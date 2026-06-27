@@ -1,6 +1,4 @@
 #include <pch.h>          // ← première ligne, toujours
-
-
 #include <Core/Logger.h>
 
 #include "../ressources/json.hpp"
