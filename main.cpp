@@ -15,12 +15,17 @@
 
 */
 
-#include <pch.h>          // ← première ligne, toujours
+#include "pch.h"          // ← première ligne, toujours
 #include "Core/Platform.h"
-#include <Core/Logger.h>
-
+#include "Core/Logger.h"
 #include "helper/ConfigManager.h"
 
+// Gestion du scenegraph
+#include "Scene/Registry.hpp"
+#include "Core/EventBus.hpp"
+#include "Scene/SceneGraph.hpp"
+#include "Scene/system.hpp"
+#include "Scene/Serializer.hpp"
 
 using namespace LibV3;
 
@@ -42,5 +47,17 @@ int main()
 	}
 	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
 
+	
+	/************************************************************
+	Lecture du scenegraph
+	************************************************************/
+	std::cout << "\n\033[32m=== Lecture de scene.json ===\033[0m" << std::endl;
+
+	Registry registry;
+	EventBus eventBus;
+	HealthSystem healthSys(&registry, eventBus);
+	AudioSystem audioSys(&registry, eventBus);
+	RessourceMeshManager resourceMeshManager;					// Collection de mesh unitaires
+	Entity activeCamera;
 
 }
