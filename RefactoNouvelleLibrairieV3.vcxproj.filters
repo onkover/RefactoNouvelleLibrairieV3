@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Fichiers sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Fichiers de ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Fichiers sources\Helpers">
+      <UniqueIdentifier>{3d2a3f58-c20c-4560-bc9e-4043aa205d02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Helpers\Registry">
+      <UniqueIdentifier>{54094421-f189-4db0-9631-953b44e94b34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Ressources">
+      <UniqueIdentifier>{6982ca1b-dc7c-4ad6-9f24-aec8221c70ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers de ressources\Assets">
+      <UniqueIdentifier>{3e4695b4-5082-4a26-9dcf-9579560e7e0d}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="RefactoNouvelleLibrairieV3.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\ConfigManager.cpp">
+      <Filter>Fichiers sources\Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="Helper\Registry\RegistryHelper.cpp">
+      <Filter>Fichiers sources\Helpers\Registry</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\cube.mtl">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </None>
+    <None Include="assets\Scene.json">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </None>
+    <None Include="assets\scenetest.json">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </None>
+    <None Include="assets\solar_system.json">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </None>
+    <None Include="config.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="assets\cube.obj">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </Object>
+    <Object Include="assets\smooth_test.obj">
+      <Filter>Fichiers de ressources\Assets</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Helper\ConfigManager.h">
+      <Filter>Fichiers sources\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="Helper\Registry\RegistryHelper.h">
+      <Filter>Fichiers sources\Helpers\Registry</Filter>
+    </ClInclude>
+    <ClInclude Include="Ressources\json.hpp">
+      <Filter>Fichiers sources\Ressources</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

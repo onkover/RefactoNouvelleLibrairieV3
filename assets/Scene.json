@@ -1,0 +1,89 @@
+{
+  "configuration": {
+    "camera": {
+      "film_aperture": {
+        "width": 0.980,
+        "height": 0.735
+      },
+      "origin": [ 0, 0, 0 ],
+      "look_at": [ 0, 0, -1 ],
+      "up_vector": [ 0, 1, 0 ],
+      "focal_length": 12,
+      "znear": 0.1,
+      "zfar": 1000.0
+    },
+    "screen": {
+      "width": 1280,
+      "height": 768
+    },
+    "renderer": {
+      "samples_per_pixel": 64,
+      "max_bounces": 10,
+      "bias": 0.0001,
+      "tile_size": 64,
+      "t_max": 100000,
+      "t_min": -200
+    }
+  },
+  "lights": [
+    {
+      "type": "spotlight",
+      "transform": {
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
+        "scale": [ 1, 1, 1 ]
+      },
+      "direction": [ 0, 0, 0 ],
+      "color": [ 1, 1, 1, 1 ],
+      "intensity": 5000,
+      "innerAngle": 10,
+      "outerAngle": 15
+    },
+    {
+      "type": "pointlight",
+      "transform": {
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
+        "scale": [ 1, 1, 1 ]
+      },
+      "direction": [ 0, 0, 0 ],
+      "color": [ 1, 1, 1, 1 ],
+      "intensity": 5000
+    },
+    {
+      "type": "distantlight",
+      "transform": {
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
+        "scale": [ 1, 1, 1 ]
+      },
+      "direction": [ 0, 0, -1 ],
+      "color": [ 1, 1, 1, 1 ],
+      "intensity": 5000
+    },
+    {
+      "type": "ambientlight",
+      "color": [ 1, 1, 1, 1 ],
+      "intensity": 5000
+    }
+  ],
+  "objects": [
+    {
+      "type": "world",
+      "background": "sky_19.hdr"
+
+    },
+    {
+      "type": "mesh",
+      "transform": {
+        "position": [ 0, 0, 0 ],
+        "rotation": [ 0, 0, 0 ],
+        "scale": [ 1, 1, 1 ]
+      },
+      "file_path": "sphere 32 faces.obj",
+      "material": {
+        "color": [ 1, 0, 0, 0 ]
+      }
+    }
+  ]
+}

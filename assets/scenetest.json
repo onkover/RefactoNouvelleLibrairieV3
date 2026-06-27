@@ -1,0 +1,63 @@
+{
+  "scene": "TNR_Scene",
+  "version": 1,
+  "nodes": [
+    {
+      "name": "Hero",
+      "transform": {
+        "position": [ 1.0, 0.0, 2.0 ],
+        "scale": [ 1.0, 1.0, 1.0 ]
+      },
+      "mesh": "assets/cube.obj",
+      "children": [
+        {
+          "name": "Sword",
+          "transform": {
+            "position": [ 0.5, 0.8, 0.0 ],
+            "scale": 0.5
+          },
+          "mesh": {
+            "path": "assets/cube.obj",
+            "generateNormals": true,
+            "smoothNormals": false,
+            "flipUVs": true,
+            "scale": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sun",
+      "transform": {
+        "euler": [ -45.0, 30.0, 0.0 ]
+      },
+      "light": {
+        "type": "directional",
+        "color": [ 1.0, 0.95, 0.8 ],
+        "intensity": 1.2
+      }
+    },
+    {
+      "name": "MainCamera",
+      "transform": {
+        "position": [ 0.0, 2.0, -5.0 ],
+        "euler": [ 15.0, 0.0, 0.0 ]
+      },
+      "camera": {
+        "fov": 60.0,
+        "aspect": 1.7777778,
+        "near": 0.1,
+        "far": 1000.0,
+        "primary": true
+      }
+    },
+    {
+      "name": "HiddenObject",
+      "visible": false,
+      "transform": {
+        "position": [ 99.0, 0.0, 0.0 ]
+      },
+      "mesh": "assets/cube.obj"
+    }
+  ]
+}

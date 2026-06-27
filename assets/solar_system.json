@@ -1,0 +1,197 @@
+{
+  "sceneName": "Système Solaire",
+  "nodes": [
+    {
+      "id": "Sun-Pivot",
+      "type": "Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Light": {
+          "type": "POINT_LIGHT",
+          "color": [ 1.0, 0.9, 0.7 ],
+          "intensity": 2.0
+        }
+      }
+    },
+    {
+      "id": "Sun-etoile",
+      "parent": "Sun-Pivot",
+      "type": "Etoile",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 5.0, 5.0, 5.0 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "sun.jpg",
+          "rotationSpeed": 0.05
+        },
+        "Light": {
+          "type": "POINT_LIGHT",
+          "color": [ 1.0, 0.9, 0.7 ],
+          "intensity": 2.0
+        }
+      }
+    },
+    {
+      "id": "Earth",
+      "parent": "Sun-Pivot",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [ 15.0, 0.0, 0.0 ],
+          "rotation": [ 23.4, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "earth_day.jpg",
+          "orbitalSpeed": 1.0,
+          "rotationSpeed": 5.0
+        }
+      }
+    },
+    {
+      "id": "Moon",
+      "parent": "Earth",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ 2.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.27, 0.27, 0.27 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "moon.jpg",
+          "orbitalSpeed": 12.0,
+          "rotationSpeed": 0.5
+        }
+      }
+    },
+    {
+      "id": "Mars",
+      "parent": "Sun-Pivot",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [ 25.0, 0.0, 0.0 ],
+          "rotation": [ 25.19, 0.0, 0.0 ],
+          "scale": [ 0.53, 0.53, 0.53 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "mars.jpg",
+          "orbitalSpeed": 0.8,
+          "rotationSpeed": 4.8
+        }
+      }
+    },
+    {
+      "id": "Phobos",
+      "parent": "Mars",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ 1.2, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.1, 0.1, 0.1 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "rock.jpg",
+          "orbitalSpeed": 30.0
+        }
+      }
+    },
+    {
+      "id": "Deimos",
+      "parent": "Mars",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ -1.8, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.08, 0.08, 0.08 ]
+        },
+        "Mesh": {
+          "model": "asset/sphere 10 faces.obj",
+          "texture": "rock.jpg",
+          "orbitalSpeed": 20.0
+        }
+      }
+    },
+    {
+      "id": "Earth_Camera_Follower",
+      "parent": "Earth",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0
+        }
+      }
+    },
+    {
+      "id": "Sun_Danger_Zone",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "scale": [ 5.0, 5.0, 5.0 ]
+        },
+        "Trigger": {
+          "radius": 10.0
+        }
+      }
+    },
+    {
+      "id": "Sun-Danger-zone",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ]
+        },
+        "Trigger": {
+          "radius": 10.0,
+          "onEnterEvent": "STARTED_TAKING_DAMAGE",
+          "onStayEvent": "TAKING_DAMAGE",
+          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+        }
+      }
+    },
+    {
+      "id": "Player_Ship",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 8.0, 0.0, 0.0 ]
+        },
+        "Mesh": {
+          "model": "asset/Cube.obj",
+          "orbitalSpeed": 2.5,
+          "rotationSpeed": 0
+        },
+        "Trigger": {
+          "radius": 0.5
+        },
+        "Health": {
+          "maxHealth": 100
+        },
+        "PlayerControl": {
+          "speed": 0.5
+        }
+      }
+    }
+  ]
+}
