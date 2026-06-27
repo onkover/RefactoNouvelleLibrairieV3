@@ -10,6 +10,7 @@
 using namespace LibV3;
 
 
+
     /************************************************************
         Assure que la console Windows utilise UTF-8 pour afficher les caractères correctement
         (utile si les chemins ou messages contiennent des caractères non-ASCII)
@@ -27,7 +28,7 @@ using namespace LibV3;
     //************************************************************
     //************************************************************
 
-    bool ProgrammeConfig(const std::string& path)
+    bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault)
     {
         using json = nlohmann::json;
         namespace fs = std::filesystem;
@@ -52,8 +53,8 @@ using namespace LibV3;
         }
 
         // Lecture sécurisée avec valeurs par défaut si la clé est absente
-        std::string repObjDefault = root["configuration"].value("REP_OBJ_DEFAULT", "G:\\Projects Visual Studio\\OBJ\\");
-        std::string repGfxDefault = root["configuration"].value("REP_GFX_DEFAULT", "G:\\Projects Visual Studio\\Graphs\\");
+        repObjDefault = root["configuration"].value("REP_OBJ_DEFAULT", "G:\\Projects Visual Studio\\OBJ\\");
+        repGfxDefault = root["configuration"].value("REP_GFX_DEFAULT", "G:\\Projects Visual Studio\\Graphs\\");
 
         int screenWidth = root["screen"].value("width", 1920); // 1920 par défaut si manquant
         int screenHeight = root["screen"].value("height", 1080); // 1080 par défaut si manquant

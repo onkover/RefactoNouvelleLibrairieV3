@@ -17,6 +17,7 @@
 
 #include <pch.h>          // ← première ligne, toujours
 #include "Core/Platform.h"
+#include <Core/Logger.h>
 
 #include "helper/ConfigManager.h"
 
@@ -31,24 +32,15 @@ int main()
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
-	// Utilisation du chemin...
-	//std::wstring RepObj;
-	//if (LoadGameDirectory(L"REPOBJ", RepObj, REP_OBJ_DEFAULT) != 0)
-	//{
-	//	std::cout << "\033[31mImpossible de lire la clé de la variable d'environnement OBJ\033[0m" << '\n';
-	//	exit(1);
-	//}
-	//std::wcout << L"Répertoire objets : " << RepObj << std::endl;
+	std::string repObjDefault;
+	std::string repGfxDefault;
 
-	//std::wstring RepGfx;
-	//if (LoadGameDirectory(L"RepGfx", RepGfx, REP_GFX_DEFAULT) != 0)
-	//{
-	//	std::cout << "\033[31mImpossible de lire la clé de la variable d'environnement GFX\033[0m" << '\n';
-	//	exit(1);
-	//}
-	//std::wcout << L"Répertoire graphismes : " << RepGfx << std::endl;
+	if (!ProgrammeConfig("config.json", repObjDefault, repGfxDefault))
+	{
+		Logger::error("\033[31mImpossible de charger la configuration.\033[0m");
+		return 1;
+	}
+	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
 
 
-
-    std::cout << "Hello World!\n";
 }

@@ -3,4 +3,4 @@
 #include <iostream>
 
 void SetConsoleMode();
-int LoadGameDirectory(std::wstring nameVariable, std::wstring& output, const std::wstring defaultPath);
+bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault);
