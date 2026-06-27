@@ -9,10 +9,7 @@
 
 #include <fstream>
 
-//using namespace LibV3;
-
-namespace LibV3
-{
+using namespace LibV3;
 
 
     /************************************************************
@@ -107,6 +104,3 @@ namespace LibV3
             return 1;
         }
     }
-
-
-}

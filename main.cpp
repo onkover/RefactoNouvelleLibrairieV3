@@ -21,7 +21,7 @@
 #include "helper/ConfigManager.h"
 
 
-//using namespace LibV3;
+using namespace LibV3;
 
 int main()
 {
