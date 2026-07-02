@@ -17,7 +17,9 @@ using namespace LV3;
     ************************************************************/
     void SetConsoleMode()
     {
-#if defined(LV2_PLATFORM_WINDOWS)
+        SetConsoleOutputCP(CP_UTF8);    // Configure la page de code pour la sortie (Output).
+        SetConsoleCP(CP_UTF8);          // Configure la page de code pour l'entrée (Input)
+#if defined(LV3_PLATFORM_WINDOWS)
         SetConsoleOutputCP(CP_UTF8);    // Configure la page de code pour la sortie (Output).
         SetConsoleCP(CP_UTF8);          // Configure la page de code pour l'entrée (Input)
 #endif

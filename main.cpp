@@ -57,7 +57,25 @@ int main()
 	EventBus eventBus;
 	HealthSystem healthSys(&registry, eventBus);
 	AudioSystem audioSys(&registry, eventBus);
-	RessourceMeshManager resourceMeshManager;					// Collection de mesh unitaires
+	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera;
+
+	// --- SETUP DE LA SCÈNE ---
+	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
+	// C/C++ > Préprocesseur.
+	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
+	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
+
+	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
+
+	if (!success)
+	{
+		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
+		return -1;
+	}
+
+	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
+	std::cout << "Structure finale du Scene Graph :" << std::endl;
+	DebugDisplaySystem(registry);
 
 }
