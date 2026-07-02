@@ -27,7 +27,7 @@
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 
-using namespace LibV3;
+using namespace LV3;
 
 int main()
 {
