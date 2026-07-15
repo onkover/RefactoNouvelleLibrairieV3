@@ -26,6 +26,7 @@
 #include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
+#include <thread>
 
 using namespace LV3;
 
@@ -77,5 +78,61 @@ int main()
 	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
 	std::cout << "Structure finale du Scene Graph :" << std::endl;
 	DebugDisplaySystem(registry);
+
+
+	// --- BOUCLE DE JEU ---
+
+	int frameCount = 0;
+	const int maxFrames = 30; // Arrête la simulation après 100 images
+	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
+
+	std::map < Entity, std::string> entityNames;	// pour le debugage
+
+	while (frameCount < maxFrames) {
+		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
+		// system("clear"); 
+
+		std::cout << std::endl;
+		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
+
+		Matrix44f mIndentity;
+		mIndentity.rotateX(45 * TO_RADIAN);
+
+
+
+		// 1. Gérer les entrées utilisateur (non implémenté ici)
+		PlayerInputSystem(registry, deltaTime);
+
+		// 2. Mettre à jour la scène
+		// L'update commence à la racine, avec une matrice identité car elle n'a pas de parent.
+
+		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
+		AnimationSystem(registry, deltaTime);
+		CameraSystem(registry, deltaTime);    // Met à jour les positions lissées => non implémenté ici
+
+		// --- 2. MISE À JOUR DES MATRICES ---
+		//TransformationSystem(registry, deltaTime);
+		LocalTransformSystem(registry);       // Construit les matrices locales finales
+		WorldTransformSystem(registry, mIndentity);       // Construit les matrices mondes finales
+
+		// --- 3. DÉTECTION (Physique/Triggers) ---
+		// Lit les matrices mondes finales
+		TriggerSystem(registry, eventBus);
+
+		// --- 4. DESSIN ---
+		// Débug de la hiérarchie 
+		DebugDisplaySystem(registry);// , entityNames);
+
+		// Draw de la hiérarchie
+		RenderSystem(registry, activeCamera);
+
+		// Pause pour rendre l'animation lisible dans la console
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+		frameCount++;
+	}
+
+
+
+
 
 }
