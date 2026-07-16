@@ -209,7 +209,7 @@ int main()
 	if (!success)
 	{
 		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
-		return -1;
+		return -1; 
 	}
 
 	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
