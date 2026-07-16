@@ -189,7 +189,7 @@ int main()
 	/************************************************************
 	Lecture du scenegraph
 	************************************************************/
-	std::cout << "\n\033[32m=== Lecture de scene.json ===\033[0m" << std::endl;
+	std::cout << "\n\033[32m=== Lecture de solar_system.json ===\033[0m" << std::endl;
 
 	Registry registry;
 	EventBus eventBus;
@@ -215,14 +215,12 @@ int main()
 	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
 	std::cout << "Structure finale du Scene Graph :" << std::endl;
 	DebugDisplaySystem(registry);
-
-
 	TestF1_EntityVersioning();
-	return 0;
+
 	// --- BOUCLE DE JEU ---
 
 	int frameCount = 0;
-	const int maxFrames = 30; // Arrête la simulation après 100 images
+	const int maxFrames = 1; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
 	std::map < Entity, std::string> entityNames;	// pour le debugage
@@ -235,9 +233,6 @@ int main()
 		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
 
 		Matrix44f mIndentity;
-		mIndentity.rotateX(45 * TO_RADIAN);
-
-
 
 		// 1. Gérer les entrées utilisateur (non implémenté ici)
 		PlayerInputSystem(registry, deltaTime);
