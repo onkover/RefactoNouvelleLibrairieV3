@@ -34,6 +34,7 @@ B2	const uint32_t INVALID_INDEX = UINT32_MAX; est un membre d'instance : 4 octet
 
 B3	ConstainsEntity — faute de frappe figée dans une interface virtuelle.
 	Chaque classe dérivée devra reproduire la coquille. Corrige en Contains maintenant, avant que ça se propage.														Mineur
+	=> Fait, migré sur TriggerComponent
 
 B4	#include <iostream> dans un header inclus partout. iostream est l'un des headers les plus lourds de la STL et il n'est même pas utilisé ici.
 	Dehors.																																								Mineur
@@ -43,7 +44,7 @@ B5	MAX_ENTITIES_INIT est un const size_t à portée de namespace dans un header 
 
 B6	Pas de Emplace avec perfect forwarding : Add(entity, T component) force une construction puis un move. Pour un composant lourd
 	(ton TriggerComponent avec ses std::string et son std::set), c'est du travail inutile.																				Amélioration
-
+	=> Fait
 B7	Le sparse est un std::vector<uint32_t> plat : avec des IDs d'entités élevés, chaque SparseSet paie 4 octets × maxEntityID, même s'il ne stocke que 3 composants.
 	EnTT résout ça avec un sparse paginé (pages de 4096 allouées à la demande).
 	À garder pour plus tard — pas urgent à ton échelle.																													Amélioration
@@ -55,9 +56,13 @@ B8	Auto-swap dans Remove : quand on supprime le dernier élément, m_Dense[i] = 
 
 
 Audit du Registry et de son utilisation
+C1 de l'audit initial, le double-destroy se déclare mort au bon moment.
+	=> Fait
 
 C2 — 🟠 MAJEUR : pas de versionnage des entités (le problème ABA)
 Ton propre commentaire dans CreateEntity identifie le problème — je te le confirme : c'est indispensable, pas optionnel, et je te donne la solution en Partie F. Sans génération, tout système qui garde un Entity en mémoire (ton TriggerComponent::overlapping_entities, par exemple !) peut se retrouver à manipuler une entité recyclée qui n'a plus rien à voir avec l'originale. C'est exactement le problème ABA des structures lock-free, transposé à l'ECS.
+	=> Fait, structurellement impossible, pas juste évités par convention — l'assert de DestroyEntity détonnera immédiatement si quelqu'un tente de contourner ça, et l'assert que tu viens d'ajouter dans Add audite silencieusement DestroyEntity à chaque insertion.
+
 C3 — 🟠 MAJEUR : le ComponentView ignore ses propres pointeurs
 Ton ComponentView fait le travail difficile correctement : il capture les pointeurs de storage dans m_storages_ptr_tuple au moment de la construction, et il choisit le plus petit pool comme base d'itération — exactement la bonne stratégie. Et puis... l'itérateur n'utilise jamais ce tuple. SkipInvalidEntities appelle registry->hasComponent<T>() et operator* appelle registry->getComponent<T>(). Chacun de ces appels refait tout le chemin : recalcul du typeID, bounds check sur m_Storages, déréférencement du unique_ptr, static_cast. Par composant, par entité, à chaque frame. Pire : la version non-const de getStorage<T>() peut créer un pool pendant l'itération et redimensionner m_Storages. Le tuple contenait déjà les pointeurs typés — c'était le but de son existence. Correction en Partie F.
 C4 — 🟠 MAJEUR : l'itérateur ment sur son type
@@ -98,7 +103,10 @@ D6	"Ressources" (orthographe française) comme nom de dossier dans un codebase d
 
 
 F1 — Priorité absolue : entités versionnées + destruction sûre
+	=> Fait
 F2 — SparseSet professionnalisé
+	=> Fait de facto avec F1
+
 F3 — ComponentView : utiliser le tuple, retourner par valeur
 F4 — Les composants référencent, ils ne possèdent pas
 F5 — ResourceManager : erreurs typées, chemins normalisés, unload O(1)
@@ -160,6 +168,7 @@ void TestF1_EntityVersioning()
 	// --- 4. Le scénario TriggerComponent : un handle stocké survit à son entité ---
 	LV3::Entity held = reg.CreateEntity();
 	reg.DestroyEntity(held);
+	//reg.DestroyEntity(held);				// Un assert doit se déclencher ici si on tente de détruire une entité déjà morte
 	reg.CreateEntity();											// recycle le slot de 'held'
 	assert(!reg.IsAlive(held));									// le voisin mémorisé est bien déclaré mort
 
