@@ -27,10 +27,12 @@ Audit de SparseSet.hpp
 B1	Get() sans garde : si l'entité n'a pas le composant, m_Sparse[entity] peut valoir INVALID_INDEX → accès m_Dense[4294967295],
 	comportement indéfini silencieux. Les //if (Has(entity)) commentés montrent que tu as hésité.
 	La réponse professionnelle est assert(Has(entity)) : gratuit en Release, fatal et bruyant en Debug.																	Majeur
+	=> Fait
 
 B2	const uint32_t INVALID_INDEX = UINT32_MAX; est un membre d'instance : 4 octets gaspillés par SparseSet,
 	non utilisable dans des contextes constexpr, et il empêche la génération de l'opérateur d'affectation par copie.
 	Ce doit être static constexpr.																																		Majeur
+	=> Fait
 
 B3	ConstainsEntity — faute de frappe figée dans une interface virtuelle.
 	Chaque classe dérivée devra reproduire la coquille. Corrige en Contains maintenant, avant que ça se propage.														Mineur
@@ -38,13 +40,16 @@ B3	ConstainsEntity — faute de frappe figée dans une interface virtuelle.
 
 B4	#include <iostream> dans un header inclus partout. iostream est l'un des headers les plus lourds de la STL et il n'est même pas utilisé ici.
 	Dehors.																																								Mineur
+	=> Fait
 
 B5	MAX_ENTITIES_INIT est un const size_t à portée de namespace dans un header — chaque unité de traduction en reçoit une copie.
 	En C++17+ : inline constexpr.	Mineur
+	=> Fait
 
 B6	Pas de Emplace avec perfect forwarding : Add(entity, T component) force une construction puis un move. Pour un composant lourd
 	(ton TriggerComponent avec ses std::string et son std::set), c'est du travail inutile.																				Amélioration
 	=> Fait
+
 B7	Le sparse est un std::vector<uint32_t> plat : avec des IDs d'entités élevés, chaque SparseSet paie 4 octets × maxEntityID, même s'il ne stocke que 3 composants.
 	EnTT résout ça avec un sparse paginé (pages de 4096 allouées à la demande).
 	À garder pour plus tard — pas urgent à ton échelle.																													Amélioration
@@ -64,7 +69,10 @@ Ton propre commentaire dans CreateEntity identifie le problème — je te le con
 	=> Fait, structurellement impossible, pas juste évités par convention — l'assert de DestroyEntity détonnera immédiatement si quelqu'un tente de contourner ça, et l'assert que tu viens d'ajouter dans Add audite silencieusement DestroyEntity à chaque insertion.
 
 C3 — 🟠 MAJEUR : le ComponentView ignore ses propres pointeurs
-Ton ComponentView fait le travail difficile correctement : il capture les pointeurs de storage dans m_storages_ptr_tuple au moment de la construction, et il choisit le plus petit pool comme base d'itération — exactement la bonne stratégie. Et puis... l'itérateur n'utilise jamais ce tuple. SkipInvalidEntities appelle registry->hasComponent<T>() et operator* appelle registry->getComponent<T>(). Chacun de ces appels refait tout le chemin : recalcul du typeID, bounds check sur m_Storages, déréférencement du unique_ptr, static_cast. Par composant, par entité, à chaque frame. Pire : la version non-const de getStorage<T>() peut créer un pool pendant l'itération et redimensionner m_Storages. Le tuple contenait déjà les pointeurs typés — c'était le but de son existence. Correction en Partie F.
+Ton ComponentView fait le travail difficile correctement : il capture les pointeurs de storage dans m_storages_ptr_tuple au moment de la construction, et il choisit le plus petit pool comme base d'itération — exactement la bonne stratégie. Et puis... l'itérateur n'utilise jamais ce tuple. SkipInvalidEntities appelle registry->hasComponent<T>() et operator* appelle registry->getComponent<T>(). Chacun de ces appels refait tout le chemin : recalcul du typeID, bounds check sur m_Storages, déréférencement du unique_ptr, static_cast. Par composant, par entité, à chaque frame. Pire : la version non-const de getStorage<T>() peut créer un pool pendant l'itération et redimensionner m_Storages. 
+Le tuple contenait déjà les pointeurs typés — c'était le but de son existence. 
+Correction en Partie F.
+
 C4 — 🟠 MAJEUR : l'itérateur ment sur son type
 using reference = value_type&; avec un mutable std::optional<value_type> rempli dans un operator*() const — c'est un contournement d'un problème que le C++ moderne a résolu proprement : le proxy iterator. Quand la valeur est fabriquée à la volée (un tuple de références), on la retourne par valeur : using reference = value_type;. C'est exactement ce que fait std::vector<bool>, et depuis C++20 les concepts d'itérateurs (std::input_iterator) l'acceptent officiellement. Ton hack fonctionne, mais il porte un état mutable inutile, il casse si deux operator* sont en vol, et surtout il montre qu'on a lutté contre le langage au lieu de l'écouter.
 
@@ -73,14 +81,20 @@ Bugs dans Systeme.cpp (l'utilisation)
 C5a	WorldTransformSystem exécute worldIdentityMatrix.rotateX(45 * TO_RADIAN) sur une matrice reçue par référence, à chaque frame.
 	Si l'appelant réutilise la même matrice, ta scène entière tourne de 45° supplémentaires par frame. Une matrice nommée « identity »
 	qui n'en est plus une : mensonge sémantique + bug cumulatif.																								🔴 Critique
+	=> Fait
+
 C5b	HierarchyComponent children = registry.getComponent<HierarchyComponent>(entity);
 	dans UpdateWorldTransforms : copie profonde du composant — donc du std::vector<Entity>
 	— à chaque nœud, à chaque frame, dans une récursion. Il manque deux caractères : auto&.																		🟠 Majeur
+
 C5c	#pragma once en première ligne d'un fichier .cpp. Cette directive protège contre l'inclusion multiple d'un header ;
 	dans un .cpp elle est du bruit qui trahit un copier-coller.																									Mineur
+	=> Fait
+
 C5d	TriggerSystem construit un ComponentView complet (recherche du plus petit pool, etc.) dans la boucle interne, pour chaque entité externe.
 	Combiné à C3, ton O(N²) de collision est un O(N²) avec un gros facteur constant.
 	Construis la vue une fois, ou mieux : collecte d'abord (entity, position) dans un vecteur local, puis fais le N² dessus.									🟠 Majeur
+
 C5e	Résidus : int b = 0; dans une branche else, RenderSystem défini dans le .cpp mais absent de System.hpp,
 	fichier nommé Systeme.cpp vs header System.hpp — l'incohérence de nommage est une taxe cognitive permanente.												Mineur
 
@@ -89,21 +103,27 @@ Audit du ResourceManager
 #	Constat	Sévérité
 D1	UnloadMesh fait un scan linéaire O(N) de m_pathToMesh pour trouver le chemin correspondant au handle.
 	Avec 500 meshes, décharger un niveau devient quadratique. Il faut une map inverse id → path, ou stocker le chemin dans le mesh.									🟠 Majeur
+
 D2	Le cache n'est pas normalisé : "assets/cube.obj", "Assets/cube.obj" et "assets\\cube.obj" sont trois clés distinctes
 	→ le même fichier chargé trois fois en mémoire, silencieusement. std::filesystem::weakly_canonical doit normaliser toute clé avant insertion/recherche.			🟠 Majeur
+
 D3	LoadMesh retourne un handle invalide en cas d'échec, sans dire pourquoi (fichier absent ? OBJ malformé ? mesh vide ?).
 	Tu as <expected> dans ton PCH, tu es en C++23 : std::expected<MeshHandle, ELoadError> est le canal d'erreur professionnel, sans exception.						🟠 Majeur
+
 D4	Les handles ne portent pas de génération, mais comme les IDs sont monotones et jamais recyclés,
 	un handle périmé après UnloadMesh retourne simplement nullptr via GetMesh.
 	C'est sûr. Je le note pour que tu saches que c'est un choix acceptable, pas un oubli — mais documente-le.														Info
+
 D5	Aucune thread-safety. Acceptable aujourd'hui (chargement mono-thread au démarrage), mais le jour où tu voudras du chargement asynchrone,
 	l'API actuelle (retour de pointeurs bruts vers l'intérieur des maps) devra être repensée. Note-le dans le code.													Amélioration
+
 D6	"Ressources" (orthographe française) comme nom de dossier dans un codebase dont le reste est en anglais (Geometry, Rendering, Lighting).
 	Cosmétique, mais l'incohérence se paie en #include ratés.																										Mineur
 
 
 F1 — Priorité absolue : entités versionnées + destruction sûre
 	=> Fait
+
 F2 — SparseSet professionnalisé
 	=> Fait de facto avec F1
 
@@ -139,11 +159,10 @@ Component.hpp
 #include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
+
 #include <thread>
 
 using namespace LV3;
-
-
 
 void TestF1_EntityVersioning()
 {
