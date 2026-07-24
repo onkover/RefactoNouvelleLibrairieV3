@@ -128,12 +128,17 @@ F2 — SparseSet professionnalisé
 	=> Fait de facto avec F1
 
 F3 — ComponentView : utiliser le tuple, retourner par valeur
+	=> Fait
+
 F4 — Les composants référencent, ils ne possèdent pas
 F5 — ResourceManager : erreurs typées, chemins normalisés, unload O(1)
 F6 — Hygiène immédiate dans Systeme.cpp
+	=> Fait
 
 => Ordre de bataille recommandé : F1 (entités versionnées — tout le reste en dépend), F2, F3, F6, puis F4 et F5.
 
+Trigger system :
+* optimiser la détection de collision naïve O(N²) en utilisant une broad-phase spatiale (grille, quadtree, etc.) pour réduire le nombre de comparaisons.
 
 
 E — La critique architecturale transversale : ton moteur a deux cerveaux
