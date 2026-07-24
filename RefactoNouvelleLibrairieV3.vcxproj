@@ -178,7 +178,9 @@
     <Object Include="assets\smooth_test.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>
-    <Object Include="assets\sphere 10 faces.obj" />
+    <Object Include="assets\sphere 10 faces.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helper\ConfigManager.h" />
