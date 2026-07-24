@@ -166,6 +166,9 @@
     <None Include="assets\solar_system.json">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
+    <None Include="assets\sphere 10 faces.mtl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="config.json" />
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +178,7 @@
     <Object Include="assets\smooth_test.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>
+    <Object Include="assets\sphere 10 faces.obj" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helper\ConfigManager.h" />
