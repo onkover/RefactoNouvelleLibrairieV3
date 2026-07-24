@@ -248,7 +248,7 @@ int main()
 	// --- BOUCLE DE JEU ---
 
 	int frameCount = 0;
-	const int maxFrames = 1; // Arrête la simulation après 100 images
+	const int maxFrames = 5; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
 	std::map < Entity, std::string> entityNames;	// pour le debugage
