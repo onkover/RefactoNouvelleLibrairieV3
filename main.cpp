@@ -131,6 +131,8 @@ F3 — ComponentView : utiliser le tuple, retourner par valeur
 	=> Fait
 
 F4 — Les composants référencent, ils ne possèdent pas
+	=> Fait sur le renderSystem, à généraliser sur tous les composants qui contiennent des handles (TriggerComponent, AudioComponent, etc.)
+
 F5 — ResourceManager : erreurs typées, chemins normalisés, unload O(1)
 F6 — Hygiène immédiate dans Systeme.cpp
 	=> Fait
@@ -291,7 +293,7 @@ int main()
 		DebugDisplaySystem(registry);// , entityNames);
 
 		// Draw de la hiérarchie
-		RenderSystem(registry, activeCamera);
+		RenderSystem(registry, activeCamera, rm);
 
 		// Pause pour rendre l'animation lisible dans la console
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));
