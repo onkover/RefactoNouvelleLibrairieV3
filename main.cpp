@@ -272,6 +272,7 @@ int main()
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
+//struct config
 	std::string repObjDefault;
 	std::string repGfxDefault;
 
@@ -282,9 +283,21 @@ int main()
 	}
 	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
 
+
 	
 	/************************************************************
-	Lecture du scenegraph
+	Paramétrage projet
+	************************************************************/
+
+
+	// --- SETUP DE LA SCÈNE ---
+	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
+	// C/C++ > Préprocesseur.
+	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
+	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
+
+	/************************************************************
+	Paramétrage du scenegraph
 	************************************************************/
 	std::cout << "\n\033[32m=== Lecture de solar_system.json ===\033[0m" << std::endl;
 
@@ -295,14 +308,7 @@ int main()
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera;
 
-	// --- SETUP DE LA SCÈNE ---
-	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
-	// C/C++ > Préprocesseur.
-	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
-	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
-
 	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
-
 	if (!success)
 	{
 		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
@@ -314,6 +320,16 @@ int main()
 	DebugDisplaySystem(registry);
 	TestF1_EntityVersioning();
 	TestF5_ResourceManager_UnloadMesh();
+
+
+
+
+
+
+
+
+
+
 
 	// --- BOUCLE DE JEU ---
 

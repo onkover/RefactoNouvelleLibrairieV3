@@ -26,8 +26,6 @@ using namespace LV3;
     }
 
 
-
-    //************************************************************
     //************************************************************
 
     bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault)
