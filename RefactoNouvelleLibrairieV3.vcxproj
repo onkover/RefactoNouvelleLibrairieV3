@@ -144,6 +144,10 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestCameraMath.cpp" />
+    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestF.cpp" />
+    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestMatrix.cpp" />
+    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestProjection.cpp" />
     <ClCompile Include="Helper\ConfigManager.cpp" />
     <ClCompile Include="Helper\Registry\RegistryHelper.cpp" />
     <ClCompile Include="main.cpp" />
@@ -154,6 +158,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\20.5.SceneGraphSerializer\Test\readme.md" />
     <None Include="assets\cube.mtl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
