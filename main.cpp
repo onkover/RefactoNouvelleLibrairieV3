@@ -160,8 +160,13 @@ todo
 
 
 #include "pch.h"          // ← première ligne, toujours
+
+#include <SDL.h>
+#include <SDL_ttf.h>
+
 #include "Core/Platform.h"
 #include "Core/Logger.h"
+#include "Core/InputState.h"
 #include "helper/ConfigManager.h"
 
 // Gestion du scenegraph
@@ -181,6 +186,53 @@ void TestF5_ResourceManager_UnloadMesh();
 int RunAllCameraMathTests();
 int TestProjection();
 int TestMatrixLib();
+
+
+bool g_running = true;
+
+// ---------- une fois par frame ----------
+/*
+1. Clavier = état, souris = événement. Le clavier se lit avec SDL_GetKeyboardState (« la touche est-elle enfoncée maintenant »). La souris s'accumule (« de combien a-t-elle bougé depuis la dernière lecture »). Confondre les deux donne une caméra saccadée ou un déplacement qui ne s'arrête pas.
+2. InputState est reconstruit entièrement chaque frame. Il est local à BuildInputState(), donc remis à zéro par construction. Si tu en fais une variable globale persistante, wheelDelta et toggleCameraMode s'accumuleront indéfiniment — la caméra basculera de mode à chaque frame
+3. mouseDeltaX/Y ne se multiplient jamais par dt. C'est un déplacement en pixels déjà accompli, pas une vitesse. Le clavier, lui, si
+*/
+LV3::InputState BuildInputState()
+{
+	LV3::InputState in;
+
+	// 1. Événements ponctuels (molette, actions)
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev))
+	{
+		switch (ev.type)
+		{
+		case SDL_QUIT:       g_running = false; break;
+		case SDL_MOUSEWHEEL: in.wheelDelta += ev.wheel.y; break;
+		case SDL_KEYDOWN:
+			if (!ev.key.repeat && ev.key.keysym.scancode == SDL_SCANCODE_C)
+				in.toggleCameraMode = true;          // front montant
+			break;
+		}
+	}
+
+	// 2. Souris relative. SDL remet l'accumulateur à zéro tout seul :
+	//    tu ne dois PAS le réinitialiser à la main.
+	SDL_GetRelativeMouseState(&in.mouseDeltaX, &in.mouseDeltaY);
+
+	// 3. Clavier : état MAINTENU, pas événement.
+	const Uint8* k = SDL_GetKeyboardState(nullptr);
+	in.moveForward = k[SDL_SCANCODE_W] || k[SDL_SCANCODE_UP];
+	in.moveBackward = k[SDL_SCANCODE_S] || k[SDL_SCANCODE_DOWN];
+	in.strafeLeft = k[SDL_SCANCODE_A] || k[SDL_SCANCODE_LEFT];
+	in.strafeRight = k[SDL_SCANCODE_D] || k[SDL_SCANCODE_RIGHT];
+	in.moveUp = k[SDL_SCANCODE_SPACE];
+	in.moveDown = k[SDL_SCANCODE_LCTRL];
+	in.sprint = k[SDL_SCANCODE_LSHIFT];
+
+	return in;
+}
+
+
 
 int main()
 {
@@ -222,9 +274,9 @@ int main()
 	Registry registry;
 	EventBus eventBus;
 	HealthSystem healthSys(&registry, eventBus);
-	AudioSystem audioSys(&registry, eventBus);
+	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
-	Entity activeCamera;
+	Entity activeCamera = NULL_ENTITY;
 
 	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
 	if (!success)
@@ -247,6 +299,11 @@ int main()
 
 	// --- BOUCLE DE JEU ---
 
+	// À l'initialisation, une seule fois : souris capturée, deltas illimités
+	SDL_SetRelativeMouseMode(SDL_TRUE);
+
+
+
 	int frameCount = 0;
 	const int maxFrames = 5; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
@@ -264,22 +321,42 @@ int main()
 
 		// 1. Gérer les entrées utilisateur (non implémenté ici)
 		PlayerInputSystem(registry, deltaTime);
+		const LV3::InputState input = BuildInputState();
+
 
 		// 2. Mettre à jour la scène
 		// L'update commence à la racine, avec une matrice identité car elle n'a pas de parent.
 
 		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
-		CameraSystem(registry, deltaTime);    // Met à jour les positions lissées => non implémenté ici
+		//CameraSystem(registry, deltaTime);    // Met à jour les positions lissées => non implémenté ici
+
+		FPSControllerSystem(registry, input, deltaTime);      // \  un seul agit,
+		CameraFollowSystem(registry, deltaTime);             // /  m_isEnabled arbitre
+
+
+
 
 		// --- 2. MISE À JOUR DES MATRICES ---
 		//TransformationSystem(registry, deltaTime);
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
-		WorldTransformSystem(registry, mIndentity);       // Construit les matrices mondes finales
+		WorldTransformSystem(registry);       // Construit les matrices mondes finales
+
+
+
+		//const Entity camEntity = FindActiveCamera(registry);
+		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camEntity),
+		//	*registry.TryGet<CameraComponent>(camEntity), viewport);
+
+
+
 
 		// --- 3. DÉTECTION (Physique/Triggers) ---
 		// Lit les matrices mondes finales
 		TriggerSystem(registry, eventBus);
+
+		//FindActiveCamera + BuildViewData
+		//Culling + Rendu
 
 		// --- 4. DESSIN ---
 		// Débug de la hiérarchie 
