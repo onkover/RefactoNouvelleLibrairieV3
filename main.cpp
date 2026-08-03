@@ -161,6 +161,7 @@ todo
 
 #include "pch.h"          // ← première ligne, toujours
 
+#define SDL_MAIN_HANDLED      // AVANT l'include : neutralise la macro
 #include <SDL.h>
 #include <SDL_ttf.h>
 
@@ -234,15 +235,17 @@ LV3::InputState BuildInputState()
 
 
 
-int main()
+int main(int argc, char* argv[])
 {
 
 	SetConsoleMode();	// mode cosole en UTF-8
 
+	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
+	//if (SDL_Init(SDL_INIT_VIDEO) != 0) { ... }
+
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
-//struct config
 	std::string repObjDefault;
 	std::string repGfxDefault;
 
@@ -284,7 +287,12 @@ int main()
 		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
 		return -1; 
 	}
+#if LV3_DEBUG
+	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
+#endif
 
+
+#if LV3_DEBUG
 	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
 	std::cout << "Structure finale du Scene Graph :" << std::endl;
 	DebugDisplaySystem(registry);
@@ -294,8 +302,8 @@ int main()
 	RunAllCameraMathTests();
 	TestProjection();
 	TestMatrixLib();
-
-	exit(0);
+#endif
+//	exit(0);
 
 	// --- BOUCLE DE JEU ---
 
@@ -329,8 +337,9 @@ int main()
 
 		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
-		//CameraSystem(registry, deltaTime);    // Met à jour les positions lissées => non implémenté ici
 
+
+		
 		FPSControllerSystem(registry, input, deltaTime);      // \  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             // /  m_isEnabled arbitre
 
@@ -342,7 +351,10 @@ int main()
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
 		WorldTransformSystem(registry);       // Construit les matrices mondes finales
 
-
+#if LV3_DEBUG
+		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
+		DebugTraceEntity(registry, "Earth");  // ← TRACE, à retirer une fois la question tranchée
+#endif
 
 		//const Entity camEntity = FindActiveCamera(registry);
 		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camEntity),
