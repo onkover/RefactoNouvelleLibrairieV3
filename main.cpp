@@ -148,6 +148,11 @@ Component.hpp
 => Règle dictatoriale n°1 de cette leçon : un composant ne possède jamais une ressource. Il la référence par handle
 => Fait
 
+
+
+todo
+* camera lissé : smoothSpeed, currentSmoothedPos
+* tester la caméra CameraFollowComponent
 */
 
 
@@ -289,7 +294,7 @@ int main()
 	}
 
 
-// TNR , supprime un mesjh	
+// TNR , supprime un mesh	
 
 
 }

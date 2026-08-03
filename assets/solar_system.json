@@ -137,9 +137,28 @@
           "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Camera": {
+          "projection": "perspective",
           "fov": 45.0,
           "near": 0.1,
-          "far": 2000.0
+          "far": 2000.0,
+          "infiniteFar": false,
+          "active": true,
+          "priority": 0
+        },
+
+        "CameraFPS": {
+          "enabled": false,
+          "moveSpeed": 5.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": true,
+          "pitchLimit": 89.0
+        },
+
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Earth",
+          "offset": [ 0.0, 5.0, -15.0 ],
+          "smoothSpeed": 5.0
         }
       }
     },
