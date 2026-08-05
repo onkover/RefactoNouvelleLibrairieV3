@@ -179,6 +179,9 @@ todo
 #include "Scene/Serializer.hpp"
 #include "Rendering/Renderer.h"
 
+#if LV3_DEBUG
+	#include "Test/Test_TopLeftRule.h"
+#endif
 using namespace LV3;
 
 void TestF1_EntityVersioning();
@@ -186,6 +189,8 @@ void TestF5_ResourceManager_UnloadMesh();
 int RunAllCameraMathTests();
 int TestProjection();
 int TestMatrixLib();
+bool Test_TopLeftRule_NoDoubleCoverage();
+
 
 
 bool g_running = true;
@@ -298,7 +303,16 @@ int main(int argc, char* argv[])
 	RunAllCameraMathTests();
 	TestProjection();
 	TestMatrixLib();
+	// Validation avant tout démarrage moteur
+	if (!Test_TopLeftRule_NoDoubleCoverage())
+	{
+		printf("\033[31mECHEC : Test_TopLeftRule\033[0m\n");
+		return -1;
+	}
+	printf("\033[32mOK : Test_TopLeftRule, pas de pixel dessiné 2 fois\033[0m\n");
+
 #endif
+
 
 	// --- BOUCLE DE JEU ---
 	
@@ -409,7 +423,7 @@ int main(int argc, char* argv[])
 
 		Renderer renderer;
 		renderer.DrawTriangle(tri1, frameBuffer, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
-		renderer.DrawTriangle(tri2, frameBuffer, ERenderMode::TestBarycentric, Color{ 0, 255, 0, 255 });
+		renderer.DrawTriangle(tri2, frameBuffer, ERenderMode::Solid, Color{ 0, 255, 0, 255 });
 
 		SDL_UnlockTexture(SDLtexture);
 		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);

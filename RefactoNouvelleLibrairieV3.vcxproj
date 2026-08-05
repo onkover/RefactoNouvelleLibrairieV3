@@ -150,14 +150,15 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestCameraMath.cpp" />
-    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestF.cpp" />
-    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestMatrix.cpp" />
-    <ClCompile Include="..\20.5.SceneGraphSerializer\Test\TestProjection.cpp" />
     <ClCompile Include="Helper\ConfigManager.cpp" />
     <ClCompile Include="Helper\Registry\RegistryHelper.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SDLMngt.cpp" />
+    <ClCompile Include="Test\TestCameraMath.cpp" />
+    <ClCompile Include="Test\TestF.cpp" />
+    <ClCompile Include="Test\TestMatrix.cpp" />
+    <ClCompile Include="Test\TestProjection.cpp" />
+    <ClCompile Include="Test\Test_TopLeftRule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\LibraryV3\LibraryV3.vcxproj">
@@ -165,7 +166,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\20.5.SceneGraphSerializer\Test\readme.md" />
     <None Include="assets\cube.mtl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -182,6 +182,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
     <None Include="config.json" />
+    <None Include="Test\readme.md" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="assets\cube.obj">
@@ -199,6 +200,7 @@
     <ClInclude Include="Helper\Registry\RegistryHelper.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Ressources\json.hpp" />
+    <ClInclude Include="Test\Test_TopLeftRule.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
