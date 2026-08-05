@@ -156,14 +156,15 @@ todo
 */
 
 
+#define MAIN
 
 
 
 #include "pch.h"          // ← première ligne, toujours
+#include "main.h"
 
-#define SDL_MAIN_HANDLED      // AVANT l'include : neutralise la macro
-#include <SDL.h>
 #include <SDL_ttf.h>
+#include <thread>
 
 #include "Core/Platform.h"
 #include "Core/Logger.h"
@@ -176,9 +177,7 @@ todo
 #include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
-
-
-#include <thread>
+#include "Rendering/Renderer.h"
 
 using namespace LV3;
 
@@ -230,6 +229,9 @@ LV3::InputState BuildInputState()
 	in.moveDown = k[SDL_SCANCODE_LCTRL];
 	in.sprint = k[SDL_SCANCODE_LSHIFT];
 
+	if (k[SDL_SCANCODE_ESCAPE] || k[SDL_SCANCODE_SPACE])
+		g_running = false;
+
 	return in;
 }
 
@@ -239,9 +241,6 @@ int main(int argc, char* argv[])
 {
 
 	SetConsoleMode();	// mode cosole en UTF-8
-
-	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
-	//if (SDL_Init(SDL_INIT_VIDEO) != 0) { ... }
 
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
@@ -289,10 +288,7 @@ int main(int argc, char* argv[])
 	}
 #if LV3_DEBUG
 	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
-#endif
 
-
-#if LV3_DEBUG
 	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
 	std::cout << "Structure finale du Scene Graph :" << std::endl;
 	DebugDisplaySystem(registry);
@@ -303,22 +299,33 @@ int main(int argc, char* argv[])
 	TestProjection();
 	TestMatrixLib();
 #endif
-//	exit(0);
 
 	// --- BOUCLE DE JEU ---
+	
+	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
+	screenWidth = 800;  // Largeur de l'écran
+	screenHeight = 600; // Hauteur de l'écran
+	if (SDLINIT(screenWidth, screenHeight) != true) return -1;
 
 	// À l'initialisation, une seule fois : souris capturée, deltas illimités
 	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 
-
+	pitch = 0;
 	int frameCount = 0;
 	const int maxFrames = 5; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
 	std::map < Entity, std::string> entityNames;	// pour le debugage
 
-	while (frameCount < maxFrames) {
+
+
+
+
+	//while (frameCount < maxFrames) {
+	while (g_running == true)
+	{
+
 		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 		// system("clear"); 
 
@@ -340,8 +347,8 @@ int main(int argc, char* argv[])
 
 
 		
-		FPSControllerSystem(registry, input, deltaTime);      // \  un seul agit,
-		CameraFollowSystem(registry, deltaTime);             // /  m_isEnabled arbitre
+		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
+		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 
 
 
@@ -377,13 +384,44 @@ int main(int argc, char* argv[])
 		// Draw de la hiérarchie
 		RenderSystem(registry, activeCamera, rm);
 
+		//Triangle2D huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
+
+		Triangle2D tri1{
+			{0,0}, {400,0}, {400,300}, // v0, v1, v2
+			0.9f, 0.9f, 0.2f					// z0, z1, z2
+		};
+
+			Triangle2D tri2{
+		{0,0}, {400,300}, {0,300}, // v0, v1, v2
+		0.9f, 0.9f, 0.2f					// z0, z1, z2
+			};
+
+//		SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch);
+		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) != 0)
+		{
+			SDL_Log("SDL_LockTexture a échoué : %s", SDL_GetError());
+			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
+		}
+
+
+		FrameBuffer frameBuffer;
+		frameBuffer.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+
+		Renderer renderer;
+		renderer.DrawTriangle(tri1, frameBuffer, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
+		renderer.DrawTriangle(tri2, frameBuffer, ERenderMode::TestBarycentric, Color{ 0, 255, 0, 255 });
+
+		SDL_UnlockTexture(SDLtexture);
+		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
+		SDL_RenderPresent(SDLrenderer);
+
+
 		// Pause pour rendre l'animation lisible dans la console
-		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+//		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		frameCount++;
 	}
 
 
-// TNR , supprime un mesh	
-
-
+	SDLkill();
+	return 0;
 }
