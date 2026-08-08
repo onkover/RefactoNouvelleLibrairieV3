@@ -28,6 +28,9 @@
     <Filter Include="Fichiers sources\Test">
       <UniqueIdentifier>{29d40733-44c2-42e6-bb32-0abae35a6fae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers sources\GFX">
+      <UniqueIdentifier>{71615fcf-1504-4dc3-a9b4-b21c2c2e575e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Helper\ConfigManager.cpp">
@@ -55,6 +58,12 @@
       <Filter>Fichiers sources\Test</Filter>
     </ClCompile>
     <ClCompile Include="Test\TestProjection.cpp">
+      <Filter>Fichiers sources\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="GFX\Gfx.cpp">
+      <Filter>Fichiers sources\GFX</Filter>
+    </ClCompile>
+    <ClCompile Include="Test\TestCleanBuffer.cpp">
       <Filter>Fichiers sources\Test</Filter>
     </ClCompile>
   </ItemGroup>
@@ -102,11 +111,19 @@
     <ClInclude Include="Ressources\json.hpp">
       <Filter>Fichiers sources\Ressources</Filter>
     </ClInclude>
-    <ClInclude Include="main.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
     <ClInclude Include="Test\Test_TopLeftRule.h">
       <Filter>Fichiers sources\Test</Filter>
     </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Fichiers sources</Filter>
+    </ClInclude>
+    <ClInclude Include="GFX\gfx.h">
+      <Filter>Fichiers sources\GFX</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="GFX\gfx.ASM">
+      <Filter>Fichiers sources\Test</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

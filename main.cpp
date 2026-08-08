@@ -190,7 +190,7 @@ int RunAllCameraMathTests();
 int TestProjection();
 int TestMatrixLib();
 bool Test_TopLeftRule_NoDoubleCoverage();
-
+int TestCleanBuffer();
 
 
 bool g_running = true;
@@ -311,9 +311,12 @@ int main(int argc, char* argv[])
 	}
 	printf("\033[32mOK : Test_TopLeftRule, pas de pixel dessiné 2 fois\033[0m\n");
 
+//	TestCleanBuffer();
+
+
 #endif
 
-
+//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	// --- BOUCLE DE JEU ---
 	
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
@@ -333,20 +336,20 @@ int main(int argc, char* argv[])
 	std::map < Entity, std::string> entityNames;	// pour le debugage
 
 
-
+	// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
+	// system("clear"); 
 
 
 	//while (frameCount < maxFrames) {
 	while (g_running == true)
 	{
 
-		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
-		// system("clear"); 
+
 
 		std::cout << std::endl;
 		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
 
-		Matrix44f mIndentity;
+
 
 		// 1. Gérer les entrées utilisateur (non implémenté ici)
 		PlayerInputSystem(registry, deltaTime);
@@ -410,25 +413,59 @@ int main(int argc, char* argv[])
 		0.9f, 0.9f, 0.2f					// z0, z1, z2
 			};
 
-//		SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch);
-		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) != 0)
+
+
+		FrameBuffer frameBuffer;
+		frameBuffer.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+
+		SparseSet<CameraComponent>* poolCamera = registry.getStorage<CameraComponent>();
+		CameraComponent* ActiveCam = nullptr;
+		for (CameraComponent& cam : poolCamera->GetDenseData())
+		{
+			if (cam.m_isActive == true)
+			{
+				ActiveCam = &cam;
+				break;
+			}
+		}
+
+		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
+		{
+
+
+		}
+		else
 		{
 			SDL_Log("SDL_LockTexture a échoué : %s", SDL_GetError());
 			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
 		}
 
 
-		FrameBuffer frameBuffer;
-		frameBuffer.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+
+
+
+
+		//ViewData BuildViewData(const TransformComponent & tr, const CameraComponent & cam, const Viewport & vp)
+
+
 
 		Renderer renderer;
 		renderer.DrawTriangle(tri1, frameBuffer, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
 		renderer.DrawTriangle(tri2, frameBuffer, ERenderMode::Solid, Color{ 0, 255, 0, 255 });
 
+
+
+
+
+
+		//SDL_RenderClear(SDLrenderer);
 		SDL_UnlockTexture(SDLtexture);
 		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
 		SDL_RenderPresent(SDLrenderer);
 
+
+		//CleanScreenASM((__m256i*)(ptrScreen), (screenWidth >> 3) * (screenHeight));
+		CleanScreenV3((__m256i*)(ptrScreen), (screenWidth >> 3) * (screenHeight));
 
 		// Pause pour rendre l'animation lisible dans la console
 //		std::this_thread::sleep_for(std::chrono::milliseconds(50));

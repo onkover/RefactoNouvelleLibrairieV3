@@ -48,3 +48,4 @@ extern int* ptrScreen;
 
 void SDLkill();
 bool SDLINIT(int ScreenWidth, int ScreenHeight);
+extern "C" void CleanScreenV3(void* p, unsigned long long bytes);
