@@ -38,8 +38,8 @@ bool Test_TopLeftRule_NoDoubleCoverage()
     Vec2f c{ 400, 300 };
     Vec2f d{ 0,   300 };
 
-    RasterizeTriangleOLD(a, b, c, W, H, ShadeFragment_Count, &ctx);
-    RasterizeTriangleOLD(a, c, d, W, H, ShadeFragment_Count, &ctx);
+    RasterizeTriangle(a, b, c, W, H, ShadeFragment_Count, &ctx);
+    RasterizeTriangle(a, c, d, W, H, ShadeFragment_Count, &ctx);
 
     // 4. Ici, ctx est devenu inutile. On lit directement `counts`.
     for (int32_t i = 0; i < W * H; ++i)
