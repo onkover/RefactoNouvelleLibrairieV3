@@ -178,19 +178,24 @@ todo
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 #include "Rendering/Renderer.h"
+#include "Rendering/depthbuffer.h"
+
+#include "GFX/gfx.h"
 
 #if LV3_DEBUG
 	#include "Test/Test_TopLeftRule.h"
+	void TestF1_EntityVersioning();
+	void TestF5_ResourceManager_UnloadMesh();
+	int RunAllCameraMathTests();
+	int TestProjection();
+	int TestMatrixLib();
+	bool Test_TopLeftRule_NoDoubleCoverage();
+	int TestCleanBuffer();
 #endif
+
 using namespace LV3;
 
-void TestF1_EntityVersioning();
-void TestF5_ResourceManager_UnloadMesh();
-int RunAllCameraMathTests();
-int TestProjection();
-int TestMatrixLib();
-bool Test_TopLeftRule_NoDoubleCoverage();
-int TestCleanBuffer();
+
 
 
 bool g_running = true;
@@ -273,11 +278,8 @@ int main(int argc, char* argv[])
 	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
 	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
 
-	/************************************************************
-	Paramétrage du scenegraph
-	************************************************************/
-	std::cout << "\n\033[32m=== Lecture de solar_system.json ===\033[0m" << std::endl;
 
+	// --- Scenegraph et systèmes ---
 	Registry registry;
 	EventBus eventBus;
 	HealthSystem healthSys(&registry, eventBus);
@@ -285,12 +287,22 @@ int main(int argc, char* argv[])
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
 
+	/************************************************************
+	Paramétrage du scenegraph
+	************************************************************/
+	std::cout << "\n\033[32m=== Lecture de solar_system.json ===\033[0m" << std::endl;
+
 	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
 	if (!success)
 	{
 		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
 		return -1; 
 	}
+
+
+
+
+	// --- TNR---
 #if LV3_DEBUG
 	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
@@ -317,12 +329,24 @@ int main(int argc, char* argv[])
 #endif
 
 //	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
-	// --- BOUCLE DE JEU ---
 	
+	// ═══ Initialisation, une seule fois ═══
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
-	screenWidth = 800;  // Largeur de l'écran
-	screenHeight = 600; // Hauteur de l'écran
+	constexpr int WinW = 800;  // Largeur de l'écran
+	constexpr int WinH = 600; // Hauteur de l'écran
 	if (SDLINIT(screenWidth, screenHeight) != true) return -1;
+
+	FrameBuffer fb;
+	DepthBuffer db;
+	db.Resize(WinW, WinH);
+
+	// Les deux régions. Découpage décidé ICI, par l'application.
+	const LV3::Viewport vpLeft{ 0,        0, WinW / 2, WinH };
+	const LV3::Viewport vpRight{ WinW / 2, 0, WinW / 2, WinH };
+
+	const Entity camFollow = FindCameraByName(registry, "Earth_Camera_Follower");
+	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");
+
 
 	// À l'initialisation, une seule fois : souris capturée, deltas illimités
 	SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -333,22 +357,16 @@ int main(int argc, char* argv[])
 	const int maxFrames = 5; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
-	std::map < Entity, std::string> entityNames;	// pour le debugage
+//	std::map < Entity, std::string> entityNames;	// pour le debugage
 
 
 	// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 	// system("clear"); 
 
-
-	//while (frameCount < maxFrames) {
 	while (g_running == true)
 	{
-
-
-
 		std::cout << std::endl;
 		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
-
 
 
 		// 1. Gérer les entrées utilisateur (non implémenté ici)
@@ -361,13 +379,8 @@ int main(int argc, char* argv[])
 
 		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
-
-
-		
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
-
-
 
 
 		// --- 2. MISE À JOUR DES MATRICES ---
@@ -375,24 +388,15 @@ int main(int argc, char* argv[])
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
 		WorldTransformSystem(registry);       // Construit les matrices mondes finales
 
-#if LV3_DEBUG
-		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
-		DebugTraceEntity(registry, "Earth");  // ← TRACE, à retirer une fois la question tranchée
-#endif
-
-		//const Entity camEntity = FindActiveCamera(registry);
-		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camEntity),
-		//	*registry.TryGet<CameraComponent>(camEntity), viewport);
-
-
-
-
 		// --- 3. DÉTECTION (Physique/Triggers) ---
 		// Lit les matrices mondes finales
 		TriggerSystem(registry, eventBus);
 
-		//FindActiveCamera + BuildViewData
-		//Culling + Rendu
+
+#if LV3_DEBUG
+		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
+		DebugTraceEntity(registry, "Earth");  // ← TRACE, à retirer une fois la question tranchée
+#endif
 
 		// --- 4. DESSIN ---
 		// Débug de la hiérarchie 
@@ -401,37 +405,57 @@ int main(int argc, char* argv[])
 		// Draw de la hiérarchie
 		RenderSystem(registry, activeCamera, rm);
 
+
+		//***************************************
 		//Triangle2D huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
 
-		Triangle2D tri1{
-			{0,0}, {400,0}, {400,300}, // v0, v1, v2
-			0.9f, 0.9f, 0.2f					// z0, z1, z2
-		};
+		//Triangle2D tri1{
+		//	{0,0}, {400,0}, {400,300}, // v0, v1, v2
+		//	0.9f, 0.9f, 0.2f					// z0, z1, z2
+		//};
 
-			Triangle2D tri2{
-		{0,0}, {400,300}, {0,300}, // v0, v1, v2
-		0.9f, 0.9f, 0.2f					// z0, z1, z2
-			};
+		//	Triangle2D tri2{
+		//{0,0}, {400,300}, {0,300}, // v0, v1, v2
+		//0.9f, 0.9f, 0.2f					// z0, z1, z2
+		//	};
+		//Renderer renderer;
+		//renderer.DrawTriangle(tri1, fb, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
+		//renderer.DrawTriangle(tri2, fb, ERenderMode::Solid, Color{ 0, 255, 0, 255 });
+//		Viewport vp = Viewport::FullScreen(screenWidth, screenHeight);
+//		LV3_ASSERT(vp.IsValid());
+		//***************************************
 
 
+		// --- 4. DEUX points de vue, construits par la MÊME fonction ---
+		const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
+			*registry.TryGet<CameraComponent>(camFollow),
+			vpLeft);
 
-		FrameBuffer frameBuffer;
-		frameBuffer.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+		const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
+			*registry.TryGet<CameraComponent>(camOverview),
+			vpRight);
 
-		SparseSet<CameraComponent>* poolCamera = registry.getStorage<CameraComponent>();
-		CameraComponent* ActiveCam = nullptr;
-		for (CameraComponent& cam : poolCamera->GetDenseData())
-		{
-			if (cam.m_isActive == true)
-			{
-				ActiveCam = &cam;
-				break;
-			}
-		}
 
+		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
+			fb.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+			fb.Clear(MakeColor(16, 16, 24));
+			db.Clear();
+
+			// --- 3. DEUX rendus dans le MÊME buffer ---
+			RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
+			RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
+
+			// Séparateur vertical
+			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
+
+
+
+//			RenderObject(registry, rm, fb, db, ERenderMode::Wireframe);
+
+			SDL_UnlockTexture(SDLtexture);
 
 		}
 		else
@@ -440,32 +464,14 @@ int main(int argc, char* argv[])
 			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
 		}
 
-
-
-
-
-
-		//ViewData BuildViewData(const TransformComponent & tr, const CameraComponent & cam, const Viewport & vp)
-
-
-
-		Renderer renderer;
-		renderer.DrawTriangle(tri1, frameBuffer, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
-		renderer.DrawTriangle(tri2, frameBuffer, ERenderMode::Solid, Color{ 0, 255, 0, 255 });
-
-
-
-
-
-
-		//SDL_RenderClear(SDLrenderer);
-		SDL_UnlockTexture(SDLtexture);
 		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
 		SDL_RenderPresent(SDLrenderer);
 
 
-		//CleanScreenASM((__m256i*)(ptrScreen), (screenWidth >> 3) * (screenHeight));
-		CleanScreenV3((__m256i*)(ptrScreen), (screenWidth >> 3) * (screenHeight));
+		//SDL_RenderClear(SDLrenderer);
+		Clean_Render(fb);
+			
+
 
 		// Pause pour rendre l'animation lisible dans la console
 //		std::this_thread::sleep_for(std::chrono::milliseconds(50));

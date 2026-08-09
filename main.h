@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+
 #ifdef MAIN
 SDL_Window* window;
 SDL_Renderer* SDLrenderer;
@@ -48,4 +49,6 @@ extern int* ptrScreen;
 
 void SDLkill();
 bool SDLINIT(int ScreenWidth, int ScreenHeight);
-extern "C" void CleanScreenV3(void* p, unsigned long long bytes);
+
+
+//extern "C" void CleanScreenV3(void* p, unsigned long long bytes);

@@ -2,6 +2,10 @@
 #include "pch.h"          // ← première ligne, toujours
 #include "gfx.h"
 
+#include "Scene/system.hpp"
+
+extern "C" void CleanScreenASM(__m256i*, int);	// ASM clearScreen
+extern "C" void CleanScreenV3(void* p, unsigned long long bytes);
 
 
 
@@ -10,116 +14,116 @@
 void Init_Render()
 {
 
-	//displayNormal(false);
-	//displayEdge(false);
-
 
 	
 }
 
-void Clean_Render()
+void Clean_Render(FrameBuffer& fb)
 {
 	//myZBuf->CleandepthBuffer(float(-pFrustum->farClippingPlane));
-//	CleanScreenASM((__m256i*)(myScreen.ptrScreen), (myScreen.Width >> 3) * (myScreen.Height));
-
+	CleanScreenASM((__m256i*)(fb.m_Pixels), (fb.m_Width >> 3) * (fb.m_Height));
+//	CleanScreenV3(fb.m_Pixels, (fb.m_Width >> 3) * (fb.m_Height));
 }
 
-/*
-	Convention des matrices : Column major (vecteurs colonnes) => OpenGL et Vulkan.
-		La transformation s'écrit : v_final = M_finale * v_local
-		L'ordre des matrices est lu de droite à gauche (la transformation la plus proche du vecteur est appliquée en premier
-		La chaîne de transformation est : Matrice_finale = Projection * Vue * Monde * Locale
-		L'ordre interne (TRS) est : matrice = Translation * Rotation * Scale
 
-		Ordre de multiplication des matrices monde et locale : Matrice_Monde * Matrice_Locale
-		Soit : Matrice_final = translation_monde * rotation_monde * dimensionnement_monde * translation_locale * rotation_locale * dimensionnement_locale
-
-	Convention des matrices : row major (vecteurs lignes) => DirectX
-		La transformation s'écrit : v_final = v_local * M_finale
-		L'ordre des matrices est lu de gauche à droite (la transformation la plus proche du vecteur est appliquée en premier).
-		L'ordre interne (SRT) est inversé : matrice = Scale * Rotation * Translation
-		La chaîne de transformation est : Matrice_finale = Locale * Monde * Vue * Projection
-
-		Ordre de multiplication des matrices monde et locale : Matrice_Locale * Matrice_Monde
-		Soit : Matrice_final = dimensionnement_locale * rotation_locale * translation_locale * dimensionnement_monde * rotation_monde *  translation_monde
-
-	Camera
-		La matrice de Vue (View Matrix) a pour but de transformer le monde entier de telle sorte que la caméra se retrouve à l'origine (0,0,0), regardant dans une direction standard (souvent le long de l'axe Z négatif).
-		Pour ce faire, on applique au monde la transformation inverse de celle de la caméra.
-		Donc, matrice_vue = matrice_camera.inverse() est l'approche standard et correcte.
-		La formule finale pour un vertex shader serait donc (en convention vecteurs lignes) : position_finale = position_locale * matMesh * matWorld * matrice_vue * matrice_projection;
-
-*/
-
-void RenderObject()
+void RenderObject(Registry& registry, ResourceManager& rm, FrameBuffer& fb, DepthBuffer& db, ERenderMode mode)
 {
-//	// 1. Calculer la matrice View (caméra)
-//	Matrix44f viewMatrix = myWorld->myCamera->getViewMatrix();
-//
-//	// 2. Calculer la matrice de projection
-//	Matrix44f projectionMatrix = myFrustum->getProjectionMatrix();
-//
-//	// 3. Calculer la matrice combinée finale (row-major)
-//	Matrix44f viewProjectionMatrix = viewMatrix * projectionMatrix;
-//
-//	// 4. Extraire les plans du frustum à partir de la matrice combinée
-//	// Les plans sont bien définis dans le worldspace
-//	myFrustum->Frustum_ExtractPlan(viewProjectionMatrix);
-//	//drawDebugFrustum(viewMatrix, viewProjectionMatrix, 255 << 16, &myScreen);
-//
-//
-//	myWorld->matWorldInversed = myWorld->matWorld.inverse();
-//	// 2. Itération linéaire sur tous les maillages
-//	//SparseSet<TransformComponent>* TransformComponentsPool = registry.getStorage<TransformComponent>();
-//	//auto& Transforms = TransformComponentsPool->GetDenseData();
-//	//auto& Entities = TransformComponentsPool->GetDenseEntities();
-//
-//	for (auto& [entity, mesh, transform] : registry.ViewGroup<MeshComponent, TransformComponent>())
-//	{
-//		std::shared_ptr<MeshClass> myMesh = mesh.m_mesh;
-//
-//		// 5. Calculer la matrice de modèle (Model Matrix)
-//		Matrix44f modelMatrix = transform.m_worldTransform;
-//
-//		// 6.Calculer l'AABB local du mesh et son pendant dans le worldspace
-////		myMesh->AABB.resetAABB();
-////		myMesh->buildAABB(VERTEXSTATE::OBJECT);
-//		AABB3d worldAABB;
-//		worldAABB = calculateWorldAABB(myMesh->AABB, modelMatrix);
-//
-//		// 7. Tester l'AABB du mesh contre le frustum
-//		// L'AABB est défini dans le worldspace ainsi que les plans du frustum. Le test de visibilité est donc possible
-//		bool isVisible = isAABBVisibleIntoWorldSpace(worldAABB, myFrustum);
-//		if (isVisible == true)
-//		{
-//
-//			//	DrawAABB(worldAABB, myFrustum, viewMatrix, &myScreen, 255 << 8);
-//
-//				// Transformation de la caméra dans le modelspace de l'objet => nécessaire pour le backface culling
-//			Matrix44f invModelMatrix = modelMatrix.inverse();
-//			invModelMatrix.multVecMatrix(myWorld->myCamera->CameraPos, myWorld->myCamera->ObjectSpaceCameraPos);
-//
-//			for (int i = 0; i < myMesh->nb_faces; i++)
-//			{
-//				Poly* pPoly = myMesh->Face(i);
-//
-//				// 8. Backface culling dans l'espace objet
-//				pPoly->Objectspace_ComputeBackfaceCulling(myWorld->myCamera->ObjectSpaceCameraPos, TypeObject::Object);
-//				if (pPoly->isCameraVisible == true)
-//				{
-//					// 9. L'objet est visible, on peut donc le transformer dans le worldspace via sa matrice "Model"
-//					TransformLocalMesh(pPoly, modelMatrix);
-//
-//					// 10. Passage en viewspace et projection
-//					Clip3DAndProject(pPoly, myFrustum, myWorld, TypeObject::Object, &myScreen, viewProjectionMatrix);
-//				}
-//			}
-//		}
-//	}
-//
-//	DrawCameraOrientation(myFrustum, myWorld, &myScreen);
-}
+	/*if (!fb.IsBound()) { Logger::warn("RenderSystem : framebuffer non bind"); return; }
 
+	const Entity camEntity = FindActiveCamera(registry);
+	if (camEntity == NULL_ENTITY)
+	{
+		Logger::warn("RenderSystem : aucune camera active");
+		return;
+	}
+
+	const ViewData view = BuildViewData(
+		*registry.TryGet<TransformComponent>(camEntity),
+		*registry.TryGet<CameraComponent>(camEntity),
+		vp);*/
+
+
+
+	//DrawCameraOrientation(myFrustum, myWorld, &myScreen);
+}
+void RenderView(Registry& registry, ResourceManager& rm,
+    FrameBuffer& fb, DepthBuffer& db,
+    const ViewData& view, ERenderMode mode)
+{
+    const Viewport& vp = view.viewport;
+    if (!vp.IsValid() || !fb.IsBound()) return;
+
+    for (auto&& [entity, meshComp, transform] : registry.ViewGroup<MeshComponent, TransformComponent>())
+    {
+        const MeshClass* mesh = rm.GetMesh(meshComp.m_meshHandle);
+        if (!mesh || mesh->faceCount() == 0) continue;
+
+        // 5. Matrice de modèle
+        const Matrix44f& modelMatrix = transform.m_worldMatrix;
+
+        // 6 + 7. AABB monde, puis culling à trois états
+        const AABB3d worldAABB = mesh->GetMeshAABB().Transformed(modelMatrix);
+        if (view.frustum.Classify(worldAABB) == EIntersect::Outside) continue;
+
+        // 9 + 10. UNE matrice Model · View · Projection
+        const Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;
+
+        const uint8_t vpf = mesh->vertsPerFace;      // 3 (triangles) ou 4 (quads)
+        const size_t  fc = mesh->faceCount();
+
+        for (size_t f = 0; f < fc; ++f)
+        {
+            const uint32_t base = static_cast<uint32_t>(f) * vpf;
+
+            // --- 10a. Local -> CLIP. SoA INDEXÉ : indices[] puis vertexPositions[]
+            //     /!\ mesh->indices[base + k], PAS indices[base] + k
+            Vec4f c[4];
+            for (uint8_t k = 0; k < vpf; ++k)
+                c[k] = MulRow(mvp, mesh->vertexPositions[mesh->indices[base + k]]);
+
+            // --- 10b. Rejet du near sur TOUS les sommets.
+            //     Diviser par un w négatif ramènerait le point en MIROIR.
+            bool behind = false;
+            for (uint8_t k = 0; k < vpf; ++k)
+                if (c[k].w <= view.nearPlane) { behind = true; break; }
+            if (behind) continue;
+
+            // --- 10c + 10d. /w -> NDC -> RASTER (flip Y dans ToRaster)
+            Vec3f r[4];
+            for (uint8_t k = 0; k < vpf; ++k)
+            {
+                const float inv = 1.0f / c[k].w;
+                r[k] = vp.ToRaster({ c[k].x * inv, c[k].y * inv, c[k].z * inv });
+            }
+
+            // --- 8. Backface culling. Une face plane et convexe a un sens de
+            //     parcours unique : le triangle (0,1,2) décide pour toute la face.
+            const float area = EdgeFn(r[0], r[1], r[2]);
+            if (area <= 0.0f) continue;
+
+            // --- 11. Dessin
+            if (mode == ERenderMode::Wireframe)
+            {
+                const Color w = MakeColor(255, 255, 255);
+                for (uint8_t k = 0; k < vpf; ++k)                     // contour du polygone
+                    DrawLineClipped(fb, vp, r[k], r[(k + 1) % vpf], w);
+            }
+            else
+            {
+                const Color col = FaceColor(static_cast<int>(f));
+
+                // Triangulation en éventail : (0,1,2) puis (0,2,3) pour un quad.
+                for (uint8_t t = 0; t + 2 < vpf; ++t)
+                {
+                    const float a2 = (t == 0) ? area
+                        : EdgeFn(r[0], r[t + 1], r[t + 2].x, r[t + 2].y);
+                    if (a2 <= 0.0f) continue;
+                    RasterizeTriangle(fb, db, vp, r[0], r[t + 1], r[t + 2], a2, col);
+                }
+            }
+        }
+    }
+}
 
 void End_Render()
 {

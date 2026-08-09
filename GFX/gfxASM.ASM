@@ -1,3 +1,72 @@
+.data
+public CleanScreenASM
+public CleanScreenV1
+public CleanScreenV2
+public CleanScreenV3
+public CleanScreenV4
+
+.code
+;***************************************************
+;*
+;*     passage parametres avec le C/C++
+;*
+;* RCX, RDX, R8, R9 are used for integer and pointer arguments 
+;* XMM0, 1, 2, and 3 are used for floating point arguments.
+;* Additional arguments are pushed on the stack left to right.
+;* 
+;*		Valeur de retour
+;* 
+;* Integer return values (similar to x86) are returned in RAX if 64 bits or less.
+;* Floating point return values are returned in XMM0.
+;*
+;***************************************************
+
+
+;	Si on utilise rbx, il faut le sauvegarder avant (push/pop) -> why ????
+;	vpxor xmm0,xmm0,xmm0				; AVX mais efface tout de même ymmX
+;
+;
+
+
+; exemple
+; 	vmovdqu ymm1, ymmword ptr [r8]	; intrinsic : _mm256_loadu_si256
+;	vpxor ymm1,ymm1,ymm1			;-> AVX2
+;	vpxor xmm1,xmm1,xmm1			; AVX mais efface tout de même ymm1
+;	vmovdqu	ymmword ptr [rcx+rbx],ymm1		; 8 int à la fois	- intrinsic : _mm256_storeu_si256  
+;	vmovups ymmword ptr [rcx+rbx],ymm0		; 8 float à la fois - intrinsic :_mm256_store_ps
+
+
+;***************************************************
+;*
+;*                Clean screen via SIMD 
+;*
+;*	efface 8 pixels en même temps
+;*
+;* Parametre : 
+;* rcx : Adresse de l'écran
+;* rdx : Taille
+;*
+;***************************************************
+
+
+	align 16
+CleanScreenASM proc
+
+	vpxor ymm0,ymm0,ymm0
+	xor rax,rax
+clean:	
+	vmovdqu	ymmword ptr [rcx+rax],ymm0		; 8 pixels à la fois	- intrinsic : _mm256_storeu_si256
+	add rax,32
+;	vmovdqu	ymmword ptr [rcx],ymm0		; 8 pixels à la fois	- intrinsic : _mm256_storeu_si256
+;	lea rcx,[rcx+32]
+
+	sub rdx,1
+	jne clean
+
+	VZEROUPPER
+	ret
+CleanScreenASM endp
+
 ;=========================================================
 ; clearscreen.asm
 ;
@@ -16,8 +85,6 @@
 ; rdx doit etre un multiple de 32 (V1..V3) ou 64 (V4).
 ; Un framebuffer W*H*4 l'est toujours si W est multiple de 8.
 ;=========================================================
-
-.code
 
 ;---------------------------------------------------------
 ; V1 - version d'origine : 1 store non aligne de 32 o / tour
