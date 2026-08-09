@@ -7,6 +7,8 @@
 #include "rendering/viewport.h"   // Viewport
 #include "rendering/depthbuffer.h" // DepthBuffer
 #include "rendering/rasterizer.h"  // RasterizeTriangle
+#include "Rendering/ViewData.h"      // ViewData
+#include "Rendering/RenderTypes.h"   // ERenderMode
 
 
 using namespace LV3;

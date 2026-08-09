@@ -21,7 +21,7 @@ void Init_Render()
 void Clean_Render(FrameBuffer& fb)
 {
 	//myZBuf->CleandepthBuffer(float(-pFrustum->farClippingPlane));
-	CleanScreenASM((__m256i*)(fb.m_Pixels), (fb.m_Width >> 3) * (fb.m_Height));
+	CleanScreenASM((__m256i*)(fb.m_Pixels), (fb.Width() >> 3) * (fb.Height()));
 //	CleanScreenV3(fb.m_Pixels, (fb.m_Width >> 3) * (fb.m_Height));
 }
 
@@ -52,6 +52,11 @@ void RenderView(Registry& registry, ResourceManager& rm,
 {
     const Viewport& vp = view.viewport;
     if (!vp.IsValid() || !fb.IsBound()) return;
+
+    LV3_ASSERT(db.Width() == fb.Width() &&
+        db.Height() == fb.Height() &&
+        "DepthBuffer et FrameBuffer doivent avoir la meme taille");
+
 
     for (auto&& [entity, meshComp, transform] : registry.ViewGroup<MeshComponent, TransformComponent>())
     {
@@ -98,7 +103,7 @@ void RenderView(Registry& registry, ResourceManager& rm,
 
             // --- 8. Backface culling. Une face plane et convexe a un sens de
             //     parcours unique : le triangle (0,1,2) décide pour toute la face.
-            const float area = EdgeFn(r[0], r[1], r[2]);
+            const float area = EdgeFunction(r[0], r[1], r[2]);
             if (area <= 0.0f) continue;
 
             // --- 11. Dessin
@@ -116,9 +121,9 @@ void RenderView(Registry& registry, ResourceManager& rm,
                 for (uint8_t t = 0; t + 2 < vpf; ++t)
                 {
                     const float a2 = (t == 0) ? area
-                        : EdgeFn(r[0], r[t + 1], r[t + 2].x, r[t + 2].y);
+                        : EdgeFunction(r[0], r[t + 1], r[t + 2].x, r[t + 2].y);
                     if (a2 <= 0.0f) continue;
-                    RasterizeTriangle(fb, db, vp, r[0], r[t + 1], r[t + 2], a2, col);
+                    RasterizeTriangle(fb, vp, r[0], r[t + 1], r[t + 2], a2, col);
                 }
             }
         }

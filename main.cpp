@@ -454,7 +454,7 @@ int main(int argc, char* argv[])
 
 
 //			RenderObject(registry, rm, fb, db, ERenderMode::Wireframe);
-
+			fb.Unbind();
 			SDL_UnlockTexture(SDLtexture);
 
 		}
