@@ -410,15 +410,15 @@ int main(int argc, char* argv[])
 		//***************************************
 		//Triangle2D huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
 
-		Triangle2D tri1{
-			{0,0}, {400,0}, {400,300}, // v0, v1, v2
-			0.9f, 0.9f, 0.2f					// z0, z1, z2
-		};
+		//Triangle2D tri1{
+		//	{0,0}, {400,0}, {400,300}, // v0, v1, v2
+		//	0.9f, 0.9f, 0.2f					// z0, z1, z2
+		//};
 
-			Triangle2D tri2{
-		{0,0}, {400,300}, {0,300}, // v0, v1, v2
-		0.9f, 0.9f, 0.2f					// z0, z1, z2
-			};
+		//	Triangle2D tri2{
+		//{0,0}, {400,300}, {0,300}, // v0, v1, v2
+		//0.9f, 0.9f, 0.2f					// z0, z1, z2
+		//	};
 
 
 
@@ -426,33 +426,33 @@ int main(int argc, char* argv[])
 		//***************************************
 
 
-		//// --- 4. DEUX points de vue, construits par la MÊME fonction ---
-		//const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
-		//	*registry.TryGet<CameraComponent>(camFollow),
-		//	vpLeft);
-
-		//const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
-		//	*registry.TryGet<CameraComponent>(camOverview),
-		//	vpRight);
+		// --- 4. DEUX points de vue, construits par la MÊME fonction ---
+		const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
+			*registry.TryGet<CameraComponent>(camFollow),
+			vpLeft);
 
 		const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
 			*registry.TryGet<CameraComponent>(camOverview),
-			vp);
+			vpRight);
+
+		//const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
+		//	*registry.TryGet<CameraComponent>(camOverview),
+		//	vp);
 
 		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
-		//	fb.Bind(ptrScreen, pitch, screenWidth, screenHeight);
-		//	fb.Clear(MakeColor(16, 16, 24));
-		//	db.Clear();
+			fb.Bind(ptrScreen, pitch, WinW, WinH);
+			fb.Clear(MakeColor(16, 16, 24));
+			db.Clear();
 
-		//	// --- 3. DEUX rendus dans le MÊME buffer ---
-		//	RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
-		//	RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
+			// --- 3. DEUX rendus dans le MÊME buffer ---
+			RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
+			RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
 
-		//	// Séparateur vertical
-		//	for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
+			// Séparateur vertical
+			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
 
 
 			// -- test via des triangles 2D - DEB

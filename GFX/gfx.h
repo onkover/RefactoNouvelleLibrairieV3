@@ -9,7 +9,9 @@
 #include "rendering/rasterizer.h"  // RasterizeTriangle
 #include "Rendering/ViewData.h"      // ViewData
 #include "Rendering/RenderTypes.h"   // ERenderMode
-
+#include "Rendering/FrameBuffer.h"  // FrameBuffer
+#include "Rendering/RenderTypes.h"  // ERenderMode (Leçon 1)
+#include "Rendering/Viewport.h"     // Viewport
 
 using namespace LV3;
 
