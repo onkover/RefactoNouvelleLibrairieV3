@@ -334,15 +334,16 @@ int main(int argc, char* argv[])
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
 	constexpr int WinW = 800;  // Largeur de l'écran
 	constexpr int WinH = 600; // Hauteur de l'écran
-	if (SDLINIT(screenWidth, screenHeight) != true) return -1;
+	if (SDLINIT(WinW, WinH) != true) return -1;
 
 	FrameBuffer fb;
 	DepthBuffer db;
 	db.Resize(WinW, WinH);
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
-	const LV3::Viewport vpLeft{ 0,        0, WinW / 2, WinH };
-	const LV3::Viewport vpRight{ WinW / 2, 0, WinW / 2, WinH };
+	const Viewport vpLeft{ 0,        0, WinW / 2, WinH };
+	const Viewport vpRight{ WinW / 2, 0, WinW / 2, WinH };
+	const Viewport vp{ 0, 0, WinW, WinH };
 
 	const Entity camFollow = FindCameraByName(registry, "Earth_Camera_Follower");
 	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");
@@ -409,48 +410,62 @@ int main(int argc, char* argv[])
 		//***************************************
 		//Triangle2D huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
 
-		//Triangle2D tri1{
-		//	{0,0}, {400,0}, {400,300}, // v0, v1, v2
-		//	0.9f, 0.9f, 0.2f					// z0, z1, z2
-		//};
+		Triangle2D tri1{
+			{0,0}, {400,0}, {400,300}, // v0, v1, v2
+			0.9f, 0.9f, 0.2f					// z0, z1, z2
+		};
 
-		//	Triangle2D tri2{
-		//{0,0}, {400,300}, {0,300}, // v0, v1, v2
-		//0.9f, 0.9f, 0.2f					// z0, z1, z2
-		//	};
-		//Renderer renderer;
-		//renderer.DrawTriangle(tri1, fb, ERenderMode::Solid, Color{ 255, 0, 0, 255 });
-		//renderer.DrawTriangle(tri2, fb, ERenderMode::Solid, Color{ 0, 255, 0, 255 });
-//		Viewport vp = Viewport::FullScreen(screenWidth, screenHeight);
-//		LV3_ASSERT(vp.IsValid());
+			Triangle2D tri2{
+		{0,0}, {400,300}, {0,300}, // v0, v1, v2
+		0.9f, 0.9f, 0.2f					// z0, z1, z2
+			};
+
+
+
+
 		//***************************************
 
 
-		// --- 4. DEUX points de vue, construits par la MÊME fonction ---
-		const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
-			*registry.TryGet<CameraComponent>(camFollow),
-			vpLeft);
+		//// --- 4. DEUX points de vue, construits par la MÊME fonction ---
+		//const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
+		//	*registry.TryGet<CameraComponent>(camFollow),
+		//	vpLeft);
+
+		//const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
+		//	*registry.TryGet<CameraComponent>(camOverview),
+		//	vpRight);
 
 		const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
 			*registry.TryGet<CameraComponent>(camOverview),
-			vpRight);
-
+			vp);
 
 		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
-			fb.Bind(ptrScreen, pitch, screenWidth, screenHeight);
-			fb.Clear(MakeColor(16, 16, 24));
-			db.Clear();
+		//	fb.Bind(ptrScreen, pitch, screenWidth, screenHeight);
+		//	fb.Clear(MakeColor(16, 16, 24));
+		//	db.Clear();
 
-			// --- 3. DEUX rendus dans le MÊME buffer ---
-			RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
-			RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
+		//	// --- 3. DEUX rendus dans le MÊME buffer ---
+		//	RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
+		//	RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
 
-			// Séparateur vertical
-			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
+		//	// Séparateur vertical
+		//	for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
 
+
+			// -- test via des triangles 2D - DEB
+			//fb.Bind(ptrScreen, pitch, WinW, WinH);
+			//fb.Clear(MakeColor(16, 16, 24));
+			////db.Clear();
+			//LV3_ASSERT(vp.IsValid());
+
+			//Renderer renderer;
+			//renderer.DrawTriangle(tri1, fb, vp, ERenderMode::Depth, Color{ 255, 0, 0, 255 });
+			//renderer.DrawTriangle(tri2, fb, vp, ERenderMode::BarycentricColors, Color{ 0, 255, 0, 255 });
+
+			// -- test via des triangles 2D - FIN
 
 
 //			RenderObject(registry, rm, fb, db, ERenderMode::Wireframe);

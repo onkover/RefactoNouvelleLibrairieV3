@@ -21,7 +21,7 @@ unsigned int ColorPalette[255];
 unsigned char* bufferPic;
 
 int pitch;
-int screenWidth,screenHeight;
+//int screenWidth,screenHeight;
 int xPosWindow, yPosWindow;
 int XposMouseDefault, YposMouseDefault;
 int* ptrScreen;
@@ -41,7 +41,7 @@ extern unsigned int ColorPalette[255];
 extern unsigned char* bufferPic;
 
 extern int pitch;
-extern int screenWidth, screenHeight;
+//extern int screenWidth, screenHeight;
 extern int xPosWindow, yPosWindow;
 extern int XposMouseDefault, YposMouseDefault;
 extern int* ptrScreen;
