@@ -177,6 +177,7 @@ todo
 #include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
+#include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
 
@@ -327,7 +328,23 @@ int main(int argc, char* argv[])
 
 
 #endif
-
+	/*
+	* Les quatre couches sont en place et chacune ignore ce qui la précède
+		RenderSystem  géométrie   transforme, cull, projette
+		Renderer      état        mode, cibles, viewport
+		Rasterizer    balayage    top-left, barycentriques
+		Fragment      pixel       profondeur, couleur
+	
+	RenderView   →  GÉOMÉTRIE   transforme, cull, projette
+                             produit des Triangle2D en espace écran
+		 ↓
+	Renderer     →  ÉTAT        choisit le fragment selon le mode,
+								 détient fb / db / viewport
+		 ↓
+	Rasterizer   →  BALAYAGE    bounding box, top-left, barycentriques
+		 ↓ callback
+	Fragment     →  PIXEL       écrit une couleur
+	*/
 //	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	
 	// ═══ Initialisation, une seule fois ═══
@@ -448,9 +465,18 @@ int main(int argc, char* argv[])
 			db.Clear();
 
 			// --- 3. DEUX rendus dans le MÊME buffer ---
-			RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
-			RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
+			//RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
+			//RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
+			Renderer renderer;
+			renderer.BeginFrame(fb, db);
 
+			renderer.SetMode(LV3::ERenderMode::Solid);
+			RenderView(registry, rm, renderer, viewLeft);
+
+			renderer.SetMode(LV3::ERenderMode::Wireframe);
+			RenderView(registry, rm, renderer, viewRight);
+
+			renderer.EndFrame();
 			// Séparateur vertical
 			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
 

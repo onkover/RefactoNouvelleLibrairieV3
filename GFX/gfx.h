@@ -20,9 +20,9 @@ void RenderObject(Registry& registry, ResourceManager& rm, FrameBuffer& fb, Dept
 void End_Render();
 void kill_Render();
 void Clean_Render(FrameBuffer& fb);
-void RenderView(Registry& registry, ResourceManager& rm,
-    FrameBuffer& fb, DepthBuffer& db,
-    const ViewData& view, ERenderMode mode);
+//void RenderView(Registry& registry, ResourceManager& rm,
+//    FrameBuffer& fb, DepthBuffer& db,
+//    const ViewData& view, ERenderMode mode);
 
 
 #ifdef GFX
