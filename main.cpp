@@ -470,10 +470,10 @@ int main(int argc, char* argv[])
 			Renderer renderer;
 			renderer.BeginFrame(fb, db);
 
-			renderer.SetMode(LV3::ERenderMode::Solid);
+			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
 			RenderView(registry, rm, renderer, viewLeft);
 
-			renderer.SetMode(LV3::ERenderMode::Wireframe);
+			renderer.SetMode(LV3::ERenderMode::Depth);
 			RenderView(registry, rm, renderer, viewRight);
 
 			renderer.EndFrame();
@@ -495,7 +495,8 @@ int main(int argc, char* argv[])
 
 
 //			RenderObject(registry, rm, fb, db, ERenderMode::Wireframe);
-			fb.Unbind();
+			renderer.EndFrame();                          // ← le pointeur cesse d'exister
+			fb.Unbind();                                  // ← idem
 			SDL_UnlockTexture(SDLtexture);
 
 		}
@@ -505,6 +506,7 @@ int main(int argc, char* argv[])
 			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
 		}
 
+		//SDL_RenderClear(renderer_sdl);
 		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
 		SDL_RenderPresent(SDLrenderer);
 
@@ -512,8 +514,6 @@ int main(int argc, char* argv[])
 		//SDL_RenderClear(SDLrenderer);
 		Clean_Render(fb);
 			
-
-
 		// Pause pour rendre l'animation lisible dans la console
 //		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		frameCount++;
