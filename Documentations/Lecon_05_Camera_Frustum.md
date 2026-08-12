@@ -1,4 +1,4 @@
-# Leçon 05 — La caméra et le frustum
+# Leçon 05 — La caméra, le frustum et le pipeline de rendu
 
 > **Moteur :** LibraryV3 | **Projet :** LIB (Static Library) | **Compilateur :** Visual Studio 2026 / C++23
 > **Namespace canonique :** `LV3` | **Préfixe macro :** `LV3_`
@@ -352,6 +352,7 @@ ARCHITECTURE
     La caméra   → CameraComponent (lentille) + TransformComponent
     Le mouvement→ contrôleurs interchangeables, écrivent m_local
     Le dérivé   → ViewData, recalculé chaque frame
+    Le rendu    → RenderSystem → Renderer → Rasterizer → Fragment
 ```
 
 ### Le critère qui tranche les emplacements
@@ -374,32 +375,115 @@ C'est ce que font GLM (`glm::perspective`, fonction libre), DirectXMath (`XMMatr
 ## 4. Architecture des fichiers
 
 ```
-Maths/
-  Vectorlib.h        Forward() = -Z + verrou static_assert
-  MatrixLib.h        algèbre seule + inverseRigid()
-  QuaternionLib.h    + LookRotation() / LookAt()
-  Transform.h        position + Quatf + scale, ToLocalMatrix() inline
-  Projection.h/.cpp  fabriques pures : Perspective, Infinite, Ortho, Filmback
-  Geometry/
-    Plane.h          SignedDistance, Normalize, EPlaneSide
-    AABB3d.h         + PVertex / NVertex / Transformed
-    Frustum.h/.cpp   Build (Gribb-Hartmann) + Classify (3 états)
+LIB — LibraryV3
+  Maths/
+    Vectorlib.h        Forward() = -Z + verrou static_assert
+    MatrixLib.h        algèbre seule + inverseRigid()
+    QuaternionLib.h    + LookRotation() / LookAt()
+    Transform.h        position + Quatf + scale, ToLocalMatrix() inline
+    Projection.h/.cpp  fabriques pures : Perspective, Infinite, Ortho, Filmback
+    geometry/
+      Plane.h          SignedDistance, Normalize, EPlaneSide
+      AABB3d.h         + PVertex / NVertex / Transformed
+      Frustum.h/.cpp   Build (Gribb-Hartmann) + Classify (3 états)
 
-Rendering/
-  Viewport.h         NDC ↔ raster, flip Y, ClampBox (scissor)
-  ViewData.h         V, P, V·P, frustum, position, invVP paresseux
+  Rendering/
+    Viewport.h         NDC ↔ raster, flip Y, ClampBox (scissor)
+    ViewData.h         V, P, V·P, frustum, position, invVP paresseux
+    FrameBuffer.h      vue NON propriétaire sur les pixels verrouillés par SDL
+    DepthBuffer.h      possède sa mémoire, reverse-Z, TestAndSet
+    Rasterizer.h/.cpp  EdgeFunction, MulRow (inline) + balayage top-left
+    Fragment.h/.cpp    callbacks de shading + leurs contextes
+    Renderer.h/.cpp    ÉTAT de rendu : cibles, viewport, mode
+    RenderTypes.h      ERenderMode, ECullMode, EDepthTest, EBlendMode
 
-Core/
-  InputState.h       POD rempli par l'application, jamais par le moteur
-  EventNames.h       constantes d'événements
+  Core/
+    InputState.h       POD rempli par l'application, jamais par le moteur
+    EventNames.h       constantes d'événements
 
-Scene/
-  Components/Component.hpp   CameraComponent, CameraFollowComponent,
-                             FPSControllerComponent, TransformComponent
-  System.hpp/.cpp            contrôleurs, transformations, BuildViewData
+  Scene/
+    Components/Component.hpp   CameraComponent, CameraFollowComponent,
+                               FPSControllerComponent, TransformComponent
+    System.hpp/.cpp            contrôleurs, transformations, BuildViewData
+    RenderSystem.h/.cpp        RenderView : géométrie → soumission
+
+EXE — application
+  main.cpp             SDL : fenêtre, texture, verrou, boucle
+  BuildInputState()    SDL → InputState
 ```
 
-**Aucune de ces couches ne connaît celle du dessus.** `Projection` ignore `Camera`. `Frustum` ignore `Mesh`. C'est ce qui manquait au legacy, dont `Frustum.h` incluait `Camera.h`, `Mesh.h` et `GfxFunctions.h`.
+**Aucune de ces couches ne connaît celle du dessus.** `Projection` ignore l'existence de `Camera`. `Frustum` ignore l'existence de `Mesh`. `Renderer` ignore l'existence du `Registry`.
+
+> **Test de placement :** *« si je remplaçais SDL par Win32 GDI, ce fichier changerait-il ? »*
+> Non → il va dans la LIB. Oui → il reste dans l'EXE.
+
+### 4.1 Les quatre couches du rendu
+
+```
+RenderSystem  →  GÉOMÉTRIE   transforme, cull, projette
+                              produit des Triangle2D en espace écran
+     ↓
+Renderer      →  ÉTAT        détient fb / db / viewport / mode,
+                              choisit le chemin de fragment
+     ↓
+Rasterizer    →  BALAYAGE    bounding box, règle top-left, barycentriques
+     ↓ callback
+Fragment      →  PIXEL       test de profondeur, écriture couleur
+```
+
+`Renderer` n'est **pas** « une fonction qui dessine » : c'est le **propriétaire de l'état de rendu**. Tant qu'il était sans état, il n'était qu'un `switch` déguisé et paraissait inutile. Une fois qu'il détient les cibles, le viewport et le mode, les enums de `RenderTypes.h` — `ECullMode`, `EDepthTest`, `EBlendMode` — trouvent naturellement leur propriétaire.
+
+Conséquence directe : `RenderView` ne prend plus de `ERenderMode` en argument. Le mode est un **état**, pas un paramètre de dessin. Les modes de debug `Depth` et `BarycentricColors` deviennent alors disponibles sur la scène 3D sans écrire une ligne.
+
+### 4.2 Un FrameBuffer, N Viewports
+
+`FrameBuffer` décrit **la mémoire**. `Viewport` décrit **la région qu'on y dessine**. Ils coïncident 99 % du temps ; c'est le 1 % restant qui justifie la séparation : écran splitté, minimap, incrustation, letterboxing, faces de cubemap.
+
+```
+┌──────────────── FrameBuffer 1600×900 ─────────────────┐
+│         DepthBuffer 1600×900 (partagé)                │
+├───────────────────────────┬───────────────────────────┤
+│ Viewport {0,0,800,900}    │ Viewport {800,0,800,900}  │
+│ ViewData #1               │ ViewData #2               │
+│   viewMatrix  (suivi)     │   viewMatrix  (ensemble)  │
+│   projection  fov 45°     │   projection  fov 60°     │
+│   frustum     6 plans     │   frustum     6 plans     │
+└───────────────────────────┴───────────────────────────┘
+```
+
+```cpp
+renderer.BeginFrame(fb, db);
+
+renderer.SetMode(ERenderMode::Solid);
+RenderView(registry, rm, renderer, viewLeft);
+
+renderer.SetMode(ERenderMode::Wireframe);
+RenderView(registry, rm, renderer, viewRight);
+
+renderer.EndFrame();
+```
+
+Le split-screen ne coûte **aucune modification du rendu** : on appelle `RenderView` deux fois. C'est le bénéfice concret du découplage — l'ancien `Frustum`, qui portait la lentille *et* l'aspect ratio *et* les plans *et* la classification, aurait exigé deux instances complètes et une refonte de `Clip3DAndProject`.
+
+> ⚠️ **Le Z-buffer partagé ne fonctionne que parce que les deux viewports sont disjoints.** Les profondeurs de deux caméras ne sont pas comparables entre elles ; elles ne se rencontrent jamais tant que les régions ne se recouvrent pas. Une incrustation exigera un `DepthBuffer::ClearRect(vp)` avant la seconde vue.
+
+### 4.3 La chaîne d'autorité sur les dimensions
+
+```
+UTILISATEUR / OS  →  redimensionne la FENÊTRE SDL
+       ↓
+main.cpp          →  LE SEUL DÉCIDEUR : taille de la texture
+       ↓
+fb.Bind(pixels, pitch, w, h)          → le FrameBuffer DÉCRIT, ne décide pas
+       ↓
+Viewport::FullScreen(fb.Width(), …)   → DÉRIVÉ, jamais stocké
+       ↓
+BuildViewData(..., viewport)          → consomme l'aspect ratio
+```
+
+Aucune classe du moteur ne stocke durablement les dimensions — sauf `DepthBuffer`, qui possède sa mémoire. Le redimensionnement de fenêtre coûte cinq lignes dans `main.cpp` : recréer la texture, appeler `db.Resize()`. Tout le reste suit, puisque tout est recalculé chaque frame.
+
+C'était précisément le défaut du legacy : `Frustum` calculait `deviceAspectRatio` dans son **constructeur** et ne le remettait jamais à jour.
 
 ---
 
@@ -479,12 +563,12 @@ Matrix44 inverseRigid() const noexcept
 }
 ```
 
-⚠️ **Contrat :** valable uniquement sur une **isométrie** (rotation + translation). Avec un scale, seul `inverse()` générique est correct. La TNR §6.3 verrouille cette limite en assertant que `inverseRigid` **échoue** en présence de scale.
+⚠️ **Contrat :** valable uniquement sur une **isométrie**. Avec un scale, seul `inverse()` générique est correct. La TNR §6.3 verrouille cette limite en assertant que `inverseRigid` **échoue** en présence de scale.
 
 ### 5.3 Extraction Gribb-Hartmann
 
 ```cpp
-// Maths/Geometry/Frustum.cpp
+// Maths/geometry/Frustum.cpp
 //
 // Vecteur-ligne : clip.j = Σ_i v[i]·M[i][j] + M[3][j]
 // La COLONNE j de M porte le composant j du vecteur clip :
@@ -545,58 +629,35 @@ EIntersect Frustum::Classify(const AABB3d& box) const noexcept
 }
 ```
 
-```cpp
-// AABB3d.h — le coin choisi par le SIGNE de la normale, jamais les 8
-Vec3f PVertex(const Vec3f& n) const noexcept
-{
-    return { n.x >= 0.0f ? max.x : min.x,
-             n.y >= 0.0f ? max.y : min.y,
-             n.z >= 0.0f ? max.z : min.z };
-}
-Vec3f NVertex(const Vec3f& n) const noexcept
-{
-    return { n.x >= 0.0f ? min.x : max.x,
-             n.y >= 0.0f ? min.y : max.y,
-             n.z >= 0.0f ? min.z : max.z };
-}
-```
-
-### 5.5 `LookRotation` — orientation depuis une direction
+### 5.5 La fonction d'arête — un noyau, deux gabarits
 
 ```cpp
-// QuaternionLib.h — équivalent de Quaternion.LookRotation (Unity)
-static Quat LookRotation(const Vec3<T>& dir,
-                         const Vec3<T>& worldUp = Vec3<T>::Up()) noexcept
+// Rendering/Rasterizer.h — DEFINIES dans le header (inline)
+//
+//  Elle ne travaille QUE sur x et y : le z n'intervient jamais.
+//  Trois services pour le prix d'un :
+//    * sur trois sommets   -> deux fois l'aire signée (backface, normalisation)
+//    * signe sur un pixel  -> le pixel est-il du bon côté de l'arête
+//    * valeur / aire       -> coordonnée barycentrique
+
+[[nodiscard]] LV3_FORCEINLINE constexpr float EdgeFunction(
+    float ax, float ay, float bx, float by, float px, float py) noexcept
 {
-    if (dir.norm() <= T(LV3::EPSILON_FLOAT)) return Identity();
-
-    const Vec3<T> f = dir.Normalized();          // avant (visée)
-
-    Vec3<T> up = worldUp;
-    Vec3<T> r  = f.crossProduct(up);
-
-    // Cas dégénéré : regard vertical. C'est LE bug du lookAT() legacy,
-    // contourné à l'époque par un EPSILON dans setOrigin().
-    if (r.norm() <= T(LV3::EPSILON_FLOAT))
-    {
-        up = (std::abs(f.z) < T(0.9)) ? Vec3<T>(0,0,1) : Vec3<T>(0,1,0);
-        r  = f.crossProduct(up);
-    }
-    r = r.Normalized();
-    const Vec3<T> u = r.crossProduct(f);
-
-    // Matrice ROW-MAJOR : les LIGNES sont les axes locaux dans le monde.
-    // Ligne 2 = +Z local = -avant  (main droite)
-    const T m00 = r.x, m01 = r.y, m02 = r.z;
-    const T m10 = u.x, m11 = u.y, m12 = u.z;
-    const T m20 = -f.x, m21 = -f.y, m22 = -f.z;
-
-    // Conversion matrice → quaternion, méthode de SHEPPERD :
-    // on choisit la plus grande des quatre composantes pour éviter
-    // la division par ~0 lors d'une rotation de 180°.
-    // ... (quatre branches selon la trace)
+    return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
 }
+
+template<typename V>
+[[nodiscard]] LV3_FORCEINLINE float EdgeFunction(const V& a, const V& b,
+                                                 float px, float py) noexcept
+{ return EdgeFunction(a.x, a.y, b.x, b.y, px, py); }
+
+template<typename V>
+[[nodiscard]] LV3_FORCEINLINE float EdgeFunction(const V& a, const V& b,
+                                                 const V& c) noexcept
+{ return EdgeFunction(a.x, a.y, b.x, b.y, c.x, c.y); }
 ```
+
+Trois fonctions couvrent `Vec2f`, `Vec3f` et tout type doté d'un `.x` et d'un `.y`. Empiler des surcharges concrètes menait à cinq variantes et à un `C2665` à chaque nouveau site d'appel.
 
 ### 5.6 `BuildViewData` — le point de convergence
 
@@ -605,34 +666,90 @@ ViewData BuildViewData(const TransformComponent& tr, const CameraComponent& cam,
                        const Viewport& vp) noexcept
 {
     ViewData v;
-    v.viewport = vp;
-    v.reverseZ = true;
+    v.viewport = vp;  v.reverseZ = true;                       // ÉTAPE 0 — contexte
 
-    const Matrix44f& world = tr.m_worldMatrix;
+    const Matrix44f& world = tr.m_worldMatrix;                 // ÉTAPE 1 — View
+    v.viewMatrix = world.inverseRigid();                       //   inverse RIGIDE
+    v.position   = {  world[3][0],  world[3][1],  world[3][2] };
+    v.forward    = { -world[2][0], -world[2][1], -world[2][2] };  // main droite : -Z
 
-    v.view     = world.inverseRigid();                            // pas de Gauss-Jordan
-    v.position = { world[3][0], world[3][1], world[3][2] };
-    v.forward  = { -world[2][0], -world[2][1], -world[2][2] };    // main droite : avant = -Z
-
-    const float fovY = (cam.m_lensModel == ELensModel::Filmback)
+    const float fovY = (cam.m_lensModel == ELensModel::Filmback)   // ÉTAPE 2 — Projection
         ? Projection::FovYFromFocal(cam.m_focalLengthMm, cam.m_filmHeightMm)
         : cam.m_fovYDeg * TO_RADIAN;
 
-    if (cam.m_projection == EProjectionType::Orthographic)
-        v.projection = Projection::OrthographicCentered(cam.m_orthoHeight, vp.Aspect(),
-                                                        cam.m_nearPlane, cam.m_farPlane);
-    else if (cam.m_infiniteFar)
-        v.projection = Projection::PerspectiveInfinite(fovY, vp.Aspect(), cam.m_nearPlane);
-    else
-        v.projection = Projection::Perspective(fovY, vp.Aspect(),
-                                               cam.m_nearPlane, cam.m_farPlane);
+    v.projectionMatrix = cam.m_infiniteFar
+        ? Projection::PerspectiveInfinite(fovY, vp.Aspect(), cam.m_nearPlane)
+        : Projection::Perspective(fovY, vp.Aspect(), cam.m_nearPlane, cam.m_farPlane);
 
-    v.viewProjection = v.view * v.projection;          // vecteur-ligne : v·V·P
-    v.frustum.Build(v.viewProjection, true, cam.m_infiniteFar);
+    v.viewProjectionMatrix = v.viewMatrix * v.projectionMatrix;   // ÉTAPE 3 — V·P
+
+    v.frustum.Build(v.viewProjectionMatrix, true, cam.m_infiniteFar);  // ÉTAPE 4 — 6 plans
 
     v.nearPlane = cam.m_nearPlane;
     v.farPlane  = cam.m_infiniteFar ? 1e30f : cam.m_farPlane;
-    return v;                                          // invViewProjection : paresseux
+    return v;                                    // invViewProjection : PARESSEUX
+}
+```
+
+**Il n'y a pas d'étape 5 ici.** La matrice `Model · View · Projection` se compose **par mesh**, dans `RenderView`. `BuildViewData` ne connaît aucun mesh : c'est ce qui permet d'en construire plusieurs par frame.
+
+### 5.7 `RenderView` — la boucle de rendu
+
+```cpp
+void RenderView(Registry& registry, ResourceManager& rm,
+                Renderer& renderer, const ViewData& view)
+{
+    renderer.SetViewport(view.viewport);                       // l'état de la VUE
+
+    for (auto&& [entity, meshComp, transform] : registry.ViewGroup<MeshComponent, TransformComponent>())
+    {
+        const MeshClass* mesh = rm.GetMesh(meshComp.m_meshHandle);
+        if (!mesh || mesh->faceCount() == 0) continue;
+
+        const Matrix44f& modelMatrix = transform.m_worldMatrix;          // 5. Model
+
+        if (view.frustum.Classify(mesh->GetMeshAABB().Transformed(modelMatrix))
+            == EIntersect::Outside) continue;                            // 6+7. Culling
+
+        const Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;   // 9+10. MVP
+        const uint8_t   vpf = mesh->vertsPerFace;                        // 3 ou 4
+
+        for (size_t f = 0; f < mesh->faceCount(); ++f)
+        {
+            const uint32_t base = uint32_t(f) * vpf;
+
+            // Local -> CLIP. SoA INDEXÉ : indices[base + k], PAS indices[base] + k
+            Vec4f c[4];
+            for (uint8_t k = 0; k < vpf; ++k)
+                c[k] = MulRow(mvp, mesh->vertexPositions[mesh->indices[base + k]]);
+
+            // Rejet du near. Diviser par un w négatif ramènerait le point EN MIROIR.
+            bool behind = false;
+            for (uint8_t k = 0; k < vpf; ++k)
+                if (c[k].w <= view.nearPlane) { behind = true; break; }
+            if (behind) continue;
+
+            // /w -> NDC -> RASTER (flip Y dans ToRaster)
+            Vec3f r[4];
+            for (uint8_t k = 0; k < vpf; ++k)
+            {
+                const float inv = 1.0f / c[k].w;
+                r[k] = view.viewport.ToRaster({ c[k].x*inv, c[k].y*inv, c[k].z*inv });
+            }
+
+            // 8. Backface culling : GRATUIT, l'aire sert aussi aux barycentriques
+            if (EdgeFunction(r[0], r[1], r[2]) <= 0.0f) continue;
+
+            // 11. SOUMISSION. RenderView ne connaît ni le rasterizer ni les fragments.
+            const Color col = FaceColor(int(f));
+            for (uint8_t t = 0; t + 2 < vpf; ++t)          // triangulation en éventail
+                renderer.DrawTriangle(
+                    Triangle2D{ { r[0].x, r[0].y }, { r[t+1].x, r[t+1].y },
+                                { r[t+2].x, r[t+2].y },
+                                  r[0].z, r[t+1].z, r[t+2].z },
+                    col);
+        }
+    }
 }
 ```
 
@@ -647,8 +764,8 @@ ViewData BuildViewData(const TransformComponent& tr, const CameraComponent& cam,
    CameraFollowSystem       ┘  (m_isEnabled arbitre entre les deux caméras)
 3. LocalTransformSystem     →  m_local  →  m_localMatrix   (consomme m_dirty)
 4. WorldTransformSystem     →  propagation descendante depuis les racines
-5. FindActiveCamera + BuildViewData
-6. Culling (frustum.Classify) + Rendu
+5. FindActiveCamera + BuildViewData        (une fois PAR VUE)
+6. RenderView                              (une fois PAR VUE)
 ```
 
 > **Le bug classique :** exécuter l'étape 5 avant l'étape 4. La caméra lit alors la matrice monde de la frame *précédente* — une frame de retard, quasi invisible en debug, très perceptible à la souris.
@@ -675,12 +792,50 @@ Journal empirique — chacun de ces bugs aurait survécu à une relecture.
 | 10 | Rotation composée `spin * initial` → **précession parasite** de l'axe | trace du pôle |
 | 11 | `"texte" + entier` = arithmétique de pointeur, pas concaténation | compilation |
 | 12 | Chaînes littérales en ANSI faute de `/utf-8` | affichage console |
+| 13 | `RGB` est une **macro de `wingdi.h`** → `C4430` incompréhensible | renommage en `MakeColor` |
+| 14 | `LV3_FORCEINLINE` **déclaré** dans le `.h`, **défini** dans le `.cpp` → 3 × `LNK2019` | édition de liens |
+| 15 | Surcharges d'`EdgeFunction` empilées jusqu'au `C2665` | remplacées par 2 gabarits |
+| 16 | `.cpp` absents du `.vcxproj` : compilés par IntelliSense, jamais par le compilateur | `LNK2019` en série |
+| 17 | Contextes de fragment divergents castés depuis un `void*` → lecture décalée de 12 octets | `z0..z2` aberrants, mode `Depth` seul touché |
+| 18 | Biais top-left à `-1.0f` : constante **absolue** appliquée à une grandeur **relative** → trous sur les petits triangles | l'œil : bruit de fond en 3D, rien en 2D |
 
 ### Ce que ce journal enseigne
 
 - **Le bug n°3 classifiait correctement** mais mesurait faux d'un facteur 10 000. Il n'aurait cassé qu'au moment des cascades d'ombres, des mois plus tard.
 - **Le bug n°5 a été diagnostiqué par un rapport constant.** Trois objets indépendants divisés par 55,69 ; `sin(23.5°·k) / sin(23.5°·k²) = 55.68`. Un facteur uniforme sur des objets indépendants n'est jamais un hasard : c'est une constante de conversion.
 - **Le bug n°8 se trouve avec `#pragma message(__FILE__)`.** Quand un symbole « n'existe pas » alors qu'on vient de l'écrire, il faut faire dire au compilateur *quel fichier il lit*, pas deviner.
+- **Le bug n°14 donne une règle générale :**
+
+> `inline` / `LV3_FORCEINLINE` ⇒ **le corps va dans le `.h`.**
+> Une fonction `inline` n'émet aucun symbole externe : sa définition doit être visible dans chaque unité de compilation qui l'appelle. Une fonction d'une ligne appelée en boucle interne → header. Une fonction qui contient elle-même des boucles → `.cpp`.
+
+- **Le bug n°17 est le prix du `void*`.** `static_cast<T*>(void*)` réussit **toujours**, quel que soit `T` : le compilateur ne peut rien vérifier. Trois contextes différents (`SolidContext`, `DepthContext`, `UnlitContext`) pour un seul point d'envoi, et la mémoire est réinterprétée en silence.
+
+```
+Ce que Renderer ENVOIE          Ce que ShadeFragment_Depth LISAIT
+FragmentContext                 DepthContext
+┌──────────────────┐  offset    ┌──────────────────┐
+│ FrameBuffer*  fb │   0..7     │ FrameBuffer*  fb │  ✅
+├──────────────────┤   8..11    ├──────────────────┤
+│ DepthBuffer*  db │            │ float         z0 │  ❌ moitié basse du POINTEUR
+│                  │  12..15    │ float         z1 │  ❌ moitié haute
+├──────────────────┤  16..19    ├──────────────────┤
+│ Color      color │            │ float         z2 │  ❌ lit color
+├──────────────────┤  20..31    └──────────────────┘
+│ float   z0,z1,z2 │  ← jamais lus
+└──────────────────┘
+```
+
+> **Parade :** un **seul** type de contexte pour tous les callbacks. Si un jour plusieurs sont nécessaires, un champ `magic` vérifié par assertion en Debug.
+>
+> `BarycentricColors` « fonctionnait » par accident : il n'utilise que `fb`, à l'offset 0 dans les deux structures.
+
+- **Le bug n°18 donne la règle la plus transposable de toute la leçon :**
+
+> **Une constante absolue appliquée à une grandeur relative est une bombe à retardement.**
+> `EdgeFunction = |arête| × distance`. Exiger `w ≥ 1` revient à exiger `distance ≥ 1/|arête|` : 0,0025 px sur un triangle de 400 px, **0,33 px** sur un triangle de 3 px. Le `-1` venait de la virgule fixe, où l'unité vaut 1/256 de pixel. En flottant, il n'a aucun sens.
+>
+> Symptôme diagnostique : **un échec qui disparaît quand la taille augmente** ne peut désigner qu'une constante absolue sur une grandeur relative.
 
 ---
 
@@ -705,6 +860,41 @@ Deux fichiers de test, ~180 assertions.
 
 Projection (coefficients, reverse-Z, monotonie, bords, `w < 0` derrière l'œil), far infini, orthographique, inverse rigide, `LookRotation` (dont le cas dégénéré), `PVertex`/`NVertex`, construction du frustum (plans normalisés, near/far), classification AABB (les trois états), viewport (flip Y).
 
+### `TestRasterizer` — la couverture
+
+Le test historique vérifiait qu'aucun pixel n'était dessiné **deux fois**. Il ne pouvait pas voir le bug n°18 : un pixel dessiné **zéro fois** passait tous les contrôles. Il faut les deux moitiés de l'invariant.
+
+> **Deux triangles adjacents couvrent leur quad EXACTEMENT une fois — ni trou, ni doublon — QUELLE QUE SOIT LEUR TAILLE.**
+
+```cpp
+for (float size : { 3.0f, 5.0f, 8.0f, 15.0f, 40.0f, 200.0f })
+{
+    int holes = 0, doubles = 0;
+    MeasureQuadCoverage(size, holes, doubles);   // carré pivoté de 0,3 rad,
+    assert(holes == 0 && doubles == 0);          // découpé sur sa diagonale
+}
+```
+
+Ce qu'aurait affiché l'ancien biais :
+
+```
+  cote    3.0 px :  2 trou(s),  0 doublon(s)   <<< FAIL
+  cote    5.0 px :  3 trou(s),  0 doublon(s)   <<< FAIL
+  cote    8.0 px :  1 trou(s),  0 doublon(s)   <<< FAIL
+  cote   15.0 px :  0 trou(s),  0 doublon(s)   OK
+  cote  200.0 px :  0 trou(s),  0 doublon(s)   OK
+```
+
+Trois choix de conception, chacun pour une raison :
+
+| Choix | Raison |
+|---|---|
+| **Carré pivoté** de 0,3 rad | convexe par construction, aucune arête alignée sur la grille — un quad axial testerait un cas dégénéré favorable |
+| **Marge proportionnelle** (`0.5 × size` en unités de fonction d'arête) | un demi-pixel réel à toutes les échelles ; une marge fixe serait elle-même un biais dépendant de la taille |
+| **Boucle sur les tailles** | l'invariant n'est pas « ça marche » mais « ça marche **à toutes les échelles** » |
+
+> **Un test qui ne balaie pas son paramètre critique ne teste qu'un point de l'espace.** Le test de non-recouvrement passait — il utilisait de gros triangles.
+
 ### Les invariants d'exécution
 
 ```cpp
@@ -717,15 +907,40 @@ void CheckSceneInvariants(Registry& registry)   // appelée chaque frame en _DEB
 }
 ```
 
-> **Un invariant vaut mieux qu'une valeur attendue.** Une valeur, il faut la calculer à la main ; un invariant se vérifie tout seul, à chaque frame, gratuitement. Trois des douze bugs ci-dessus ont été trouvés ainsi.
+> **Un invariant vaut mieux qu'une valeur attendue.** Une valeur, il faut la calculer à la main ; un invariant se vérifie tout seul, à chaque frame, gratuitement. Trois des seize bugs ci-dessus ont été trouvés ainsi.
 
 ### La méthode de débogage numérique
 
-1. **N'affiche jamais que la position monde** — c'est la fin d'une chaîne à quatre maillons. Affiche `local`, `world`, `|xz|`, `rayon`, `angle`.
+1. **N'affiche jamais que la position monde** — c'est la fin d'une chaîne à quatre maillons. Affiche `local`, `world`, `|xz|`, `rayon`, `angle`, `pôle`.
 2. **Instrumente le chargement**, pas seulement l'exécution. Un récapitulatif des meshes chargés aurait montré `orbitRadius = 0` avant même la première frame.
 3. **Vérifie des invariants**, pas des valeurs.
 4. **`dt = 0` doit reproduire le JSON.** Si un objet bouge à `dt = 0`, le bug est dans les matrices ; sinon il est dans l'animation. L'espace de recherche est divisé en deux d'une seule exécution.
 5. **Ne cherche pas la parité au bit près avec l'ancienne version.** Elle contenait quatre bugs. La référence, ce sont les invariants.
+
+### Isoler un rendu qui n'affiche rien
+
+Trois coupes, trois sous-systèmes :
+
+1. Commente le test `area <= 0` → si le mesh apparaît, le signe de winding est inversé (piège du flip Y).
+2. Commente `if (Classify == Outside) continue;` → si le mesh apparaît, le frustum ou l'AABB est faux.
+3. Affiche `r[0]` d'un seul triangle → s'il sort de l'écran, le problème est dans les matrices, pas dans le rasterizer.
+
+### Et si le fond transparaît à travers la géométrie
+
+**La forme des trous est le diagnostic.** Mets une couleur de fond criarde et regarde de près :
+
+| Ce que tu vois | Cause |
+|---|---|
+| Pixels **épars, comme du bruit** | seuil de couverture dépendant de l'échelle (bug n°18) |
+| **Fentes nettes** le long des arêtes partagées | même cause, stade avancé |
+| **Triangles entiers** manquants | culling, clipping ou géométrie — pas le remplissage |
+| Trous **qui clignotent** d'une frame à l'autre | z-fighting sur géométrie coplanaire |
+
+Trois coupes pour confirmer :
+
+1. Biais du rasterizer à `0` → les trous disparaissent ⇒ c'était le seuil.
+2. Test de profondeur commenté → les trous disparaissent ⇒ z-fighting.
+3. Mode `Wireframe` → si le fil de fer laisse déjà des vides, le problème est dans le mesh ou la triangulation des quads.
 
 ---
 
@@ -735,24 +950,35 @@ void CheckSceneInvariants(Registry& registry)   // appelée chaque frame en _DEB
 |---|---|---|---|
 | 1a | `MatrixLib` | `inverseRigid()`, fabriques retirées | ✅ |
 | 1b | `Projection` | reverse-Z, far infini, ortho, filmback | ✅ |
-| 2 | `Geometry/Plane` | `SignedDistance`, `Normalize` | ✅ |
-| 3 | `Geometry/AABB3d` | `PVertex`/`NVertex`, `Transformed` | ✅ |
-| 4 | `Geometry/Frustum` | Gribb-Hartmann, `Classify` 3 états | ✅ |
+| 2 | `geometry/Plane` | `SignedDistance`, `Normalize` | ✅ |
+| 3 | `geometry/AABB3d` | `PVertex`/`NVertex`, `Transformed` | ✅ |
+| 4 | `geometry/Frustum` | Gribb-Hartmann, `Classify` 3 états | ✅ |
 | 5 | `CameraComponent` | lentille pure + contrôleurs séparés | ✅ |
 | 5bis | `TransformComponent` | embarque `LV3::Transform` | ✅ |
-| 6 | `Viewport` | flip Y, `ClampBox` | ✅ |
-| 7 | `ViewData` | matrices + frustum + invVP paresseux | ⬜ |
-| 8 | `CameraSystem` | `BuildViewData`, `FindActiveCamera` | ⬜ |
-| 9 | Boucle de rendu | culling 3 états + clipping near | ⬜ |
+| 6 | `Viewport` | flip Y, `ClampBox`, `FullScreen` | ✅ |
+| 7 | `ViewData` | matrices + frustum + invVP paresseux | ✅ |
+| 8 | `BuildViewData` / `FindActiveCamera` | dans `Scene/System.cpp` | ✅ |
+| 9 | `RenderSystem` + `Renderer` | 4 couches, écran splitté validé | ✅ |
 
-### Ce qu'on n'a délibérément pas fait
+### Dette technique identifiée
+
+| Sujet | Risque |
+|---|---|
+| `MeshClass::GetFaceView` suppose les sommets **contigus** dans `vertexPositions` | normales et UV fausses dès qu'on s'en servira |
+| `ComputeMeshAABB()` n'est appelée nulle part automatiquement | si l'`OBJLoader` l'oublie : `meshAABB` invalide, culling incohérent, écran noir |
+| `Renderer` n'exploite ni `ECullMode`, ni `EDepthTest`, ni `EBlendMode` | trois enums sans usage effectif |
+| Matériaux : `submeshes` ignorés, couleur par hash de face | pas de rendu réaliste possible |
+| Leçon 02 affirme encore « main gauche, +Z entre dans l'écran » | documentation mensongère |
+
+### Chantiers différés
 
 - ❌ coins du frustum / debug draw
-- ❌ culling en espace objet (optimisation F4)
+- ❌ culling en espace objet (extraction depuis `M·V·P`)
 - ❌ guard band
 - ❌ BVH / octree — la boucle linéaire suffit
 - ❌ occlusion culling
 - ❌ `enum class Entity` (sécurité de type) — touche toute la signature du Registry
+- ❌ refonte du `TriggerSystem` (détection N²)
 
 ---
 
@@ -779,14 +1005,31 @@ LE CONTRÔLEUR N'EST PAS LA CAMÉRA
     Input → Controller → Transform → View
     Changer de caméra = activer un composant
 
+LE RENDU EN QUATRE COUCHES
+    RenderSystem (géométrie) → Renderer (état)
+    → Rasterizer (balayage) → Fragment (pixel)
+    Le mode d'affichage est un ÉTAT, pas un argument.
+
 MATRIX44 NE CONNAÎT QUE L'ALGÈBRE
     Toute fonction qui connaît une convention de rendu en sort
 
+INLINE ⇒ CORPS DANS LE HEADER
+    Une fonction inline n'émet aucun symbole externe.
+
+UN FICHIER APPARTIENT À LA COUCHE DE SON ARGUMENT LE PLUS HAUT
+
+JAMAIS DE CONSTANTE ABSOLUE SUR UNE GRANDEUR RELATIVE
+    Un échec qui disparaît quand la taille augmente en dénonce une.
+
+UN SEUL TYPE DE CONTEXTE DERRIÈRE UN void*
+    Le compilateur ne vérifie rien ; c'est à la conception de le faire.
+
 RÈGLE D'OR
     Un invariant vaut mieux qu'une valeur attendue.
+    Un test qui ne balaie pas son paramètre critique ne teste qu'un point.
     Un test qui échoue tôt vaut mieux qu'un bug qui se tait.
 ```
 
 ---
 
-*Prochaine étape — Leçon 04 Partie 2 : clipping near en espace de clip, interpolation perspective-correcte, Z-buffer reverse-Z.*
+*Prochaine étape — Leçon 04 Partie 2 : clipping near en espace de clip, interpolation perspective-correcte (le `z` s'interpole linéairement, les UV et les couleurs exigent le `1/w`), et exploitation du troisième état du culling.*

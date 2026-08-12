@@ -153,6 +153,11 @@ Component.hpp
 todo
 * camera lissé : smoothSpeed, currentSmoothedPos
 * tester la caméra CameraFollowComponent
+* GetFaceView et son hypothèse de contiguïté
+* ComputeMeshAABB() jamais appelée automatiquement, 
+les trois enums de RenderTypes.h sans usage effectif, 
+* et les matériaux via submeshes n'ont utilisé.
+
 */
 
 
@@ -191,6 +196,8 @@ todo
 	int TestProjection();
 	int TestMatrixLib();
 	bool Test_TopLeftRule_NoDoubleCoverage();
+	bool Test_TopLeftRule_ExactCoverage();
+	bool Test_TopLeftRule_SmallTriangles();
 	int TestCleanBuffer();
 #endif
 
@@ -296,7 +303,7 @@ int main(int argc, char* argv[])
 	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
 	if (!success)
 	{
-		std::cerr << "Impossible de construire la scène. Arrêt du programme." << std::endl;
+		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
 		return -1; 
 	}
 
@@ -324,8 +331,23 @@ int main(int argc, char* argv[])
 	}
 	printf("\033[32mOK : Test_TopLeftRule, pas de pixel dessiné 2 fois\033[0m\n");
 
+	if (!Test_TopLeftRule_ExactCoverage())
+	{
+		printf("\033[31mECHEC : Test_TopLeftRule_ExactCoverage\033[0m\n");
+		return -1;
+	}
+	printf("\033[32mOK : Test_TopLeftRule_ExactCoverage, couverture exacte\033[0m\n");
+
+	if (!Test_TopLeftRule_SmallTriangles())
+	{
+		printf("\033[31mECHEC : Test_TopLeftRule_SmallTriangles\033[0m\n");
+		return -1;
+	}
+	printf("\033[32mOK : Test_TopLeftRule_SmallTriangles, couverture exacte\033[0m\n");
+
 //	TestCleanBuffer();
 
+//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 
 #endif
 	/*
@@ -345,7 +367,6 @@ int main(int argc, char* argv[])
 		 ↓ callback
 	Fragment     →  PIXEL       écrit une couleur
 	*/
-//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	
 	// ═══ Initialisation, une seule fois ═══
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
@@ -452,28 +473,28 @@ int main(int argc, char* argv[])
 			*registry.TryGet<CameraComponent>(camOverview),
 			vpRight);
 
-		//const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
-		//	*registry.TryGet<CameraComponent>(camOverview),
-		//	vp);
+		const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
+			*registry.TryGet<CameraComponent>(camOverview),
+			vp);
 
 		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
 			fb.Bind(ptrScreen, pitch, WinW, WinH);
-			fb.Clear(MakeColor(16, 16, 24));
+			fb.Clear(MakeColor(0, 0, 24));
 			db.Clear();
 
 			// --- 3. DEUX rendus dans le MÊME buffer ---
-			//RenderView(registry, rm, fb, db, viewLeft, LV3::ERenderMode::Solid);
-			//RenderView(registry, rm, fb, db, viewRight, LV3::ERenderMode::Wireframe);
 			Renderer renderer;
 			renderer.BeginFrame(fb, db);
 
 			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
+			renderer.SetDepthRange(viewLeft.nearPlane, viewLeft.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
 			RenderView(registry, rm, renderer, viewLeft);
 
-			renderer.SetMode(LV3::ERenderMode::Depth);
+			renderer.SetMode(LV3::ERenderMode::Wireframe);
+			renderer.SetDepthRange(viewRight.nearPlane, viewRight.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
 			RenderView(registry, rm, renderer, viewRight);
 
 			renderer.EndFrame();
@@ -483,18 +504,26 @@ int main(int argc, char* argv[])
 
 			// -- test via des triangles 2D - DEB
 			//fb.Bind(ptrScreen, pitch, WinW, WinH);
-			//fb.Clear(MakeColor(16, 16, 24));
+			//fb.Clear(MakeColor(255, 255, 24));		// clear du framebuffer
 			////db.Clear();
 			//LV3_ASSERT(vp.IsValid());
 
 			//Renderer renderer;
-			//renderer.DrawTriangle(tri1, fb, vp, ERenderMode::Depth, Color{ 255, 0, 0, 255 });
-			//renderer.DrawTriangle(tri2, fb, vp, ERenderMode::BarycentricColors, Color{ 0, 255, 0, 255 });
+			//renderer.BeginFrame(fb, db);
+
+			//renderer.SetMode(LV3::ERenderMode::Solid);
+			//renderer.SetDepthRange(view.nearPlane, view.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			//renderer.SetViewport(view.viewport);
+			//renderer.DrawTriangle(tri1,Color{ 255, 0, 0, 255 });
+
+			//renderer.SetMode(LV3::ERenderMode::Depth);
+			//renderer.SetDepthRange(view.nearPlane, view.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			//renderer.SetViewport(view.viewport);
+			//renderer.DrawTriangle(tri2, Color{ 0, 255, 0, 255 });
 
 			// -- test via des triangles 2D - FIN
 
 
-//			RenderObject(registry, rm, fb, db, ERenderMode::Wireframe);
 			renderer.EndFrame();                          // ← le pointeur cesse d'exister
 			fb.Unbind();                                  // ← idem
 			SDL_UnlockTexture(SDLtexture);
