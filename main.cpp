@@ -3,8 +3,15 @@
 
 	26/06/26
 	Nouvelle gestion de librairie graphique v3
-	S'appuie sur le librairie V2.1 entierement réécrite par Claude.ai
-	
+	S'appuie sur le librairie V2.1 entierement réécrite par Claude.ai mais difficilement exploitable en l'état	
+	Leçon par Claude
+	1 : Lecon_01_Config_Enums.md
+	2 : Lecon_02_Mathematiques.md
+	3 : Lecon_03_ECS_SparseSet_ResourceManager.md
+	4.1 : Lecon_04_Rasterizer_Partie1.md
+	4.2 : todo
+	5 : Lecon_05_Camera_Frustum.md
+
 
 */
 
@@ -157,7 +164,10 @@ todo
 * ComputeMeshAABB() jamais appelée automatiquement, 
 les trois enums de RenderTypes.h sans usage effectif, 
 * et les matériaux via submeshes n'ont utilisé.
-
+* le clipping near en espace de clip, 
+* l'interpolation perspective-correcte (z linéaire mais UV et couleurs en 1/w), 
+* l'exploitation du troisième état du culling,
+* cone culling par cluster,
 */
 
 
@@ -358,7 +368,7 @@ int main(int argc, char* argv[])
 		Fragment      pixel       profondeur, couleur
 	
 	RenderView   →  GÉOMÉTRIE   transforme, cull, projette
-                             produit des Triangle2D en espace écran
+                             produit des RasterTriangle en espace écran
 		 ↓
 	Renderer     →  ÉTAT        choisit le fragment selon le mode,
 								 détient fb / db / viewport
@@ -439,21 +449,21 @@ int main(int argc, char* argv[])
 
 		// --- 4. DESSIN ---
 		// Débug de la hiérarchie 
-		DebugDisplaySystem(registry);// , entityNames);
+//		DebugDisplaySystem(registry);// , entityNames);
 
 		// Draw de la hiérarchie
 		RenderSystem(registry, activeCamera, rm);
 
 
 		//***************************************
-		//Triangle2D huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
+		//RasterTriangle huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
 
-		//Triangle2D tri1{
+		//RasterTriangle tri1{
 		//	{0,0}, {400,0}, {400,300}, // v0, v1, v2
 		//	0.9f, 0.9f, 0.2f					// z0, z1, z2
 		//};
 
-		//	Triangle2D tri2{
+		//	RasterTriangle tri2{
 		//{0,0}, {400,300}, {0,300}, // v0, v1, v2
 		//0.9f, 0.9f, 0.2f					// z0, z1, z2
 		//	};
@@ -489,12 +499,11 @@ int main(int argc, char* argv[])
 			Renderer renderer;
 			renderer.BeginFrame(fb, db);
 
-			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
-			renderer.SetDepthRange(viewLeft.nearPlane, viewLeft.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			renderer.SetDepthDisplayRange(2000); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			renderer.SetMode(LV3::ERenderMode::Solid);
 			RenderView(registry, rm, renderer, viewLeft);
 
 			renderer.SetMode(LV3::ERenderMode::Wireframe);
-			renderer.SetDepthRange(viewRight.nearPlane, viewRight.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
 			RenderView(registry, rm, renderer, viewRight);
 
 			renderer.EndFrame();
