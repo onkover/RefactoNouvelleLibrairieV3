@@ -4,6 +4,7 @@
 #define SDL_MAIN_HANDLED      // AVANT l'include : neutralise la macro
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include "config.h"
 
 
 #ifdef MAIN

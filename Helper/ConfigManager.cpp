@@ -28,7 +28,8 @@ using namespace LV3;
 
     //************************************************************
 
-    bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault)
+//    bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault)
+    bool ProgrammeConfig(const std::string& path, config& cfg)
     {
         using json = nlohmann::json;
         namespace fs = std::filesystem;
@@ -53,11 +54,11 @@ using namespace LV3;
         }
 
         // Lecture sécurisée avec valeurs par défaut si la clé est absente
-        repObjDefault = root["configuration"].value("REP_OBJ_DEFAULT", "G:\\Projects Visual Studio\\OBJ\\");
-        repGfxDefault = root["configuration"].value("REP_GFX_DEFAULT", "G:\\Projects Visual Studio\\Graphs\\");
+        cfg.repObjDefault = root["configuration"].value("REP_OBJ_DEFAULT", "G:\\Projects Visual Studio\\OBJ\\");
+        cfg.repGfxDefault = root["configuration"].value("REP_GFX_DEFAULT", "G:\\Projects Visual Studio\\Graphs\\");
 
-        int screenWidth = root["screen"].value("width", 1920); // 1920 par défaut si manquant
-        int screenHeight = root["screen"].value("height", 1080); // 1080 par défaut si manquant
+        cfg.screenWidth = root["screen"].value("width", 1920); // 1920 par défaut si manquant
+        cfg.screenHeight = root["screen"].value("height", 1080); // 1080 par défaut si manquant
 
         return true;
     }

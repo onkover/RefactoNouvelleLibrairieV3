@@ -175,6 +175,9 @@
     <None Include="assets\Scene.json">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
+    <None Include="assets\SceneBasicTest.json">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </None>
     <None Include="assets\scenetest.json">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </None>
@@ -188,6 +191,12 @@
     <MASM Include="GFX\gfxASM.ASM">
       <FileType>Document</FileType>
     </MASM>
+    <None Include="Documentations\Lecon_01_Config_Enums.md" />
+    <None Include="Documentations\Lecon_02_Mathematiques.md" />
+    <None Include="Documentations\Lecon_03_ECS_SparseSet_ResourceManager.md" />
+    <None Include="Documentations\Lecon_04_Rasterizer_Partie1.md" />
+    <None Include="Documentations\Lecon_05_Camera_Frustum.md" />
+    <None Include="Documentations\readme.md" />
     <None Include="Test\readme.md" />
   </ItemGroup>
   <ItemGroup>
@@ -202,6 +211,7 @@
     </Object>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="GFX\gfx.h" />
     <ClInclude Include="Helper\ConfigManager.h" />
     <ClInclude Include="Helper\Registry\RegistryHelper.h" />

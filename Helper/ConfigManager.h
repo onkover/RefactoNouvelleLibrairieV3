@@ -1,5 +1,6 @@
 #pragma once
 #include <string>	
+#include "../config.h"
 
 void SetConsoleMode();
-bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault);
+bool ProgrammeConfig(const std::string& path, config& cfg);
