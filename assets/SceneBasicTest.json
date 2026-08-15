@@ -9,11 +9,6 @@
           "translation": [ 0.0, 0.0, 0.0 ],
           "rotation": [ 0.0, 0.0, 0.0 ],
           "scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "Light": {
-          "type": "Point",
-          "color": [ 1.0, 0.9, 0.7 ],
-          "intensity": 2.0
         }
       }
     },
@@ -31,50 +26,6 @@
           "model": "assets/cube.obj",
           "texture": "sun.jpg",
           "rotationSpeed": 0.05
-        },
-        "Light": {
-          "type": "Point",
-          "color": [ 1.0, 0.9, 0.7 ],
-          "intensity": 2.0
-        }
-      }
-    },
-    {
-      "id": "Cube1_Camera_Follower",
-      "parent": "Pivot",
-      "components": {
-        "Transform": {
-          "translation": [ 0.0, 5.0, 0.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "fov": 45.0,
-          "near": 0.1,
-          "far": 2000.0,
-          "infiniteFar": false,
-          "active": false,
-          "priority": 0
-        },
-
-        "CameraFPS": {
-          "enabled": false,
-          "moveSpeed": 5.0,
-          "mouseSensitivity": 0.15,
-          "lockVertical": true,
-          "pitchLimit": 89.0,
-          "active": true,
-          "priority": 1
-        },
-
-        "CameraFollow": {
-          "enabled": true,
-          "target": "Cube1",
-          "offset": [ 0.0, 5.0, -35.0 ],
-          "smoothSpeed": 5.0,
-          "active": true,
-          "priority": 0
         }
       }
     },
@@ -97,6 +48,58 @@
       }
     },
     {
+      "id": "FPS_Camera",
+      "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 40.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "active": true,
+          "priority": 10
+        },
+        "CameraFPS": {
+          "enabled": true,
+          "moveSpeed": 15.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": false,
+          "pitchLimit": 89.0
+        }
+      }
+    },
+    {
+      "id": "Follow_Camera",
+      "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "active": false,
+          "priority": 5
+        },
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Cube1",
+          "offset": [ 0.0, 5.0, -35.0 ],
+          "smoothSpeed": 5.0,
+          "lookAtHeight": 0.0
+        }
+      }
+    },
+    {
       "id": "Overview_Camera",
       "components": {
         "Transform": {
@@ -109,7 +112,8 @@
           "fov": 60.0,
           "near": 1.0,
           "far": 300.0,
-          "active": false
+          "active": false,
+          "priority": 0
         }
       }
     }

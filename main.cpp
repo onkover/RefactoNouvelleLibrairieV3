@@ -13,6 +13,7 @@
 		5 : Lecon_05_Camera_Frustum.md
 
 	todo
+		* todo lecture de la texture dans le serializer parsingmesh
 		* camera lissé : smoothSpeed, currentSmoothedPos
 		* tester la caméra CameraFollowComponent
 		* GetFaceView et son hypothèse de contiguïté
@@ -48,11 +49,11 @@
 #include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
+#include "Test/Test_TopLeftRule.h"
 
 #include "GFX/gfx.h"
 
 #if LV3_DEBUG
-	#include "Test/Test_TopLeftRule.h"
 	void TestF1_EntityVersioning();
 	void TestF5_ResourceManager_UnloadMesh();
 	int RunAllCameraMathTests();
@@ -62,6 +63,9 @@
 	bool Test_TopLeftRule_ExactCoverage();
 	bool Test_TopLeftRule_SmallTriangles();
 	int TestCleanBuffer();
+	void TestFrontFaceSign();
+	void DebugDumpControllers(Registry& reg);
+	void CheckControllerExclusivity(Registry& reg);
 #endif
 
 using namespace LV3;
@@ -186,6 +190,7 @@ int main(int argc, char* argv[])
 	RunAllCameraMathTests();
 	TestProjection();
 	TestMatrixLib();
+	TestFrontFaceSign();
 	// Validation avant tout démarrage moteur
 	if (!Test_TopLeftRule_NoDoubleCoverage())
 	{
@@ -208,6 +213,8 @@ int main(int argc, char* argv[])
 	}
 	printf("\033[32mOK : Test_TopLeftRule_SmallTriangles, couverture exacte\033[0m\n");
 
+	DebugDumpControllers(registry);
+	CheckControllerExclusivity(registry);
 //	TestCleanBuffer();
 
 //	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
@@ -230,7 +237,7 @@ int main(int argc, char* argv[])
 	const Viewport vpRight{ WinW / 2, 0, WinW / 2, WinH };
 	const Viewport vp{ 0, 0, WinW, WinH };
 
-	const Entity camFollow = FindCameraByName(registry, "Cube1_Camera_Follower");
+	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");
 
 
@@ -336,11 +343,11 @@ int main(int argc, char* argv[])
 			Renderer renderer;
 			renderer.BeginFrame(fb, db);
 
-			renderer.SetDepthDisplayRange(2000); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			renderer.SetMode(LV3::ERenderMode::Solid);
+			renderer.SetDepthDisplayRange(1500); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			renderer.SetMode(LV3::ERenderMode::LinearDepth);
 			RenderView(registry, rm, renderer, viewLeft);
 
-			renderer.SetMode(LV3::ERenderMode::Wireframe);
+			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
 			RenderView(registry, rm, renderer, viewRight);
 
 			renderer.EndFrame();

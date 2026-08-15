@@ -14,6 +14,9 @@
 #include "Maths/Geometry/AABB3d.h"
 #include "Maths/Geometry/Frustum.h"
 #include "Rendering/Viewport.h"
+#include "scene/registry.hpp"
+#include "Core/Logger.h"
+
 
 using namespace LV3;
 
@@ -499,19 +502,32 @@ int RunAllCameraMathTests()
     Test_Frustum_ClassifyAABB();
     Test_Viewport_ToRaster();
 
-    if(g_failures>0)
-    std::printf("\033[31m\n=== TNR Camera/Projection/Frustum : %d verifications, %d echec(s) ===\n\033[0m",
-        g_checks, g_failures);
-   
-	if (g_failures == 0)
+    if (g_failures > 0)
+        std::printf("\033[31m\n=== TNR Camera/Projection/Frustum : %d verifications, %d echec(s) ===\n\033[0m",
+            g_checks, g_failures);
+
+    if (g_failures == 0)
     {
-		std::printf("\033[32m=== TOUTES LES VERIFICATIONS ONT REUSSI ===\n\033[0m");
-		return 0;
+        std::printf("\033[32m=== TOUTES LES VERIFICATIONS ONT REUSSI ===\n\033[0m");
+        return 0;
     }
-	else
+    else
     {
-		std::printf("\033[31m=== %d VERIFICATION(S) ONT ECHOUE ===\n\033[0m", g_failures);
+        std::printf("\033[31m=== %d VERIFICATION(S) ONT ECHOUE ===\n\033[0m", g_failures);
         return -1;                    // on ne demarre pas sur une projection fausse
     }
-
 }
+
+    void CheckControllerExclusivity(Registry& reg)
+    {
+        for (auto&& [e, fps] : reg.ViewGroup<FPSControllerComponent>())
+        {
+            const auto* follow = reg.TryGet<CameraFollowComponent>(e);
+            if (follow && fps.m_isEnabled && follow->m_isEnabled)
+            {
+                Logger::error("\033[31mI[INVARIANT] " + reg.getComponent<NameComponent>(e).m_id
+                    + " : FPS et Follow actifs simultanement — ils s'ecrasent mutuellement\033[0m");
+                LV3_ASSERT(false);
+            }
+        }
+    }

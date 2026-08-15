@@ -8,7 +8,8 @@
 #include "rendering/Fragment.h"   // FragmentContext, FragmentCallback
 #include "rendering/Rasterizer.h"
 
-using namespace LV3;
+using
+namespace LV3;
 
 // Contexte local au test — n'a AUCUNE raison d'exister dans Fragment.h
 //struct CountContext
