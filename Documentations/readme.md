@@ -168,3 +168,62 @@ Component.hpp
        ↓ callback
 **Fragment**     →  PIXEL       écrit une couleur
 ```
+
+
+# Json : entité caméra
+Chaque entité doit contenir un controleur et une lentille
+```
+   ┌─────────────────────────────────────────────────────────┐
+   │  Entité « FPS_Camera »                                  │
+   │                                                         │
+   │   CameraFPS (contrôleur)        Camera (lentille)       │
+   │      "enabled": true               "active": true       │
+   │           │                             │               │
+   │           ▼                             ▼               │
+   │   « Ai-je le droit           « Suis-je la caméra        │
+   │     de BOUGER cette            qui produit l'IMAGE ? »  │
+   │     entité ? »                                          │
+   │           │                             │               │
+   │           ▼                             ▼               │
+   │      m_local ────► Transform ────► View ────► rendu      │
+   │      (position, rotation)                               │
+   └─────────────────────────────────────────────────────────┘
+```
+## Exemple
+```
+    {
+      "id": "Follow_Camera",
+      "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "active": false,
+          "priority": 5
+        },
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Cube1",
+          "offset": [ 0.0, 5.0, -35.0 ],
+          "smoothSpeed": 5.0,
+          "lookAtHeight": 0.0
+        }
+      }
+    }
+```
+
+## Les quatre combinaisons sont toutes valides
+enabled		active		Ce que ça donne
+true		true		Caméra libre pilotée au clavier — ton cas
+true		false		Elle bouge hors champ. Un observateur qui continue de suivre l'action ; tu bascules dessus (active = true) sans qu'elle ait « sauté » entre-temps
+false		true		Caméra fixe. Overview_Camera : elle rend, elle ne bouge pas. Elle n'a aucun contrôleur du tout
+false		false		Caméra en réserve, figée
+
+La deuxième ligne est celle qui justifie la séparation. Sans elle, on pourrait effectivement fusionner les deux notions.

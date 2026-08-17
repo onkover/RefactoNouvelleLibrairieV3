@@ -156,6 +156,7 @@
     <ClCompile Include="Helper\Registry\RegistryHelper.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SDLMngt.cpp" />
+    <ClCompile Include="Test\RunAllTests.cpp" />
     <ClCompile Include="Test\TestCameraMath.cpp" />
     <ClCompile Include="Test\TestCleanBuffer.cpp" />
     <ClCompile Include="Test\TestDumpControllers.cpp" />
@@ -163,6 +164,8 @@
     <ClCompile Include="Test\TestMatrix.cpp" />
     <ClCompile Include="Test\TestProjection.cpp" />
     <ClCompile Include="Test\TestRasterizer.cpp" />
+    <ClCompile Include="Test\Test_ClipCoverage.cpp" />
+    <ClCompile Include="Test\Test_Clipper.cpp" />
     <ClCompile Include="Test\Test_TopLeftRule.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -219,7 +222,11 @@
     <ClInclude Include="Helper\Registry\RegistryHelper.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Ressources\json.hpp" />
+    <ClInclude Include="Test\RunAllTests.h" />
+    <ClInclude Include="Test\Test_ClipCoverage.h" />
+    <ClInclude Include="Test\Test_Clipper.h" />
     <ClInclude Include="Test\Test_TopLeftRule.h" />
+    <ClInclude Include="Test\Test_Winding.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

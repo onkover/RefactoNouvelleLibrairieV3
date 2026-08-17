@@ -7,9 +7,8 @@
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 
-using namespace LV3;
-//namespace LV3
-//{
+namespace LV3::Tests
+{
 
 	void TestF1_EntityVersioning()
 	{
@@ -104,4 +103,4 @@ using namespace LV3;
 
 		std::cout << "\033[32m[F5] UnloadMesh : tous les invariants tiennent.\n\033[0m";
 	}
-//}
+}
