@@ -23,6 +23,7 @@ namespace LV3::Tests
     void DebugDumpControllers(Registry& reg);
     void CheckControllerExclusivity(Registry& reg);
     [[nodiscard]] bool Test_ClipCoverage_NoCrackNoOverlap();
+    bool Test_Rasterizer_EmptyBoxes();
 
 
 
@@ -46,6 +47,15 @@ namespace LV3::Tests
         TestProjection();
         TestMatrixLib();
         TestFrontFaceSign();
+        if (!Test_Rasterizer_EmptyBoxes())
+        {
+            printf("\033[31mECHEC : Test_Rasterizer_EmptyBoxes\033[0m\n");
+            return false;
+        }
+        else
+        {
+            printf("\033[32mSUCCES : Test_Rasterizer_EmptyBoxes\033[0m\n");
+        }
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())

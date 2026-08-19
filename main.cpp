@@ -61,6 +61,27 @@ using namespace LV3;
 using namespace LV3::Tests;         // ← ajoute CE using en plus
 
 bool g_running = true;
+DepthBuffer db;
+FrameBuffer fb;
+Viewport vpLeft;
+Viewport vpRight;
+int WinW, WinH;
+
+int pendingW,pendingH;
+bool resizePending = false;
+//**********************************************
+
+// État global de la boucle
+
+bool g_mouseCaptured = true;
+
+static void SetMouseCapture(bool captured)
+{
+	g_mouseCaptured = captured;
+	// Cache le curseur et le confine à la fenêtre — c'est ce qui permet un déplacement souris infini sans buter sur les bords de l'écran
+	SDL_SetRelativeMouseMode(captured ? SDL_TRUE : SDL_FALSE);
+}
+
 
 // ---------- une fois par frame ----------
 /*
@@ -78,18 +99,68 @@ LV3::InputState BuildInputState()
 	{
 		switch (ev.type)
 		{
+		case SDL_WINDOWEVENT:
+			if (ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
+			{
+				// on NOTE, on n'agit pas tout de suite car la SDLtexture pourrait dajà étré lockée 
+				pendingW = ev.window.data1;
+				pendingH = ev.window.data2;
+				resizePending = true;         
+
+
+				//const int w = ev.window.data1, h = ev.window.data2;
+				//if (w <= 20 || h <= 20) break;              // fenêtre minimisée
+
+				//WinW = w;
+				//WinH = h;
+				//// 1. La texture SDL (le pitch change aussi !)
+				//SDL_DestroyTexture(SDLtexture);
+				//SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WinW, WinH);
+
+				//// 2. Le Z-buffer
+				//db.Resize(WinW, WinH);
+
+				//// 3. Le viewport
+				//vpLeft.Resize(0, 0, WinW / 2, WinH);
+				//vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
+
+				//// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
+				////    rien à faire, il suivra tout seul.
+
+			}
+			break;
 		case SDL_QUIT:       g_running = false; break;
 		case SDL_MOUSEWHEEL: in.wheelDelta += ev.wheel.y; break;
 		case SDL_KEYDOWN:
-			if (!ev.key.repeat && ev.key.keysym.scancode == SDL_SCANCODE_C)
-				in.toggleCameraMode = true;          // front montant
-			break;
+			if (!ev.key.repeat)
+			{
+				switch (ev.key.keysym.scancode)
+				{
+				case SDL_SCANCODE_F1:
+					SetMouseCapture(!g_mouseCaptured);      // libère / recapture la souris
+					break;
+				case SDL_SCANCODE_C:
+					in.toggleCameraMode = true;          // front montant
+					break;
+				case SDL_SCANCODE_ESCAPE:
+					g_running = false;	break;
+
+				default:	break;
+				}
+
+
+			}
+		
 		}
 	}
 
 	// 2. Souris relative. SDL remet l'accumulateur à zéro tout seul :
-	//    tu ne dois PAS le réinitialiser à la main.
-	SDL_GetRelativeMouseState(&in.mouseDeltaX, &in.mouseDeltaY);
+	//    ne PAS le réinitialiser à la main.
+	if (g_mouseCaptured)
+		SDL_GetRelativeMouseState(&in.mouseDeltaX, &in.mouseDeltaY);
+	else
+		in.mouseDeltaX = in.mouseDeltaY = 0;
+
 
 	// 3. Clavier : état MAINTENU, pas événement.
 	const Uint8* k = SDL_GetKeyboardState(nullptr);
@@ -101,13 +172,10 @@ LV3::InputState BuildInputState()
 	in.moveDown = k[SDL_SCANCODE_LCTRL];
 	in.sprint = k[SDL_SCANCODE_LSHIFT];
 
-	if (k[SDL_SCANCODE_ESCAPE] || k[SDL_SCANCODE_SPACE])
-		g_running = false;
-
 	return in;
 }
 
-
+//**********************************************
 
 int main(int argc, char* argv[])
 {
@@ -178,27 +246,27 @@ int main(int argc, char* argv[])
 
 	
 	// ═══ Initialisation, une seule fois ═══
-	const int WinW = cfg.screenWidth;  // Largeur de l'écran
-	const int WinH = cfg.screenHeight; // Hauteur de l'écran
+	WinW = cfg.screenWidth;  // Largeur de l'écran
+	WinH = cfg.screenHeight; // Hauteur de l'écran
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
 	if (SDLINIT(WinW, WinH) != true) return -1;
 
-	FrameBuffer fb;
-	DepthBuffer db;
+
 	db.Resize(WinW, WinH);
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
-	const Viewport vpLeft{ 0,        0, WinW / 2, WinH };
-	const Viewport vpRight{ WinW / 2, 0, WinW / 2, WinH };
-	const Viewport vp{ 0, 0, WinW, WinH };
+	//const Viewport vpLeft { 0, 0, WinW / 2, WinH };
+	//const Viewport vpRight { WinW / 2, 0, WinW / 2, WinH };
+//	const Viewport vp{ 0, 0, WinW, WinH };
+	vpLeft.Resize(0, 0, WinW / 2, WinH);
+	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
 
 	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");
 
 
-	// À l'initialisation, une seule fois : souris capturée, deltas illimités
-	SDL_SetRelativeMouseMode(SDL_TRUE);
-
+	SetMouseCapture(true);
+//	SDL_SetRelativeMouseMode(SDL_TRUE); 
 
 	pitch = 0;
 	int frameCount = 0;
@@ -216,7 +284,7 @@ int main(int argc, char* argv[])
 
 		// 1. Gérer les entrées utilisateur (non implémenté ici)
 		PlayerInputSystem(registry, deltaTime);
-		const LV3::InputState input = BuildInputState();
+		LV3::InputState input = BuildInputState();
 
 
 		// 2. Mettre à jour la scène
@@ -282,21 +350,23 @@ int main(int argc, char* argv[])
 			*registry.TryGet<CameraComponent>(camOverview),
 			vpRight);
 
-		const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
-			*registry.TryGet<CameraComponent>(camOverview),
-			vp);
+		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
+		//	*registry.TryGet<CameraComponent>(camOverview),
+		//	vp);
+
+		
+
 
 		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
-			fb.Bind(ptrScreen, pitch, WinW, WinH);
+			fb.Bind(ptrScreen, pitch,WinW, WinH);
 			fb.Clear(MakeColor(0, 0, 24));
-			db.Clear();
 
 			// --- 3. DEUX rendus dans le MÊME buffer ---
 			Renderer renderer;
-			renderer.BeginFrame(fb, db);
+			renderer.BeginFrame(fb, db); //
 
 			renderer.SetDepthDisplayRange(1500); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
 			renderer.SetMode(LV3::ERenderMode::Solid);
@@ -306,7 +376,8 @@ int main(int argc, char* argv[])
 			RenderView(registry, rm, renderer, viewRight);
 
 			renderer.EndFrame();
-			// Séparateur vertical
+			
+// Séparateur vertical
 			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
 
 
@@ -350,7 +421,34 @@ int main(int argc, char* argv[])
 
 		//SDL_RenderClear(SDLrenderer);
 		Clean_Render(fb);
-			
+		
+		// resize si besoin après le lock sur la texture SDL, sinon le pitch est mauvais et on écrit hors bornes dans le framebuffer
+		if (resizePending)
+		{
+			resizePending = false;
+
+			if (pendingW > 0 && pendingH > 0)
+			{
+				WinW = pendingW;
+				WinH = pendingH;
+
+				// 1. La texture SDL (le pitch change aussi !)
+				SDL_DestroyTexture(SDLtexture);
+				SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WinW, WinH);
+
+				// 2. Le Z-buffer
+				db.Resize(WinW, WinH);
+
+				// 3. Le viewport
+				vpLeft.Resize(0, 0, WinW / 2, WinH);
+				vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
+
+				// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
+				//    rien à faire, il suivra tout seul.
+
+			}
+		}
+
 		// Pause pour rendre l'animation lisible dans la console
 //		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 		frameCount++;

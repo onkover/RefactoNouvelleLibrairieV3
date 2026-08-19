@@ -65,8 +65,8 @@ bool SDLINIT(int ScreenWidth, int ScreenHeight)
 		SDL_WINDOWPOS_UNDEFINED,           // initial y position
 		ScreenWidth,                               // width, in pixels
 		ScreenHeight,                               // height, in pixels
-		SDL_WINDOW_SHOWN                  // flags - see below
-	);
+		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);   // flags 
+
 	if (window == NULL) {
 		// In the case that the window could not be made...
 		printf("Could not create window: %s\n", SDL_GetError());
