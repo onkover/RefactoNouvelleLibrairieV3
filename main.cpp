@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
 
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
 
-	//(	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	#endif
 
 
@@ -368,13 +368,15 @@ int main(int argc, char* argv[])
 			Renderer renderer;
 			renderer.BeginFrame(fb, db); //
 
-			renderer.SetDepthDisplayRange(1500); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			renderer.SetMode(LV3::ERenderMode::Solid);
+			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			renderer.SetMode(LV3::ERenderMode::Depth);
 			RenderView(registry, rm, renderer, viewLeft);
 
 			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
 			RenderView(registry, rm, renderer, viewRight);
-
+#ifdef _DEBUG
+			ReportCullStats();
+#endif
 			renderer.EndFrame();
 			
 // Séparateur vertical

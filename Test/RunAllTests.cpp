@@ -6,6 +6,7 @@
 #include "Test_TopLeftRule.h"
 #include "scene/registry.hpp"
 #include "RunAllTests.h" 
+#include "Test_Depth.h"
 
 namespace LV3::Tests
 {
@@ -47,6 +48,18 @@ namespace LV3::Tests
         TestProjection();
         TestMatrixLib();
         TestFrontFaceSign();
+
+        if (!Test_Depth_CrossingTriangles())
+        {
+            printf("\033[31mECHEC : Test_Depth_CrossingTriangles\033[0m\n");
+            return false;
+        }
+        else
+        {
+            printf("\033[32mSUCCES : Test_Depth_CrossingTriangles\033[0m\n");
+        }
+
+
         if (!Test_Rasterizer_EmptyBoxes())
         {
             printf("\033[31mECHEC : Test_Rasterizer_EmptyBoxes\033[0m\n");
@@ -94,5 +107,9 @@ namespace LV3::Tests
             ? "\033[32m=== Tous les tests passent ===\033[0m"
             : "\033[31m=== " + std::to_string(s_failures) + " echec(s) ===\033[0m");
         return s_failures == 0;
+
     }
+
+
+
 }
