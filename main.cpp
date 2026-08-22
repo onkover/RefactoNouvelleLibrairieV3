@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 	************************************************************/
 	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
 
-	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/SceneBasicTest.json", registry, activeCamera, rm);
+	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
 	if (!success)
 	{
 		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
