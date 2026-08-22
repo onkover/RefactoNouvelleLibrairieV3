@@ -290,6 +290,8 @@ int main(int argc, char* argv[])
 		// 2. Mettre à jour la scène
 		// L'update commence à la racine, avec une matrice identité car elle n'a pas de parent.
 
+		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
+
 		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
