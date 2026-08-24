@@ -7,6 +7,7 @@
 #include "scene/registry.hpp"
 #include "RunAllTests.h" 
 #include "Test_Depth.h"
+#include "TestAffichageGizmoCamera.h"
 
 namespace LV3::Tests
 {
@@ -48,6 +49,9 @@ namespace LV3::Tests
         TestProjection();
         TestMatrixLib();
         TestFrontFaceSign();
+
+        Test_GizmoCountMatchesCameras(registry);
+
 
         if (!Test_Depth_CrossingTriangles())
         {
@@ -107,6 +111,7 @@ namespace LV3::Tests
             ? "\033[32m=== Tous les tests passent ===\033[0m"
             : "\033[31m=== " + std::to_string(s_failures) + " echec(s) ===\033[0m");
         return s_failures == 0;
+
 
     }
 

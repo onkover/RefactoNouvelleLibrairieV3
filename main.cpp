@@ -49,7 +49,8 @@
 #include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
-#include "Test/RunAllTests.h" 
+#include "Test/RunAllTests.h"
+#include "test/TestAffichageGizmoCamera.h"
 
 #include "GFX/gfx.h"
 
@@ -317,6 +318,7 @@ int main(int argc, char* argv[])
 		AnimationSystem(registry, deltaTime);
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
+
 		CameraGizmoSystem(registry, activeCamera, vpLeft.Aspect());// (float)WinW / (float)WinH);
 
 		// --- 2. MISE À JOUR DES MATRICES ---
@@ -373,12 +375,17 @@ int main(int argc, char* argv[])
 			*registry.TryGet<CameraComponent>(camOverview),
 			vpRight, camOverview);
 
+
 		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
 		//	*registry.TryGet<CameraComponent>(camOverview),
 		//	vp);
 
 		
-
+#ifdef _DEBUG
+		Test_CameraWorldMatrixIsRigid(registry);
+		const ViewData views[2] = { viewLeft, viewRight };
+		Test_GizmoMatchesFrustum(registry, views,2);
+#endif
 
 		// --- 5. UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
