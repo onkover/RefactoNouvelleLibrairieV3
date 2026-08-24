@@ -23,7 +23,7 @@
           "scale": [ 0.5, 0.5, 0.5 ]
         },
         "Mesh": {
-          "model": "assets/cube.obj",
+          "model": "assets/Meshes/cube.obj",
           "texture": "sun.jpg",
           "rotationSpeed": 0.05
         }
@@ -40,7 +40,7 @@
           "scale": [ 0.5, 0.5, 0.5 ]
         },
         "Mesh": {
-          "model": "assets/cube.obj",
+          "model": "assets/Meshes/cube.obj",
           "texture": "earth_day.jpg",
           "orbitalSpeed": 0.1,
           "rotationSpeed": 0.01
@@ -63,7 +63,8 @@
           "far": 30.0,
           "infiniteFar": true,
           "active": true,
-          "priority": 10
+          "priority": 10,
+          "gizmo": { "length": 3.0 }
         },
         "CameraFPS": {
           "enabled": true,
@@ -90,7 +91,8 @@
           "far": 2000.0,
           "infiniteFar": false,
           "active": true,
-          "priority": 5
+          "priority": 5,
+          "gizmo": { "length": 3.0 }
         },
         "CameraFollow": {
           "enabled": true,
@@ -116,7 +118,8 @@
           "far": 300.0,
           "infiniteFar": true,
           "active": false,
-          "priority": 0
+          "priority": 0,
+          "gizmo": { "length": 3.0 }
         }
       }
     }

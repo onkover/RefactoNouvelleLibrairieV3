@@ -217,17 +217,38 @@ int main(int argc, char* argv[])
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
 
+	//OBJLoadOptions opts;
+	//opts.flipUVsVertically = false;
+	//opts.generateNormalsIfMissing = true;
+
+	//const std::string name = "assets/Meshes/camera_gizmo.obj";
+	//auto h = rm.LoadMeshChecked(name, {});
+	//if (!h.has_value())
+	//{
+	//	int a = 0;
+	//}
+	//const MeshHandle hMesh = *h;
+
+	//const MeshClass* mesh = rm.GetMesh(hMesh);
+	//LV3_ASSERT(hMesh.IsValid());
+
+	//const MeshClass* m = rm.GetMesh(hMesh);
+	//LV3_ASSERT(m->vertsPerFace == 3 && m->faceCount() == 6);
+
+
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
 	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
 
-	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/SceneBasicTest.json", registry, activeCamera, rm);
+	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, cfg.GraphSceneName, registry, activeCamera, rm);
 	if (!success)
 	{
 		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
 		return -1; 
 	}
+
+	SceneSerializer::SpawnCameraGizmos(registry, rm, cfg.gizmoMesh);
 
 	// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
 	#ifdef _DEBUG
@@ -296,7 +317,7 @@ int main(int argc, char* argv[])
 		AnimationSystem(registry, deltaTime);
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
-
+		CameraGizmoSystem(registry, activeCamera, vpLeft.Aspect());// (float)WinW / (float)WinH);
 
 		// --- 2. MISE À JOUR DES MATRICES ---
 		//TransformationSystem(registry, deltaTime);
@@ -346,11 +367,11 @@ int main(int argc, char* argv[])
 		// --- 4. DEUX points de vue, construits par la MÊME fonction ---
 		const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
 			*registry.TryGet<CameraComponent>(camFollow),
-			vpLeft);
+			vpLeft, camFollow);
 
 		const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
 			*registry.TryGet<CameraComponent>(camOverview),
-			vpRight);
+			vpRight, camOverview);
 
 		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
 		//	*registry.TryGet<CameraComponent>(camOverview),

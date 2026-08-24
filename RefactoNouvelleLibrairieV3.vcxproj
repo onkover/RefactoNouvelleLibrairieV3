@@ -210,6 +210,9 @@
     <None Include="Test\readme.md" />
   </ItemGroup>
   <ItemGroup>
+    <Object Include="assets\camera_gizmo.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
     <Object Include="assets\cube.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>

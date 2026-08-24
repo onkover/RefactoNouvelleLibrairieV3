@@ -47,8 +47,8 @@ namespace LV3::Tests
 
 		// Charge plusieurs meshes distincts — adapte ces chemins à des .obj réels de ton projet
 		const std::vector<std::string> paths = {
-			"Assets/cube.obj",
-			"Assets/sphere 10 faces.obj"
+			"Assets/Meshes/cube.obj",
+			"Assets/Meshes/sphere 10 faces.obj"
 		};
 
 		std::vector<MeshHandle> handles;

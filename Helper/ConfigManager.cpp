@@ -60,6 +60,8 @@ using namespace LV3;
         cfg.screenWidth = root["screen"].value("width", 1920); // 1920 par défaut si manquant
         cfg.screenHeight = root["screen"].value("height", 1080); // 1080 par défaut si manquant
 
+        cfg.gizmoMesh = root["GizmoMesh"];
+        cfg.GraphSceneName = root["GraphSceneName"];
         return true;
     }
 
