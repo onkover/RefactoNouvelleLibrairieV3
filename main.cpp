@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 	************************************************************/
 	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
 
-	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/solar_system.json", registry, activeCamera, rm);
+	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, "assets/SceneBasicTest.json", registry, activeCamera, rm);
 	if (!success)
 	{
 		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
@@ -289,6 +289,8 @@ int main(int argc, char* argv[])
 
 		// 2. Mettre à jour la scène
 		// L'update commence à la racine, avec une matrice identité car elle n'a pas de parent.
+
+		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
 
 		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
@@ -369,10 +371,10 @@ int main(int argc, char* argv[])
 			renderer.BeginFrame(fb, db); //
 
 			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			renderer.SetMode(LV3::ERenderMode::Depth);
+			renderer.SetMode(LV3::ERenderMode::Solid);
 			RenderView(registry, rm, renderer, viewLeft);
 
-			renderer.SetMode(LV3::ERenderMode::BarycentricColors);
+			renderer.SetMode(LV3::ERenderMode::Solid);
 			RenderView(registry, rm, renderer, viewRight);
 #ifdef _DEBUG
 			ReportCullStats();
