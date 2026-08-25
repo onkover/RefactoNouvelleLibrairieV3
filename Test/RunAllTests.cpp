@@ -50,7 +50,7 @@ namespace LV3::Tests
         TestMatrixLib();
         TestFrontFaceSign();
 
-        Test_GizmoCountMatchesCameras(registry);
+
 
 
         if (!Test_Depth_CrossingTriangles())

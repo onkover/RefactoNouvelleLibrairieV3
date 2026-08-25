@@ -58,13 +58,14 @@
         },
         "Camera": {
           "projection": "perspective",
+          "lens": "fov",
           "fov": 45.0,
           "near": 0.1,
           "far": 30.0,
           "infiniteFar": true,
           "active": true,
           "priority": 10,
-          "gizmo": { "length": 3.0 }
+          "gizmo": { "length": 5.0 }
         },
         "CameraFPS": {
           "enabled": true,
@@ -86,13 +87,14 @@
         },
         "Camera": {
           "projection": "perspective",
+          "lens": "fov",
           "fov": 45.0,
           "near": 0.1,
           "far": 2000.0,
-          "infiniteFar": false,
+          "infiniteFar": true,
           "active": true,
           "priority": 5,
-          "gizmo": { "length": 3.0 }
+          "gizmo": { "length": 5.0 }
         },
         "CameraFollow": {
           "enabled": true,
@@ -105,6 +107,7 @@
     },
     {
       "id": "Overview_Camera",
+      "Notes": "Camera permettant de visualier la scène globale",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 120.0 ],
@@ -113,13 +116,35 @@
         },
         "Camera": {
           "projection": "perspective",
+          "lens": "fov",
+          "gateFit": "overscan",
           "fov": 60.0,
           "near": 1.0,
           "far": 300.0,
           "infiniteFar": true,
-          "active": false,
+          "active": true,
           "priority": 0,
           "gizmo": { "length": 3.0 }
+        }
+      }
+    },
+    {
+      "id": "Top_Camera",
+      "_note": "Vue de dessus orthographique — plan de la scene, sans perspective",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 150.0, 0.0 ],
+          "rotation": [ -90.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "orthographic",
+          "orthoHeight": 120.0,
+          "near": 1.0,
+          "far": 400.0,
+          "active": true,
+          "priority": 0,
+          "gizmo": { "length": 30.0 }
         }
       }
     }

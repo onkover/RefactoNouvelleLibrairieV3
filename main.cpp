@@ -49,6 +49,9 @@
 #include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
+#include "Scene/SpawnCameraGizmos.hpp"
+
+
 #include "Test/RunAllTests.h"
 #include "test/TestAffichageGizmoCamera.h"
 
@@ -197,7 +200,7 @@ int main(int argc, char* argv[])
 	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
 
 
-	
+
 	/************************************************************
 	Paramétrage projet
 	************************************************************/
@@ -246,10 +249,14 @@ int main(int argc, char* argv[])
 	if (!success)
 	{
 		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
-		return -1; 
+		return -1;
 	}
 
-	SceneSerializer::SpawnCameraGizmos(registry, rm, cfg.gizmoMesh);
+	const GizmoAssets GizAssets = LoadGizmoAssets(rm, cfg.GizmoMeshPersective, cfg.GizmoMeshOrthographiq);
+	if (GizAssets.IsValid())
+		SceneSerializer::SpawnCameraGizmos(registry, GizAssets);
+	else
+		Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
 
 	// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
 	#ifdef _DEBUG
@@ -260,6 +267,7 @@ int main(int argc, char* argv[])
 		DebugDisplaySystem(registry);
 
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
+		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
 
 	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	#endif
@@ -284,7 +292,7 @@ int main(int argc, char* argv[])
 	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
 
 	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");
+	const Entity camOverview = FindCameraByName(registry, "Top_Camera");
 
 
 	SetMouseCapture(true);
@@ -319,7 +327,7 @@ int main(int argc, char* argv[])
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 
-		CameraGizmoSystem(registry, activeCamera, vpLeft.Aspect());// (float)WinW / (float)WinH);
+		CameraGizmoSystem(registry, activeCamera, vpLeft.Aspect(), GizAssets);// (float)WinW / (float)WinH);
 
 		// --- 2. MISE À JOUR DES MATRICES ---
 		//TransformationSystem(registry, deltaTime);
@@ -384,7 +392,7 @@ int main(int argc, char* argv[])
 #ifdef _DEBUG
 		Test_CameraWorldMatrixIsRigid(registry);
 		const ViewData views[2] = { viewLeft, viewRight };
-		Test_GizmoMatchesFrustum(registry, views,2);
+		if (GizAssets.IsValid()) Test_GizmoMatchesFrustum(registry, views,2, GizAssets);
 #endif
 
 		// --- 5. UN seul verrou, UN seul effacement ---
@@ -404,9 +412,9 @@ int main(int argc, char* argv[])
 
 			renderer.SetMode(LV3::ERenderMode::Solid);
 			RenderView(registry, rm, renderer, viewRight);
-#ifdef _DEBUG
-			ReportCullStats();
-#endif
+//#ifdef _DEBUG
+//			ReportCullStats();
+//#endif
 			renderer.EndFrame();
 			
 // Séparateur vertical
