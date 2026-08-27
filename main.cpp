@@ -253,9 +253,8 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-	const GizmoAssets GizAssets = LoadGizmoAssets(rm, cfg.GizmoMeshPersective, cfg.GizmoMeshOrthographiq);
+	if (cfg.mapAssets.find("gizmo_perspective") != cfg.mapAssets.end() && cfg.mapAssets.find("gizmo_ortho") != cfg.mapAssets.end())
 	if (GizAssets.IsValid())
-//		SceneSerializer::SpawnCameraGizmos(registry, GizAssets);
 		SpawnCameraGizmos(registry, GizAssets);
 	else
 		Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
