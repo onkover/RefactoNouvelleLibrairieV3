@@ -2,7 +2,8 @@
 
 #include "Scene/registry.hpp"
 #include "Rendering/Viewdata.h"
-#include "Scene/SpawnCameraGizmos.hpp"
+//#include "Scene/SpawnCameraGizmos.hpp"
+#include "Scene/DebugGizmos.hpp"
 
 
 namespace LV3::Tests

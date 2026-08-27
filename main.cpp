@@ -49,7 +49,8 @@
 #include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
-#include "Scene/SpawnCameraGizmos.hpp"
+//#include "Scene/SpawnCameraGizmos.hpp"
+#include "Scene/DebugGizmos.hpp"
 
 
 #include "Test/RunAllTests.h"
@@ -254,7 +255,8 @@ int main(int argc, char* argv[])
 
 	const GizmoAssets GizAssets = LoadGizmoAssets(rm, cfg.GizmoMeshPersective, cfg.GizmoMeshOrthographiq);
 	if (GizAssets.IsValid())
-		SceneSerializer::SpawnCameraGizmos(registry, GizAssets);
+//		SceneSerializer::SpawnCameraGizmos(registry, GizAssets);
+		SpawnCameraGizmos(registry, GizAssets);
 	else
 		Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
 
@@ -292,7 +294,7 @@ int main(int argc, char* argv[])
 	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
 
 	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Top_Camera");
+	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
 
 
 	SetMouseCapture(true);
