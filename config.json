@@ -7,10 +7,26 @@
   },
   "screen": {
     "width": 1536,
-    "height": 800
+    "height": 900
   },
-  "GizmoMeshPersective": "assets/Meshes/camera_gizmo.obj",
-  "GizmoMeshOrthographiq": "assets/Meshes/camera_gizmo_box.obj",
-  "GraphSceneName": "assets/GraphScene/SceneBasicTest.json"
-
+  "viewports": [
+    { "nom": "title", "largeur": 1536, "hauteur": 100 },
+    { "nom": "left", "largeur": 1136, "hauteur": 800 },
+    { "nom": "Right", "largeur": 400, "hauteur": 800 }
+  ],
+  "assets": {
+      "gizmo_perspective": {
+        "type": "mesh",
+        "path": "assets/Meshes/camera_gizmo.obj"
+      },
+      "gizmo_ortho": {
+        "type": "mesh",
+        "path": "assets/Meshes/camera_gizmo_box.obj"
+      },
+      "scene_test": {
+        "type": "scene_graph",
+        "path": "assets/GraphScene/SceneBasicTest.json"
+      }
+    }
+  }
 }

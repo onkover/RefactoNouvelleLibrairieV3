@@ -68,8 +68,7 @@ using namespace LV3::Tests;         // ← ajoute CE using en plus
 bool g_running = true;
 DepthBuffer db;
 FrameBuffer fb;
-Viewport vpLeft;
-Viewport vpRight;
+Viewport vpLeft, vpRight, vpTitle;
 int WinW, WinH;
 
 int pendingW,pendingH;
@@ -200,8 +199,6 @@ int main(int argc, char* argv[])
 	}
 	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
 
-
-
 	/************************************************************
 	Paramétrage projet
 	************************************************************/
@@ -246,21 +243,31 @@ int main(int argc, char* argv[])
 	************************************************************/
 	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
 
-	bool success = SceneSerializer::LoadSceneGraph(cheminProjet, cfg.GraphSceneName, registry, activeCamera, rm);
-	if (!success)
+	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
 	{
-		std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
+		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, cfg.mapAssets["scene_test"].path, registry, activeCamera, rm);
+		if (!success)
+		{
+			std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
+			return -1;
+		}
+	}
+	else
+	{
+		std::cerr << "\033[31mImpossible de retrouver le scene graph. Arrêt du programme.\033[0m" << std::endl;
 		return -1;
 	}
-
+	GizmoAssets GizAssets;
 	if (cfg.mapAssets.find("gizmo_perspective") != cfg.mapAssets.end() && cfg.mapAssets.find("gizmo_ortho") != cfg.mapAssets.end())
-	if (GizAssets.IsValid())
-		SpawnCameraGizmos(registry, GizAssets);
-	else
-		Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
+	{
+		 GizAssets = LoadGizmoAssets(rm, cfg.mapAssets["gizmo_perspective"].path, cfg.mapAssets["gizmo_ortho"].path);
+		if (GizAssets.IsValid())
+			SpawnCameraGizmos(registry, GizAssets);
+		else
+			Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
 
-	// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
-	#ifdef _DEBUG
+		// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
+#ifdef _DEBUG
 		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
 		// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
@@ -270,8 +277,17 @@ int main(int argc, char* argv[])
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
 		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
 
-	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
-	#endif
+		//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+#endif
+
+	}
+	else
+	{
+		std::cerr << "\033[31mImpossible de retrouver les mesh des gizmo Camera. Arrêt du programme.\033[0m" << std::endl;
+		return -1;
+	}
+
+
 
 
 
@@ -286,11 +302,31 @@ int main(int argc, char* argv[])
 	db.Resize(WinW, WinH);
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
-	//const Viewport vpLeft { 0, 0, WinW / 2, WinH };
-	//const Viewport vpRight { WinW / 2, 0, WinW / 2, WinH };
-//	const Viewport vp{ 0, 0, WinW, WinH };
-	vpLeft.Resize(0, 0, WinW / 2, WinH);
-	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
+	if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
+		cfg.mapViewports.find("Right") != cfg.mapViewports.end() &&
+		cfg.mapViewports.find("left") != cfg.mapViewports.end())
+	{
+		vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+		vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
+		vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
+	}
+	else
+	{
+		std::cerr << "\033[31mImpossible de créer les viewport. Arrêt du programme.\033[0m" << std::endl;
+		return -1;
+	}
+
+
+
+
+	//if (cfg.mapViewports.find("title") != cfg.mapViewports.end())
+	//	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+	//else
+	//	std::cout << "\nLe viewport 'title' introuvable\n";
+	//
+
+//	vpLeft.Resize(0, 0, WinW / 2, WinH);
+//	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
 
 	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
@@ -419,7 +455,11 @@ int main(int argc, char* argv[])
 			renderer.EndFrame();
 			
 // Séparateur vertical
-			for (int y = 0; y < WinH; ++y) fb.SetPixel(WinW / 2, y, MakeColor(90, 90, 110));
+			for (int y = 0; y < cfg.mapViewports["left"].hauteur; ++y) 
+				fb.SetPixel(cfg.mapViewports["left"].largeur, y, MakeColor(90, 90, 110));
+			
+			for (int x = 0; x < cfg.mapViewports["title"].largeur; ++x) 
+				fb.SetPixel(x, cfg.mapViewports["left"].hauteur, MakeColor(90, 90, 110));
 
 
 			// -- test via des triangles 2D - DEB
@@ -481,8 +521,18 @@ int main(int argc, char* argv[])
 				db.Resize(WinW, WinH);
 
 				// 3. Le viewport
-				vpLeft.Resize(0, 0, WinW / 2, WinH);
-				vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
+//				vpLeft.Resize(0, 0, WinW / 2, WinH);
+//				vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
+
+				on ne peut avoir les mêmes dimension puisque l'écran est lus petit. 
+					Il faudrait calculer un ratio
+
+
+
+				vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+				vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
+				vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
+
 
 				// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
 				//    rien à faire, il suivra tout seul.
