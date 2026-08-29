@@ -110,40 +110,93 @@ namespace LV3::Tests
     //    LV3_ASSERT(checked > 0);
     //}
 
-    void Test_GizmoMatchesFrustum(Registry& registry, const ViewData* views, size_t count, const GizmoAssets& assets)
+    //void Test_GizmoMatchesFrustum(Registry& registry, const ViewData* views, size_t count, const GizmoAssets& assets)
+    //{
+    //    constexpr float kEps = 1e-4f;
+    //    static const Vec3f kCorners[4] = { {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1} };
+
+    //    size_t checked = 0;
+
+    //    // MeshComponent ajoute au groupe : le test verifie desormais AUSSI l'asset.
+    //    for (auto&& [e, giz, trGiz, mcGiz] :
+    //        registry.ViewGroup<CameraGizmoComponent, TransformComponent, MeshComponent>())
+    //    {
+    //        const auto& cam = registry.getComponent<CameraComponent>(giz.m_owner);
+
+    //        // ── NIVEAU ENTITE : une seule fois par gizmo ──────────────────
+    //        LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
+
+    //        const bool  isOrtho = (cam.m_projection == EProjectionType::Orthographic);
+    //        const float expectedW = isOrtho ? 1.0f : giz.m_length;
+
+    //        // Retrouve LA vue reellement construite pour la camera de ce gizmo.
+    //        const ViewData* vd = nullptr;
+    //        for (size_t i = 0; i < count; ++i)
+    //            if (views[i].m_sourceCamera == giz.m_owner) { vd = &views[i]; break; }
+
+    //        if (!vd) continue;   // camera non rendue cette frame : rien a comparer
+
+    //        //Logger::log("  proj=" + std::string(cam.m_projection == EProjectionType::Orthographic
+    //        //    ? "ORTHO" : "PERSP")
+    //        //    + "  meshId=" + std::to_string(mcGiz.m_meshHandle.id)
+    //        //    + "  wantId=" + std::to_string(assets.For(cam.m_projection).id)
+    //        //    + "  orthoHeight=" + std::to_string(cam.m_orthoHeight));
+
+
+    //        // ── NIVEAU COIN : quatre fois par gizmo ───────────────────────
+    //        for (const Vec3f& c : kCorners)
+    //        {
+    //            const Vec4f w4 = MulRow(trGiz.m_worldMatrix, c);
+    //            LV3_ASSERT(std::fabs(w4.w - 1.0f) < kEps);          // matrice affine
+
+    //            const Vec3f world{ w4.x, w4.y, w4.z };
+    //            const Vec4f clip = MulRow(vd->viewProjectionMatrix, world);
+
+    //            //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
+    //            //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
+    //            //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
+    //        }
+    //        ++checked;
+    //    }
+
+    //    LV3_ASSERT(checked > 0);   // un test qui n'a rien verifie n'est pas vert
+    //}
+
+    void Test_GizmoMatchesFrustum(Registry& registry, ResourceManager& rm,
+        const ViewData* views, size_t count,
+        const GizmoAssets& assets)
     {
         constexpr float kEps = 1e-4f;
         static const Vec3f kCorners[4] = { {-1,-1,-1}, {1,-1,-1}, {1,1,-1}, {-1,1,-1} };
 
         size_t checked = 0;
 
-        // MeshComponent ajoute au groupe : le test verifie desormais AUSSI l'asset.
         for (auto&& [e, giz, trGiz, mcGiz] :
             registry.ViewGroup<CameraGizmoComponent, TransformComponent, MeshComponent>())
         {
             const auto& cam = registry.getComponent<CameraComponent>(giz.m_owner);
+            const bool  isOrtho = (cam.m_projection == EProjectionType::Orthographic);
 
-            // ── NIVEAU ENTITE : une seule fois par gizmo ──────────────────
+            // ── NIVEAU ENTITE ────────────────────────────────────────────
+            // 1. Le handle designe le bon asset.
             LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
 
-            const bool  isOrtho = (cam.m_projection == EProjectionType::Orthographic);
+            // 2. L'asset contient bien la geometrie attendue.
+            //    Un handle correct ne prouve rien sur le contenu du fichier.
+            const MeshClass* mg = rm.GetMesh(mcGiz.m_meshHandle);
+            LV3_ASSERT(mg);
+            LV3_ASSERT(mg->vertsPerFace == 3);
+            LV3_ASSERT(mg->faceCount() == (isOrtho ? 12u : 6u));
+
             const float expectedW = isOrtho ? 1.0f : giz.m_length;
 
-            // Retrouve LA vue reellement construite pour la camera de ce gizmo.
             const ViewData* vd = nullptr;
             for (size_t i = 0; i < count; ++i)
                 if (views[i].m_sourceCamera == giz.m_owner) { vd = &views[i]; break; }
 
             if (!vd) continue;   // camera non rendue cette frame : rien a comparer
 
-            //Logger::log("  proj=" + std::string(cam.m_projection == EProjectionType::Orthographic
-            //    ? "ORTHO" : "PERSP")
-            //    + "  meshId=" + std::to_string(mcGiz.m_meshHandle.id)
-            //    + "  wantId=" + std::to_string(assets.For(cam.m_projection).id)
-            //    + "  orthoHeight=" + std::to_string(cam.m_orthoHeight));
-
-
-            // ── NIVEAU COIN : quatre fois par gizmo ───────────────────────
+            // ── NIVEAU COIN ──────────────────────────────────────────────
             for (const Vec3f& c : kCorners)
             {
                 const Vec4f w4 = MulRow(trGiz.m_worldMatrix, c);
@@ -152,14 +205,14 @@ namespace LV3::Tests
                 const Vec3f world{ w4.x, w4.y, w4.z };
                 const Vec4f clip = MulRow(vd->viewProjectionMatrix, world);
 
-                //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
-                //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
-                //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
+                LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
+                LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
+                LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
             }
             ++checked;
         }
 
-        LV3_ASSERT(checked > 0);   // un test qui n'a rien verifie n'est pas vert
+        LV3_ASSERT(checked > 0);
     }
 }
 

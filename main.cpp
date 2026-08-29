@@ -57,6 +57,8 @@
 #include "test/TestAffichageGizmoCamera.h"
 
 #include "GFX/gfx.h"
+#include "scene/CameraBinding.hpp"
+
 
 
 
@@ -298,17 +300,16 @@ int main(int argc, char* argv[])
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
 	if (SDLINIT(WinW, WinH) != true) return -1;
 
-
-	db.Resize(WinW, WinH);
+	db.Resize(WinW, WinH);	// depth buffer
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
 	if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
 		cfg.mapViewports.find("Right") != cfg.mapViewports.end() &&
 		cfg.mapViewports.find("left") != cfg.mapViewports.end())
 	{
-		vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+	/*	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
 		vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
-		vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
+		vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);*/
 	}
 	else
 	{
@@ -317,18 +318,7 @@ int main(int argc, char* argv[])
 	}
 
 
-
-
-	//if (cfg.mapViewports.find("title") != cfg.mapViewports.end())
-	//	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
-	//else
-	//	std::cout << "\nLe viewport 'title' introuvable\n";
-	//
-
-//	vpLeft.Resize(0, 0, WinW / 2, WinH);
-//	vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
-
-	const Entity camFollow = FindCameraByName(registry, "FPS_Camera");
+	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
 
 
@@ -346,35 +336,51 @@ int main(int argc, char* argv[])
 	// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 	// system("clear"); 
 
+	CameraBinding bindings[4];
+	ViewData      views[4];
+	Renderer renderer;
+
+	const ViewSlot slots[] = {
+		{ camActive,   ERenderMode::Solid     },
+		{ camOverview, ERenderMode::Wireframe },
+	};
+
 	while (g_running == true)
 	{
 
-		// 1. Gérer les entrées utilisateur (non implémenté ici)
+		// --- Gérer les entrées utilisateur (non implémenté ici)
 		PlayerInputSystem(registry, deltaTime);
 		LV3::InputState input = BuildInputState();
 
-
-		// 2. Mettre à jour la scène
-		// L'update commence à la racine, avec une matrice identité car elle n'a pas de parent.
-
+		// --- Mettre à jour la scène
 		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
 
-		// --- 1. MISE À JOUR DE L'ÉTAT (Logique pure) ---
+		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
 		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 
-		CameraGizmoSystem(registry, activeCamera, vpLeft.Aspect(), GizAssets);// (float)WinW / (float)WinH);
+		// --- L'association : AUCUNE matrice lue ici.
+		//const size_t nViews = BuildCameraBindings(camActive, camOverview, WinW, WinH,bindings, std::size(bindings));
+		const size_t nViews = BuildCameraBindings(ELayout::MainSide, slots, std::size(slots), WinW, WinH, bindings, std::size(bindings));
 
-		// --- 2. MISE À JOUR DES MATRICES ---
+
+
+		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
+		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
+
+		// --- MISE À JOUR DES MATRICES ---
 		//TransformationSystem(registry, deltaTime);
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
 		WorldTransformSystem(registry);       // Construit les matrices mondes finales
 
-		// --- 3. DÉTECTION (Physique/Triggers) ---
+		// --- DÉTECTION (Physique/Triggers) ---
 		// Lit les matrices mondes finales
 		TriggerSystem(registry, eventBus);
 
+		// --- Les vues lisent les matrices de CETTE frame.
+		for (size_t i = 0; i < nViews; ++i)
+			views[i] = BuildViewData(registry, bindings[i]);
 
 #if LV3_DEBUG
 //		std::cout << std::endl;
@@ -383,76 +389,49 @@ int main(int argc, char* argv[])
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
 //		DebugTraceEntity(registry, "Cube1");  // ← TRACE, à retirer une fois la question tranchée
 
-		// --- 4. DESSIN ---
+		// --- DESSIN ---
 		// Débug de la hiérarchie 
 //		DebugDisplaySystem(registry);// , entityNames);
 
-		// Draw de la hiérarchie
+		// --- Draw de la hiérarchie ---
 //		RenderSystem(registry, activeCamera, rm);
 
 #endif
 
-		//***************************************
-		//RasterTriangle huge{ {-500, -500}, {2000, 400}, {300, 1500}, 0.9f, 0.9f, 0.2f };
-
-		//RasterTriangle tri1{
-		//	{0,0}, {400,0}, {400,300}, // v0, v1, v2
-		//	0.9f, 0.9f, 0.2f					// z0, z1, z2
-		//};
-
-		//	RasterTriangle tri2{
-		//{0,0}, {400,300}, {0,300}, // v0, v1, v2
-		//0.9f, 0.9f, 0.2f					// z0, z1, z2
-		//	};
-
-
-
-
-		//***************************************
-
-
-		// --- 4. DEUX points de vue, construits par la MÊME fonction ---
-		const ViewData viewLeft = BuildViewData(*registry.TryGet<TransformComponent>(camFollow),
-			*registry.TryGet<CameraComponent>(camFollow),
-			vpLeft, camFollow);
-
-		const ViewData viewRight = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
-			*registry.TryGet<CameraComponent>(camOverview),
-			vpRight, camOverview);
-
-
-		//const ViewData view = BuildViewData(*registry.TryGet<TransformComponent>(camOverview),
-		//	*registry.TryGet<CameraComponent>(camOverview),
-		//	vp);
-
 		
 #ifdef _DEBUG
+		//Test_CameraWorldMatrixIsRigid(registry);
+		//const ViewData views[2] = { viewLeft, viewRight };
+		//if (GizAssets.IsValid()) Test_GizmoMatchesFrustum(registry, views,2, GizAssets);
+
+		CheckControllerExclusivity(registry);
 		Test_CameraWorldMatrixIsRigid(registry);
-		const ViewData views[2] = { viewLeft, viewRight };
-		if (GizAssets.IsValid()) Test_GizmoMatchesFrustum(registry, views,2, GizAssets);
+		Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
+
 #endif
 
-		// --- 5. UN seul verrou, UN seul effacement ---
+		// --- UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
 			fb.Bind(ptrScreen, pitch,WinW, WinH);
 			fb.Clear(MakeColor(0, 0, 24));
 
-			// --- 3. DEUX rendus dans le MÊME buffer ---
-			Renderer renderer;
+			// --- Plusieurs rendus dans le MÊME buffer ---
 			renderer.BeginFrame(fb, db); //
 
 			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			renderer.SetMode(LV3::ERenderMode::Solid);
-			RenderView(registry, rm, renderer, viewLeft);
 
-			renderer.SetMode(LV3::ERenderMode::Solid);
-			RenderView(registry, rm, renderer, viewRight);
+			// --- recontruit les viewport et dessine les triangle
+			for (size_t i = 0; i < nViews; ++i)
+			{
+				RenderView(registry, rm, renderer, views[i]);
+				LV3_ASSERT(renderer.GetMode() == views[i].m_mode);   // personne n'a modifie l'etat en cours de route
+			}
+			
 //#ifdef _DEBUG
 //			ReportCullStats();
 //#endif
-			renderer.EndFrame();
 			
 // Séparateur vertical
 			for (int y = 0; y < cfg.mapViewports["left"].hauteur; ++y) 
@@ -460,28 +439,6 @@ int main(int argc, char* argv[])
 			
 			for (int x = 0; x < cfg.mapViewports["title"].largeur; ++x) 
 				fb.SetPixel(x, cfg.mapViewports["left"].hauteur, MakeColor(90, 90, 110));
-
-
-			// -- test via des triangles 2D - DEB
-			//fb.Bind(ptrScreen, pitch, WinW, WinH);
-			//fb.Clear(MakeColor(255, 255, 24));		// clear du framebuffer
-			////db.Clear();
-			//LV3_ASSERT(vp.IsValid());
-
-			//Renderer renderer;
-			//renderer.BeginFrame(fb, db);
-
-			//renderer.SetMode(LV3::ERenderMode::Solid);
-			//renderer.SetDepthRange(view.nearPlane, view.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			//renderer.SetViewport(view.viewport);
-			//renderer.DrawTriangle(tri1,Color{ 255, 0, 0, 255 });
-
-			//renderer.SetMode(LV3::ERenderMode::Depth);
-			//renderer.SetDepthRange(view.nearPlane, view.farPlane);	// permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
-			//renderer.SetViewport(view.viewport);
-			//renderer.DrawTriangle(tri2, Color{ 0, 255, 0, 255 });
-
-			// -- test via des triangles 2D - FIN
 
 
 			renderer.EndFrame();                          // ← le pointeur cesse d'exister
@@ -524,14 +481,14 @@ int main(int argc, char* argv[])
 //				vpLeft.Resize(0, 0, WinW / 2, WinH);
 //				vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
 
-				on ne peut avoir les mêmes dimension puisque l'écran est lus petit. 
-					Il faudrait calculer un ratio
+				//on ne peut avoir les mêmes dimension puisque l'écran est lus petit. 
+				//	Il faudrait calculer un ratio
 
 
 
-				vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
-				vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
-				vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
+				//vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+				//vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
+				//vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
 
 
 				// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
