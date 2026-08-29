@@ -60,23 +60,24 @@
 #include "scene/CameraBinding.hpp"
 
 
-
-
-
-
 using namespace LV3;
 using namespace LV3::Tests;         // ← ajoute CE using en plus
 
-bool g_running = true;
+//**********************************************
+
+bool g_running = true;				// flag de la boucle. Si False, on quitte
 DepthBuffer db;
 FrameBuffer fb;
 Viewport vpLeft, vpRight, vpTitle;
-int WinW, WinH;
 
-int pendingW,pendingH;
-bool resizePending = false;
+// Dimension de l'écran
+int FrameW, FrameH;					// dimension de l'écran au cours d'une frame
+bool resizePending = false;			// Inidique si la taille de l'écran évolue pendant le rendu de celui-ci
+int pendingW,pendingH;				// Sauvegarde des dimensions de l'écran modifié lors du rendu. 
+									// Elles seront adaptées après le rendu
+
+
 //**********************************************
-
 // État global de la boucle
 
 bool g_mouseCaptured = true;
@@ -108,31 +109,10 @@ LV3::InputState BuildInputState()
 		case SDL_WINDOWEVENT:
 			if (ev.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
 			{
-				// on NOTE, on n'agit pas tout de suite car la SDLtexture pourrait dajà étré lockée 
+				// on NOTE, on n'agit pas tout de suite car la SDLtexture pourrait déjà êtré lockée 
 				pendingW = ev.window.data1;
 				pendingH = ev.window.data2;
 				resizePending = true;         
-
-
-				//const int w = ev.window.data1, h = ev.window.data2;
-				//if (w <= 20 || h <= 20) break;              // fenêtre minimisée
-
-				//WinW = w;
-				//WinH = h;
-				//// 1. La texture SDL (le pitch change aussi !)
-				//SDL_DestroyTexture(SDLtexture);
-				//SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WinW, WinH);
-
-				//// 2. Le Z-buffer
-				//db.Resize(WinW, WinH);
-
-				//// 3. Le viewport
-				//vpLeft.Resize(0, 0, WinW / 2, WinH);
-				//vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
-
-				//// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
-				////    rien à faire, il suivra tout seul.
-
 			}
 			break;
 		case SDL_QUIT:       g_running = false; break;
@@ -221,25 +201,7 @@ int main(int argc, char* argv[])
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
 
-	//OBJLoadOptions opts;
-	//opts.flipUVsVertically = false;
-	//opts.generateNormalsIfMissing = true;
-
-	//const std::string name = "assets/Meshes/camera_gizmo.obj";
-	//auto h = rm.LoadMeshChecked(name, {});
-	//if (!h.has_value())
-	//{
-	//	int a = 0;
-	//}
-	//const MeshHandle hMesh = *h;
-
-	//const MeshClass* mesh = rm.GetMesh(hMesh);
-	//LV3_ASSERT(hMesh.IsValid());
-
-	//const MeshClass* m = rm.GetMesh(hMesh);
-	//LV3_ASSERT(m->vertsPerFace == 3 && m->faceCount() == 6);
-
-
+	
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
@@ -295,12 +257,12 @@ int main(int argc, char* argv[])
 
 	
 	// ═══ Initialisation, une seule fois ═══
-	WinW = cfg.screenWidth;  // Largeur de l'écran
-	WinH = cfg.screenHeight; // Hauteur de l'écran
+	FrameW = cfg.screenWidth;  // Largeur de l'écran
+	FrameH = cfg.screenHeight; // Hauteur de l'écran
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
-	if (SDLINIT(WinW, WinH) != true) return -1;
+	if (SDLINIT(FrameW, FrameH) != true) return -1;
 
-	db.Resize(WinW, WinH);	// depth buffer
+	db.Resize(FrameW, FrameH);	// depth buffer
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
 	if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
@@ -319,7 +281,7 @@ int main(int argc, char* argv[])
 
 
 	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
+	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
 
 
 	SetMouseCapture(true);
@@ -330,17 +292,14 @@ int main(int argc, char* argv[])
 	const int maxFrames = 5; // Arrête la simulation après 100 images
 	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
-//	std::map < Entity, std::string> entityNames;	// pour le debugage
-
-
-	// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
-	// system("clear"); 
+	// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 
 	CameraBinding bindings[4];
 	ViewData      views[4];
 	Renderer renderer;
 
-	const ViewSlot slots[] = {
+	const ViewSlot slots[] = 
+	{
 		{ camActive,   ERenderMode::Solid     },
 		{ camOverview, ERenderMode::Wireframe },
 	};
@@ -361,9 +320,7 @@ int main(int argc, char* argv[])
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 
 		// --- L'association : AUCUNE matrice lue ici.
-		//const size_t nViews = BuildCameraBindings(camActive, camOverview, WinW, WinH,bindings, std::size(bindings));
-		const size_t nViews = BuildCameraBindings(ELayout::MainSide, slots, std::size(slots), WinW, WinH, bindings, std::size(bindings));
-
+		const size_t nViews = BuildCameraBindings(ELayout::MainSide, slots, std::size(slots), FrameW, FrameH, bindings, std::size(bindings));
 
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
@@ -414,7 +371,8 @@ int main(int argc, char* argv[])
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
-			fb.Bind(ptrScreen, pitch,WinW, WinH);
+			//fb.Bind(ptrScreen, pitch, WinW, WinH);
+			fb.Bind(ptrScreen, pitch,FrameW, FrameH);
 			fb.Clear(MakeColor(0, 0, 24));
 
 			// --- Plusieurs rendus dans le MÊME buffer ---
@@ -426,14 +384,14 @@ int main(int argc, char* argv[])
 			for (size_t i = 0; i < nViews; ++i)
 			{
 				RenderView(registry, rm, renderer, views[i]);
-				LV3_ASSERT(renderer.GetMode() == views[i].m_mode);   // personne n'a modifie l'etat en cours de route
+				LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
 			}
 			
 //#ifdef _DEBUG
 //			ReportCullStats();
 //#endif
 			
-// Séparateur vertical
+			// Séparateur vertical entre les différents viewports
 			for (int y = 0; y < cfg.mapViewports["left"].hauteur; ++y) 
 				fb.SetPixel(cfg.mapViewports["left"].largeur, y, MakeColor(90, 90, 110));
 			
@@ -441,6 +399,7 @@ int main(int argc, char* argv[])
 				fb.SetPixel(x, cfg.mapViewports["left"].hauteur, MakeColor(90, 90, 110));
 
 
+			// Fin du rendu
 			renderer.EndFrame();                          // ← le pointeur cesse d'exister
 			fb.Unbind();                                  // ← idem
 			SDL_UnlockTexture(SDLtexture);
@@ -460,6 +419,7 @@ int main(int argc, char* argv[])
 		//SDL_RenderClear(SDLrenderer);
 		Clean_Render(fb);
 		
+		//******************************************
 		// resize si besoin après le lock sur la texture SDL, sinon le pitch est mauvais et on écrit hors bornes dans le framebuffer
 		if (resizePending)
 		{
@@ -467,32 +427,17 @@ int main(int argc, char* argv[])
 
 			if (pendingW > 0 && pendingH > 0)
 			{
-				WinW = pendingW;
-				WinH = pendingH;
+				FrameW = pendingW;
+				FrameH = pendingH;
 
 				// 1. La texture SDL (le pitch change aussi !)
 				SDL_DestroyTexture(SDLtexture);
-				SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, WinW, WinH);
+				SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, FrameW, FrameH);
 
 				// 2. Le Z-buffer
-				db.Resize(WinW, WinH);
+				db.Resize(FrameW, FrameH);
 
-				// 3. Le viewport
-//				vpLeft.Resize(0, 0, WinW / 2, WinH);
-//				vpRight.Resize(WinW / 2, 0, WinW / 2, WinH);
-
-				//on ne peut avoir les mêmes dimension puisque l'écran est lus petit. 
-				//	Il faudrait calculer un ratio
-
-
-
-				//vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
-				//vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
-				//vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);
-
-
-				// 4. L'aspect ratio est dérivé du viewport dans BuildViewData :
-				//    rien à faire, il suivra tout seul.
+				// 3. Le viewport : le ou les vioewports seront reconstruit durant la boucle de rendu
 
 			}
 		}

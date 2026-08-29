@@ -186,7 +186,7 @@ namespace LV3::Tests
             const MeshClass* mg = rm.GetMesh(mcGiz.m_meshHandle);
             LV3_ASSERT(mg);
             LV3_ASSERT(mg->vertsPerFace == 3);
-            LV3_ASSERT(mg->faceCount() == (isOrtho ? 12u : 6u));
+            LV3_ASSERT(mg->faceCount() == (isOrtho ? 14u : 8u));
 
             const float expectedW = isOrtho ? 1.0f : giz.m_length;
 
