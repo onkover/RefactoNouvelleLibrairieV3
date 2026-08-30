@@ -75,7 +75,7 @@ namespace LV3::Tests
         //            && counts[size_t(y + 1) * vp.width + x]) ++holes;
         //    }
 
-        //Logger::log("[COVERAGE] doubles=" + std::to_string(doubles)
+        //Logger::info("[COVERAGE] doubles=" + std::to_string(doubles)
         //    + "  trous=" + std::to_string(holes));
 
         //return doubles == 0 && holes == 0;
@@ -111,11 +111,11 @@ namespace LV3::Tests
                 }
             }
 
-        Logger::log("[COVERAGE] doubles=" + std::to_string(doubles)
+        Logger::info("[COVERAGE] doubles=" + std::to_string(doubles)
             + "  trous=" + std::to_string(holes));
 
         if (holes > 0)
-            Logger::log("[COVERAGE] premier (" + std::to_string(firstX) + "," + std::to_string(firstY)
+            Logger::info("[COVERAGE] premier (" + std::to_string(firstX) + "," + std::to_string(firstY)
                 + ")  dernier (" + std::to_string(lastX) + "," + std::to_string(lastY) + ")");
 
         return doubles == 0 && holes == 0;

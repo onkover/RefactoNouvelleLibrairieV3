@@ -35,6 +35,7 @@
 #include <SDL_ttf.h>
 #include <thread>
 
+#include "Core/engineconfig.h"
 #include "Core/Platform.h"
 #include "Core/Logger.h"
 #include "Core/InputState.h"
@@ -171,20 +172,29 @@ int main(int argc, char* argv[])
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
-
+	Logger::info(" === Lecture de la configuration du programme ===");
 	config cfg;
-
 	if (!ProgrammeConfig("config.json", cfg))
 	{
-		Logger::error("\033[31mImpossible de charger la configuration.\033[0m");
+		Logger::error("Impossible de charger la configuration.\n");
 		return 1;
 	}
-	Logger::log("\033[32mConfiguration chargée avec succès.\033[0m");
+	Logger::success("Configuration du programme chargée avec succès\n.");
+
+
+	/************************************************************
+	Paramétrage du moteur de rendu
+	************************************************************/
+	Logger::info(" === Lecture de la configuration du moteur ===");
+
+	if (!LV3::EngineConfig::Get().LoadFromJson("engine.json"))		
+		Logger::warn("EngineConfig — defauts LV3_DEFAULT_* utilises (fichier absent ou invalide)\n");
+	else
+		Logger::success("Configration du moteur chargée avec succès\n");
 
 	/************************************************************
 	Paramétrage projet
 	************************************************************/
-
 
 	// --- SETUP DE LA SCÈNE ---
 	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
@@ -205,20 +215,22 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
-	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
+//	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
+	Logger::info(" === Lecture du scenegraph ===");
 
 	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
 	{
 		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, cfg.mapAssets["scene_test"].path, registry, activeCamera, rm);
 		if (!success)
 		{
-			std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
+			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");
+//			std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
 			return -1;
 		}
 	}
 	else
 	{
-		std::cerr << "\033[31mImpossible de retrouver le scene graph. Arrêt du programme.\033[0m" << std::endl;
+		Logger::error("Impossible de retrouver le scene graph. Arrêt du programme.\n");
 		return -1;
 	}
 	GizmoAssets GizAssets;
@@ -228,14 +240,14 @@ int main(int argc, char* argv[])
 		if (GizAssets.IsValid())
 			SpawnCameraGizmos(registry, GizAssets);
 		else
-			Logger::warn("\033[31m[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\033[0m");
+			Logger::warn("[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\n");
 
 		// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
 #ifdef _DEBUG
 		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
 		// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
-		std::cout << "Structure finale du Scene Graph :" << std::endl;
+		Logger::info("Structure finale du Scene Graph :");
 		DebugDisplaySystem(registry);
 
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
@@ -247,7 +259,7 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		std::cerr << "\033[31mImpossible de retrouver les mesh des gizmo Camera. Arrêt du programme.\033[0m" << std::endl;
+		Logger::error("Impossible de retrouver les mesh des gizmo Camera. Arrêt du programme.\n");
 		return -1;
 	}
 
@@ -275,13 +287,13 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		std::cerr << "\033[31mImpossible de créer les viewport. Arrêt du programme.\033[0m" << std::endl;
+		Logger::error("Impossible de créer les viewport. Arrêt du programme.\n");
 		return -1;
 	}
 
 
 	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
+	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
 
 
 	SetMouseCapture(true);

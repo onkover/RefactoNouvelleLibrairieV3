@@ -770,7 +770,7 @@ bool EngineConfig::LoadFromJson(const std::string& filepath)
     // --- 5. Sanitisation — valeurs plancher ---
     Sanitize();
 
-    Logger::Log("[EngineConfig] Chargé depuis '" + filepath + "'.");
+    Logger::info("[EngineConfig] Chargé depuis '" + filepath + "'.");
     LogCurrentConfig();
     return true;
 }
@@ -792,17 +792,17 @@ void EngineConfig::Sanitize()
 // -------------------------------------------------------
 void EngineConfig::LogCurrentConfig() const
 {
-    Logger::Log("[EngineConfig] ── Renderer ──────────────────────");
-    Logger::Log("  tile_size   : " + std::to_string(renderer.tileSize));
-    Logger::Log("  max_bounces : " + std::to_string(renderer.maxBounces));
-    Logger::Log("  multithread : " + std::string(renderer.multithread ? "ON" : "OFF"));
-    Logger::Log("[EngineConfig] ── Features ──────────────────────");
-    Logger::Log("  shadows     : " + std::string(features.shadows   ? "ON" : "OFF"));
-    Logger::Log("  fog         : " + std::string(features.fog       ? "ON" : "OFF"));
-    Logger::Log("  wireframe   : " + std::string(features.wireframe ? "ON" : "OFF"));
-    Logger::Log("  stats       : " + std::string(features.stats     ? "ON" : "OFF"));
-    Logger::Log("[EngineConfig] ── Resources ─────────────────────");
-    Logger::Log("  path        : " + resources.path);
+    Logger::info("[EngineConfig] ── Renderer ──────────────────────");
+    Logger::info("  tile_size   : " + std::to_string(renderer.tileSize));
+    Logger::info("  max_bounces : " + std::to_string(renderer.maxBounces));
+    Logger::info("  multithread : " + std::string(renderer.multithread ? "ON" : "OFF"));
+    Logger::info("[EngineConfig] ── Features ──────────────────────");
+    Logger::info("  shadows     : " + std::string(features.shadows   ? "ON" : "OFF"));
+    Logger::info("  fog         : " + std::string(features.fog       ? "ON" : "OFF"));
+    Logger::info("  wireframe   : " + std::string(features.wireframe ? "ON" : "OFF"));
+    Logger::info("  stats       : " + std::string(features.stats     ? "ON" : "OFF"));
+    Logger::info("[EngineConfig] ── Resources ─────────────────────");
+    Logger::info("  path        : " + resources.path);
 }
 
 } // namespace LV3
@@ -862,12 +862,12 @@ int main()
     //  doivent pouvoir être loguées.
     // ════════════════════════════════════════════════════
     Logger::Init();
-    Logger::Log("══════════════════════════════════════════");
-    Logger::Log("  LibraryV3 v"
+    Logger::info("══════════════════════════════════════════");
+    Logger::info("  LibraryV3 v"
         + std::to_string(LV3_VERSION_MAJOR) + "."
         + std::to_string(LV3_VERSION_MINOR) + "."
         + std::to_string(LV3_VERSION_PATCH));
-    Logger::Log("══════════════════════════════════════════");
+    Logger::info("══════════════════════════════════════════");
 
     // ════════════════════════════════════════════════════
     //  3 — Configuration moteur
@@ -885,7 +885,7 @@ int main()
     //  Prépare les pools : textures, meshes, matériaux.
     // ════════════════════════════════════════════════════
     const std::string& assetsPath = EngineConfig::Get().resources.path;
-    Logger::Log("ResourceManager → path : " + assetsPath);
+    Logger::info("ResourceManager → path : " + assetsPath);
     // ResourceManager::Get().Init(assetsPath);   ← Leçon suivante
 
     // ════════════════════════════════════════════════════
@@ -893,9 +893,9 @@ int main()
     //  Crée la surface de rendu (HWND).
     //  Platform.h est inclus ici et nulle part ailleurs.
     // ════════════════════════════════════════════════════
-    Logger::Log("Window → création...");
+    Logger::info("Window → création...");
     // Window::Get().Init(1280, 720, "LibraryV3");  ← Leçon suivante
-    Logger::Log("Window → OK");
+    Logger::info("Window → OK");
 
     // ════════════════════════════════════════════════════
     //  6 — Renderer
@@ -903,7 +903,7 @@ int main()
     //  Doit être après Window (surface cible) et
     //  après ResourceManager (accès meshes/textures).
     // ════════════════════════════════════════════════════
-    Logger::Log("Renderer → initialisation...");
+    Logger::info("Renderer → initialisation...");
     if (!InitRenderer())
     {
         Logger::Error("Renderer → échec. Arrêt.");
@@ -917,7 +917,7 @@ int main()
     //  Registry ECS. Doit être après Renderer et
     //  ResourceManager (les ressources doivent exister).
     // ════════════════════════════════════════════════════
-    Logger::Log("Scène → chargement...");
+    Logger::info("Scène → chargement...");
     if (!LoadScene(assetsPath + "scenes/scene.json"))
     {
         Logger::Error("Scène → échec. Arrêt.");
@@ -930,7 +930,7 @@ int main()
     //  Update (logique) → Render (visuel) → Events (input)
     //  Tourne jusqu'à fermeture de la fenêtre.
     // ════════════════════════════════════════════════════
-    Logger::Log("Boucle principale → démarrage.");
+    Logger::info("Boucle principale → démarrage.");
     RunMainLoop();
 
     // ════════════════════════════════════════════════════
@@ -944,9 +944,9 @@ int main()
 bool InitRenderer()
 {
     const auto& cfg = EngineConfig::Get().renderer;
-    Logger::Log("  tile_size   : " + std::to_string(cfg.tileSize));
-    Logger::Log("  multithread : " + std::string(cfg.multithread ? "ON" : "OFF"));
-    Logger::Log("  shadows     : " + std::string(
+    Logger::info("  tile_size   : " + std::to_string(cfg.tileSize));
+    Logger::info("  multithread : " + std::string(cfg.multithread ? "ON" : "OFF"));
+    Logger::info("  shadows     : " + std::string(
         EngineConfig::Get().features.shadows ? "ON" : "OFF"));
     // Renderer::Get().Init(cfg);  ← Leçon suivante
     return true;
@@ -954,7 +954,7 @@ bool InitRenderer()
 
 bool LoadScene(const std::string& scenePath)
 {
-    Logger::Log("  fichier : " + scenePath);
+    Logger::info("  fichier : " + scenePath);
     // SceneSerializer::Get().Load(scenePath, registry);  ← Leçon suivante
     return true;
 }
@@ -968,17 +968,17 @@ void RunMainLoop()
     //     Renderer::Get().RenderFrame();
     //     Window::Get().PollEvents();
     // }
-    Logger::Log("[stub] boucle principale — Leçon suivante.");
+    Logger::info("[stub] boucle principale — Leçon suivante.");
 }
 
 void Shutdown()
 {
-    Logger::Log("Shutdown → début (ordre inverse)...");
+    Logger::info("Shutdown → début (ordre inverse)...");
     // SceneManager::Get().Shutdown();
     // Renderer::Get().Shutdown();
     // ResourceManager::Get().Shutdown();
     // Window::Get().Shutdown();
-    Logger::Log("Shutdown → terminé.");
+    Logger::info("Shutdown → terminé.");
     Logger::Shutdown();   // Logger en dernier — toujours
 }
 ```

@@ -1,0 +1,30 @@
+{
+  "_comment": "LibraryV3 — Configuration moteur (engine.json)",
+  "_version": "1.0.0",
+
+  "renderer": {
+    "rasterizer": true,
+    "raycaster": false,
+    "tile_size": 64,
+    "max_bounces": 10,
+    "shadow_bias": 0.0001,
+    "alpha_thresh": 0.5,
+    "multithread": true
+  },
+
+  "features": {
+    "shadows": true,
+    "fog": false,
+    "wireframe": false,
+    "stats": true,
+    "raycast": true
+  },
+
+  "resources": {
+    "assets": "assets/",
+    "mesh": "assets/meshes/",
+    "scene": "assets/graphscene/"
+  },
+
+  "debug": { "depthDisplayRange": 80.0 }
+}

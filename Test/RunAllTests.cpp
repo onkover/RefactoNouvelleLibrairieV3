@@ -36,7 +36,7 @@ namespace LV3::Tests
     static void Run(const char* name, bool (*fn)())
     {
         const bool ok = fn();
-        Logger::log(std::string(ok ? "\033[32m  [OK]   \033[0m"
+        Logger::info(std::string(ok ? "\033[32m  [OK]   \033[0m"
             : "\033[31m  [ECHEC]\033[0m") + name);
         if (!ok) ++s_failures;
     }
@@ -99,7 +99,7 @@ namespace LV3::Tests
         DebugDumpControllers(registry);
         CheckControllerExclusivity(registry);
 
-        Logger::log("=== Tests de non-regression ===");
+        Logger::info("=== Tests de non-regression ===");
         s_failures = 0;
 
         Run("Winding — face avant = aire raster negative", Test_FrontFaceSign);
@@ -107,7 +107,7 @@ namespace LV3::Tests
         Run("Clipper — winding preserve", Test_ClipPreservesWinding);
         Run("Coverage — ni fissure ni doublon apres clip", Test_ClipCoverage_NoCrackNoOverlap);
 
-        Logger::log(s_failures == 0
+        Logger::info(s_failures == 0
             ? "\033[32m=== Tous les tests passent ===\033[0m"
             : "\033[31m=== " + std::to_string(s_failures) + " echec(s) ===\033[0m");
         return s_failures == 0;

@@ -6,7 +6,7 @@ namespace LV3::Tests
 {
     void DebugDumpControllers(Registry& reg)
     {
-        Logger::log("=== Controleurs de camera ===");
+        Logger::info("=== Controleurs de camera ===");
         for (auto&& [e, cam] : reg.ViewGroup<CameraComponent>())
         {
             const std::string n = reg.TryGet<NameComponent>(e)
@@ -15,7 +15,7 @@ namespace LV3::Tests
             const auto* fps = reg.TryGet<FPSControllerComponent>(e);
             const auto* follow = reg.TryGet<CameraFollowComponent>(e);
 
-            Logger::log("  " + n
+            Logger::info("  " + n
                 + " | active=" + std::to_string(cam.m_isActive)
                 + " prio=" + std::to_string(cam.m_priority)
                 + " | FPS=" + (fps ? (fps->m_isEnabled ? "ON" : "OFF") : "ABSENT")

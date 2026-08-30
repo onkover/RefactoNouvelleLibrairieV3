@@ -112,7 +112,7 @@ namespace LV3::Tests
 
         const bool ok = (wrongLeft == 0 && wrongRight == 0 && empty == 0);
 
-        Logger::log(std::string("[DEPTH] ordre=") + (aFirst ? "A,B" : "B,A")
+        Logger::info(std::string("[DEPTH] ordre=") + (aFirst ? "A,B" : "B,A")
             + "  gauche_faux=" + std::to_string(wrongLeft)
             + "  droite_faux=" + std::to_string(wrongRight)
             + "  vides=" + std::to_string(empty)

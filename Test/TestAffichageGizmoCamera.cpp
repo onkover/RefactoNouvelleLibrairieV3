@@ -64,7 +64,7 @@ namespace LV3::Tests
     //        if (!vd) continue;   // camera non rendue cette frame : rien a comparer
 
     //        //const auto& cam = registry.getComponent<CameraComponent>(giz.m_owner);
-    //        //Logger::log("--- gizmo owner=" + std::to_string(giz.m_owner)
+    //        //Logger::info("--- gizmo owner=" + std::to_string(giz.m_owner)
     //        //    + " fov=" + std::to_string(cam.m_fovYDeg)
     //        //    + " L=" + std::to_string(giz.m_length)
     //        //    + " scale=(" + std::to_string(trGiz.m_local.scale.x) + ", "
@@ -84,7 +84,7 @@ namespace LV3::Tests
     //            const Vec3f world{ w4.x, w4.y, w4.z };
     //            const Vec4f clip = MulRow(vd->viewProjectionMatrix, world);
 
-    //            //Logger::log("    ndcX=" + std::to_string(clip.x / clip.w)
+    //            //Logger::info("    ndcX=" + std::to_string(clip.x / clip.w)
     //            //    + "  ndcY=" + std::to_string(clip.y / clip.w)
     //            //    + "  clipW=" + std::to_string(clip.w));
 
@@ -136,7 +136,7 @@ namespace LV3::Tests
 
     //        if (!vd) continue;   // camera non rendue cette frame : rien a comparer
 
-    //        //Logger::log("  proj=" + std::string(cam.m_projection == EProjectionType::Orthographic
+    //        //Logger::info("  proj=" + std::string(cam.m_projection == EProjectionType::Orthographic
     //        //    ? "ORTHO" : "PERSP")
     //        //    + "  meshId=" + std::to_string(mcGiz.m_meshHandle.id)
     //        //    + "  wantId=" + std::to_string(assets.For(cam.m_projection).id)
