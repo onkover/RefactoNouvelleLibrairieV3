@@ -215,16 +215,15 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
-//	std::cout << "\n\033[32m=== Lecture du scenegraph ===\033[0m" << std::endl;
 	Logger::info(" === Lecture du scenegraph ===");
 
 	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
 	{
-		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, cfg.mapAssets["scene_test"].path, registry, activeCamera, rm);
+		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_test"].object;
+		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, pathScene, registry, activeCamera, rm);
 		if (!success)
 		{
 			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");
-//			std::cerr << "\033[31mImpossible de construire la scène. Arrêt du programme.\033[0m" << std::endl;
 			return -1;
 		}
 	}
@@ -233,28 +232,25 @@ int main(int argc, char* argv[])
 		Logger::error("Impossible de retrouver le scene graph. Arrêt du programme.\n");
 		return -1;
 	}
+
+	/************************************************************
+	Paramétrage des gizmo des camera
+	************************************************************/
 	GizmoAssets GizAssets;
 	if (cfg.mapAssets.find("gizmo_perspective") != cfg.mapAssets.end() && cfg.mapAssets.find("gizmo_ortho") != cfg.mapAssets.end())
 	{
-		 GizAssets = LoadGizmoAssets(rm, cfg.mapAssets["gizmo_perspective"].path, cfg.mapAssets["gizmo_ortho"].path);
+		std::string gizmoPerspect = LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_perspective"].object;
+		std::string gizmoOrtho = LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_ortho"].object;
+
+		 GizAssets = LoadGizmoAssets(rm, gizmoPerspect, gizmoOrtho);
 		if (GizAssets.IsValid())
 			SpawnCameraGizmos(registry, GizAssets);
 		else
-			Logger::warn("[Gizmo] assets absents : aucun gizmo de camera ne sera affiche\n");
+			Logger::warn("[Gizmo] assets absents : aucun gizmo de camera ne sera affiché\n");
 
-		// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
-#ifdef _DEBUG
-		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
-
-		// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
-		Logger::info("Structure finale du Scene Graph :");
-		DebugDisplaySystem(registry);
-
-		if (!LV3::Tests::RunAllTests(registry)) return -1;
+	#ifdef _DEBUG
 		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
-
-		//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
-#endif
+	#endif
 
 	}
 	else
@@ -264,8 +260,15 @@ int main(int argc, char* argv[])
 	}
 
 
-
-
+	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
+	// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
+#ifdef _DEBUG
+	Logger::info("Structure finale du Scene Graph :");
+	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
+	DebugDisplaySystem(registry);
+	if (!LV3::Tests::RunAllTests(registry)) return -1;
+	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+#endif
 
 	
 	// ═══ Initialisation, une seule fois ═══
@@ -295,9 +298,7 @@ int main(int argc, char* argv[])
 	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
 
-
 	SetMouseCapture(true);
-//	SDL_SetRelativeMouseMode(SDL_TRUE); 
 
 	pitch = 0;
 	int frameCount = 0;
@@ -310,6 +311,7 @@ int main(int argc, char* argv[])
 	ViewData      views[4];
 	Renderer renderer;
 
+	// Rendu pour chaque viewport
 	const ViewSlot slots[] = 
 	{
 		{ camActive,   ERenderMode::Solid     },
@@ -379,18 +381,13 @@ int main(int argc, char* argv[])
 
 #endif
 
-		// --- UN seul verrou, UN seul effacement ---
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
-
-			//fb.Bind(ptrScreen, pitch, WinW, WinH);
 			fb.Bind(ptrScreen, pitch,FrameW, FrameH);
 			fb.Clear(MakeColor(0, 0, 24));
-
-			// --- Plusieurs rendus dans le MÊME buffer ---
-			renderer.BeginFrame(fb, db); //
-
-			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait l'afficher à la place des couleurs
+			
+			renderer.BeginFrame(fb, db);		// --- Plusieurs rendus dans le MÊME buffer ---
+			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs
 
 			// --- recontruit les viewport et dessine les triangle
 			for (size_t i = 0; i < nViews; ++i)
@@ -423,7 +420,7 @@ int main(int argc, char* argv[])
 			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
 		}
 
-		//SDL_RenderClear(renderer_sdl);
+		//SDL_RenderClear(SDLrenderer);
 		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
 		SDL_RenderPresent(SDLrenderer);
 

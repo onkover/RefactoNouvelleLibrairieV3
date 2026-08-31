@@ -2,9 +2,10 @@
 #include <string>
 #include <unordered_map>
 
+// Définition des structures de données pour "unordered_map"
 struct AssetStruct {
 	std::string type;
-	std::string path;
+	std::string object;
 };
 
 struct ViewportStruct {
@@ -19,10 +20,6 @@ struct config
 	std::string repGfxDefault="";
 
 	int screenWidth=0, screenHeight=0;
-
-	//std::string GizmoMeshPersective = "";
-	//std::string GizmoMeshOrthographiq = "";
-	//std::string GraphSceneName = "";
 
 	std::unordered_map<std::string, AssetStruct> mapAssets;
 	std::unordered_map<std::string, ViewportStruct> mapViewports;

@@ -1,11 +1,10 @@
 #include "pch.h"          // ← première ligne, toujours
 #include "Core/Logger.h"
-
-#include "../ressources/json.hpp"
 #include "ConfigManager.h"
 #include "Registry/RegistryHelper.h"
 #include <fstream>
 #include <unordered_map>
+#include "core/JsonReader.h"
 
 using namespace LV3;
 
@@ -27,23 +26,8 @@ using namespace LV3;
 
 
     //************************************************************
-    using json = nlohmann::json;
+    using nlo_json = nlohmann::json;
 
-
-    // 2. Binding automatique avec nlohmann/json
-    // Associe automatiquement les champs "nom", "largeur" et "hauteur" du JSON
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-        ViewportStruct,
-        nom,
-        largeur,
-        hauteur)
-
-    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
-        AssetStruct,
-        type,
-        path)
-
-//    bool ProgrammeConfig(const std::string& path, std::string& repObjDefault, std::string& repGfxDefault)
     bool ProgrammeConfig(const std::string& path, config& cfg)
     {
         namespace fs = std::filesystem;
@@ -56,25 +40,30 @@ using namespace LV3;
         }
 
         // 2. Parser le JSON
-        json root;
+        nlo_json root;
         try
         {
             file >> root;
         }
-        catch (const json::parse_error& e)
+        catch (const nlo_json::parse_error& e)
         {
             Logger::error(std::string("Config — JSON malformé : ") + e.what());
             return false;
         }
-        
+
+        JsonReader r(root, "Programme", path);
+
         try
         {
-            // Lecture sécurisée avec valeurs par défaut si la clé est absente
-            cfg.repObjDefault = root["configuration"].value("REP_OBJ_DEFAULT", "G:\\Projects Visual Studio\\OBJ\\");
-            cfg.repGfxDefault = root["configuration"].value("REP_GFX_DEFAULT", "G:\\Projects Visual Studio\\Graphs\\");
+            JsonReader rr = r.Child("configuration");
 
+            // Lecture sécurisée avec valeurs par défaut si la clé est absente
+            cfg.repObjDefault = rr.Read("REP_OBJ_DEFAULT", std::string("G:\\Projects Visual Studio\\OBJ\\"));
+            cfg.repGfxDefault = rr.Read("REP_GFX_DEFAULT", std::string("G:\\Projects Visual Studio\\Graphs\\"));
+
+            rr.WarnUnread();
         }
-        catch (const json::exception& e) {
+        catch (const nlo_json::exception& e) {
             Logger::error(std::string("Erreur lors du parsing JSON des répertoires des assets ") + e.what());
             return false;
         }
@@ -82,10 +71,12 @@ using namespace LV3;
         try
         {
             // lecture de la raille de l'écran
-            cfg.screenWidth = root["screen"].value("width", 1920); // 1920 par défaut si manquant
-            cfg.screenHeight = root["screen"].value("height", 1080); // 1080 par défaut si manquant
+            JsonReader rr = r.Child("screen");
+            cfg.screenWidth = rr.Read("width", 1920);
+            cfg.screenHeight = rr.Read("height", 1080);            
+            rr.WarnUnread();
         }
-        catch (const json::exception& e) 
+        catch (const nlo_json::exception& e)
         {
             Logger::error(std::string("Erreur lors du parsing JSON de la taille de l'écran : ") + e.what());
             return false;
@@ -93,75 +84,78 @@ using namespace LV3;
 
         try
         {
-            //for (const auto& item : root["assets"]) {
-            //    AssetStruct vp = item.get<AssetStruct>(); // Utilise la macro automatique
-            //    cfg.mapAssets[vp.type] = vp;
-            //}
-            
-            auto assetsMap = root["assets"].get<std::unordered_map<std::string, AssetStruct>>();
-            cfg.mapAssets = assetsMap;
-            std::cout << "=== Assets charges (" << cfg.mapAssets.size() << ") ===\n\n";
-            
-            // --- 1. Parcours de tous les assets ---
-            for (const auto& [id, AssetGroup] : cfg.mapAssets) {
-                std::cout << "ID   : " << id << "\n"
-                    << "Type : " << AssetGroup.type << "\n"
-                    << "Path : " << AssetGroup.path << "\n"
-                    << "-----------------------\n";
-            }
+            if (r.Has("assets"))
+            {
+                JsonReader ra = r.Child("assets");
+                ra.ForEachChild([&](const std::string& id, LV3::JsonReader entry)
+                {
+                    AssetStruct a;
+                    a.type = entry.Read("type", std::string{});
+                    a.object = entry.Read("object", std::string{});
 
-            // Lecture sécurisée avec valeurs par défaut si la clé est absente
-            //cfg.GizmoMeshPersective = root["GizmoMeshPersective"];
-            //cfg.GizmoMeshOrthographiq = root["GizmoMeshOrthographiq"];
-            //cfg.GraphSceneName = root["GraphSceneName"];
+                    if (a.type.empty() || a.object.empty())
+                        Logger::warn("[Assets] '" + id + "' : 'type' ou 'object' manquant — entree ignoree");
+                    // pas de doublon ici, le parsing du json écrase la clé déjà existeante
+                    //else if (cfg.mapAssets.contains(id))
+                    //    Logger::warn("[Assets][" + id + "] nom '" + id + "' deja utilise, ignore");
+                    else
+                        cfg.mapAssets.emplace(id, std::move(a));
+
+                    entry.WarnUnread();   // detecte une faute de frappe DANS cette entree ("objet" au lieu de "object")
+                });
+                
+                Logger::success("=== Chargement des Assets : " + std::to_string(cfg.mapAssets.size()) + " assets chargés ===");
+                //// --- 1. Parcours de tous les assets ---
+                //for (const auto& [id, AssetGroup] : cfg.mapAssets) {
+                //    std::cout << "ID   : " << id << "\n"
+                //        << "Type : " << AssetGroup.type << "\n"
+                //        << "object : " << AssetGroup.object << "\n"
+                //        << "-----------------------\n";
+                //}
+            }                  
         }
-        catch (const json::exception& e) {
+        catch (const nlo_json::exception& e) {
             std::cerr << "Erreur lors du parsing JSON du gizmo ou de lien du scènegraph: " << e.what() << std::endl;
        }
 
-
-        int b = 0;
         try
         {
-            for (const auto& item : root["viewports"]) {
-                ViewportStruct vp = item.get<ViewportStruct>(); // Utilise la macro automatique
-                cfg.mapViewports[vp.nom] = vp;
-            }
-            std::cout << "=== Chargement reussi : " << cfg.mapViewports.size() << " viewports detectes ===\n\n";
 
-            // Parcours pour configurer chaque viewport
-            int width = 0, height = 0;
-            for (const auto& [nom, vp] : cfg.mapViewports)
+            if (r.Has("viewports"))
             {
-                std::cout << "[Configuration] Viewport '" << nom << "' -> Dimensions : " << vp.largeur << "x" << vp.hauteur << "\n";
-                //width += vp.largeur;
-                //height += vp.hauteur;
-            }
+                JsonReader rv = r.Child("viewports");
+                rv.ForEachElement([&](std::size_t index, LV3::JsonReader elem)
+                    {
+                        ViewportStruct v;
+                        v.nom = elem.Read("nom", std::string{});
+                        v.largeur = elem.Read("largeur", 0);
+                        v.hauteur = elem.Read("hauteur", 0);
 
-            //LV3_ASSERT(width == cfg.screenWidth && height == cfg.screenHeight);
+                        if (v.nom.empty() || v.largeur <= 0 || v.hauteur <= 0)
+                            Logger::warn("[Viewports][" + std::to_string(index) + "] entree invalide, ignoree");
+                        else if (cfg.mapViewports.contains(v.nom))
+                            Logger::warn("[Viewports][" + std::to_string(index) + "] nom '" + v.nom + "' deja utilise, ignore");
+                        else
+                            cfg.mapViewports.emplace(v.nom, std::move(v));
 
-                // Exemple : Appliquer les parametres dans ton moteur graphiques/IHM
-                // configurerViewport(vp.nom, vp.largeur, vp.hauteur);
+                        elem.WarnUnread();   // detecte une faute de frappe DANS cette entree ("objet" au lieu de "object")
+                    });
 
-                //// Accès direct rapide par clé :
-                //if (cfg.mapViewports.find("titre") != cfg.mapViewports.end()) {
-                //    std::cout << "\nLe viewport 'titre' existe, sa hauteur est : "
-                //        << cfg.mapViewports["titre"].hauteur << "px\n";
+                Logger::success("=== Chargement des viewports : " + std::to_string(cfg.mapViewports.size()) + " viewports detectes ===");
+                //int width = 0, height = 0;
+                //for (const auto& [nom, vp] : cfg.mapViewports)
+                //{
+                //    std::cout << "[Configuration] Viewport '" << nom << "' -> Dimensions : " << vp.largeur << "x" << vp.hauteur << "\n";
                 //}
 
-                    // Accès direct rapide par clé :
-                /*if (cfg.mapViewports.find("titre") != cfg.mapViewports.end()) {
-                    std::cout << "\nLe viewport 'titre' existe, sa hauteur est : "
-                        << cfg.mapViewports["titre"].hauteur << "px\n";
-                }*/
-
-            //}
+            }
 
         }
-        catch (const json::exception& e) {
+        catch (const nlo_json::exception& e) {
             std::cerr << "Erreur lors du parsing JSON des viewport: " << e.what() << std::endl;
         }
 
+        r.WarnUnread();
         return true;
     }
 
