@@ -293,7 +293,7 @@ int main(int argc, char* argv[])
 
 
 	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Overview_Camera");// Top_Camera");
+	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
 
 
 	SetMouseCapture(true);
@@ -328,12 +328,12 @@ int main(int argc, char* argv[])
 
 		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, deltaTime);
-		FPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
+		CameraFPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
+		CameraZoomSystem(registry, input, deltaTime);
 
 		// --- L'association : AUCUNE matrice lue ici.
 		const size_t nViews = BuildCameraBindings(ELayout::MainSide, slots, std::size(slots), FrameW, FrameH, bindings, std::size(bindings));
-
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);

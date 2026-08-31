@@ -15,6 +15,7 @@ namespace LV3::Tests
     void TestF1_EntityVersioning();
     void TestF5_ResourceManager_UnloadMesh();
     int RunAllCameraMathTests();
+    void TestCameraZoom();
     int TestProjection();
     int TestMatrixLib();
     bool Test_TopLeftRule_NoDoubleCoverage();
@@ -46,12 +47,10 @@ namespace LV3::Tests
         TestF1_EntityVersioning();
         TestF5_ResourceManager_UnloadMesh();
         RunAllCameraMathTests();
+        TestCameraZoom();
         TestProjection();
         TestMatrixLib();
         TestFrontFaceSign();
-
-
-
 
         if (!Test_Depth_CrossingTriangles())
         {
