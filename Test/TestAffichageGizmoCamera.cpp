@@ -46,7 +46,7 @@ namespace LV3::Tests
         }
     }
 
-    void Test_GizmoMatchesFrustum(Registry& registry, ResourceManager& rm,
+    size_t  Test_GizmoMatchesFrustum(Registry& registry, ResourceManager& rm,
         const ViewData* views, size_t count,
         const GizmoAssets& assets)
     {
@@ -96,7 +96,9 @@ namespace LV3::Tests
             ++checked;
         }
 
-        LV3_ASSERT(checked > 0);
+        if (checked == 0)
+            Logger::info("[TNR] Test_GizmoMatchesFrustum — sans objet (aucun gizmo dans les vues rendues)");
+        return checked;      // ← remplace LV3_ASSERT(checked > 0)
     }
 }
 

@@ -1,0 +1,248 @@
+{
+  "sceneName": "Système Solaire — ordre mélangé (TNR Leçon 06 / bug 40)",
+  "_note": "MÊMES noeuds que solar_system.json, mais les ENFANTS sont déclarés AVANT leurs parents. La hiérarchie produite doit être STRICTEMENT identique à celle du fichier original (R26 : le chargeur est invariant par permutation des noeuds). Chemins mesh corrigés en assets/Meshes/ (bug 42). Top_Camera ajoutée : concession temporaire au bug 46 (main.cpp la cherche par nom) — retirée en P1.",
+  "nodes": [
+    {
+      "id": "Moon",
+      "parent": "Earth",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ 2.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.27, 0.27, 0.27 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "orbitalSpeed": 12.0,
+          "rotationSpeed": 0.5
+        }
+      }
+    },
+    {
+      "id": "Phobos",
+      "parent": "Mars",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ 1.2, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.1, 0.1, 0.1 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "orbitalSpeed": 30.0
+        }
+      }
+    },
+    {
+      "id": "Deimos",
+      "parent": "Mars",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [ -1.8, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 0.08, 0.08, 0.08 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "orbitalSpeed": 20.0
+        }
+      }
+    },
+    {
+      "id": "Earth",
+      "parent": "Sun-Pivot",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [ 15.0, 0.0, 0.0 ],
+          "rotation": [ 23.4, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "orbitalSpeed": 1.0,
+          "rotationSpeed": 5.0
+        }
+      }
+    },
+    {
+      "id": "Mars",
+      "parent": "Sun-Pivot",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [ 25.0, 0.0, 0.0 ],
+          "rotation": [ 25.19, 0.0, 0.0 ],
+          "scale": [ 0.53, 0.53, 0.53 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "orbitalSpeed": 0.8,
+          "rotationSpeed": 4.8
+        }
+      }
+    },
+    {
+      "id": "Sun-etoile",
+      "parent": "Sun-Pivot",
+      "type": "Etoile",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 5.0, 5.0, 5.0 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere 10 faces.obj",
+          "rotationSpeed": 0.05
+        },
+        "Light": {
+          "type": "Point",
+          "color": [ 1.0, 0.9, 0.7 ],
+          "intensity": 2.0
+        }
+      }
+    },
+    {
+      "id": "Sun_Danger_Zone",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "scale": [ 5.0, 5.0, 5.0 ]
+        },
+        "Trigger": {
+          "radius": 100.0
+        }
+      }
+    },
+    {
+      "id": "Sun-Danger-zone",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ]
+        },
+        "Trigger": {
+          "radius": 100.0,
+          "onEnterEvent": "STARTED_TAKING_DAMAGE",
+          "onStayEvent": "TAKING_DAMAGE",
+          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+        }
+      }
+    },
+    {
+      "id": "Player_Ship",
+      "parent": "Sun-Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 8.0, 0.0, 0.0 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/cube.obj",
+          "orbitalSpeed": 2.5,
+          "rotationSpeed": 0
+        },
+        "Trigger": {
+          "radius": 0.5
+        },
+        "Health": {
+          "maxHealth": 100
+        },
+        "PlayerControl": {
+          "speed": 0.5
+        }
+      }
+    },
+    {
+      "id": "FPS_Camera",
+      "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 40.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "active": true,
+          "priority": 10
+        },
+        "CameraFPS": {
+          "enabled": true,
+          "moveSpeed": 15.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": false,
+          "pitchLimit": 89.0
+        }
+      }
+    },
+    {
+      "id": "Follow_Camera",
+      "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "active": false,
+          "priority": 5
+        },
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Earth",
+          "offset": [ 0.0, 5.0, -35.0 ],
+          "smoothSpeed": 5.0,
+          "lookAtHeight": 0.0
+        }
+      }
+    },
+    {
+      "id": "Top_Camera",
+      "_note": "Concession au bug 46 : main.cpp cherche 'Top_Camera' en dur. Sera supprimée quand les viewports seront pilotés par la scène (P1).",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 120.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 300.0,
+          "active": false,
+          "priority": 0
+        }
+      }
+    },
+    {
+      "id": "Sun-Pivot",
+      "_note": "LA RACINE, déclarée EN DERNIER — c'est tout l'objet du test.",
+      "type": "Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Light": {
+          "type": "Point",
+          "color": [ 1.0, 0.9, 0.7 ],
+          "intensity": 2.0
+        }
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 // Gestion du scenegraph
 #include "Scene/Registry.hpp"
 #include "Core/EventBus.hpp"
-#include "Scene/SceneGraph.hpp"
+//#include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 

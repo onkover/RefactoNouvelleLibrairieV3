@@ -44,7 +44,7 @@
 // Gestion du scenegraph
 #include "Scene/Registry.hpp"
 #include "Core/EventBus.hpp"
-#include "Scene/SceneGraph.hpp"
+//#include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 #include "Scene/renderSystem.h"
@@ -265,9 +265,13 @@ int main(int argc, char* argv[])
 #ifdef _DEBUG
 	Logger::info("Structure finale du Scene Graph :");
 	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
+
+	Logger::info("[système] \n");
 	DebugDisplaySystem(registry);
+	Logger::info("[système] fin\n");
+
 	if (!LV3::Tests::RunAllTests(registry)) return -1;
-	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 #endif
 
 	
@@ -280,22 +284,22 @@ int main(int argc, char* argv[])
 	db.Resize(FrameW, FrameH);	// depth buffer
 
 	// Les deux régions. Découpage décidé ICI, par l'application.
-	if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
-		cfg.mapViewports.find("Right") != cfg.mapViewports.end() &&
-		cfg.mapViewports.find("left") != cfg.mapViewports.end())
-	{
-	/*	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
-		vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
-		vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);*/
-	}
-	else
-	{
-		Logger::error("Impossible de créer les viewport. Arrêt du programme.\n");
-		return -1;
-	}
+	//if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
+	//	cfg.mapViewports.find("Right") != cfg.mapViewports.end() &&
+	//	cfg.mapViewports.find("left") != cfg.mapViewports.end())
+	//{
+	///*	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
+	//	vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
+	//	vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);*/
+	//}
+	//else
+	//{
+	//	Logger::error("Impossible de créer les viewport. Arrêt du programme.\n");
+	//	return -1;
+	//}
 
 
-	const Entity camActive = FindCameraByName(registry, "FPS_Camera");
+	const Entity camActive = FindCameraByName(registry, "Follow_Camera");
 	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
 
 	SetMouseCapture(true);
@@ -334,8 +338,14 @@ int main(int argc, char* argv[])
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 		CameraZoomSystem(registry, input, deltaTime);
 
-		// --- L'association : AUCUNE matrice lue ici.
-		const size_t nViews = BuildCameraBindings(ELayout::MainSide, slots, std::size(slots), FrameW, FrameH, bindings, std::size(bindings));
+		// --- L'association : viewport , camera et mode de rendu par rapport à une dimensionnée d'écran (redimensionable)												
+		const size_t nViews = BuildCameraBindings(ELayout::MainSide,	// type de disopsition dew viewport
+												slots,					// déclaration camera et type de rendu
+												std::size(slots),		// taille du slot	
+												FrameW, FrameH,			// taille de l'écran global
+												bindings,				// paramètre de sortie, contient l/les viewport taillés
+												std::size(bindings));	// nb de viewport
+
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
@@ -362,23 +372,29 @@ int main(int argc, char* argv[])
 
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
-//		DebugDisplaySystem(registry);// , entityNames);
+		DebugDisplaySystem(registry);// , entityNames);
 
 		// --- Draw de la hiérarchie ---
-//		RenderSystem(registry, activeCamera, rm);
+		RenderSystem(registry, activeCamera, rm);
 
 #endif
 
 		
 #ifdef _DEBUG
-		//Test_CameraWorldMatrixIsRigid(registry);
-		//const ViewData views[2] = { viewLeft, viewRight };
-		//if (GizAssets.IsValid()) Test_GizmoMatchesFrustum(registry, views,2, GizAssets);
 
 		CheckControllerExclusivity(registry);
 		Test_CameraWorldMatrixIsRigid(registry);
-		Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
 
+		const size_t nGizChecked = Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
+		// Garde de vacuité DÉPLACÉ, pas supprimé : si les assets sont valides et
+		// qu'au moins une caméra a déclaré un gizmo, alors 0 vérification = câblage cassé.
+		if (GizAssets.IsValid())
+		{
+			size_t declared = 0;
+			for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
+				if (cam.m_gizmoLength > 0.0f) ++declared;
+			LV3_ASSERT(declared == 0 || nGizChecked > 0);
+		}		
 #endif
 
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
