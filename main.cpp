@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
 	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
 	{
 		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_test"].object;
-		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, pathScene, registry, activeCamera, rm);
+		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, pathScene, registry, rm);// activeCamera, rm);
 		if (!success)
 		{
 			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");
@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
 	Logger::info("[système] fin\n");
 
 	if (!LV3::Tests::RunAllTests(registry)) return -1;
-	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 #endif
 
 	
@@ -299,8 +299,12 @@ int main(int argc, char* argv[])
 	//}
 
 
-	const Entity camActive = FindCameraByName(registry, "Follow_Camera");
-	const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
+	//const Entity camActive = FindCameraByName(registry, "Follow_Camera");
+	//const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
+
+
+
+
 
 	SetMouseCapture(true);
 
@@ -316,11 +320,11 @@ int main(int argc, char* argv[])
 	Renderer renderer;
 
 	// Rendu pour chaque viewport
-	const ViewSlot slots[] = 
-	{
-		{ camActive,   ERenderMode::Solid     },
-		{ camOverview, ERenderMode::Wireframe },
-	};
+	//const ViewSlot slots[] = 
+	//{
+	//	{ camActive,   ERenderMode::Solid     },
+	//	{ camOverview, ERenderMode::Wireframe },
+	//};
 
 	while (g_running == true)
 	{
@@ -338,10 +342,40 @@ int main(int argc, char* argv[])
 		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
 		CameraZoomSystem(registry, input, deltaTime);
 
+
+
+
+		// --- Élection par frame : la scène dit QUI et dans quel ORDRE ---
+		Entity cams[4];
+		const size_t nCams = CollectActiveCameras(registry, cams, std::size(cams));
+		if (nCams == 0)
+		{
+			Logger::error("Aucune caméra active dans la scène — rien à rendre.");
+			g_running = false;                 // arrêt propre, pas un assert dans les entrailles
+			break;
+		}
+		const Entity activeCamera = cams[0];   // LA vérité — le gizmo surligne celle-ci
+
+		// --- L'EXE dit OÙ et COMMENT : modes par PANNEAU, pas par caméra ---
+		static constexpr ERenderMode paneModes[] = { ERenderMode::Solid, ERenderMode::Wireframe };
+
+		const size_t nSlots = std::min(nCams, std::size(paneModes));
+		if (nCams > nSlots)
+			Logger::warn("[Layout] " + std::to_string(nCams - nSlots) + " caméra(s) active(s) sans panneau — ignorée(s)");
+
+		ViewSlot slots[4];
+		for (size_t i = 0; i < nSlots; ++i)
+			slots[i] = { cams[i], paneModes[i] };
+
+
+		const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
+
+
+
 		// --- L'association : viewport , camera et mode de rendu par rapport à une dimensionnée d'écran (redimensionable)												
-		const size_t nViews = BuildCameraBindings(ELayout::MainSide,	// type de disopsition dew viewport
+		const size_t nViews = BuildCameraBindings(layout,	// type de disopsition dew viewport
 												slots,					// déclaration camera et type de rendu
-												std::size(slots),		// taille du slot	
+												nSlots,		// taille du slot	
 												FrameW, FrameH,			// taille de l'écran global
 												bindings,				// paramètre de sortie, contient l/les viewport taillés
 												std::size(bindings));	// nb de viewport
