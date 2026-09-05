@@ -82,6 +82,8 @@ int pendingW,pendingH;				// Sauvegarde des dimensions de l'écran modifié lors
 // État global de la boucle
 
 bool g_mouseCaptured = true;
+static bool g_cycleCam[2] = { false, false };   // [0]=gameplay, [1]=debug
+static bool g_cycleMode[2] = { false, false };
 
 static void SetMouseCapture(bool captured)
 {
@@ -126,6 +128,10 @@ LV3::InputState BuildInputState()
 				case SDL_SCANCODE_F1:
 					SetMouseCapture(!g_mouseCaptured);      // libère / recapture la souris
 					break;
+				case SDL_SCANCODE_F2: g_cycleCam[0] = true; break;   // caméra du panneau jeu
+				case SDL_SCANCODE_F3: g_cycleMode[0] = true; break;   // mode du panneau jeu
+				case SDL_SCANCODE_F4: g_cycleCam[1] = true; break;   // caméra du panneau debug
+				case SDL_SCANCODE_F5: g_cycleMode[1] = true; break;   // mode du panneau debug
 				case SDL_SCANCODE_C:
 					in.toggleCameraMode = true;          // front montant
 					break;
@@ -160,6 +166,30 @@ LV3::InputState BuildInputState()
 	in.sprint = k[SDL_SCANCODE_LSHIFT];
 
 	return in;
+}
+
+
+struct Panel
+{
+	ECameraCategory category;   // qui candidate ici — politique de l'appli
+	Entity          camera;     // sélection COURANTE — état de session
+	ERenderMode     mode;       // mode de rendu COURANT — état de session
+};
+
+Panel panels[2] =
+{
+	{ ECameraCategory::Gameplay, NULL_ENTITY, ERenderMode::Solid     },
+	{ ECameraCategory::Debug,    NULL_ENTITY, ERenderMode::Wireframe },
+};
+
+static ERenderMode NextRenderMode(ERenderMode m)
+{
+	switch (m)
+	{
+	case ERenderMode::Solid:     return ERenderMode::Wireframe;
+	case ERenderMode::Wireframe: return ERenderMode::Depth;
+	default:                     return ERenderMode::Solid;
+	}
 }
 
 //**********************************************
@@ -346,40 +376,71 @@ int main(int argc, char* argv[])
 
 
 		// --- Élection par frame : la scène dit QUI et dans quel ORDRE ---
-		Entity cams[4];
-		const size_t nCams = CollectActiveCameras(registry, cams, std::size(cams));
-		if (nCams == 0)
+		//Entity cams[4];
+		//const size_t nCams = CollectActiveCameras(registry, cams, std::size(cams));
+		//if (nCams == 0)
+		//{
+		//	Logger::error("Aucune caméra active dans la scène — rien à rendre.");
+		//	g_running = false;                 // arrêt propre, pas un assert dans les entrailles
+		//	break;
+		//}
+		//const Entity activeCamera = cams[0];   // LA vérité — le gizmo surligne celle-ci
+
+		//// --- L'EXE dit OÙ et COMMENT : modes par PANNEAU, pas par caméra ---
+		//static constexpr ERenderMode paneModes[] = { ERenderMode::Solid, ERenderMode::Wireframe };
+
+		//const size_t nSlots = std::min(nCams, std::size(paneModes));
+		//if (nCams > nSlots)
+		//	Logger::warn("[Layout] " + std::to_string(nCams - nSlots) + " caméra(s) active(s) sans panneau — ignorée(s)");
+
+		//ViewSlot slots[4];
+		//for (size_t i = 0; i < nSlots; ++i)
+		//	slots[i] = { cams[i], paneModes[i] };
+
+
+		//const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
+
+
+
+		//// --- L'association : viewport , camera et mode de rendu par rapport à une dimensionnée d'écran (redimensionable)												
+		//const size_t nViews = BuildCameraBindings(layout,	// type de disopsition dew viewport
+		//										slots,					// déclaration camera et type de rendu
+		//										nSlots,		// taille du slot	
+		//										FrameW, FrameH,			// taille de l'écran global
+		//										bindings,				// paramètre de sortie, contient l/les viewport taillés
+		//										std::size(bindings));	// nb de viewport
+
+		// --- Sélection : consomme les touches, cicatrise les sélections mortes ---
+		for (int p = 0; p < 2; ++p)
+		{
+			if (g_cycleCam[p]) { panels[p].camera = NextCamera(registry, panels[p].category, panels[p].camera); g_cycleCam[p] = false; }
+			if (g_cycleMode[p]) { panels[p].mode = NextRenderMode(panels[p].mode); g_cycleMode[p] = false; }
+
+			// Validation par frame : la sélection doit être vivante, active, de la bonne catégorie.
+			const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[p].camera);
+			if (!cam || !cam->m_isActive || cam->m_category != panels[p].category)
+				panels[p].camera = NextCamera(registry, panels[p].category, NULL_ENTITY);  // ré-élection
+		}
+
+		// --- Construction des slots : seuls les panneaux pourvus rendent ---
+		ViewSlot slots[2];
+		size_t nSlots = 0;
+		for (int p = 0; p < 2; ++p)
+			if (panels[p].camera != NULL_ENTITY)
+				slots[nSlots++] = { panels[p].camera, panels[p].mode };
+
+		if (nSlots == 0)
 		{
 			Logger::error("Aucune caméra active dans la scène — rien à rendre.");
-			g_running = false;                 // arrêt propre, pas un assert dans les entrailles
+			g_running = false;
 			break;
 		}
-		const Entity activeCamera = cams[0];   // LA vérité — le gizmo surligne celle-ci
 
-		// --- L'EXE dit OÙ et COMMENT : modes par PANNEAU, pas par caméra ---
-		static constexpr ERenderMode paneModes[] = { ERenderMode::Solid, ERenderMode::Wireframe };
-
-		const size_t nSlots = std::min(nCams, std::size(paneModes));
-		if (nCams > nSlots)
-			Logger::warn("[Layout] " + std::to_string(nCams - nSlots) + " caméra(s) active(s) sans panneau — ignorée(s)");
-
-		ViewSlot slots[4];
-		for (size_t i = 0; i < nSlots; ++i)
-			slots[i] = { cams[i], paneModes[i] };
-
+		const Entity activeCamera = (panels[0].camera != NULL_ENTITY)
+			? panels[0].camera : slots[0].m_camera;   // le gizmo surligne la vue de JEU
 
 		const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
-
-
-
-		// --- L'association : viewport , camera et mode de rendu par rapport à une dimensionnée d'écran (redimensionable)												
-		const size_t nViews = BuildCameraBindings(layout,	// type de disopsition dew viewport
-												slots,					// déclaration camera et type de rendu
-												nSlots,		// taille du slot	
-												FrameW, FrameH,			// taille de l'écran global
-												bindings,				// paramètre de sortie, contient l/les viewport taillés
-												std::size(bindings));	// nb de viewport
-
+		const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings, std::size(bindings));
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);

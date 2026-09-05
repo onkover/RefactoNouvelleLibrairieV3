@@ -64,6 +64,7 @@
           "far": 300.0,
           "infiniteFar": false,
           "active": true,
+          "category": "gameplay",
           "priority": 10,
           "gizmo": { "length": 5.0 }
         },
@@ -72,7 +73,8 @@
           "moveSpeed": 15.0,
           "mouseSensitivity": 0.15,
           "lockVertical": false,
-          "pitchLimit": 89.0
+          "pitchLimit": 89.0,
+          "sprintMultiplier": 3.0
         }
       }
     },
@@ -94,6 +96,7 @@
           "infiniteFar": true,
           "active": true,
           "priority": 5,
+          "category": "gameplay",
           "gizmo": { "length": 5.0 }
         },
         "CameraFollow": {
@@ -124,6 +127,7 @@
           "infiniteFar": true,
           "active": true,
           "priority": 0,
+          "category": "debug",
           "gizmo": { "length": 3.0 }
         }
       }
@@ -142,8 +146,10 @@
           "orthoHeight": 120.0,
           "near": 1.0,
           "far": 400.0,
+          "infiniteFar": true,
           "active": true,
           "priority": 0,
+          "category": "debug",
           "gizmo": { "length": 30.0 }
         }
       }

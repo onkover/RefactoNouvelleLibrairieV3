@@ -142,14 +142,16 @@
           "near": 0.1,
           "far": 2000.0,
           "active": true,
-          "priority": 10
+          "priority": 10,
+          "gizmo": { "length": 3.0 }
         },
         "CameraFPS": {
           "enabled": true,
           "moveSpeed": 15.0,
           "mouseSensitivity": 0.15,
           "lockVertical": false,
-          "pitchLimit": 89.0
+          "pitchLimit": 89.0,
+          "sprintMultiplier": 3.0
         }
       }
     },
@@ -167,8 +169,9 @@
           "fov": 45.0,
           "near": 0.1,
           "far": 2000.0,
-          "active": false,
-          "priority": 5
+          "active": true,
+          "priority": 5,
+          "gizmo": { "length": 3.0 }
         },
         "CameraFollow": {
           "enabled": true,
@@ -176,6 +179,108 @@
           "offset": [ 0.0, 5.0, -35.0 ],
           "smoothSpeed": 5.0,
           "lookAtHeight": 0.0
+        }
+      }
+    },
+    {
+      "id": "Overview_Camera",
+      "Notes": "Camera permettant de visualier la scène globale",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 120.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "lens": "fov",
+          "gateFit": "overscan",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 300.0,
+          "infiniteFar": true,
+          "active": true,
+          "priority": 0,
+          "category": "debug",
+          "gizmo": { "length": 3.0 }
+        }
+      }
+    },
+    {
+      "id": "Top_Camera",
+      "_note": "Concession au bug 46 : main.cpp cherche 'Top_Camera' en dur. Sera supprimée quand les viewports seront pilotés par la scène (P1).",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 120.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 300.0,
+          "active": false,
+          "category": "debug",
+          "priority": 0,
+          "gizmo": { "length": 3.0 }
+        }
+      }
+    },
+    {
+      "id": "Top_View",
+      "components": {
+        "Transform": {
+          "translation": [ 0, 120, 0 ],
+          "rotation": [ -90, 0, 0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 500.0,
+          "active": false,
+          "priority": 5,
+          "category": "debug",
+          "gizmo": { "length": 3.0 }
+        }
+      }
+    },
+    {
+      "id": "Side_View",
+      "components": {
+        "Transform": {
+          "translation": [ 120, 0, 0 ],
+          "rotation": [ 0, 90, 0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 500.0,
+          "active": false,
+          "priority": 4,
+          "category": "debug",
+          "gizmo": { "length": 3.0 }
+        }
+      }
+    },
+    {
+      "id": "Bottom_View",
+      "components": {
+        "Transform": {
+          "translation": [ 0, -120, 0 ],
+          "rotation": [ 90, 0, 0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 500.0,
+          "active": false,
+          "priority": 3,
+          "category": "debug",
+          "gizmo": { "length": 3.0 }
         }
       }
     },
@@ -226,24 +331,6 @@
         },
         "PlayerControl": {
           "speed": 0.5
-        }
-      }
-    },
-    {
-      "id": "Overview_Camera",
-      "components": {
-        "Transform": {
-          "translation": [ 0.0, 0.0, 120.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "fov": 60.0,
-          "near": 1.0,
-          "far": 300.0,
-          "active": true,
-          "priority": 0
         }
       }
     }
