@@ -21,6 +21,8 @@ void Init_Render()
 
 void Clean_Render(FrameBuffer& fb)
 {
+	fb.Clear(MakeColor(0, 0, 24));
+
 	//myZBuf->CleandepthBuffer(float(-pFrustum->farClippingPlane));
 //	CleanScreenASM((__m256i*)(fb.frameBuffer()), (fb.Width() >> 3) * (fb.Height()));
 //	CleanScreenV3(fb.m_Pixels, (fb.m_Width >> 3) * (fb.m_Height));frameBuffer

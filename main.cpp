@@ -42,16 +42,13 @@
 #include "helper/ConfigManager.h"
 #include "Core/SimulationClock.h"
 
-// Gestion du scenegraph
 #include "Scene/Registry.hpp"
 #include "Core/EventBus.hpp"
-//#include "Scene/SceneGraph.hpp"
 #include "Scene/system.hpp"
 #include "Scene/Serializer.hpp"
 #include "Scene/renderSystem.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
-//#include "Scene/SpawnCameraGizmos.hpp"
 #include "Scene/DebugGizmos.hpp"
 
 
@@ -71,14 +68,15 @@ bool g_running = true;				// flag de la boucle. Si False, on quitte
 DepthBuffer db;
 FrameBuffer fb;
 Viewport vpLeft, vpRight, vpTitle;
+LV3::SimulationClock _clock;
 
+//**********************************************
+// 
 // Dimension de l'écran
 int FrameW, FrameH;					// dimension de l'écran au cours d'une frame
 bool resizePending = false;			// Inidique si la taille de l'écran évolue pendant le rendu de celui-ci
 int pendingW,pendingH;				// Sauvegarde des dimensions de l'écran modifié lors du rendu. 
 									// Elles seront adaptées après le rendu
-LV3::SimulationClock _clock;
-
 //**********************************************
 // État global de la boucle
 
@@ -144,9 +142,8 @@ LV3::InputState BuildInputState()
 					_clock.Scale(false, shiftHeld); break;   // $
 				case SDL_SCANCODE_P:            
 					_clock.m_paused = !_clock.m_paused; break;
-				case SDL_SCANCODE_0:            
-					_clock.m_timeScale = EngineConfig::Get().simulation.daysPerSecond; break;
-
+				case SDL_SCANCODE_0: 
+					_clock.Reset(); break;
 				case SDL_SCANCODE_C:
 					in.toggleCameraMode = true;          // front montant
 					break;
@@ -241,12 +238,20 @@ int main(int argc, char* argv[])
 	Paramétrage projet
 	************************************************************/
 
+	// --- Paramétrage de l'horloge de simulation ---
+	_clock.Configure(LV3::EngineConfig::Get().simulation);
+
 	// --- SETUP DE LA SCÈNE ---
 	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
 	// C/C++ > Préprocesseur.
 	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
 	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
 
+
+	/************************************************************
+	Paramétrage du scenegraph
+	************************************************************/
+	Logger::info(" === Lecture et paramétrage du scenegraph ===");
 
 	// --- Scenegraph et systèmes ---
 	Registry registry;
@@ -255,12 +260,12 @@ int main(int argc, char* argv[])
 	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
+	CameraBinding bindings[4];
+	ViewData      views[4];
+	Renderer renderer;
 
-	/************************************************************
-	Paramétrage du scenegraph
-	************************************************************/
-	Logger::info(" === Lecture du scenegraph ===");
 
+	// --- Lecture de la scène ---
 	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
 	{
 		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_test"].object;
@@ -303,23 +308,26 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
+	/************************************************************
+	VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT
+	TESTS DE NON-RÉGRESSION — avant toute ressource système
+	************************************************************/
+	#ifdef _DEBUG
+		Logger::info("Structure finale du Scene Graph :");
+		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
-	// --- VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT ---
-	// ── TESTS DE NON-RÉGRESSION — avant toute ressource système ──
-#ifdef _DEBUG
-	Logger::info("Structure finale du Scene Graph :");
-	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
+		Logger::info("[système] Systeme avec matrice vide\n");
+		DebugDisplaySystem(registry);
+		Logger::info("[système] fin\n");
 
-	Logger::info("[système] Systeme avec matrice vide\n");
-	DebugDisplaySystem(registry);
-	Logger::info("[système] fin\n");
+		if (!LV3::Tests::RunAllTests(registry)) return -1;
+	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+	#endif
 
-	if (!LV3::Tests::RunAllTests(registry)) return -1;
-//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
-#endif
-
+	/************************************************************
+	Initialisation, une seule fois
+	************************************************************/
 	
-	// ═══ Initialisation, une seule fois ═══
 	FrameW = cfg.screenWidth;  // Largeur de l'écran
 	FrameH = cfg.screenHeight; // Hauteur de l'écran
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
@@ -332,34 +340,29 @@ int main(int argc, char* argv[])
 	pitch = 0;
 	int frameCount = 0;
 	const int maxFrames = 5; // Arrête la simulation après 100 images
-//	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
 	// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 
-	CameraBinding bindings[4];
-	ViewData      views[4];
-	Renderer renderer;
 
-
+	/************************************************************
+	Initialisation de l'horloge de simulation
+	************************************************************/
 	Uint64 prevCounter = SDL_GetPerformanceCounter();
 	const double counterFreq = static_cast<double>(SDL_GetPerformanceFrequency());
-	_clock.m_timeScale = LV3::EngineConfig::Get().simulation.daysPerSecond;
+	LV3::SimulationClock _clock;
+	
+	// Reglage : lu une fois depuis engine.json, constant ensuite.
+	_clock.Configure(LV3::EngineConfig::Get().simulation);
+	
+	// récupération de la configuration (depuis engine.json) de l'état Frame (change à chaque frame)
+	_clock.m_timeScale = LV3::EngineConfig::Get().simulation.m_timeScale;
+	_clock.m_simTime = LV3::EngineConfig::Get().simulation.m_simTime;
 
-
+	/************************************************************
+	Boucle du jeu
+	************************************************************/
 	while (g_running == true)
 	{
-		//const Uint64 nowCounter = SDL_GetPerformanceCounter();
-		//const float simDt = _clock.Advance(realDt);   // point, et non double-deux-points
-		//prevCounter = nowCounter;
-
-		//// Clamp obligatoire. Sans lui, un point d'arret dans le debogueur produit un dt
-		//// de plusieurs secondes : au retour, la scene bondit de plusieurs annees et tu
-		//// crois avoir un bug de simulation alors que tu as un bug de mesure.
-		//realDt = std::min(realDt, 0.1f);
-		//
-
-		//const float simDt = clock.Advance(realDt);   // point, et non double-deux-points
-
 		// --- Mesure du temps réel écoulé
 		const Uint64 nowCounter = SDL_GetPerformanceCounter();
 		float realDt = static_cast<float>((nowCounter - prevCounter) / counterFreq);
@@ -370,8 +373,6 @@ int main(int argc, char* argv[])
 
 		// --- Le temps du monde dérive du temps réel, jamais l'inverse
 		const float simDt = _clock.Advance(realDt);
-
-
 
 
 		// --- Gérer les entrées utilisateur (non implémenté ici)
@@ -455,8 +456,6 @@ int main(int argc, char* argv[])
 
 		
 #ifdef _DEBUG
-
-		CheckControllerExclusivity(registry);
 		Test_CameraWorldMatrixIsRigid(registry);
 
 		const size_t nGizChecked = Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
@@ -474,10 +473,10 @@ int main(int argc, char* argv[])
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 			fb.Bind(ptrScreen, pitch,FrameW, FrameH);
-			fb.Clear(MakeColor(0, 0, 24));
+			Clean_Render(fb);
 			
-			renderer.BeginFrame(fb, db);		// --- Plusieurs rendus dans le MÊME buffer ---
-			renderer.SetDepthDisplayRange(80); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs
+			renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
+			renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
 
 			// --- recontruit les viewport et dessine les triangle
 			for (size_t i = 0; i < nViews; ++i)
@@ -516,7 +515,7 @@ int main(int argc, char* argv[])
 
 
 		//SDL_RenderClear(SDLrenderer);
-		Clean_Render(fb);
+
 		
 		//******************************************
 		// resize si besoin après le lock sur la texture SDL, sinon le pitch est mauvais et on écrit hors bornes dans le framebuffer
