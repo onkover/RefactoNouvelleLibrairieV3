@@ -169,6 +169,7 @@
     <ClCompile Include="Test\Test_ClipCoverage.cpp" />
     <ClCompile Include="Test\Test_Clipper.cpp" />
     <ClCompile Include="Test\Test_Depth.cpp" />
+    <ClCompile Include="Test\Test_SimulationClock.cpp" />
     <ClCompile Include="Test\Test_TopLeftRule.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -194,6 +195,16 @@
       <DeploymentContent>true</DeploymentContent>
     </None>
     <None Include="assets\GraphScene\solar_system_shuffled.json" />
+    <None Include="assets\GraphScene\solar_system_v1compat.json" />
+    <None Include="assets\GraphScene\solar_system_v1compat_belt.json" />
+    <None Include="assets\GraphScene\solar_system_v2.json" />
+    <None Include="assets\Meshes\planet.mtl" />
+    <None Include="assets\Meshes\camera_gizmo.obj">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\ship_scout.mtl">
+      <FileType>Document</FileType>
+    </None>
     <None Include="assets\Scene.json">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
@@ -226,16 +237,10 @@
     <PackageLayout Include="engine.json">
       <FileType>Document</FileType>
     </PackageLayout>
+    <None Include="Documentations\solar_system_data.md" />
     <None Include="Test\readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="assets\camera_gizmo.obj">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-      </ExcludedFromBuild>
-      <DeploymentContent>true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
-      <FileType>Document</FileType>
-    </None>
     <None Include="assets\cube.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
@@ -279,6 +284,36 @@
     <ClInclude Include="Test\Test_Depth.h" />
     <ClInclude Include="Test\Test_TopLeftRule.h" />
     <ClInclude Include="Test\Test_Winding.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\Meshes\rock_a.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\rock_b.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\rock_c.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\ship_scout.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\sphere_hi.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\sphere_lo.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
+    <None Include="assets\Meshes\sphere_mid.obj">
+      <DeploymentContent>true</DeploymentContent>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

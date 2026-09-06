@@ -40,6 +40,7 @@
 #include "Core/Logger.h"
 #include "Core/InputState.h"
 #include "helper/ConfigManager.h"
+#include "Core/SimulationClock.h"
 
 // Gestion du scenegraph
 #include "Scene/Registry.hpp"
@@ -76,7 +77,7 @@ int FrameW, FrameH;					// dimension de l'écran au cours d'une frame
 bool resizePending = false;			// Inidique si la taille de l'écran évolue pendant le rendu de celui-ci
 int pendingW,pendingH;				// Sauvegarde des dimensions de l'écran modifié lors du rendu. 
 									// Elles seront adaptées après le rendu
-
+LV3::SimulationClock _clock;
 
 //**********************************************
 // État global de la boucle
@@ -123,6 +124,10 @@ LV3::InputState BuildInputState()
 		case SDL_KEYDOWN:
 			if (!ev.key.repeat)
 			{
+				const bool shiftHeld = (ev.key.keysym.mod & KMOD_SHIFT) != 0;
+
+				// Un scancode désigne une position physique
+				// un keycode désigne le caractère produit, donc il dépend de la disposition
 				switch (ev.key.keysym.scancode)
 				{
 				case SDL_SCANCODE_F1:
@@ -132,6 +137,16 @@ LV3::InputState BuildInputState()
 				case SDL_SCANCODE_F3: g_cycleMode[0] = true; break;   // mode du panneau jeu
 				case SDL_SCANCODE_F4: g_cycleCam[1] = true; break;   // caméra du panneau debug
 				case SDL_SCANCODE_F5: g_cycleMode[1] = true; break;   // mode du panneau debug
+
+				case SDL_SCANCODE_RIGHTBRACKET: 
+					_clock.Scale(true, shiftHeld); break;   // ^
+				case SDL_SCANCODE_LEFTBRACKET:  
+					_clock.Scale(false, shiftHeld); break;   // $
+				case SDL_SCANCODE_P:            
+					_clock.m_paused = !_clock.m_paused; break;
+				case SDL_SCANCODE_0:            
+					_clock.m_timeScale = EngineConfig::Get().simulation.daysPerSecond; break;
+
 				case SDL_SCANCODE_C:
 					in.toggleCameraMode = true;          // front montant
 					break;
@@ -241,7 +256,6 @@ int main(int argc, char* argv[])
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
 
-	
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
@@ -296,7 +310,7 @@ int main(int argc, char* argv[])
 	Logger::info("Structure finale du Scene Graph :");
 	CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
-	Logger::info("[système] \n");
+	Logger::info("[système] Systeme avec matrice vide\n");
 	DebugDisplaySystem(registry);
 	Logger::info("[système] fin\n");
 
@@ -313,35 +327,12 @@ int main(int argc, char* argv[])
 
 	db.Resize(FrameW, FrameH);	// depth buffer
 
-	// Les deux régions. Découpage décidé ICI, par l'application.
-	//if (cfg.mapViewports.find("title") != cfg.mapViewports.end() &&
-	//	cfg.mapViewports.find("Right") != cfg.mapViewports.end() &&
-	//	cfg.mapViewports.find("left") != cfg.mapViewports.end())
-	//{
-	///*	vpTitle.Resize(0, 0, cfg.mapViewports["title"].largeur, cfg.mapViewports["title"].hauteur);
-	//	vpLeft.Resize(0, 0, cfg.mapViewports["left"].largeur, cfg.mapViewports["left"].hauteur);
-	//	vpRight.Resize(cfg.mapViewports["left"].largeur, 0, cfg.mapViewports["Right"].largeur, cfg.mapViewports["Right"].hauteur);*/
-	//}
-	//else
-	//{
-	//	Logger::error("Impossible de créer les viewport. Arrêt du programme.\n");
-	//	return -1;
-	//}
-
-
-	//const Entity camActive = FindCameraByName(registry, "Follow_Camera");
-	//const Entity camOverview = FindCameraByName(registry, "Top_Camera");// Top_Camera");
-
-
-
-
-
 	SetMouseCapture(true);
 
 	pitch = 0;
 	int frameCount = 0;
 	const int maxFrames = 5; // Arrête la simulation après 100 images
-	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
+//	float deltaTime = 0.5f; // Temps fixe pour une simulation stable
 
 	// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 
@@ -349,66 +340,54 @@ int main(int argc, char* argv[])
 	ViewData      views[4];
 	Renderer renderer;
 
-	// Rendu pour chaque viewport
-	//const ViewSlot slots[] = 
-	//{
-	//	{ camActive,   ERenderMode::Solid     },
-	//	{ camOverview, ERenderMode::Wireframe },
-	//};
+
+	Uint64 prevCounter = SDL_GetPerformanceCounter();
+	const double counterFreq = static_cast<double>(SDL_GetPerformanceFrequency());
+	_clock.m_timeScale = LV3::EngineConfig::Get().simulation.daysPerSecond;
+
 
 	while (g_running == true)
 	{
+		//const Uint64 nowCounter = SDL_GetPerformanceCounter();
+		//const float simDt = _clock.Advance(realDt);   // point, et non double-deux-points
+		//prevCounter = nowCounter;
+
+		//// Clamp obligatoire. Sans lui, un point d'arret dans le debogueur produit un dt
+		//// de plusieurs secondes : au retour, la scene bondit de plusieurs annees et tu
+		//// crois avoir un bug de simulation alors que tu as un bug de mesure.
+		//realDt = std::min(realDt, 0.1f);
+		//
+
+		//const float simDt = clock.Advance(realDt);   // point, et non double-deux-points
+
+		// --- Mesure du temps réel écoulé
+		const Uint64 nowCounter = SDL_GetPerformanceCounter();
+		float realDt = static_cast<float>((nowCounter - prevCounter) / counterFreq);
+		prevCounter = nowCounter;
+
+		// --- Clamp AVANT toute consommation (bug 44)
+		realDt = std::min(realDt, 0.1f);
+
+		// --- Le temps du monde dérive du temps réel, jamais l'inverse
+		const float simDt = _clock.Advance(realDt);
+
+
+
 
 		// --- Gérer les entrées utilisateur (non implémenté ici)
-		PlayerInputSystem(registry, deltaTime);
+		PlayerInputSystem(registry, realDt);
 		LV3::InputState input = BuildInputState();
 
 		// --- Mettre à jour la scène
 		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
 
 		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
-		AnimationSystem(registry, deltaTime);
-		CameraFPSControllerSystem(registry, input, deltaTime);      //  un seul agit,
-		CameraFollowSystem(registry, deltaTime);             //  m_isEnabled arbitre
-		CameraZoomSystem(registry, input, deltaTime);
+		AnimationSystem(registry, simDt);
+		CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
+		CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
+		CameraZoomSystem(registry, input, realDt);
 
 
-
-
-		// --- Élection par frame : la scène dit QUI et dans quel ORDRE ---
-		//Entity cams[4];
-		//const size_t nCams = CollectActiveCameras(registry, cams, std::size(cams));
-		//if (nCams == 0)
-		//{
-		//	Logger::error("Aucune caméra active dans la scène — rien à rendre.");
-		//	g_running = false;                 // arrêt propre, pas un assert dans les entrailles
-		//	break;
-		//}
-		//const Entity activeCamera = cams[0];   // LA vérité — le gizmo surligne celle-ci
-
-		//// --- L'EXE dit OÙ et COMMENT : modes par PANNEAU, pas par caméra ---
-		//static constexpr ERenderMode paneModes[] = { ERenderMode::Solid, ERenderMode::Wireframe };
-
-		//const size_t nSlots = std::min(nCams, std::size(paneModes));
-		//if (nCams > nSlots)
-		//	Logger::warn("[Layout] " + std::to_string(nCams - nSlots) + " caméra(s) active(s) sans panneau — ignorée(s)");
-
-		//ViewSlot slots[4];
-		//for (size_t i = 0; i < nSlots; ++i)
-		//	slots[i] = { cams[i], paneModes[i] };
-
-
-		//const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
-
-
-
-		//// --- L'association : viewport , camera et mode de rendu par rapport à une dimensionnée d'écran (redimensionable)												
-		//const size_t nViews = BuildCameraBindings(layout,	// type de disopsition dew viewport
-		//										slots,					// déclaration camera et type de rendu
-		//										nSlots,		// taille du slot	
-		//										FrameW, FrameH,			// taille de l'écran global
-		//										bindings,				// paramètre de sortie, contient l/les viewport taillés
-		//										std::size(bindings));	// nb de viewport
 
 		// --- Sélection : consomme les touches, cicatrise les sélections mortes ---
 		for (int p = 0; p < 2; ++p)

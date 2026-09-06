@@ -27,7 +27,7 @@ namespace LV3::Tests
     void CheckControllerExclusivity(Registry& reg);
     [[nodiscard]] bool Test_ClipCoverage_NoCrackNoOverlap();
     bool Test_Rasterizer_EmptyBoxes();
-
+    void Test_SimulationClock();
 
 
 
@@ -105,6 +105,7 @@ namespace LV3::Tests
         Run("Clipper — 4 configurations", Test_ClipTriangleNear_Cases);
         Run("Clipper — winding preserve", Test_ClipPreservesWinding);
         Run("Coverage — ni fissure ni doublon apres clip", Test_ClipCoverage_NoCrackNoOverlap);
+        Test_SimulationClock();
 
         Logger::info(s_failures == 0
             ? "\033[32m=== Tous les tests passent ===\033[0m"

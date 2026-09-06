@@ -1,0 +1,5252 @@
+{
+  "sceneName": "Systeme Solaire",
+  "schemaVersion": 2,
+  "units": {
+    "length": "km",
+    "time": "day",
+    "angle": "deg"
+  },
+  "scaleModel": {
+    "name": "compressed",
+    "distanceRefAU": 1.0,
+    "distanceRefUnits": 60.0,
+    "distanceExponent": 0.5,
+    "radiusRefKm": 6371.0,
+    "radiusRefUnits": 1.0,
+    "radiusExponent": 0.4,
+    "satelliteExponent": 0.45,
+    "minRadiusUnits": 0.04,
+    "daysPerSecond": 1.0
+  },
+  "simulation": {
+    "daysPerSecond": 0.2,
+    "timeScaleStep": 1.5,
+    "timeScaleSprint": 4.0,
+    "timeScaleMin": 0.001,
+    "timeScaleMax": 1000.0,
+    "epochDays": 0.0,
+    "_note": "Regle S11 : angles CALCULES depuis epochDays, jamais integres frame a frame."
+  },
+  "nodes": [
+    {
+      "id": "Solar-System",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": "Sun-Anchor",
+      "parent": "Solar-System",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            0.0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": "Sun",
+      "parent": "Sun-Anchor",
+      "type": "Etoile",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            6.538,
+            6.538,
+            6.538
+          ]
+        },
+        "Body": {
+          "class": "star",
+          "radiusKm": 696340.0,
+          "displayRadius": 6.538,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 7.25,
+          "rotationPeriodHours": 609.12,
+          "angularSpeedDegPerHour": 0.59101655,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_hi.obj"
+        },
+        "Material": {
+          "baseColor": [
+            1.0,
+            0.94,
+            0.8
+          ],
+          "emissive": 1.0,
+          "emissiveMap": "assets/Textures/sun_emissive_2k.jpg",
+          "albedoMap": "assets/Textures/sun_albedo_2k.jpg"
+        },
+        "Light": {
+          "type": "POINT_LIGHT",
+          "color": [
+            1.0,
+            0.94,
+            0.8
+          ],
+          "intensity": 4.0,
+          "rangeUnits": 600.0
+        }
+      }
+    },
+    {
+      "id": "Sun-Corona-Zone",
+      "parent": "Sun-Anchor",
+      "_note": "Couronne solaire — degats extremes",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 2.0,
+          "radius": 13.076,
+          "onEnterEvent": "ENTER_SUN_CORONA",
+          "onStayEvent": "STAY_SUN_CORONA",
+          "onExitEvent": "EXIT_SUN_CORONA"
+        }
+      }
+    },
+    {
+      "id": "Sun-Heat-Zone",
+      "parent": "Sun-Anchor",
+      "_note": "Zone de chaleur — degats continus (reste sous l'orbite de Mercure)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 4.5,
+          "radius": 29.421,
+          "onEnterEvent": "ENTER_SUN_HEAT",
+          "onStayEvent": "STAY_SUN_HEAT",
+          "onExitEvent": "EXIT_SUN_HEAT"
+        }
+      }
+    },
+    {
+      "id": "Sun-Gravity-Zone",
+      "parent": "Sun-Anchor",
+      "_note": "Puits gravitationnel du Soleil",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 6.0,
+          "radius": 39.228,
+          "onEnterEvent": "ENTER_SUN_GRAVITY",
+          "onStayEvent": "STAY_SUN_GRAVITY",
+          "onExitEvent": "EXIT_SUN_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Mercury-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            37.33,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 57909050.0,
+          "displayRadius": 37.33,
+          "eccentricity": 0.2056,
+          "inclinationDeg": 7.005,
+          "periodDays": 87.969,
+          "meanAnomalyDeg": 137.51,
+          "angularSpeedDegPerDay": 4.09235071
+        }
+      }
+    },
+    {
+      "id": "Mercury",
+      "parent": "Mercury-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.6812,
+            0.6812,
+            0.6812
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 2439.7,
+          "displayRadius": 0.6812,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.034,
+          "rotationPeriodHours": 1407.6,
+          "angularSpeedDegPerHour": 0.25575448,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.55,
+            0.52,
+            0.49
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/mercury_albedo_2k.jpg",
+          "normalMap": "assets/Textures/mercury_normal_2k.png",
+          "heightMap": "assets/Textures/mercury_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Mercury-Surface-Zone",
+      "parent": "Mercury-Anchor",
+      "_note": "Pas d'atmosphere — impact direct",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.05,
+          "radius": 0.7153,
+          "onEnterEvent": "ENTER_MERCURY_SURFACE",
+          "onStayEvent": "STAY_MERCURY_SURFACE",
+          "onExitEvent": "EXIT_MERCURY_SURFACE"
+        }
+      }
+    },
+    {
+      "id": "Mercury-Gravity-Zone",
+      "parent": "Mercury-Anchor",
+      "_note": "Puits gravitationnel (Hill reel ~ 90 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.2,
+          "radius": 2.1798,
+          "onEnterEvent": "ENTER_MERCURY_GRAVITY",
+          "onStayEvent": "STAY_MERCURY_GRAVITY",
+          "onExitEvent": "EXIT_MERCURY_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Venus-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            51.029,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 108208000.0,
+          "displayRadius": 51.029,
+          "eccentricity": 0.0068,
+          "inclinationDeg": 3.395,
+          "periodDays": 224.701,
+          "meanAnomalyDeg": 275.01,
+          "angularSpeedDegPerDay": 1.60212905
+        }
+      }
+    },
+    {
+      "id": "Venus",
+      "parent": "Venus-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.9796,
+            0.9796,
+            0.9796
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 6051.8,
+          "displayRadius": 0.9796,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 177.36,
+          "rotationPeriodHours": -5832.5,
+          "angularSpeedDegPerHour": -0.0617231,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.91,
+            0.79,
+            0.53
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/venus_albedo_2k.jpg",
+          "normalMap": "assets/Textures/venus_normal_2k.png",
+          "heightMap": "assets/Textures/venus_height_2k.png",
+          "cloudMap": "assets/Textures/venus_clouds_2k.jpg"
+        }
+      }
+    },
+    {
+      "id": "Venus-Atmosphere-Zone",
+      "parent": "Venus-Anchor",
+      "_note": "Atmosphere corrosive 92 bar, 464 C",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.2,
+          "radius": 1.1755,
+          "onEnterEvent": "ENTER_VENUS_ATMOSPHERE",
+          "onStayEvent": "STAY_VENUS_ATMOSPHERE",
+          "onExitEvent": "EXIT_VENUS_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Venus-Gravity-Zone",
+      "parent": "Venus-Anchor",
+      "_note": "Puits gravitationnel (Hill reel ~ 168 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 4.5,
+          "radius": 4.4082,
+          "onEnterEvent": "ENTER_VENUS_GRAVITY",
+          "onStayEvent": "STAY_VENUS_GRAVITY",
+          "onExitEvent": "EXIT_VENUS_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Earth-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            60.0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 149598023.0,
+          "displayRadius": 60.0,
+          "eccentricity": 0.0167,
+          "inclinationDeg": 0.0,
+          "periodDays": 365.256,
+          "meanAnomalyDeg": 52.52,
+          "angularSpeedDegPerDay": 0.98561009
+        }
+      }
+    },
+    {
+      "id": "Earth",
+      "parent": "Earth-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 6371.0,
+          "displayRadius": 1.0,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 23.44,
+          "rotationPeriodHours": 23.9345,
+          "angularSpeedDegPerHour": 15.04104953,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.24,
+            0.42,
+            0.7
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/earth_albedo_2k.jpg",
+          "normalMap": "assets/Textures/earth_normal_2k.png",
+          "heightMap": "assets/Textures/earth_height_2k.png",
+          "specularMap": "assets/Textures/earth_specular_2k.png",
+          "emissiveMap": "assets/Textures/earth_night_2k.jpg",
+          "cloudMap": "assets/Textures/earth_clouds_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Earth-Atmosphere-Zone",
+      "parent": "Earth-Anchor",
+      "_note": "Rentree atmospherique",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.12,
+          "radius": 1.12,
+          "onEnterEvent": "ENTER_EARTH_ATMOSPHERE",
+          "onStayEvent": "STAY_EARTH_ATMOSPHERE",
+          "onExitEvent": "EXIT_EARTH_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Earth-Gravity-Zone",
+      "parent": "Earth-Anchor",
+      "_note": "Puits gravitationnel (Hill reel ~ 235 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 5.0,
+          "radius": 5.0,
+          "onEnterEvent": "ENTER_EARTH_GRAVITY",
+          "onStayEvent": "STAY_EARTH_GRAVITY",
+          "onExitEvent": "EXIT_EARTH_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Earth-SafeZone-Zone",
+      "parent": "Earth-Anchor",
+      "_note": "Zone de reparation / ravitaillement",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 9.0,
+          "radius": 9.0,
+          "onEnterEvent": "ENTER_EARTH_SAFE_ZONE",
+          "onStayEvent": "STAY_EARTH_SAFE_ZONE",
+          "onExitEvent": "EXIT_EARTH_SAFE_ZONE"
+        }
+      }
+    },
+    {
+      "id": "Moon-Anchor",
+      "parent": "Earth-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            6.3279,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 384400.0,
+          "displayRadius": 6.3279,
+          "eccentricity": 0.0549,
+          "inclinationDeg": 5.145,
+          "periodDays": 27.3217,
+          "meanAnomalyDeg": 190.03,
+          "angularSpeedDegPerDay": 13.17633969
+        }
+      }
+    },
+    {
+      "id": "Moon",
+      "parent": "Moon-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5947,
+            0.5947,
+            0.5947
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 1737.4,
+          "displayRadius": 0.5947,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 6.68,
+          "rotationPeriodHours": 655.72,
+          "angularSpeedDegPerHour": 0.54901482,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.62,
+            0.61,
+            0.58
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/moon_albedo_2k.jpg",
+          "normalMap": "assets/Textures/moon_normal_2k.png",
+          "heightMap": "assets/Textures/moon_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Moon-Gravity-Zone",
+      "parent": "Moon-Anchor",
+      "_note": "Puits gravitationnel lunaire",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.0,
+          "radius": 1.7841,
+          "onEnterEvent": "ENTER_MOON_GRAVITY",
+          "onStayEvent": "STAY_MOON_GRAVITY",
+          "onExitEvent": "EXIT_MOON_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Mars-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            74.062,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 227939366.0,
+          "displayRadius": 74.062,
+          "eccentricity": 0.0934,
+          "inclinationDeg": 1.85,
+          "periodDays": 686.98,
+          "meanAnomalyDeg": 327.54,
+          "angularSpeedDegPerDay": 0.52403272
+        }
+      }
+    },
+    {
+      "id": "Mars",
+      "parent": "Mars-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.7769,
+            0.7769,
+            0.7769
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 3389.5,
+          "displayRadius": 0.7769,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 25.19,
+          "rotationPeriodHours": 24.6229,
+          "angularSpeedDegPerHour": 14.62053617,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.76,
+            0.42,
+            0.28
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/mars_albedo_2k.jpg",
+          "normalMap": "assets/Textures/mars_normal_2k.png",
+          "heightMap": "assets/Textures/mars_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Mars-Atmosphere-Zone",
+      "parent": "Mars-Anchor",
+      "_note": "Atmosphere tenue + tempetes de poussiere",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.1,
+          "radius": 0.8546,
+          "onEnterEvent": "ENTER_MARS_ATMOSPHERE",
+          "onStayEvent": "STAY_MARS_ATMOSPHERE",
+          "onExitEvent": "EXIT_MARS_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Mars-Gravity-Zone",
+      "parent": "Mars-Anchor",
+      "_note": "Puits gravitationnel (Hill reel ~ 320 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 4.2,
+          "radius": 3.263,
+          "onEnterEvent": "ENTER_MARS_GRAVITY",
+          "onStayEvent": "STAY_MARS_GRAVITY",
+          "onExitEvent": "EXIT_MARS_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Phobos-Anchor",
+      "parent": "Mars-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            1.3223,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 9376.0,
+          "displayRadius": 1.3223,
+          "eccentricity": 0.0151,
+          "inclinationDeg": 1.093,
+          "periodDays": 0.31891,
+          "meanAnomalyDeg": 105.04,
+          "angularSpeedDegPerDay": 1128.84512872
+        }
+      }
+    },
+    {
+      "id": "Phobos",
+      "parent": "Phobos-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.0793,
+            0.0793,
+            0.0793
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 11.267,
+          "displayRadius": 0.0793,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 7.654,
+          "angularSpeedDegPerHour": 47.03423047,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.42,
+            0.38,
+            0.35
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/phobos_albedo_2k.jpg",
+          "normalMap": "assets/Textures/phobos_normal_2k.png",
+          "heightMap": "assets/Textures/phobos_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Deimos-Anchor",
+      "parent": "Mars-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            1.8556,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 23463.2,
+          "displayRadius": 1.8556,
+          "eccentricity": 0.00033,
+          "inclinationDeg": 0.93,
+          "periodDays": 1.26244,
+          "meanAnomalyDeg": 242.55,
+          "angularSpeedDegPerDay": 285.16206711
+        }
+      }
+    },
+    {
+      "id": "Deimos",
+      "parent": "Deimos-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.0624,
+            0.0624,
+            0.0624
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 6.2,
+          "displayRadius": 0.0624,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 30.3,
+          "angularSpeedDegPerHour": 11.88118812,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.46,
+            0.42,
+            0.38
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/deimos_albedo_2k.jpg",
+          "normalMap": "assets/Textures/deimos_normal_2k.png",
+          "heightMap": "assets/Textures/deimos_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Ceres-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            99.776,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 413690250.0,
+          "displayRadius": 99.776,
+          "eccentricity": 0.0785,
+          "inclinationDeg": 10.594,
+          "periodDays": 1681.63,
+          "meanAnomalyDeg": 20.06,
+          "angularSpeedDegPerDay": 0.21407801
+        }
+      }
+    },
+    {
+      "id": "Ceres",
+      "parent": "Ceres-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3524,
+            0.3524,
+            0.3524
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 469.73,
+          "displayRadius": 0.3524,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 4.0,
+          "rotationPeriodHours": 9.074,
+          "angularSpeedDegPerHour": 39.67379326,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.55,
+            0.54,
+            0.52
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/ceres_albedo_2k.jpg",
+          "normalMap": "assets/Textures/ceres_normal_2k.png",
+          "heightMap": "assets/Textures/ceres_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Ceres-Gravity-Zone",
+      "parent": "Ceres-Anchor",
+      "_note": "Puits gravitationnel faible",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.0,
+          "radius": 1.0572,
+          "onEnterEvent": "ENTER_CERES_GRAVITY",
+          "onStayEvent": "STAY_CERES_GRAVITY",
+          "onExitEvent": "EXIT_CERES_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Jupiter-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            136.871,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 778479000.0,
+          "displayRadius": 136.871,
+          "eccentricity": 0.0489,
+          "inclinationDeg": 1.303,
+          "periodDays": 4332.589,
+          "meanAnomalyDeg": 157.56,
+          "angularSpeedDegPerDay": 0.0830912
+        }
+      }
+    },
+    {
+      "id": "Jupiter",
+      "parent": "Jupiter-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            2.607,
+            2.607,
+            2.607
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 69911.0,
+          "displayRadius": 2.607,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 3.13,
+          "rotationPeriodHours": 9.925,
+          "angularSpeedDegPerHour": 36.2720403,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_hi.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.79,
+            0.68,
+            0.55
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/jupiter_albedo_2k.jpg"
+        }
+      }
+    },
+    {
+      "id": "Jupiter-Rings",
+      "parent": "Jupiter-Anchor",
+      "type": "Ring",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 3.13,
+          "rotationPeriodHours": 0.0,
+          "inheritParentRotation": false
+        },
+        "Ring": {
+          "innerRadiusKm": 122500.0,
+          "outerRadiusKm": 129000.0,
+          "innerRadius": 4.5681,
+          "outerRadius": 4.8104,
+          "segments": 96
+        },
+        "Material": {
+          "baseColor": [
+            0.55,
+            0.5,
+            0.45
+          ],
+          "opacity": 0.1,
+          "albedoMap": "assets/Textures/jupiter_ring_albedo.png",
+          "alphaMap": "assets/Textures/jupiter_ring_alpha.png",
+          "uvMode": "radial",
+          "doubleSided": true
+        }
+      }
+    },
+    {
+      "id": "Jupiter-Atmosphere-Zone",
+      "parent": "Jupiter-Anchor",
+      "_note": "Ecrasement — 1000 bar a -100 km",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.15,
+          "radius": 2.9981,
+          "onEnterEvent": "ENTER_JUPITER_ATMOSPHERE",
+          "onStayEvent": "STAY_JUPITER_ATMOSPHERE",
+          "onExitEvent": "EXIT_JUPITER_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Jupiter-Radiation-Zone",
+      "parent": "Jupiter-Anchor",
+      "_note": "Ceinture de radiations / tore de Io : letal",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 4.0,
+          "radius": 10.428,
+          "onEnterEvent": "ENTER_JUPITER_RADIATION",
+          "onStayEvent": "STAY_JUPITER_RADIATION",
+          "onExitEvent": "EXIT_JUPITER_RADIATION"
+        }
+      }
+    },
+    {
+      "id": "Jupiter-Gravity-Zone",
+      "parent": "Jupiter-Anchor",
+      "_note": "Puits gravitationnel majeur (Hill reel ~ 740 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 10.0,
+          "radius": 26.07,
+          "onEnterEvent": "ENTER_JUPITER_GRAVITY",
+          "onStayEvent": "STAY_JUPITER_GRAVITY",
+          "onExitEvent": "EXIT_JUPITER_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Io-Anchor",
+      "parent": "Jupiter-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            5.8526,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 421700.0,
+          "displayRadius": 5.8526,
+          "eccentricity": 0.0041,
+          "inclinationDeg": 0.05,
+          "periodDays": 1.769138,
+          "meanAnomalyDeg": 295.07,
+          "angularSpeedDegPerDay": 203.48893077
+        }
+      }
+    },
+    {
+      "id": "Io",
+      "parent": "Io-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.606,
+            0.606,
+            0.606
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 1821.6,
+          "displayRadius": 0.606,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 42.459,
+          "angularSpeedDegPerHour": 8.47876775,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.9,
+            0.82,
+            0.42
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/io_albedo_2k.jpg",
+          "normalMap": "assets/Textures/io_normal_2k.png",
+          "heightMap": "assets/Textures/io_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Io-Volcanic-Zone",
+      "parent": "Io-Anchor",
+      "_note": "Volcanisme actif — ejectas",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 2.0,
+          "radius": 1.212,
+          "onEnterEvent": "ENTER_IO_VOLCANIC",
+          "onStayEvent": "STAY_IO_VOLCANIC",
+          "onExitEvent": "EXIT_IO_VOLCANIC"
+        }
+      }
+    },
+    {
+      "id": "Europa-Anchor",
+      "parent": "Jupiter-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            7.2132,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 671034.0,
+          "displayRadius": 7.2132,
+          "eccentricity": 0.0094,
+          "inclinationDeg": 0.47,
+          "periodDays": 3.551181,
+          "meanAnomalyDeg": 72.58,
+          "angularSpeedDegPerDay": 101.37472576
+        }
+      }
+    },
+    {
+      "id": "Europa",
+      "parent": "Europa-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5697,
+            0.5697,
+            0.5697
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 1560.8,
+          "displayRadius": 0.5697,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.1,
+          "rotationPeriodHours": 85.228,
+          "angularSpeedDegPerHour": 4.22396396,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.86,
+            0.83,
+            0.77
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/europa_albedo_2k.jpg",
+          "normalMap": "assets/Textures/europa_normal_2k.png",
+          "heightMap": "assets/Textures/europa_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Europa-Gravity-Zone",
+      "parent": "Europa-Anchor",
+      "_note": "Puits gravitationnel",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 2.5,
+          "radius": 1.4243,
+          "onEnterEvent": "ENTER_EUROPA_GRAVITY",
+          "onStayEvent": "STAY_EUROPA_GRAVITY",
+          "onExitEvent": "EXIT_EUROPA_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Ganymede-Anchor",
+      "parent": "Jupiter-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            8.9001,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 1070412.0,
+          "displayRadius": 8.9001,
+          "eccentricity": 0.0013,
+          "inclinationDeg": 0.204,
+          "periodDays": 7.154553,
+          "meanAnomalyDeg": 210.08,
+          "angularSpeedDegPerDay": 50.31760894
+        }
+      }
+    },
+    {
+      "id": "Ganymede",
+      "parent": "Ganymede-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.7024,
+            0.7024,
+            0.7024
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 2634.1,
+          "displayRadius": 0.7024,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.165,
+          "rotationPeriodHours": 171.709,
+          "angularSpeedDegPerHour": 2.09657036,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.62,
+            0.58,
+            0.53
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/ganymede_albedo_2k.jpg",
+          "normalMap": "assets/Textures/ganymede_normal_2k.png",
+          "heightMap": "assets/Textures/ganymede_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Callisto-Anchor",
+      "parent": "Jupiter-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            11.4749,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 1882709.0,
+          "displayRadius": 11.4749,
+          "eccentricity": 0.0074,
+          "inclinationDeg": 0.205,
+          "periodDays": 16.689018,
+          "meanAnomalyDeg": 347.59,
+          "angularSpeedDegPerDay": 21.57107147
+        }
+      }
+    },
+    {
+      "id": "Callisto",
+      "parent": "Callisto-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.6779,
+            0.6779,
+            0.6779
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 2410.3,
+          "displayRadius": 0.6779,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 400.536,
+          "angularSpeedDegPerHour": 0.89879561,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.45,
+            0.42,
+            0.39
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/callisto_albedo_2k.jpg",
+          "normalMap": "assets/Textures/callisto_normal_2k.png",
+          "heightMap": "assets/Textures/callisto_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Saturn-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            185.734,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 1433530000.0,
+          "displayRadius": 185.734,
+          "eccentricity": 0.0565,
+          "inclinationDeg": 2.485,
+          "periodDays": 10759.22,
+          "meanAnomalyDeg": 125.1,
+          "angularSpeedDegPerDay": 0.03345967
+        }
+      }
+    },
+    {
+      "id": "Saturn",
+      "parent": "Saturn-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            2.4232,
+            2.4232,
+            2.4232
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 58232.0,
+          "displayRadius": 2.4232,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 26.73,
+          "rotationPeriodHours": 10.656,
+          "angularSpeedDegPerHour": 33.78378378,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_hi.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.87,
+            0.79,
+            0.6
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/saturn_albedo_2k.jpg"
+        }
+      }
+    },
+    {
+      "id": "Saturn-Rings",
+      "parent": "Saturn-Anchor",
+      "type": "Ring",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 26.73,
+          "rotationPeriodHours": 0.0,
+          "inheritParentRotation": false
+        },
+        "Ring": {
+          "innerRadiusKm": 74500.0,
+          "outerRadiusKm": 140220.0,
+          "innerRadius": 3.1002,
+          "outerRadius": 5.835,
+          "segments": 96
+        },
+        "Material": {
+          "baseColor": [
+            0.82,
+            0.77,
+            0.66
+          ],
+          "opacity": 0.85,
+          "albedoMap": "assets/Textures/saturn_ring_albedo.png",
+          "alphaMap": "assets/Textures/saturn_ring_alpha.png",
+          "uvMode": "radial",
+          "doubleSided": true
+        }
+      }
+    },
+    {
+      "id": "Saturn-Atmosphere-Zone",
+      "parent": "Saturn-Anchor",
+      "_note": "Ecrasement atmospherique",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.15,
+          "radius": 2.7867,
+          "onEnterEvent": "ENTER_SATURN_ATMOSPHERE",
+          "onStayEvent": "STAY_SATURN_ATMOSPHERE",
+          "onExitEvent": "EXIT_SATURN_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Saturn-Gravity-Zone",
+      "parent": "Saturn-Anchor",
+      "_note": "Puits gravitationnel (Hill reel ~ 1100 R)",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 8.0,
+          "radius": 19.3856,
+          "onEnterEvent": "ENTER_SATURN_GRAVITY",
+          "onStayEvent": "STAY_SATURN_GRAVITY",
+          "onExitEvent": "EXIT_SATURN_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Mimas-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            4.1267,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 185539.0,
+          "displayRadius": 4.1267,
+          "eccentricity": 0.0196,
+          "inclinationDeg": 1.574,
+          "periodDays": 0.942,
+          "meanAnomalyDeg": 262.61,
+          "angularSpeedDegPerDay": 382.1656051
+        }
+      }
+    },
+    {
+      "id": "Mimas",
+      "parent": "Mimas-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2496,
+            0.2496,
+            0.2496
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 198.2,
+          "displayRadius": 0.2496,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 22.608,
+          "angularSpeedDegPerHour": 15.92356688,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.88,
+            0.88,
+            0.86
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/mimas_albedo_2k.jpg",
+          "normalMap": "assets/Textures/mimas_normal_2k.png",
+          "heightMap": "assets/Textures/mimas_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Enceladus-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            4.5654,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 237948.0,
+          "displayRadius": 4.5654,
+          "eccentricity": 0.0047,
+          "inclinationDeg": 0.009,
+          "periodDays": 1.370218,
+          "meanAnomalyDeg": 40.11,
+          "angularSpeedDegPerDay": 262.73191565
+        }
+      }
+    },
+    {
+      "id": "Enceladus",
+      "parent": "Enceladus-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2748,
+            0.2748,
+            0.2748
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 252.1,
+          "displayRadius": 0.2748,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 32.885,
+          "angularSpeedDegPerHour": 10.94724038,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.96,
+            0.96,
+            0.95
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/enceladus_albedo_2k.jpg",
+          "normalMap": "assets/Textures/enceladus_normal_2k.png",
+          "heightMap": "assets/Textures/enceladus_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Tethys-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            5.0261,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 294619.0,
+          "displayRadius": 5.0261,
+          "eccentricity": 0.0001,
+          "inclinationDeg": 1.12,
+          "periodDays": 1.887802,
+          "meanAnomalyDeg": 177.62,
+          "angularSpeedDegPerDay": 190.69796515
+        }
+      }
+    },
+    {
+      "id": "Tethys",
+      "parent": "Tethys-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3702,
+            0.3702,
+            0.3702
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 531.1,
+          "displayRadius": 0.3702,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 45.307,
+          "angularSpeedDegPerHour": 7.94579204,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.92,
+            0.91,
+            0.89
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/tethys_albedo_2k.jpg",
+          "normalMap": "assets/Textures/tethys_normal_2k.png",
+          "heightMap": "assets/Textures/tethys_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Dione-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            5.6186,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 377396.0,
+          "displayRadius": 5.6186,
+          "eccentricity": 0.0022,
+          "inclinationDeg": 0.019,
+          "periodDays": 2.736915,
+          "meanAnomalyDeg": 315.13,
+          "angularSpeedDegPerDay": 131.53495816
+        }
+      }
+    },
+    {
+      "id": "Dione",
+      "parent": "Dione-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3785,
+            0.3785,
+            0.3785
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 561.4,
+          "displayRadius": 0.3785,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 65.686,
+          "angularSpeedDegPerHour": 5.48061992,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.89,
+            0.88,
+            0.86
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/dione_albedo_2k.jpg",
+          "normalMap": "assets/Textures/dione_normal_2k.png",
+          "heightMap": "assets/Textures/dione_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Rhea-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            6.5301,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 527108.0,
+          "displayRadius": 6.5301,
+          "eccentricity": 0.0013,
+          "inclinationDeg": 0.345,
+          "periodDays": 4.518212,
+          "meanAnomalyDeg": 92.63,
+          "angularSpeedDegPerDay": 79.67753616
+        }
+      }
+    },
+    {
+      "id": "Rhea",
+      "parent": "Rhea-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.4281,
+            0.4281,
+            0.4281
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 763.8,
+          "displayRadius": 0.4281,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 108.437,
+          "angularSpeedDegPerHour": 3.31990003,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.87,
+            0.86,
+            0.84
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/rhea_albedo_2k.jpg",
+          "normalMap": "assets/Textures/rhea_normal_2k.png",
+          "heightMap": "assets/Textures/rhea_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Titan-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            9.533,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 1221870.0,
+          "displayRadius": 9.533,
+          "eccentricity": 0.0288,
+          "inclinationDeg": 0.348,
+          "periodDays": 15.945,
+          "meanAnomalyDeg": 230.14,
+          "angularSpeedDegPerDay": 22.57761054
+        }
+      }
+    },
+    {
+      "id": "Titan",
+      "parent": "Titan-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.696,
+            0.696,
+            0.696
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 2574.7,
+          "displayRadius": 0.696,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 382.68,
+          "angularSpeedDegPerHour": 0.94073377,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.85,
+            0.6,
+            0.25
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/titan_albedo_2k.jpg",
+          "normalMap": "assets/Textures/titan_normal_2k.png",
+          "heightMap": "assets/Textures/titan_height_2k.png",
+          "cloudMap": "assets/Textures/titan_haze_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Titan-Atmosphere-Zone",
+      "parent": "Titan-Anchor",
+      "_note": "Atmosphere epaisse d'azote/methane",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.4,
+          "radius": 0.9744,
+          "onEnterEvent": "ENTER_TITAN_ATMOSPHERE",
+          "onStayEvent": "STAY_TITAN_ATMOSPHERE",
+          "onExitEvent": "EXIT_TITAN_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Iapetus-Anchor",
+      "parent": "Saturn-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            15.4264,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 3560820.0,
+          "displayRadius": 15.4264,
+          "eccentricity": 0.0286,
+          "inclinationDeg": 15.47,
+          "periodDays": 79.3215,
+          "meanAnomalyDeg": 7.65,
+          "angularSpeedDegPerDay": 4.53849209
+        }
+      }
+    },
+    {
+      "id": "Iapetus",
+      "parent": "Iapetus-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.4214,
+            0.4214,
+            0.4214
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 734.5,
+          "displayRadius": 0.4214,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 1903.72,
+          "angularSpeedDegPerHour": 0.18910344,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.5,
+            0.47,
+            0.44
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/iapetus_albedo_2k.jpg",
+          "normalMap": "assets/Textures/iapetus_normal_2k.png",
+          "heightMap": "assets/Textures/iapetus_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Uranus-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            262.915,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 2872460000.0,
+          "displayRadius": 262.915,
+          "eccentricity": 0.0457,
+          "inclinationDeg": 0.773,
+          "periodDays": 30688.5,
+          "meanAnomalyDeg": 145.15,
+          "angularSpeedDegPerDay": 0.01173078
+        }
+      }
+    },
+    {
+      "id": "Uranus",
+      "parent": "Uranus-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1.7378,
+            1.7378,
+            1.7378
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 25362.0,
+          "displayRadius": 1.7378,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 97.77,
+          "rotationPeriodHours": -17.24,
+          "angularSpeedDegPerHour": -20.88167053,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.56,
+            0.78,
+            0.82
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/uranus_albedo_2k.jpg"
+        }
+      }
+    },
+    {
+      "id": "Uranus-Rings",
+      "parent": "Uranus-Anchor",
+      "type": "Ring",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 97.77,
+          "rotationPeriodHours": 0.0,
+          "inheritParentRotation": false
+        },
+        "Ring": {
+          "innerRadiusKm": 38000.0,
+          "outerRadiusKm": 51150.0,
+          "innerRadius": 2.6038,
+          "outerRadius": 3.5048,
+          "segments": 96
+        },
+        "Material": {
+          "baseColor": [
+            0.45,
+            0.5,
+            0.52
+          ],
+          "opacity": 0.25,
+          "albedoMap": "assets/Textures/uranus_ring_albedo.png",
+          "alphaMap": "assets/Textures/uranus_ring_alpha.png",
+          "uvMode": "radial",
+          "doubleSided": true
+        }
+      }
+    },
+    {
+      "id": "Uranus-Atmosphere-Zone",
+      "parent": "Uranus-Anchor",
+      "_note": "Ecrasement atmospherique",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.15,
+          "radius": 1.9985,
+          "onEnterEvent": "ENTER_URANUS_ATMOSPHERE",
+          "onStayEvent": "STAY_URANUS_ATMOSPHERE",
+          "onExitEvent": "EXIT_URANUS_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Uranus-Gravity-Zone",
+      "parent": "Uranus-Anchor",
+      "_note": "Puits gravitationnel",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 6.5,
+          "radius": 11.2957,
+          "onEnterEvent": "ENTER_URANUS_GRAVITY",
+          "onStayEvent": "STAY_URANUS_GRAVITY",
+          "onExitEvent": "EXIT_URANUS_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Miranda-Anchor",
+      "parent": "Uranus-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            3.618,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 129390.0,
+          "displayRadius": 3.618,
+          "eccentricity": 0.0013,
+          "inclinationDeg": 4.232,
+          "periodDays": 1.413479,
+          "meanAnomalyDeg": 282.66,
+          "angularSpeedDegPerDay": 254.69073117
+        }
+      }
+    },
+    {
+      "id": "Miranda",
+      "parent": "Miranda-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2675,
+            0.2675,
+            0.2675
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 235.8,
+          "displayRadius": 0.2675,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 33.923,
+          "angularSpeedDegPerHour": 10.61226896,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.72,
+            0.72,
+            0.71
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/miranda_albedo_2k.jpg",
+          "normalMap": "assets/Textures/miranda_normal_2k.png",
+          "heightMap": "assets/Textures/miranda_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Ariel-Anchor",
+      "parent": "Uranus-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            4.31,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 190900.0,
+          "displayRadius": 4.31,
+          "eccentricity": 0.0012,
+          "inclinationDeg": 0.26,
+          "periodDays": 2.52,
+          "meanAnomalyDeg": 60.17,
+          "angularSpeedDegPerDay": 142.85714286
+        }
+      }
+    },
+    {
+      "id": "Ariel",
+      "parent": "Ariel-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3831,
+            0.3831,
+            0.3831
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 578.9,
+          "displayRadius": 0.3831,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 60.489,
+          "angularSpeedDegPerHour": 5.95149531,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.79,
+            0.79,
+            0.78
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/ariel_albedo_2k.jpg",
+          "normalMap": "assets/Textures/ariel_normal_2k.png",
+          "heightMap": "assets/Textures/ariel_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Umbriel-Anchor",
+      "parent": "Uranus-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            5.004,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 266000.0,
+          "displayRadius": 5.004,
+          "eccentricity": 0.0039,
+          "inclinationDeg": 0.128,
+          "periodDays": 4.144,
+          "meanAnomalyDeg": 197.68,
+          "angularSpeedDegPerDay": 86.87258687
+        }
+      }
+    },
+    {
+      "id": "Umbriel",
+      "parent": "Umbriel-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3847,
+            0.3847,
+            0.3847
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 584.7,
+          "displayRadius": 0.3847,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 99.46,
+          "angularSpeedDegPerHour": 3.61954555,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.52,
+            0.52,
+            0.51
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/umbriel_albedo_2k.jpg",
+          "normalMap": "assets/Textures/umbriel_normal_2k.png",
+          "heightMap": "assets/Textures/umbriel_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Titania-Anchor",
+      "parent": "Uranus-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            6.2495,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 435910.0,
+          "displayRadius": 6.2495,
+          "eccentricity": 0.0011,
+          "inclinationDeg": 0.34,
+          "periodDays": 8.706,
+          "meanAnomalyDeg": 335.18,
+          "angularSpeedDegPerDay": 41.35079256
+        }
+      }
+    },
+    {
+      "id": "Titania",
+      "parent": "Titania-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.4335,
+            0.4335,
+            0.4335
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 788.4,
+          "displayRadius": 0.4335,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 208.941,
+          "angularSpeedDegPerHour": 1.72297443,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.66,
+            0.65,
+            0.63
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/titania_albedo_2k.jpg",
+          "normalMap": "assets/Textures/titania_normal_2k.png",
+          "heightMap": "assets/Textures/titania_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Oberon-Anchor",
+      "parent": "Uranus-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            7.1259,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 583520.0,
+          "displayRadius": 7.1259,
+          "eccentricity": 0.0014,
+          "inclinationDeg": 0.058,
+          "periodDays": 13.463,
+          "meanAnomalyDeg": 112.69,
+          "angularSpeedDegPerDay": 26.73995395
+        }
+      }
+    },
+    {
+      "id": "Oberon",
+      "parent": "Oberon-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.4275,
+            0.4275,
+            0.4275
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 761.4,
+          "displayRadius": 0.4275,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 323.118,
+          "angularSpeedDegPerHour": 1.11414406,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.61,
+            0.6,
+            0.58
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/oberon_albedo_2k.jpg",
+          "normalMap": "assets/Textures/oberon_normal_2k.png",
+          "heightMap": "assets/Textures/oberon_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Neptune-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            328.894,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 4495060000.0,
+          "displayRadius": 328.894,
+          "eccentricity": 0.0113,
+          "inclinationDeg": 1.77,
+          "periodDays": 60195.0,
+          "meanAnomalyDeg": 250.2,
+          "angularSpeedDegPerDay": 0.00598056
+        }
+      }
+    },
+    {
+      "id": "Neptune",
+      "parent": "Neptune-Anchor",
+      "type": "Planete",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1.7173,
+            1.7173,
+            1.7173
+          ]
+        },
+        "Body": {
+          "class": "planet",
+          "radiusKm": 24622.0,
+          "displayRadius": 1.7173,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 28.32,
+          "rotationPeriodHours": 16.11,
+          "angularSpeedDegPerHour": 22.34636872,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.26,
+            0.4,
+            0.72
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/neptune_albedo_2k.jpg"
+        }
+      }
+    },
+    {
+      "id": "Neptune-Rings",
+      "parent": "Neptune-Anchor",
+      "type": "Ring",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 28.32,
+          "rotationPeriodHours": 0.0,
+          "inheritParentRotation": false
+        },
+        "Ring": {
+          "innerRadiusKm": 40900.0,
+          "outerRadiusKm": 62930.0,
+          "innerRadius": 2.8526,
+          "outerRadius": 4.3892,
+          "segments": 96
+        },
+        "Material": {
+          "baseColor": [
+            0.3,
+            0.36,
+            0.5
+          ],
+          "opacity": 0.15,
+          "albedoMap": "assets/Textures/neptune_ring_albedo.png",
+          "alphaMap": "assets/Textures/neptune_ring_alpha.png",
+          "uvMode": "radial",
+          "doubleSided": true
+        }
+      }
+    },
+    {
+      "id": "Neptune-Atmosphere-Zone",
+      "parent": "Neptune-Anchor",
+      "_note": "Vents a 2100 km/h",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 1.15,
+          "radius": 1.9749,
+          "onEnterEvent": "ENTER_NEPTUNE_ATMOSPHERE",
+          "onStayEvent": "STAY_NEPTUNE_ATMOSPHERE",
+          "onExitEvent": "EXIT_NEPTUNE_ATMOSPHERE"
+        }
+      }
+    },
+    {
+      "id": "Neptune-Gravity-Zone",
+      "parent": "Neptune-Anchor",
+      "_note": "Puits gravitationnel",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 6.5,
+          "radius": 11.1624,
+          "onEnterEvent": "ENTER_NEPTUNE_GRAVITY",
+          "onStayEvent": "STAY_NEPTUNE_GRAVITY",
+          "onExitEvent": "EXIT_NEPTUNE_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Triton-Anchor",
+      "parent": "Neptune-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            5.7045,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 354759.0,
+          "displayRadius": 5.7045,
+          "eccentricity": 1.6e-05,
+          "inclinationDeg": 156.885,
+          "periodDays": -5.876854,
+          "meanAnomalyDeg": 27.7,
+          "angularSpeedDegPerDay": -61.25726452
+        }
+      }
+    },
+    {
+      "id": "Triton",
+      "parent": "Triton-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5381,
+            0.5381,
+            0.5381
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 1353.4,
+          "displayRadius": 0.5381,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": -141.044,
+          "angularSpeedDegPerHour": -2.552395,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.82,
+            0.8,
+            0.77
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/triton_albedo_2k.jpg",
+          "normalMap": "assets/Textures/triton_normal_2k.png",
+          "heightMap": "assets/Textures/triton_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Pluto-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            377.007,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 5906380000.0,
+          "displayRadius": 377.007,
+          "eccentricity": 0.2488,
+          "inclinationDeg": 17.16,
+          "periodDays": 90560.0,
+          "meanAnomalyDeg": 165.21,
+          "angularSpeedDegPerDay": 0.00397527
+        }
+      }
+    },
+    {
+      "id": "Pluto",
+      "parent": "Pluto-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5108,
+            0.5108,
+            0.5108
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 1188.3,
+          "displayRadius": 0.5108,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 122.53,
+          "rotationPeriodHours": -153.293,
+          "angularSpeedDegPerHour": -2.34844383,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.72,
+            0.62,
+            0.52
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/pluto_albedo_2k.jpg",
+          "normalMap": "assets/Textures/pluto_normal_2k.png",
+          "heightMap": "assets/Textures/pluto_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Pluto-Gravity-Zone",
+      "parent": "Pluto-Anchor",
+      "_note": "Puits gravitationnel faible",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.0,
+          "radius": 1.5324,
+          "onEnterEvent": "ENTER_PLUTO_GRAVITY",
+          "onStayEvent": "STAY_PLUTO_GRAVITY",
+          "onExitEvent": "EXIT_PLUTO_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Vesta-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            92.209,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 353318000.0,
+          "displayRadius": 92.209,
+          "eccentricity": 0.0887,
+          "inclinationDeg": 7.14,
+          "periodDays": 1325.75,
+          "meanAnomalyDeg": 302.72,
+          "angularSpeedDegPerDay": 0.27154441
+        }
+      }
+    },
+    {
+      "id": "Vesta",
+      "parent": "Vesta-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2793,
+            0.2793,
+            0.2793
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 262.7,
+          "displayRadius": 0.2793,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 29.0,
+          "rotationPeriodHours": 5.342,
+          "angularSpeedDegPerHour": 67.39049045,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.62,
+            0.58,
+            0.52
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/vesta_albedo_2k.jpg",
+          "normalMap": "assets/Textures/vesta_normal_2k.png",
+          "heightMap": "assets/Textures/vesta_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Vesta-Gravity-Zone",
+      "parent": "Vesta-Anchor",
+      "_note": "Puits gravitationnel — ancrage minier",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 2.5,
+          "radius": 0.6983,
+          "onEnterEvent": "ENTER_VESTA_GRAVITY",
+          "onStayEvent": "STAY_VESTA_GRAVITY",
+          "onExitEvent": "EXIT_VESTA_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Pallas-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            99.898,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 414700000.0,
+          "displayRadius": 99.898,
+          "eccentricity": 0.2299,
+          "inclinationDeg": 34.83,
+          "periodDays": 1686.0,
+          "meanAnomalyDeg": 80.22,
+          "angularSpeedDegPerDay": 0.21352313
+        }
+      }
+    },
+    {
+      "id": "Pallas",
+      "parent": "Pallas-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2762,
+            0.2762,
+            0.2762
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 255.5,
+          "displayRadius": 0.2762,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 84.0,
+          "rotationPeriodHours": 7.813,
+          "angularSpeedDegPerHour": 46.07705107,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.55,
+            0.55,
+            0.54
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/pallas_albedo_2k.jpg",
+          "normalMap": "assets/Textures/pallas_normal_2k.png",
+          "heightMap": "assets/Textures/pallas_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Haumea-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            394.036,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 6452000000.0,
+          "displayRadius": 394.036,
+          "eccentricity": 0.1912,
+          "inclinationDeg": 28.21,
+          "periodDays": 103774.0,
+          "meanAnomalyDeg": 217.73,
+          "angularSpeedDegPerDay": 0.00346908
+        }
+      }
+    },
+    {
+      "id": "Haumea",
+      "parent": "Haumea-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5814,
+            0.2974,
+            0.4648
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 779.6,
+          "displayRadius": 0.4316,
+          "axes": [
+            1.347,
+            0.689,
+            1.077
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 126.0,
+          "rotationPeriodHours": 3.9155,
+          "angularSpeedDegPerHour": 91.94228068,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.9,
+            0.9,
+            0.88
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/haumea_albedo_2k.jpg",
+          "normalMap": "assets/Textures/haumea_normal_2k.png",
+          "heightMap": "assets/Textures/haumea_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Haumea-Rings",
+      "parent": "Haumea-Anchor",
+      "type": "Ring",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 126.0,
+          "rotationPeriodHours": 0.0,
+          "inheritParentRotation": false
+        },
+        "Ring": {
+          "innerRadiusKm": 2252.0,
+          "outerRadiusKm": 2322.0,
+          "innerRadius": 1.2467,
+          "outerRadius": 1.2855,
+          "segments": 96
+        },
+        "Material": {
+          "baseColor": [
+            0.7,
+            0.7,
+            0.68
+          ],
+          "opacity": 0.35,
+          "albedoMap": "assets/Textures/haumea_ring_albedo.png",
+          "alphaMap": "assets/Textures/haumea_ring_alpha.png",
+          "uvMode": "radial",
+          "doubleSided": true
+        }
+      }
+    },
+    {
+      "id": "Haumea-Spin-Zone",
+      "parent": "Haumea-Anchor",
+      "_note": "Rotation en 3h55 : debris ejectes a l'equateur",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 2.2,
+          "radius": 0.9495,
+          "onEnterEvent": "ENTER_HAUMEA_SPIN",
+          "onStayEvent": "STAY_HAUMEA_SPIN",
+          "onExitEvent": "EXIT_HAUMEA_SPIN"
+        }
+      }
+    },
+    {
+      "id": "Haumea-Gravity-Zone",
+      "parent": "Haumea-Anchor",
+      "_note": "Puits gravitationnel",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.0,
+          "radius": 1.2948,
+          "onEnterEvent": "ENTER_HAUMEA_GRAVITY",
+          "onStayEvent": "STAY_HAUMEA_GRAVITY",
+          "onExitEvent": "EXIT_HAUMEA_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Hiiaka-Anchor",
+      "parent": "Haumea-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            2.8042,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 49880.0,
+          "displayRadius": 2.8042,
+          "eccentricity": 0.0513,
+          "inclinationDeg": 126.36,
+          "periodDays": 49.12,
+          "meanAnomalyDeg": 355.24,
+          "angularSpeedDegPerDay": 7.32899023
+        }
+      }
+    },
+    {
+      "id": "Hiiaka",
+      "parent": "Hiiaka-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2291,
+            0.2291,
+            0.2291
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 160.0,
+          "displayRadius": 0.2291,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 235.0,
+          "angularSpeedDegPerHour": 1.53191489,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.88,
+            0.88,
+            0.87
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/hiiaka_albedo_2k.jpg",
+          "normalMap": "assets/Textures/hiiaka_normal_2k.png",
+          "heightMap": "assets/Textures/hiiaka_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Namaka-Anchor",
+      "parent": "Haumea-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            2.0791,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 25657.0,
+          "displayRadius": 2.0791,
+          "eccentricity": 0.249,
+          "inclinationDeg": 113.0,
+          "periodDays": 18.2783,
+          "meanAnomalyDeg": 132.74,
+          "angularSpeedDegPerDay": 19.6954859
+        }
+      }
+    },
+    {
+      "id": "Namaka",
+      "parent": "Namaka-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.1779,
+            0.1779,
+            0.1779
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 85.0,
+          "displayRadius": 0.1779,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 100.0,
+          "angularSpeedDegPerHour": 3.6,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.85,
+            0.85,
+            0.84
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/namaka_albedo_2k.jpg",
+          "normalMap": "assets/Textures/namaka_normal_2k.png",
+          "heightMap": "assets/Textures/namaka_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Makemake-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            404.404,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 6796000000.0,
+          "displayRadius": 404.404,
+          "eccentricity": 0.1591,
+          "inclinationDeg": 28.98,
+          "periodDays": 113183.0,
+          "meanAnomalyDeg": 270.25,
+          "angularSpeedDegPerDay": 0.00318069
+        }
+      }
+    },
+    {
+      "id": "Makemake",
+      "parent": "Makemake-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.4169,
+            0.4169,
+            0.4169
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 715.0,
+          "displayRadius": 0.4169,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 22.8266,
+          "angularSpeedDegPerHour": 15.7710741,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.75,
+            0.55,
+            0.45
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/makemake_albedo_2k.jpg",
+          "normalMap": "assets/Textures/makemake_normal_2k.png",
+          "heightMap": "assets/Textures/makemake_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Eris-Anchor",
+      "parent": "Sun-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            494.316,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 10153900000.0,
+          "displayRadius": 494.316,
+          "eccentricity": 0.4362,
+          "inclinationDeg": 44.04,
+          "periodDays": 203830.0,
+          "meanAnomalyDeg": 47.76,
+          "angularSpeedDegPerDay": 0.00176618
+        }
+      }
+    },
+    {
+      "id": "Eris",
+      "parent": "Eris-Anchor",
+      "type": "PlaneteNaine",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.5065,
+            0.5065,
+            0.5065
+          ]
+        },
+        "Body": {
+          "class": "dwarf",
+          "radiusKm": 1163.0,
+          "displayRadius": 0.5065,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 78.0,
+          "rotationPeriodHours": 378.864,
+          "angularSpeedDegPerHour": 0.95020905,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_mid.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.94,
+            0.94,
+            0.92
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/eris_albedo_2k.jpg",
+          "normalMap": "assets/Textures/eris_normal_2k.png",
+          "heightMap": "assets/Textures/eris_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Eris-Gravity-Zone",
+      "parent": "Eris-Anchor",
+      "_note": "Puits gravitationnel — corps le plus lointain",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "sphere",
+          "radiusBodyRadii": 3.0,
+          "radius": 1.5195,
+          "onEnterEvent": "ENTER_ERIS_GRAVITY",
+          "onStayEvent": "STAY_ERIS_GRAVITY",
+          "onExitEvent": "EXIT_ERIS_GRAVITY"
+        }
+      }
+    },
+    {
+      "id": "Dysnomia-Anchor",
+      "parent": "Eris-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            2.411,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 37273.0,
+          "displayRadius": 2.411,
+          "eccentricity": 0.0062,
+          "inclinationDeg": 0.0,
+          "periodDays": 15.786,
+          "meanAnomalyDeg": 185.27,
+          "angularSpeedDegPerDay": 22.8050171
+        }
+      }
+    },
+    {
+      "id": "Dysnomia",
+      "parent": "Dysnomia-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.2975,
+            0.2975,
+            0.2975
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 307.5,
+          "displayRadius": 0.2975,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 378.864,
+          "angularSpeedDegPerHour": 0.95020905,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.3,
+            0.29,
+            0.28
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/dysnomia_albedo_2k.jpg",
+          "normalMap": "assets/Textures/dysnomia_normal_2k.png",
+          "heightMap": "assets/Textures/dysnomia_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "Charon-Anchor",
+      "parent": "Pluto-Anchor",
+      "type": "Anchor",
+      "components": {
+        "Transform": {
+          "translation": [
+            1.8029,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Orbit": {
+          "semiMajorAxisKm": 19591.0,
+          "displayRadius": 1.8029,
+          "eccentricity": 0.0002,
+          "inclinationDeg": 0.08,
+          "periodDays": 6.3872,
+          "meanAnomalyDeg": 322.77,
+          "angularSpeedDegPerDay": 56.36272545
+        }
+      }
+    },
+    {
+      "id": "Charon",
+      "parent": "Charon-Anchor",
+      "type": "Lune",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.3902,
+            0.3902,
+            0.3902
+          ]
+        },
+        "Body": {
+          "class": "moon",
+          "radiusKm": 606.0,
+          "displayRadius": 0.3902,
+          "axes": [
+            1.0,
+            1.0,
+            1.0
+          ]
+        },
+        "Spin": {
+          "axialTiltDeg": 0.0,
+          "rotationPeriodHours": 153.293,
+          "angularSpeedDegPerHour": 2.34844383,
+          "initialAngleDeg": 0.0,
+          "inheritParentRotation": false
+        },
+        "Mesh": {
+          "model": "assets/Meshes/sphere_lo.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.6,
+            0.58,
+            0.56
+          ],
+          "emissive": 0.0,
+          "albedoMap": "assets/Textures/charon_albedo_2k.jpg",
+          "normalMap": "assets/Textures/charon_normal_2k.png",
+          "heightMap": "assets/Textures/charon_height_2k.png"
+        }
+      }
+    },
+    {
+      "id": "AsteroidBelt-Zone",
+      "parent": "Solar-System",
+      "_note": "Ceinture principale — trigger en coquille (shape 'shell')",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "shell",
+          "innerRadius": 86.116,
+          "outerRadius": 108.499,
+          "halfThickness": 6.715,
+          "radius": 108.499,
+          "onEnterEvent": "ENTER_ASTEROIDBELT",
+          "onStayEvent": "STAY_ASTEROIDBELT",
+          "onExitEvent": "EXIT_ASTEROIDBELT"
+        }
+      }
+    },
+    {
+      "id": "KuiperBelt-Zone",
+      "parent": "Solar-System",
+      "_note": "Ceinture de Kuiper — trigger en coquille (shape 'shell')",
+      "type": "Trigger",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Trigger": {
+          "role": "zone",
+          "shape": "shell",
+          "innerRadius": 328.634,
+          "outerRadius": 424.264,
+          "halfThickness": 19.126,
+          "radius": 424.264,
+          "onEnterEvent": "ENTER_KUIPERBELT",
+          "onStayEvent": "STAY_KUIPERBELT",
+          "onExitEvent": "EXIT_KUIPERBELT"
+        }
+      }
+    },
+    {
+      "id": "AsteroidBelt",
+      "parent": "Solar-System",
+      "type": "Belt",
+      "_note": "Developpe proceduralement au chargement. Meme graine = meme ceinture.",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Belt": {
+          "count": 600,
+          "seed": 1337,
+          "innerAU": 2.06,
+          "outerAU": 3.27,
+          "eccentricityMax": 0.2,
+          "inclinationMaxDeg": 12.0,
+          "radiusMinKm": 8.0,
+          "radiusMaxKm": 120.0,
+          "rotationPeriodMinHours": 2.0,
+          "rotationPeriodMaxHours": 20.0,
+          "meshes": [
+            "assets/Meshes/rock_a.obj",
+            "assets/Meshes/rock_b.obj",
+            "assets/Meshes/rock_c.obj"
+          ],
+          "kirkwoodGaps": [
+            [
+              2.502,
+              0.035
+            ],
+            [
+              2.825,
+              0.025
+            ],
+            [
+              2.958,
+              0.022
+            ],
+            [
+              3.279,
+              0.03
+            ]
+          ],
+          "baseColor": [
+            0.46,
+            0.42,
+            0.38
+          ]
+        }
+      }
+    },
+    {
+      "id": "Player_Ship",
+      "_note": "Pas de parent : le controleur ecrit une position MONDE.",
+      "components": {
+        "Transform": {
+          "translation": [
+            64.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.35,
+            0.35,
+            0.35
+          ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/ship_scout.obj"
+        },
+        "Material": {
+          "baseColor": [
+            0.72,
+            0.74,
+            0.78
+          ],
+          "albedoMap": "assets/Textures/ship_scout_albedo_1k.png",
+          "normalMap": "assets/Textures/ship_scout_normal_1k.png",
+          "specularMap": "assets/Textures/ship_scout_spec_1k.png",
+          "emissiveMap": "assets/Textures/ship_scout_emissive_1k.png"
+        },
+        "Trigger": {
+          "role": "probe",
+          "shape": "sphere",
+          "radius": 0.5
+        },
+        "Health": {
+          "maxHealth": 100
+        },
+        "PlayerControl": {
+          "speed": 12.0
+        }
+      }
+    },
+    {
+      "id": "FPS_Camera",
+      "_note": "Pas de parent : un controleur ecrit en local.",
+      "components": {
+        "Transform": {
+          "translation": [
+            60.0,
+            3.0,
+            12.0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 45.0,
+          "near": 0.05,
+          "far": 2000.0,
+          "infiniteFar": true,
+          "active": true,
+          "priority": 10,
+          "category": "game",
+          "gizmo": {
+            "length": 3.0
+          }
+        },
+        "CameraFPS": {
+          "enabled": true,
+          "moveSpeed": 25.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": false,
+          "pitchLimit": 89.0,
+          "sprintMultiplier": 6.0
+        }
+      }
+    },
+    {
+      "id": "Follow_Camera",
+      "_note": "Pas de parent : CameraFollowSystem produit une position MONDE.",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 50.0,
+          "near": 0.05,
+          "far": 2000.0,
+          "infiniteFar": true,
+          "active": true,
+          "priority": 5,
+          "category": "game",
+          "gizmo": {
+            "length": 3.0
+          }
+        },
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Player_Ship",
+          "offset": [
+            0.0,
+            1.5,
+            -6.0
+          ],
+          "smoothSpeed": 5.0,
+          "lookAtHeight": 0.0
+        }
+      }
+    },
+    {
+      "id": "Overview_Camera",
+      "_note": "Vue d'ensemble du systeme.",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Camera": {
+          "projection": "orthographic",
+          "orthoHeight": 1200.0,
+          "near": 1.0,
+          "far": 2000.0,
+          "infiniteFar": false,
+          "active": true,
+          "priority": 0,
+          "category": "debug",
+          "gizmo": {
+            "length": 3.0
+          }
+        }
+      }
+    },
+    {
+      "id": "Top_View",
+      "components": {
+        "Transform": {
+          "translation": [
+            0,
+            950,
+            0
+          ],
+          "rotation": [
+            -90,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 5000.0,
+          "infiniteFar": true,
+          "active": true,
+          "priority": 4,
+          "category": "debug",
+          "gizmo": {
+            "length": 3.0
+          }
+        }
+      }
+    },
+    {
+      "id": "Side_View",
+      "components": {
+        "Transform": {
+          "translation": [
+            950,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            90,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 5000.0,
+          "infiniteFar": true,
+          "active": true,
+          "priority": 3,
+          "category": "debug",
+          "gizmo": {
+            "length": 3.0
+          }
+        }
+      }
+    }
+  ]
+}
