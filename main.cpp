@@ -63,7 +63,6 @@ using namespace LV3;
 using namespace LV3::Tests;         // ← ajoute CE using en plus
 
 //**********************************************
-
 bool g_running = true;				// flag de la boucle. Si False, on quitte
 DepthBuffer db;
 FrameBuffer fb;
@@ -133,7 +132,8 @@ LV3::InputState BuildInputState()
 					break;
 				case SDL_SCANCODE_F2: g_cycleCam[0] = true; break;   // caméra du panneau jeu
 				case SDL_SCANCODE_F3: g_cycleMode[0] = true; break;   // mode du panneau jeu
-				case SDL_SCANCODE_F4: g_cycleCam[1] = true; break;   // caméra du panneau debug
+				case SDL_SCANCODE_F4:
+					g_cycleCam[1] = true; break;   // caméra du panneau debug
 				case SDL_SCANCODE_F5: g_cycleMode[1] = true; break;   // mode du panneau debug
 
 				case SDL_SCANCODE_RIGHTBRACKET: 
@@ -321,7 +321,9 @@ int main(int argc, char* argv[])
 		Logger::info("[système] fin\n");
 
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
-	//	exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
+
+
+//		exit(0); // Arrêt du programme après les tests, avant la boucle de jeu
 	#endif
 
 	/************************************************************
@@ -447,7 +449,7 @@ int main(int argc, char* argv[])
 
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
-		DebugDisplaySystem(registry);// , entityNames);
+			DebugDisplaySystem(registry);// , entityNames);
 
 		// --- Draw de la hiérarchie ---
 		RenderSystem(registry, activeCamera, rm);

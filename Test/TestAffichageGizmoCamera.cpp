@@ -46,6 +46,7 @@ namespace LV3::Tests
         }
     }
 
+    // vérifie qu'un sommet du gizmo, transformé par la view-projection de sa propre caméra propriétaire, tombe exactement sur le bord du frustum (|clip.x/clip.w| == 1)
     size_t  Test_GizmoMatchesFrustum(Registry& registry, ResourceManager& rm,
         const ViewData* views, size_t count,
         const GizmoAssets& assets)

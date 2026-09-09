@@ -48,6 +48,24 @@
       }
     },
     {
+      "id": "Cube3",
+      "parent": "Cube2",
+      "type": "xxxx",
+      "components": {
+        "Transform": {
+          "translation": [ -40.0, 20.0, 0.0 ],
+          "rotation": [ 45.0, 45.0, 0.0 ],
+          "scale": [ 0.5, 0.5, 0.5 ]
+        },
+        "Mesh": {
+          "model": "assets/Meshes/cube.obj",
+          "texture": "sun.jpg",
+          "rotationSpeed": 0.05
+        }
+      }
+    },
+
+    {
       "id": "FPS_Camera",
       "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
       "components": {
@@ -125,7 +143,7 @@
           "near": 1.0,
           "far": 300.0,
           "infiniteFar": true,
-          "active": true,
+          "active": false,
           "priority": 0,
           "category": "debug",
           "gizmo": { "length": 3.0 }
@@ -146,7 +164,7 @@
           "orthoHeight": 120.0,
           "near": 1.0,
           "far": 400.0,
-          "infiniteFar": true,
+          "infiniteFar": false,
           "active": true,
           "priority": 0,
           "category": "debug",
