@@ -90,9 +90,34 @@ namespace LV3::Tests
                 const Vec3f world{ w4.x, w4.y, w4.z };
                 const Vec4f clip = MulRow(vd->viewProjectionMatrix, world);
 
-                LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
-                LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
-                LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
+                //// L'ANNULATION position-caméra / view-matrix perd en précision proportionnellement
+                //// a la magnitude de cette position (erreur d'arrondi float32 ~ magnitude * 1.19e-7).
+                //// Une tolerance absolue n'a de sens que pres de l'origine ; au-dela, elle doit
+                //// suivre la distance reelle de la camera testee.
+                //const Vec3f camPos{ trGiz.m_worldMatrix[3][0], trGiz.m_worldMatrix[3][1], trGiz.m_worldMatrix[3][2] };
+                //const float kEpsScaled = kEps * std::max(1.0f, camPos.length());        // absolu — clip.w
+                //const float kEpsRatio = kEpsScaled / std::max(expectedW, 1e-3f);       // relatif — x/w, y/w
+
+                //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEpsScaled);
+                //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEpsRatio);
+                //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEpsRatio);
+
+
+                //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
+                //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
+                //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
+
+
+                // L'erreur nait de l'annulation des termes de magnitude M (position de la camera),
+                // pas de la magnitude du resultat final. Les trois comparaisons — clip.w, x/w, y/w —
+                // heritent donc du MEME ordre de grandeur d'erreur, mesure au ULP pres a la magnitude M.
+                constexpr float kUlpMargin = 8.0f;   // marge de securite, en multiples de l'epsilon machine
+                const Vec3f camPos{ trGiz.m_worldMatrix[3][0], trGiz.m_worldMatrix[3][1], trGiz.m_worldMatrix[3][2] };
+                const float eps = kUlpMargin * std::numeric_limits<float>::epsilon() * std::max(1.0f, camPos.length());
+
+                LV3_ASSERT(std::fabs(clip.w - expectedW) < eps);
+                LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < eps);
+                LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < eps);
             }
             ++checked;
         }

@@ -64,111 +64,84 @@
         }
       }
     },
-
     {
       "id": "FPS_Camera",
-      "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
+      "_note": "Pas de parent : un controleur ecrit en local.",
       "components": {
         "Transform": {
-          "translation": [ 0.0, 5.0, 40.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
+          "translation": [
+            60.0,
+            3.0,
+            12.0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
         },
         "Camera": {
           "projection": "perspective",
           "lens": "fov",
           "fov": 45.0,
-          "near": 0.1,
-          "far": 300.0,
-          "infiniteFar": false,
-          "active": true,
-          "category": "gameplay",
-          "priority": 10,
-          "gizmo": { "length": 5.0 }
-        },
-        "CameraFPS": {
-          "enabled": true,
-          "moveSpeed": 15.0,
-          "mouseSensitivity": 0.15,
-          "lockVertical": false,
-          "pitchLimit": 89.0,
-          "sprintMultiplier": 3.0
-        }
-      }
-    },
-    {
-      "id": "Follow_Camera",
-      "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
-      "components": {
-        "Transform": {
-          "translation": [ 0.0, 5.0, 0.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "lens": "fov",
-          "fov": 45.0,
-          "near": 0.1,
+          "near": 0.05,
           "far": 2000.0,
           "infiniteFar": true,
           "active": true,
-          "priority": 5,
-          "category": "gameplay",
-          "gizmo": { "length": 5.0 }
+          "priority": 10,
+          "category": "game",
+          "gizmo": {
+            "length": 3.0
+          }
         },
-        "CameraFollow": {
+        "CameraFPS": {
           "enabled": true,
-          "target": "Cube1",
-          "offset": [ 0.0, 5.0, -35.0 ],
-          "smoothSpeed": 5.0,
-          "lookAtHeight": 0.0
+          "moveSpeed": 25.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": false,
+          "pitchLimit": 89.0,
+          "sprintMultiplier": 6.0
         }
       }
     },
     {
       "id": "Overview_Camera",
-      "Notes": "Camera permettant de visualier la scène globale",
+      "_note": "Vue d'ensemble du systeme.",
       "components": {
         "Transform": {
-          "translation": [ 0.0, 0.0, 120.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "lens": "fov",
-          "gateFit": "overscan",
-          "fov": 60.0,
-          "near": 1.0,
-          "far": 300.0,
-          "infiniteFar": true,
-          "active": false,
-          "priority": 0,
-          "category": "debug",
-          "gizmo": { "length": 3.0 }
-        }
-      }
-    },
-    {
-      "id": "Top_Camera",
-      "_note": "Vue de dessus orthographique — plan de la scene, sans perspective",
-      "components": {
-        "Transform": {
-          "translation": [ 0.0, 150.0, 0.0 ],
-          "rotation": [ -90.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
+          "translation": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            1,
+            1,
+            1
+          ]
         },
         "Camera": {
           "projection": "orthographic",
-          "orthoHeight": 120.0,
+          "orthoHeight": 1200.0,
           "near": 1.0,
-          "far": 400.0,
+          "far": 2000.0,
           "infiniteFar": false,
           "active": true,
           "priority": 0,
           "category": "debug",
-          "gizmo": { "length": 30.0 }
+          "gizmo": {
+            "length": 5.0
+          }
         }
       }
     }

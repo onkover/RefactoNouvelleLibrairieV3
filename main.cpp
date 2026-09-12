@@ -530,15 +530,15 @@ int main(int argc, char* argv[])
 				FrameW = pendingW;
 				FrameH = pendingH;
 
-				// 1. La texture SDL (le pitch change aussi !)
+				// 1. La texture SDL chnage (le pitch change aussi !)
 				SDL_DestroyTexture(SDLtexture);
 				SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, FrameW, FrameH);
 
 				// 2. Le Z-buffer
 				db.Resize(FrameW, FrameH);
 
-				// 3. Le viewport : le ou les vioewports seront reconstruit durant la boucle de rendu
-
+				// 3. Le viewport : 
+				// rien à faire : le ou les viewports seront reconstruit durant la boucle de rendu
 			}
 		}
 

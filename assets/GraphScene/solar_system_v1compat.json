@@ -2401,54 +2401,6 @@
       }
     },
     {
-      "id": "Follow_Camera",
-      "_note": "Pas de parent : CameraFollowSystem produit une position MONDE.",
-      "components": {
-        "Transform": {
-          "translation": [
-            0,
-            0,
-            0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1,
-            1,
-            1
-          ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "lens": "fov",
-          "fov": 50.0,
-          "near": 0.05,
-          "far": 2000.0,
-          "infiniteFar": true,
-          "active": true,
-          "priority": 5,
-          "category": "game",
-          "gizmo": {
-            "length": 3.0
-          }
-        },
-        "CameraFollow": {
-          "enabled": true,
-          "target": "Player_Ship",
-          "offset": [
-            0.0,
-            1.5,
-            -6.0
-          ],
-          "smoothSpeed": 5.0,
-          "lookAtHeight": 0.0
-        }
-      }
-    },
-    {
       "id": "Overview_Camera",
       "_note": "Vue d'ensemble du systeme.",
       "components": {
@@ -2470,8 +2422,9 @@
           ]
         },
         "Camera": {
-          "projection": "orthographic",
-          "orthoHeight": 1200.0,
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 45.0,
           "near": 1.0,
           "far": 2000.0,
           "infiniteFar": false,
@@ -2479,66 +2432,8 @@
           "priority": 0,
           "category": "debug",
           "gizmo": {
-            "length": 3.0
+            "length": 5.0
           }
-        }
-      }
-    },
-    {
-      "id": "Top_View",
-      "components": {
-        "Transform": {
-          "translation": [
-            0,
-            950,
-            0
-          ],
-          "rotation": [
-            -90,
-            0,
-            0
-          ],
-          "scale": [
-            1,
-            1,
-            1
-          ]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "lens": "fov",
-          "fov": 60.0,
-          "near": 1.0,
-          "far": 5000.0,
-          "infiniteFar": true,
-          "active": true,
-          "priority": 4,
-          "category": "debug",
-          "gizmo": {
-            "length": 3.0
-          }
-        }
-      }
-    },
-    {
-      "id": "Side_View",
-      "components": {
-        "Transform": {
-          "translation": [950, 0, 0],
-          "rotation": [0, 90, 0],
-          "scale": [1, 1, 1]
-        },
-        "Camera": {
-          "projection": "perspective",
-          "lens": "fov",
-          "fov": 60.0,
-          "near": 1.0,
-          "far": 5000.0,
-          "infiniteFar": true,
-          "active": true,
-          "priority": 3,
-          "category": "debug",
-          "gizmo": {"length": 3.0}
         }
       }
     }
