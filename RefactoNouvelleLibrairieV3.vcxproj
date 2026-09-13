@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <LV3BuildDir>$(MSBuildThisFileDirectory)Build\</LV3BuildDir>
+  </PropertyGroup>
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -53,34 +56,51 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(LV3BuildDir)LV3.Common.props" Condition="exists('$(LV3BuildDir)LV3.Common.props')" />
+    <Import Project="$(LV3BuildDir)LV3.User.props" Condition="exists('$(LV3BuildDir)LV3.User.props')" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(LV3BuildDir)LV3.Common.props" Condition="exists('$(LV3BuildDir)LV3.Common.props')" />
+    <Import Project="$(LV3BuildDir)LV3.User.props" Condition="exists('$(LV3BuildDir)LV3.User.props')" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(LV3BuildDir)LV3.Common.props" Condition="exists('$(LV3BuildDir)LV3.Common.props')" />
+    <Import Project="$(LV3BuildDir)LV3.User.props" Condition="exists('$(LV3BuildDir)LV3.User.props')" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(LV3BuildDir)LV3.Common.props" Condition="exists('$(LV3BuildDir)LV3.Common.props')" />
+    <Import Project="$(LV3BuildDir)LV3.User.props" Condition="exists('$(LV3BuildDir)LV3.User.props')" />
+  </ImportGroup>
   <ImportGroup Label="ExtensionSettings">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>G:\Projects Visual Studio\LibraryV3;C:\Pascal_Perso\source\repos\LibraryV3;$(IncludePath)</IncludePath>
-  </PropertyGroup>
+  <!-- ============================================================
+       Reglages VALABLES POUR TOUTES LES CONFIGURATIONS.
+       Sans Condition : c'est ce qui rend impossible la divergence
+       Debug / Release qui a rendu Release|x64 inconstructible.
+       Les chemins viennent de Build\LV3.User.props (non versionne).
+       ============================================================ -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(LIBRARYV3_DIR);$(SDL2_DIR)\include;$(SDL2_TTF_DIR)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SDL2_DIR)\lib\x64;$(SDL2_TTF_DIR)\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -92,13 +112,10 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -110,23 +127,16 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;PROJECT_DIR=R"($(ProjectDir))";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp23</LanguageStandard>
-      <AdditionalIncludeDirectories>G:\code\lib\SDL2\SDL2-2.26.2\include;G:\code\lib\SDL2\SDL2_ttf-2.0.14\include;C:\Pascal_Perso\Mes docs\SDL2\SDL2-2.26.2\include;C:\Pascal_Perso\Mes docs\SDL2\SDL2_ttf-2.0.14\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
-      <AssemblerOutput>All</AssemblerOutput>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <!-- LV3_PROJECT_DIR : repli de CONFORT, Debug uniquement.
+           R"(...)" obligatoire : $(ProjectDir) finit par un antislash,
+           qui echapperait le guillemet fermant en litteral classique.
+           Absent de Release : c'est tout l'objet du correctif (R36). -->
+      <PreprocessorDefinitions>LV3_PROJECT_DIR=R"($(ProjectDir))";_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>G:\code\lib\SDL2\SDL2-2.26.2\lib\x64;G:\code\lib\SDL2\SDL2_ttf-2.0.14\lib\x64;C:\Pascal_Perso\Mes docs\SDL2\SDL2-2.26.2\lib\x64;C:\Pascal_Perso\Mes docs\SDL2\SDL2_ttf-2.0.14\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -134,17 +144,19 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <!-- NDEBUG, pas _DEBUG. Definir _DEBUG avec la CRT release (/MD)
+           met _ITERATOR_DEBUG_LEVEL a 2 alors que la LIB est a 0 :
+           erreur d'edition de liens LNK2038, ou pire, ODR silencieuse. -->
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
     </Link>
     <Manifest>
       <EnableSegmentHeap>true</EnableSegmentHeap>
@@ -218,6 +230,9 @@
       <DeploymentContent>true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
     </None>
+    <None Include="build\LV3.Common.props" />
+    <None Include="build\LV3.User.props" />
+    <None Include="build\LV3.User.props.example" />
     <None Include="config.json" />
     <MASM Include="GFX\gfxASM.ASM">
       <FileType>Document</FileType>
@@ -319,4 +334,25 @@
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
+  <Target Name="LV3CopyContent" AfterTargets="Build">
+    <!-- ItemGroup DANS la cible : evalue au moment du build, donc un asset
+         ajoute depuis le dernier chargement de la solution est pris en compte.
+         Declare hors cible, il ne serait evalue qu'au chargement du .vcxproj. -->
+    <ItemGroup>
+      <LV3ContentRoot Include="$(ProjectDir)engine.json;$(ProjectDir)config.json" />
+      <LV3Assets Include="$(ProjectDir)assets\**\*" />
+      <LV3Runtime Include="$(ProjectDir)*.dll;$(ProjectDir)tahoma.ttf" />
+    </ItemGroup>
+    <!-- Les fichiers racine et les DLL atterrissent a plat dans $(OutDir). -->
+    <Copy SourceFiles="@(LV3ContentRoot);@(LV3Runtime)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <!-- Les assets CONSERVENT leur arborescence. %(RecursiveDir) ne contient
+         que la partie captee par le '**' : il faut donc reposer 'assets\'
+         devant, sinon assets\Meshes\rock_a.obj atterrit dans $(OutDir)Meshes\
+         et tous les chemins relatifs de engine.json cassent. -->
+    <Copy SourceFiles="@(LV3Assets)" DestinationFiles="@(LV3Assets->'$(OutDir)assets\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="[LV3] Contenu copie vers $(OutDir)" />
+  </Target>
+  <Target Name="LV3CheckProps" BeforeTargets="ClCompile" Condition="'$(LV3CommonPropsLoaded)' != 'true'">
+    <Error Text="LV3.Common.props introuvable via LV3BuildDir=$(LV3BuildDir) — les reglages communs ne sont PAS appliques. Corrige LV3BuildDir dans ce .vcxproj." />
+  </Target>
 </Project>

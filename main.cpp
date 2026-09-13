@@ -41,6 +41,7 @@
 #include "Core/InputState.h"
 #include "helper/ConfigManager.h"
 #include "Core/SimulationClock.h"
+#include "Core/contentroot.h"
 
 #include "Scene/Registry.hpp"
 #include "Core/EventBus.hpp"
@@ -212,6 +213,27 @@ int main(int argc, char* argv[])
 	SetConsoleMode();	// mode cosole en UTF-8
 
 	///************************************************************
+	// Lecture du répertoire de l'executable
+	//************************************************************/
+	// LV3_PROJECT_DIR est defini par le projet EXECUTABLE, en Debug uniquement.
+	// La LIB ne l'a jamais vu et n'a pas a le voir : c'est un chemin de developpement, donc une donnee de l'APPLICATION.
+	std::vector<std::filesystem::path> devCandidates;
+	#ifdef LV3_PROJECT_DIR
+		devCandidates.emplace_back(LV3_PROJECT_DIR);	// path du projet définit dans l'Explorateur de projet > Propriétés.;
+		// C/C++ > Préprocesseur.
+		// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
+		// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
+	#endif
+
+	const std::filesystem::path contentRoot = LV3::ResolveContentRoot(devCandidates);
+	if (contentRoot.empty())
+	{
+		Logger::error("Arret : aucune racine de contenu.");
+		return -1;
+	}
+	LV3_ASSERT(contentRoot.is_absolute());	// test si le chemin est absolu, par exmeple : c:\chemin\
+
+	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
 	Logger::info(" === Lecture de la configuration du programme ===");
@@ -241,12 +263,7 @@ int main(int argc, char* argv[])
 	// --- Paramétrage de l'horloge de simulation ---
 	_clock.Configure(LV3::EngineConfig::Get().simulation);
 
-	// --- SETUP DE LA SCÈNE ---
-	std::string cheminProjet = PROJECT_DIR; // path du projet définit dans l'Explorateur de projet > Propriétés.;
-	// C/C++ > Préprocesseur.
-	// Définitions de préprocesseur => PROJECT_DIR=R"($(ProjectDir))"
-	// (Le R"(...)" est un Raw String Literal en C++, ça permet d'éviter que les antislashs \ de Windows ne fassent planter la chaîne de caractères).
-
+	
 
 	/************************************************************
 	Paramétrage du scenegraph
@@ -260,16 +277,16 @@ int main(int argc, char* argv[])
 	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
 	Entity activeCamera = NULL_ENTITY;
-	CameraBinding bindings[4];
+	CameraBinding bindings[4]; 
 	ViewData      views[4];
 	Renderer renderer;
 
 
 	// --- Lecture de la scène ---
-	if (cfg.mapAssets.find("scene_test") != cfg.mapAssets.end())
+	if (cfg.mapAssets.find("scene_graph") != cfg.mapAssets.end())
 	{
-		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_test"].object;
-		bool success = SceneSerializer::LoadSceneGraph(cheminProjet, pathScene, registry, rm);// activeCamera, rm);
+		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_graph"].object;
+		bool success = SceneSerializer::LoadSceneGraph(contentRoot.string(), pathScene, registry, rm);// activeCamera, rm);
 		if (!success)
 		{
 			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");

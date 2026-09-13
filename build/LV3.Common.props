@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- ============================================================
+       LV3.Common.props — reglages de compilation communs a
+       LibraryV3 (LIB) et RefactoNouvelleLibrairieV3 (EXE).
+
+       UN SEUL FOYER : toute divergence entre Debug et Release sur
+       ces reglages a produit un bug (bug 12, ANSI ; expected en
+       C++20 ; _clock masque non signale faute de Level4).
+
+       Ne contient AUCUN chemin de machine : voir LV3.User.props.
+       ============================================================ -->
+
+  <PropertyGroup>
+    <!-- Temoin lu par la cible de garde des .vcxproj : si ce fichier
+         n'est pas charge, le build s'arrete au lieu de compiler avec
+         les reglages par defaut. -->
+    <LV3CommonPropsLoaded>true</LV3CommonPropsLoaded>
+  </PropertyGroup>
+
+  <ItemDefinitionGroup>
+    <ClCompile>
+
+      <!-- C++23 : std::expected (ResourceManager::LoadMeshChecked, F5). -->
+      <LanguageStandard>stdcpp23</LanguageStandard>
+
+      <!-- /permissive- : conformite stricte. -->
+      <ConformanceMode>true</ConformanceMode>
+
+      <!-- Level4 dans TOUTES les configurations. -->
+      <WarningLevel>Level4</WarningLevel>
+
+      <!-- Compilation parallele. -->
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+
+      <!-- /utf-8          : sources et litteraux en UTF-8 (bug 12).
+           /Zc:__cplusplus : __cplusplus rapporte le vrai mode standard.
+                             Aucune case dans l'IDE : se pose ici.
+           /we4456 : declaration masque une variable locale
+           /we4457 : declaration masque un parametre de fonction
+           /we4458 : declaration masque un membre de classe
+           /we4459 : declaration masque une variable globale  <- bug 52
+           /we4553 : expression sans effet                    <- bug 23
+           /we4700 : variable locale non initialisee utilisee
+           /we4701 : variable locale potentiellement non initialisee <- bug 60
+           /we4715 : chemin de sortie sans valeur de retour -->
+      <AdditionalOptions>/utf-8 /Zc:__cplusplus /we4456 /we4457 /we4458 /we4459 /we4553 /we4700 /we4701 /we4715 %(AdditionalOptions)</AdditionalOptions>
+
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+</Project>
