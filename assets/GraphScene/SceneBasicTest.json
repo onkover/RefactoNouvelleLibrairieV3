@@ -70,13 +70,13 @@
       "components": {
         "Transform": {
           "translation": [
-            60.0,
-            3.0,
-            12.0
+            0.0,
+            0.0,
+            0.0
           ],
           "rotation": [
-            0,
-            0,
+            45.0,
+            45.0,
             0
           ],
           "scale": [
@@ -115,27 +115,28 @@
       "components": {
         "Transform": {
           "translation": [
-            0,
-            0,
-            0
+            0.0,
+            0.0,
+            50.0
           ],
           "rotation": [
-            0,
-            0,
-            0
+            0.0,
+            0.0,
+            0.0
           ],
           "scale": [
-            1,
-            1,
-            1
+            1.0,
+            1.0,
+            1.0
           ]
         },
         "Camera": {
-          "projection": "orthographic",
-          "orthoHeight": 12.0,
+          "projection": "perspective",
+          "lens": "fov",
+          "fov": 90.0,
           "near": 1.0,
           "far": 2000.0,
-          "infiniteFar": false,
+          "infiniteFar": true,
           "active": true,
           "priority": 0,
           "category": "debug",
