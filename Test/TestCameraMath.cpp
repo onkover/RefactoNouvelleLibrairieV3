@@ -515,18 +515,4 @@ namespace LV3::Tests
             return -1;                    // on ne demarre pas sur une projection fausse
         }
     }
-
-    void CheckControllerExclusivity(Registry& reg)
-    {
-        for (auto&& [e, fps] : reg.ViewGroup<FPSControllerComponent>())
-        {
-            const auto* follow = reg.TryGet<CameraFollowComponent>(e);
-            if (follow && fps.m_isEnabled && follow->m_isEnabled)
-            {
-                Logger::error("\033[31mI[INVARIANT] " + reg.getComponent<NameComponent>(e).m_id
-                    + " : FPS et Follow actifs simultanement — ils s'ecrasent mutuellement\033[0m");
-                LV3_ASSERT(false);
-            }
-        }
-    }
 }

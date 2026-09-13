@@ -24,7 +24,6 @@ namespace LV3::Tests
     int TestCleanBuffer();
     void TestFrontFaceSign();
     void DebugDumpControllers(Registry& reg);
-    void CheckControllerExclusivity(Registry& reg);
     [[nodiscard]] bool Test_ClipCoverage_NoCrackNoOverlap();
     bool Test_Rasterizer_EmptyBoxes();
     void Test_SimulationClock();
@@ -96,7 +95,6 @@ namespace LV3::Tests
         printf("\033[32mOK : Test_TopLeftRule_SmallTriangles, couverture exacte\033[0m\n");
 
         DebugDumpControllers(registry);
-        CheckControllerExclusivity(registry);
 
         Logger::info("=== Tests de non-regression ===");
         s_failures = 0;

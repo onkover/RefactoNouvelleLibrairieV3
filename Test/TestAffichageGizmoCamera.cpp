@@ -62,6 +62,22 @@ namespace LV3::Tests
             const auto& cam = registry.getComponent<CameraComponent>(giz.m_owner);
             const bool  isOrtho = (cam.m_projection == EProjectionType::Orthographic);
 
+
+            // Echelle de la maquette = section AFFICHEE / section REELLE a la distance L.
+            // L'aspect s'annule dans le rapport : un seul s pour x et pour y.
+            /*
+                Ici le test ne rejoue pas le calcul du système. 
+                Il calcule un rapport entre deux grandeurs d'origines différentes : *
+                * le numérateur vient du gizmo, 
+                * le dénominateur vient de la définition du frustum (celle-là même qu'implémente viewProjectionMatrix, produite par un tout autre chemin)
+            
+                Puis il vérifie que ce rapport se retrouve au bout de la chaîne complète m_local.scale → LocalTransformSystem → WorldTransformSystem → viewProjection. C'est cette chaîne, et elle seule, que le test prouve.
+            */
+            const Vec2f hs = GizmoHalfSection(cam, giz.m_length);
+            // s est scalaire parce que hs.x == hs.y dans les deux modes actuels. 
+            // Si un jour une demi-section affichée devenait non uniforme, il faudrait s.x = hs.x / FrustumHalfHeightAt(...) et s.y séparément.
+            const float s = hs.y / FrustumHalfHeightAt(cam, giz.m_length);
+
             // ── NIVEAU ENTITE ────────────────────────────────────────────
             // 1. Le handle designe le bon asset.
             LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
@@ -90,34 +106,20 @@ namespace LV3::Tests
                 const Vec3f world{ w4.x, w4.y, w4.z };
                 const Vec4f clip = MulRow(vd->viewProjectionMatrix, world);
 
-                //// L'ANNULATION position-caméra / view-matrix perd en précision proportionnellement
-                //// a la magnitude de cette position (erreur d'arrondi float32 ~ magnitude * 1.19e-7).
-                //// Une tolerance absolue n'a de sens que pres de l'origine ; au-dela, elle doit
-                //// suivre la distance reelle de la camera testee.
-                //const Vec3f camPos{ trGiz.m_worldMatrix[3][0], trGiz.m_worldMatrix[3][1], trGiz.m_worldMatrix[3][2] };
-                //const float kEpsScaled = kEps * std::max(1.0f, camPos.length());        // absolu — clip.w
-                //const float kEpsRatio = kEpsScaled / std::max(expectedW, 1e-3f);       // relatif — x/w, y/w
+                // L'erreur naît de l'annulation catastrophique entre termes de meme magnitude M.
+                // M n'est PAS la position du noeud camera : c'est celle du COIN evalue, qui vaut
+                // camPos ± l'encombrement du gizmo. A orthoHeight eleve, c'est l'encombrement qui
+                // domine — l'indexer sur camPos seul laisse l'assert sauter sans qu'aucun bug
+                // geometrique ne soit en cause.
+                constexpr float kUlpMargin = 8.0f;
+                const float eps = kUlpMargin * std::numeric_limits<float>::epsilon()
+                    * std::max(1.0f, world.length());
 
-                //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEpsScaled);
-                //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEpsRatio);
-                //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEpsRatio);
-
-
-                //LV3_ASSERT(std::fabs(clip.w - expectedW) < kEps);   // L, ou 1 en ortho
-                //LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < kEps);
-                //LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < kEps);
-
-
-                // L'erreur nait de l'annulation des termes de magnitude M (position de la camera),
-                // pas de la magnitude du resultat final. Les trois comparaisons — clip.w, x/w, y/w —
-                // heritent donc du MEME ordre de grandeur d'erreur, mesure au ULP pres a la magnitude M.
-                constexpr float kUlpMargin = 8.0f;   // marge de securite, en multiples de l'epsilon machine
-                const Vec3f camPos{ trGiz.m_worldMatrix[3][0], trGiz.m_worldMatrix[3][1], trGiz.m_worldMatrix[3][2] };
-                const float eps = kUlpMargin * std::numeric_limits<float>::epsilon() * std::max(1.0f, camPos.length());
-
+                // En ortho, le coin ne tombe plus sur ±1 mais sur ±s, avec s = L / halfH.
+                // L'egalite ndcX == ndcY reste la preuve que l'aspect est bon.
                 LV3_ASSERT(std::fabs(clip.w - expectedW) < eps);
-                LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - 1.0f) < eps);
-                LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - 1.0f) < eps);
+                LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - s) < eps);
+                LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - s) < eps);
             }
             ++checked;
         }

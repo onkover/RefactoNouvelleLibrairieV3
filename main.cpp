@@ -449,7 +449,7 @@ int main(int argc, char* argv[])
 
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
-			DebugDisplaySystem(registry);// , entityNames);
+//		DebugDisplaySystem(registry);// , entityNames);
 
 		// --- Draw de la hiérarchie ---
 		RenderSystem(registry, activeCamera, rm);
