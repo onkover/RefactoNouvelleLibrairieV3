@@ -218,6 +218,12 @@ int main(int argc, char* argv[])
 	// LV3_PROJECT_DIR est defini par le projet EXECUTABLE, en Debug uniquement.
 	// La LIB ne l'a jamais vu et n'a pas a le voir : c'est un chemin de developpement, donc une donnee de l'APPLICATION.
 	std::vector<std::filesystem::path> devCandidates;
+
+	// Racine passee en argument : priorite sur tous les replis.
+	// C'est ce qui permettra de mesurer les trois scenes avec UN SEUL binaire.
+	if (argc > 1)
+		devCandidates.emplace_back(argv[1]);
+
 	#ifdef LV3_PROJECT_DIR
 		devCandidates.emplace_back(LV3_PROJECT_DIR);	// path du projet définit dans l'Explorateur de projet > Propriétés.;
 		// C/C++ > Préprocesseur.
@@ -260,10 +266,7 @@ int main(int argc, char* argv[])
 	Paramétrage projet
 	************************************************************/
 
-	// --- Paramétrage de l'horloge de simulation ---
-	_clock.Configure(LV3::EngineConfig::Get().simulation);
 
-	
 
 	/************************************************************
 	Paramétrage du scenegraph
@@ -276,9 +279,9 @@ int main(int argc, char* argv[])
 	HealthSystem healthSys(&registry, eventBus);
 	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
-	Entity activeCamera = NULL_ENTITY;
-	CameraBinding bindings[4]; 
-	ViewData      views[4];
+//	Entity activeCamera = NULL_ENTITY;
+	CameraBinding bindings[LV3_MAX_VIEWPORT];
+	ViewData      views[LV3_MAX_VIEWPORT];
 	Renderer renderer;
 
 
@@ -286,7 +289,7 @@ int main(int argc, char* argv[])
 	if (cfg.mapAssets.find("scene_graph") != cfg.mapAssets.end())
 	{
 		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_graph"].object;
-		bool success = SceneSerializer::LoadSceneGraph(contentRoot.string(), pathScene, registry, rm);// activeCamera, rm);
+		bool success = SceneSerializer::LoadSceneGraph(contentRoot.string(), pathScene, registry, rm);
 		if (!success)
 		{
 			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");
@@ -356,10 +359,6 @@ int main(int argc, char* argv[])
 
 	SetMouseCapture(true);
 
-	pitch = 0;
-	int frameCount = 0;
-	const int maxFrames = 5; // Arrête la simulation après 100 images
-
 	// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 
 
@@ -368,11 +367,12 @@ int main(int argc, char* argv[])
 	************************************************************/
 	Uint64 prevCounter = SDL_GetPerformanceCounter();
 	const double counterFreq = static_cast<double>(SDL_GetPerformanceFrequency());
-	LV3::SimulationClock _clock;
-	
+
+
+	// --- Paramétrage de l'horloge de simulation ---
 	// Reglage : lu une fois depuis engine.json, constant ensuite.
 	_clock.Configure(LV3::EngineConfig::Get().simulation);
-	
+
 	// récupération de la configuration (depuis engine.json) de l'état Frame (change à chaque frame)
 	_clock.m_timeScale = LV3::EngineConfig::Get().simulation.m_timeScale;
 	_clock.m_simTime = LV3::EngineConfig::Get().simulation.m_simTime;
@@ -380,6 +380,11 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Boucle du jeu
 	************************************************************/
+	pitch = 0;
+
+#if LV3_DEBUG
+	int frameCount = 0;
+#endif
 	while (g_running == true)
 	{
 		// --- Mesure du temps réel écoulé
@@ -405,7 +410,7 @@ int main(int argc, char* argv[])
 		AnimationSystem(registry, simDt);
 		CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
 		CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
-		CameraZoomSystem(registry, input, realDt);
+		CameraZoomSystem(registry, input);
 
 
 
@@ -439,7 +444,13 @@ int main(int argc, char* argv[])
 			? panels[0].camera : slots[0].m_camera;   // le gizmo surligne la vue de JEU
 
 		const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
-		const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings, std::size(bindings));
+		const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings);
+		if (nViews == 0)
+		{
+			Logger::error("Impossible de construire les bindings de caméra.");
+			g_running = false;
+			break;
+		}
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
@@ -458,23 +469,19 @@ int main(int argc, char* argv[])
 			views[i] = BuildViewData(registry, bindings[i]);
 
 #if LV3_DEBUG
-//		std::cout << std::endl;
-//		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
+		std::cout << std::endl;
+		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
 
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
-//		DebugTraceEntity(registry, "Cube1");  // ← TRACE, à retirer une fois la question tranchée
+//		DebugTraceEntity(registry, "Cube1"); 
 
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
-//		DebugDisplaySystem(registry);// , entityNames);
+		//	DebugDisplaySystem(registry);// , entityNames);
 
 		// --- Draw de la hiérarchie ---
-		RenderSystem(registry, activeCamera, rm);
+		DrawHierarchySystem(registry, rm);
 
-#endif
-
-		
-#ifdef _DEBUG
 		Test_CameraWorldMatrixIsRigid(registry);
 
 		const size_t nGizChecked = Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
@@ -558,10 +565,9 @@ int main(int argc, char* argv[])
 				// rien à faire : le ou les viewports seront reconstruit durant la boucle de rendu
 			}
 		}
-
-		// Pause pour rendre l'animation lisible dans la console
-//		std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		frameCount++;
+		#if LV3_DEBUG
+			frameCount++;
+		#endif
 	}
 
 

@@ -9,6 +9,7 @@
 
 namespace LV3::Tests
 {
+#ifdef _DEBUG
     void Test_SimulationClock()
     {
         LV3::SimulationClockSettings cfg;    // valeurs par defaut
@@ -47,5 +48,5 @@ namespace LV3::Tests
         LV3_ASSERT(b.m_simTime == 0.0);
     }
 
-
+#endif
 }

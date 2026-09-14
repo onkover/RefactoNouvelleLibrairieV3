@@ -16,7 +16,7 @@
 using namespace LV3;
 
 void Init_Render();
-void RenderObject(Registry& registry, ResourceManager& rm, FrameBuffer& fb, DepthBuffer& db, ERenderMode mode);
+void RenderObject();
 void End_Render();
 void kill_Render();
 void Clean_Render(FrameBuffer& fb);

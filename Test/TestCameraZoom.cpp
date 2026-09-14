@@ -52,7 +52,7 @@ namespace LV3::Tests
 
             InputState in{};
             in.wheelDelta = 1;
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float expected = 120.0f * kRatio;
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
@@ -68,7 +68,7 @@ namespace LV3::Tests
 
             InputState in{};
             in.wheelDelta = -1;
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float expected = 120.0f / kRatio;   // agrandit
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
@@ -85,7 +85,7 @@ namespace LV3::Tests
 
             InputState in{};
             in.wheelDelta = 1;
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float expected = 45.0f * kRatio;
             const float actual = reg.getComponent<CameraComponent>(cam).m_fovYDeg;
@@ -102,7 +102,7 @@ namespace LV3::Tests
 
             InputState in{};
             in.wheelDelta = 1;
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float expected = 35.0f / kRatio;   // ALLONGE
             const float wrongIfCopied = 35.0f * kRatio;    // ce que donnerait un copier-coller naif
@@ -123,7 +123,7 @@ namespace LV3::Tests
             InputState in{};
             in.wheelDelta = 1;
             in.sprint = true;                     // ctrl.m_sprintMultiplier == 3.0f
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float expected = 120.0f * std::pow(kRatio, 3.0f);
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
@@ -147,7 +147,7 @@ namespace LV3::Tests
 
             InputState in{};
             in.wheelDelta = 5;
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
             assert(std::fabs(actual - 120.0f) < kEpsilon);   // inchange
@@ -161,7 +161,7 @@ namespace LV3::Tests
             Entity cam = MakeControlledCamera(reg, EProjectionType::Perspective, ELensModel::Filmback);
 
             InputState in{};   // wheelDelta == 0 par defaut
-            CameraZoomSystem(reg, in, 0.0f);
+            CameraZoomSystem(reg, in);
 
             const float actual = reg.getComponent<CameraComponent>(cam).m_focalLengthMm;
             assert(std::fabs(actual - 35.0f) < kEpsilon);
@@ -188,7 +188,7 @@ namespace LV3::Tests
 
                 InputState in{};
                 in.wheelDelta = c.wheel;
-                CameraZoomSystem(reg, in, 0.0f);
+                CameraZoomSystem(reg, in);
 
                 const CameraComponent& result = reg.getComponent<CameraComponent>(cam);
                 const float values[] = { result.m_orthoHeight, result.m_fovYDeg, result.m_focalLengthMm };

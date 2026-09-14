@@ -11,7 +11,6 @@
 
 namespace LV3::Tests
 {
-
     void TestF1_EntityVersioning();
     void TestF5_ResourceManager_UnloadMesh();
     int RunAllCameraMathTests();
@@ -30,7 +29,7 @@ namespace LV3::Tests
 
 
 
-
+#ifdef _DEBUG
     static int s_failures = 0;
 
     static void Run(const char* name, bool (*fn)())
@@ -40,9 +39,10 @@ namespace LV3::Tests
             : "\033[31m  [ECHEC]\033[0m") + name);
         if (!ok) ++s_failures;
     }
-
+#endif
     bool RunAllTests(Registry & registry)
     {
+    #ifdef _DEBUG
         TestF1_EntityVersioning();
         TestF5_ResourceManager_UnloadMesh();
         RunAllCameraMathTests();
@@ -110,7 +110,11 @@ namespace LV3::Tests
             : "\033[31m=== " + std::to_string(s_failures) + " echec(s) ===\033[0m");
         return s_failures == 0;
 
-
+        #else
+            (void)registry;
+            Logger::info("[TNR] Suite de tests desactivee en Release : aucun test execute.");
+            return true;
+        #endif
     }
 
 

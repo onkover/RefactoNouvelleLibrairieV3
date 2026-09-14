@@ -7,7 +7,7 @@
 
 namespace LV3::Tests
 {
-
+#ifdef _DEBUG
     // TestRasterizer — §Winding : la face avant a une aire NEGATIVE en raster
     void TestFrontFaceSign()
     {
@@ -85,4 +85,5 @@ namespace LV3::Tests
 
         return ok;
     }
+#endif
 }

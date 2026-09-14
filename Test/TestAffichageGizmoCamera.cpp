@@ -9,6 +9,7 @@
 //, const std::string gizmoMesh
 namespace LV3::Tests
 {
+#ifdef _DEBUG
     void Test_GizmoCountMatchesCameras(Registry& registry)
     {
         size_t expected = 0;
@@ -128,5 +129,6 @@ namespace LV3::Tests
             Logger::info("[TNR] Test_GizmoMatchesFrustum — sans objet (aucun gizmo dans les vues rendues)");
         return checked;      // ← remplace LV3_ASSERT(checked > 0)
     }
+#endif
 }
 

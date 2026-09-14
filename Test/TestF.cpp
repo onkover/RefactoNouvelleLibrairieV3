@@ -9,7 +9,7 @@
 
 namespace LV3::Tests
 {
-
+#ifdef _DEBUG
 	void TestF1_EntityVersioning()
 	{
 		LV3::Registry reg;
@@ -33,8 +33,8 @@ namespace LV3::Tests
 		// --- 4. Le scénario TriggerComponent : un handle stocké survit à son entité ---
 		LV3::Entity held = reg.CreateEntity();
 		reg.DestroyEntity(held);
-		//reg.DestroyEntity(held);				// Un assert doit se déclencher ici si on tente de détruire une entité déjà morte
-		reg.CreateEntity();											// recycle le slot de 'held'
+		//reg.DestroyEntity(held);						// Un assert doit se déclencher ici si on tente de détruire une entité déjà morte
+		LV3::Entity Result = reg.CreateEntity();		// recycle le slot de 'held' - Resuklt est prévsent en raison du [[nodiscard]] sinon il y aura un warnin. A voir s'il faut à l'avenir tester ce retour
 		assert(!reg.IsAlive(held));									// le voisin mémorisé est bien déclaré mort
 
 		std::cout << "\033[32m[F1] Versionnage des entités : tous les invariants tiennent.\n";
@@ -103,4 +103,5 @@ namespace LV3::Tests
 
 		std::cout << "\033[32m[F5] UnloadMesh : tous les invariants tiennent.\n\033[0m";
 	}
+#endif
 }

@@ -2,9 +2,6 @@
 #include "pch.h"          // ← première ligne, toujours
 #include "gfx.h"
 
-#include "Scene/system.hpp"
-#include "Rendering/Fragment.h"
-
 extern "C" void CleanScreenASM(__m256i*, int);	// ASM clearScreen
 extern "C" void CleanScreenV3(void* p, unsigned long long bytes);
 
@@ -29,7 +26,7 @@ void Clean_Render(FrameBuffer& fb)
 }
 
 
-void RenderObject(Registry& registry, ResourceManager& rm, FrameBuffer& fb, DepthBuffer& db, ERenderMode mode)
+void RenderObject()
 {
 	
 
