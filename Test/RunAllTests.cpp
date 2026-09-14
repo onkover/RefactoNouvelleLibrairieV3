@@ -29,7 +29,7 @@ namespace LV3::Tests
 
 
 
-#ifdef _DEBUG
+#if LV3_DEBUG    
     static int s_failures = 0;
 
     static void Run(const char* name, bool (*fn)())
@@ -42,7 +42,7 @@ namespace LV3::Tests
 #endif
     bool RunAllTests(Registry & registry)
     {
-    #ifdef _DEBUG
+#if LV3_DEBUG
         TestF1_EntityVersioning();
         TestF5_ResourceManager_UnloadMesh();
         RunAllCameraMathTests();

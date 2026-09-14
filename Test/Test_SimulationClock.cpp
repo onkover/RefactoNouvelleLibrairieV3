@@ -9,7 +9,7 @@
 
 namespace LV3::Tests
 {
-#ifdef _DEBUG
+#if LV3_DEBUG
     void Test_SimulationClock()
     {
         LV3::SimulationClockSettings cfg;    // valeurs par defaut

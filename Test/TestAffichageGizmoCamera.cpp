@@ -9,7 +9,7 @@
 //, const std::string gizmoMesh
 namespace LV3::Tests
 {
-#ifdef _DEBUG
+#if LV3_DEBUG
     void Test_GizmoCountMatchesCameras(Registry& registry)
     {
         size_t expected = 0;

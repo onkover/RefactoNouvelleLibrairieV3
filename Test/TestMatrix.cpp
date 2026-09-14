@@ -8,7 +8,7 @@
 //  TestCameraMath, supprime le bloc "Infrastructure" ci-dessous
 //  et réutilise le TCHECK existant.
 // ============================================================
-#include <cassert>
+//#include <cassert>
 #include <cstdio>
 #include <cmath>
 
@@ -44,7 +44,7 @@ namespace LV3::Tests
             do { ++checks;                                                         \
                  if (!(cond)) { ++failures;                                        \
                     std::printf("[FAIL] L%d  " fmt "\n", __LINE__, __VA_ARGS__); } \
-                 assert(cond); } while (0)
+                 LV3_ASSERT(cond); } while (0)
 
         // Contrôle NON bloquant : signale sans faire échouer la TNR.
 #define WARN(cond, fmt, ...)                                               \

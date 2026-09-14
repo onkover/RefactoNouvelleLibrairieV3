@@ -7,7 +7,7 @@
 
 namespace LV3::Tests
 {
-#ifdef _DEBUG
+#if LV3_DEBUG
     // TestRasterizer — §Winding : la face avant a une aire NEGATIVE en raster
     void TestFrontFaceSign()
     {
@@ -27,11 +27,11 @@ namespace LV3::Tests
         }
 
         const float area = EdgeFunction(r[0], r[1], r[2]);
-        assert(area < 0.0f && "\033[31mFace AVANT : l'aire raster doit etre NEGATIVE\033[0m\n");
-        assert(IsBackFacing(area) == false);
+        LV3_ASSERT(area < 0.0f && "\033[31mFace AVANT : l'aire raster doit etre NEGATIVE\033[0m\n");
+        LV3_ASSERT(IsBackFacing(area) == false);
 
         // et le miroir : l'ordre inverse doit etre cullé
-        assert(IsBackFacing(EdgeFunction(r[0], r[2], r[1])) == true);
+        LV3_ASSERT(IsBackFacing(EdgeFunction(r[0], r[2], r[1])) == true);
         printf("\033[32mSUCCES : TestFrontFaceSign OK \033[0m\n");
 
     }

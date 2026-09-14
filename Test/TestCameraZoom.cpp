@@ -56,7 +56,7 @@ namespace LV3::Tests
 
             const float expected = 120.0f * kRatio;
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
-            assert(std::fabs(actual - expected) < kEpsilon);
+            LV3_ASSERT(std::fabs(actual - expected) < kEpsilon);
         }
 
         // ----------------------------------------------------------------
@@ -72,8 +72,8 @@ namespace LV3::Tests
 
             const float expected = 120.0f / kRatio;   // agrandit
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
-            assert(std::fabs(actual - expected) < kEpsilon);
-            assert(actual > 120.0f);                  // sens qualitatif, independant de la formule
+            LV3_ASSERT(std::fabs(actual - expected) < kEpsilon);
+            LV3_ASSERT(actual > 120.0f);                  // sens qualitatif, independant de la formule
         }
 
         // ----------------------------------------------------------------
@@ -89,8 +89,8 @@ namespace LV3::Tests
 
             const float expected = 45.0f * kRatio;
             const float actual = reg.getComponent<CameraComponent>(cam).m_fovYDeg;
-            assert(std::fabs(actual - expected) < kEpsilon);
-            assert(actual < 45.0f);                   // retrecit, comme l'ortho
+            LV3_ASSERT(std::fabs(actual - expected) < kEpsilon);
+            LV3_ASSERT(actual < 45.0f);                   // retrecit, comme l'ortho
         }
 
         // ----------------------------------------------------------------
@@ -108,9 +108,9 @@ namespace LV3::Tests
             const float wrongIfCopied = 35.0f * kRatio;    // ce que donnerait un copier-coller naif
             const float actual = reg.getComponent<CameraComponent>(cam).m_focalLengthMm;
 
-            assert(std::fabs(actual - expected) < kEpsilon);
-            assert(actual > 35.0f);                        // sens qualitatif
-            assert(std::fabs(actual - wrongIfCopied) > kEpsilon);  // prouve qu'on n'a PAS le defaut
+            LV3_ASSERT(std::fabs(actual - expected) < kEpsilon);
+            LV3_ASSERT(actual > 35.0f);                        // sens qualitatif
+            LV3_ASSERT(std::fabs(actual - wrongIfCopied) > kEpsilon);  // prouve qu'on n'a PAS le defaut
         }
 
         // ----------------------------------------------------------------
@@ -127,12 +127,12 @@ namespace LV3::Tests
 
             const float expected = 120.0f * std::pow(kRatio, 3.0f);
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
-            assert(std::fabs(actual - expected) < kEpsilon);
+            LV3_ASSERT(std::fabs(actual - expected) < kEpsilon);
 
             // Non-regression directe : le sprint doit produire un effet MESURABLEMENT
             // different d'un cran normal, pas juste "un peu plus".
             const float withoutSprint = 120.0f * kRatio;
-            assert(std::fabs(actual - withoutSprint) > 1.0f);
+            LV3_ASSERT(std::fabs(actual - withoutSprint) > 1.0f);
         }
 
         // ----------------------------------------------------------------
@@ -150,7 +150,7 @@ namespace LV3::Tests
             CameraZoomSystem(reg, in);
 
             const float actual = reg.getComponent<CameraComponent>(cam).m_orthoHeight;
-            assert(std::fabs(actual - 120.0f) < kEpsilon);   // inchange
+            LV3_ASSERT(std::fabs(actual - 120.0f) < kEpsilon);   // inchange
         }
 
         // ----------------------------------------------------------------
@@ -164,7 +164,7 @@ namespace LV3::Tests
             CameraZoomSystem(reg, in);
 
             const float actual = reg.getComponent<CameraComponent>(cam).m_focalLengthMm;
-            assert(std::fabs(actual - 35.0f) < kEpsilon);
+            LV3_ASSERT(std::fabs(actual - 35.0f) < kEpsilon);
         }
 
         // ----------------------------------------------------------------
@@ -195,8 +195,8 @@ namespace LV3::Tests
 
                 for (float v : values)
                 {
-                    assert(std::isfinite(v));   // pas d'inf, pas de NaN
-                    assert(v > 0.0f);           // aucune borne minimale n'est <= 0
+                    LV3_ASSERT(std::isfinite(v));   // pas d'inf, pas de NaN
+                    LV3_ASSERT(v > 0.0f);           // aucune borne minimale n'est <= 0
                 }
 
                 printf("  [%-20s] orthoHeight=%8.2f fov=%6.2f focal=%7.1f\n",

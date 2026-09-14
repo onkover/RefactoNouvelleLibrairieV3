@@ -1,7 +1,7 @@
 #include "pch.h"
 
 #include <vector>
-#include <cassert>
+//#include <cassert>
 #include <cstdint>
 
 
@@ -176,7 +176,7 @@ namespace LV3::Tests
             std::printf("  cote %6.1f px : %2d trou(s), %2d doublon(s)   %s\n",
                 size, holes, doubles, pass ? "OK" : "<<< FAIL");
             ok = ok && pass;
-            assert(pass);
+            LV3_ASSERT(pass);
         }
         return ok;
     }

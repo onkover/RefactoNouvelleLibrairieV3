@@ -2,7 +2,7 @@
 //  Validation Projection::Perspective  —  auto-vérifiante
 //  Retourne le nombre d'échecs (0 = OK).
 // ============================================================
-#include <cassert>
+//#include <cassert>
 #include <cstdio>
 #include <cmath>
 #include "Maths/Projection.h"
@@ -30,7 +30,7 @@ namespace LV3::Tests
                     ++failures;                                                    \
                     std::printf("[FAIL] L%d  " fmt "\n", __LINE__, __VA_ARGS__);   \
                 }                                                                  \
-                assert(cond);                                                      \
+                LV3_ASSERT(cond);                                                      \
             } while (0)
 
         // --- Paramètres --------------------------------------------------

@@ -4,7 +4,7 @@
 //                      NDC x,y ∈ [-1,1] ; z ∈ [0,1] REVERSE-Z
 //  Appeler RunAllCameraMathTests() au démarrage en _DEBUG.
 // ============================================================
-#include <cassert>
+//#include <cassert>
 #include <cstdio>
 #include <cmath>
 
@@ -38,7 +38,7 @@ namespace LV3::Tests
             ++g_failures;                                                      \
             std::printf("[FAIL] %s:%d  %s\n", __FILE__, __LINE__, (msg));      \
         }                                                                      \
-        assert((cond) && msg);                                                 \
+        LV3_ASSERT((cond) && msg);                                                 \
     } while (0)
 
     constexpr float EPS = 1e-4f;   // tolérance générale

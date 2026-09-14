@@ -279,7 +279,6 @@ int main(int argc, char* argv[])
 	HealthSystem healthSys(&registry, eventBus);
 	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
-//	Entity activeCamera = NULL_ENTITY;
 	CameraBinding bindings[LV3_MAX_VIEWPORT];
 	ViewData      views[LV3_MAX_VIEWPORT];
 	Renderer renderer;
@@ -317,7 +316,7 @@ int main(int argc, char* argv[])
 		else
 			Logger::warn("[Gizmo] assets absents : aucun gizmo de camera ne sera affiché\n");
 
-	#ifdef _DEBUG
+	#if LV3_DEBUG
 		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
 	#endif
 
@@ -332,7 +331,7 @@ int main(int argc, char* argv[])
 	VÉRIFICATION : AFFICHAGE DE L'ARBRE CONSTRUIT
 	TESTS DE NON-RÉGRESSION — avant toute ressource système
 	************************************************************/
-	#ifdef _DEBUG
+	#if LV3_DEBUG
 		Logger::info("Structure finale du Scene Graph :");
 		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
@@ -471,10 +470,11 @@ int main(int argc, char* argv[])
 #if LV3_DEBUG
 		std::cout << std::endl;
 		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
-
+#endif
+#if LV3_ASSERTS_ENABLED
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
-//		DebugTraceEntity(registry, "Cube1"); 
-
+#endif
+#if LV3_DEBUG
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
 		//	DebugDisplaySystem(registry);// , entityNames);
@@ -511,9 +511,9 @@ int main(int argc, char* argv[])
 				LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
 			}
 			
-//#ifdef _DEBUG
-//			ReportCullStats();
-//#endif
+#if LV3_DEBUG
+			ReportCullStats();
+#endif
 			
 			// Séparateur vertical entre les différents viewports
 			for (int y = 0; y < cfg.mapViewports["left"].hauteur; ++y) 
