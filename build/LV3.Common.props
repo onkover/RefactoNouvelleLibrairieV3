@@ -49,5 +49,15 @@
 
     </ClCompile>
   </ItemDefinitionGroup>
-
+	<!-- ============================================================
+       RelWithAsserts : LV3_ASSERTS_ENABLED defini UNE SEULE FOIS,
+       pour la LIB et l'EXE a la fois — sinon exactement le bug
+       de fond que ce fichier existe pour eviter (cf. en-tete).
+       Condition sur $(Configuration) seul : vaut pour Win32 et x64.
+       ============================================================ -->
+	<ItemDefinitionGroup Condition="'$(Configuration)'=='RelWithAsserts'">
+		<ClCompile>
+			<PreprocessorDefinitions>LV3_ASSERTS_ENABLED=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+		</ClCompile>
+	</ItemDefinitionGroup>
 </Project>
