@@ -271,7 +271,7 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
-	Logger::info(" === Lecture et paramétrage du scenegraph ===");
+	Logger::info(" === Lecture et paramétrage du scenegraph ===\n");
 
 	// --- Scenegraph et systèmes ---
 	Registry registry;
@@ -307,8 +307,8 @@ int main(int argc, char* argv[])
 	GizmoAssets GizAssets;
 	if (cfg.mapAssets.find("gizmo_perspective") != cfg.mapAssets.end() && cfg.mapAssets.find("gizmo_ortho") != cfg.mapAssets.end())
 	{
-		std::string gizmoPerspect = LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_perspective"].object;
-		std::string gizmoOrtho = LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_ortho"].object;
+		std::string gizmoPerspect = contentRoot.string() + LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_perspective"].object;
+		std::string gizmoOrtho = contentRoot.string() + LV3::EngineConfig::Get().resources.pathMesh + cfg.mapAssets["gizmo_ortho"].object;
 
 		 GizAssets = LoadGizmoAssets(rm, gizmoPerspect, gizmoOrtho);
 		if (GizAssets.IsValid())
@@ -478,10 +478,10 @@ int main(int argc, char* argv[])
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
 		//	DebugDisplaySystem(registry);// , entityNames);
-
+	#if LV3_DUMP_HIERARCHY
 		// --- Draw de la hiérarchie ---
 		DrawHierarchySystem(registry, rm);
-
+	#endif
 		Test_CameraWorldMatrixIsRigid(registry);
 
 		const size_t nGizChecked = Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);

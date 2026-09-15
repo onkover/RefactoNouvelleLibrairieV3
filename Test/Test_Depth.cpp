@@ -116,7 +116,7 @@ namespace LV3::Tests
             + "  gauche_faux=" + std::to_string(wrongLeft)
             + "  droite_faux=" + std::to_string(wrongRight)
             + "  vides=" + std::to_string(empty)
-            + (ok ? "  OK" : "  ECHEC"));
+            + (ok ? "  OK\n" : "  ECHEC\n"));
         return ok;
     }
 

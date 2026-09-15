@@ -126,7 +126,7 @@ namespace LV3::Tests
         }
 
         if (checked == 0)
-            Logger::info("[TNR] Test_GizmoMatchesFrustum — sans objet (aucun gizmo dans les vues rendues)");
+            Logger::info("[TNR] Test_GizmoMatchesFrustum — sans objet (aucun gizmo dans les vues rendues)\n");
         return checked;      // ← remplace LV3_ASSERT(checked > 0)
     }
 #endif
