@@ -35,8 +35,7 @@ namespace LV3::Tests
     static void Run(const char* name, bool (*fn)())
     {
         const bool ok = fn();
-        Logger::info(std::string(ok ? "\033[32m  [OK]   \033[0m"
-            : "\033[31m  [ECHEC]\033[0m") + name);
+        Logger::info(std::string(ok ? " [OK] " : " [ECHEC] ") + name);
         if (!ok) ++s_failures;
     }
 #endif
@@ -53,46 +52,46 @@ namespace LV3::Tests
 
         if (!Test_Depth_CrossingTriangles())
         {
-            printf("\033[31mECHEC : Test_Depth_CrossingTriangles\033[0m\n");
+            Logger::error("ECHEC : Test_Depth_CrossingTriangles");
             return false;
         }
         else
         {
-            printf("\033[32mSUCCES : Test_Depth_CrossingTriangles\033[0m\n");
+            Logger::success("SUCCES : Test_Depth_CrossingTriangles");
         }
 
 
         if (!Test_Rasterizer_EmptyBoxes())
         {
-            printf("\033[31mECHEC : Test_Rasterizer_EmptyBoxes\033[0m\n");
+            Logger::error("ECHEC : Test_Rasterizer_EmptyBoxes");
             return false;
         }
         else
         {
-            printf("\033[32mSUCCES : Test_Rasterizer_EmptyBoxes\033[0m\n");
+            Logger::success("SUCCES : Test_Rasterizer_EmptyBoxes");
         }
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())
         {
-            printf("\033[31mECHEC : Test_TopLeftRule\033[0m\n");
+            Logger::error("ECHEC : Test_TopLeftRule");
             return false;
         }
-        printf("\033[32mOK : Test_TopLeftRule, pas de pixel dessiné 2 fois\033[0m\n");
+        Logger::success("OK : Test_TopLeftRule, pas de pixel dessiné 2 fois\n");
 
         if (!Test_TopLeftRule_ExactCoverage())
         {
-            printf("\033[31mECHEC : Test_TopLeftRule_ExactCoverage\033[0m\n");
+            Logger::error("ECHEC : Test_TopLeftRule_ExactCoverage");
             return false;
         }
-        printf("\033[32mOK : Test_TopLeftRule_ExactCoverage, couverture exacte\033[0m\n");
+        Logger::success("OK : Test_TopLeftRule_ExactCoverage, couverture exacte\n");
 
         if (!Test_TopLeftRule_SmallTriangles())
         {
-            printf("\033[31mECHEC : Test_TopLeftRule_SmallTriangles\033[0m\n");
+            Logger::error("ECHEC : Test_TopLeftRule_SmallTriangles");
             return false;
         }
-        printf("\033[32mOK : Test_TopLeftRule_SmallTriangles, couverture exacte\033[0m\n");
+        Logger::success("OK : Test_TopLeftRule_SmallTriangles, couverture exacte\n");
 
         DebugDumpControllers(registry);
 
@@ -106,8 +105,8 @@ namespace LV3::Tests
         Test_SimulationClock();
 
         Logger::info(s_failures == 0
-            ? "\033[32m=== Tous les tests passent ===\033[0m"
-            : "\033[31m=== " + std::to_string(s_failures) + " echec(s) ===\033[0m");
+            ? "=== Tous les tests passent ===\n"
+            : "=== " + std::to_string(s_failures) + " echec(s) ===\n");
         return s_failures == 0;
 
         #else

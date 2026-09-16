@@ -384,6 +384,7 @@ int main(int argc, char* argv[])
 #if LV3_DEBUG
 	int frameCount = 0;
 #endif
+	Logger::info("=== Boucle de jeu ===\n");
 	while (g_running == true)
 	{
 		// --- Mesure du temps réel écoulé
@@ -468,18 +469,18 @@ int main(int argc, char* argv[])
 			views[i] = BuildViewData(registry, bindings[i]);
 
 #if LV3_DEBUG
-		std::cout << std::endl;
-		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
-#endif
-#if LV3_ASSERTS_ENABLED
+	#if LV3_ASSERTS_ENABLED
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
-#endif
-#if LV3_DEBUG
+	#endif
+
 		// --- DESSIN ---
 		// Débug de la hiérarchie 
 		//	DebugDisplaySystem(registry);// , entityNames);
+
 	#if LV3_DUMP_HIERARCHY
 		// --- Draw de la hiérarchie ---
+		std::cout << std::endl;
+		std::cout << "--- FRAME " << frameCount << " ---" << std::endl;
 		DrawHierarchySystem(registry, rm);
 	#endif
 		Test_CameraWorldMatrixIsRigid(registry);
@@ -512,7 +513,9 @@ int main(int argc, char* argv[])
 			}
 			
 #if LV3_DEBUG
+	#if LV3_VERBOSE_LOG
 			ReportCullStats();
+	#endif
 #endif
 			
 			// Séparateur vertical entre les différents viewports
@@ -569,6 +572,8 @@ int main(int argc, char* argv[])
 			frameCount++;
 		#endif
 	}
+	Logger::info("=== Fin de la boucle de jeu ===\n\n");
+
 
 
 	SDLkill();
