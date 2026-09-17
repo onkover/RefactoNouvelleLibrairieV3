@@ -27,6 +27,7 @@ namespace LV3::Tests
     [[nodiscard]] bool Test_ClipCoverage_NoCrackNoOverlap();
     bool Test_Rasterizer_EmptyBoxes();
     void Test_SimulationClock();
+    bool test54_Recyclage();
 
 
 #if LV3_DEBUG    
@@ -53,6 +54,16 @@ namespace LV3::Tests
         else
         {
             Logger::success("SUCCES : Test 0 hierarchy success");
+        }
+
+        if (!test54_Recyclage())
+        {
+            Logger::error("ECHEC : Test54_Recyclage");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test54_Recyclage");
         }
 
         TestF1_EntityVersioning();
@@ -127,6 +138,9 @@ namespace LV3::Tests
             Logger::info("[TNR] Suite de tests desactivee en Release : aucun test execute.");
             return true;
         #endif
+
+        
+
     }
 
 
