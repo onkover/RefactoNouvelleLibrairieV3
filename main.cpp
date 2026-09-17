@@ -59,7 +59,6 @@
 #include "GFX/gfx.h"
 #include "scene/CameraBinding.hpp"
 
-
 using namespace LV3;
 using namespace LV3::Tests;         // ← ajoute CE using en plus
 
@@ -211,6 +210,7 @@ int main(int argc, char* argv[])
 {
 
 	SetConsoleMode();	// mode cosole en UTF-8
+
 
 	///************************************************************
 	// Lecture du répertoire de l'executable

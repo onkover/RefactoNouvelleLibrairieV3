@@ -50,7 +50,7 @@ namespace LV3::Tests
 		LV3_ASSERT(!reg.IsAlive(held));                        // l'ancien est bien mort
 		LV3_ASSERT(reg.IsAlive(recycled));                     // le neuf est bien vivant
 
-		std::cout << "\033[32m[F1] Versionnage des entités : tous les invariants tiennent.\n";
+		Logger::success("[F1]Versionnage des entités : tous les invariants tiennent");
 	}
 
 	void TestF5_ResourceManager_UnloadMesh()
@@ -114,7 +114,7 @@ namespace LV3::Tests
 		LV3_ASSERT(rm.IsMeshLoaded(targetPath));
 		LV3_ASSERT(rm.GetMeshCount() == countBefore);             // on est revenu au compte initial
 
-		std::cout << "\033[32m[F5] UnloadMesh : tous les invariants tiennent.\n\033[0m";
+		Logger::success("[F5] UnloadMesh : tous les invariants tiennent.");		
 	}
 #endif
 }

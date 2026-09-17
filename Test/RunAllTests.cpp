@@ -11,6 +11,7 @@
 
 namespace LV3::Tests
 {
+    bool test_hierarchy();
     void TestF1_EntityVersioning();
     void TestF5_ResourceManager_UnloadMesh();
     int RunAllCameraMathTests();
@@ -28,7 +29,6 @@ namespace LV3::Tests
     void Test_SimulationClock();
 
 
-
 #if LV3_DEBUG    
     static int s_failures = 0;
 
@@ -42,6 +42,19 @@ namespace LV3::Tests
     bool RunAllTests(Registry & registry)
     {
 #if LV3_DEBUG
+
+        Logger::info("================== TNR ==================");
+
+        if (!test_hierarchy())
+        {
+            Logger::error("ECHEC : Test 0 hierarchy failed");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test 0 hierarchy success");
+        }
+
         TestF1_EntityVersioning();
         TestF5_ResourceManager_UnloadMesh();
         RunAllCameraMathTests();
