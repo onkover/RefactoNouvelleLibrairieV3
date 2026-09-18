@@ -399,9 +399,9 @@ int main(int argc, char* argv[])
 		const float simDt = _clock.Advance(realDt);
 
 
-		// --- Gérer les entrées utilisateur (non implémenté ici)
-		PlayerInputSystem(registry, realDt);
+		// --- Gérer les entrées utilisateur
 		LV3::InputState input = BuildInputState();
+		PlayerInputSystem(registry, input, realDt);
 
 		// --- Mettre à jour la scène
 		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
@@ -535,6 +535,7 @@ int main(int argc, char* argv[])
 		else
 		{
 			SDL_Log("SDL_LockTexture a échoué : %s", SDL_GetError());
+			SDLkill();   // Bug 27 : SDL était initialisé (fenêtre, renderer, texture) — une sortie ici les laissait fuiter.
 			return -1; // ou assert — mais surtout, ne continue PAS avec des valeurs invalides
 		}
 
@@ -560,7 +561,15 @@ int main(int argc, char* argv[])
 				// 1. La texture SDL chnage (le pitch change aussi !)
 				SDL_DestroyTexture(SDLtexture);
 				SDLtexture = SDL_CreateTexture(SDLrenderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, FrameW, FrameH);
-
+				if (SDLtexture == nullptr)
+				{
+					// Bug 27 : un échec ici laissait SDLtexture nul jusqu'à la frame suivante,
+					// où SDL_LockTexture(nullptr, ...) aurait échoué loin du site réel de la faute
+					// (une resize) — diagnostic à l'aveugle. On échoue ICI, avec le bon message.
+					Logger::error(std::string("SDL_CreateTexture (resize) a échoué : ") + SDL_GetError());
+					SDLkill();
+					return -1;
+				}
 				// 2. Le Z-buffer
 				db.Resize(FrameW, FrameH);
 
