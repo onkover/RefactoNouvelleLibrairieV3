@@ -400,7 +400,7 @@ int main(int argc, char* argv[])
 
 
 		// --- Gérer les entrées utilisateur
-		LV3::InputState input = BuildInputState();
+		LV3::InputState input = BuildInputState();		// Ordre canonique : construire l'InputState de la frame AVANT tout système qui le consomme.
 		PlayerInputSystem(registry, input, realDt);
 
 		// --- Mettre à jour la scène
@@ -408,6 +408,16 @@ int main(int argc, char* argv[])
 
 		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
 		AnimationSystem(registry, simDt);
+
+		// --- MISE À JOUR DES MATRICES ---
+		// CameraFollowSystem lit tr.m_worldMatrix de sa cible (le vaisseau) pour se positionner.
+		// Sans cette cuisson intermédiaire, il lirait la matrice monde de la frame PRÉCÉDENTE —
+		// une frame de retard entre « PlayerInputSystem vient de déplacer le vaisseau » et
+		// « la caméra qui le suit en tient compte ». Imperceptible avec du lissage actif, mais faux.
+		LocalTransformSystem(registry);       // Construit les matrices locales finales
+		WorldTransformSystem(registry);       // Construit les matrices mondes finales
+
+		// --- MISE À JOUR DES SYSTÈMES DE CAMÉRA ---
 		CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
 		CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
 		CameraZoomSystem(registry, input);
@@ -455,10 +465,17 @@ int main(int argc, char* argv[])
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
 
-		// --- MISE À JOUR DES MATRICES ---
-		//TransformationSystem(registry, deltaTime);
+		// --- matrices des CAMÉRAS (et de leurs gizmos) SEULEMENT ---
+		// * LocalTransformSystem ne retraite que ce qui est resté dirty depuis la cuisson n°1 (les caméras, leurs gizmos) — quasi gratuit grâce au drapeau. 
+		// * Pour WorldTransformSystem, on n'appelle PAS la version complète : sur une scène à plusieurs centaines d'objets,
+		// retraverser tout pour ~2 caméras effectivement changées serait pur gaspillage. 
+		// La surcharge ciblée ne repropage que les caméras rendues cette frame (et leurs gizmos, via la hiérarchie) — coût O(nViews), pas O(N).
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
-		WorldTransformSystem(registry);       // Construit les matrices mondes finales
+		Entity renderedCameras[LV3_MAX_VIEWPORT];
+		for (size_t i = 0; i < nViews; ++i)
+			renderedCameras[i] = bindings[i].m_camera;
+		WorldTransformSystem(registry, std::span<const Entity>(renderedCameras, nViews));   // Construit les matrices mondes — caméras seulement
+
 
 		// --- DÉTECTION (Physique/Triggers) ---
 		// Lit les matrices mondes finales
