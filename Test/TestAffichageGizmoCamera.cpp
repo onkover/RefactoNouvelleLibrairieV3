@@ -10,22 +10,36 @@
 namespace LV3::Tests
 {
 #if LV3_DEBUG
-    void Test_GizmoCountMatchesCameras(Registry& registry)
+    //void Test_GizmoCountMatchesCameras(Registry& registry)
+    //{
+    //    size_t expected = 0;
+    //    for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
+    //        if (cam.m_gizmoLength > 0.0f) ++expected;
+
+    //    size_t actual = 0;
+    //    for (auto&& [e, giz] : registry.ViewGroup<CameraGizmoComponent>())
+    //    {
+    //        ++actual;
+    //        LV3_ASSERT(registry.hasComponent<CameraComponent>(giz.m_owner));  // pas d'orphelin
+    //        LV3_ASSERT(registry.hasComponent<DebugVisualComponent>(e));
+    //    }
+    //    LV3_ASSERT(actual == expected);
+    //}
+    void Test_GizmoCountMatchesCameras(Registry& registry, const GizmoAssets& assets)
     {
         size_t expected = 0;
         for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
-            if (cam.m_gizmoLength > 0.0f) ++expected;
+            if (cam.m_gizmoLength > 0.0f && assets.For(cam.m_projection).IsValid()) ++expected;
 
         size_t actual = 0;
         for (auto&& [e, giz] : registry.ViewGroup<CameraGizmoComponent>())
         {
             ++actual;
-            LV3_ASSERT(registry.hasComponent<CameraComponent>(giz.m_owner));  // pas d'orphelin
+            LV3_ASSERT(registry.hasComponent<CameraComponent>(giz.m_owner));
             LV3_ASSERT(registry.hasComponent<DebugVisualComponent>(e));
         }
         LV3_ASSERT(actual == expected);
     }
-
     void Test_CameraWorldMatrixIsRigid(Registry& registry)
     {
         constexpr float kEps = 1e-4f;

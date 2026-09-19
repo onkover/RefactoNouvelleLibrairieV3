@@ -18,6 +18,8 @@ aliases: [règles dictatoriales, R11bis]
 - [stated] `TriggerSystem` rule (L06): never execute user code inside collision detection; use a flat event queue with Enter/Stay/Exit and no callbacks during iteration.
 - [stated] `CameraBinding` separates static associations from derived matrices, avoiding one-frame-lag bugs.
 - [stated] A `hasFarPlane` boolean plus an unconditionally assigned `farPlane` is preferred over sentinel values.
+- [stated] Bug 61 (Discussion E) — two-tier camera/viewport cap, never a per-frame `std::vector`: `kMaxCamerasHard` (`Core/EngineSettings.h`, `constexpr size_t`, equals `LV3_MAX_VIEWPORT`) is the compile-time hard ceiling that sizes every stack buffer touching camera bindings (`BuildCameraBindings`'s local `vps[]`, and `main.cpp`'s `bindings[]`/`views[]`/`renderedCameras[]`) — it never moves at runtime. `EngineConfig::CameraConfig::maxCameras` (`engine.json`, key `camera.maxCameras`) is the runtime-tunable soft cap, clamped against `kMaxCamerasHard` via `std::min` exactly once, at `LoadFromJson` — never re-clamped ad hoc at each call site. `BuildCameraBindings` enforces both: reject (warn + return 0) above the hard ceiling, reject (warn + return 0) above the configured soft cap, `LV3_ASSERT`-check the remaining programmer invariants (no camera bound twice, `slots[i].m_camera != NULL_ENTITY`). Applies generally: any future per-frame system needing an N-bounded stack buffer should split its cap the same way — a named compile-time `kXxxHard` for the buffer, a config-time value clamped against it once, never a runtime-resizable container in the hot path.
+- [stated] `BuildCameraBindings` contract: `slotCount` is not spare buffer capacity — `layout` is chosen by the caller *from* `slotCount` (one viewport per requested camera), so `n == slotCount` is the correct precondition, not `n <= slotCount`. A violation is a caller bug (never user input), so it is handled with `Logger::warn` + `return 0` rather than `LV3_ASSERT`, specifically because this function runs every frame and an assert here would kill the program on every tick until fixed, whereas the caller (`main.cpp`) already turns a `0` return into a clean, single, loud loop shutdown.
 
 ## Rendering pipeline learnings
 
@@ -26,6 +28,7 @@ aliases: [règles dictatoriales, R11bis]
 - [stated] Front-face area is negative in raster space (Y-flip); the backface culling sign must account for this.
 - [stated] Clipping seam cracks require both an antisymmetric `EdgeFunction` formulation and a canonical-order `ClipLess` comparator.
 - [stated] `invW` is the critical passenger across the clip→NDC boundary; `nearPlane`/`farPlane` in `FragmentContext` were retired in favor of `invW`-based distance reconstruction.
+- [stated] Camera gizmos (Discussion E, bug 56): the validated policy (A5 §4.5) is that every camera's gizmo stays visible every frame — only tint (amber for the active camera, cold gray otherwise) distinguishes it. `DebugVisualComponent::m_visible` exists but is intentionally left unwritten: the alternative "Unity-style" policy (A9 §11.2, only the active camera's frustum drawn) is a deliberately deferred, explicitly non-adopted debt, not a silently half-wired feature — `RenderView`'s filter must keep reading only `m_hideForCamera`, never `m_visible`, until that debt is knowingly picked back up.
 
 ## ECS / systems learnings
 
@@ -40,3 +43,4 @@ aliases: [règles dictatoriales, R11bis]
 - [stated] TNR (non-regression test) system is based on `JsonReader` with `WarnUnread()`, with numbered bugs tracked in a journal.
 - [stated] Coverage tests (pixel-counting) are effective for diagnosing clipping correctness.
 - [stated] All new systems integrate with the `WarnUnread`/`LV3_ASSERT`/`Logger` pattern.
+- [stated] A vacuity guard on a loop-based test must generalize with the scene, not hardcode an entity count (A9 §8, Discussion E correction): `LV3_ASSERT(n == 2)` broke the instant a third camera existed; the code's actual invariant — `LV3_ASSERT(declared == 0 || nGizChecked > 0)` — says "if anything declared work, at least one unit of it was actually checked", which holds for any scene.

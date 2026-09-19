@@ -246,21 +246,34 @@ C'est ce qui rend `GizmoHalfSection` légitime : le test ne rejoue pas le calcul
 
 ## 8. Validation
 
+> **Rectifié (Discussion E, session du 18/09/2026).** Cette section décrivait encore `LV3_ASSERT(n == 2)` comme le garde-fou de vacuité du test. **C'était la documentation qui était périmée, pas le code** : le code réel (`main.cpp`) a depuis évolué vers un invariant strictement plus général, et c'est lui qui fait foi. `n == 2` n'aurait jamais pu survivre tel quel : il code en dur le nombre de caméras de la scène de test de ce chantier (`FPS_Camera` + `Overview_Camera`) et casse le jour où une troisième caméra apparaît dans une scène — sur `solar_system_v1compat_belt.json` par exemple.
+
 | Palier | Attendu | Obtenu |
 |---|---|---|
-| `Test_GizmoMatchesFrustum` retourne | `2` (les deux caméras inspectées) | **2** |
+| `Test_GizmoMatchesFrustum` retourne | `checked > 0` s'il existe au moins un gizmo dans les vues rendues | conforme |
 | `s`, `orthoHeight = 12`, `L = 3` | `0.5` | **0.5** |
 | `s`, `orthoHeight = 1200`, `L = 3` | `0.005` | **0.00499999989** |
 | `s`, `orthoHeight = 5000`, `L = 3` | `0.0012` | **0.00120000006** |
 | `s`, perspective | `1` exactement | conforme |
 | Asserts | aucun | aucun |
 
-Le point décisif : `s` **varie** avec `orthoHeight` alors qu'il était figé à 1 en S1. Le test suit désormais l'échelle réelle du gizmo, et `n == 2` garantit que la branche ortho est réellement exécutée — la faiblesse introduite en remplaçant `LV3_ASSERT(checked > 0)` par un `Logger::info` est compensée par un assert au point d'appel :
+Le point décisif : `s` **varie** avec `orthoHeight` alors qu'il était figé à 1 en S1. Le test suit désormais l'échelle réelle du gizmo. La faiblesse introduite en remplaçant `LV3_ASSERT(checked > 0)` par un simple `Logger::info` (§5 plus haut, `TestAffichageGizmoCamera.cpp::Test_GizmoMatchesFrustum`) est compensée au point d'appel — mais par une **garde de vacuité généralisée**, pas par un compte figé à 2 :
 
 ```cpp
-const size_t n = Test_GizmoMatchesFrustum(registry, rm, views, count, assets);
-LV3_ASSERT(n == 2);
+// main.cpp — après le rendu des vues de la frame
+const size_t nGizChecked = Test_GizmoMatchesFrustum(registry, rm, views, nViews, GizAssets);
+// Garde de vacuité DÉPLACÉ, pas supprimé : si les assets sont valides et
+// qu'au moins une caméra a déclaré un gizmo, alors 0 vérification = câblage cassé.
+if (GizAssets.IsValid())
+{
+    size_t declared = 0;
+    for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
+        if (cam.m_gizmoLength > 0.0f) ++declared;
+    LV3_ASSERT(declared == 0 || nGizChecked > 0);
+}
 ```
+
+`declared == 0 || nGizChecked > 0` dit exactement ce que `n == 2` essayait de dire sur cette seule scène de test, mais pour **n'importe quelle scène** : « si des caméras ont demandé un gizmo, le test en a réellement vérifié au moins un — sinon le câblage (spawn, filtre de vue, source des `ViewData`) est cassé en silence ». Un test vert qui n'a rien exécuté reste pire qu'un test absent (§ci-dessus, note sur `checked`) ; cette formulation généralise ce principe au lieu de le figer sur un effectif de caméras particulier.
 
 À l'écran : la dalle a disparu du viewport de rendu. Le gizmo d'`Overview_Camera` mesure 2,56 × 6 × 3 unités au lieu de 512 × 1200 × 5.
 
@@ -270,16 +283,18 @@ LV3_ASSERT(n == 2);
 
 **Perdu :** le gizmo ortho ne réagit plus visuellement au zoom (bénéfice annoncé de l'A7, conservé en perspective), et il ne dit plus le volume cadré.
 
-**Conservé, et sans substitut ailleurs :** position, direction de visée, roulis (marqueur « up » asymétrique, A5 §3.3), nature de la projection (boîte contre pyramide), ratio d'aspect exact, état actif/inactif. Cinq informations spatiales sur six — et une information spatiale se lit toujours mieux dans une forme que dans un nombre.
+**Conservé, et sans substitut ailleurs :** position, direction de visée, roulis (marqueur « up » asymétrique, A5 §3.3), nature de la projection (boîte contre pyramide), ratio d'aspect exact, état actif/inactif (par la teinte, A5 §4.5 — voir aussi §11.2 plus bas). Cinq informations spatiales sur six — et une information spatiale se lit toujours mieux dans une forme que dans un nombre.
 
-**Déplacé :** le scalaire va dans l'overlay de debug de chaque viewport.
+**Prévu, PAS ENCORE FAIT :** le scalaire manquant (le sixième) est destiné à un futur overlay de debug par viewport — mais cet overlay **n'existe pas dans le code aujourd'hui**. Cette section décrivait jusqu'ici cette destination au passé (« Déplacé »), comme si le déplacement avait déjà eu lieu. **Rectifié (Discussion E, session du 18/09/2026)** : ce n'est qu'une cible de conception, formalisée ici pour ne pas la perdre, explicitement rattachée à un numéro de dette daté plutôt qu'à un vague `TODO`. Le carnet de route (Phase 3) le confirme : cet item **bloque la Leçon 07** — c'est là, et seulement là, qu'il sera implémenté.
+
+Maquette visée pour cet overlay, à construire en L07 :
 
 ```
 Overview_Camera | ortho | h=1200.0 | aspect 0.427
 FPS_Camera      | persp | fov 45.0 | aspect 1.280
 ```
 
-Gain triple : lisible à tout zoom, exact au dixième, et valable pour les caméras **hors champ** — dont le gizmo, par définition, n'apprenait rien. Attention au bug A8 en l'écrivant : l'affichage de debug lit, il n'écrit jamais, et ne touche jamais `m_dirty`.
+Gain triple attendu : lisible à tout zoom, exact au dixième, et valable pour les caméras **hors champ** — dont le gizmo, par définition, n'apprenait rien. Attention au bug A8 en l'écrivant, le jour venu : l'affichage de debug lit, il n'écrit jamais, et ne touche jamais `m_dirty`.
 
 ---
 
@@ -307,8 +322,8 @@ Le bug 35 illustre le point complémentaire : un défaut que ni test ni revue ne
 | | Sujet | État |
 |---|---|---|
 | **D2** | S3 : icône de taille constante à l'écran | ouverte — voir §11.1 |
-| | Overlay de debug portant `orthoHeight` / `fov` / `aspect` par viewport | à faire, §9 |
-| | Politique de visibilité : ne dessiner le frustum que de la caméra active | proposée, non tranchée — §11.2 |
+| | Overlay de debug portant `orthoHeight` / `fov` / `aspect` par viewport | à faire, §9 — bloque L07 |
+| | Politique de visibilité : ne dessiner le frustum que de la caméra active | proposée, **tranchée en Discussion E : NON retenue pour l'instant** — voir §11.2 |
 | | Sonde de triangle quasi dégénéré dans `RasterizeTriangle` | à retirer (disculpée, et la géométrie extrême a disparu) |
 | | `Overview_Camera` : `gizmoLength` resté à 5 (résidu d'un test d'élimination) | à remettre à 3 |
 | | `ScaledEps` / `AssertNear` mutualisés pour `TestCameraMath` | non implémentée |
@@ -355,3 +370,5 @@ if (dbg && (!dbg->m_visible || dbg->m_hideForCamera == view.m_sourceCamera)) con
 ```
 
 C'est le comportement de Unity — le frustum n'apparaît que sur la caméra sélectionnée. **Mais ce n'est pas un correctif de taille** : rendre `Overview_Camera` active ramènerait sa dalle telle quelle en S1. À traiter séparément.
+
+> **Rectifié (Discussion E, bug 56, session du 18/09/2026).** Cette proposition avait fini à moitié câblée dans le code : `dbg.m_visible = isActive` était bien écrit par `CameraGizmoSystem`, mais le filtre `RenderView` censé le lire était en pratique désactivé — la couleur grise (caméra inactive) calculée juste à côté n'était donc plus jamais observable si ce filtre avait été réactivé sans qu'on y prenne garde, en contradiction frontale avec A5 §4.5. Discussion E a tranché : **on ne retient pas cette politique maintenant.** L'écriture morte de `m_visible` a été retirée de `CameraGizmoSystem`, tous les gizmos redeviennent visibles avec la seule teinte pour les distinguer (comportement A5, validé et testé). Le champ `DebugVisualComponent::m_visible` reste déclaré (défaut `true`, donc inerte tant que rien ne l'écrit) : si cette politique est un jour retranchée pour de bon, l'infrastructure ci-dessus est prête à être reconnectée en une fois, proprement, plutôt que redécouverte bug par bug.

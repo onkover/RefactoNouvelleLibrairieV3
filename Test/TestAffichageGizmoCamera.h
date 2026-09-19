@@ -7,7 +7,7 @@
 
 namespace LV3::Tests
 {
-	void Test_GizmoCountMatchesCameras(Registry& registry);
+    void Test_GizmoCountMatchesCameras(Registry& registry, const GizmoAssets& assets);
 	void Test_CameraWorldMatrixIsRigid(Registry& registry);
     size_t  Test_GizmoMatchesFrustum(Registry& registry, ResourceManager& rm,
         const ViewData* views, size_t count,

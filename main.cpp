@@ -317,7 +317,8 @@ int main(int argc, char* argv[])
 			Logger::warn("[Gizmo] assets absents : aucun gizmo de camera ne sera affiché\n");
 
 	#if LV3_DEBUG
-		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
+		//if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry);
+		if (GizAssets.IsValid()) Test_GizmoCountMatchesCameras(registry, GizAssets);
 	#endif
 
 	}
