@@ -279,8 +279,8 @@ int main(int argc, char* argv[])
 	HealthSystem healthSys(&registry, eventBus);
 	AudioSystem audioSys(eventBus);
 	ResourceManager rm;					// Collection de mesh unitaires
-	CameraBinding bindings[LV3_MAX_VIEWPORT];
-	ViewData      views[LV3_MAX_VIEWPORT];
+	CameraBinding bindings[kMaxCamerasHard];
+	ViewData      views[kMaxCamerasHard];
 	Renderer renderer;
 
 
@@ -472,7 +472,7 @@ int main(int argc, char* argv[])
 		// retraverser tout pour ~2 caméras effectivement changées serait pur gaspillage. 
 		// La surcharge ciblée ne repropage que les caméras rendues cette frame (et leurs gizmos, via la hiérarchie) — coût O(nViews), pas O(N).
 		LocalTransformSystem(registry);       // Construit les matrices locales finales
-		Entity renderedCameras[LV3_MAX_VIEWPORT];
+		Entity renderedCameras[kMaxCamerasHard];
 		for (size_t i = 0; i < nViews; ++i)
 			renderedCameras[i] = bindings[i].m_camera;
 		WorldTransformSystem(registry, std::span<const Entity>(renderedCameras, nViews));   // Construit les matrices mondes — caméras seulement
