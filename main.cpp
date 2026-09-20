@@ -51,13 +51,13 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/depthbuffer.h"
 #include "Scene/DebugGizmos.hpp"
-
+#include "GFX/gfx.h"
+#include "scene/CameraBinding.hpp"
+#include "scene/SerializerHelpers.hpp"
 
 #include "Test/RunAllTests.h"
 #include "test/TestAffichageGizmoCamera.h"
 
-#include "GFX/gfx.h"
-#include "scene/CameraBinding.hpp"
 
 using namespace LV3;
 using namespace LV3::Tests;         // ← ajoute CE using en plus
@@ -80,8 +80,8 @@ int pendingW,pendingH;				// Sauvegarde des dimensions de l'écran modifié lors
 // État global de la boucle
 
 bool g_mouseCaptured = true;
-static bool g_cycleCam[2] = { false, false };   // [0]=gameplay, [1]=debug
-static bool g_cycleMode[2] = { false, false };
+static bool g_cycleCam[kMaxCamerasHard] = {};   // [0]=gameplay, [1]=debug
+static bool g_cycleMode[kMaxCamerasHard] = {};
 
 static void SetMouseCapture(bool captured)
 {
@@ -130,11 +130,15 @@ LV3::InputState BuildInputState()
 				case SDL_SCANCODE_F1:
 					SetMouseCapture(!g_mouseCaptured);      // libère / recapture la souris
 					break;
-				case SDL_SCANCODE_F2: g_cycleCam[0] = true; break;   // caméra du panneau jeu
-				case SDL_SCANCODE_F3: g_cycleMode[0] = true; break;   // mode du panneau jeu
-				case SDL_SCANCODE_F4:
-					g_cycleCam[1] = true; break;   // caméra du panneau debug
-				case SDL_SCANCODE_F5: g_cycleMode[1] = true; break;   // mode du panneau debug
+
+				case SDL_SCANCODE_F2: g_cycleCam[0] = true; break;   // caméra du slot RENDU
+				case SDL_SCANCODE_F3: g_cycleMode[0] = true; break;
+				case SDL_SCANCODE_F4: g_cycleCam[1] = true; break;   // caméra du slot DEBUG #1
+				case SDL_SCANCODE_F5: g_cycleMode[1] = true; break;
+				case SDL_SCANCODE_F6: g_cycleCam[2] = true; break;   // caméra du slot DEBUG #2
+				case SDL_SCANCODE_F7: g_cycleMode[2] = true; break;
+				case SDL_SCANCODE_F8: g_cycleCam[3] = true; break;   // caméra du slot DEBUG #3
+				case SDL_SCANCODE_F9: g_cycleMode[3] = true; break;
 
 				case SDL_SCANCODE_RIGHTBRACKET: 
 					_clock.Scale(true, shiftHeld); break;   // ^
@@ -183,16 +187,19 @@ LV3::InputState BuildInputState()
 
 struct Panel
 {
-	ECameraCategory category;   // qui candidate ici — politique de l'appli
-	Entity          camera;     // sélection COURANTE — état de session
-	ERenderMode     mode;       // mode de rendu COURANT — état de session
+//	ECameraCategory category;   // qui candidate ici — politique de l'appli  
+	Entity      camera = NULL_ENTITY;		// sélection COURANTE — état de session
+	ERenderMode mode = ERenderMode::Solid;	// mode de rendu COURANT — état de session
 };
 
-Panel panels[2] =
-{
-	{ ECameraCategory::Gameplay, NULL_ENTITY, ERenderMode::Solid     },
-	{ ECameraCategory::Debug,    NULL_ENTITY, ERenderMode::Wireframe },
-};
+Panel panels[kMaxCamerasHard];
+
+//Panel panels[2] =
+//{
+//	{ ECameraCategory::Gameplay, NULL_ENTITY, ERenderMode::Solid     },
+//	{ ECameraCategory::Debug,    NULL_ENTITY, ERenderMode::Wireframe },
+//};
+
 
 static ERenderMode NextRenderMode(ERenderMode m)
 {
@@ -202,6 +209,31 @@ static ERenderMode NextRenderMode(ERenderMode m)
 	case ERenderMode::Wireframe: return ERenderMode::Depth;
 	default:                     return ERenderMode::Solid;
 	}
+}
+
+/***********************************************
+Helpers pour BuildInputState() :
+* BuildLayout ne sait produire que 1, 2 ou 4 viewports.
+* Toute valeur demandée est ramenée à la plus proche taille supportée
+* INFÉRIEURE OU ÉGALE — jamais supérieure, pour ne jamais dépasser maxViewport.
+*/
+
+static size_t SnapToSupportedViewportCount(size_t requested)
+{
+	if (requested >= 4) return 4;
+	if (requested >= 2) return 2;
+	return 1;
+}
+
+// Les slots debug (indices 1..nDebugSlots) partagent le même bassin de
+// caméras : deux slots debug ne doivent jamais pointer sur la même caméra
+// (BuildCameraBindings l'interdit en debug via LV3_ASSERT — mieux vaut ne
+// jamais y arriver que le découvrir au premier crash).
+static bool IsCameraUsedByOtherDebugSlot(const Panel* _panels, size_t nDebugSlots, size_t exceptIndex, Entity cam)
+{
+	for (size_t i = 1; i <= nDebugSlots; ++i)
+		if (i != exceptIndex && _panels[i].camera == cam) return true;
+	return false;
 }
 
 //**********************************************
@@ -294,12 +326,23 @@ int main(int argc, char* argv[])
 			Logger::error("Impossible de construire la scène. Arrêt du programme.\n");
 			return -1;
 		}
+
+		Logger::info("[Diag] Scene chargee : " + pathScene);
+		for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
+		{
+			Logger::info("[Diag] Camera '" + EntityLabel(registry, e) + "' active=" +
+				(cam.m_isActive ? std::string("true") : std::string("false")) +
+				" categorie=" + std::to_string(static_cast<int>(cam.m_category)));
+		}
+
 	}
 	else
 	{
 		Logger::error("Impossible de retrouver le scene graph. Arrêt du programme.\n");
 		return -1;
 	}
+
+
 
 	/************************************************************
 	Paramétrage des gizmo des camera
@@ -426,35 +469,161 @@ int main(int argc, char* argv[])
 
 
 		// --- Sélection : consomme les touches, cicatrise les sélections mortes ---
-		for (int p = 0; p < 2; ++p)
+		//for (int p = 0; p < 2; ++p)
+		//{
+		//	if (g_cycleCam[p]) { panels[p].camera = NextCamera(registry, panels[p].category, panels[p].camera); g_cycleCam[p] = false; }
+		//	if (g_cycleMode[p]) { panels[p].mode = NextRenderMode(panels[p].mode); g_cycleMode[p] = false; }
+
+		//	// Validation par frame : la sélection doit être vivante, active, de la bonne catégorie.
+		//	const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[p].camera);
+		//	if (!cam || !cam->m_isActive || cam->m_category != panels[p].category)
+		//		panels[p].camera = NextCamera(registry, panels[p].category, NULL_ENTITY);  // ré-élection
+		//}
+
+	
+
+
+		//// --- Construction des slots ------------------------------------------------
+		//// Bloc de test Quad (bug 61) — corrigé : Gameplay peut légitimement contenir
+		//// plusieurs caméras actives à la fois (FPS_Camera ET Follow_Camera, pour que
+		//// F2 puisse cycler de l'une à l'autre). Ne JAMAIS aspirer tout le bassin
+		//// Gameplay dans les slots : seule celle couramment sélectionnée par le panel
+		//// (panels[0].camera) doit en occuper un — les slots restants viennent de
+		//// Debug, qui n'a pas cette sémantique de bassin ici.
+		//ViewSlot slots[kMaxCamerasHard];
+		//size_t nSlots = 0;
+
+		//{
+		//	Entity testCams[kMaxCamerasHard];
+		//	size_t n = 0;
+		//	if (panels[0].camera != NULL_ENTITY)
+		//		testCams[n++] = panels[0].camera;
+		//	n += CollectActiveCameras(registry, ECameraCategory::Debug, testCams + n, kMaxCamerasHard - n);
+
+		//	if (n >= kMaxCamerasHard)
+		//		for (size_t i = 0; i < kMaxCamerasHard; ++i)
+		//			slots[nSlots++] = { testCams[i], ERenderMode::Solid };
+		//}
+
+		//if (nSlots == 0)
+		//{
+		//	for (int p = 0; p < 2; ++p)
+		//		if (panels[p].camera != NULL_ENTITY)
+		//			slots[nSlots++] = { panels[p].camera, panels[p].mode };
+		//}
+
+		//const Entity activeCamera = (panels[0].camera != NULL_ENTITY)
+		//	? panels[0].camera : slots[0].m_camera;   // le gizmo surligne la vue de JEU
+
+		//const ELayout layout =
+		//	(nSlots == 1) ? ELayout::Single :
+		//	(nSlots == 4) ? ELayout::Quad :
+		//	ELayout::MainSide;
+
+		//const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings);
+		//if (nViews == 0)
+		//{
+		//	Logger::error("Impossible de construire les bindings de caméra.");
+		//	g_running = false;
+		//	break;
+		//}
+
+		// --- Combien de viewports, et pour qui ? (bug 61, généralisé) --------------
+		Entity gamingBuf[LV3_MAX_CAMERA];
+		const size_t nGamingActive = CollectActiveCameras(registry, ECameraCategory::Gameplay, gamingBuf, std::size(gamingBuf));
+		if (nGamingActive == 0)
 		{
-			if (g_cycleCam[p]) { panels[p].camera = NextCamera(registry, panels[p].category, panels[p].camera); g_cycleCam[p] = false; }
-			if (g_cycleMode[p]) { panels[p].mode = NextRenderMode(panels[p].mode); g_cycleMode[p] = false; }
-
-			// Validation par frame : la sélection doit être vivante, active, de la bonne catégorie.
-			const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[p].camera);
-			if (!cam || !cam->m_isActive || cam->m_category != panels[p].category)
-				panels[p].camera = NextCamera(registry, panels[p].category, NULL_ENTITY);  // ré-élection
-		}
-
-		// --- Construction des slots : seuls les panneaux pourvus rendent ---
-		ViewSlot slots[2];
-		size_t nSlots = 0;
-		for (int p = 0; p < 2; ++p)
-			if (panels[p].camera != NULL_ENTITY)
-				slots[nSlots++] = { panels[p].camera, panels[p].mode };
-
-		if (nSlots == 0)
-		{
-			Logger::error("Aucune caméra active dans la scène — rien à rendre.");
+			Logger::error("Aucune caméra de rendu (Gameplay) active — arrêt du programme.");
 			g_running = false;
 			break;
 		}
 
-		const Entity activeCamera = (panels[0].camera != NULL_ENTITY)
-			? panels[0].camera : slots[0].m_camera;   // le gizmo surligne la vue de JEU
+		Entity debugBuf[LV3_MAX_CAMERA];
+		const size_t nDebugActive = CollectActiveCameras(registry, ECameraCategory::Debug, debugBuf, std::size(debugBuf));
 
-		const ELayout layout = (nSlots == 1) ? ELayout::Single : ELayout::MainSide;
+		const size_t requestedV = std::min<size_t>(
+			static_cast<size_t>(LV3::EngineConfig::Get().viewport.maxViewport), kMaxCamerasHard);
+		const size_t V = SnapToSupportedViewportCount(requestedV);
+
+		size_t nDebugSlots = std::min(V - 1, nDebugActive);
+		size_t total = 1 + nDebugSlots;
+		if (total == 3) { --nDebugSlots; total = 2; }   // 3 non supporté par BuildLayout : on sacrifie un slot debug
+
+		// --- Avertissement de mode dégradé — une seule fois par changement d'état --
+		static size_t s_lastWarnedTotal = SIZE_MAX;
+		const size_t bestPossible = 1 + std::min(nDebugActive, kMaxCamerasHard - 1);
+		const size_t wanted = std::min(requestedV, bestPossible);
+		if (total < wanted)
+		{
+			if (s_lastWarnedTotal != total)
+			{
+				Logger::warn("[Viewport] mode degrade : " + std::to_string(total) + " viewport(s) affiche(s) au lieu de "
+					+ std::to_string(wanted) + " demande(s)/possible(s) (" + std::to_string(nGamingActive)
+					+ " camera(s) rendu, " + std::to_string(nDebugActive) + " camera(s) debug actives).");
+				s_lastWarnedTotal = total;
+			}
+		}
+		else
+		{
+			s_lastWarnedTotal = SIZE_MAX;   // état normal : réarme l'avertissement pour la prochaine dégradation
+		}
+
+		// --- Sélection : slot 0 (rendu), bassin dédié, jamais de collision ---------
+		if (g_cycleCam[0]) { panels[0].camera = NextCamera(registry, ECameraCategory::Gameplay, panels[0].camera); g_cycleCam[0] = false; }
+		if (g_cycleMode[0]) { panels[0].mode = NextRenderMode(panels[0].mode); g_cycleMode[0] = false; }
+		{
+			const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[0].camera);
+			if (!cam || !cam->m_isActive || cam->m_category != ECameraCategory::Gameplay)
+				panels[0].camera = NextCamera(registry, ECameraCategory::Gameplay, NULL_ENTITY);
+		}
+
+		// --- Sélection : slots 1..nDebugSlots, bassin partagé, collision à éviter --
+		for (size_t p = 1; p <= nDebugSlots; ++p)
+		{
+			if (g_cycleCam[p])
+			{
+				Entity next = NextCamera(registry, ECameraCategory::Debug, panels[p].camera);
+				const Entity start = next;
+				while (next != NULL_ENTITY && IsCameraUsedByOtherDebugSlot(panels, nDebugSlots, p, next))
+				{
+					next = NextCamera(registry, ECameraCategory::Debug, next);
+					if (next == start) { next = NULL_ENTITY; break; }   // toutes deja prises ailleurs
+				}
+
+				Logger::info("[Diag] slot" + std::to_string(p) + " : "
+					+ EntityLabel(registry, panels[p].camera) + " -> " + EntityLabel(registry, next));
+
+
+				panels[p].camera = next;
+				g_cycleCam[p] = false;
+			}
+			if (g_cycleMode[p]) { panels[p].mode = NextRenderMode(panels[p].mode); g_cycleMode[p] = false; }
+
+			const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[p].camera);
+			if (!cam || !cam->m_isActive || cam->m_category != ECameraCategory::Debug
+				|| IsCameraUsedByOtherDebugSlot(panels, nDebugSlots, p, panels[p].camera))
+			{
+				Entity elect = NextCamera(registry, ECameraCategory::Debug, NULL_ENTITY);
+				const Entity start = elect;
+				while (elect != NULL_ENTITY && IsCameraUsedByOtherDebugSlot(panels, nDebugSlots, p, elect))
+				{
+					elect = NextCamera(registry, ECameraCategory::Debug, elect);
+					if (elect == start) { elect = NULL_ENTITY; break; }
+				}
+				panels[p].camera = elect;
+			}
+		}
+
+		// --- Construction des slots -------------------------------------------------
+		ViewSlot slots[kMaxCamerasHard];
+		size_t nSlots = 0;
+		slots[nSlots++] = { panels[0].camera, panels[0].mode };
+		for (size_t p = 1; p <= nDebugSlots; ++p)
+			slots[nSlots++] = { panels[p].camera, panels[p].mode };
+
+		const Entity activeCamera = panels[0].camera;   // le gizmo surligne toujours la vue de jeu
+
+		const ELayout layout = (total == 1) ? ELayout::Single : (total == 4) ? ELayout::Quad : ELayout::MainSide;
 		const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings);
 		if (nViews == 0)
 		{
@@ -462,6 +631,7 @@ int main(int argc, char* argv[])
 			g_running = false;
 			break;
 		}
+
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);

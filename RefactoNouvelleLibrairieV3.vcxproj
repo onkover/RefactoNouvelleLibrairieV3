@@ -253,11 +253,6 @@
     <ClCompile Include="Test\Test_TopLeftRule.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\LibraryV3\LibraryV3.vcxproj">
-      <Project>{6a380ff1-00ad-425b-a7e4-cbf187583c4e}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="assets\cube.mtl">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
       </ExcludedFromBuild>
@@ -404,6 +399,11 @@
       <DeploymentContent>true</DeploymentContent>
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\LibraryV3\LibraryV3.vcxproj">
+      <Project>{6a380ff1-00ad-425b-a7e4-cbf187583c4e}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
