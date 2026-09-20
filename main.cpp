@@ -590,9 +590,8 @@ int main(int argc, char* argv[])
 					if (next == start) { next = NULL_ENTITY; break; }   // toutes deja prises ailleurs
 				}
 
-				Logger::info("[Diag] slot" + std::to_string(p) + " : "
-					+ EntityLabel(registry, panels[p].camera) + " -> " + EntityLabel(registry, next));
-
+				//Logger::info("[Diag] slot" + std::to_string(p) + " : "
+				//	+ EntityLabel(registry, panels[p].camera) + " -> " + EntityLabel(registry, next));
 
 				panels[p].camera = next;
 				g_cycleCam[p] = false;
