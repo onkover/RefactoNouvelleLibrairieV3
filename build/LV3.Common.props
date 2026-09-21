@@ -60,4 +60,22 @@
 			<PreprocessorDefinitions>LV3_ASSERTS_ENABLED=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 		</ClCompile>
 	</ItemDefinitionGroup>
+
+	<!-- ============================================================
+       Phase G : harnais de mesure. UN SEUL MOT a changer ici pour
+       armer la campagne, et il vaut pour la LIB et pour l'EXE
+       jamais deux definitions independantes (bug 0.3).
+       Alternative sans editer ce fichier :
+         msbuild ... /p:LV3Profile=true
+       Remettre a false une fois la campagne close : une binaire
+       livree ne doit porter aucune borne de mesure.
+       ============================================================ -->
+	<PropertyGroup>
+		<LV3Profile Condition="'$(LV3Profile)'==''">false</LV3Profile>
+	</PropertyGroup>
+	<ItemDefinitionGroup Condition="'$(LV3Profile)'=='true'">
+		<ClCompile>
+			<PreprocessorDefinitions>LV3_PROFILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+		</ClCompile>
+	</ItemDefinitionGroup>
 </Project>

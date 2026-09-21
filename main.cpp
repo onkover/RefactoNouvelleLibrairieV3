@@ -54,7 +54,7 @@
 #include "GFX/gfx.h"
 #include "scene/CameraBinding.hpp"
 #include "scene/SerializerHelpers.hpp"
-
+#include "core/Profiler.h"
 #include "Test/RunAllTests.h"
 #include "test/TestAffichageGizmoCamera.h"
 
@@ -428,6 +428,27 @@ int main(int argc, char* argv[])
 #if LV3_DEBUG
 	int frameCount = 0;
 #endif
+
+//#if LV3_PROFILE
+//	{
+//		LV3::Profiler::Begin(8, 2);
+//		for (int i = 0; i < 5; ++i)
+//		{
+//			LV3_PROF_BEGIN_FRAME(static_cast<uint64_t>(i));
+//			{
+//				LV3_PROF_SCOPE(LV3::EProfZone::Render);
+//				std::this_thread::sleep_for(std::chrono::milliseconds(5));
+//			}
+//			LV3_PROF_COUNT(LV3::EProfCounter::Entities, 42);
+//			LV3_PROF_END_FRAME();
+//		}
+//		LV3::Profiler::DumpCsv("prof_smoke.csv", { "smoke", "Release", 0, 0, 0 });
+//	}
+//#endif
+
+
+
+
 	Logger::info("=== Boucle de jeu ===\n");
 	while (g_running == true)
 	{
