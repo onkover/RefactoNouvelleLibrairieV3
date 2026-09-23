@@ -40,6 +40,7 @@
 #include "Core/Logger.h"
 #include "Core/InputState.h"
 #include "helper/ConfigManager.h"
+#include "helper/AppArgs.h"
 #include "Core/SimulationClock.h"
 #include "Core/contentroot.h"
 
@@ -243,6 +244,13 @@ int main(int argc, char* argv[])
 
 	SetConsoleMode();	// mode cosole en UTF-8
 
+	///************************************************************
+	// Ligne de commande — AVANT tout le reste : une erreur de frappe
+	// doit couter zero seconde de calcul, pas une campagne de mesure.
+	//************************************************************/
+	const AppArgs args = ParseArgs(argc, argv);
+	if (args.wantsHelp) { PrintUsage(); return 0; }
+	if (!args.valid) { PrintUsage(); return -1; }
 
 	///************************************************************
 	// Lecture du répertoire de l'executable
@@ -251,10 +259,11 @@ int main(int argc, char* argv[])
 	// La LIB ne l'a jamais vu et n'a pas a le voir : c'est un chemin de developpement, donc une donnee de l'APPLICATION.
 	std::vector<std::filesystem::path> devCandidates;
 
-	// Racine passee en argument : priorite sur tous les replis.
-	// C'est ce qui permettra de mesurer les trois scenes avec UN SEUL binaire.
-	if (argc > 1)
-		devCandidates.emplace_back(argv[1]);
+	// Racine passee en argument : priorite sur tous les replis (bug 63).
+	// Elle designe OU se trouve le contenu — le choix de la SCENE, lui,
+	// passe par --scene (G2a) : le commentaire d'origine confondait les deux.
+	if (!args.contentRoot.empty())
+		devCandidates.emplace_back(args.contentRoot);
 
 	#ifdef LV3_PROJECT_DIR
 		devCandidates.emplace_back(LV3_PROJECT_DIR);	// path du projet définit dans l'Explorateur de projet > Propriétés.;
@@ -319,7 +328,19 @@ int main(int argc, char* argv[])
 	// --- Lecture de la scène ---
 	if (cfg.mapAssets.find("scene_graph") != cfg.mapAssets.end())
 	{
-		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_graph"].object;
+		// --scene prime sur config.json : une binaire, N scenes, aucune edition
+		// de fichier entre deux mesures. La substitution est TRACEE — une mesure
+		// dont on ignore la scene reellement chargee ne vaut rien.
+		std::string sceneFile = cfg.mapAssets["scene_graph"].object;
+		if (!args.scene.empty())
+		{
+			Logger::info("[Args] scene forcee par --scene : " + args.scene + "  (config.json proposait : " + sceneFile + ")");
+			sceneFile = args.scene;
+		}
+
+		std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + sceneFile;
+
+		//std::string pathScene = LV3::EngineConfig::Get().resources.pathGraphScene + cfg.mapAssets["scene_graph"].object;
 		bool success = SceneSerializer::LoadSceneGraph(contentRoot.string(), pathScene, registry, rm);
 		if (!success)
 		{
