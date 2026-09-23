@@ -26,7 +26,7 @@ void SDLkill(void)
 }
 
 
-bool SDLINIT(int ScreenWidth, int ScreenHeight)
+bool SDLINIT(int ScreenWidth, int ScreenHeight, const std::string& fontPath)
 {
 	if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
 	{
@@ -46,7 +46,7 @@ bool SDLINIT(int ScreenWidth, int ScreenHeight)
 	}
 	else
 	{
-		myFont = TTF_OpenFont("Tahoma.ttf", 20);
+		myFont = TTF_OpenFont(fontPath.c_str(), 20);
 		if (myFont == NULL)
 		{
 			std::cout << "Could not load font: " << TTF_GetError();

@@ -276,7 +276,7 @@ int main(int argc, char* argv[])
 	//************************************************************/
 	Logger::info(" === Lecture de la configuration du programme ===");
 	config cfg;
-	if (!ProgrammeConfig("config.json", cfg))
+	if (!ProgrammeConfig((contentRoot / "config.json").string(), cfg))
 	{
 		Logger::error("Impossible de charger la configuration.\n");
 		return 1;
@@ -289,7 +289,7 @@ int main(int argc, char* argv[])
 	************************************************************/
 	Logger::info(" === Lecture de la configuration du moteur ===");
 
-	if (!LV3::EngineConfig::Get().LoadFromJson("engine.json"))		
+	if (!LV3::EngineConfig::Get().LoadFromJson((contentRoot / LV3::kContentMarker).string()))
 		Logger::warn("EngineConfig — defauts LV3_DEFAULT_* utilises (fichier absent ou invalide)\n");
 	else
 		Logger::success("Configration du moteur chargée avec succès\n");
@@ -396,7 +396,7 @@ int main(int argc, char* argv[])
 	FrameW = cfg.screenWidth;  // Largeur de l'écran
 	FrameH = cfg.screenHeight; // Hauteur de l'écran
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
-	if (SDLINIT(FrameW, FrameH) != true) return -1;
+	if (SDLINIT(FrameW, FrameH, (contentRoot / "tahoma.ttf").string()) != true) return -1;
 
 	db.Resize(FrameW, FrameH);	// depth buffer
 

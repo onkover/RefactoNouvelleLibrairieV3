@@ -49,7 +49,6 @@ extern int* ptrScreen;
 #endif
 
 void SDLkill();
-bool SDLINIT(int ScreenWidth, int ScreenHeight);
-
+bool SDLINIT(int ScreenWidth, int ScreenHeight, const std::string& fontPath);
 
 //extern "C" void CleanScreenV3(void* p, unsigned long long bytes);
