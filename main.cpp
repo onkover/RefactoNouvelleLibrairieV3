@@ -253,6 +253,41 @@ int main(int argc, char* argv[])
 	if (!args.valid) { PrintUsage(); return -1; }
 
 	///************************************************************
+	// --- Mode banc (G2b) ---------------------------------------------------
+	// Le pas de simulation du banc. 1/60 s : une valeur plausible, et SURTOUT
+	// constante. Sa valeur exacte importe peu, son invariance est tout.
+	//************************************************************/
+	const bool bench = (args.benchFrames > 0);
+	constexpr float kBenchDt = 1.0f / 60.0f;
+
+	// Nom de la configuration de compilation, ecrit DANS le CSV : un chiffre
+	// dont on ignore s'il vient d'un build avec ou sans assertions ne vaut rien.
+	#if defined(_DEBUG)
+		constexpr const char* kBuildConfigName = "Debug";
+	#elif LV3_ASSERTS_ENABLED
+		constexpr const char* kBuildConfigName = "RelWithAsserts";
+	#else
+		constexpr const char* kBuildConfigName = "Release";
+	#endif
+
+	// Carte d'identite de la binaire. __DATE__/__TIME__ datent la compilation
+	// de CE fichier : une binaire perimee se denonce elle-meme, au lieu de te
+	// faire soupconner ton paramétrage. Le prix a payer est que main.obj n'est
+	// plus reproductible bit a bit — sans importance ici, et dans un seul .cpp.
+		Logger::info(std::string("[Build] ") + kBuildConfigName
+			+ " | LV3_PROFILE(exe)=" + std::to_string(LV3_PROFILE)
+			+ " | LV3_PROFILE(lib)=" + std::to_string(LV3::Profiler::CompiledProfileFlag())
+			+ " | LV3_ASSERTS_ENABLED=" + std::to_string(LV3_ASSERTS_ENABLED)
+			+ " | compile le " __DATE__ " a " __TIME__);
+
+		if (LV3_PROFILE != LV3::Profiler::CompiledProfileFlag())
+		{
+			Logger::error("[Build] LV3_PROFILE differe entre l'EXE et la LIB : le commutateur"
+				" n'est pas pose dans LV3.Common.props. Cherche une definition locale dans les"
+				" proprietes du projet EXE ou dans Build\\LV3.User.props.");
+		}
+
+	///************************************************************
 	// Lecture du répertoire de l'executable
 	//************************************************************/
 	// LV3_PROJECT_DIR est defini par le projet EXECUTABLE, en Debug uniquement.
@@ -320,11 +355,6 @@ int main(int argc, char* argv[])
 	else
 		Logger::success("Configration du moteur chargée avec succès\n");
 
-	/************************************************************
-	Paramétrage projet
-	************************************************************/
-
-
 
 	/************************************************************
 	Paramétrage du scenegraph
@@ -343,12 +373,15 @@ int main(int argc, char* argv[])
 
 
 	// --- Lecture de la scène ---
+	// Portee fonction : le nom de la scene sert aussi, en fin de main, a nommer
+	// et a documenter le CSV de mesure (G2b).
+	std::string sceneFile;
 	if (cfg.mapAssets.find("scene_graph") != cfg.mapAssets.end())
 	{
 		// --scene prime sur config.json : une binaire, N scenes, aucune edition
 		// de fichier entre deux mesures. La substitution est TRACEE — une mesure
 		// dont on ignore la scene reellement chargee ne vaut rien.
-		std::string sceneFile = cfg.mapAssets["scene_graph"].object;
+		sceneFile = cfg.mapAssets["scene_graph"].object;
 		if (!args.scene.empty())
 		{
 			Logger::info("[Args] scene forcee par --scene : " + args.scene + "  (config.json proposait : " + sceneFile + ")");
@@ -438,9 +471,33 @@ int main(int argc, char* argv[])
 
 	db.Resize(FrameW, FrameH);	// depth buffer
 
-	SetMouseCapture(true);
+	// G2b : en mode banc la souris reste LIBRE. Capturee, le moindre mouvement
+	// involontaire ferait pivoter la camera FPS et changerait le nombre de
+	// pixels rasterises : deux executions incomparables.
+	SetMouseCapture(!bench);
 
-	// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
+	/************************************************************
+	Bench : initialisation de la mesure, si demandée
+	************************************************************/
+	if (bench)
+	{
+	#if LV3_PROFILE
+		Logger::info("[Bench] " + std::to_string(args.benchFrames) + " frames a dt fixe, "
+			+ std::to_string(args.warmupFrames) + " de chauffe.");
+		LV3::Profiler::Begin(args.benchFrames, args.warmupFrames);
+	#else
+		// Un banc sans borne tournerait 3000 frames pour n'ecrire aucun fichier.
+		// On le dit AVANT, pas apres.
+		Logger::warn("[Bench] --bench demande mais LV3_PROFILE=0 : cette binaire ne porte"
+			" aucune borne de mesure, aucun CSV ne sera ecrit."
+			" Recompile avec /p:LV3Profile=true.");
+	#endif
+	}
+
+	// Etat du banc et metadonnee du CSV (nViews est local a la boucle).
+	uint32_t benchFrame = 0;
+	size_t   lastViews = 0;
+
 
 
 	/************************************************************
@@ -484,6 +541,7 @@ int main(int argc, char* argv[])
 //	}
 //#endif
 
+		// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
 
 
 
@@ -495,15 +553,38 @@ int main(int argc, char* argv[])
 		float realDt = static_cast<float>((nowCounter - prevCounter) / counterFreq);
 		prevCounter = nowCounter;
 
+		//// --- Clamp AVANT toute consommation (bug 44)
+		//realDt = std::min(realDt, 0.1f);
+		//// --- Le temps du monde dérive du temps réel, jamais l'inverse
+		//const float simDt = _clock.Advance(realDt);
+
 		// --- Clamp AVANT toute consommation (bug 44)
 		realDt = std::min(realDt, 0.1f);
+
+		// G2b : en mode banc, le temps qui NOURRIT la simulation est fixe.
+		// Le temps REEL vient d'etre mesure et continue de l'etre : c'est lui
+		// qui remplira frame_ns. On fige l'entree du monde, pas l'horloge.
+		if (bench) realDt = kBenchDt;
 
 		// --- Le temps du monde dérive du temps réel, jamais l'inverse
 		const float simDt = _clock.Advance(realDt);
 
+		// Ouverture de la frame mesuree. simTime en milli-jours : un entier,
+		// donc aucun piege de separateur decimal a la relecture du CSV.
+		LV3_PROF_BEGIN_FRAME(static_cast<uint64_t>(_clock.m_simTime * 1000.0));
+
+
 
 		// --- Gérer les entrées utilisateur
 		LV3::InputState input = BuildInputState();		// Ordre canonique : construire l'InputState de la frame AVANT tout système qui le consomme.
+
+		// G2b : le banc ne doit dependre d'aucun geste. On DEPILE quand meme les
+		// evenements -- sans quoi Windows declare la fenetre "ne repond pas" et
+		// cesse de la presenter -- puis on jette l'etat : souris a zero, molette
+		// a zero, aucun deplacement. ESC et la croix restent actifs : ils
+		// agissent sur g_running directement, pas a travers InputState.
+		if (bench) input = LV3::InputState{};
+
 		PlayerInputSystem(registry, input, realDt);
 
 		// --- Mettre à jour la scène
@@ -525,67 +606,6 @@ int main(int argc, char* argv[])
 		CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
 		CameraZoomSystem(registry, input);
 
-
-
-		// --- Sélection : consomme les touches, cicatrise les sélections mortes ---
-		//for (int p = 0; p < 2; ++p)
-		//{
-		//	if (g_cycleCam[p]) { panels[p].camera = NextCamera(registry, panels[p].category, panels[p].camera); g_cycleCam[p] = false; }
-		//	if (g_cycleMode[p]) { panels[p].mode = NextRenderMode(panels[p].mode); g_cycleMode[p] = false; }
-
-		//	// Validation par frame : la sélection doit être vivante, active, de la bonne catégorie.
-		//	const CameraComponent* cam = registry.TryGet<CameraComponent>(panels[p].camera);
-		//	if (!cam || !cam->m_isActive || cam->m_category != panels[p].category)
-		//		panels[p].camera = NextCamera(registry, panels[p].category, NULL_ENTITY);  // ré-élection
-		//}
-
-	
-
-
-		//// --- Construction des slots ------------------------------------------------
-		//// Bloc de test Quad (bug 61) — corrigé : Gameplay peut légitimement contenir
-		//// plusieurs caméras actives à la fois (FPS_Camera ET Follow_Camera, pour que
-		//// F2 puisse cycler de l'une à l'autre). Ne JAMAIS aspirer tout le bassin
-		//// Gameplay dans les slots : seule celle couramment sélectionnée par le panel
-		//// (panels[0].camera) doit en occuper un — les slots restants viennent de
-		//// Debug, qui n'a pas cette sémantique de bassin ici.
-		//ViewSlot slots[kMaxCamerasHard];
-		//size_t nSlots = 0;
-
-		//{
-		//	Entity testCams[kMaxCamerasHard];
-		//	size_t n = 0;
-		//	if (panels[0].camera != NULL_ENTITY)
-		//		testCams[n++] = panels[0].camera;
-		//	n += CollectActiveCameras(registry, ECameraCategory::Debug, testCams + n, kMaxCamerasHard - n);
-
-		//	if (n >= kMaxCamerasHard)
-		//		for (size_t i = 0; i < kMaxCamerasHard; ++i)
-		//			slots[nSlots++] = { testCams[i], ERenderMode::Solid };
-		//}
-
-		//if (nSlots == 0)
-		//{
-		//	for (int p = 0; p < 2; ++p)
-		//		if (panels[p].camera != NULL_ENTITY)
-		//			slots[nSlots++] = { panels[p].camera, panels[p].mode };
-		//}
-
-		//const Entity activeCamera = (panels[0].camera != NULL_ENTITY)
-		//	? panels[0].camera : slots[0].m_camera;   // le gizmo surligne la vue de JEU
-
-		//const ELayout layout =
-		//	(nSlots == 1) ? ELayout::Single :
-		//	(nSlots == 4) ? ELayout::Quad :
-		//	ELayout::MainSide;
-
-		//const size_t nViews = BuildCameraBindings(layout, slots, nSlots, FrameW, FrameH, bindings);
-		//if (nViews == 0)
-		//{
-		//	Logger::error("Impossible de construire les bindings de caméra.");
-		//	g_running = false;
-		//	break;
-		//}
 
 		// --- Combien de viewports, et pour qui ? (bug 61, généralisé) --------------
 		Entity gamingBuf[LV3_MAX_CAMERA];
@@ -689,6 +709,7 @@ int main(int argc, char* argv[])
 			g_running = false;
 			break;
 		}
+		lastViews = nViews;   // metadonnee du CSV : 1 ou 4 viewports, ce n'est pas la meme charge
 
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
@@ -786,8 +807,23 @@ int main(int argc, char* argv[])
 		}
 
 		//SDL_RenderClear(SDLrenderer);
-		SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
-		SDL_RenderPresent(SDLrenderer);
+		//SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
+		//SDL_RenderPresent(SDLrenderer);
+		{
+			// Seule borne posee des maintenant (les autres arrivent en G3) :
+			// elle repond a une question de PROTOCOLE, pas de performance.
+			// Le renderer est cree sans SDL_RENDERER_PRESENTVSYNC, mais le modele
+			// de presentation de Windows peut bloquer malgre tout. Si Present_ns
+			// median vaut ~16,6 ms moins le temps moteur, la boucle est cadencee
+			// par l'ecran : le moteur ne sature jamais, et le CPU peut baisser sa
+			// frequence entre deux frames. Present reste HORS du budget moteur.
+			LV3_PROF_SCOPE(LV3::EProfZone::Present);
+			SDL_RenderCopy(SDLrenderer, SDLtexture, nullptr, nullptr);
+			SDL_RenderPresent(SDLrenderer);
+		}
+
+
+
 
 
 		//SDL_RenderClear(SDLrenderer);
@@ -826,10 +862,44 @@ int main(int argc, char* argv[])
 		#if LV3_DEBUG
 			frameCount++;
 		#endif
+
+		LV3_PROF_END_FRAME();
+
+		// G2b : arret automatique APRES la fermeture de frame, pour que la
+		// N-ieme soit enregistree entiere. Incrementer avant couterait
+		// silencieusement la derniere ligne du CSV.
+		if (bench && ++benchFrame >= args.benchFrames) g_running = false;
 	}
 	Logger::info("=== Fin de la boucle de jeu ===\n\n");
 
+	#if LV3_PROFILE
+		if (bench)
+		{
+			// Chemin relatif a contentRoot, jamais au repertoire courant (bug 67).
+			// Par defaut : Mesures/<scene>_<config>.csv — le nom porte deja les deux
+			// variables de la campagne, et les metadonnees du fichier les repetent.
+			const std::filesystem::path rel = args.csv.empty()
+				? std::filesystem::path("Mesures") /
+				(std::filesystem::path(sceneFile).stem().string() + "_" + kBuildConfigName + ".csv")
+				: std::filesystem::path(args.csv);
 
+			const std::filesystem::path out = contentRoot / rel;
+
+			std::error_code ec;
+			std::filesystem::create_directories(out.parent_path(), ec);
+			if (ec)
+				Logger::warn("[Bench] creation de '" + out.parent_path().string() + "' : " + ec.message());
+
+			LV3::ProfRunInfo info;
+			info.scene = sceneFile;
+			info.config = kBuildConfigName;
+			info.width = FrameW;
+			info.height = FrameH;
+			info.views = static_cast<int>(lastViews);
+
+			LV3::Profiler::DumpCsv(out.string(), info);
+		}
+	#endif
 
 	SDLkill();
 	return 0;

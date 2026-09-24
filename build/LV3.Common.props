@@ -71,11 +71,21 @@
        livree ne doit porter aucune borne de mesure.
        ============================================================ -->
 	<PropertyGroup>
-		<LV3Profile Condition="'$(LV3Profile)'==''">false</LV3Profile>
+		<LV3Profile Condition="'$(LV3Profile)'==''">true</LV3Profile>
 	</PropertyGroup>
 	<ItemDefinitionGroup Condition="'$(LV3Profile)'=='true'">
 		<ClCompile>
 			<PreprocessorDefinitions>LV3_PROFILE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 		</ClCompile>
 	</ItemDefinitionGroup>
+
+	<!-- La valeur EFFECTIVE de LV3Profile, affichee a chaque compilation, pour
+       les deux projets. $(LV3Profile) peut venir de trois sources : ce fichier,
+       une variable d'ENVIRONNEMENT (MSBuild en fait une propriete), ou un
+       /p:LV3Profile=... en ligne de commande. Les trois sont legitimes ; ce qui
+       ne l'est pas, c'est de ne pas savoir laquelle a gagne. -->
+	<Target Name="LV3ShowProfile" BeforeTargets="ClCompile">
+		<Message Importance="high"
+		         Text="[LV3] $(MSBuildProjectName) | $(Configuration)|$(Platform) | LV3Profile=$(LV3Profile)" />
+	</Target>
 </Project>
