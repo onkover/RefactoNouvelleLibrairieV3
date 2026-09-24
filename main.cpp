@@ -262,8 +262,25 @@ int main(int argc, char* argv[])
 	// Racine passee en argument : priorite sur tous les replis (bug 63).
 	// Elle designe OU se trouve le contenu — le choix de la SCENE, lui,
 	// passe par --scene (G2a) : le commentaire d'origine confondait les deux.
+	//
+	// Bug 68 : c'est une INTENTION, pas un candidat. ResolveContentRoot recoit
+	// une liste anonyme et ne peut pas distinguer un ordre d'un repli : une
+	// racine fautive y serait sautee en silence, et le moteur tournerait sur
+	// LV3_PROJECT_DIR (Debug) ou sur la copie post-build (Release) sans un mot.
+	// On valide donc ICI, avec le critere du moteur (IsContentRoot), jamais
+	// avec un exists() qui laisserait passer un dossier sans marqueur.
 	if (!args.contentRoot.empty())
+	{
+		if (!LV3::IsContentRoot(args.contentRoot))
+		{
+			Logger::error("[Args] racine de contenu invalide : '" + args.contentRoot.string()
+				+ "' — '" + std::string(LV3::kContentMarker) + "' introuvable.");
+			Logger::error("[Args] une racine passee en argument est un ordre, pas une suggestion :"
+				" arret (aucun repli silencieux).");
+			return -1;
+		}
 		devCandidates.emplace_back(args.contentRoot);
+	}
 
 	#ifdef LV3_PROJECT_DIR
 		devCandidates.emplace_back(LV3_PROJECT_DIR);	// path du projet définit dans l'Explorateur de projet > Propriétés.;
