@@ -32,7 +32,6 @@
 #include "pch.h"          // ← première ligne, toujours
 #include "main.h"
 
-#include <SDL_ttf.h>
 #include <thread>
 
 #include "Core/engineconfig.h"
@@ -90,6 +89,8 @@ static void SetMouseCapture(bool captured)
 	// Cache le curseur et le confine à la fenêtre — c'est ce qui permet un déplacement souris infini sans buter sur les bords de l'écran
 	SDL_SetRelativeMouseMode(captured ? SDL_TRUE : SDL_FALSE);
 }
+
+//***********************************************
 
 
 // ---------- une fois par frame ----------
@@ -242,7 +243,7 @@ static bool IsCameraUsedByOtherDebugSlot(const Panel* _panels, size_t nDebugSlot
 int main(int argc, char* argv[])
 {
 
-	SetConsoleMode();	// mode cosole en UTF-8
+	InitConsole();	// mode console en UTF-8
 
 	///************************************************************
 	// Ligne de commande — AVANT tout le reste : une erreur de frappe
@@ -576,7 +577,27 @@ int main(int argc, char* argv[])
 
 
 		// --- Gérer les entrées utilisateur
-		LV3::InputState input = BuildInputState();		// Ordre canonique : construire l'InputState de la frame AVANT tout système qui le consomme.
+		//LV3::InputState input = BuildInputState();		// Ordre canonique : construire l'InputState de la frame AVANT tout système qui le consomme.
+		// input est declare ICI, hors du bloc mesure : les systemes camera le
+		// relisent plus bas dans la frame.
+		LV3::InputState input{};
+		{
+			// Attention a la lecture : cette zone inclut SDL_PollEvent, donc du
+			// travail du SYSTEME (pompe de messages Windows), pas seulement du moteur.
+			LV3_PROF_SCOPE(LV3::EProfZone::Input);
+
+			input = BuildInputState();		// Ordre canonique : construire l'InputState de la frame AVANT tout système qui le consomme.
+
+			// G2b : le banc ne doit dependre d'aucun geste. On DEPILE quand meme les
+			// evenements -- sans quoi Windows declare la fenetre "ne repond pas" et
+			// cesse de la presenter -- puis on jette l'etat : souris a zero, molette
+			// a zero, aucun deplacement. ESC et la croix restent actifs : ils
+			// agissent sur g_running directement, pas a travers InputState.
+			if (bench) input = LV3::InputState{};
+
+			PlayerInputSystem(registry, input, realDt);
+		}
+
 
 		// G2b : le banc ne doit dependre d'aucun geste. On DEPILE quand meme les
 		// evenements -- sans quoi Windows declare la fenetre "ne repond pas" et
@@ -588,27 +609,66 @@ int main(int argc, char* argv[])
 		PlayerInputSystem(registry, input, realDt);
 
 		// --- Mettre à jour la scène
-		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
+//		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
+		{
+			// Compte dans le budget "Cameras" : c'est l'invariant des controleurs
+			// de camera, meme s'il s'execute ici pour des raisons d'ordre. Les
+			// zones s'ACCUMULENT : plusieurs blocs peuvent porter la meme etiquette.
+			LV3_PROF_SCOPE(LV3::EProfZone::Cameras);
+			CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
+		}
 
 		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
-		AnimationSystem(registry, simDt);
+		//AnimationSystem(registry, simDt);
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::Animation);
+			AnimationSystem(registry, simDt);
+		}
 
 		// --- MISE À JOUR DES MATRICES ---
 		// CameraFollowSystem lit tr.m_worldMatrix de sa cible (le vaisseau) pour se positionner.
 		// Sans cette cuisson intermédiaire, il lirait la matrice monde de la frame PRÉCÉDENTE —
 		// une frame de retard entre « PlayerInputSystem vient de déplacer le vaisseau » et
 		// « la caméra qui le suit en tient compte ». Imperceptible avec du lissage actif, mais faux.
-		LocalTransformSystem(registry);       // Construit les matrices locales finales
-		WorldTransformSystem(registry);       // Construit les matrices mondes finales
+		//LocalTransformSystem(registry);       // Construit les matrices locales finales
+		//WorldTransformSystem(registry);       // Construit les matrices mondes finales
+
+		//// --- MISE À JOUR DES SYSTÈMES DE CAMÉRA ---
+		//CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
+		//CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
+		//CameraZoomSystem(registry, input);
+		// Les deux zones de la cuisson n°1 sont SEPAREES : c'est WorldXform1 qui
+		// porte la traversee complete O(N) -- la grandeur meme dont depend la
+		// decision A3. La confondre avec LocalTransformSystem rendrait le chiffre
+		// inutilisable.
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::LocalXform1);
+			LocalTransformSystem(registry);       // Construit les matrices locales finales
+		}
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::WorldXform1);
+			WorldTransformSystem(registry);       // Construit les matrices mondes finales
+		}
 
 		// --- MISE À JOUR DES SYSTÈMES DE CAMÉRA ---
-		CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
-		CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
-		CameraZoomSystem(registry, input);
-
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::Cameras);
+			CameraFPSControllerSystem(registry, input, realDt);      //  un seul agit,
+			CameraFollowSystem(registry, realDt);             //  m_isEnabled arbitre
+			CameraZoomSystem(registry, input);
+		}
 
 		// --- Combien de viewports, et pour qui ? (bug 61, généralisé) --------------
+	//	Entity gamingBuf[LV3_MAX_CAMERA];
+				// --- Combien de viewports, et pour qui ? (bug 61, généralisé) --------------
+		// Borne MANUELLE : cette section declare nDebugSlots, total, nViews...
+		// utilises plus bas dans la frame — un bloc RAII les enfermerait.
+		// Le LV3_PROF_END correspondant est apres CameraGizmoSystem.
+		// Le 'break' du cas nViews==0 saute la fermeture : sans importance, cette
+		// frame ne sera de toute facon jamais enregistree (pas de LV3_PROF_END_FRAME).
+		LV3_PROF_BEGIN(camSel);
 		Entity gamingBuf[LV3_MAX_CAMERA];
+
 		const size_t nGamingActive = CollectActiveCameras(registry, ECameraCategory::Gameplay, gamingBuf, std::size(gamingBuf));
 		if (nGamingActive == 0)
 		{
@@ -714,27 +774,60 @@ int main(int argc, char* argv[])
 
 		// --- Le gizmo ecrit m_local.scale AVANT la cuisson.
 		CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
+		LV3_PROF_END(camSel, LV3::EProfZone::Cameras);   // pendant du LV3_PROF_BEGIN ci-dessus
+
 
 		// --- matrices des CAMÉRAS (et de leurs gizmos) SEULEMENT ---
 		// * LocalTransformSystem ne retraite que ce qui est resté dirty depuis la cuisson n°1 (les caméras, leurs gizmos) — quasi gratuit grâce au drapeau. 
 		// * Pour WorldTransformSystem, on n'appelle PAS la version complète : sur une scène à plusieurs centaines d'objets,
 		// retraverser tout pour ~2 caméras effectivement changées serait pur gaspillage. 
 		// La surcharge ciblée ne repropage que les caméras rendues cette frame (et leurs gizmos, via la hiérarchie) — coût O(nViews), pas O(N).
-		LocalTransformSystem(registry);       // Construit les matrices locales finales
-		Entity renderedCameras[kMaxCamerasHard];
-		for (size_t i = 0; i < nViews; ++i)
-			renderedCameras[i] = bindings[i].m_camera;
-		WorldTransformSystem(registry, std::span<const Entity>(renderedCameras, nViews));   // Construit les matrices mondes — caméras seulement
-
+		//LocalTransformSystem(registry);       // Construit les matrices locales finales
+		//Entity renderedCameras[kMaxCamerasHard];
+		//for (size_t i = 0; i < nViews; ++i)
+		//	renderedCameras[i] = bindings[i].m_camera;
+		//WorldTransformSystem(registry, std::span<const Entity>(renderedCameras, nViews));   // Construit les matrices mondes — caméras seulement
+		
+		// Rappel de calibration : ces deux zones seront probablement sous le seuil
+		// de l'instrument (100 ns de resolution, 123 ns par paire de bornes). Un 0
+		// ne voudra pas dire "gratuit" mais "trop petit pour etre vu" -- ce sera au
+		// compteur XformNodes (G3b) de le confirmer.
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::LocalXform2);
+			LocalTransformSystem(registry);       // Construit les matrices locales finales
+		}
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::WorldXform2);
+			Entity renderedCameras[kMaxCamerasHard];
+			for (size_t i = 0; i < nViews; ++i)
+				renderedCameras[i] = bindings[i].m_camera;
+			WorldTransformSystem(registry, std::span<const Entity>(renderedCameras, nViews));   // Construit les matrices mondes — caméras seulement
+		}
 
 		// --- DÉTECTION (Physique/Triggers) ---
 		// Lit les matrices mondes finales
-		TriggerSystem(registry, eventBus);
+		//TriggerSystem(registry, eventBus);
+
+		//// --- Les vues lisent les matrices de CETTE frame.
+		//for (size_t i = 0; i < nViews; ++i)
+		//	views[i] = BuildViewData(registry, bindings[i]);
+		
+		// --- DÉTECTION (Physique/Triggers) ---
+		// Lit les matrices mondes finales
+		{
+			// La zone qui doit trancher le point 7 de la phase G : detection en
+			// N^2 ou en N ? Le temps seul ne le dira pas -- il faudra le rapport
+			// avec le compteur TriggerPairs (G3b).
+			LV3_PROF_SCOPE(LV3::EProfZone::Trigger);
+			TriggerSystem(registry, eventBus);
+		}
 
 		// --- Les vues lisent les matrices de CETTE frame.
-		for (size_t i = 0; i < nViews; ++i)
-			views[i] = BuildViewData(registry, bindings[i]);
-
+		{
+			LV3_PROF_SCOPE(LV3::EProfZone::BuildViews);
+			for (size_t i = 0; i < nViews; ++i)
+				views[i] = BuildViewData(registry, bindings[i]);
+		}
 #if LV3_DEBUG
 	#if LV3_ASSERTS_ENABLED
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
@@ -766,17 +859,40 @@ int main(int argc, char* argv[])
 
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
-			fb.Bind(ptrScreen, pitch,FrameW, FrameH);
-			Clean_Render(fb);
+			//fb.Bind(ptrScreen, pitch,FrameW, FrameH);
+			//Clean_Render(fb);
+			//
+			//renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
+			//renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
+
+			//// --- recontruit les viewport et dessine les triangle
+			//for (size_t i = 0; i < nViews; ++i)
+			//{
+			//	RenderView(registry, rm, renderer, views[i]);
+			//	LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
 			
-			renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
-			renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
+			fb.Bind(ptrScreen, pitch, FrameW, FrameH);
+			{
+				// Effacement couleur + profondeur : un cout proportionnel a la
+				// RESOLUTION, indifferent a la scene. Comme Present, c'est un
+				// temoin : il ne doit pas bouger entre v1compat et belt.
+				LV3_PROF_SCOPE(LV3::EProfZone::Clear);
+				Clean_Render(fb);
+
+				renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
+				renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
+			}
 
 			// --- recontruit les viewport et dessine les triangle
-			for (size_t i = 0; i < nViews; ++i)
 			{
-				RenderView(registry, rm, renderer, views[i]);
-				LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
+				// LA zone du moteur : transformation, culling, clipping,
+				// rasterisation, pour toutes les vues.
+				LV3_PROF_SCOPE(LV3::EProfZone::Render);
+				for (size_t i = 0; i < nViews; ++i)
+				{
+					RenderView(registry, rm, renderer, views[i]);
+					LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
+				}
 			}
 			
 #if LV3_DEBUG
@@ -902,5 +1018,6 @@ int main(int argc, char* argv[])
 	#endif
 
 	SDLkill();
+	void ShutdownConsole();
 	return 0;
 }

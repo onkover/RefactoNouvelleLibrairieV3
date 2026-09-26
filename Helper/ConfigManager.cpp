@@ -6,24 +6,74 @@
 #include <unordered_map>
 #include "core/JsonReader.h"
 
+#include <windows.h>
+
 using namespace LV3;
 
+struct ConsoleState
+{
+    UINT  oldOutCP = 0;
+    UINT  oldInCP = 0;
+    DWORD oldOutMode = 0;
+    bool  isConsole = false;
+};
 
+static ConsoleState g_console;
+bool g_useColors = false;
 
-    /************************************************************
-        Assure que la console Windows utilise UTF-8 pour afficher les caractères correctement
-        (utile si les chemins ou messages contiennent des caractères non-ASCII)
-    ************************************************************/
-    void SetConsoleMode()
+/************************************************************
+    Assure que la console Windows utilise UTF-8 pour afficher les caractères correctement
+    (utile si les chemins ou messages contiennent des caractères non-ASCII)
+************************************************************/
+
+static bool EnableVTMode(DWORD stdHandle)
+{
+    HANDLE h = GetStdHandle(stdHandle);
+    if (h == INVALID_HANDLE_VALUE || h == nullptr)
+        return false;
+
+    DWORD mode = 0;
+    if (!GetConsoleMode(h, &mode))
+        return false;               // pas une console : sortie redirigée (fichier, pipe)
+
+    return SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING) != 0;
+}
+
+void InitConsole()
+{
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE || hOut == nullptr)
+        return;
+
+    DWORD mode = 0;
+    if (!GetConsoleMode(hOut, &mode))
+        return;                     // sortie redirigée
+
+    // Sauvegarde de l'état d'origine pour ShutdownConsole()
+    g_console.isConsole = true;
+    g_console.oldOutMode = mode;
+    g_console.oldOutCP = GetConsoleOutputCP();
+    g_console.oldInCP = GetConsoleCP();
+
+    // UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
+    // Couleurs ANSI
+    g_useColors = EnableVTMode(STD_OUTPUT_HANDLE);
+    EnableVTMode(STD_ERROR_HANDLE);
+
+}    //************************************************************
+
+    void ShutdownConsole()
     {
-        SetConsoleOutputCP(CP_UTF8);    // Configure la page de code pour la sortie (Output).
-        SetConsoleCP(CP_UTF8);          // Configure la page de code pour l'entrée (Input)
-#if defined(LV3_PLATFORM_WINDOWS)
-        SetConsoleOutputCP(CP_UTF8);    // Configure la page de code pour la sortie (Output).
-        SetConsoleCP(CP_UTF8);          // Configure la page de code pour l'entrée (Input)
-#endif
-    }
+        if (!g_console.isConsole)
+            return;
 
+        SetConsoleOutputCP(g_console.oldOutCP);
+        SetConsoleCP(g_console.oldInCP);
+        SetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), g_console.oldOutMode);
+    }
 
     //************************************************************
     using nlo_json = nlohmann::json;
