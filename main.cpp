@@ -57,6 +57,7 @@
 #include "core/Profiler.h"
 #include "Test/RunAllTests.h"
 #include "test/TestAffichageGizmoCamera.h"
+#include "Rendering/VertexStage.h"     // ClipSpaceBuffer (chantier 2)
 
 
 using namespace LV3;
@@ -371,7 +372,7 @@ int main(int argc, char* argv[])
 	CameraBinding bindings[kMaxCamerasHard];
 	ViewData      views[kMaxCamerasHard];
 	Renderer renderer;
-
+	ClipSpaceBuffer clipBuf;        // chantier 2 : 1 Mio alloue UNE fois, avant la boucle
 
 	// --- Lecture de la scène ---
 	// Portee fonction : le nom de la scene sert aussi, en fin de main, a nommer
@@ -859,18 +860,7 @@ int main(int argc, char* argv[])
 
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
-			//fb.Bind(ptrScreen, pitch,FrameW, FrameH);
-			//Clean_Render(fb);
-			//
-			//renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
-			//renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
 
-			//// --- recontruit les viewport et dessine les triangle
-			//for (size_t i = 0; i < nViews; ++i)
-			//{
-			//	RenderView(registry, rm, renderer, views[i]);
-			//	LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
-			
 			fb.Bind(ptrScreen, pitch, FrameW, FrameH);
 			{
 				// Effacement couleur + profondeur : un cout proportionnel a la
@@ -890,7 +880,7 @@ int main(int argc, char* argv[])
 				LV3_PROF_SCOPE(LV3::EProfZone::Render);
 				for (size_t i = 0; i < nViews; ++i)
 				{
-					RenderView(registry, rm, renderer, views[i]);
+					RenderView(registry, rm, renderer, views[i], clipBuf);
 					LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
 				}
 			}
