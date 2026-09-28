@@ -373,6 +373,7 @@ int main(int argc, char* argv[])
 	ViewData      views[kMaxCamerasHard];
 	Renderer renderer;
 	ClipSpaceBuffer clipBuf;        // chantier 2 : 1 Mio alloue UNE fois, avant la boucle
+	RasterSpaceBuffer rasterBuf;    // chantier 2b : idem, sortie projetee des meshes Inside
 
 	// --- Lecture de la scène ---
 	// Portee fonction : le nom de la scene sert aussi, en fin de main, a nommer
@@ -880,7 +881,7 @@ int main(int argc, char* argv[])
 				LV3_PROF_SCOPE(LV3::EProfZone::Render);
 				for (size_t i = 0; i < nViews; ++i)
 				{
-					RenderView(registry, rm, renderer, views[i], clipBuf);
+					RenderView(registry, rm, renderer, views[i], clipBuf, rasterBuf);
 					LV3_ASSERT(renderer.GetMode() == views[i].mode);   // personne n'a modifie l'etat en cours de route
 				}
 			}
