@@ -1,0 +1,142 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Taille apparente LV3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#ffffff;--ink:#141a22;--mute:#5a6675;--line:#cfd6de;--acc:#2f6fd6;--warn:#b86f0e;--bad:#c23b3b;--ok:#23835a;--sphere:#8a97a8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1319;--panel:#161c24;--ink:#dbe2ea;--mute:#8d99a8;--line:#2a3340;--acc:#6ea2ff;--warn:#e0a44a;--bad:#ef6f6f;--ok:#4cc58d;--sphere:#6b778a}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1319;--panel:#161c24;--ink:#dbe2ea;--mute:#8d99a8;--line:#2a3340;--acc:#6ea2ff;--warn:#e0a44a;--bad:#ef6f6f;--ok:#4cc58d;--sphere:#6b778a}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+h1,h2{font-family:"IBM Plex Sans Condensed",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:1.9rem}h2{font-size:1.3rem}
+.lede{color:var(--mute);max-width:68ch;margin:6px 0 0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:14px}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.grid{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.ctl{display:grid;gap:10px}
+label{display:grid;grid-template-columns:9.5em 1fr 5em;gap:8px;align-items:center;font-size:.9rem}
+label output{font-family:"IBM Plex Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{font:inherit;font-size:.85rem;padding:5px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:4px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.mono{font-family:"IBM Plex Mono",monospace;font-size:.86rem}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:.9rem}
+th{font-weight:600;color:var(--mute);font-size:.75rem;text-transform:uppercase;letter-spacing:.06em}
+.chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.8rem;font-weight:600;border:1px solid currentColor}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.big{font-family:"IBM Plex Mono",monospace;font-size:1.6rem;font-weight:600}
+.bar{display:flex;height:22px;border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.bar div{height:100%}
+.zones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.zones{grid-template-columns:1fr}}
+.zone{border:1px solid var(--line);border-radius:4px;padding:10px;font-size:.88rem}
+.zone.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.zone b{font-family:"IBM Plex Mono",monospace}
+.note{font-size:.85rem;color:var(--mute)}
+</style>
+
+<div class="wrap">
+<header>
+<h1>Taille apparente : la métrique du LOD</h1>
+<p class="lede">Chantier 2b ou chantier 1 ? Avant de décider, on mesure combien de faces viennent d'instances minuscules à l'écran. La métrique est calculée par paire (instance, vue), en pixels, avec une seule formule pour la perspective et l'ortho.</p>
+</header>
+
+<section>
+<h2>1. Rayon apparent contre distance</h2>
+<p class="mono">r_px = r_monde × P[1][1] × H/2 ÷ w_min &nbsp;·&nbsp; w_min = w_centre − r_monde × |col₃(VP)|</p>
+<div class="grid">
+<canvas id="cv" width="640" height="340" aria-label="Vue de côté : caméra, frustum et astéroïde"></canvas>
+<div class="ctl">
+<div class="seg" role="group" aria-label="Projection"><button id="bP" aria-pressed="true">Perspective</button><button id="bO" aria-pressed="false">Orthographique</button></div>
+<label>Distance (m)<input id="d" type="range" min="2" max="400" value="120"><output id="od"></output></label>
+<label>FOV vertical (°)<input id="f" type="range" min="5" max="90" value="60"><output id="of"></output></label>
+<label>Hauteur ortho (m)<input id="oh" type="range" min="5" max="400" value="100"><output id="ooh"></output></label>
+<label>Hauteur vue (px)<input id="h" type="range" min="225" max="900" step="225" value="450"><output id="oh2"></output></label>
+<label>Rayon roche (m)<input id="r" type="range" min="0.2" max="6" step="0.1" value="1.5"><output id="or"></output></label>
+<table>
+<tr><th></th><th>Valeur</th><th>Niveau choisi</th></tr>
+<tr><td>Rayon apparent</td><td class="mono" id="rpx"></td><td id="lodA"></td></tr>
+<tr><td>✗ Distance &gt; 50 m</td><td class="mono" id="dist"></td><td id="lodB"></td></tr>
+</table>
+<p class="note" id="verdict"></p>
+</div>
+</div>
+</section>
+
+<section>
+<h2>2. La règle de décision, écrite avant la mesure</h2>
+<p class="note">Répartition des faces soumises par tranche de rayon apparent. Valeurs préremplies : la <b>prédiction</b>, pas une mesure. Les parts sont renormalisées à 100 %.</p>
+<div class="grid">
+<div class="ctl">
+<label>&lt; 1 px<input id="s0" type="range" min="0" max="100" value="30"><output id="o0"></output></label>
+<label>1 à 4 px<input id="s1" type="range" min="0" max="100" value="40"><output id="o1"></output></label>
+<label>4 à 16 px<input id="s2" type="range" min="0" max="100" value="15"><output id="o2"></output></label>
+<label>≥ 16 px<input id="s3" type="range" min="0" max="100" value="15"><output id="o3"></output></label>
+<div class="bar" id="bar" aria-hidden="true"></div>
+<p class="note mono">Échelle H1 (faces conservées, calibrée sur les roches, appliquée à TOUS les meshes) : 0,048 · 0,095 · 0,38 · 1<br>Biais : prudent pour les sphères, optimiste pour les meshes de moins de 64 faces (&lt; 1 % des faces)<br>G1 = 1 − Σ Fₖ·cₖ ÷ FacesSubmitted, calculé FRAME PAR FRAME puis médiane</p>
+</div>
+<div class="ctl">
+<div>G1 prédit (gain LOD sur Render)</div>
+<div class="big" id="g1"></div>
+<div class="note">Plafond 2b (H3) : η × s × (1 − 1/κ) ≈ 0,9 × 0,40 × (1 − 1/4,5) ≈ <b class="mono">0,28</b></div>
+</div>
+</div>
+<div class="zones">
+<div class="zone" id="z1"><b>G1 ≥ 0,60</b><br>Chantier 1 (LOD) en premier. Il dépasse deux fois le plafond du 2b, et réduit l'assiette du 2b.</div>
+<div class="zone" id="z2"><b>0,30 ≤ G1 &lt; 0,60</b><br>Chantier 2b d'abord (une séance, image identique au bit près), puis LOD.</div>
+<div class="zone" id="z3"><b>G1 &lt; 0,30</b><br>Chantier 2b. LOD abandonné pour cette scène : trop peu de faces viennent d'instances petites à l'écran, tous meshes confondus.</div>
+</div>
+</section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);let ortho=false;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function lod(px){return px<1?"L3 · 8 faces":px<4?"L2 · 16 faces":px<16?"L1 · 64 faces":"L0 · 168 faces"}
+function sim(){
+ const d=+$('d').value,f=+$('f').value,oh=+$('oh').value,H=+$('h').value,r=+$('r').value;
+ $('od').value=d;$('of').value=f;$('ooh').value=oh;$('oh2').value=H;$('or').value=r.toFixed(1);
+ $('f').disabled=ortho;$('oh').disabled=!ortho;
+ let P11,wGrad,w;
+ if(ortho){P11=2/oh;wGrad=0;w=1}else{P11=1/Math.tan(f*Math.PI/360);wGrad=1;w=d}
+ const wMin=w-r*wGrad;const px=(wGrad>0&&wMin<=0.1)?Infinity:r*P11*H/2/wMin;
+ $('rpx').textContent=px===Infinity?"∞ (touche le near)":px.toFixed(2)+" px";
+ $('lodA').textContent=lod(px);
+ $('dist').textContent=d+" m";
+ const lb=d>50?"L3 · 8 faces":"L0 · 168 faces";$('lodB').textContent=lb;
+ const good=lod(px);const agree=(good===lb);
+ $('verdict').innerHTML=agree?'<span class="chip ok">accord</span> Ici les deux choix coïncident. Changez le FOV, la résolution ou passez en ortho.'
+ :'<span class="chip bad">désaccord</span> La distance ignore '+(ortho?'l\'ortho : la taille ne dépend pas de la distance.':'le FOV et la résolution de la vue.');
+ draw(d,f,oh,r,px);
+}
+function draw(d,f,oh,r,px){
+ const c=$('cv'),g=c.getContext('2d'),W=c.width,Hh=c.height;g.clearRect(0,0,W,Hh);
+ const cx=40,cy=Hh/2,sc=(W-80)/400;
+ g.strokeStyle=css('--line');g.lineWidth=1;g.beginPath();g.moveTo(cx,cy);g.lineTo(W-20,cy);g.stroke();
+ g.fillStyle=css('--acc');g.globalAlpha=.12;g.beginPath();
+ if(ortho){const hh=oh/2*sc;g.rect(cx,cy-hh,W-60-cx,2*hh)}else{const t=Math.tan(f*Math.PI/360);g.moveTo(cx,cy);g.lineTo(W-20,cy-(W-20-cx)*t);g.lineTo(W-20,cy+(W-20-cx)*t);g.closePath()}
+ g.fill();g.globalAlpha=1;g.strokeStyle=css('--acc');g.stroke();
+ g.fillStyle=css('--ink');g.fillRect(cx-14,cy-8,14,16);
+ const x=cx+d*sc,rr=Math.max(2,r*sc*6);g.fillStyle=css('--sphere');g.beginPath();g.arc(x,cy,rr,0,7);g.fill();
+ g.fillStyle=css('--mute');g.font='12px "IBM Plex Mono",monospace';
+ g.fillText('caméra',cx-18,cy+26);g.fillText('roche (rayon ×6 pour être visible)',Math.min(x-40,W-260),cy-rr-8);
+ g.fillText('r_px = '+(px===Infinity?'∞':px.toFixed(2)),16,20);
+}
+function rule(){
+ const s=[0,1,2,3].map(i=>+$('s'+i).value),t=s.reduce((a,b)=>a+b,0)||1,sh=s.map(v=>v/t);
+ const cK=[0.048,0.095,0.38,1];sh.forEach((v,i)=>$('o'+i).value=(v*100).toFixed(0)+" %");
+ const g1=1-sh.reduce((a,v,i)=>a+v*cK[i],0);$('g1').textContent=g1.toFixed(2)+"  (−"+(g1*100).toFixed(0)+" %)";
+ const col=['--ok','--acc','--warn','--bad'];$('bar').innerHTML=sh.map((v,i)=>'<div style="width:'+(v*100)+'%;background:var('+col[i]+')"></div>').join('');
+ $('z1').classList.toggle('on',g1>=.6);$('z2').classList.toggle('on',g1>=.3&&g1<.6);$('z3').classList.toggle('on',g1<.3);
+}
+$('bP').onclick=()=>{ortho=false;$('bP').setAttribute('aria-pressed','true');$('bO').setAttribute('aria-pressed','false');sim()};
+$('bO').onclick=()=>{ortho=true;$('bO').setAttribute('aria-pressed','true');$('bP').setAttribute('aria-pressed','false');sim()};
+['d','f','oh','h','r'].forEach(i=>$(i).oninput=sim);[0,1,2,3].forEach(i=>$('s'+i).oninput=rule);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',sim);
+sim();rule();
+</script>
+
+</body></html>

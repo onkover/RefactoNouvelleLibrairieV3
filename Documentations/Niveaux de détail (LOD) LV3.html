@@ -1,0 +1,142 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Niveaux de détail LV3</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef1f4;--panel:#ffffff;--ink:#141a22;--mute:#5a6675;--line:#cfd6de;--acc:#2f6fd6;--warn:#b86f0e;--bad:#c23b3b;--ok:#23835a;--grid:#dde3ea;--void:#e6eaef}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1319;--panel:#161c24;--ink:#dbe2ea;--mute:#8d99a8;--line:#2a3340;--acc:#6ea2ff;--warn:#e0a44a;--bad:#ef6f6f;--ok:#4cc58d;--grid:#222a35;--void:#1b222c}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1319;--panel:#161c24;--ink:#dbe2ea;--mute:#8d99a8;--line:#2a3340;--acc:#6ea2ff;--warn:#e0a44a;--bad:#ef6f6f;--ok:#4cc58d;--grid:#222a35;--void:#1b222c}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+h1,h2{font-family:"IBM Plex Sans Condensed",sans-serif;text-wrap:balance;margin:0}
+h1{font-size:1.9rem}h2{font-size:1.25rem}
+.lede{color:var(--mute);max-width:70ch;margin:6px 0 0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:18px;display:grid;gap:14px}
+.screens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:760px){.screens{grid-template-columns:1fr}}
+figure{margin:0;display:grid;gap:6px}
+figcaption{font-size:.85rem;color:var(--mute)}
+figcaption b{color:var(--ink);font-family:"IBM Plex Mono",monospace;font-weight:600}
+canvas{width:100%;max-width:100%;height:auto;image-rendering:pixelated;border:1px solid var(--line);border-radius:4px;background:var(--void)}
+.ctl{display:grid;gap:10px}
+label{display:grid;grid-template-columns:10em 1fr 5.5em;gap:8px;align-items:center;font-size:.9rem}
+@media (max-width:480px){label{grid-template-columns:1fr 4.5em}label>span{grid-column:1/-1}}
+label output{font-family:"IBM Plex Mono",monospace;text-align:right;font-variant-numeric:tabular-nums}
+.seg{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.9rem}
+.seg button{font:inherit;font-size:.85rem;padding:5px 10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:4px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:.9rem;white-space:nowrap}
+th{font-weight:600;color:var(--mute);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em}
+tr.sel td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+td.mono,.mono{font-family:"IBM Plex Mono",monospace}
+.chip{display:inline-block;padding:1px 8px;border-radius:99px;font-size:.78rem;font-weight:600;border:1px solid currentColor}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{border-top:2px solid var(--line);padding-top:6px}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:1.25rem;font-weight:600}
+.stat .k{font-size:.78rem;color:var(--mute)}
+.note{font-size:.86rem;color:var(--mute);max-width:78ch}
+</style>
+
+<div class="wrap">
+<header>
+<h1>Niveaux de détail : un rocher, quatre maillages</h1>
+<p class="lede">Le même rocher que <span class="mono">rock_a.obj</span>, généré par le même code que <span class="mono">gen_meshes.py</span>, à quatre résolutions. Chaque image est rasterisée pixel par pixel avec la règle du centre de pixel. Réduisez la taille à l'écran : à partir d'un certain point, le maillage à 8 faces donne les mêmes pixels que celui à 168.</p>
+</header>
+
+<section>
+<div class="ctl">
+<label><span>Rayon à l'écran</span><input id="rpx" type="range" min="0.5" max="22" step="0.1" value="3"><output id="orpx"></output></label>
+<label><span>Rotation</span><input id="rot" type="range" min="0" max="360" step="1" value="35"><output id="orot"></output></label>
+<div class="seg" role="group" aria-label="Tolérance">Tolérance d'erreur :
+<button id="t05" aria-pressed="true">0,5 px</button><button id="t1" aria-pressed="false">1 px</button>
+</div>
+<div class="seg" role="group" aria-label="Niveau affiché">Niveau affiché :
+<button id="mA" aria-pressed="true">Auto</button><button id="m1" aria-pressed="false">L1</button><button id="m2" aria-pressed="false">L2</button><button id="m3" aria-pressed="false">L3</button>
+<span class="note">En Auto, le niveau choisi est le plus grossier dont l'erreur à l'écran reste sous la tolérance. Forcez L3 à 15 px pour voir ce que le sélecteur évite.</span></div>
+</div>
+<div class="screens">
+<figure><canvas id="c0" width="48" height="48"></canvas><figcaption>L0 · <b>168 faces</b> · référence</figcaption></figure>
+<figure><canvas id="c1" width="48" height="48"></canvas><figcaption id="cap1"></figcaption></figure>
+<figure><canvas id="c2" width="48" height="48"></canvas><figcaption>Différence : <span class="bad">■</span> pixels qui changent</figcaption></figure>
+</div>
+<div class="stats">
+<div class="stat"><div class="v" id="sCov"></div><div class="k">pixels couverts (L0)</div></div>
+<div class="stat"><div class="v" id="sEmpty"></div><div class="k">faces L0 qui ne couvrent aucun pixel</div></div>
+<div class="stat"><div class="v" id="sDiff"></div><div class="k">pixels différents, niveau choisi contre L0</div></div>
+<div class="stat"><div class="v" id="sGain"></div><div class="k">faces économisées pour ce rocher</div></div>
+</div>
+<div class="tw"><table>
+<thead><tr><th>Niveau</th><th>Grille seg × rings</th><th>Faces</th><th>Erreur ε (× rayon)</th><th>Erreur à l'écran</th><th>Admis ?</th></tr></thead>
+<tbody id="tb"></tbody>
+</table></div>
+<p class="note">ε est l'écart radial maximal entre le niveau et L0, mesuré sur 400 directions, en fraction du rayon du rocher. L'erreur à l'écran vaut ε × rayon apparent. C'est la seule grandeur que regarde le sélecteur : ni la distance, ni le numéro de niveau.</p>
+</section>
+</div>
+
+<script>
+// ── Rocher : portage fidele de gen_meshes.py (LCG, 4 harmoniques, uv_sphere) ──
+function LCG(seed){let s=seed>>>0;return{next(){s=(Math.imul(1664525,s)+1013904223)>>>0;return s/4294967296},rng(a,b){return a+(b-a)*this.next()}}}
+const R=LCG(0xA5701);const W=[];for(let k=0;k<4;k++)W.push([R.rng(1,4),R.rng(1,4),R.rng(1,4),R.rng(0,6.28),R.rng(.4,1)]);
+function noise(n){let d=0;for(const[a,b,c,ph,w]of W)d+=w*Math.sin(a*n[0]*3.1+b*n[1]*3.1+c*n[2]*3.1+ph);return 1+.3*d/4}
+function sphere(seg,rings){const V=[],F=[];for(let j=0;j<=rings;j++){const p=Math.PI*j/rings,sp=Math.sin(p),cp=Math.cos(p);
+ for(let i=0;i<=seg;i++){const t=2*Math.PI*i/seg,n=[sp*Math.cos(t),cp,sp*Math.sin(t)],r=noise(n);V.push([n[0]*r,n[1]*r,n[2]*r])}}
+ const id=(i,j)=>j*(seg+1)+i;for(let j=0;j<rings;j++)for(let i=0;i<seg;i++){const a=id(i,j),b=id(i+1,j),c=id(i,j+1),d=id(i+1,j+1);
+ if(j!==rings-1)F.push([a,d,c]);if(j!==0)F.push([a,b,d])}return{V,F}}
+const LODS=[{n:'L0',s:12,r:8,eps:0},{n:'L1',s:8,r:5,eps:.235},{n:'L2',s:4,r:3,eps:.484},{n:'L3',s:4,r:2,eps:.537}].map(l=>Object.assign(l,sphere(l.s,l.r)));
+
+// ── Rasterisation : centre de pixel, Z-buffer, ombrage plat (Lambert) ──
+let G=48;const L=[.45,.6,.66];const Ln=Math.hypot(...L);L[0]/=Ln;L[1]/=Ln;L[2]/=Ln;
+function render(m,rpx,ang){
+ const ca=Math.cos(ang),sa=Math.sin(ang),ct=Math.cos(.45),st=Math.sin(.45);
+ const P=m.V.map(([x,y,z])=>{let X=x*ca+z*sa,Z=-x*sa+z*ca;let Y=y*ct-Z*st;Z=y*st+Z*ct;return[G/2+X*rpx,G/2-Y*rpx,Z]});
+ const Wv=m.V.map(([x,y,z])=>{let X=x*ca+z*sa,Z=-x*sa+z*ca;let Y=y*ct-Z*st;Z=y*st+Z*ct;return[X,Y,Z]});
+ const col=new Float32Array(G*G).fill(-1),zb=new Float32Array(G*G).fill(-1e9);let empty=0;
+ for(const f of m.F){const[a,b,c]=f.map(i=>P[i]);
+  const area=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);if(Math.abs(area)<1e-12){empty++;continue}
+  const[wa,wb,wc]=f.map(i=>Wv[i]);const u=[wb[0]-wa[0],wb[1]-wa[1],wb[2]-wa[2]],v=[wc[0]-wa[0],wc[1]-wa[1],wc[2]-wa[2]];
+  let n=[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];const nl=Math.hypot(...n)||1;n=n.map(q=>q/nl);
+  const cen=[(wa[0]+wb[0]+wc[0])/3,(wa[1]+wb[1]+wc[1])/3,(wa[2]+wb[2]+wc[2])/3];if(n[0]*cen[0]+n[1]*cen[1]+n[2]*cen[2]<0)n=n.map(q=>-q);
+  if(n[2]<=0){empty++;continue}                       // face arriere
+  const shade=.18+.82*Math.max(0,n[0]*L[0]+n[1]*L[1]+n[2]*L[2]);
+  const x0=Math.max(0,Math.ceil(Math.min(a[0],b[0],c[0])-.5)),x1=Math.min(G-1,Math.floor(Math.max(a[0],b[0],c[0])-.5));
+  const y0=Math.max(0,Math.ceil(Math.min(a[1],b[1],c[1])-.5)),y1=Math.min(G-1,Math.floor(Math.max(a[1],b[1],c[1])-.5));
+  let cov=0;const s=Math.sign(area);
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const px=x+.5,py=y+.5;
+   const e0=((b[0]-a[0])*(py-a[1])-(b[1]-a[1])*(px-a[0]))*s,e1=((c[0]-b[0])*(py-b[1])-(c[1]-b[1])*(px-b[0]))*s,e2=((a[0]-c[0])*(py-c[1])-(a[1]-c[1])*(px-c[0]))*s;
+   if(e0<0||e1<0||e2<0)continue;cov++;const z=(a[2]*e1+b[2]*e2+c[2]*e0)/(e0+e1+e2);const k=y*G+x;if(z>zb[k]){zb[k]=z;col[k]=shade}}
+  if(!cov)empty++}
+ return{col,empty,faces:m.F.length}}
+function paint(cv,img,diffWith){const g=cv.getContext('2d'),d=g.createImageData(G,G);
+ const cs=getComputedStyle(document.documentElement);const hex=h=>{h=h.trim().replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16))};
+ const vo=hex(cs.getPropertyValue('--void')),bad=hex(cs.getPropertyValue('--bad')),rock=[176,160,140];let diff=0;
+ for(let k=0;k<G*G;k++){let c;
+  if(diffWith){const a=diffWith[0][k],b=diffWith[1][k];const ch=(a<0)!==(b<0)||(a>=0&&Math.abs(a-b)*255>12);if(ch){diff++;c=bad}else c=a<0?vo:rock.map(q=>q*a*.55)}
+  else c=img[k]<0?vo:rock.map(q=>q*img[k]);
+  d.data.set([c[0],c[1],c[2],255],k*4)}
+ g.putImageData(d,0,0);return diff}
+let tol=.5,force=-1;
+function update(){
+ const rpx=+rpxI.value,ang=+rotI.value*Math.PI/180;orpx.value=rpx.toFixed(1)+' px';orot.value=rotI.value+'°';
+ let pick=0;LODS.forEach((l,i)=>{if(l.eps*rpx<=tol)pick=i});if(force>0)pick=force;
+ G=Math.max(16,Math.ceil(2.6*rpx)+6);[c0,c1,c2].forEach(c=>{c.width=G;c.height=G});
+ const r0=render(LODS[0],rpx,ang),rl=render(LODS[pick],rpx,ang);
+ paint(c0,r0.col);paint(c1,rl.col);const diff=paint(c2,null,[r0.col,rl.col]);
+ let cov=0;for(const v of r0.col)if(v>=0)cov++;
+ cap1.innerHTML=(force>0?'Niveau forcé : <b>':'Niveau choisi : <b>')+LODS[pick].n+' · '+LODS[pick].F.length+' faces</b>';
+ sCov.textContent=cov;sEmpty.textContent=r0.empty+' / 168';sDiff.textContent=diff;
+ sGain.textContent=Math.round(100*(1-LODS[pick].F.length/168))+' %';
+ tb.innerHTML=LODS.map((l,i)=>{const e=l.eps*rpx,ok=e<=tol;return'<tr class="'+(i===pick?'sel':'')+'"><td class="mono">'+l.n+'</td><td class="mono">'+l.s+' × '+l.r+'</td><td class="mono">'+l.F.length+'</td><td class="mono">'+l.eps.toFixed(3)+'</td><td class="mono">'+e.toFixed(2)+' px</td><td>'+(ok?'<span class="chip ok">oui</span>':'<span class="chip bad">non</span>')+'</td></tr>'}).join('')}
+const $=id=>document.getElementById(id);const rpxI=$('rpx'),rotI=$('rot'),orpx=$('orpx'),orot=$('orot'),c0=$('c0'),c1=$('c1'),c2=$('c2'),cap1=$('cap1'),sCov=$('sCov'),sEmpty=$('sEmpty'),sDiff=$('sDiff'),sGain=$('sGain'),tb=$('tb');
+rpxI.oninput=update;rotI.oninput=update;
+$('t05').onclick=()=>{tol=.5;$('t05').setAttribute('aria-pressed','true');$('t1').setAttribute('aria-pressed','false');update()};
+$('t1').onclick=()=>{tol=1;$('t1').setAttribute('aria-pressed','true');$('t05').setAttribute('aria-pressed','false');update()};
+['mA','m1','m2','m3'].forEach((id,i)=>$(id).onclick=()=>{force=i?i:-1;['mA','m1','m2','m3'].forEach((o,j)=>$(o).setAttribute('aria-pressed',String(i===j)));update()});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',update);
+update();
+</script>
+
+</body></html>

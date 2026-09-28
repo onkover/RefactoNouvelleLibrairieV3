@@ -1002,7 +1002,6 @@ int main(int argc, char* argv[])
 			info.width = FrameW;
 			info.height = FrameH;
 			info.views = static_cast<int>(lastViews);
-			info.ablation = LV3_ABLATION_RASTER ? "raster" : "none";
 
 			LV3::Profiler::DumpCsv(out.string(), info);
 		}
