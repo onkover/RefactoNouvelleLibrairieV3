@@ -1,6 +1,6 @@
 # Avenant A12a — Pipeline de rendu après les chantiers 3b et 2b
 
-> **Statut** : schéma de référence au 28/09/2026 (Référence H).
+> **Statut** : schéma de référence au 28/09/2026 (Référence H), complété le 30/09/2026 par le chantier 3a.
 > **Rattachement** : annexe A12 (`Annexe_A12_Pipeline_Rendu.md`, état après le chantier 2) ; avenants C3 (chantier 3b) et C4 (chantier 2b).
 > **Nature** : cet avenant **remplace** les § 2 à 7 de l'annexe A12. Le principe d'organisation de A12 § 1 (classement par fréquence d'exécution) reste en vigueur, inchangé.
 
@@ -12,6 +12,7 @@
 |---|---|---|
 | **3b** (avenant C3) | triangle | rejet exact, avant le rasterizer, de tout triangle dont la boîte serrée ne contient aucun centre de pixel. 99,7 % des triangles de la ceinture ne vont plus au rasterizer |
 | **2b** (avenant C4) | sommet / triangle | pour les instances `Inside`, la division par w et `ToRaster` remontent de la bande triangle (par coin) à la bande sommet (par sommet). La bande sommet a désormais **deux branches** |
+| **3a** (avenant C4 § 14) | pixel | la boucle pixel ne parcourt plus que la **boîte serrée** : même `TightPixelBox` que le rejet 3b. Pixels testés : 14 372 → 10 562 par frame. Image identique |
 | Instrumentation | instance × vue | mesure de la taille apparente (`LV3_LOD_STATS`), au point exact où le LOD choisira le mesh |
 
 Rappel de la règle de fréquence (A12 § 1) :
@@ -61,9 +62,10 @@ par triangle              │          │                           │        
                   │     (sauf Wireframe)
                   └─ DrawTriangle                          ≈ 386 triangles
                                                  │ RasterTriangle
-                  RasterizeTriangle : setup (aire, bbox ∩ viewport, top-left)
+                  RasterizeTriangle : setup (aire, TightPixelBox ∩ viewport, top-left)
                                                  │
-par pixel         14 372 testés        3 EdgeFunction + ShadeFragment_*       ──► TestAndSet + SetPixel
+par pixel         10 562 testés        3 EdgeFunction + ShadeFragment_*       ──► TestAndSet + SetPixel
+                  (= boîte serrée)
                   4 562 couverts                                                   (profondeur : presque jamais lue)
 ```
 
@@ -91,8 +93,8 @@ Lecture du schéma :
 | Clipping near | `Clipper.cpp` | 3 sommets → 0, 3 ou 4 | après clipping, w > 0 garanti ; `Lerp` couvre tous les attributs ; `ClipLess` canonique |
 | **ProjectClip** | `VertexStage.h` | `Vec4f` clip → `RasterVertex` | **seul endroit du moteur où l'on divise par w** ; appelé par les deux branches, donc image identique au bit près |
 | **EmitRasterTriangle** | `RenderSystem.cpp` | 3 `RasterVertex` → `RasterTriangle` ou rejet | aval unique : backface (face avant = aire négative en raster), `TrisRasterized` après backface, rejet 3b sauf Wireframe |
-| Setup raster | `Rasterizer.cpp` | triangle → bbox, top-left, `invArea` | ne reçoit que des triangles dont la boîte serrée est non vide |
-| Pixel | `Rasterizer.cpp`, `Fragment.cpp` | (x, y, bary) → profondeur + couleur | 3 `EdgeFunction` complètes par pixel (incrémentales → L13) |
+| Setup raster | `Rasterizer.cpp` | triangle → **boîte serrée**, top-left, `invArea` | ne reçoit que des triangles dont la boîte serrée est non vide ; `TightPixelBox` est la **seule** définition des pixels candidats (3b et 3a) |
+| Pixel | `Rasterizer.cpp`, `Fragment.cpp` | (x, y, bary) → profondeur + couleur | ne parcourt que la boîte serrée : `PixelsTested` = `PixelsTight` à chaque frame ; 3 `EdgeFunction` complètes par pixel (incrémentales → L13) |
 
 ---
 
@@ -136,6 +138,7 @@ Use(*saved);                                         // lit un sommet de B : ni 
 | Division par w + `ToRaster`, instances Intersect | coin, **après** clipping | **correct tel quel** : les sommets clippés n'existent qu'au niveau triangle |
 | Backface, boîte serrée | triangle | fait |
 | Rejet des triangles sans pixel | triangle, **avant** le setup | **fait (3b)** |
+| Bornes de la boucle pixel | triangle (boîte serrée, calculée une fois) | **fait (3a)** |
 | Règle top-left, `invArea` | triangle | fait |
 | Fonctions d'arête (affines) | valeur de départ par triangle, incrément par pixel | 3 évaluations complètes par pixel → **L13** |
 | Choix du mesh selon la taille à l'écran | instance × vue, avant l'étage sommets | absent → **chantier 1 (LOD)** |
@@ -152,7 +155,8 @@ La ligne « Intersect » montre qu'appliquer la règle de fréquence ne signifie
 | ②b | ~~projection par sommet~~ | ~~sommet~~ | **fait**, −33,5 % sur `Render` (avenant C4) |
 | ③ | ~~rejet sub-pixel~~ | ~~triangle~~ | **fait**, −29 % sur `Render` (avenant C3) |
 | ④ | **AVX2** | sommet, **`ProjectPositions`** | cible déplacée : `TransformPositions` ne sert plus qu'à 2,4 % des faces. Division exacte obligatoire (`vdivps`, jamais `vrcpps`) |
-| L13 | fonctions d'arête incrémentales | pixel | à reconsidérer : 14 372 pixels testés par frame seulement |
+| ~~3a~~ | ~~boîte serrée dans la boucle pixel~~ | ~~pixel~~ | **fait**, mise en cohérence exacte, aucun gain revendiqué (avenant C4 § 14) |
+| L13 | fonctions d'arête incrémentales | pixel | à reconsidérer : 10 562 pixels testés par frame sur la ceinture ; elles partiront du coin de la boîte serrée |
 
 ### 6.1 Contraintes que le LOD devra respecter à ce point d'insertion
 

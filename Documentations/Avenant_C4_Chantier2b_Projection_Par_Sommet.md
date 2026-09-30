@@ -1,6 +1,6 @@
 # Avenant C4 — Chantier 2b : la projection une fois par sommet
 
-> **Statut** : clos le 28/09/2026.
+> **Statut** : clos le 28/09/2026. Complété le 30/09/2026 par le chantier 3a (§ 14), clos.
 > **Rattachement** : avenant C3 (`Avenant_C3_Couverture_Chantier3b.md`) § 11 ; avenant C2 § 8 (première mention de l'étape 2b) ; annexe A12 § 5 et § 6.
 > **Portée** : LibraryV3 (LIB) + RefactoNouvelleLibrairieV3 (EXE), `Release` et `RelWithAsserts`, x64.
 > **Machine** : i7-1265U (portable, Alder Lake hybride), secteur, performances élevées. Chronométrages épinglés sur P-core (`affinity=4`).
@@ -407,7 +407,7 @@ Chemin parcouru dans la phase G : `Render` est passé de 11,48 ms (C2, 4 vues) �
 | 2 | Pré-transformation des sommets | clos (avenant C2) |
 | 3b | Rejet précoce des triangles vides | clos (avenant C3) |
 | **2b** | **Projection par sommet** | **CLOS : −33,5 % sur `Render`, image identique** |
-| 3a | Boîte serrée dans la boucle pixel | abandonné pour la ceinture (C3) |
+| **3a** | **Boîte serrée dans la boucle pixel** | **rouvert puis clos** comme mise en cohérence exacte (§ 14) : aucun gain revendiqué ; utile au LOD, qui produira des triangles de 1 à 4 px |
 | **1** | **LOD** | **suivant.** Dimensionnement par un run de comptage `LV3_LOD_STATS`, seuils issus de l'erreur mesurée (annexe A13), règle écrite avant la mesure |
 | **4** | **AVX2** | **cible déplacée.** `TransformPositions` ne sert plus qu'aux meshes `Intersect` (2,4 % des faces) : la vectoriser n'apporterait rien. La cible est désormais **`ProjectPositions`**, qui fait toute la projection de 97,6 % des faces dans une boucle contiguë sans branchement. La division doit rester exacte (`vdivps`, pas `vrcpps`) |
 | L13 | Fonctions d'arête incrémentales | inchangé |
@@ -421,6 +421,111 @@ Chemin parcouru dans la phase G : `Render` est passé de 11,48 ms (C2, 4 vues) �
 - Remettre `LV3Profile` à `false` dans `LV3.Common.props` et vérifier `LV3_PROFILE(exe)=0` dans la ligne `[Build]`.
 - Versionner sous `Mesures/` : `2B_serie_A`, `2B_A1`, `2B_B1`, `2B_B2`, `2B_A2` (CSV et résumés), et marquer le run B isolé comme **refusé**.
 - Supprimer les dossiers de banc une fois les CSV versionnés.
+
+---
+
+## 14. Complément : chantier 3a, la boîte serrée borne la boucle pixel
+
+### 14.1 Pourquoi le rouvrir
+
+C3 § 11 l'avait abandonné pour la ceinture : après le 3b, il n'économisait qu'environ 3 800 tests de pixel par frame, soit 0,2 % de `Render`, sous le bruit de mesure. Il est rouvert pour trois raisons qui ne sont pas des raisons de temps :
+
+1. **Une seule définition des pixels candidats.** `RasterizeTriangle` portait deux boîtes : la lâche pilotait la boucle, la serrée ne servait qu'aux statistiques. La boîte lâche était une seconde définition « par sécurité », devenue inutile puisque la sécurité était prouvée (C3 § 6).
+2. **Le LOD va déplacer la taille des triangles** vers 1 à 4 px, la zone où la boîte lâche coûte le plus (environ 9 à 16 tests contre 1 à 4, C3 § 2).
+3. **Les fonctions d'arête incrémentales (L13)** et un futur rendu par tuiles partent du coin de la boîte.
+
+**Prédiction (M12, écrite avant) :** image identique ; Δ `Render` dans ±3 % (zone neutre). On garde le code pour sa structure. **Aucun ABBA**, parce qu'un gain de 0,2 % revendiqué serait de la fausse précision.
+
+### 14.2 Le code (`Rendering/Rasterizer.cpp`, `RasterizeTriangle`)
+
+**Avant :**
+```cpp
+int minX = int(std::floor(std::min({ p0.x, p1.x, p2.x })));
+int minY = int(std::floor(std::min({ p0.y, p1.y, p2.y })));
+int maxX = int(std::ceil (std::max({ p0.x, p1.x, p2.x }))) + 1;
+int maxY = int(std::ceil (std::max({ p0.y, p1.y, p2.y }))) + 1;
+vp.ClampBox(minX, minY, maxX, maxY);
+#if LV3_RASTER_STATS
+    const PixelBox tb = TightPixelBox(p0, p1, p2, vp);    // mesurée, jamais utilisée
+#endif
+for (int y = minY; y < maxY; ++y) … for (int x = minX; x < maxX; ++x)
+    … LV3_ASSERT(x ∈ tb) …
+```
+
+**Après :**
+```cpp
+const PixelBox bb = TightPixelBox(p0, p1, p2, vp);        // source UNIQUE (3b + boucle)
+if (bb.Empty()) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }
+for (int32_t y = bb.y0; y < bb.y1; ++y) … for (int32_t x = bb.x0; x < bb.x1; ++x)
+…
+LV3_RASTER_RECORD(bb.Area(), bb.Area(), covered);         // PixelsTested == PixelsTight
+```
+
+**L'assertion de C3 est retirée.** Maintenant que la boucle ne parcourt que la boîte serrée, « tout pixel couvert est dans la boîte serrée » est une tautologie : un pixel perdu ne serait plus visité, donc invisible pour une assertion placée dans la boucle. **La preuve change de nature** : elle devient la comparaison, frame par frame, avec un run de l'ancienne boucle.
+
+**Contre-exemples :**
+- garder le `+ 1` de la boîte lâche « par sécurité » : c'est la formule du centre de pixel qui fait foi, et elle est prouvée ;
+- « resserrer encore » avec un epsilon (`ceil(min − 0,5 + 1e-4)`) : un centre de pixel exactement sur une arête gauche, couvert par la règle top-left, serait perdu.
+
+### 14.3 Vérifications (runs de comptage `RelWithAsserts`, `rasterstats=1`)
+
+**Ceinture** (4 vues, 1536×900) : runs `3a` (batterie, `affinity=fff`) et `3a_affinity_4` (secteur), comparés à `2B_serie_A` (ancienne boucle).
+
+| Contrôle | Résultat |
+|---|---|
+| `PixelsCovered` identique à l'ancienne boucle | **300 / 300** frames ; 1 820 303 pixels cumulés des deux côtés |
+| `TrisCov*`, `TrisEarlyRejected`, `TrisRasterized` | identiques, 300 / 300 |
+| **`PixelsTested` = `PixelsTight`** (nouvel invariant) | 300 / 300 |
+| `PixelsTested` du 3a = `PixelsTight` de l'ancienne boucle | 300 / 300 |
+| Tests de pixel | 14 372 → **10 562** en médiane (−26,5 %) ; 6,52 → 4,60 millions sur 300 frames |
+
+**`solar_system_v1compat.json`** (2 vues, 1536×900) : grands triangles, rognés par le viewport. Runs `3a_sansbelt` et `3a_affinity_4_sansbelt`, comparés à `2B_sansbelt`.
+
+**Identité du run de référence.** `2B_sansbelt` n'a ni `lodstats=` dans son en-tête ni colonne `FacesInside` : c'est le binaire LIB `8c05c84` (Référence G, chantier 3b), pas le binaire 2b. Il est recevable pour cette comparaison, parce que sa boucle pixel est la boîte lâche d'origine (le 2b n'a pas touché `Rasterizer.cpp`). La comparaison porte donc sur **3b contre 2b + 3a** : elle vérifie à la fois la boucle 3a et la projection 2b sur cette scène (§ 14.4).
+
+| Contrôle | Résultat |
+|---|---|
+| Assertion de C3 dans l'ancienne boucle (`x ∈ boîte serrée`) | CSV complet : **aucune violation sur 12 514 966 pixels couverts**, grands triangles rognés compris |
+| `PixelsCovered` identique | **300 / 300** frames |
+| `TrisCov0/1/2to4/5plus`, `TrisEarlyRejected`, `TrisRasterized`, `FacesSubmitted`, `VertsTransformed`, `TrisTightEmpty` | identiques, 300 / 300 |
+| `PixelsTested` = `PixelsTight` dans les runs 3a | 300 / 300 |
+| Les deux runs 3a entre eux | identiques, 300 / 300 |
+| τ = `PixelsTight / PixelsTested` (ancienne boucle) | **0,909** cumulé, 0,936 en médiane (C3 : 0,87 en 768×450) |
+
+La hausse de τ entre 768×450 et 1536×900 est attendue : les mêmes triangles font deux fois plus de pixels de côté, et les une à trois colonnes et lignes de marge de la boîte lâche pèsent relativement moins.
+
+### 14.4 Un bénéfice imprévu : l'exactitude du 2b étendue au chemin clippé
+
+Sur `v1compat`, `FacesInside` ne vaut que 296 faces sur 4 272 en médiane : **93 % des faces passent par le chemin `Intersect`** (clipping near, `ProjectClip` par coin). Sur la ceinture, ce chemin ne représentait que 2,4 % des faces. L'égalité frame par frame de `PixelsCovered` et de toute la distribution `TrisCov*` entre la Référence G et le code 2b + 3a prouve que la projection **par coin après clipping** du 2b est, elle aussi, identique au bit près, sur une scène où elle domine.
+
+### 14.5 Les temps
+
+Tous les runs de cette section sont des runs de comptage (M10), de séances et d'états de machine différents (M14). Le même binaire 3a donne 5,53 ms sur batterie non épinglé et 5,07 ms sur secteur épinglé : 9 % d'écart **sans aucune modification de code**, soit plus que tout ce que le 3a pouvait apporter. Aucun temps n'est lu, conformément à la prédiction.
+
+### 14.6 TNR (configuration `Debug`, code 3a)
+
+La suite `RunAllTests` n'est active que sous `LV3_DEBUG`. Elle appelle `RasterizeTriangle` directement, sur des cas construits : centres de pixel exactement sur une arête, triangles minuscules, arêtes partagées. C'est là qu'une borne décalée d'un pixel se verrait, alors qu'aucune scène réelle ne garantit de produire ces cas.
+
+| Test | Résultat |
+|---|---|
+| `Test_TopLeftRule` (pas de pixel dessiné deux fois) | OK |
+| `Test_TopLeftRule_SmallTriangles` | OK |
+| `Test_TopLeftRule_ExactCoverage`, côtés 3 / 5 / 8 / 15 / 40 / 200 px | OK : 0 trou, 0 doublon à chaque taille |
+| Winding : face avant = aire raster négative | OK |
+| Clipper : 4 configurations | OK |
+| Clipper : winding préservé | OK |
+| Coverage : ni fissure ni doublon après clip | OK : 0 double, 0 trou |
+| Bilan | **Tous les tests passent** |
+
+### 14.7 Verdict
+
+**Clos comme mise en cohérence exacte.** Trois preuves indépendantes :
+
+1. scènes réelles : `PixelsCovered` identique à l'ancienne boucle, frame par frame, sur la ceinture et sur `v1compat` ;
+2. cas construits : TNR complète, dont la couverture exacte de 3 à 200 px ;
+3. l'assertion de C3, dans l'ancienne boucle, sur environ 12,5 millions de pixels de `v1compat`.
+
+La boîte serrée est désormais la seule définition des pixels candidats, partagée par le rejet 3b et la boucle pixel. Nouvel invariant de comptage : **`PixelsTested` = `PixelsTight`** à chaque frame.
 
 ---
 

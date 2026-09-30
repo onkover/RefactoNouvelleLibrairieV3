@@ -1,0 +1,100 @@
+{
+  "sceneName": "Système Solaire",
+  "nodes": [
+    {
+      "id": "Pivot",
+      "type": "Pivot",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        }
+      }
+    },
+    {
+      "id": "Sol",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, -5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 40.0, 0.05, 40.0 ]
+        },
+        "Mesh": { "model": "assets/cube.obj" }
+      }
+    },
+    {
+      "id": "FPS_Camera",
+      "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 40.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 30.0,
+          "infiniteFar": false,
+          "active": true,
+          "priority": 10
+        },
+        "CameraFPS": {
+          "enabled": true,
+          "moveSpeed": 15.0,
+          "mouseSensitivity": 0.15,
+          "lockVertical": false,
+          "pitchLimit": 89.0
+        }
+      }
+    },
+    {
+      "id": "Follow_Camera",
+      "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 5.0, 0.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 45.0,
+          "near": 0.1,
+          "far": 2000.0,
+          "infiniteFar": true,
+          "active": false,
+          "priority": 5
+        },
+        "CameraFollow": {
+          "enabled": true,
+          "target": "Sol",
+          "offset": [ 0.0, 5.0, -35.0 ],
+          "smoothSpeed": 5.0,
+          "lookAtHeight": 0.0
+        }
+      }
+    },
+    {
+      "id": "Overview_Camera",
+      "components": {
+        "Transform": {
+          "translation": [ 0.0, 0.0, 120.0 ],
+          "rotation": [ 0.0, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
+        },
+        "Camera": {
+          "projection": "perspective",
+          "fov": 60.0,
+          "near": 1.0,
+          "far": 10.0,
+          "infiniteFar": false,
+          "active": false,
+          "priority": 0
+        }
+      }
+    }
+  ]
+}
