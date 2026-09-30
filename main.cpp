@@ -453,10 +453,12 @@ int main(int argc, char* argv[])
 		Logger::info("Structure finale du Scene Graph :");
 		CheckAnimationBaseline(registry);     // ← TEST A : dt = 0, rien ne bouge
 
-		Logger::info("[système] Systeme avec matrice vide\n");
-		DebugDisplaySystem(registry);
-		Logger::info("[système] fin\n");
-
+		#if LV3_VERBOSE_LOG
+			Logger::info("[système] Systeme avec matrice vide\n");
+			DebugDisplaySystem(registry);
+			Logger::info("[système] fin\n");
+		#endif
+	
 		if (!LV3::Tests::RunAllTests(registry)) return -1;
 
 
@@ -835,10 +837,11 @@ int main(int argc, char* argv[])
 		CheckSceneInvariants(registry);       // ← INVARIANTS, chaque frame
 	#endif
 
-		// --- DESSIN ---
-		// Débug de la hiérarchie 
-		//	DebugDisplaySystem(registry);// , entityNames);
-
+		#if LV3_VERBOSE_LOG
+			// --- DESSIN ---
+			// Débug de la hiérarchie 
+			DebugDisplaySystem(registry);// , entityNames);
+		#endif
 	#if LV3_DUMP_HIERARCHY
 		// --- Draw de la hiérarchie ---
 		std::cout << std::endl;
