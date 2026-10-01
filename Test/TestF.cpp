@@ -116,5 +116,73 @@ namespace LV3::Tests
 
 		Logger::success("[F5] UnloadMesh : tous les invariants tiennent.");		
 	}
+
+	// Test 4c : chargement des chaines de LOD des rochers.
+// dir : dossier contenant rock_x.obj, rock_x_Lk.obj et rock_x.lod.json
+//       (le meme prefixe que celui utilise par la scene pour rock_a.obj).
+	bool TestLodChain_Load(const std::string& dir)
+	{
+		using namespace LV3;
+		int failures = 0;
+		auto check = [&failures](bool ok, const std::string& what) {
+			if (!ok) { ++failures; Logger::error("[TestLodChain] ECHEC : " + what); }
+			};
+
+		ResourceManager rm;
+
+		// 1. Les trois chaines se chargent
+		LodChainHandle h[3];
+		const char* names[3] = { "rock_a", "rock_b", "rock_c" };
+		for (int i = 0; i < 3; ++i)
+		{
+			const auto r = rm.LoadLodChainChecked(dir + "/" + names[i] + ".lod.json");
+			check(r.has_value(), std::string(names[i]) + " : chargement");
+			h[i] = r.value_or(LodChainHandle::Invalid());
+		}
+		check(rm.GetLodChainCount() == 3, "3 chaines enregistrees");
+
+		// 2. Contenu de rock_a
+		const LodChain* a = rm.GetLodChain(h[0]);
+		check(a != nullptr, "rock_a accessible");
+		if (a)
+		{
+			check(a->levelCount == 4, "rock_a : 4 niveaux");
+			check(a->bounds.IsValid(), "rock_a : bounds non vide");
+			// L'union contient la boite de L0 (et peut la depasser)
+			const AABB3d b0 = rm.GetMesh(a->levels[0])->GetMeshAABB();
+			check(a->bounds.Contains(b0.min) && a->bounds.Contains(b0.max), "rock_a : bounds contient L0");
+
+			// 3. Selection : invEps(rock_a) ~ 2,645 / 1,781 / 1,580
+			check(SelectLodLevel(*a, 3.0f) == 0, "q'=3,0 -> L0");
+			check(SelectLodLevel(*a, 2.0f) == 1, "q'=2,0 -> L1");
+			check(SelectLodLevel(*a, 1.7f) == 2, "q'=1,7 -> L2");
+			check(SelectLodLevel(*a, 1.0f) == 3, "q'=1,0 -> L3");
+			check(SelectLodLevel(*a, std::numeric_limits<float>::infinity()) == 0, "q'=+inf -> L0");
+			check(SelectLodLevel(*a, std::numeric_limits<float>::quiet_NaN()) == 0, "q'=NaN -> L0");
+		}
+
+		// 4. Cache : meme fichier, ecriture differente -> meme handle, aucune chaine de plus
+		const auto again = rm.LoadLodChainChecked(dir + "\\.\\rock_a.lod.json");
+		check(again.has_value() && *again == h[0], "cache : meme handle pour un chemin equivalent");
+		check(rm.GetLodChainCount() == 3, "cache : toujours 3 chaines");
+
+		// 5. Partage : L0 de la chaine EST le mesh rock_a.obj du cache (aucun double chargement)
+		if (a)
+			check(rm.FindMesh(dir + "/rock_a.obj") == a->levels[0], "L0 partage avec rock_a.obj");
+
+		// 6. Erreur typee : fichier absent (un Logger::error est ATTENDU ici)
+		// Le fichier absent.lod.json n'existe pas, et ne doit pas exister. 
+		// On demande volontairement au ResourceManager de charger un fichier introuvable, pour vérifier deux choses :
+		//		1. le chargement échoue proprement, sans exception ni plantage;
+		//		2.l'erreur rendue est la bonne : FileNotFound, et pas ParseFailed ou une autre catégorie.
+		Logger::info("[TestLodChain] Test 6 : l'erreur FileNotFound qui suit est VOLONTAIRE");
+		const auto missing = rm.LoadLodChainChecked(dir + "/absent.lod.json");
+		check(!missing && missing.error() == ELodChainLoadError::FileNotFound, "absent -> FileNotFound");
+
+		Logger::info("[TestLodChain] " + std::string(failures == 0 ? "OK" : "ECHEC") +
+			" (" + std::to_string(failures) + " echec(s))");
+		return failures == 0;
+	}
+
 #endif
 }

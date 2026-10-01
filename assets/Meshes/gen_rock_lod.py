@@ -13,6 +13,8 @@ Pour chaque rocher :
   2. mesure eps_k par ecart radial (A13 4.2), directions aleatoires + directions
      CIBLEES sur les sommets des deux maillages (voir MESURE ci-dessous) ;
   3. ecrit rock_x.lod.json (descripteur de chaine, format lv3.lodchain v1).
+     Les cles prefixees par "_" sont de la documentation : JsonReader ne les
+     signale pas (convention de WarnUnread), le moteur ne les lit pas.
 
 MESURE. 400 directions aleatoires (A13) SOUS-ESTIMENT eps : l'ecart maximal entre
 deux surfaces lineaires par morceaux se trouve pres des SOMMETS, qu'un tirage
@@ -71,12 +73,16 @@ if __name__ == "__main__":
                           "planet.mtl", "M_Rock")
             dev  = np.abs(ray_radius(V, F, D) - r0)
             eMax = float(dev.max()); eMoy = float(dev.mean())
-            levels.append({"mesh": path, "vertices": len(V), "faces": len(F),
+            # Sommets COMPTES COMME LE MOTEUR : seuls les triplets v/vt/vn REFERENCES par une face.
+            # uv_sphere ecrit (seg+1)(rings+1) sommets, mais un sommet de chaque pole n'est
+            # utilise par aucune face : OBJLoader ne le cree pas (117 ecrits, 115 charges pour L0).
+            used = len({i for f in F for i in f})
+            levels.append({"mesh": path, "vertices": used, "faces": len(F),
                            "epsilon": ceil4(eMax * SAFETY),
-                           "measure": {"max": round(eMax, 4), "mean": round(eMoy, 4)}})
-            print(f"{name:7s} L{k}  {len(V):3d} v  {len(F):3d} f  eps_max={eMax:.4f}  eps_moy={eMoy:.4f}")
+                           "_measure": {"max": round(eMax, 4), "mean": round(eMoy, 4)}})
+            print(f"{name:7s} L{k}  {used:3d} v  {len(F):3d} f  eps_max={eMax:.4f}  eps_moy={eMoy:.4f}")
         desc = {"format": "lv3.lodchain", "version": 1, "name": name, "units": "local",
-                "errorMetric": {"method": "radial", "randomDirections": N_RAND,
+                "_errorMetric": {"method": "radial", "randomDirections": N_RAND,
                                 "vertexTargeted": True, "safety": SAFETY},
                 "levels": levels}
         with open(f"{name}.lod.json", "w", encoding="utf-8", newline="\n") as fp:

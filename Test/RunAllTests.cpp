@@ -40,7 +40,7 @@ namespace LV3::Tests
         if (!ok) ++s_failures;
     }
 #endif
-    bool RunAllTests(Registry & registry)
+    bool RunAllTests(Registry & registry, const std::string meshPath)
     {
 #if LV3_DEBUG
 
@@ -73,6 +73,17 @@ namespace LV3::Tests
         TestProjection();
         TestMatrixLib();
         TestFrontFaceSign();
+
+        if(!TestLodChain_Load(meshPath))
+		{
+			Logger::error("ECHEC : TestLodChain_Load");
+			return false;
+		}
+		else
+		{
+			Logger::success("SUCCES : TestLodChain_Load");
+		}
+
 
         if (!Test_Depth_CrossingTriangles())
         {

@@ -459,7 +459,8 @@ int main(int argc, char* argv[])
 			Logger::info("[système] fin\n");
 		#endif
 	
-		if (!LV3::Tests::RunAllTests(registry)) return -1;
+		const std::string MeshPath = contentRoot.string() + LV3::EngineConfig::Get().resources.pathMesh;
+		if (!LV3::Tests::RunAllTests(registry, MeshPath)) return -1;
 
 
 //		exit(0); // Arrêt du programme après les tests, avant la boucle de jeu

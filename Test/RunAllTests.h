@@ -7,5 +7,5 @@ namespace LV3
 
 namespace LV3::Tests
 {
-    [[nodiscard]] bool RunAllTests(Registry& registry);
+    [[nodiscard]] bool RunAllTests(Registry& registry, const std::string meshPath);
 }

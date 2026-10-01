@@ -81,7 +81,7 @@
        livree ne doit porter aucune borne de mesure.
        ============================================================ -->
 	<PropertyGroup>
-		<LV3Profile Condition="'$(LV3Profile)'==''">true</LV3Profile>
+		<LV3Profile Condition="'$(LV3Profile)'==''">false</LV3Profile>
 	</PropertyGroup>
 	<ItemDefinitionGroup Condition="'$(LV3Profile)'=='true'">
 		<ClCompile>
