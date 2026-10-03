@@ -95,11 +95,21 @@ namespace LV3::Tests
 
             // ── NIVEAU ENTITE ────────────────────────────────────────────
             // 1. Le handle designe le bon asset.
-            LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
+            //LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
+            LV3_ASSERT(mcGiz.m_MeshlodChain == assets.For(cam.m_projection));
+
 
             // 2. L'asset contient bien la geometrie attendue.
             //    Un handle correct ne prouve rien sur le contenu du fichier.
-            const MeshClass* mg = rm.GetMesh(mcGiz.m_meshHandle);
+            //const MeshClass* mg = rm.GetMesh(mcGiz.m_meshHandle);
+            //LV3_ASSERT(mg);
+
+            // 2. L'asset contient bien la geometrie attendue.
+            //    Un handle correct ne prouve rien sur le contenu du fichier.
+            //    Un gizmo est un instrument : chaine de longueur 1, jamais degrade (A13 § 7.4).
+            const LodChain* chainGiz = rm.GetLodChain(mcGiz.m_MeshlodChain);
+            LV3_ASSERT(chainGiz && chainGiz->levelCount == 1);
+            const MeshClass* mg = rm.GetMesh(chainGiz->levels[0]);
             LV3_ASSERT(mg);
             LV3_ASSERT(mg->vertsPerFace == 3);
             LV3_ASSERT(mg->faceCount() == (isOrtho ? 14u : 8u));

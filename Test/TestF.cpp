@@ -170,6 +170,18 @@ namespace LV3::Tests
 		if (a)
 			check(rm.FindMesh(dir + "/rock_a.obj") == a->levels[0], "L0 partage avec rock_a.obj");
 
+		// 5b. Chaine implicite : partagee, longueur 1, toujours L0
+		{
+			const MeshHandle   m = rm.FindMesh(dir + "/rock_a.obj");
+			const LodChainHandle s1 = rm.GetOrCreateSingleLevelChain(m);
+			const LodChainHandle s2 = rm.GetOrCreateSingleLevelChain(m);
+			check(s1.IsValid() && s1 == s2, "chaine implicite : creee une fois, partagee");
+			check(s1 != h[0], "chaine implicite distincte de la chaine decrite");
+			const LodChain* s = rm.GetLodChain(s1);
+			check(s && s->levelCount == 1 && s->levels[0] == m, "chaine implicite : 1 niveau, le mesh");
+			check(s && SelectLodLevel(*s, 0.0f) == 0, "chaine implicite : q'=0 -> L0 quand meme");
+		}
+
 		// 6. Erreur typee : fichier absent (un Logger::error est ATTENDU ici)
 		// Le fichier absent.lod.json n'existe pas, et ne doit pas exister. 
 		// On demande volontairement au ResourceManager de charger un fichier introuvable, pour vérifier deux choses :
