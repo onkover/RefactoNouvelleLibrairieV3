@@ -280,7 +280,8 @@ int main(int argc, char* argv[])
 			+ " | LV3_PROFILE(exe)=" + std::to_string(LV3_PROFILE)
 			+ " | LV3_PROFILE(lib)=" + std::to_string(LV3::Profiler::CompiledProfileFlag())
 			+ " | LV3_ASSERTS_ENABLED=" + std::to_string(LV3_ASSERTS_ENABLED)
-			+ " | compile le " __DATE__ " a " __TIME__);
+			+ " | compile le " __DATE__ " a " __TIME__
+			+ "\n");
 
 		if (LV3_PROFILE != LV3::Profiler::CompiledProfileFlag())
 		{
@@ -337,7 +338,8 @@ int main(int argc, char* argv[])
 	///************************************************************
 	//Lecture du nom des répertoires depuis la base de registres
 	//************************************************************/
-	Logger::info(" === Lecture de la configuration du programme ===");
+	Logger::info("************************************************");
+	Logger::info("=== Lecture de la configuration du programme ===");
 	config cfg;
 	if (!ProgrammeConfig((contentRoot / "config.json").string(), cfg))
 	{
@@ -350,7 +352,8 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Paramétrage du moteur de rendu
 	************************************************************/
-	Logger::info(" === Lecture de la configuration du moteur ===");
+	Logger::info("*********************************************");
+	Logger::info("=== Lecture de la configuration du moteur ===");
 
 	if (!LV3::EngineConfig::Get().LoadFromJson((contentRoot / LV3::kContentMarker).string()))
 		Logger::warn("EngineConfig — defauts LV3_DEFAULT_* utilises (fichier absent ou invalide)\n");
@@ -361,7 +364,8 @@ int main(int argc, char* argv[])
 	/************************************************************
 	Paramétrage du scenegraph
 	************************************************************/
-	Logger::info(" === Lecture et paramétrage du scenegraph ===\n");
+	Logger::info("**********************************************");
+	Logger::info("=== Lecture et paramétrage du scenegraph ===\n");
 
 	// --- Scenegraph et systèmes ---
 	Registry registry;
@@ -401,7 +405,11 @@ int main(int argc, char* argv[])
 			return -1;
 		}
 
-		Logger::info("[Diag] Scene chargee : " + pathScene);
+		/************************************************************
+		Paramétrage de caméras
+		************************************************************/
+		Logger::info("*******************************************");
+		Logger::info("Etat des lieux des caméras");
 		for (auto&& [e, cam] : registry.ViewGroup<CameraComponent>())
 		{
 			Logger::info("[Diag] Camera '" + EntityLabel(registry, e) + "' active=" +
@@ -416,11 +424,12 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 
-
-
 	/************************************************************
 	Paramétrage des gizmo des camera
 	************************************************************/
+	Logger::newline();
+	Logger::info("****************************************");
+	Logger::info("[Gizmo] Paramétrage des gizmo des camera");
 	GizmoAssets GizAssets;
 	if (cfg.mapAssets.find("gizmo_perspective") != cfg.mapAssets.end() && cfg.mapAssets.find("gizmo_ortho") != cfg.mapAssets.end())
 	{
@@ -548,9 +557,9 @@ int main(int argc, char* argv[])
 //#endif
 
 		// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
-
-
-
+	
+	Logger::newline();
+	Logger::info("*********************");
 	Logger::info("=== Boucle de jeu ===\n");
 	while (g_running == true)
 	{
@@ -981,7 +990,7 @@ int main(int argc, char* argv[])
 		// silencieusement la derniere ligne du CSV.
 		if (bench && ++benchFrame >= args.benchFrames) g_running = false;
 	}
-	Logger::info("=== Fin de la boucle de jeu ===\n\n");
+	Logger::info("=== Fin de la boucle de jeu ===\n");
 
 	#if LV3_PROFILE
 		if (bench)

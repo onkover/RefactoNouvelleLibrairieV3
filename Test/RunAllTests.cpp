@@ -43,7 +43,7 @@ namespace LV3::Tests
     bool RunAllTests(Registry & registry, const std::string meshPath)
     {
 #if LV3_DEBUG
-
+        Logger::newline();
         Logger::info("================== TNR ==================");
 
         if (!test_hierarchy())
