@@ -55,7 +55,7 @@ void PrintUsage()
 		"  --help                  cette aide\n"
 		"Exemple :\n"
 		"  RefactoNouvelleLibrairieV3.exe \"D:\\...\\RefactoNouvelleLibrairieV3\""
-		" --scene=solar_system_v1compat_belt.json --bench=3000 --csv=Mesures/belt_release.csv");
+		" --scene=solar_system_v1compat_belt.json --bench=300 --csv=Mesures/belt_release.csv");
 }
 
 AppArgs ParseArgs(int argc, char* argv[])

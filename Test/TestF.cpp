@@ -122,6 +122,10 @@ namespace LV3::Tests
 //       (le meme prefixe que celui utilise par la scene pour rock_a.obj).
 	bool TestLodChain_Load(const std::string& dir)
 	{
+		OBJLoadOptions kSceneOpts;                 // memes options que ParseMesh
+		kSceneOpts.flipUVsVertically = false;
+		kSceneOpts.generateNormalsIfMissing = true;
+
 		using namespace LV3;
 		int failures = 0;
 		auto check = [&failures](bool ok, const std::string& what) {
@@ -135,7 +139,7 @@ namespace LV3::Tests
 		const char* names[3] = { "rock_a", "rock_b", "rock_c" };
 		for (int i = 0; i < 3; ++i)
 		{
-			const auto r = rm.LoadLodChainChecked(dir + "/" + names[i] + ".lod.json");
+			const auto r = rm.LoadLodChainChecked(dir + "/" + names[i] + ".lod.json", kSceneOpts);
 			check(r.has_value(), std::string(names[i]) + " : chargement");
 			h[i] = r.value_or(LodChainHandle::Invalid());
 		}
@@ -162,7 +166,7 @@ namespace LV3::Tests
 		}
 
 		// 4. Cache : meme fichier, ecriture differente -> meme handle, aucune chaine de plus
-		const auto again = rm.LoadLodChainChecked(dir + "\\.\\rock_a.lod.json");
+		const auto again = rm.LoadLodChainChecked(dir + "\\.\\rock_a.lod.json", kSceneOpts);
 		check(again.has_value() && *again == h[0], "cache : meme handle pour un chemin equivalent");
 		check(rm.GetLodChainCount() == 3, "cache : toujours 3 chaines");
 
@@ -188,7 +192,7 @@ namespace LV3::Tests
 		//		1. le chargement échoue proprement, sans exception ni plantage;
 		//		2.l'erreur rendue est la bonne : FileNotFound, et pas ParseFailed ou une autre catégorie.
 		Logger::info("[TestLodChain] Test 6 : l'erreur FileNotFound qui suit est VOLONTAIRE");
-		const auto missing = rm.LoadLodChainChecked(dir + "/absent.lod.json");
+		const auto missing = rm.LoadLodChainChecked(dir + "/absent.lod.json", kSceneOpts);
 		check(!missing && missing.error() == ELodChainLoadError::FileNotFound, "absent -> FileNotFound");
 
 		Logger::info("[TestLodChain] " + std::string(failures == 0 ? "OK" : "ECHEC") +
