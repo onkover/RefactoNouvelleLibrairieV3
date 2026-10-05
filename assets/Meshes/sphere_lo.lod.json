@@ -1,0 +1,60 @@
+{
+  "format": "lv3.lodchain",
+  "version": 1,
+  "name": "sphere_lo",
+  "units": "local",
+  "_fabrication": "resample",
+  "_errorMetric": {
+    "method": "radial",
+    "randomDirections": 100000,
+    "vertexTargeted": true,
+    "faceCenterTargeted": true,
+    "safety": 1.1
+  },
+  "levels": [
+    {
+      "mesh": "sphere_lo.obj",
+      "vertices": 185,
+      "faces": 288,
+      "epsilon": 0.0,
+      "_measure": {
+        "max": 0.0,
+        "mean": 0.0,
+        "sagVsExactSphere": 0.0308
+      }
+    },
+    {
+      "mesh": "sphere_12x6.obj",
+      "vertices": 89,
+      "faces": 120,
+      "epsilon": 0.0695,
+      "_measure": {
+        "max": 0.0631,
+        "mean": 0.0218,
+        "sagVsExactSphere": 0.0649
+      }
+    },
+    {
+      "mesh": "sphere_8x5.obj",
+      "vertices": 52,
+      "faces": 64,
+      "epsilon": 0.1335,
+      "_measure": {
+        "max": 0.1213,
+        "mean": 0.0488,
+        "sagVsExactSphere": 0.1213
+      }
+    },
+    {
+      "mesh": "sphere_6x4.obj",
+      "vertices": 33,
+      "faces": 36,
+      "epsilon": 0.203,
+      "_measure": {
+        "max": 0.1845,
+        "mean": 0.0921,
+        "sagVsExactSphere": 0.1848
+      }
+    }
+  ]
+}
