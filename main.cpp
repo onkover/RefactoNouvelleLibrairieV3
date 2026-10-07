@@ -483,6 +483,14 @@ int main(int argc, char* argv[])
 	FrameH = cfg.screenHeight; // Hauteur de l'écran
 	SDL_SetMainReady();       // on prend la responsabilité de l'initialisation
 	if (SDLINIT(FrameW, FrameH, (contentRoot / "tahoma.ttf").string()) != true) return -1;
+	
+	// Chantier Clear (2a) : le pilote decide de la memoire rendue par SDL_LockTexture.
+	std::string sdlDriver = "inconnu";
+	{
+		SDL_RendererInfo ri{};
+		if (SDL_GetRendererInfo(SDLrenderer, &ri) == 0 && ri.name) sdlDriver = ri.name;
+		Logger::info("[SDL] pilote de rendu : " + sdlDriver);
+	}
 
 	db.Resize(FrameW, FrameH);	// depth buffer
 
@@ -534,7 +542,7 @@ int main(int argc, char* argv[])
 	Boucle du jeu
 	************************************************************/
 	pitch = 0;
-
+	
 #if LV3_DEBUG
 	int frameCount = 0;
 #endif
@@ -875,16 +883,34 @@ int main(int argc, char* argv[])
 		if (SDL_LockTexture(SDLtexture, nullptr, (void**)&ptrScreen, &pitch) == 0)
 		{
 
+			//fb.Bind(ptrScreen, pitch, FrameW, FrameH);
+			//{
+			//	// Effacement couleur + profondeur : un cout proportionnel a la
+			//	// RESOLUTION, indifferent a la scene. Comme Present, c'est un
+			//	// temoin : il ne doit pas bouger entre v1compat et belt.
+			//	LV3_PROF_SCOPE(LV3::EProfZone::Clear);
+			//	Clean_Render(fb);
+
+			//	renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
+			//	renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
+			//}
+
 			fb.Bind(ptrScreen, pitch, FrameW, FrameH);
 			{
 				// Effacement couleur + profondeur : un cout proportionnel a la
-				// RESOLUTION, indifferent a la scene. Comme Present, c'est un
-				// temoin : il ne doit pas bouger entre v1compat et belt.
+				// RESOLUTION, indifferent a la scene. La borne EXTERIEURE ne change
+				// pas : Clear reste comparable a la Reference J. Les deux sous-zones
+				// disent OU part le temps.
 				LV3_PROF_SCOPE(LV3::EProfZone::Clear);
-				Clean_Render(fb);
-
-				renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
-				renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // permet de gérer la profondeur dans le cas par exemple où on voudrait colorier la profondeur à la place des couleurs. Définit dans engine.json
+				{
+					LV3_PROF_SCOPE(LV3::EProfZone::ClearColor);
+					Clean_Render(fb);
+				}
+				{
+					LV3_PROF_SCOPE(LV3::EProfZone::ClearDepth);
+					renderer.BeginFrame(fb, db);			// --- Plusieurs rendus dans le MÊME buffer ---
+				}
+				renderer.SetDepthDisplayRange(LV3::EngineConfig::Get().debug.depthDisplayRange); // ...
 			}
 
 			// --- recontruit les viewport et dessine les triangle
@@ -899,11 +925,11 @@ int main(int argc, char* argv[])
 				}
 			}
 			
-#if LV3_DEBUG
-	#if LV3_VERBOSE_LOG
-			ReportCullStats();
-	#endif
-#endif
+			#if LV3_DEBUG
+				#if LV3_VERBOSE_LOG
+						ReportCullStats();
+				#endif
+			#endif
 			
 			// Séparateur vertical entre les différents viewports
 			for (int y = 0; y < cfg.mapViewports["left"].hauteur; ++y) 
@@ -1016,6 +1042,7 @@ int main(int argc, char* argv[])
 			info.width = FrameW;
 			info.height = FrameH;
 			info.views = static_cast<int>(lastViews);
+			info.renderDriver = sdlDriver;
 
 			LV3::Profiler::DumpCsv(out.string(), info);
 		}

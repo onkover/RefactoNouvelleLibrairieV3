@@ -34,6 +34,11 @@
       <!-- Compilation parallele. -->
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
 
+		<!-- /Zi dans TOUTES les configurations : un .pdb ne change pas le code
+           machine, il permet seulement de lire le Release dans le debogueur.
+           (Chantier Clear 2a : desassemblage de la boucle chaude.) -->
+		<DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+		
       <!-- /utf-8          : sources et litteraux en UTF-8 (bug 12).
            /Zc:__cplusplus : __cplusplus rapporte le vrai mode standard.
                              Aucune case dans l'IDE : se pose ici.

@@ -1,0 +1,122 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Anatomie du Clear LV3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;600&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout : colonne unique de lecture, un banc interactif au centre, tableau des hypothèses en bas */
+:root{
+  --bg:#f3f5f7; --panel:#ffffff; --fg:#17202a; --muted:#5b6876; --line:#d5dce3;
+  --rfo:#c2410c; --write:#1d4ed8; --ok:#15803d; --warn:#a16207;
+  --display:"Fraunces",Georgia,serif; --body:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --panel:#18202a; --fg:#e4e9ee; --muted:#93a1b0; --line:#2c3743;
+  --rfo:#fb923c; --write:#60a5fa; --ok:#4ade80; --warn:#facc15; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --panel:#18202a; --fg:#e4e9ee; --muted:#93a1b0; --line:#2c3743;
+  --rfo:#fb923c; --write:#60a5fa; --ok:#4ade80; --warn:#facc15; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);line-height:1.55}
+.wrap{max-width:860px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:28px}
+h1{font-family:var(--display);font-size:2rem;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:1.25rem;margin:0 0 10px;text-wrap:balance}
+p{margin:0;max-width:68ch}
+.eyebrow{font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+.mono{font-family:var(--mono)}
+.lines{display:grid;gap:14px}
+.row{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center}
+.row > div{min-width:0}
+.bar{height:26px;display:flex;border-radius:4px;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:flex;align-items:center;justify-content:center;font:600 .72rem var(--mono);color:#fff;white-space:nowrap;overflow:hidden}
+.r{background:var(--rfo)} .w{background:var(--write)}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:16px}
+label{font-size:.85rem;color:var(--muted);display:grid;gap:4px}
+input[type=range]{width:100%}
+input:focus-visible,select:focus-visible{outline:2px solid var(--write);outline-offset:2px}
+select{font:inherit;padding:4px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.cell{border-top:2px solid var(--line);padding-top:6px}
+.cell b{display:block;font:600 1.3rem var(--mono);font-variant-numeric:tabular-nums}
+.cell small{color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:.9rem}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 .75rem var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.pill{font:600 .7rem var(--mono);padding:2px 6px;border-radius:3px;border:1px solid currentColor}
+.bad{color:var(--rfo)} .good{color:var(--ok)}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="eyebrow">Phase G · Chantier Clear · étape 2a</span>
+    <h1>Anatomie du Clear</h1>
+    <p>Référence J (i7-1265U, 1536 × 900) : Clear coûte 1,25 à 1,28 ms pour 11,06 Mo écrits. Ce banc montre ce que la mémoire doit réellement déplacer pour une ligne de cache de 64 octets, selon la façon dont on écrit.</p>
+  </header>
+
+  <section class="panel">
+    <h2>Une ligne de cache, trois façons de l'écrire</h2>
+    <div class="lines">
+      <div class="row"><div class="mono">store normal<br><small class="bad">write-allocate</small></div>
+        <div class="bar"><span class="r" style="width:50%">lecture RFO 64 o</span><span class="w" style="width:50%">écriture 64 o</span></div></div>
+      <div class="row"><div class="mono">store non temporel<br><small class="good">vmovntdq</small></div>
+        <div class="bar"><span class="w" style="width:50%">écriture 64 o</span><span style="width:50%"></span></div></div>
+      <div class="row"><div class="mono">rep stosb (ERMS)<br><small>selon le CPU</small></div>
+        <div class="bar"><span class="w" style="width:50%">écriture 64 o</span><span style="width:50%;color:var(--muted)">RFO évité ?</span></div></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:.9rem">Le store normal lit d'abord la ligne (Read For Ownership) pour l'écraser aussitôt : la moitié du trafic ne sert à rien. Le non temporel envoie la ligne entière, sans lecture, mais ne la laisse pas en cache.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Banc de prédiction</h2>
+    <div class="ctrls">
+      <label for="bw">Débit DRAM utile d'un cœur : <span class="mono" id="bwv"></span>
+        <input id="bw" type="range" min="8" max="40" step="0.5" value="17.6"></label>
+      <label for="res">Résolution
+        <select id="res"><option value="1536x900" selected>1536 × 900</option><option value="768x450">768 × 450</option><option value="1920x1080">1920 × 1080</option><option value="2560x1440">2560 × 1440</option></select></label>
+      <label for="mode">Écriture du color / du depth
+        <select id="mode">
+          <option value="rr" selected>normal / normal (H1)</option>
+          <option value="rn">normal / sans RFO (H2)</option>
+          <option value="nn">sans RFO / sans RFO</option>
+        </select></label>
+    </div>
+    <div class="out">
+      <div class="cell"><small>Octets par buffer</small><b id="o1"></b></div>
+      <div class="cell"><small>ClearColor prédit</small><b id="o2"></b></div>
+      <div class="cell"><small>ClearDepth prédit</small><b id="o3"></b></div>
+      <div class="cell"><small>Clear prédit · mesuré 1,26 ms</small><b id="o4"></b></div>
+    </div>
+    <p style="margin-top:12px;color:var(--muted);font-size:.9rem">17,6 Go/s est le débit qui reproduit 1,26 ms avec RFO sur les deux buffers. Le modèle ignore le cache L3 (12 Mo) : à 768 × 450 les buffers y tiennent et la mesure sera plus basse que la prédiction (contrôle C : ÷5 au lieu de ÷4).</p>
+  </section>
+
+  <section>
+    <h2>Les trois hypothèses, avant mesure</h2>
+    <div class="tbl panel" style="padding:0">
+    <table>
+      <thead><tr><th>Hypothèse</th><th>Mécanisme</th><th>Prédiction chiffrée</th><th>Ce qui la réfute</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">H1 symétrie</td><td>Les deux buffers sont écrits de la même façon, avec RFO</td><td class="mono">Depth ÷ Color ∈ [0,85 ; 1,15]<br>≈ 0,63 ms chacun</td><td>Un rapport hors de cette bande</td></tr>
+        <tr><td class="mono">H2 chemins</td><td><code>fill(0.0f)</code> devient <code>memset</code> (sans RFO) ; <code>fill(couleur)</code> reste une boucle SSE2 avec RFO</td><td class="mono">Depth ÷ Color &lt; 0,75</td><td>Le désassemblage montre la même boucle pour les deux</td></tr>
+        <tr><td class="mono">H3 texture neuve</td><td>SDL rend une mémoire non encore touchée : défauts de page au premier accès</td><td class="mono">ClearPageFaults ≈ 1 350 / frame<br>LockAddrChanged ≈ 1</td><td>ClearPageFaults ≈ 0</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+function upd(){
+  const bw=parseFloat($('bw').value), [w,h]=$('res').value.split('x').map(Number), m=$('mode').value;
+  const B=w*h*4, f=(k)=>k?1:2;
+  const tc=B*f(m==='nn')/(bw*1e9)*1e3, td=B*f(m!=='rr')/(bw*1e9)*1e3;
+  const fr=x=>x.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  $('bwv').textContent=fr(bw)+' Go/s';
+  $('o1').textContent=(B/1e6).toLocaleString('fr-FR',{maximumFractionDigits:2})+' Mo';
+  $('o2').textContent=fr(tc)+' ms'; $('o3').textContent=fr(td)+' ms'; $('o4').textContent=fr(tc+td)+' ms';
+}
+['bw','res','mode'].forEach(i=>$(i).addEventListener('input',upd)); upd();
+</script>
+
+</body></html>
