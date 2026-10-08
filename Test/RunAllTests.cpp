@@ -28,6 +28,9 @@ namespace LV3::Tests
     bool Test_Rasterizer_EmptyBoxes();
     void Test_SimulationClock();
     bool test54_Recyclage();
+    void TestD3_1_JsonReader_Contrats();
+    void TestD3_2_SurchargesCamera();
+
 
 
 #if LV3_DEBUG    
@@ -68,6 +71,8 @@ namespace LV3::Tests
 
         TestF1_EntityVersioning();
         TestF5_ResourceManager_UnloadMesh();
+        TestD3_1_JsonReader_Contrats();
+        TestD3_2_SurchargesCamera();
         RunAllCameraMathTests();
         TestCameraZoom();
         TestProjection();
