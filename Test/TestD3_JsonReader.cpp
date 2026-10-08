@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Core/JsonReader.h"
 #include "Scene/SerializerHelpers.hpp"
+#include "Scene/Serializer.hpp"
+#include <filesystem>
+#include <fstream>
 
 namespace LV3::Tests
 {
@@ -72,6 +75,90 @@ namespace LV3::Tests
         Logger::success("[D3.2] Surcharges camera : valeur / null / absente / hors domaine");
     }
 
+    struct SceneLoadResult { bool ok; std::uint32_t warns; std::size_t linked; };
 
+    namespace
+    {
+        // Ecrit le texte dans un fichier temporaire et le charge dans un monde VIERGE.
+        SceneLoadResult LoadSceneText(const std::string& text)
+        {
+            const std::filesystem::path dir = std::filesystem::temp_directory_path();
+            const std::string file = "lv3_test_d3_3a.json";
+            { std::ofstream(dir / file) << text; }
+
+            Registry        reg;
+            ResourceManager rm;
+            const std::uint32_t w0 = Logger::warnCount();
+            const bool ok = SceneSerializer::LoadSceneGraph(dir.string() + "/", file, reg, rm);
+
+            std::size_t linked = 0;
+            for (const HierarchyComponent& h : reg.View<HierarchyComponent>())
+                if (h.m_parent != NULL_ENTITY) ++linked;
+
+            return { ok, Logger::warnCount() - w0, linked };
+        }
+
+        const std::string kComps = R"("components": { "Transform": { "translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1] } })";
+    }
+
+    void TestD3_3a_NiveauNoeud()
+    {
+        // 1. Nominal, enfant declare AVANT son parent (prouve la resolution differee)
+        auto r = LoadSceneText(R"({ "sceneName": "T", "nodes": [
+            { "id": "Child", "parent": "Root", "_type": "Lune", )" + kComps + R"( },
+            { "id": "Root",  "parent": null, )" + kComps + R"( } ] })");
+        LV3_ASSERT(r.ok && r.warns == 0 && r.linked == 1);
+
+        // 2. sceneName absent : AVANT -> std::terminate ; APRES -> 1 souci, chargement OK
+        r = LoadSceneText(R"({ "nodes": [ { "id": "Root", "parent": null, )" + kComps + R"( } ] })");
+        LV3_ASSERT(r.ok && r.warns == 1);
+
+        // 3. Faute de frappe 'parnet' : 2 soucis ('parent' absente + 'parnet' ignoree), aucun lien
+        r = LoadSceneText(R"({ "sceneName": "T", "nodes": [
+            { "id": "Root",  "parent": null, )" + kComps + R"( },
+            { "id": "Child", "parnet": "Root", )" + kComps + R"( } ] })");
+        LV3_ASSERT(r.ok && r.warns == 2 && r.linked == 0);
+
+        // 4. Refus francs (5 lignes ROUGES attendues) :
+        //    id absent / parent inconnu / parent non texte (2 lignes) / nodes absent
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "parent": null, )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "id": "A", "parent": "Ghost", )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "id": "A", "parent": 42, )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T" })").ok);
+
+        Logger::success("[D3.3a] Niveau noeud : une lecture, un lecteur, aucune absence muette");
+    }
+
+    void TestD3_3b_Blocs()
+    {
+        const nlohmann::json j = nlohmann::json::parse(R"({ "plein": { "a": 1 }, "nul": null, "faux": 3 })");
+        JsonReader r(j, "TestD3b", "test");
+        const std::uint32_t w0 = Logger::warnCount();
+
+        // 1. Bloc present : lecture normale, aucun souci
+        { JsonReader b = r.Child("plein"); LV3_ASSERT(b.Read("a", 0) == 1); b.WarnUnread(); }
+        LV3_ASSERT(Logger::warnCount() == w0);
+
+        // 2. Bloc null : info pour le bloc, ses cles sont ANNONCEES -> aucun souci
+        { JsonReader b = r.Child("nul"); LV3_ASSERT(b.Read("x", 7) == 7); LV3_ASSERT(b.ReadVector("v", Vec3f::One()).x == 1.0f); }
+        LV3_ASSERT(Logger::warnCount() == w0);
+
+        // 3. Bloc absent : 1 souci pour le bloc + 1 par cle lue
+        { JsonReader b = r.Child("absent"); LV3_ASSERT(b.Read("x", 7) == 7); }
+        LV3_ASSERT(Logger::warnCount() == w0 + 2);
+
+        // 4. Bloc de mauvais type : comme absent
+        { JsonReader b = r.Child("faux"); LV3_ASSERT(b.Read("x", 7) == 7); }
+        LV3_ASSERT(Logger::warnCount() == w0 + 4);
+
+        // 5. La delegation se transmet : un sous-bloc absent DANS un bloc null reste une annonce
+        { JsonReader b = r.Child("nul"); JsonReader c = b.Child("sous"); LV3_ASSERT(c.Read("y", 2) == 2); }
+        LV3_ASSERT(Logger::warnCount() == w0 + 4);
+
+        r.WarnUnread();
+        LV3_ASSERT(Logger::warnCount() == w0 + 4);
+
+        Logger::success("[D3.3b] Blocs : present / null / absent / mauvais type");
+    }
 #endif
 }

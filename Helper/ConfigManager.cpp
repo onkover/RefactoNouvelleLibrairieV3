@@ -134,7 +134,7 @@ void InitConsole()
 
         try
         {
-            if (r.Has("assets"))
+           // if (r.Has("assets"))
             {
                 JsonReader ra = r.Child("assets");
                 ra.ForEachChild([&](const std::string& id, LV3::JsonReader entry)
@@ -171,7 +171,7 @@ void InitConsole()
         try
         {
 
-            if (r.Has("viewports"))
+        //    if (r.Has("viewports"))
             {
                 JsonReader rv = r.Child("viewports");
                 rv.ForEachElement([&](std::size_t index, LV3::JsonReader elem)

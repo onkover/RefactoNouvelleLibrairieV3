@@ -30,6 +30,8 @@ namespace LV3::Tests
     bool test54_Recyclage();
     void TestD3_1_JsonReader_Contrats();
     void TestD3_2_SurchargesCamera();
+    void TestD3_3a_NiveauNoeud();
+	void TestD3_3b_Blocs();
 
 
 
@@ -73,6 +75,8 @@ namespace LV3::Tests
         TestF5_ResourceManager_UnloadMesh();
         TestD3_1_JsonReader_Contrats();
         TestD3_2_SurchargesCamera();
+        TestD3_3a_NiveauNoeud();
+        TestD3_3b_Blocs();
         RunAllCameraMathTests();
         TestCameraZoom();
         TestProjection();
