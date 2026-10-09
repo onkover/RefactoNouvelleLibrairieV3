@@ -5,7 +5,6 @@
 #include <fstream>
 #include <unordered_map>
 #include "core/JsonReader.h"
-#include "core/logger.h"
 #include <windows.h>
 
 using namespace LV3;

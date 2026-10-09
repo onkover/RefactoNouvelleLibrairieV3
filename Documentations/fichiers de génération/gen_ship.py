@@ -9,12 +9,23 @@ Le vaisseau est donc modelise nez vers -Z, ailes selon X, dessus vers +Y.
 Depliage UV : chaque piece est depliee par sa propre projection naturelle
 (cylindrique pour les corps de revolution, planaire pour les ailes), dans une
 bande horizontale distincte de l'atlas -> pas de recouvrement entre groupes,
-et un atlas 1024x1024 suffit.
+et un atlas 1024x1024 suffit. Bandes REELLES (mesurees, aucun recouvrement) :
 
-  v in [0.00, 0.34] : coque (hull)
-  v in [0.36, 0.58] : ailes (wings)
-  v in [0.60, 0.80] : moteurs (engine)
-  v in [0.82, 1.00] : verriere (glass)
+  v in [0.02, 0.33] : coque (hull), bouchon arriere compris
+  v in [0.36, 0.57] : ailes (wings) ; en u : derive [0.02, 0.20],
+                      aile babord [0.24, 0.58], aile tribord [0.62, 0.96]
+  v in [0.62, 0.78] : moteurs (engine)
+  v in [0.80, 0.84] : disques des tuyeres (thruster)
+  v in [0.86, 0.99] : verriere (glass)
+
+Contre-exemple corrige (phase G, 3.3e) : un disque de bouchon de rayon UV 0.06
+DEBORDE de sa bande (bouchon de coque centre en v=0.305 -> v jusqu'a 0.365,
+dans les ailes ; tuyeres en v=0.90 -> dans la verriere ; verriere jusqu'a
+v=1.012, hors atlas), et des ailes en u [0.02, 0.48] recouvrent la derive
+[0.02, 0.20]. 124 triangles se partageaient les memes texels : une texture
+peinte pour l'un apparaissait sur l'autre. D'ou R_DISC = 0.022 et les
+intervalles ci-dessus. Le ship_scout.obj du depot portait deja ces valeurs ;
+ce script les reproduit desormais a l'octet pres.
 """
 import math
 
@@ -59,12 +70,14 @@ def tube(z0, r0, z1, r1, n, v0, v1, ry0=None, ry1=None, cap_start=False, cap_end
     if cap_end:   fan(B, z1, +1, (v0 + v1) * 0.5)
     return ia, ib
 
+R_DISC = 0.022    # rayon UV d'un bouchon : le disque doit TENIR dans la bande de son groupe
+
 def fan(R, z, sign, vband):
-    """Bouchon en eventail. UV en disque autour de (0.5, vband)."""
+    """Bouchon en eventail. UV en disque de rayon R_DISC autour de (0.5, vband)."""
     n = len(R)
     ic = vtx((0.0, 0.0, z)); tc = uv((0.5, vband)); nc = nrm((0.0, 0.0, float(sign)))
     idx = [(vtx((p[0], p[1], p[2])),
-            uv((0.5 + 0.06 * math.cos(p[3]), vband + 0.06 * math.sin(p[3]))),
+            uv((0.5 + R_DISC * math.cos(p[3]), vband + R_DISC * math.sin(p[3]))),
             nrm((0.0, 0.0, float(sign)))) for p in R]
     for i in range(n):
         j = (i + 1) % n
@@ -133,9 +146,9 @@ tube( 0.85, 0.320,  1.25, 0.230, N, 0.28, 0.33, cap_end=True)   # retreint arrie
 group("wings", "M_Hull")
 # aile babord : polygone (x, z) vu de dessus, sens trigo
 slab([(-0.28, -0.10), (-1.05, 0.55), (-1.00, 1.10), (-0.28, 0.95)], 0.075, N,
-     0.02, 0.48, 0.36, 0.57)
+     0.24, 0.58, 0.36, 0.57)          # u : apres la derive [0.02, 0.20]
 slab([( 0.28, -0.10), ( 0.28, 0.95), ( 1.00, 1.10), ( 1.05, 0.55)], 0.075, N,
-     0.52, 0.98, 0.36, 0.57)
+     0.62, 0.96, 0.36, 0.57)
 # derive dorsale : plaque VERTICALE, definie dans le plan (Z,Y), extrudee selon X
 fin([(0.30, 0.18), (1.22, 0.62), (1.22, 0.10), (0.36, 0.05)], 0.085,
     0.02, 0.20, 0.36, 0.57)
@@ -151,13 +164,13 @@ for sx in (-0.62, 0.62):
 group("thruster", "M_Thruster")
 for sx in (-0.62, 0.62):
     b = len(V)
-    fan(ring(1.325, 0.120, N), 1.325, +1, 0.90)                     # disque emissif
+    fan(ring(1.325, 0.120, N), 1.325, +1, 0.82)                     # disque emissif
     for i in range(b, len(V)):
         x, y, z = V[i]; V[i] = (x + sx, y - 0.02, z)
 
 group("glass", "M_Glass")
 _b = len(V)
-tube(-0.60, 0.090, -0.20, 0.190, N, 0.84, 0.92, ry0=0.05, ry1=0.11)
+tube(-0.60, 0.090, -0.20, 0.190, N, 0.86, 0.92, ry0=0.05, ry1=0.11)
 tube(-0.20, 0.190,  0.15, 0.120, N, 0.92, 0.99, ry0=0.11, ry1=0.07, cap_end=True)
 for i in range(_b, len(V)):
     x, y, z = V[i]; V[i] = (x, y + 0.26, z)
@@ -200,27 +213,28 @@ def write_obj(path):
         for f in F[start:end]:
             L.append("f " + " ".join("%d/%d/%d" % v for v in f))
         L.append("")
-    open(path, "w", encoding="utf-8").write("\n".join(L))
+    open(path, "w", encoding="utf-8", newline="\n").write("\n".join(L))
 
 def write_mtl(path):
-    open(path, "w", encoding="utf-8").write("""# ship_scout.mtl
+    # Chemins de textures RELATIFS AU DOSSIER DU MTL (assets/Meshes) : Textures/Ship/...
+    open(path, "w", encoding="utf-8", newline="\n").write("""# ship_scout.mtl
 newmtl M_Hull
 Ka 0.10 0.10 0.11
 Kd 0.72 0.74 0.78
 Ks 0.45 0.46 0.48
 Ns 48
 d  1.0
-map_Kd assets/Textures/ship_scout_albedo_1k.png
-map_Ks assets/Textures/ship_scout_spec_1k.png
-map_Bump assets/Textures/ship_scout_normal_1k.png
+map_Kd Textures/Ship/ship_scout_albedo_1k.png
+map_Ks Textures/Ship/ship_scout_spec_1k.png
+map_Bump Textures/Ship/ship_scout_normal_1k.png
 
 newmtl M_Engine
 Ka 0.08 0.08 0.09
 Kd 0.38 0.39 0.42
 Ks 0.60 0.60 0.62
 Ns 72
-map_Kd assets/Textures/ship_scout_albedo_1k.png
-map_Bump assets/Textures/ship_scout_normal_1k.png
+map_Kd Textures/Ship/ship_scout_albedo_1k.png
+map_Bump Textures/Ship/ship_scout_normal_1k.png
 
 newmtl M_Thruster
 Ka 0.00 0.00 0.00
@@ -228,7 +242,7 @@ Kd 0.10 0.35 0.85
 Ks 0.00 0.00 0.00
 Ke 0.30 0.70 1.00
 Ns 1
-map_Ke assets/Textures/ship_scout_emissive_1k.png
+map_Ke Textures/Ship/ship_scout_emissive_1k.png
 
 newmtl M_Glass
 Ka 0.02 0.03 0.04

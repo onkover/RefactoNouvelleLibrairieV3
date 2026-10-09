@@ -26,7 +26,7 @@ Dependance : numpy.
 """
 import json, math
 import numpy as np
-from gen_meshes import rock, write_obj
+from gen_meshes import rock, write_obj, rock_mtl
 
 ROCKS   = (("rock_a", 0xA5701), ("rock_b", 0xA5701 + 7919), ("rock_c", 0xA5701 + 2 * 7919))
 LEVELS  = ((12, 8), (8, 5), (4, 3), (4, 2))   # (seg, rings) : L0 = celui de gen_meshes.py
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             if k > 0:
                 write_obj(path, V, VT, VN, F,
                           f"{path} — niveau L{k} de {name}.obj : sphere {s}x{rg}, meme surface, meme graine",
-                          "planet.mtl", "M_Rock")
+                          *rock_mtl(name))           # D9 : le MTL de L0, partage
             dev  = np.abs(ray_radius(V, F, D) - r0)
             eMax = float(dev.max()); eMoy = float(dev.mean())
             # Sommets COMPTES COMME LE MOTEUR : seuls les triplets v/vt/vn REFERENCES par une face.

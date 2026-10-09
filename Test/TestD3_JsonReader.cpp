@@ -2,6 +2,7 @@
 #include "Core/JsonReader.h"
 #include "Scene/SerializerHelpers.hpp"
 #include "Scene/Serializer.hpp"
+#include "Ressources/ResourceManager.h"
 #include <filesystem>
 #include <fstream>
 
@@ -195,5 +196,45 @@ namespace LV3::Tests
         Logger::success("[D3.3c] Parseurs : far conditionnel, gizmo, currentHealth");
     }
 
+    namespace
+    {
+        // Un triangle minimal : 3 sommets, 1 face
+        constexpr const char* kTri = "v 0 0 0\nv 1 0 0\nv 0 1 0\nf 1 2 3\n";
+
+        std::uint32_t LoadObjText(const std::string& name, const std::string& obj)
+        {
+            const std::filesystem::path dir = std::filesystem::temp_directory_path();
+            { std::ofstream(dir / name) << obj; }
+            ResourceManager rm;
+            const std::uint32_t w0 = Logger::warnCount();
+            const auto h = rm.LoadMeshChecked((dir / name).string(), {});
+            LV3_ASSERT(h.has_value());                       // un souci n'empeche pas le chargement
+            return Logger::warnCount() - w0;
+        }
+    }
+
+    void TestD3_3e_Materiaux()
+    {
+        const std::filesystem::path dir = std::filesystem::temp_directory_path();
+        { std::ofstream(dir / "lv3_d3e_ok.mtl") << "newmtl M_Ok\nKd 0.5 0.5 0.5\n"; }
+        { std::ofstream(dir / "lv3_d3e_bad.mtl") << "Kd 1 1 1\nnewmtl M_Bad\nNi 1.5\nmap_Kd absente.png\n"; }
+
+        // 1. Nominal : mtllib present, usemtl connu -> aucun souci
+        LV3_ASSERT(LoadObjText("lv3_d3e_1.obj", std::string("mtllib lv3_d3e_ok.mtl\nusemtl M_Ok\n") + kTri) == 0);
+
+        // 2. mtllib absent, donc usemtl inconnu -> 2 soucis
+        LV3_ASSERT(LoadObjText("lv3_d3e_2.obj", std::string("mtllib lv3_d3e_absent.mtl\nusemtl M_Ok\n") + kTri) == 2);
+
+        // 3. usemtl inconnu dans un mtllib present -> 1 souci
+        LV3_ASSERT(LoadObjText("lv3_d3e_3.obj", std::string("mtllib lv3_d3e_ok.mtl\nusemtl M_Faux\n") + kTri) == 1);
+
+        // 4. MTL defectueux : directive avant newmtl, directive inconnue, texture absente -> 3 soucis
+        LV3_ASSERT(LoadObjText("lv3_d3e_4.obj", std::string("mtllib lv3_d3e_bad.mtl\nusemtl M_Bad\n") + kTri) == 3);
+
+        // 5. Ni mtllib ni usemtl (cas des gizmos) -> aucun souci : rien n'a ete promis
+        LV3_ASSERT(LoadObjText("lv3_d3e_5.obj", kTri) == 0);
+
+        Logger::success("[D3.3e] Materiaux : mtllib / usemtl / directives / textures");
+    }
 #endif
 }

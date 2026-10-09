@@ -23,7 +23,7 @@ Dependance : numpy.
 """
 import json, math
 import numpy as np
-from gen_meshes import uv_sphere, write_obj
+from gen_meshes import uv_sphere, write_obj, SPHERE_MTL
 from gen_rock_lod import ray_radius
 
 GRIDS  = {"hi": (64, 32), "mid": (32, 16), "lo": (16, 10),
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         V, VT, VN, F = M[k]; s, rg = GRIDS[k]
         write_obj(FILES[k], V, VT, VN, F,
                   f"{FILES[k]} — sphere UV {s}x{rg}, rayon 1.0 (niveau de LOD, gen_sphere_lod.py)",
-                  "planet.mtl", "M_Planet")
+                  *SPHERE_MTL)                         # D9 : un MTL pour toute la famille
 
     rng = np.random.default_rng(SEED)
     def unit(d): return d / np.linalg.norm(d, axis=1, keepdims=True)

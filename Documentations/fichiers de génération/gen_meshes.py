@@ -5,6 +5,13 @@ gen_meshes.py — spheres LOD + rochers, pour LibraryV3.
 
 Convention : main droite, Y up, avant = -Z. Rayon 1.0 (l'echelle vient du Transform).
 
+MATERIAUX (decision D9, phase G pas 3.3e) : UN MTL PAR ASSET, partage par tous
+ses niveaux de LOD — un changement de niveau ne change que la geometrie, jamais
+l'apparence. rock_x.mtl pour rock_x (+ _L1.._L3), sphere.mtl pour TOUTE la
+famille des spheres (hi, mid, lo, 12x6, 8x5, 6x4 : sphere_mid est a la fois L1
+de sphere_hi et L0 de sphere_mid). Les chemins de textures d'un MTL sont
+relatifs au dossier du MTL. Plus de planet.mtl.
+
 Depliage equirectangulaire, avec les DEUX corrections qui manquent a une sphere
 naive :
 
@@ -52,6 +59,37 @@ def uv_sphere(seg, rings, radius=1.0, noise=None):
             if j != 0:         F.append((a, b, d))
     return V, VT, VN, F
 
+# --- Materiaux : la SEULE definition, importee par gen_rock_lod.py et gen_sphere_lod.py
+SPHERE_MTL = ("sphere.mtl", "M_Sphere")
+
+def rock_mtl(name):
+    """'rock_a' -> ('rock_a.mtl', 'M_Rock_A') : un MTL par asset rocher (D9)."""
+    return f"{name}.mtl", "M_Rock_" + name.split("_")[-1].upper()
+
+def write_sphere_mtl():
+    lib, mat = SPHERE_MTL
+    open(lib, "w", encoding="utf-8", newline="\n").write(
+f"""# {lib} — materiau de la famille des spheres (D9) : sphere_hi, _mid, _lo, _12x6, _8x5, _6x4
+# Generique : l'apparence d'un astre viendra d'une surcharge de materiau dans la scene (L08).
+newmtl {mat}
+Ka 0.02 0.02 0.02
+Kd 0.80 0.80 0.80
+Ks 0.05 0.05 0.05
+Ns 8
+""")
+
+def write_rock_mtl(name):
+    lib, mat = rock_mtl(name)
+    open(lib, "w", encoding="utf-8", newline="\n").write(
+f"""# {lib} — materiau de l'asset {name} (D9 : UN MTL par asset, partage par tous ses niveaux de LOD)
+newmtl {mat}
+Ka 0.02 0.02 0.02
+Kd 0.45 0.42 0.39
+Ks 0.02 0.02 0.02
+Ns 4
+map_Kd Textures/Divers/rock_albedo_1k.jpg
+""")
+
 def write_obj(path, V, VT, VN, F, header, mtl=None, usemtl=None):
     L = [f"# {header}", "# main droite, Y up, avant = -Z"]
     if mtl: L.append(f"mtllib {mtl}")
@@ -62,7 +100,7 @@ def write_obj(path, V, VT, VN, F, header, mtl=None, usemtl=None):
     L.append("")
     if usemtl: L.append(f"usemtl {usemtl}")
     L += ["f " + " ".join("%d/%d/%d" % (k, k, k) for k in f) for f in F]
-    open(path, "w", encoding="utf-8").write("\n".join(L) + "\n")
+    open(path, "w", encoding="utf-8", newline="\n").write("\n".join(L) + "\n")
     return len(V), len(F)
 
 # --- LCG deterministe : meme rocher a chaque generation ----------------------
@@ -94,27 +132,15 @@ if __name__ == "__main__":
         V, VT, VN, F = uv_sphere(s, rg)
         nv, nf = write_obj(f"{name}.obj", V, VT, VN, F,
                            f"{name}.obj — sphere UV {s}x{rg}, rayon 1.0",
-                           "planet.mtl", "M_Planet")
+                           *SPHERE_MTL)
         print(f"{name:12s} {nv:5d} sommets  {nf:5d} triangles")
 
     for k, name in enumerate(("rock_a", "rock_b", "rock_c")):
         V, VT, VN, F = rock(seed=0xA5701 + k * 7919)
         nv, nf = write_obj(f"{name}.obj", V, VT, VN, F,
                            f"{name}.obj — asteroide procedural, rayon moyen 1.0",
-                           "planet.mtl", "M_Rock")
+                           *rock_mtl(name))
+        write_rock_mtl(name)
         print(f"{name:12s} {nv:5d} sommets  {nf:5d} triangles")
 
-    open("planet.mtl", "w", encoding="utf-8").write(
-"""# planet.mtl — materiaux generiques ; la couleur reelle vient de Material dans la scene
-newmtl M_Planet
-Ka 0.02 0.02 0.02
-Kd 0.80 0.80 0.80
-Ks 0.05 0.05 0.05
-Ns 8
-
-newmtl M_Rock
-Ka 0.02 0.02 0.02
-Kd 0.45 0.42 0.39
-Ks 0.02 0.02 0.02
-Ns 4
-""")
+    write_sphere_mtl()

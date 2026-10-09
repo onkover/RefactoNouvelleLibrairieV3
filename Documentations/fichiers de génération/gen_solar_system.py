@@ -10,15 +10,33 @@ PRINCIPE DIRECTEUR (regle S1) :
     Le passage aux unites moteur est fait par UN SEUL endroit : le ScaleModel.
     Changer de modele d'echelle = changer 4 constantes, pas 200 nombres.
 
-Sorties :
-    solar_system_v2.json      -> schema cible (composants Body/Orbit/Spin/Material/Ring)
-    solar_system_v1compat.json-> schema actuel (Transform/Mesh/Light/Trigger) : tourne TOUT DE SUITE
-    solar_system_data.md      -> la table des donnees physiques, pour la doc
+SEULE SOURCE du scenegraph "Systeme Solaire" (phase G, pas 3.3d) : on ne
+retouche JAMAIS une scene a la main, on modifie ce fichier et on regenere.
+
+Sorties (dans le dossier courant, a copier dans assets/GraphScene) :
+    solar_system_v2.json                         -> schema cible (Body/Orbit/Spin/Material/Ring/Belt)
+    solar_system_v1compat.json                   -> schema actuel, sans la ceinture
+    solar_system_v1compat_belt.json              -> + 600 asteroides (meshes .obj)
+    solar_system_v1compat_belt_lod.json          -> rochers en chaines de LOD (.lod.json)
+    solar_system_v1compat_belt_lod_spheres.json  -> rochers ET spheres en LOD : la scene active
+    solar_system_data.md                         -> la table des donnees physiques, pour la doc
+
+FORMAT DE SCENE (regle Onky du 7 octobre 2026) : toute cle lue par le moteur
+est ECRITE — valeur exacte, ou null pour deleguer au moteur. Une cle absente
+est un souci au chargement. Les cles '_xxx' sont de la documentation.
+Decisions appliquees : D1 racines "parent": null ; D2 "_type" ; D3 pas de
+texture dans la scene (elle passe par le MTL / Material) ; D4 lumiere "Point"
+et "_range" ; D5 triggers explicites ; D6 "currentHealth".
+
+Le jeu joueur + cameras est UNIQUE (build_gameplay_nodes) et identique dans
+les 5 scenes. Les evenements de trigger sont traduits dans le vocabulaire du
+moteur pour le v1 (v1_events) ; le v2 garde les noms descriptifs.
+Ce fichier remplace normalize_v1.py (devenu inutile).
 
 Usage : python gen_solar_system.py
 """
 
-import json, math, os
+import json
 
 # =============================================================================
 # 1. CONSTANTES ASTRONOMIQUES
@@ -53,7 +71,7 @@ SCALE = {
 
 # Horloge de simulation (regle S10) : facteur multiplicatif, comme le zoom camera.
 SIMULATION = {
-    "daysPerSecond":  1.0,      # valeur de depart
+    "daysPerSecond":  0.2,      # valeur de depart (= engine.json simulationclock.timeScale)
     "timeScaleStep":  1.5,      # ratio par cran  ( [ et ] )
     "timeScaleSprint": 4.0,     # multiplicateur Shift, coherent avec sprintMultiplier
     "timeScaleMin":   0.001,
@@ -273,7 +291,7 @@ def build_v2_nodes():
     # -- Racine du systeme : porte le referentiel, rien d'autre --------------
     nodes.append({
         "id": "Solar-System",
-        "type": "Anchor",
+        "_type": "Anchor",
         "components": {"Transform": {"translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1]}}
     })
 
@@ -286,7 +304,7 @@ def build_v2_nodes():
         anchor = {
             "id": anchor_id(k),
             "parent": parent_anchor,
-            "type": "Anchor",
+            "_type": "Anchor",
             "components": {
                 "Transform": {"translation": [round(a,4),0,0], "rotation": [0,0,0], "scale": [1,1,1]}
             }
@@ -307,7 +325,7 @@ def build_v2_nodes():
         body = {
             "id": body_id(k),
             "parent": anchor_id(k),
-            "type": {"star":"Etoile","planet":"Planete","moon":"Lune","dwarf":"PlaneteNaine"}[b["cls"]],
+            "_type": {"star":"Etoile","planet":"Planete","moon":"Lune","dwarf":"PlaneteNaine"}[b["cls"]],
             "components": {
                 "Transform": {"translation":[0,0,0], "rotation":[0,0,0],
                               "scale":[round(r*ax[0],4), round(r*ax[1],4), round(r*ax[2],4)]},
@@ -334,10 +352,10 @@ def build_v2_nodes():
         }
         if b["cls"] == "star":
             body["components"]["Light"] = {
-                "type": "POINT_LIGHT",
+                "type": "Point",                # vocabulaire du moteur (ParseLight)
                 "color": [round(c,3) for c in b["color"]],
                 "intensity": 4.0,
-                "rangeUnits": 600.0
+                "_range": 600.0                 # portee : lue a partir de L10
             }
         nodes.append(body)
 
@@ -347,7 +365,7 @@ def build_v2_nodes():
             nodes.append({
                 "id": f"{k}-Rings",
                 "parent": anchor_id(k),
-                "type": "Ring",
+                "_type": "Ring",
                 "components": {
                     "Transform": {"translation":[0,0,0], "rotation":[0,0,0], "scale":[1,1,1]},
                     "Spin": {"axialTiltDeg": b["tilt"], "rotationPeriodHours": 0.0,
@@ -375,7 +393,7 @@ def build_v2_nodes():
                 "id": f"{k}-{evt.title().replace('_','')}-Zone",
                 "parent": anchor_id(k),
                 "_note": note,
-                "type": "Trigger",
+                "_type": "Trigger",
                 "components": {
                     "Transform": {"translation":[0,0,0], "rotation":[0,0,0], "scale":[1,1,1]},
                     "Trigger": {
@@ -398,7 +416,7 @@ def build_v2_nodes():
             "id": f"{belt['key']}-Zone",
             "parent": "Solar-System",
             "_note": f"{belt['name']} — trigger en coquille (shape 'shell')",
-            "type": "Trigger",
+            "_type": "Trigger",
             "components": {
                 "Transform": {"translation":[0,0,0], "rotation":[0,0,0], "scale":[1,1,1]},
                 "Trigger": {
@@ -461,7 +479,7 @@ def build_belt_nodes():
         col    = [round(min(1.0, max(0.0, c + tint)), 3) for c in (0.46, 0.42, 0.38)]
         key    = "Asteroid_%03d" % i
         nodes.append({
-            "id": key + "-Anchor", "parent": "Solar-System", "type": "Anchor",
+            "id": key + "-Anchor", "parent": "Solar-System", "_type": "Anchor",
             "components": {
                 "Transform": {"translation": [round(disp_orbit_planet(a_km), 4), 0, 0],
                               "rotation": [0, 0, 0], "scale": [1, 1, 1]},
@@ -473,7 +491,7 @@ def build_belt_nodes():
                           "meanAnomalyDeg": round(r.rng(0.0, 360.0), 2),
                           "angularSpeedDegPerDay": round(360.0 / per_d, 8)}}})
         nodes.append({
-            "id": key, "parent": key + "-Anchor", "type": "Asteroide",
+            "id": key, "parent": key + "-Anchor", "_type": "Asteroide",
             "components": {
                 "Transform": {"translation": [0, 0, 0],
                               "rotation": [0, 0, 0],
@@ -497,7 +515,7 @@ def build_belt_component():
     """Version v2 : douze lignes au lieu de 1200 noeuds."""
     cfg = BELT_CFG
     return {
-        "id": "AsteroidBelt", "parent": "Solar-System", "type": "Belt",
+        "id": "AsteroidBelt", "parent": "Solar-System", "_type": "Belt",
         "_note": "Developpe proceduralement au chargement. Meme graine = meme ceinture.",
         "components": {
             "Transform": {"translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1]},
@@ -517,8 +535,28 @@ def build_belt_component():
 # =============================================================================
 # 8. CAMERAS ET JOUEUR (communs aux deux schemas)
 # =============================================================================
+def _camera(projection, near, priority, category, *, fov=None, orthoHeight=None,
+            far=None, active=True):
+    """Bloc Camera canonique : toutes les cles lues par ParseCamera, dans l'ordre.
+    'far' n'est ecrit que si infiniteFar = false (3.3c : sinon il n'est pas lu)."""
+    c = {"projection": projection}
+    if projection == "orthographic":
+        c["orthoHeight"] = orthoHeight
+    else:
+        c["lens"] = "fov"; c["fov"] = fov
+    c["near"] = near
+    if far is not None: c["far"] = far
+    c["infiniteFar"] = far is None
+    c.update({"active": active, "priority": priority, "category": category,
+              "gizmo": {"length": 3.0},
+              "depthDisplayRange": 150,      # plage du mode Depth (unites monde)
+              "lodTolerancePx": None})       # null : delegue a engine.json
+    return c
+
 def build_gameplay_nodes():
+    """Joueur + cameras. UN SEUL jeu, identique dans les 5 scenes."""
     d_earth = DISP["Earth"]["a"]
+    T0 = {"translation": [0, 0, 0], "rotation": [0, 0, 0], "scale": [1, 1, 1]}
     return [
     {
       "id": "Player_Ship",
@@ -534,8 +572,11 @@ def build_gameplay_nodes():
             "specularMap": f"{TEX_DIR}/ship_scout_spec_1k.png",
             "emissiveMap": f"{TEX_DIR}/ship_scout_emissive_1k.png"
         },
-        "Trigger": {"role":"probe", "shape":"sphere", "radius": 0.5},
-        "Health":  {"maxHealth": 100},
+        # role "probe" : les zones (role "zone") ne testent que les sondes.
+        # Une zone contre une zone est ignoree par TriggerSystem.
+        "Trigger": {"role":"probe", "shape":"sphere", "radius": 0.5,
+                    "onEnterEvent": "", "onStayEvent": "", "onExitEvent": ""},
+        "Health":  {"maxHealth": 100, "currentHealth": 100},
         "PlayerControl": {"speed": 12.0}
       }
     },
@@ -544,9 +585,7 @@ def build_gameplay_nodes():
       "_note": "Pas de parent : un controleur ecrit en local.",
       "components": {
         "Transform": {"translation": [round(d_earth,3), 3.0, 12.0], "rotation": [0,0,0], "scale":[1,1,1]},
-        "Camera": {"projection":"perspective","lens":"fov","fov":45.0,"near":0.05,
-                   "far":2000.0,"infiniteFar":True,"active":True,"priority":10,
-                   "category":"game","gizmo":{"length":3.0}},
+        "Camera": _camera("perspective", 0.05, 10, "gameplay", fov=45.0),
         "CameraFPS": {"enabled":True,"moveSpeed":25.0,"mouseSensitivity":0.15,
                       "lockVertical":False,"pitchLimit":89.0,"sprintMultiplier":6.0}
       }
@@ -555,42 +594,54 @@ def build_gameplay_nodes():
       "id": "Follow_Camera",
       "_note": "Pas de parent : CameraFollowSystem produit une position MONDE.",
       "components": {
-        "Transform": {"translation":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},
-        "Camera": {"projection":"perspective","lens":"fov","fov":50.0,"near":0.05,
-                   "far":2000.0,"infiniteFar":True,"active":True,"priority":5,
-                   "category":"game","gizmo":{"length":3.0}},
+        "Transform": dict(T0),
+        "Camera": _camera("perspective", 0.05, 5, "gameplay", fov=50.0),
         "CameraFollow": {"enabled":True,"target":"Player_Ship","offset":[0.0,1.5,-6.0],
-                         "smoothSpeed":5.0,"lookAtHeight":0.0}
+                         "smoothSpeed":5.0,"lookAtHeight":0.0,"followRotation":True}
       }
     },
     {
       "id": "Overview_Camera",
       "_note": "Vue d'ensemble du systeme.",
       "components": {
-        "Transform": {"translation":[0,0,0],"rotation":[0,0,0],"scale":[1,1,1]},
-        "Camera": {"projection":"orthographic","orthoHeight":1200.0,"near":1.0,
-                   "far":5000.0,"infiniteFar":True,"active":True,"priority":0,
-                   "category":"debug","gizmo":{"length":3.0}}
+        "Transform": dict(T0),
+        # ortho : infiniteFar impossible (assert du moteur) -> far ecrit
+        "Camera": _camera("orthographic", 1.0, 0, "debug", orthoHeight=1200.0, far=2000.0)
       }
     },
     {
       "id": "Top_View",
       "components": {
         "Transform": {"translation":[0,950,0],"rotation":[-90,0,0],"scale":[1,1,1]},
-        "Camera": {"projection":"perspective","lens":"fov","fov":60.0,"near":1.0,
-                   "far":5000.0,"infiniteFar":True,"active":True,"priority":4,
-                   "category":"debug","gizmo":{"length":3.0}}
+        "Camera": _camera("perspective", 1.0, 4, "debug", fov=60.0)
       }
     },
     {
       "id": "Side_View",
       "components": {
         "Transform": {"translation":[950,0,0],"rotation":[0,90,0],"scale":[1,1,1]},
-        "Camera": {"projection":"perspective","lens":"fov","fov":60.0,"near":1.0,
-                   "far":5000.0,"infiniteFar":True,"active":True,"priority":3,
-                   "category":"debug","gizmo":{"length":3.0}}
+        "Camera": _camera("perspective", 1.0, 3, "debug", fov=60.0)
       }
     }]
+
+
+# =============================================================================
+# 8bis. VOCABULAIRE D'EVENEMENTS DU MOTEUR (v1)
+# =============================================================================
+# Le v2 garde les noms descriptifs (ENTER_SUN_CORONA...). Le moteur actuel ne
+# connait que IsKnownEvent : "", TAKING_DAMAGE, STARTED_TAKING_DAMAGE,
+# STOPPED_TAKING_DAMAGE, ENTITY_DIED. Le v1 est donc traduit :
+#   zone inoffensive (GRAVITY, SAFE_ZONE, ceintures) -> ""   (aucun evenement)
+#   zone de danger (tout le reste)                   -> degats entree/sejour/sortie
+HARMLESS = ("_GRAVITY", "_SAFE_ZONE")
+DAMAGE_EVENTS = ("STARTED_TAKING_DAMAGE", "TAKING_DAMAGE", "STOPPED_TAKING_DAMAGE")
+
+def v1_events(trigger):
+    """trigger : bloc Trigger v2. Rend (enter, stay, exit) dans le vocabulaire moteur."""
+    enter = trigger.get("onEnterEvent", "")
+    if trigger.get("shape") == "shell" or not enter or enter.endswith(HARMLESS):
+        return ("", "", "")
+    return DAMAGE_EVENTS
 
 
 # =============================================================================
@@ -620,16 +671,22 @@ def to_v1(nodes_v2):
     """
     byid = {n["id"]: n for n in nodes_v2}
     out, consumed = [], set()
+    # L'ancre d'une ETOILE est a l'origine de son parent : ses enfants (planetes,
+    # zones solaires) sont rattaches directement a ce parent, sans compensation.
+    # Sinon toutes les orbites seraient divisees par le rayon du Soleil.
+    STAR_ANCHORS = {anchor_id(b["key"]): (b["parent"] and anchor_id(b["parent"])) or "Solar-System"
+                    for b in BODIES if b["cls"] == "star"}
 
     def parent_scale(pid):
         """Echelle heritee du noeud parent une fois l'ancre fusionnee."""
-        if not pid: return 1.0
+        if not pid or pid in STAR_ANCHORS: return 1.0
         base = pid[:-7] if pid.endswith("-Anchor") else pid
         b = byid.get(base)
         if not b: return 1.0
         return b.get("components", {}).get("Body", {}).get("displayRadius", 1.0)
 
     def remap(pid):
+        if pid in STAR_ANCHORS: return STAR_ANCHORS[pid]
         return pid[:-7] if pid and pid.endswith("-Anchor") else pid
 
     for n in nodes_v2:
@@ -660,9 +717,9 @@ def to_v1(nodes_v2):
 
         orb = anchor["components"].get("Orbit") if anchor is not None else None
         if "Mesh" in c:
-            m = {"model": c["Mesh"]["model"]}
-            mat = c.get("Material", {})
-            if "albedoMap" in mat: m["texture"] = os.path.basename(mat["albedoMap"])
+            # D3 : pas de texture ici, elle vient du MTL de l'OBJ.
+            # Les deux vitesses sont toujours ecrites (0.0 = immobile).
+            m = {"model": c["Mesh"]["model"], "orbitalSpeed": 0.0, "rotationSpeed": 0.0}
             if orb:  m["orbitalSpeed"]  = round(orb["angularSpeedDegPerDay"] * SCALE["daysPerSecond"], 6)
             if spin: m["rotationSpeed"] = round(spin["angularSpeedDegPerHour"] * 24.0
                                                 * SCALE["daysPerSecond"], 6)
@@ -674,18 +731,16 @@ def to_v1(nodes_v2):
         if "Trigger" in c:
             t = c["Trigger"]
             r = t["outerRadius"] if t.get("shape") == "shell" else t["radius"]
+            ev = v1_events(t)
             nc["Trigger"] = {"role": t.get("role", "zone"), "radius": r,
-                             "onEnterEvent": t.get("onEnterEvent", ""),
-                             "onStayEvent":  t.get("onStayEvent", ""),
-                             "onExitEvent":  t.get("onExitEvent", "")}
+                             "onEnterEvent": ev[0], "onStayEvent": ev[1], "onExitEvent": ev[2]}
             # Regle S9 : le rayon d'un trigger est en unites MONDE et n'herite
             # jamais de l'echelle. Aucune compensation a poser ici.
 
         if not nc: continue
-        node = {"id": nid}
-        if parent: node["parent"] = parent
-        if "type"  in n: node["type"]  = n["type"]
+        node = {"id": nid, "parent": parent}            # D1 : null pour une racine
         if "_note" in n: node["_note"] = n["_note"]
+        if "_type" in n: node["_type"] = n["_type"]
         node["components"] = nc
         out.append(node)
     return out
@@ -694,28 +749,76 @@ def to_v1(nodes_v2):
 # =============================================================================
 # 10. ECRITURE
 # =============================================================================
+def canonical(nodes):
+    """D1 : 'parent' toujours ecrit (null = racine). Ordre des cles de noeud :
+    id, parent, cles '_xxx', components."""
+    out = []
+    for n in nodes:
+        o = {"id": n["id"], "parent": n.get("parent")}
+        for k, v in n.items():
+            if k not in o and k != "components": o[k] = v
+        o["components"] = n["components"]
+        out.append(o)
+    return out
+
+def with_lod(nodes, prefixes):
+    """Remplace 'assets/Meshes/<prefixe>_x.obj' par la chaine 'assets/Meshes/<prefixe>_x.lod.json'."""
+    out = json.loads(json.dumps(nodes))
+    for n in out:
+        m = n["components"].get("Mesh")
+        if m and any(m["model"].startswith(f"assets/Meshes/{p}_") for p in prefixes):
+            m["model"] = m["model"][:-4] + ".lod.json"
+    return out
+
+# --- ecriture lisible : tableaux de scalaires et petits objets sur une ligne ---
+def _is_scalar(v): return not isinstance(v, (dict, list))
+def dump(v, ind=0):
+    sp = "  " * ind
+    if isinstance(v, list):
+        if all(_is_scalar(x) for x in v):
+            return "[ " + ", ".join(json.dumps(x, ensure_ascii=False) for x in v) + " ]" if v else "[]"
+        return "[\n" + ",\n".join(sp + "  " + dump(x, ind + 1) for x in v) + "\n" + sp + "]"
+    if isinstance(v, dict):
+        if not v: return "{}"
+        if len(v) <= 2 and all(_is_scalar(x) for x in v.values()):
+            return "{ " + ", ".join(json.dumps(k, ensure_ascii=False) + ": " + json.dumps(x, ensure_ascii=False)
+                                    for k, x in v.items()) + " }"
+        return "{\n" + ",\n".join(sp + "  " + json.dumps(k, ensure_ascii=False) + ": " + dump(x, ind + 1)
+                                   for k, x in v.items()) + "\n" + sp + "}"
+    return json.dumps(v, ensure_ascii=False)
+
+def write_scene(path, scene):
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(dump(scene) + "\n")
+
 def main():
-    nodes_v2 = build_v2_nodes() + [build_belt_component()] + build_gameplay_nodes()
+    nodes_v2 = canonical(build_v2_nodes() + [build_belt_component()] + build_gameplay_nodes())
     belt     = build_belt_nodes()
 
-    scene_v2 = {
+    write_scene("solar_system_v2.json", {
         "sceneName": "Systeme Solaire",
         "schemaVersion": 2,
         "units":  {"length": "km", "time": "day", "angle": "deg"},
         "scaleModel": SCALE,
         "simulation": SIMULATION,
         "nodes": nodes_v2
-    }
-    with open("solar_system_v2.json", "w", encoding="utf-8") as f:
-        json.dump(scene_v2, f, indent=2, ensure_ascii=False)
+    })
 
-    v1_core = to_v1([n for n in nodes_v2 if n["id"] != "AsteroidBelt"])
-    with open("solar_system_v1compat.json", "w", encoding="utf-8") as f:
-        json.dump({"sceneName": "Systeme Solaire", "nodes": v1_core},
-                  f, indent=2, ensure_ascii=False)
-    with open("solar_system_v1compat_belt.json", "w", encoding="utf-8") as f:
-        json.dump({"sceneName": "Systeme Solaire + ceinture",
-                   "nodes": v1_core + to_v1(belt)}, f, indent=2, ensure_ascii=False)
+    gameplay = {n["id"] for n in build_gameplay_nodes()}
+    v1_core  = to_v1([n for n in nodes_v2 if n["id"] != "AsteroidBelt" and n["id"] not in gameplay])
+    v1_play  = to_v1([n for n in nodes_v2 if n["id"] in gameplay])
+    v1_belt  = to_v1(belt)
+
+    # Ordre des noeuds : systeme, joueur + cameras, [ceinture].
+    V1 = [
+        ("solar_system_v1compat.json",                  "Systeme Solaire",                                     v1_core + v1_play),
+        ("solar_system_v1compat_belt.json",             "Systeme Solaire + ceinture",                          v1_core + v1_play + v1_belt),
+        ("solar_system_v1compat_belt_lod.json",         "Systeme Solaire + ceinture (LOD)",                    with_lod(v1_core + v1_play + v1_belt, ["rock"])),
+        ("solar_system_v1compat_belt_lod_spheres.json", "Systeme Solaire + ceinture (LOD rochers + spheres)",  with_lod(v1_core + v1_play + v1_belt, ["rock", "sphere"])),
+    ]
+    for path, name, nodes in V1:
+        write_scene(path, {"sceneName": name, "nodes": nodes})
+        print(f"{path:46s} {len(nodes):4d} noeuds")
 
     # ---- table de reference ------------------------------------------------
     lines = ["# Donnees physiques et valeurs d'affichage\n",
@@ -732,7 +835,7 @@ def main():
         lines.append(f"| {b['name']} | {b['parent'] or '-'} | {b['radius_km']:,.1f} | {d['r']:.3f} "
                      f"| {b['a_km']:,.0f} | {d['a']:.3f} | {b['ecc']:.4f} | {b['incl']:.3f} "
                      f"| {b['period_d']:,.3f} | {b['rot_h']:,.2f} | {b['tilt']:.2f} | `{col}` |")
-    open("solar_system_data.md", "w", encoding="utf-8").write("\n".join(lines) + "\n")
+    open("solar_system_data.md", "w", encoding="utf-8", newline="\n").write("\n".join(lines) + "\n")
 
     ntri = {"assets/Meshes/sphere_lo.obj": 288, "assets/Meshes/sphere_mid.obj": 960,
             "assets/Meshes/sphere_hi.obj": 3968, "assets/Meshes/rock_a.obj": 168,
@@ -740,9 +843,8 @@ def main():
             "assets/Meshes/ship_scout.obj": 296}
     def tris(ns): return sum(ntri.get(n["components"].get("Mesh", {}).get("model"), 0) for n in ns)
     print(f"v2            : {len(nodes_v2):4d} noeuds")
-    print(f"v1 (sans belt): {len(v1_core):4d} noeuds, {tris(v1_core):,} triangles")
-    print(f"v1 (avec belt): {len(v1_core) + len(to_v1(belt)):4d} noeuds, "
-          f"{tris(v1_core) + tris(to_v1(belt)):,} triangles")
+    print(f"v1 (sans belt): {tris(v1_core + v1_play):,} triangles (LOD 0)")
+    print(f"v1 (avec belt): {tris(v1_core + v1_play + v1_belt):,} triangles (LOD 0)")
     print(f"asteroides    : {len(belt)//2}")
     print("R affiche : Soleil %.3f | Jupiter %.3f | Terre %.3f | Deimos %.3f"
           % (DISP["Sun"]["r"], DISP["Jupiter"]["r"], DISP["Earth"]["r"], DISP["Deimos"]["r"]))

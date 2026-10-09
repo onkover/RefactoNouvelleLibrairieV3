@@ -33,7 +33,7 @@ namespace LV3::Tests
     void TestD3_3a_NiveauNoeud();
 	void TestD3_3b_Blocs();
     void TestD3_3c_Parseurs();
-
+    void TestD3_3e_Materiaux();
 
 
 #if LV3_DEBUG    
@@ -79,6 +79,7 @@ namespace LV3::Tests
         TestD3_3a_NiveauNoeud();
         TestD3_3b_Blocs();
         TestD3_3c_Parseurs();
+        TestD3_3e_Materiaux();
         RunAllCameraMathTests();
         TestCameraZoom();
         TestProjection();
