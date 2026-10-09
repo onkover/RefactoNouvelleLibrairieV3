@@ -104,7 +104,7 @@ namespace LV3::Tests
     void TestD3_3a_NiveauNoeud()
     {
         // 1. Nominal, enfant declare AVANT son parent (prouve la resolution differee)
-        auto r = LoadSceneText(R"({ "sceneName": "T", "nodes": [
+        auto r = LoadSceneText(R"({ "sceneName": "scene TNR1", "nodes": [
             { "id": "Child", "parent": "Root", "_type": "Lune", )" + kComps + R"( },
             { "id": "Root",  "parent": null, )" + kComps + R"( } ] })");
         LV3_ASSERT(r.ok && r.warns == 0 && r.linked == 1);
@@ -114,17 +114,17 @@ namespace LV3::Tests
         LV3_ASSERT(r.ok && r.warns == 1);
 
         // 3. Faute de frappe 'parnet' : 2 soucis ('parent' absente + 'parnet' ignoree), aucun lien
-        r = LoadSceneText(R"({ "sceneName": "T", "nodes": [
+        r = LoadSceneText(R"({ "sceneName": "scene TNR2", "nodes": [
             { "id": "Root",  "parent": null, )" + kComps + R"( },
             { "id": "Child", "parnet": "Root", )" + kComps + R"( } ] })");
         LV3_ASSERT(r.ok && r.warns == 2 && r.linked == 0);
 
         // 4. Refus francs (5 lignes ROUGES attendues) :
         //    id absent / parent inconnu / parent non texte (2 lignes) / nodes absent
-        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "parent": null, )" + kComps + R"( } ] })").ok);
-        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "id": "A", "parent": "Ghost", )" + kComps + R"( } ] })").ok);
-        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T", "nodes": [ { "id": "A", "parent": 42, )" + kComps + R"( } ] })").ok);
-        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "T" })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "parent": null, )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "id": "A", "parent": "Ghost", )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "id": "A", "parent": 42, )" + kComps + R"( } ] })").ok);
+        LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR" })").ok);
 
         Logger::success("[D3.3a] Niveau noeud : une lecture, un lecteur, aucune absence muette");
     }
@@ -160,5 +160,40 @@ namespace LV3::Tests
 
         Logger::success("[D3.3b] Blocs : present / null / absent / mauvais type");
     }
+
+    void TestD3_3c_Parseurs()
+    {
+        // Une camera ECRITE EN ENTIER : seules les cles testees varient
+        const std::string head = R"({ "sceneName": "TNR3", "nodes": [ { "id": "Cam", "parent": null, "components": {
+            "Transform": { "translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1] },
+            "Health": { "maxHealth": 80, "currentHealth": 50 },
+            "Camera": { "projection": "perspective", "lens": "fov", "fov": 60.0, "near": 0.1,
+                        "depthDisplayRange": null, "lodTolerancePx": null,
+                        "category": "gameplay", "active": true, "priority": 0, )";
+        const std::string tail = R"( } } } ] })";
+
+        // 1. infiniteFar sans 'far' + gizmo complet : AUCUN souci (impossible avant 3.3c)
+        auto r = LoadSceneText(head + R"("infiniteFar": true, "gizmo": { "length": 3.0 })" + tail);
+        LV3_ASSERT(r.ok && r.warns == 0);
+
+        // 2. Plan lointain fini : 'far' est lu, aucun souci
+        r = LoadSceneText(head + R"("infiniteFar": false, "far": 500.0, "gizmo": { "length": 3.0 })" + tail);
+        LV3_ASSERT(r.ok && r.warns == 0);
+
+        // 3. infiniteFar ET 'far' : 'far' n'est pas lu -> 1 souci ("cle ignoree 'far'")
+        r = LoadSceneText(head + R"("infiniteFar": true, "far": 500.0, "gizmo": { "length": 3.0 })" + tail);
+        LV3_ASSERT(r.ok && r.warns == 1);
+
+        // 4. gizmo null : "pas de gizmo" annonce, aucun souci
+        r = LoadSceneText(head + R"("infiniteFar": true, "gizmo": null)" + tail);
+        LV3_ASSERT(r.ok && r.warns == 0);
+
+        // 5. gizmo absent : 2 soucis (le bloc + sa cle 'length')
+        r = LoadSceneText(head + R"("infiniteFar": true)" + tail);
+        LV3_ASSERT(r.ok && r.warns == 2);
+
+        Logger::success("[D3.3c] Parseurs : far conditionnel, gizmo, currentHealth");
+    }
+
 #endif
 }

@@ -5,7 +5,7 @@
     {
       "id": "Moon",
       "parent": "Earth",
-      "_type": "Lune",
+      "type": "Lune",
       "components": {
         "Transform": {
           "translation": [ 2.0, 0.0, 0.0 ],
@@ -22,7 +22,7 @@
     {
       "id": "Phobos",
       "parent": "Mars",
-      "_type": "Lune",
+      "type": "Lune",
       "components": {
         "Transform": {
           "translation": [ 1.2, 0.0, 0.0 ],
@@ -31,15 +31,14 @@
         },
         "Mesh": {
           "model": "assets/Meshes/sphere 10 faces.obj",
-          "orbitalSpeed": 30.0,
-          "rotationSpeed": 0.0
+          "orbitalSpeed": 30.0
         }
       }
     },
     {
       "id": "Deimos",
       "parent": "Mars",
-      "_type": "Lune",
+      "type": "Lune",
       "components": {
         "Transform": {
           "translation": [ -1.8, 0.0, 0.0 ],
@@ -48,15 +47,14 @@
         },
         "Mesh": {
           "model": "assets/Meshes/sphere 10 faces.obj",
-          "orbitalSpeed": 20.0,
-          "rotationSpeed": 0.0
+          "orbitalSpeed": 20.0
         }
       }
     },
     {
       "id": "Earth",
       "parent": "Sun-Pivot",
-      "_type": "Planete",
+      "type": "Planete",
       "components": {
         "Transform": {
           "translation": [ 15.0, 0.0, 0.0 ],
@@ -73,7 +71,7 @@
     {
       "id": "Mars",
       "parent": "Sun-Pivot",
-      "_type": "Planete",
+      "type": "Planete",
       "components": {
         "Transform": {
           "translation": [ 25.0, 0.0, 0.0 ],
@@ -90,7 +88,7 @@
     {
       "id": "Sun-etoile",
       "parent": "Sun-Pivot",
-      "_type": "Etoile",
+      "type": "Etoile",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 0.0 ],
@@ -99,8 +97,7 @@
         },
         "Mesh": {
           "model": "assets/Meshes/sphere 10 faces.obj",
-          "rotationSpeed": 0.05,
-          "orbitalSpeed": 0.0
+          "rotationSpeed": 0.05
         },
         "Light": {
           "type": "Point",
@@ -114,16 +111,10 @@
       "parent": "Sun-Pivot",
       "components": {
         "Transform": {
-          "scale": [ 5.0, 5.0, 5.0 ],
-          "translation": [ 0, 0, 0 ],
-          "rotation": [ 0, 0, 0 ]
+          "scale": [ 5.0, 5.0, 5.0 ]
         },
         "Trigger": {
-          "radius": 100.0,
-          "role": "zone",
-          "onEnterEvent": "",
-          "onStayEvent": "",
-          "onExitEvent": ""
+          "radius": 100.0
         }
       }
     },
@@ -132,16 +123,13 @@
       "parent": "Sun-Pivot",
       "components": {
         "Transform": {
-          "translation": [ 0.0, 0.0, 0.0 ],
-          "rotation": [ 0, 0, 0 ],
-          "scale": [ 1, 1, 1 ]
+          "translation": [ 0.0, 0.0, 0.0 ]
         },
         "Trigger": {
           "radius": 100.0,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE",
-          "role": "zone"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE"
         }
       }
     },
@@ -150,9 +138,7 @@
       "parent": "Sun-Pivot",
       "components": {
         "Transform": {
-          "translation": [ 8.0, 0.0, 0.0 ],
-          "rotation": [ 0, 0, 0 ],
-          "scale": [ 1, 1, 1 ]
+          "translation": [ 8.0, 0.0, 0.0 ]
         },
         "Mesh": {
           "model": "assets/Meshes/cube.obj",
@@ -160,19 +146,18 @@
           "rotationSpeed": 0
         },
         "Trigger": {
-          "radius": 0.5,
-          "role": "zone",
-          "onEnterEvent": "",
-          "onStayEvent": "",
-          "onExitEvent": ""
+          "radius": 0.5
         },
-        "Health": { "maxHealth": 100, "currentHealth": 100 },
-        "PlayerControl": { "speed": 0.5 }
+        "Health": {
+          "maxHealth": 100
+        },
+        "PlayerControl": {
+          "speed": 0.5
+        }
       }
     },
     {
       "id": "FPS_Camera",
-      "parent": null,
       "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
       "components": {
         "Transform": {
@@ -187,12 +172,7 @@
           "far": 2000.0,
           "active": true,
           "priority": 10,
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov",
-          "category": "gameplay"
+          "gizmo": { "length": 3.0 }
         },
         "CameraFPS": {
           "enabled": true,
@@ -206,7 +186,6 @@
     },
     {
       "id": "Follow_Camera",
-      "parent": null,
       "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
       "components": {
         "Transform": {
@@ -221,27 +200,20 @@
           "far": 2000.0,
           "active": true,
           "priority": 5,
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov",
-          "category": "gameplay"
+          "gizmo": { "length": 3.0 }
         },
         "CameraFollow": {
           "enabled": true,
           "target": "Earth",
           "offset": [ 0.0, 5.0, -35.0 ],
           "smoothSpeed": 5.0,
-          "lookAtHeight": 0.0,
-          "followRotation": true
+          "lookAtHeight": 0.0
         }
       }
     },
     {
       "id": "Overview_Camera",
-      "parent": null,
-      "_notes": "Camera permettant de visualier la scène globale",
+      "Notes": "Camera permettant de visualier la scène globale",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 120.0 ],
@@ -251,21 +223,20 @@
         "Camera": {
           "projection": "perspective",
           "lens": "fov",
+          "gateFit": "overscan",
           "fov": 60.0,
           "near": 1.0,
+          "far": 300.0,
           "infiniteFar": true,
           "active": true,
           "priority": 0,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Top_Camera",
-      "parent": null,
       "_note": "Concession au bug 46 : main.cpp cherche 'Top_Camera' en dur. Sera supprimée quand les viewports seront pilotés par la scène (P1).",
       "components": {
         "Transform": {
@@ -281,22 +252,16 @@
           "active": true,
           "category": "debug",
           "priority": 0,
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Top_View",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 0, 120, 0 ],
-          "rotation": [ -90, 0, 0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ -90, 0, 0 ]
         },
         "Camera": {
           "projection": "perspective",
@@ -306,22 +271,16 @@
           "active": true,
           "priority": 5,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Side_View",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 120, 0, 0 ],
-          "rotation": [ 0, 90, 0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ 0, 90, 0 ]
         },
         "Camera": {
           "projection": "perspective",
@@ -331,22 +290,16 @@
           "active": true,
           "priority": 4,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Bottom_View",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 0, -120, 0 ],
-          "rotation": [ 90, 0, 0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ 90, 0, 0 ]
         },
         "Camera": {
           "projection": "perspective",
@@ -356,19 +309,14 @@
           "active": true,
           "priority": 3,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": 150,
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Sun-Pivot",
-      "parent": null,
       "_note": "LA RACINE, déclarée EN DERNIER — c'est tout l'objet du test.",
-      "_type": "Pivot",
+      "type": "Pivot",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 0.0 ],

@@ -3,181 +3,111 @@
   "nodes": [
     {
       "id": "Solar-System",
-      "type": "Anchor",
+      "parent": null,
+      "_type": "Anchor",
       "components": {
         "Transform": {
-          "translation": [
-            0,
-            0,
-            0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1,
-            1,
-            1
-          ]
+          "translation": [ 0, 0, 0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1, 1, 1 ]
         }
       }
     },
     {
       "id": "Sun",
       "parent": "Solar-System",
-      "type": "Etoile",
+      "_type": "Etoile",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            7.25,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            6.538,
-            6.538,
-            6.538
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 7.25, 0.0, 0.0 ],
+          "scale": [ 6.538, 6.538, 6.538 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_hi.obj",
-          "texture": "sun_albedo_2k.jpg",
-          "rotationSpeed": 14.184397
+          "rotationSpeed": 14.184397,
+          "orbitalSpeed": 0.0
         },
         "Light": {
-          "type": "POINT_LIGHT",
-          "color": [
-            1.0,
-            0.94,
-            0.8
-          ],
+          "type": "Point",
+          "color": [ 1.0, 0.94, 0.8 ],
           "intensity": 4.0,
-          "rangeUnits": 600.0
+          "_range": 600.0
         }
       }
     },
     {
       "id": "Sun-Corona-Zone",
       "parent": "Solar-System",
-      "type": "Trigger",
       "_note": "Couronne solaire — degats extremes",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
           "radius": 13.076,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Sun-Heat-Zone",
       "parent": "Solar-System",
-      "type": "Trigger",
       "_note": "Zone de chaleur — degats continus (reste sous l'orbite de Mercure)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
           "radius": 29.421,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Sun-Gravity-Zone",
       "parent": "Solar-System",
-      "type": "Trigger",
       "_note": "Puits gravitationnel du Soleil",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
-          "radius": 39.228
+          "radius": 39.228,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Mercury",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            37.33,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0.034,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.6812,
-            0.6812,
-            0.6812
-          ]
+          "translation": [ 37.33, 0.0, 0.0 ],
+          "rotation": [ 0.034, 0.0, 0.0 ],
+          "scale": [ 0.6812, 0.6812, 0.6812 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "mercury_albedo_2k.jpg",
           "orbitalSpeed": 4.092351,
           "rotationSpeed": 6.138108
         }
@@ -186,87 +116,55 @@
     {
       "id": "Mercury-Surface-Zone",
       "parent": "Mercury",
-      "type": "Trigger",
       "_note": "Pas d'atmosphere — impact direct",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.468,
-            1.468,
-            1.468
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.468, 1.468, 1.468 ]
         },
         "Trigger": {
           "radius": 0.7153,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Mercury-Gravity-Zone",
       "parent": "Mercury",
-      "type": "Trigger",
       "_note": "Puits gravitationnel (Hill reel ~ 90 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.468,
-            1.468,
-            1.468
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.468, 1.468, 1.468 ]
         },
         "Trigger": {
-          "radius": 2.1798
+          "radius": 2.1798,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Venus",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            51.029,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            177.36,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.9796,
-            0.9796,
-            0.9796
-          ]
+          "translation": [ 51.029, 0.0, 0.0 ],
+          "rotation": [ 177.36, 0.0, 0.0 ],
+          "scale": [ 0.9796, 0.9796, 0.9796 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "venus_albedo_2k.jpg",
           "orbitalSpeed": 1.602129,
           "rotationSpeed": -1.481354
         }
@@ -275,87 +173,55 @@
     {
       "id": "Venus-Atmosphere-Zone",
       "parent": "Venus",
-      "type": "Trigger",
       "_note": "Atmosphere corrosive 92 bar, 464 C",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.02082,
-            1.02082,
-            1.02082
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.02082, 1.02082, 1.02082 ]
         },
         "Trigger": {
           "radius": 1.1755,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Venus-Gravity-Zone",
       "parent": "Venus",
-      "type": "Trigger",
       "_note": "Puits gravitationnel (Hill reel ~ 168 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.02082,
-            1.02082,
-            1.02082
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.02082, 1.02082, 1.02082 ]
         },
         "Trigger": {
-          "radius": 4.4082
+          "radius": 4.4082,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Earth",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            60.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            23.44,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 60.0, 0.0, 0.0 ],
+          "rotation": [ 23.44, 0.0, 0.0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "earth_albedo_2k.jpg",
           "orbitalSpeed": 0.98561,
           "rotationSpeed": 360.985189
         }
@@ -364,115 +230,75 @@
     {
       "id": "Earth-Atmosphere-Zone",
       "parent": "Earth",
-      "type": "Trigger",
       "_note": "Rentree atmospherique",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
           "radius": 1.12,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Earth-Gravity-Zone",
       "parent": "Earth",
-      "type": "Trigger",
       "_note": "Puits gravitationnel (Hill reel ~ 235 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
-          "radius": 5.0
+          "radius": 5.0,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Earth-SafeZone-Zone",
       "parent": "Earth",
-      "type": "Trigger",
       "_note": "Zone de reparation / ravitaillement",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
-          "radius": 9.0
+          "radius": 9.0,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Moon",
       "parent": "Earth",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            6.3279,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            6.68,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.5947,
-            0.5947,
-            0.5947
-          ]
+          "translation": [ 6.3279, 0.0, 0.0 ],
+          "rotation": [ 6.68, 0.0, 0.0 ],
+          "scale": [ 0.5947, 0.5947, 0.5947 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "moon_albedo_2k.jpg",
           "orbitalSpeed": 13.17634,
           "rotationSpeed": 13.176356
         }
@@ -481,56 +307,35 @@
     {
       "id": "Moon-Gravity-Zone",
       "parent": "Moon",
-      "type": "Trigger",
       "_note": "Puits gravitationnel lunaire",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.68152,
-            1.68152,
-            1.68152
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.68152, 1.68152, 1.68152 ]
         },
         "Trigger": {
-          "radius": 1.7841
+          "radius": 1.7841,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Mars",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            74.062,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            25.19,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.7769,
-            0.7769,
-            0.7769
-          ]
+          "translation": [ 74.062, 0.0, 0.0 ],
+          "rotation": [ 25.19, 0.0, 0.0 ],
+          "scale": [ 0.7769, 0.7769, 0.7769 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "mars_albedo_2k.jpg",
           "orbitalSpeed": 0.524033,
           "rotationSpeed": 350.892868
         }
@@ -539,87 +344,55 @@
     {
       "id": "Mars-Atmosphere-Zone",
       "parent": "Mars",
-      "type": "Trigger",
       "_note": "Atmosphere tenue + tempetes de poussiere",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.28717,
-            1.28717,
-            1.28717
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.28717, 1.28717, 1.28717 ]
         },
         "Trigger": {
           "radius": 0.8546,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Mars-Gravity-Zone",
       "parent": "Mars",
-      "type": "Trigger",
       "_note": "Puits gravitationnel (Hill reel ~ 320 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.28717,
-            1.28717,
-            1.28717
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.28717, 1.28717, 1.28717 ]
         },
         "Trigger": {
-          "radius": 3.263
+          "radius": 3.263,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Phobos",
       "parent": "Mars",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            1.70202,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.10207,
-            0.10207,
-            0.10207
-          ]
+          "translation": [ 1.70202, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.10207, 0.10207, 0.10207 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "phobos_albedo_2k.jpg",
           "orbitalSpeed": 1128.845129,
           "rotationSpeed": 1128.821531
         }
@@ -628,28 +401,15 @@
     {
       "id": "Deimos",
       "parent": "Mars",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.38847,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.08032,
-            0.08032,
-            0.08032
-          ]
+          "translation": [ 2.38847, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.08032, 0.08032, 0.08032 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "deimos_albedo_2k.jpg",
           "orbitalSpeed": 285.162067,
           "rotationSpeed": 285.148515
         }
@@ -658,28 +418,15 @@
     {
       "id": "Ceres",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            99.776,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            4.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.3524,
-            0.3524,
-            0.3524
-          ]
+          "translation": [ 99.776, 0.0, 0.0 ],
+          "rotation": [ 4.0, 0.0, 0.0 ],
+          "scale": [ 0.3524, 0.3524, 0.3524 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "ceres_albedo_2k.jpg",
           "orbitalSpeed": 0.214078,
           "rotationSpeed": 952.171038
         }
@@ -688,56 +435,35 @@
     {
       "id": "Ceres-Gravity-Zone",
       "parent": "Ceres",
-      "type": "Trigger",
       "_note": "Puits gravitationnel faible",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            2.83768,
-            2.83768,
-            2.83768
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 2.83768, 2.83768, 2.83768 ]
         },
         "Trigger": {
-          "radius": 1.0572
+          "radius": 1.0572,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Jupiter",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            136.871,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            3.13,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            2.607,
-            2.607,
-            2.607
-          ]
+          "translation": [ 136.871, 0.0, 0.0 ],
+          "rotation": [ 3.13, 0.0, 0.0 ],
+          "scale": [ 2.607, 2.607, 2.607 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_hi.obj",
-          "texture": "jupiter_albedo_2k.jpg",
           "orbitalSpeed": 0.083091,
           "rotationSpeed": 870.528967
         }
@@ -746,142 +472,87 @@
     {
       "id": "Jupiter-Rings",
       "parent": "Jupiter",
-      "type": "Ring",
+      "_type": "Ring",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            3.13,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.38358,
-            0.38358,
-            0.38358
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 3.13, 0.0, 0.0 ],
+          "scale": [ 0.38358, 0.38358, 0.38358 ]
         }
       }
     },
     {
       "id": "Jupiter-Atmosphere-Zone",
       "parent": "Jupiter",
-      "type": "Trigger",
       "_note": "Ecrasement — 1000 bar a -100 km",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.38358,
-            0.38358,
-            0.38358
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.38358, 0.38358, 0.38358 ]
         },
         "Trigger": {
           "radius": 2.9981,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Jupiter-Radiation-Zone",
       "parent": "Jupiter",
-      "type": "Trigger",
       "_note": "Ceinture de radiations / tore de Io : letal",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.38358,
-            0.38358,
-            0.38358
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.38358, 0.38358, 0.38358 ]
         },
         "Trigger": {
           "radius": 10.428,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Jupiter-Gravity-Zone",
       "parent": "Jupiter",
-      "type": "Trigger",
       "_note": "Puits gravitationnel majeur (Hill reel ~ 740 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.38358,
-            0.38358,
-            0.38358
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.38358, 0.38358, 0.38358 ]
         },
         "Trigger": {
-          "radius": 26.07
+          "radius": 26.07,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Io",
       "parent": "Jupiter",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.24496,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.23245,
-            0.23245,
-            0.23245
-          ]
+          "translation": [ 2.24496, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.23245, 0.23245, 0.23245 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "io_albedo_2k.jpg",
           "orbitalSpeed": 203.488931,
           "rotationSpeed": 203.490426
         }
@@ -890,59 +561,35 @@
     {
       "id": "Io-Volcanic-Zone",
       "parent": "Io",
-      "type": "Trigger",
       "_note": "Volcanisme actif — ejectas",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.65017,
-            1.65017,
-            1.65017
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.65017, 1.65017, 1.65017 ]
         },
         "Trigger": {
           "radius": 1.212,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Europa",
       "parent": "Jupiter",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.76686,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0.1,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.21853,
-            0.21853,
-            0.21853
-          ]
+          "translation": [ 2.76686, 0.0, 0.0 ],
+          "rotation": [ 0.1, 0.0, 0.0 ],
+          "scale": [ 0.21853, 0.21853, 0.21853 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "europa_albedo_2k.jpg",
           "orbitalSpeed": 101.374726,
           "rotationSpeed": 101.375135
         }
@@ -951,56 +598,35 @@
     {
       "id": "Europa-Gravity-Zone",
       "parent": "Europa",
-      "type": "Trigger",
       "_note": "Puits gravitationnel",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.75531,
-            1.75531,
-            1.75531
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.75531, 1.75531, 1.75531 ]
         },
         "Trigger": {
-          "radius": 1.4243
+          "radius": 1.4243,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Ganymede",
       "parent": "Jupiter",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            3.41392,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0.165,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.26943,
-            0.26943,
-            0.26943
-          ]
+          "translation": [ 3.41392, 0.0, 0.0 ],
+          "rotation": [ 0.165, 0.0, 0.0 ],
+          "scale": [ 0.26943, 0.26943, 0.26943 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "ganymede_albedo_2k.jpg",
           "orbitalSpeed": 50.317609,
           "rotationSpeed": 50.317689
         }
@@ -1009,28 +635,15 @@
     {
       "id": "Callisto",
       "parent": "Jupiter",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            4.40157,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.26003,
-            0.26003,
-            0.26003
-          ]
+          "translation": [ 4.40157, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.26003, 0.26003, 0.26003 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "callisto_albedo_2k.jpg",
           "orbitalSpeed": 21.571071,
           "rotationSpeed": 21.571095
         }
@@ -1039,28 +652,15 @@
     {
       "id": "Saturn",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            185.734,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            26.73,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            2.4232,
-            2.4232,
-            2.4232
-          ]
+          "translation": [ 185.734, 0.0, 0.0 ],
+          "rotation": [ 26.73, 0.0, 0.0 ],
+          "scale": [ 2.4232, 2.4232, 2.4232 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_hi.obj",
-          "texture": "saturn_albedo_2k.jpg",
           "orbitalSpeed": 0.03346,
           "rotationSpeed": 810.810811
         }
@@ -1069,111 +669,67 @@
     {
       "id": "Saturn-Rings",
       "parent": "Saturn",
-      "type": "Ring",
+      "_type": "Ring",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            26.73,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.41268,
-            0.41268,
-            0.41268
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 26.73, 0.0, 0.0 ],
+          "scale": [ 0.41268, 0.41268, 0.41268 ]
         }
       }
     },
     {
       "id": "Saturn-Atmosphere-Zone",
       "parent": "Saturn",
-      "type": "Trigger",
       "_note": "Ecrasement atmospherique",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.41268,
-            0.41268,
-            0.41268
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.41268, 0.41268, 0.41268 ]
         },
         "Trigger": {
           "radius": 2.7867,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Saturn-Gravity-Zone",
       "parent": "Saturn",
-      "type": "Trigger",
       "_note": "Puits gravitationnel (Hill reel ~ 1100 R)",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.41268,
-            0.41268,
-            0.41268
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.41268, 0.41268, 0.41268 ]
         },
         "Trigger": {
-          "radius": 19.3856
+          "radius": 19.3856,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Mimas",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            1.703,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.103,
-            0.103,
-            0.103
-          ]
+          "translation": [ 1.703, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.103, 0.103, 0.103 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "mimas_albedo_2k.jpg",
           "orbitalSpeed": 382.165605,
           "rotationSpeed": 382.165605
         }
@@ -1182,28 +738,15 @@
     {
       "id": "Enceladus",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            1.88404,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.1134,
-            0.1134,
-            0.1134
-          ]
+          "translation": [ 1.88404, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.1134, 0.1134, 0.1134 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "enceladus_albedo_2k.jpg",
           "orbitalSpeed": 262.731916,
           "rotationSpeed": 262.733769
         }
@@ -1212,28 +755,15 @@
     {
       "id": "Tethys",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.07416,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.15277,
-            0.15277,
-            0.15277
-          ]
+          "translation": [ 2.07416, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.15277, 0.15277, 0.15277 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "tethys_albedo_2k.jpg",
           "orbitalSpeed": 190.697965,
           "rotationSpeed": 190.699009
         }
@@ -1242,28 +772,15 @@
     {
       "id": "Dione",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.31867,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.1562,
-            0.1562,
-            0.1562
-          ]
+          "translation": [ 2.31867, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.1562, 0.1562, 0.1562 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "dione_albedo_2k.jpg",
           "orbitalSpeed": 131.534958,
           "rotationSpeed": 131.534878
         }
@@ -1272,28 +789,15 @@
     {
       "id": "Rhea",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.69483,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.17667,
-            0.17667,
-            0.17667
-          ]
+          "translation": [ 2.69483, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.17667, 0.17667, 0.17667 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "rhea_albedo_2k.jpg",
           "orbitalSpeed": 79.677536,
           "rotationSpeed": 79.677601
         }
@@ -1302,28 +806,15 @@
     {
       "id": "Titan",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            3.93405,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.28722,
-            0.28722,
-            0.28722
-          ]
+          "translation": [ 3.93405, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.28722, 0.28722, 0.28722 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "titan_albedo_2k.jpg",
           "orbitalSpeed": 22.577611,
           "rotationSpeed": 22.57761
         }
@@ -1332,59 +823,35 @@
     {
       "id": "Titan-Atmosphere-Zone",
       "parent": "Titan",
-      "type": "Trigger",
       "_note": "Atmosphere epaisse d'azote/methane",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.43678,
-            1.43678,
-            1.43678
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.43678, 1.43678, 1.43678 ]
         },
         "Trigger": {
           "radius": 0.9744,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Iapetus",
       "parent": "Saturn",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            6.36613,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.1739,
-            0.1739,
-            0.1739
-          ]
+          "translation": [ 6.36613, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.1739, 0.1739, 0.1739 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "iapetus_albedo_2k.jpg",
           "orbitalSpeed": 4.538492,
           "rotationSpeed": 4.538483
         }
@@ -1393,28 +860,15 @@
     {
       "id": "Uranus",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            262.915,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            97.77,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            1.7378,
-            1.7378,
-            1.7378
-          ]
+          "translation": [ 262.915, 0.0, 0.0 ],
+          "rotation": [ 97.77, 0.0, 0.0 ],
+          "scale": [ 1.7378, 1.7378, 1.7378 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "uranus_albedo_2k.jpg",
           "orbitalSpeed": 0.011731,
           "rotationSpeed": -501.160093
         }
@@ -1423,111 +877,67 @@
     {
       "id": "Uranus-Rings",
       "parent": "Uranus",
-      "type": "Ring",
+      "_type": "Ring",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            97.77,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.57544,
-            0.57544,
-            0.57544
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 97.77, 0.0, 0.0 ],
+          "scale": [ 0.57544, 0.57544, 0.57544 ]
         }
       }
     },
     {
       "id": "Uranus-Atmosphere-Zone",
       "parent": "Uranus",
-      "type": "Trigger",
       "_note": "Ecrasement atmospherique",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.57544,
-            0.57544,
-            0.57544
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.57544, 0.57544, 0.57544 ]
         },
         "Trigger": {
           "radius": 1.9985,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Uranus-Gravity-Zone",
       "parent": "Uranus",
-      "type": "Trigger",
       "_note": "Puits gravitationnel",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.57544,
-            0.57544,
-            0.57544
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.57544, 0.57544, 0.57544 ]
         },
         "Trigger": {
-          "radius": 11.2957
+          "radius": 11.2957,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Miranda",
       "parent": "Uranus",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.08194,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.15393,
-            0.15393,
-            0.15393
-          ]
+          "translation": [ 2.08194, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.15393, 0.15393, 0.15393 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "miranda_albedo_2k.jpg",
           "orbitalSpeed": 254.690731,
           "rotationSpeed": 254.694455
         }
@@ -1536,28 +946,15 @@
     {
       "id": "Ariel",
       "parent": "Uranus",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.48015,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.22045,
-            0.22045,
-            0.22045
-          ]
+          "translation": [ 2.48015, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.22045, 0.22045, 0.22045 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "ariel_albedo_2k.jpg",
           "orbitalSpeed": 142.857143,
           "rotationSpeed": 142.835887
         }
@@ -1566,28 +963,15 @@
     {
       "id": "Umbriel",
       "parent": "Uranus",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            2.8795,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.22137,
-            0.22137,
-            0.22137
-          ]
+          "translation": [ 2.8795, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.22137, 0.22137, 0.22137 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "umbriel_albedo_2k.jpg",
           "orbitalSpeed": 86.872587,
           "rotationSpeed": 86.869093
         }
@@ -1596,28 +980,15 @@
     {
       "id": "Titania",
       "parent": "Uranus",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            3.59621,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.24945,
-            0.24945,
-            0.24945
-          ]
+          "translation": [ 3.59621, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.24945, 0.24945, 0.24945 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "titania_albedo_2k.jpg",
           "orbitalSpeed": 41.350793,
           "rotationSpeed": 41.351386
         }
@@ -1626,28 +997,15 @@
     {
       "id": "Oberon",
       "parent": "Uranus",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            4.10053,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.246,
-            0.246,
-            0.246
-          ]
+          "translation": [ 4.10053, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.246, 0.246, 0.246 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "oberon_albedo_2k.jpg",
           "orbitalSpeed": 26.739954,
           "rotationSpeed": 26.739457
         }
@@ -1656,28 +1014,15 @@
     {
       "id": "Neptune",
       "parent": "Solar-System",
-      "type": "Planete",
+      "_type": "Planete",
       "components": {
         "Transform": {
-          "translation": [
-            328.894,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            28.32,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            1.7173,
-            1.7173,
-            1.7173
-          ]
+          "translation": [ 328.894, 0.0, 0.0 ],
+          "rotation": [ 28.32, 0.0, 0.0 ],
+          "scale": [ 1.7173, 1.7173, 1.7173 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "neptune_albedo_2k.jpg",
           "orbitalSpeed": 0.005981,
           "rotationSpeed": 536.312849
         }
@@ -1686,111 +1031,67 @@
     {
       "id": "Neptune-Rings",
       "parent": "Neptune",
-      "type": "Ring",
+      "_type": "Ring",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            28.32,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.58231,
-            0.58231,
-            0.58231
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 28.32, 0.0, 0.0 ],
+          "scale": [ 0.58231, 0.58231, 0.58231 ]
         }
       }
     },
     {
       "id": "Neptune-Atmosphere-Zone",
       "parent": "Neptune",
-      "type": "Trigger",
       "_note": "Vents a 2100 km/h",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.58231,
-            0.58231,
-            0.58231
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.58231, 0.58231, 0.58231 ]
         },
         "Trigger": {
           "radius": 1.9749,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Neptune-Gravity-Zone",
       "parent": "Neptune",
-      "type": "Trigger",
       "_note": "Puits gravitationnel",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.58231,
-            0.58231,
-            0.58231
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.58231, 0.58231, 0.58231 ]
         },
         "Trigger": {
-          "radius": 11.1624
+          "radius": 11.1624,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Triton",
       "parent": "Neptune",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            3.32178,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.31334,
-            0.31334,
-            0.31334
-          ]
+          "translation": [ 3.32178, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.31334, 0.31334, 0.31334 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "triton_albedo_2k.jpg",
           "orbitalSpeed": -61.257265,
           "rotationSpeed": -61.25748
         }
@@ -1799,28 +1100,15 @@
     {
       "id": "Pluto",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            377.007,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            122.53,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.5108,
-            0.5108,
-            0.5108
-          ]
+          "translation": [ 377.007, 0.0, 0.0 ],
+          "rotation": [ 122.53, 0.0, 0.0 ],
+          "scale": [ 0.5108, 0.5108, 0.5108 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "pluto_albedo_2k.jpg",
           "orbitalSpeed": 0.003975,
           "rotationSpeed": -56.362652
         }
@@ -1829,56 +1117,35 @@
     {
       "id": "Pluto-Gravity-Zone",
       "parent": "Pluto",
-      "type": "Trigger",
       "_note": "Puits gravitationnel faible",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.95771,
-            1.95771,
-            1.95771
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.95771, 1.95771, 1.95771 ]
         },
         "Trigger": {
-          "radius": 1.5324
+          "radius": 1.5324,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Vesta",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            92.209,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            29.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.2793,
-            0.2793,
-            0.2793
-          ]
+          "translation": [ 92.209, 0.0, 0.0 ],
+          "rotation": [ 29.0, 0.0, 0.0 ],
+          "scale": [ 0.2793, 0.2793, 0.2793 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "vesta_albedo_2k.jpg",
           "orbitalSpeed": 0.271544,
           "rotationSpeed": 1617.371771
         }
@@ -1887,56 +1154,35 @@
     {
       "id": "Vesta-Gravity-Zone",
       "parent": "Vesta",
-      "type": "Trigger",
       "_note": "Puits gravitationnel — ancrage minier",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            3.58038,
-            3.58038,
-            3.58038
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 3.58038, 3.58038, 3.58038 ]
         },
         "Trigger": {
-          "radius": 0.6983
+          "radius": 0.6983,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Pallas",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            99.898,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            84.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.2762,
-            0.2762,
-            0.2762
-          ]
+          "translation": [ 99.898, 0.0, 0.0 ],
+          "rotation": [ 84.0, 0.0, 0.0 ],
+          "scale": [ 0.2762, 0.2762, 0.2762 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "pallas_albedo_2k.jpg",
           "orbitalSpeed": 0.213523,
           "rotationSpeed": 1105.849226
         }
@@ -1945,28 +1191,15 @@
     {
       "id": "Haumea",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            394.036,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            126.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.5814,
-            0.2974,
-            0.4648
-          ]
+          "translation": [ 394.036, 0.0, 0.0 ],
+          "rotation": [ 126.0, 0.0, 0.0 ],
+          "scale": [ 0.5814, 0.2974, 0.4648 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "haumea_albedo_2k.jpg",
           "orbitalSpeed": 0.003469,
           "rotationSpeed": 2206.614736
         }
@@ -1975,111 +1208,67 @@
     {
       "id": "Haumea-Rings",
       "parent": "Haumea",
-      "type": "Ring",
+      "_type": "Ring",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            126.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            2.31696,
-            2.31696,
-            2.31696
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 126.0, 0.0, 0.0 ],
+          "scale": [ 2.31696, 2.31696, 2.31696 ]
         }
       }
     },
     {
       "id": "Haumea-Spin-Zone",
       "parent": "Haumea",
-      "type": "Trigger",
       "_note": "Rotation en 3h55 : debris ejectes a l'equateur",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            2.31696,
-            2.31696,
-            2.31696
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 2.31696, 2.31696, 2.31696 ]
         },
         "Trigger": {
           "radius": 0.9495,
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
-          "onExitEvent": "STOPPED_TAKING_DAMAGE"
+          "onExitEvent": "STOPPED_TAKING_DAMAGE",
+          "role": "zone"
         }
       }
     },
     {
       "id": "Haumea-Gravity-Zone",
       "parent": "Haumea",
-      "type": "Trigger",
       "_note": "Puits gravitationnel",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            2.31696,
-            2.31696,
-            2.31696
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 2.31696, 2.31696, 2.31696 ]
         },
         "Trigger": {
-          "radius": 1.2948
+          "radius": 1.2948,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Hiiaka",
       "parent": "Haumea",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            6.49722,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.53082,
-            0.53082,
-            0.53082
-          ]
+          "translation": [ 6.49722, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.53082, 0.53082, 0.53082 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "hiiaka_albedo_2k.jpg",
           "orbitalSpeed": 7.32899,
           "rotationSpeed": 36.765957
         }
@@ -2088,28 +1277,15 @@
     {
       "id": "Namaka",
       "parent": "Haumea",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            4.81719,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.41219,
-            0.41219,
-            0.41219
-          ]
+          "translation": [ 4.81719, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.41219, 0.41219, 0.41219 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "namaka_albedo_2k.jpg",
           "orbitalSpeed": 19.695486,
           "rotationSpeed": 86.4
         }
@@ -2118,28 +1294,15 @@
     {
       "id": "Makemake",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            404.404,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.4169,
-            0.4169,
-            0.4169
-          ]
+          "translation": [ 404.404, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.4169, 0.4169, 0.4169 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "makemake_albedo_2k.jpg",
           "orbitalSpeed": 0.003181,
           "rotationSpeed": 378.505778
         }
@@ -2148,28 +1311,15 @@
     {
       "id": "Eris",
       "parent": "Solar-System",
-      "type": "PlaneteNaine",
+      "_type": "PlaneteNaine",
       "components": {
         "Transform": {
-          "translation": [
-            494.316,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            78.0,
-            0.0,
-            0.0
-          ],
-          "scale": [
-            0.5065,
-            0.5065,
-            0.5065
-          ]
+          "translation": [ 494.316, 0.0, 0.0 ],
+          "rotation": [ 78.0, 0.0, 0.0 ],
+          "scale": [ 0.5065, 0.5065, 0.5065 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_mid.obj",
-          "texture": "eris_albedo_2k.jpg",
           "orbitalSpeed": 0.001766,
           "rotationSpeed": 22.805017
         }
@@ -2178,56 +1328,35 @@
     {
       "id": "Eris-Gravity-Zone",
       "parent": "Eris",
-      "type": "Trigger",
       "_note": "Puits gravitationnel — corps le plus lointain",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.97433,
-            1.97433,
-            1.97433
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.97433, 1.97433, 1.97433 ]
         },
         "Trigger": {
-          "radius": 1.5195
+          "radius": 1.5195,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Dysnomia",
       "parent": "Eris",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            4.76012,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.58736,
-            0.58736,
-            0.58736
-          ]
+          "translation": [ 4.76012, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.58736, 0.58736, 0.58736 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "dysnomia_albedo_2k.jpg",
           "orbitalSpeed": 22.805017,
           "rotationSpeed": 22.805017
         }
@@ -2236,28 +1365,15 @@
     {
       "id": "Charon",
       "parent": "Pluto",
-      "type": "Lune",
+      "_type": "Lune",
       "components": {
         "Transform": {
-          "translation": [
-            3.52956,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.7639,
-            0.7639,
-            0.7639
-          ]
+          "translation": [ 3.52956, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.7639, 0.7639, 0.7639 ]
         },
         "Mesh": {
           "model": "assets/Meshes/sphere_lo.obj",
-          "texture": "charon_albedo_2k.jpg",
           "orbitalSpeed": 56.362725,
           "rotationSpeed": 56.362652
         }
@@ -2266,129 +1382,91 @@
     {
       "id": "AsteroidBelt-Zone",
       "parent": "Solar-System",
-      "type": "Trigger",
       "_note": "Ceinture principale — trigger en coquille (shape 'shell')",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
-          "radius": 108.499
+          "radius": 108.499,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "KuiperBelt-Zone",
       "parent": "Solar-System",
-      "type": "Trigger",
       "_note": "Ceinture de Kuiper — trigger en coquille (shape 'shell')",
+      "_type": "Trigger",
       "components": {
         "Transform": {
-          "translation": [
-            0.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1.0,
-            1.0,
-            1.0
-          ]
+          "translation": [ 0.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1.0, 1.0, 1.0 ]
         },
         "Trigger": {
-          "radius": 424.264
+          "radius": 424.264,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "Player_Ship",
+      "parent": null,
       "_note": "Pas de parent : le controleur ecrit une position MONDE.",
       "components": {
         "Transform": {
-          "translation": [
-            64.0,
-            0.0,
-            0.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            0.35,
-            0.35,
-            0.35
-          ]
+          "translation": [ 64.0, 0.0, 0.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 0.35, 0.35, 0.35 ]
         },
         "Mesh": {
           "model": "assets/Meshes/ship_scout.obj",
-          "texture": "ship_scout_albedo_1k.png"
+          "orbitalSpeed": 0.0,
+          "rotationSpeed": 0.0
         },
-        "Health": {
-          "maxHealth": 100
-        },
-        "PlayerControl": {
-          "speed": 12.0
-        },
+        "Health": { "maxHealth": 100, "currentHealth": 100 },
+        "PlayerControl": { "speed": 12.0 },
         "Trigger": {
-          "radius": 0.5
+          "radius": 0.5,
+          "role": "zone",
+          "onEnterEvent": "",
+          "onStayEvent": "",
+          "onExitEvent": ""
         }
       }
     },
     {
       "id": "FPS_Camera",
+      "parent": null,
       "_note": "Pas de parent : un controleur ecrit en local.",
       "components": {
         "Transform": {
-          "translation": [
-            60.0,
-            3.0,
-            12.0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1,
-            1,
-            1
-          ]
+          "translation": [ 60.0, 3.0, 12.0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1, 1, 1 ]
         },
         "Camera": {
           "projection": "perspective",
           "lens": "fov",
           "fov": 45.0,
           "near": 0.05,
-          "far": 2000.0,
           "infiniteFar": true,
           "active": true,
           "priority": 5,
-          "category": "game",
-          "gizmo": {
-            "length": 3.0
-          }
+          "category": "gameplay",
+          "gizmo": { "length": 3.0 },
+          "depthDisplayRange": 150,
+          "lodTolerancePx": null
         },
         "CameraFPS": {
           "enabled": true,
@@ -2402,6 +1480,7 @@
     },
     {
       "id": "Follow_Camera",
+      "parent": null,
       "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
       "components": {
         "Transform": {
@@ -2416,7 +1495,12 @@
           "far": 2000.0,
           "active": true,
           "priority": 0,
-          "gizmo": { "length": 3.0 }
+          "gizmo": { "length": 3.0 },
+          "infiniteFar": false,
+          "depthDisplayRange": 150,
+          "lodTolerancePx": null,
+          "lens": "fov",
+          "category": "gameplay"
         },
         "CameraFollow": {
           "enabled": true,
@@ -2424,30 +1508,19 @@
           "offset": [ 0.0, 2.0, 6.0 ],
           "smoothSpeed": 5.0,
           "lookAtHeight": 0.0,
-          "followRotation" :  true
+          "followRotation": true
         }
       }
     },
     {
       "id": "Overview_Camera",
+      "parent": null,
       "_note": "Vue d'ensemble du systeme.",
       "components": {
         "Transform": {
-          "translation": [
-            0,
-            0,
-            0
-          ],
-          "rotation": [
-            0,
-            0,
-            0
-          ],
-          "scale": [
-            1,
-            1,
-            1
-          ]
+          "translation": [ 0, 0, 0 ],
+          "rotation": [ 0, 0, 0 ],
+          "scale": [ 1, 1, 1 ]
         },
         "Camera": {
           "projection": "orthographic",
@@ -2458,9 +1531,9 @@
           "active": true,
           "priority": 0,
           "category": "debug",
-          "gizmo": {
-            "length": 10.0
-          }
+          "gizmo": { "length": 10.0 },
+          "depthDisplayRange": 150,
+          "lodTolerancePx": null
         }
       }
     }

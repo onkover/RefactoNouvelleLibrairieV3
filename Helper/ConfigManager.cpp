@@ -5,7 +5,7 @@
 #include <fstream>
 #include <unordered_map>
 #include "core/JsonReader.h"
-
+#include "core/logger.h"
 #include <windows.h>
 
 using namespace LV3;
@@ -103,20 +103,20 @@ void InitConsole()
 
         JsonReader r(root, "Programme", path);
 
-        try
-        {
-            JsonReader rr = r.Child("configuration");
+        //try
+        //{
+        //    JsonReader rr = r.Child("configuration");
 
-            // Lecture sécurisée avec valeurs par défaut si la clé est absente
-            cfg.repObjDefault = rr.Read("REP_OBJ_DEFAULT", std::string("G:\\Projects Visual Studio\\OBJ\\"));
-            cfg.repGfxDefault = rr.Read("REP_GFX_DEFAULT", std::string("G:\\Projects Visual Studio\\Graphs\\"));
+        //    // Lecture sécurisée avec valeurs par défaut si la clé est absente
+        //    cfg.repObjDefault = rr.Read("REP_OBJ_DEFAULT", std::string("G:\\Projects Visual Studio\\OBJ\\"));
+        //    cfg.repGfxDefault = rr.Read("REP_GFX_DEFAULT", std::string("G:\\Projects Visual Studio\\Graphs\\"));
 
-            rr.WarnUnread();
-        }
-        catch (const nlo_json::exception& e) {
-            Logger::error(std::string("Erreur lors du parsing JSON des répertoires des assets ") + e.what());
-            return false;
-        }
+        //    rr.WarnUnread();
+        //}
+        //catch (const nlo_json::exception& e) {
+        //    Logger::error(std::string("Erreur lors du parsing JSON des répertoires des assets ") + e.what());
+        //    return false;
+        //}
 
         try
         {
@@ -164,9 +164,10 @@ void InitConsole()
                 //}
             }                  
         }
-        catch (const nlo_json::exception& e) {
-            std::cerr << "Erreur lors du parsing JSON du gizmo ou de lien du scènegraph: " << e.what() << std::endl;
-       }
+        catch (const nlo_json::exception& e)
+        {
+            Logger::error("Erreur lors du parsing JSON du gizmo ou de lien du scènegraph: " + std::string(e.what()));
+        }
 
         try
         {
@@ -192,17 +193,17 @@ void InitConsole()
                     });
 
                 Logger::success("=== Chargement des viewports : " + std::to_string(cfg.mapViewports.size()) + " viewports detectes ===");
-                //int width = 0, height = 0;
-                //for (const auto& [nom, vp] : cfg.mapViewports)
-                //{
-                //    std::cout << "[Configuration] Viewport '" << nom << "' -> Dimensions : " << vp.largeur << "x" << vp.hauteur << "\n";
-                //}
+                for (const auto& [nom, vp] : cfg.mapViewports)
+                {
+					Logger::info("[Configuration] Viewport '" + nom + "' -> Dimensions : " + std::to_string(vp.largeur) + "x" + std::to_string(vp.hauteur));
+                }
 
             }
 
         }
-        catch (const nlo_json::exception& e) {
-            std::cerr << "Erreur lors du parsing JSON des viewport: " << e.what() << std::endl;
+        catch (const nlo_json::exception& e)
+        {
+            Logger::error("Erreur lors du parsing JSON des viewport: " + std::string(e.what()));
         }
 
         r.WarnUnread();
@@ -240,13 +241,13 @@ void InitConsole()
         catch (const std::runtime_error& e)
         {
             // Erreur spécifique levée par GetOrCreateString (accès refusé, clé invalide...)
-            std::cerr << "\n\033[32m=== Erreur registre : " << e.what() << " ===\033[0m" << std::endl;
+            Logger::error("Erreur registre : " + std::string(e.what()));
             return 1;
         }
         catch (const std::exception& e)
         {
             // Toute autre exception standard
-            std::cerr << "\n\033[32m=== Erreur inattendue : " << e.what() << " ===\033[0m" << std::endl;
+			Logger::error("Erreur inattendue : " + std::string(e.what()));
             return 1;
         }
     }

@@ -32,6 +32,7 @@ namespace LV3::Tests
     void TestD3_2_SurchargesCamera();
     void TestD3_3a_NiveauNoeud();
 	void TestD3_3b_Blocs();
+    void TestD3_3c_Parseurs();
 
 
 
@@ -77,6 +78,7 @@ namespace LV3::Tests
         TestD3_2_SurchargesCamera();
         TestD3_3a_NiveauNoeud();
         TestD3_3b_Blocs();
+        TestD3_3c_Parseurs();
         RunAllCameraMathTests();
         TestCameraZoom();
         TestProjection();

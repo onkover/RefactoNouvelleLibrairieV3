@@ -3,8 +3,7 @@
   "nodes": [
     {
       "id": "Pivot",
-      "parent": null,
-      "_type": "Pivot",
+      "type": "Pivot",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 0.0 ],
@@ -16,7 +15,7 @@
     {
       "id": "Cube1",
       "parent": "Cube2",
-      "_type": "xxxx",
+      "type": "xxxx",
       "components": {
         "Transform": {
           "translation": [ -30.0, 0.0, 0.0 ],
@@ -25,15 +24,15 @@
         },
         "Mesh": {
           "model": "assets/Meshes/cube.obj",
-          "rotationSpeed": 0.05,
-          "orbitalSpeed": 0.0
+          "texture": "sun.jpg",
+          "rotationSpeed": 0.05
         }
       }
     },
     {
       "id": "Cube2",
       "parent": "Pivot",
-      "_type": "xxxx",
+      "type": "xxxx",
       "components": {
         "Transform": {
           "translation": [ 30.0, 0.0, 0.0 ],
@@ -42,6 +41,7 @@
         },
         "Mesh": {
           "model": "assets/Meshes/cube.obj",
+          "texture": "earth_day.jpg",
           "orbitalSpeed": 0.1,
           "rotationSpeed": 0.01
         }
@@ -50,7 +50,7 @@
     {
       "id": "Cube3",
       "parent": "Cube2",
-      "_type": "xxxx",
+      "type": "xxxx",
       "components": {
         "Transform": {
           "translation": [ -40.0, 20.0, 0.0 ],
@@ -59,15 +59,15 @@
         },
         "Mesh": {
           "model": "assets/Meshes/cube.obj",
-          "rotationSpeed": 0.05,
-          "orbitalSpeed": 0.0
+          "texture": "sun.jpg",
+          "rotationSpeed": 0.05
         }
       }
     },
     {
       "id": "zone-triggering",
       "parent": "Cube1",
-      "_type": "Trigger",
+      "type": "Trigger",
       "components": {
         "Transform": {
           "translation": [ 0.0, 0.0, 0.0 ],
@@ -85,33 +85,47 @@
     },
     {
       "id": "Player_Ship",
-      "parent": null,
       "_note": "Pas de parent : le controleur ecrit une position MONDE.",
       "components": {
         "Transform": {
-          "translation": [ 14.0, 0.0, 0.0 ],
-          "rotation": [ 0, 0, 0 ],
-          "scale": [ 0.35, 0.35, 0.35 ]
+          "translation": [
+            14.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ],
+          "scale": [
+            0.35,
+            0.35,
+            0.35
+          ]
         },
         "Mesh": {
           "model": "assets/Meshes/ship_scout.obj",
-          "orbitalSpeed": 0.0,
-          "rotationSpeed": 0.0
+          "texture": "ship_scout_albedo_1k.png"
         },
-        "Health": { "maxHealth": 100, "currentHealth": 100 },
-        "PlayerControl": { "speed": 12.0 },
+        "Health": {
+          "maxHealth": 100
+        },
+        "PlayerControl": {
+          "speed": 12.0
+        },
         "Trigger": {
           "radius": 0.01,
           "role": "probe",
           "onEnterEvent": "STARTED_TAKING_DAMAGE",
           "onStayEvent": "TAKING_DAMAGE",
           "onExitEvent": "STOPPED_TAKING_DAMAGE"
+
         }
       }
     },
     {
       "id": "FPS_Camera",
-      "parent": null,
       "_note": "PAS de parent : un contrôleur écrit en local, un parent ajouterait sa matrice par-dessus",
       "components": {
         "Transform": {
@@ -126,12 +140,7 @@
           "far": 2000.0,
           "active": true,
           "priority": 10,
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": null,
-          "lodTolerancePx": null,
-          "lens": "fov",
-          "category": "gameplay"
+          "gizmo": { "length": 3.0 }
         },
         "CameraFPS": {
           "enabled": true,
@@ -145,7 +154,6 @@
     },
     {
       "id": "Follow_Camera",
-      "parent": null,
       "_note": "PAS de parent : CameraFollowSystem produit une position MONDE",
       "components": {
         "Transform": {
@@ -160,32 +168,37 @@
           "far": 2000.0,
           "active": true,
           "priority": 5,
-          "gizmo": { "length": 3.0 },
-          "infiniteFar": false,
-          "depthDisplayRange": null,
-          "lodTolerancePx": null,
-          "lens": "fov",
-          "category": "gameplay"
+          "gizmo": { "length": 3.0 }
         },
         "CameraFollow": {
           "enabled": true,
           "target": "Player_Ship",
           "offset": [ 0.0, 2.0, 5.0 ],
           "smoothSpeed": 5.0,
-          "lookAtHeight": 0.0,
-          "followRotation": true
+          "lookAtHeight": 0.0
         }
       }
     },
     {
       "id": "Overview_Camera",
-      "parent": null,
       "_note": "Vue d'ensemble du systeme.",
       "components": {
         "Transform": {
-          "translation": [ 0.0, 0.0, 50.0 ],
-          "rotation": [ 0.0, 0.0, 0.0 ],
-          "scale": [ 1.0, 1.0, 1.0 ]
+          "translation": [
+            0.0,
+            0.0,
+            50.0
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ]
         },
         "Camera": {
           "projection": "perspective",
@@ -198,104 +211,93 @@
           "priority": 11,
           "depthDisplayRange": 150.0,
           "category": "debug",
-          "gizmo": { "length": 5.0 },
-          "lodTolerancePx": null
+          "gizmo": {
+            "length": 5.0
+          }
         }
       }
     },
     {
       "id": "Top_Camera",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 0.0, 120.0, 0.0 ],
-          "rotation": [ -90.0, 0.0, 0.0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ -90.0, 0.0, 0.0 ]
         },
         "Camera": {
           "projection": "perspective",
           "fov": 60.0,
           "near": 1.0,
+          "far": 2000.0,
           "infiniteFar": true,
           "active": true,
           "priority": 7,
           "depthDisplayRange": 140.0,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Bottom_Camera",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 0.0, -120.0, 0.0 ],
-          "rotation": [ 90.0, 0.0, 0.0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ 90.0, 0.0, 0.0 ]
         },
         "Camera": {
           "projection": "perspective",
           "fov": 60.0,
           "near": 1.0,
+          "far": 2000.0,
           "infiniteFar": true,
           "active": true,
           "priority": 5,
           "depthDisplayRange": 130.0,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Left_Camera",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ -120.0, 0.0, 0.0 ],
-          "rotation": [ 0.0, -90.0, 0.0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ 0.0, -90.0, 0.0 ]
         },
         "Camera": {
           "projection": "perspective",
           "fov": 60.0,
           "near": 1.0,
+          "far": 2000.0,
           "infiniteFar": true,
           "active": true,
           "priority": 4,
           "depthDisplayRange": 120.0,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     },
     {
       "id": "Right_Camera",
-      "parent": null,
       "components": {
         "Transform": {
           "translation": [ 120.0, 0.0, 0.0 ],
-          "rotation": [ 0.0, 90.0, 0.0 ],
-          "scale": [ 1, 1, 1 ]
+          "rotation": [ 0.0, 90.0, 0.0 ]
         },
         "Camera": {
           "projection": "perspective",
           "fov": 60.0,
           "near": 1.0,
+          "far": 2000.0,
           "infiniteFar": true,
           "active": true,
           "priority": 6,
+          "depthDisplayRangeAA": 150.0,
           "category": "debug",
-          "gizmo": { "length": 3.0 },
-          "depthDisplayRange": 150.0,
-          "lodTolerancePx": null,
-          "lens": "fov"
+          "gizmo": { "length": 3.0 }
         }
       }
     }
