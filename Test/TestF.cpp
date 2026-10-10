@@ -170,14 +170,6 @@ namespace LV3::Tests
 		check(again.has_value() && *again == h[0], "cache : meme handle pour un chemin equivalent");
 		check(rm.GetLodChainCount() == 3, "cache : toujours 3 chaines");
 
-		// 4b. Meme fichier, AUTRES options -> autre chaine (avant 3.4a : meme handle, en silence)
-		{
-			OBJLoadOptions other = kSceneOpts; other.scale = 2.0f;
-			const auto r = rm.LoadLodChainChecked(dir + "/rock_a.lod.json", other);
-			check(r.has_value() && *r != h[0], "cache : options differentes -> chaine distincte");
-			check(rm.GetLodChainCount() == 4, "cache : 4 chaines");
-		}
-
 		// 5. Partage : L0 de la chaine EST le mesh rock_a.obj du cache (aucun double chargement)
 		if (a)
 			check(rm.FindMesh(dir + "/rock_a.obj", kSceneOpts) == a->levels[0], "L0 partage avec rock_a.obj");
@@ -192,6 +184,15 @@ namespace LV3::Tests
 			const LodChain* s = rm.GetLodChain(s1);
 			check(s && s->levelCount == 1 && s->levels[0] == m, "chaine implicite : 1 niveau, le mesh");
 			check(s && SelectLodLevel(*s, 0.0f) == 0, "chaine implicite : q'=0 -> L0 quand meme");
+		}
+
+		// 4b. Meme fichier, AUTRES options -> autre chaine (avant 3.4a : meme handle, en silence).
+		// PLACE EN DERNIER : RegisterLodChain peut reallouer m_lodChains et rendre 'a' pendant.
+		{
+			OBJLoadOptions other = kSceneOpts; other.scale = 2.0f;
+			const auto r = rm.LoadLodChainChecked(dir + "/rock_a.lod.json", other);
+			check(r.has_value() && *r != h[0], "cache : options differentes -> chaine distincte");
+			check(rm.GetLodChainCount() == 5, "cache : 5 chaines");
 		}
 
 		// 6. Erreur typee : fichier absent (un Logger::error est ATTENDU ici)

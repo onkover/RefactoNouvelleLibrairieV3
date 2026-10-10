@@ -122,6 +122,7 @@ namespace LV3::Tests
 
         // 4. Refus francs (5 lignes ROUGES attendues) :
         //    id absent / parent inconnu / parent non texte (2 lignes) / nodes absent
+        Logger::info("[D3.3a] Test 4 : \033[31mles 5 erreurs qui suivent sont VOLONTAIRES (refus francs)\033[0m");
         LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "parent": null, )" + kComps + R"( } ] })").ok);
         LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "id": "A", "parent": "Ghost", )" + kComps + R"( } ] })").ok);
         LV3_ASSERT(!LoadSceneText(R"({ "sceneName": "scene TNR", "nodes": [ { "id": "A", "parent": 42, )" + kComps + R"( } ] })").ok);
