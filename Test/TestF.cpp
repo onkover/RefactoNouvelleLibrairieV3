@@ -81,8 +81,8 @@ namespace LV3::Tests
 
 		// 1. Invariants AVANT suppression — la cible est bien vivante et retrouvable dans les deux sens
 		LV3_ASSERT(rm.GetMesh(target) != nullptr);
-		LV3_ASSERT(rm.IsMeshLoaded(targetPath));
-		LV3_ASSERT(rm.FindMesh(targetPath) == target);
+		LV3_ASSERT(rm.IsMeshLoaded(targetPath, opts));
+		LV3_ASSERT(rm.FindMesh(targetPath,opts) == target);
 
 		// --- ACTION ---
 		rm.UnloadMesh(target);
@@ -90,16 +90,16 @@ namespace LV3::Tests
 		// 2. Invariants APRÈS suppression
 		LV3_ASSERT(rm.GetMeshCount() == countBefore - 1);        // exactement un mesh de moins, pas plus
 		LV3_ASSERT(rm.GetMesh(target) == nullptr);               // le handle périmé résout désormais à null
-		LV3_ASSERT(!rm.IsMeshLoaded(targetPath));                // preuve que m_meshIdToPath a bien retrouvé
-		LV3_ASSERT(rm.FindMesh(targetPath) == MeshHandle::Invalid());  // et nettoyé m_pathToMesh — le cœur de F5
+		LV3_ASSERT(!rm.IsMeshLoaded(targetPath, opts));                // preuve que m_meshIdToPath a bien retrouvé
+		LV3_ASSERT(rm.FindMesh(targetPath, opts) == MeshHandle::Invalid());  // et nettoyé m_pathToMesh — le cœur de F5
 
 		// 3. Les AUTRES meshes ne doivent SUBIR AUCUN effet de bord
 		//    (garde contre une éventuelle confusion d'index dans la map inverse)
 		for (size_t i = 1; i < handles.size(); ++i)
 		{
 			LV3_ASSERT(rm.GetMesh(handles[i]) != nullptr);
-			LV3_ASSERT(rm.IsMeshLoaded(paths[i]));
-			LV3_ASSERT(rm.FindMesh(paths[i]) == handles[i]);
+			LV3_ASSERT(rm.IsMeshLoaded(paths[i], opts));
+			LV3_ASSERT(rm.FindMesh(paths[i], opts) == handles[i]);
 		}
 
 		// 4. Double-unload : doit être un no-op silencieux, jamais un crash
@@ -111,7 +111,7 @@ namespace LV3::Tests
 		auto reload = rm.LoadMeshChecked(targetPath, opts);
 		LV3_ASSERT(reload.has_value());
 		LV3_ASSERT(reload->id != target.id);                     // AllocateMeshHandle ne recycle jamais les ids : nouveau mesh, nouvel id
-		LV3_ASSERT(rm.IsMeshLoaded(targetPath));
+		LV3_ASSERT(rm.IsMeshLoaded(targetPath, opts));
 		LV3_ASSERT(rm.GetMeshCount() == countBefore);             // on est revenu au compte initial
 
 		Logger::success("[F5] UnloadMesh : tous les invariants tiennent.");		
@@ -170,13 +170,21 @@ namespace LV3::Tests
 		check(again.has_value() && *again == h[0], "cache : meme handle pour un chemin equivalent");
 		check(rm.GetLodChainCount() == 3, "cache : toujours 3 chaines");
 
+		// 4b. Meme fichier, AUTRES options -> autre chaine (avant 3.4a : meme handle, en silence)
+		{
+			OBJLoadOptions other = kSceneOpts; other.scale = 2.0f;
+			const auto r = rm.LoadLodChainChecked(dir + "/rock_a.lod.json", other);
+			check(r.has_value() && *r != h[0], "cache : options differentes -> chaine distincte");
+			check(rm.GetLodChainCount() == 4, "cache : 4 chaines");
+		}
+
 		// 5. Partage : L0 de la chaine EST le mesh rock_a.obj du cache (aucun double chargement)
 		if (a)
-			check(rm.FindMesh(dir + "/rock_a.obj") == a->levels[0], "L0 partage avec rock_a.obj");
+			check(rm.FindMesh(dir + "/rock_a.obj", kSceneOpts) == a->levels[0], "L0 partage avec rock_a.obj");
 
 		// 5b. Chaine implicite : partagee, longueur 1, toujours L0
 		{
-			const MeshHandle   m = rm.FindMesh(dir + "/rock_a.obj");
+			const MeshHandle   m = rm.FindMesh(dir + "/rock_a.obj", kSceneOpts);
 			const LodChainHandle s1 = rm.GetOrCreateSingleLevelChain(m);
 			const LodChainHandle s2 = rm.GetOrCreateSingleLevelChain(m);
 			check(s1.IsValid() && s1 == s2, "chaine implicite : creee une fois, partagee");

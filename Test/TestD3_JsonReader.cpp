@@ -236,5 +236,43 @@ namespace LV3::Tests
 
         Logger::success("[D3.3e] Materiaux : mtllib / usemtl / directives / textures");
     }
+
+    void TestD3_4a_CacheMeshOptions()
+    {
+        Logger::info("[D3.4a] test cache mesh option");
+        const std::filesystem::path obj = std::filesystem::temp_directory_path() / "lv3_test_d3_4a.obj";
+        { std::ofstream(obj) << "v 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\nvn 0 0 1\nf 1/1/1 2/2/1 3/3/1\n"; }
+        const std::string path = obj.string();
+
+        OBJLoadOptions A;                 // scale 1
+        OBJLoadOptions B; B.scale = 2.0f; // meme fichier, autre option
+
+        ResourceManager rm;
+        const auto hA = rm.LoadMeshChecked(path, A);
+        const auto hB = rm.LoadMeshChecked(path, B);
+        LV3_ASSERT(hA && hB);
+
+        // 1. Deux options -> deux meshes distincts (avant : hB == hA, en silence)
+        LV3_ASSERT(*hA != *hB);
+        LV3_ASSERT(rm.GetMeshCount() == 2);
+
+        // 2. C'est bien l'option qui a ete appliquee : la boite double
+        LV3_ASSERT(rm.GetMesh(*hB)->GetMeshAABB().max.x == 2.0f * rm.GetMesh(*hA)->GetMeshAABB().max.x);
+
+        // 3. Memes options -> le cache sert, aucun mesh de plus
+        const auto again = rm.LoadMeshChecked(path, A);
+        LV3_ASSERT(again && *again == *hA && rm.GetMeshCount() == 2);
+
+        // 4. Recherche : le couple (chemin, options) est la cle
+        LV3_ASSERT(rm.FindMesh(path, A) == *hA && rm.FindMesh(path, B) == *hB);
+        OBJLoadOptions C; C.flipUVsVertically = !A.flipUVsVertically;
+        LV3_ASSERT(!rm.IsMeshLoaded(path, C));
+
+        // 5. Decharger une variante ne touche pas l'autre
+        rm.UnloadMesh(*hB);
+        LV3_ASSERT(!rm.IsMeshLoaded(path, B) && rm.IsMeshLoaded(path, A));
+
+        Logger::success("[D3.4a] Cache meshes : cle = chemin + options");
+    }
 #endif
 }
