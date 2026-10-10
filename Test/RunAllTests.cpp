@@ -35,6 +35,7 @@ namespace LV3::Tests
     void TestD3_3c_Parseurs();
     void TestD3_3e_Materiaux();
     void TestD3_4a_CacheMeshOptions();
+    void TestD3_4b_CleMateriaux();
 
 
 #if LV3_DEBUG    
@@ -81,6 +82,7 @@ namespace LV3::Tests
         TestD3_3b_Blocs();
         TestD3_3c_Parseurs();
         TestD3_4a_CacheMeshOptions();
+        TestD3_4b_CleMateriaux();
         TestD3_3e_Materiaux();
         RunAllCameraMathTests();
         TestCameraZoom();

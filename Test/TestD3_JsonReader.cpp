@@ -275,5 +275,47 @@ namespace LV3::Tests
 
         Logger::success("[D3.4a] Cache meshes : cle = chemin + options");
     }
+
+    void TestD3_4b_CleMateriaux()
+    {
+        namespace fs = std::filesystem;
+        const fs::path root = fs::temp_directory_path() / "lv3_test_d3_4b";
+        const char* kObj = "mtllib shared.mtl\nv 0 0 0\nv 1 0 0\nv 0 1 0\nvt 0 0\nvt 1 0\nvt 0 1\nvn 0 0 1\nusemtl Material\nf 1/1/1 2/2/1 3/3/1\n";
+        for (const char* d : { "A", "B" })
+        {
+            fs::create_directories(root / d);
+            std::ofstream(root / d / "mesh.obj") << kObj;
+            std::ofstream(root / d / "shared.mtl") << "newmtl Material\nKd " << (d[0] == 'A' ? "1 0 0" : "0 1 0") << "\n";
+        }
+
+        ResourceManager rm;
+        const OBJLoadOptions opt;
+        const auto hA = rm.LoadMeshChecked((root / "A" / "mesh.obj").string(), opt);
+        const auto hB = rm.LoadMeshChecked((root / "B" / "mesh.obj").string(), opt);
+        LV3_ASSERT(hA && hB);
+
+        // 1. Deux MTL -> deux materiaux (avant : B recevait le materiau ROUGE de A, en silence)
+        const MaterialHandle mA = rm.GetMesh(*hA)->submeshes[0].material;
+        const MaterialHandle mB = rm.GetMesh(*hB)->submeshes[0].material;
+        LV3_ASSERT(mA.IsValid() && mB.IsValid() && mA != mB);
+        LV3_ASSERT(rm.GetMaterialCount() == 2);
+
+        // 2. Chacun porte SA couleur
+        LV3_ASSERT(rm.GetMaterial(mA)->GetDiffuseColor().x == 1.0f);
+        LV3_ASSERT(rm.GetMaterial(mB)->GetDiffuseColor().y == 1.0f);
+
+        // 3. Recherche : le couple (MTL, nom) est la cle, quelle que soit l'ecriture du chemin
+        LV3_ASSERT(rm.FindMaterial((root / "A" / "shared.mtl").string(), "Material") == mA);
+        LV3_ASSERT(rm.FindMaterial((root / "B" / "." / "shared.mtl").string(), "Material") == mB);
+
+        // 4. Le meme MTL relu (autres options -> autre mesh) rend le MEME materiau
+        OBJLoadOptions big; big.scale = 2.0f;
+        const auto hA2 = rm.LoadMeshChecked((root / "A" / "mesh.obj").string(), big);
+        LV3_ASSERT(hA2 && rm.GetMesh(*hA2)->submeshes[0].material == mA);
+        LV3_ASSERT(rm.GetMaterialCount() == 2);
+
+        Logger::success("[D3.4b] Materiaux : cle = MTL + nom");
+    }
+
 #endif
 }
