@@ -34,6 +34,17 @@
       <!-- Compilation parallele. -->
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
 
+		<!-- Chantier B, pas B1 : AVX2 pour TOUT le moteur (LIB et EXE), un seul foyer (M6).
+           Les deux machines de reference ont l'AVX2 ; supporter une machine sans AVX2
+           n'est pas un objectif. L'AVX-512 viendra par dispatch CPUID, jamais ici. -->
+		<EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+
+		<!-- /fp:precise ECRIT : pas de contraction a*b+c -> FMA en silence. Une FMA change
+           le dernier bit des coordonnees raster (A21 § 5.1) : elle se decidera, se mesurera
+           et s'appliquera aux deux chemins (Inside et Intersect) en meme temps.
+		   Il faut l’option explicite /fp:contract pour obtenir cette fusion. -->
+		<FloatingPointModel>Precise</FloatingPointModel>		
+		
 		<!-- /Zi dans TOUTES les configurations : un .pdb ne change pas le code
            machine, il permet seulement de lire le Release dans le debogueur.
            (Chantier Clear 2a : desassemblage de la boucle chaude.) -->

@@ -25,7 +25,15 @@ Taille projetee : diametre 0.1 a 200 unites -> ~0.35 px dans une vue de
 800 px de haut : SOUS-PIXEL, la rasterisation est quasi nulle par construction.
 
 Format : toute cle lue est ecrite (regle Onky du 7 octobre 2026), D1/D2.
-Usage : python gen_bench_render.py   (ecrit bench_R_*.json + bench_R.bat)
+Campagne V (etape 4b, vectorisation) : deux scenes ou la FACE domine, PAS le pixel
+ni le point (rayon apparent au-dessus du seuil pointRadiusPx dans les 4 vues) :
+    V1 : 32 sphere_hi (3968 faces) a ~7 px de rayon (~0,9 px dans les vues titre)
+         -> ~0,5 M faces/frame, presque aucun pixel : le cout PAR FACE domine.
+    V2 : 1 sphere_hi en gros plan (rayon ~170 px) -> garde-fou : le cout PIXEL domine,
+         la vectorisation ne doit pas le degrader.
+Le .obj est charge directement (pas de .lod.json) : les 3968 faces sont toujours soumises.
+
+Usage : python gen_bench_render.py   (ecrit bench_R_*.json, bench_V_*.json, bench_R.bat, bench_V.bat)
 """
 import json, math
 
@@ -95,24 +103,41 @@ SCENES = {"S0":      ("Banc R - S0 : cameras seules",                     []),
           "S3_300":  ("Banc R - S3 : 300 cubes sous-pixel (12 f)",       objects("Cube", CUBE,  300, -D)),
           "S3_1200": ("Banc R - S3 : 1200 cubes sous-pixel (12 f)",      objects("Cube", CUBE, 1200, -D))}
 
+SPHERE = ("assets/Meshes/sphere_hi.obj", 2.0)
+VSCENES = {"V1": ("Banc V - V1 : 32 spheres hi, cout par face", objects("Sphere", SPHERE, 32, -D)),
+           "V2": ("Banc V - V2 : 1 sphere hi en gros plan, cout pixel",
+                  [{"id": "Sphere_Big", "parent": None, "_type": "Bench",
+                    "components": {"Transform": T((0, 0, -10.0), 2.5),
+                                   "Mesh": {"model": "assets/Meshes/sphere_hi.obj",
+                                            "orbitalSpeed": 0.0, "rotationSpeed": 0.0}}}])}
+
+def write_bat(name, keys, prefix, header):
+    order = list(keys) + list(reversed(keys))
+    lines = ["@echo off", f"rem {header}",
+             "rem A lancer depuis le dossier de l'exe (x64\\Release).",
+             "set EXE=RefactoNouvelleLibrairieV3.exe",
+             f"if not exist Mesures\\{prefix} mkdir Mesures\\{prefix}",
+             f'start "" /wait /affinity 4 "%EXE%" --scene=bench_{prefix}_{keys[0]}.json --bench=300 --csv=Mesures/{prefix}/jetable.csv']
+    seen = {}
+    for key in order:
+        seen[key] = seen.get(key, 0) + 1
+        lines.append(f'start "" /wait /affinity 4 "%EXE%" --scene=bench_{prefix}_{key}.json --bench=300 '
+                     f'--csv=Mesures/{prefix}/{prefix}_{key}_{"ab"[seen[key]-1]}.csv')
+    open(name, "w", encoding="utf-8", newline="\r\n").write("\r\n".join(lines) + "\r\n")
+    print(name, ":", len(order) + 1, "runs")
+
 if __name__ == "__main__":
     for key, (name, objs) in SCENES.items():
         with open(f"bench_R_{key}.json", "w", encoding="utf-8", newline="\n") as f:
             f.write(dump({"sceneName": name, "nodes": CAMERAS + objs}) + "\n")
         print(f"bench_R_{key}.json : {len(objs)} objets")
 
-    # Lot de mesure : chaque scene 2 fois, ordre A B ... B A pour etaler la derive thermique.
-    order = list(SCENES) + list(reversed(SCENES))
-    lines = ["@echo off",
-             "rem Campagne R (phase G, etape 4) : cout fixe de Render. Release, P-core (affinity 4).",
-             "rem A lancer depuis le dossier de l'exe (x64\\Release). Les CSV vont dans Mesures\\R\\.",
-             "set EXE=RefactoNouvelleLibrairieV3.exe",
-             "if not exist Mesures\\R mkdir Mesures\\R",
-             'start "" /wait /affinity 4 "%EXE%" --scene=bench_R_S0.json --bench=300 --csv=Mesures/R/jetable.csv']
-    seen = {}
-    for key in order:
-        seen[key] = seen.get(key, 0) + 1
-        lines.append(f'start "" /wait /affinity 4 "%EXE%" --scene=bench_R_{key}.json --bench=300 '
-                     f'--csv=Mesures/R/R_{key}_{"ab"[seen[key]-1]}.csv')
-    open("bench_R.bat", "w", encoding="utf-8", newline="\r\n").write("\r\n".join(lines) + "\r\n")
-    print("bench_R.bat :", len(order) + 1, "runs")
+    write_bat("bench_R.bat", list(SCENES), "R",
+              "Campagne R (phase G, etape 4) : cout fixe de Render. Release, P-core (affinity 4).")
+
+    for key, (name, objs) in VSCENES.items():
+        with open(f"bench_V_{key}.json", "w", encoding="utf-8", newline="\n") as f:
+            f.write(dump({"sceneName": name, "nodes": CAMERAS + objs}) + "\n")
+        print(f"bench_V_{key}.json : {len(objs)} objets")
+    write_bat("bench_V.bat", list(VSCENES), "V",
+              "Campagne V (phase G, etape 4b) : cout par face avant/apres vectorisation. Release, P-core.")
