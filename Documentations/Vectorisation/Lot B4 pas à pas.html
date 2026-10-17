@@ -1,0 +1,613 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot B4 pas à pas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout : banc d'essai — scène + mémoire à gauche, registres de l'étape à droite, rail d'étapes en haut */
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --ink:#16202b; --muted:#5b6876; --line:#d8dee6; --accent:#1f5fbf;
+  --ok:#1e7a4c; --warn:#a86300; --bad:#c0362c; --code:#eef2f6; --cm:#6b7a89; --fn:#1f5fbf;
+  --l0:#3b7dd8; --l1:#d0612c; --l2:#2f9e6e; --l3:#9a57c9; --l4:#b8901a; --l5:#d0457f; --l6:#2a9fb2; --l7:#6f8424;
+  --f-disp:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f141a; --panel:#161d25; --ink:#e3e9ef; --muted:#93a1b0; --line:#2a3440; --accent:#7eaaff;
+  --ok:#4fc48a; --warn:#f0a840; --bad:#ff7a6e; --code:#111820; --cm:#7f8e9d; --fn:#8fb6ff;
+  --l0:#6ea2f0; --l1:#ec8a5a; --l2:#52c294; --l3:#bb88e6; --l4:#e0bf4a; --l5:#ef77a6; --l6:#4cc6d8; --l7:#a6bd4d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f141a; --panel:#161d25; --ink:#e3e9ef; --muted:#93a1b0; --line:#2a3440; --accent:#7eaaff;
+  --ok:#4fc48a; --warn:#f0a840; --bad:#ff7a6e; --code:#111820; --cm:#7f8e9d; --fn:#8fb6ff;
+  --l0:#6ea2f0; --l1:#ec8a5a; --l2:#52c294; --l3:#bb88e6; --l4:#e0bf4a; --l5:#ef77a6; --l6:#4cc6d8; --l7:#a6bd4d; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);padding-inline:16px;padding-block:20px 40px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.eyebrow{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font:600 clamp(24px,3.4vw,34px)/1.15 var(--f-disp);margin:4px 0 6px;text-wrap:balance}
+h2{font:600 21px/1.25 var(--f-disp);margin:0;text-wrap:balance}
+h3{font:600 15px var(--f-disp);margin:0;letter-spacing:.02em;color:var(--muted)}
+.lede{color:var(--muted);max-width:72ch;margin:0}
+.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+button,select{font:500 13px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 12px;cursor:pointer}
+button:hover,select:hover{border-color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--panel);border-color:var(--accent)}
+label.chk{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--muted);cursor:pointer}
+.rail{display:flex;flex-wrap:wrap;gap:4px}
+.rail button{padding:4px 0;width:34px;font:500 12px var(--f-mono);color:var(--muted)}
+.rail button.done{color:var(--ink)}
+.rail button.cur{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}
+@media (max-width:960px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.scroll{overflow-x:auto;min-width:0}
+svg text{font-family:var(--f-mono)}
+pre{margin:0;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font:13px/1.55 var(--f-mono);overflow-x:auto;white-space:pre}
+.cm{color:var(--cm)} .fn{color:var(--fn)}
+.ex{margin:0;max-width:70ch}
+.ex code,.note code{font:13px var(--f-mono);background:var(--code);padding:1px 4px;border-radius:4px}
+.regs{display:flex;flex-direction:column;gap:10px}
+.reg{display:grid;grid-template-columns:112px auto;gap:10px;align-items:center}
+.rname{font:500 13px var(--f-mono);text-align:right}
+.rname small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+.cells{display:flex;gap:10px}
+.half{display:grid;grid-template-columns:repeat(4,58px);gap:3px;padding:3px;border:1px dashed var(--line);border-radius:6px}
+.cell{--lc:var(--muted);position:relative;height:42px;border-radius:4px;background:color-mix(in oklab,var(--lc) 15%,var(--panel));border:1px solid color-mix(in oklab,var(--lc) 45%,var(--panel));display:flex;flex-direction:column;justify-content:center;align-items:center;font:500 12px var(--f-mono);font-variant-numeric:tabular-nums;transition:opacity .15s}
+.cell .tag{position:absolute;top:1px;left:4px;font-size:10px;color:var(--muted);font-weight:400}
+.cell .fid{position:absolute;bottom:0;right:4px;font-size:10px;color:var(--lc)}
+.cell.bit1{background:color-mix(in oklab,var(--ok) 22%,var(--panel));border-color:var(--ok);color:var(--ok);font-size:15px}
+.cell.bit0{background:var(--panel);color:var(--muted);font-size:15px}
+.cell.dead{opacity:.35}
+.cell.bad{outline:2px solid var(--bad);outline-offset:1px}
+.cell.nan{color:var(--bad)}
+.lanehdr{display:flex;gap:10px;margin-left:122px}
+.lanehdr .half{border-color:transparent;padding-block:0}
+.lanehdr span{font:11px var(--f-mono);color:var(--muted);text-align:center}
+.dim .cell[data-face]:not(.hl),.dim .ix[data-face]:not(.hl),.dim tr[data-face]:not(.hl){opacity:.28}
+.idxrow{display:flex;flex-wrap:wrap;gap:6px}
+.grp{display:flex;gap:2px;padding:3px;border-radius:5px;border:1px solid var(--line)}
+.ix{--lc:var(--muted);font:500 12px var(--f-mono);padding:2px 6px;border-radius:3px;background:color-mix(in oklab,var(--lc) 15%,var(--panel));min-width:26px;text-align:center}
+table{border-collapse:collapse;font:12px var(--f-mono);font-variant-numeric:tabular-nums;width:100%}
+th,td{padding:3px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:400}
+td.uses{text-align:left;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.phases{display:flex;flex-wrap:wrap;gap:4px}
+.ph{font:12px var(--f-body);border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--muted);display:flex;flex-direction:column;line-height:1.3}
+.ph b{font:600 12px var(--f-disp);color:var(--muted)}
+.ph.cur{border-color:var(--accent);color:var(--ink)}
+.ph.cur b{color:var(--accent)}
+.lbl{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+.goal{border:1px solid var(--accent);border-radius:8px;padding:10px 12px;background:color-mix(in oklab,var(--accent) 7%,var(--panel));max-width:76ch}
+.goal .lbl{color:var(--accent)}
+.blk{max-width:76ch}
+.blk>div:last-child,.blk p{margin:0}
+.after{border-top:1px solid var(--line);padding-top:10px;max-width:76ch}
+#stGoal code,#stWhy code,#stSimpler code,#stAfter code,#stExample code{font:13px var(--f-mono);background:var(--code);padding:1px 4px;border-radius:4px}
+.io{border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.io.in{background:var(--code);border:1px dashed var(--border-in,var(--line))}
+.io.out{border:1px solid var(--ok);background:color-mix(in oklab,var(--ok) 5%,var(--panel))}
+.io.out>.lbl{color:var(--ok)}
+.from{font:500 11px var(--f-mono);color:var(--accent);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline}
+.kpis{display:flex;flex-wrap:wrap;gap:8px}
+.kpi{border:1px solid var(--line);border-radius:6px;padding:6px 10px;font:12px var(--f-mono);display:flex;gap:6px;align-items:baseline}
+.kpi b{font:500 16px var(--f-mono)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
+.iter{font:13px var(--f-mono)}
+.iter td,.iter th{text-align:left}
+.iter tr.on td{background:color-mix(in oklab,var(--ok) 18%,var(--panel))}
+.warnbox{border:1px solid var(--bad);border-radius:6px;padding:8px 10px;font-size:13px;color:var(--bad)}
+@media (prefers-reduced-motion:reduce){.cell{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">LibraryV3 · phase G · chantier B4 · ClassifyFaces8</div>
+    <h1>Un lot de 8 faces, registre par registre</h1>
+    <p class="lede">Chaque étape montre l'intrinsèque, son commentaire et le contenu réel des registres AVX2 pour ce lot. Les valeurs sont calculées en float32, avec la sémantique exacte de <code>minps</code>, <code>roundps</code> et <code>cvttps2dq</code>. Survolez une case pour suivre sa face dans la scène et dans la mémoire.</p>
+  </header>
+
+  <div class="bar">
+    <button id="prev" aria-label="Étape précédente">← Précédente</button>
+    <button id="next" class="primary">Suivante →</button>
+    <select id="stageSel" aria-label="Choisir l'étape"></select>
+    <button id="regen">Nouveau lot</button>
+    <label class="chk"><input type="checkbox" id="nan"> Injecter un NaN (face 5, coin b)</label>
+    <select id="variant" aria-label="Variante du code">
+      <option value="ok">Code correct</option>
+      <option value="order">✗ min_ps(gauche, droite)</option>
+      <option value="lt">✗ _CMP_LT_OQ</option>
+    </select>
+  </div>
+  <div class="rail" id="rail" aria-label="Étapes"></div>
+
+  <div class="grid">
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <section class="panel" id="scenePanel">
+        <h3>Scène : viewport 32 × 12 pixels</h3>
+        <div class="scroll"><svg id="scene" viewBox="-24 -8 672 262" width="100%" role="img" aria-label="Les 8 triangles du lot sur la grille de pixels"></svg></div>
+        <div class="legend" id="legend"></div>
+      </section>
+      <section class="panel" id="memPanel">
+        <h3>Mémoire : 24 indices, puis les sommets projetés (AoS, 16 octets)</h3>
+        <div class="idxrow" id="idx"></div>
+        <div class="scroll"><table id="rv"></table></div>
+        <p class="note">Les indices sont lus 3 par face. La face j est en <code>idx[j*3]</code>, <code>idx[j*3+1]</code>, <code>idx[j*3+2]</code>. Un sommet partagé apparaît plusieurs fois.</p>
+      </section>
+    </div>
+    <section class="panel" id="stagePanel">
+      <div class="eyebrow" id="stNum"></div>
+      <h2 id="stTitle"></h2>
+      <div class="phases" id="stPhases"></div>
+      <div class="goal"><div class="lbl">Objectif</div><div id="stGoal"></div></div>
+      <div class="blk"><div class="lbl">Pourquoi ce calcul</div><div id="stWhy"></div></div>
+      <div class="io in"><div class="lbl">Entrées : ce que cette étape reçoit des étapes précédentes</div><div class="scroll"><div class="regs" id="stIn"></div></div></div>
+      <div class="blk"><div class="lbl">Comment : l'intrinsèque</div><p class="ex" id="stEx"></p></div>
+      <pre id="stCode"></pre>
+      <div id="stWarn"></div>
+      <div class="io out"><div class="lbl">Résultat de cette étape</div><div class="scroll"><div class="regs" id="stRegs"></div></div></div>
+      <div class="blk"><div class="lbl">Pourquoi pas plus simple, ou autrement ?</div><div id="stSimpler"></div></div>
+      <div class="blk"><div class="lbl">Sur ce lot</div><div id="stExample"></div></div>
+      <div class="after"><div class="lbl">Ce qu'on a maintenant</div><div id="stAfter"></div></div>
+      <div class="kpis" id="kpis"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const F=Math.fround, VP={x:0,y:0,w:32,h:12}, S=20, INT_MIN=-2147483648;
+let pool=[], idx=[], stage=0, nanOn=false, variant='ok', hover=-1, anim=null, animStep=-1;
+
+/* ---------- données ---------- */
+function rnd(a,b){return a+Math.random()*(b-a)}
+function makeBatch(){
+  const verts=[], faces=[];
+  for(let k=0;k<8;k++){
+    const cx=2+k*3.9+rnd(-.4,.4), cy=rnd(2.5,9.5), s=rnd(.3,2.5), rot=rnd(0,6.28);
+    let c=[0,1,2].map(j=>{const a=rot+j*2.094+rnd(-.35,.35), r=s*rnd(.7,1.15);return {x:F(cx+Math.cos(a)*r),y:F(cy+Math.sin(a)*r)}});
+    if(Math.random()<.45) c=[c[0],c[2],c[1]];
+    faces.push(c);
+  }
+  // indices : sommets mélangés comme dans un vrai mesh, quelques sommets partagés
+  const ids=[];
+  faces.forEach((c,k)=>{c.forEach((v,j)=>{
+    if(k>0&&j===0&&Math.random()<.35){ids.push(ids[(k-1)*3+2]);faces[k][0]=verts[ids[(k-1)*3+2]];return}
+    verts.push(v);ids.push(verts.length-1);
+  })});
+  const perm=verts.map((_,i)=>i).sort(()=>Math.random()-.5);
+  const np=[];perm.forEach((old,n)=>{np[n]=verts[old]});
+  const inv=[];perm.forEach((old,n)=>{inv[old]=n});
+  pool=np.map(v=>({x:v.x,y:v.y,z:F(rnd(.82,.98)),w:F(rnd(.05,.2))}));
+  idx=ids.map(i=>inv[i]);
+}
+function counts(){const r=classify();let b=0,e=0,s=0;for(let j=0;j<8;j++){if(!r.front[j])b++;else if(!r.nonEmpty[j])e++;else s++}return{b,e,s}}
+function regen(){for(let t=0;t<300;t++){makeBatch();const c=counts();if(c.b>=2&&c.e>=2&&c.s>=2&&c.s<=4)return}}
+
+function V(i){const v=pool[i];if(nanOn&&i===idx[5*3+1])return{x:NaN,y:v.y,z:v.z,w:v.w};return v}
+function corner(j,k){return V(idx[j*3+k])}
+
+/* ---------- sémantique exacte ---------- */
+const minps=(a,b)=>a<b?a:b, maxps=(a,b)=>a>b?a:b;           // minps : NaN ou égalité -> 2e opérande
+const stdmin=(a,b)=>b<a?b:a, stdmax=(a,b)=>a<b?b:a;         // MSVC std::min / std::max
+const cvtt=v=>(v>=INT_MIN&&v<2147483648)?Math.trunc(v):INT_MIN; // cvttps2dq : hors plage ou NaN -> INT_MIN
+function boxOf(minX,minY,maxX,maxY){
+  const rx0=Math.ceil(F(minX-.5)),ry0=Math.ceil(F(minY-.5)),rx1=Math.floor(F(maxX-.5)),ry1=Math.floor(F(maxY-.5));
+  const ix0=cvtt(rx0),iy0=cvtt(ry0),ix1=(cvtt(rx1)+1)|0,iy1=(cvtt(ry1)+1)|0;
+  const x0=Math.max(ix0,VP.x),y0=Math.max(iy0,VP.y),x1=Math.min(ix1,VP.x+VP.w),y1=Math.min(iy1,VP.y+VP.h);
+  return{sx0:F(minX-.5),sy0:F(minY-.5),sx1:F(maxX-.5),sy1:F(maxY-.5),rx0,ry0,rx1,ry1,ix0,iy0,ix1,iy1,x0,y0,x1,y1,ne:(x1>x0&&y1>y0)};
+}
+function classify(){
+  const R={ax:[],ay:[],bx:[],by:[],cx:[],cy:[],ux:[],uy:[],vx:[],vy:[],area:[],front:[],minX:[],minY:[],maxX:[],maxY:[],box:[],nonEmpty:[],surv:[],ref:[]};
+  for(let j=0;j<8;j++){
+    const a=corner(j,0),b=corner(j,1),c=corner(j,2);
+    R.ax[j]=a.x;R.ay[j]=a.y;R.bx[j]=b.x;R.by[j]=b.y;R.cx[j]=c.x;R.cy[j]=c.y;
+    const ux=F(a.x-c.x),uy=F(a.y-c.y),vx=F(b.x-c.x),vy=F(b.y-c.y),area=F(F(ux*vy)-F(uy*vx));
+    R.ux[j]=ux;R.uy[j]=uy;R.vx[j]=vx;R.vy[j]=vy;R.area[j]=area;
+    R.front[j]= variant==='lt' ? (area<0) : !(area>=0);
+    let mnx,mny,mxx,mxy;
+    if(variant==='order'){mnx=minps(a.x,minps(b.x,c.x));mny=minps(a.y,minps(b.y,c.y));mxx=maxps(a.x,maxps(b.x,c.x));mxy=maxps(a.y,maxps(b.y,c.y))}
+    else{mnx=minps(minps(c.x,b.x),a.x);mny=minps(minps(c.y,b.y),a.y);mxx=maxps(maxps(c.x,b.x),a.x);mxy=maxps(maxps(c.y,b.y),a.y)}
+    R.minX[j]=mnx;R.minY[j]=mny;R.maxX[j]=mxx;R.maxY[j]=mxy;
+    const bx=boxOf(mnx,mny,mxx,mxy);R.box[j]=bx;R.nonEmpty[j]=bx.ne;R.surv[j]=R.front[j]&&bx.ne;
+    // référence scalaire : IsBackFacing(EdgeFunction) puis TightPixelBox(...).Empty()
+    const fr=!(area>=0);
+    const sb=boxOf(stdmin(a.x,stdmin(b.x,c.x)),stdmin(a.y,stdmin(b.y,c.y)),stdmax(a.x,stdmax(b.x,c.x)),stdmax(a.y,stdmax(b.y,c.y)));
+    R.ref[j]={front:fr,surv:fr&&sb.ne};
+  }
+  R.fm=R.front.reduce((m,b,j)=>m|(b?1<<j:0),0);
+  R.nm=R.nonEmpty.reduce((m,b,j)=>m|(b?1<<j:0),0);
+  R.sm=R.fm&R.nm;
+  R.rf=R.ref.reduce((m,r,j)=>m|(r.front?1<<j:0),0);
+  R.rs=R.ref.reduce((m,r,j)=>m|(r.surv?1<<j:0),0);
+  return R;
+}
+
+/* ---------- formatage ---------- */
+function ff(v){if(Number.isNaN(v))return'NaN';if(v===Infinity)return'+inf';if(v===-Infinity)return'−inf';if(Object.is(v,-0))return'−0';
+  const s=Math.abs(v)>=1000?v.toFixed(0):v.toFixed(2);return s.replace('-','−')}
+function fi(v){return v===INT_MIN?'INT_MIN':String(v).replace('-','−')}
+function hex(m){return'0x'+m.toString(16).toUpperCase().padStart(2,'0')}
+function bin(m){return'0b'+m.toString(2).padStart(8,'0')}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function hl(code){return esc(code).replace(/\b(_mm(?:256)?_\w+|_MM_\w+|std::\w+)/g,'<span class="fn">$1</span>').replace(/(\/\/.*)$/gm,'<span class="cm">$1</span>')}
+
+/* ---------- registres ---------- */
+function cellHTML(c){
+  if(c.bit!==undefined){const cls='cell '+(c.bit?'bit1':'bit0')+(c.dead?' dead':'')+(c.bad?' bad':'');
+    return `<div class="${cls}" data-face="${c.face}" style="--lc:var(--l${c.face})"><span class="tag">${c.tag||''}</span>${c.bit?1:0}<span class="fid">f${c.face}</span></div>`}
+  const isnan=(typeof c.v==='number'&&(Number.isNaN(c.v)||c.v===INT_MIN));
+  const txt=c.int?fi(c.v):ff(c.v);
+  return `<div class="cell${isnan?' nan':''}${c.bad?' bad':''}" data-face="${c.face}" style="--lc:var(--l${c.face})"><span class="tag">${c.tag||''}</span>${txt}<span class="fid">f${c.face}</span></div>`;
+}
+function reg(name,sub,cells){
+  return `<div class="reg"><div class="rname">${name}${sub?`<small>${sub}</small>`:''}</div><div class="cells"><div class="half">${cells.slice(0,4).map(cellHTML).join('')}</div><div class="half">${cells.slice(4).map(cellHTML).join('')}</div></div></div>`;
+}
+function laneHdr(){const h=a=>`<div class="half">${a.map(i=>`<span>couloir ${i}</span>`).join('')}</div>`;return `<div class="lanehdr">${h([0,1,2,3])}${h([4,5,6,7])}</div>`}
+function vec(arr,tag,opt={}){return arr.map((v,j)=>({v,face:j,tag,int:opt.int,bad:opt.bad&&opt.bad[j]}))}
+function bits(arr,tag,opt={}){return arr.map((b,j)=>({bit:!!b,face:j,tag,bad:opt.bad&&opt.bad[j]}))}
+function pairReg(k,fa,fb){const A=corner(fa,k),B=corner(fb,k);return [
+  {v:A.x,face:fa,tag:'x'},{v:A.y,face:fa,tag:'y'},{v:A.z,face:fa,tag:'z'},{v:A.w,face:fa,tag:'invW'},
+  {v:B.x,face:fb,tag:'x'},{v:B.y,face:fb,tag:'y'},{v:B.z,face:fb,tag:'z'},{v:B.w,face:fb,tag:'invW'}]}
+function unpackReg(k,f0,f1,f2,f3){const g=(f,c)=>({v:corner(f,k)[c],face:f,tag:c});
+  return [g(f0,'x'),g(f1,'x'),g(f0,'y'),g(f1,'y'),g(f2,'x'),g(f3,'x'),g(f2,'y'),g(f3,'y')]}
+const KN=['a','b','c'];
+
+/* ---------- étapes ---------- */
+const ST=[
+{t:'Les données du lot',ex:'Le lot commence avec 24 indices contigus (3 par face) et un tampon de sommets projetés en AoS : x, y, z et invW, 16 octets par sommet. Pour les tests, seuls x et y servent. Il faut les extraire pour 8 faces et les ranger <em>verticalement</em> : un registre = une composante, 8 faces.',
+code:`const uint32_t* idx = indices + base * 3;   // 24 indices : face j -> idx[j*3 .. j*3+2]
+const RasterVertex* rv = rasterBuf.Data();   // AoS : rv[i] = { x, y, z, invW }, 16 octets
+// Objectif des etapes 1 a 4 : six registres
+//   ax ay  (coin a des 8 faces)   bx by  (coin b)   cx cy  (coin c)
+// ou le couloir j contient TOUJOURS la face j.`,
+regs:()=>`<p class="note">Aucun registre n'est encore chargé. La scène et la mémoire, à gauche, montrent les 8 faces et leurs sommets.</p>`},
+
+{t:'Coin a : 4 registres de 2 sommets',ex:'On lit chaque sommet entier (16 octets alignés) dans une moitié de 128 bits. Les faces sont appariées (0,4), (1,5), (2,6) et (3,7) : la face j va en bas, la face j+4 en haut. Les instructions suivantes ne traversent jamais la frontière des 128 bits, donc chaque moitié portera ensuite 4 faces.',
+code:`// _mm_load_ps            : 1 sommet complet (x y z invW) -> 128 bits
+// _mm256_castps128_ps256 : le pose en moitie BASSE (aucune instruction emise)
+// _mm256_insertf128_ps   : pose un 2e sommet en moitie HAUTE (le "1")
+const __m256 v04 = _mm256_insertf128_ps(_mm256_castps128_ps256(
+                       _mm_load_ps(&rv[idx[0*3 + k]].x)),     // face 0, coin k
+                       _mm_load_ps(&rv[idx[4*3 + k]].x), 1);  // face 4, coin k
+// v15, v26, v37 : meme recette pour les paires (1,5) (2,6) (3,7)`,
+regs:()=>laneHdr()+reg('v04','faces 0 et 4',pairReg(0,0,4))+reg('v15','faces 1 et 5',pairReg(0,1,5))+reg('v26','faces 2 et 6',pairReg(0,2,6))+reg('v37','faces 3 et 7',pairReg(0,3,7))+`<p class="note">z et invW sont chargés parce qu'on lit 16 octets d'un coup, mais l'étape suivante les abandonne.</p>`},
+
+{t:'unpacklo : x et y entrelacés',ex:'<code>unpacklo(A, B)</code> prend, dans chaque moitié, les deux premiers éléments de A et de B et les alterne : A0 B0 A1 B1. Avec deux sommets par moitié, on obtient les deux x puis les deux y. z et invW (éléments 2 et 3) sont laissés de côté.',
+code:`// unpacklo(A, B), dans CHAQUE moitie de 128 bits : [ A0 B0 A1 B1 ]
+const __m256 t0 = _mm256_unpacklo_ps(v04, v15);  // [x0 x1 y0 y1 | x4 x5 y4 y5]
+const __m256 t1 = _mm256_unpacklo_ps(v26, v37);  // [x2 x3 y2 y3 | x6 x7 y6 y7]`,
+regs:()=>laneHdr()+reg('t0','unpacklo(v04, v15)',unpackReg(0,0,1,4,5))+reg('t1','unpacklo(v26, v37)',unpackReg(0,2,3,6,7))},
+
+{t:'shuffle : ax et ay, une face par couloir',ex:'<code>shuffle(A, B, imm)</code> produit, dans chaque moitié, deux éléments de A puis deux de B. <code>_MM_SHUFFLE(d,c,b,a)</code> se lit de droite à gauche : (1,0,1,0) prend les éléments 0 et 1, c\'est-à-dire les deux x ; (3,2,3,2) prend les éléments 2 et 3, les deux y. À partir d\'ici, le couloir j contient la face j.',
+code:`// shuffle(A, B, imm), dans CHAQUE moitie : [ A[i0] A[i1] B[i2] B[i3] ]
+// _MM_SHUFFLE(d,c,b,a) se lit A L'ENVERS : i0=a, i1=b, i2=c, i3=d
+x = _mm256_shuffle_ps(t0, t1, _MM_SHUFFLE(1,0,1,0)); // [x0 x1 x2 x3 | x4 x5 x6 x7]
+y = _mm256_shuffle_ps(t0, t1, _MM_SHUFFLE(3,2,3,2)); // [y0 y1 y2 y3 | y4 y5 y6 y7]`,
+regs:(R)=>laneHdr()+reg('ax','shuffle 1,0,1,0',vec(R.ax,'x'))+reg('ay','shuffle 3,2,3,2',vec(R.ay,'y'))},
+
+{t:'Coins b et c : la même recette',ex:'<code>LoadCornerXY8</code> est appelée trois fois, avec k = 0, 1 puis 2. Le lot coûte au total 24 lectures de 16 octets, 6 unpack et 6 shuffle, sans aucun gather. Les six registres sont maintenant verticaux.',
+code:`__m256 ax, ay, bx, by, cx, cy;
+LoadCornerXY8(rv, idx, 0, ax, ay);   // coin a des 8 faces
+LoadCornerXY8(rv, idx, 1, bx, by);   // coin b
+LoadCornerXY8(rv, idx, 2, cx, cy);   // coin c`,
+regs:(R)=>laneHdr()+reg('ax','',vec(R.ax,'x'))+reg('ay','',vec(R.ay,'y'))+reg('bx','',vec(R.bx,'x'))+reg('by','',vec(R.by,'y'))+reg('cx','',vec(R.cx,'x'))+reg('cy','',vec(R.cy,'y'))},
+
+{t:'Vecteurs d\'arête : c sert de référence',ex:'Même forme antisymétrique que <code>EdgeFunction(a, b, c)</code> : on soustrait d\'abord le point c. Quatre soustractions, et chacune traite 8 faces.',
+code:`// EdgeFunction(ax,ay, bx,by, px,py) avec p = c :
+//   ux = ax - px   uy = ay - py   vx = bx - px   vy = by - py
+const __m256 ux = _mm256_sub_ps(ax, cx), uy = _mm256_sub_ps(ay, cy);
+const __m256 vx = _mm256_sub_ps(bx, cx), vy = _mm256_sub_ps(by, cy);`,
+regs:(R)=>laneHdr()+reg('ux','ax − cx',vec(R.ux,''))+reg('uy','ay − cy',vec(R.uy,''))+reg('vx','bx − cx',vec(R.vx,''))+reg('vy','by − cy',vec(R.vy,''))},
+
+{t:'Aire signée',ex:'Deux produits puis une soustraction, dans le même ordre que le scalaire, et sans FMA : une FMA ferait un seul arrondi au lieu de deux et changerait le dernier bit. En raster, une face avant a une aire négative (Y inversé).',
+code:`// area = ux*vy - uy*vx : 2 arrondis (mul) puis 1 (sub), comme le scalaire /fp:precise
+const __m256 area = _mm256_sub_ps(_mm256_mul_ps(ux, vy), _mm256_mul_ps(uy, vx));`,
+regs:(R)=>laneHdr()+reg('area','ux·vy − uy·vx',vec(R.area,''))},
+
+{t:'Masque front : _CMP_NGE_UQ',ex:'Le scalaire rejette une face si <code>area >= 0</code>. Est avant tout ce qui ne vérifie pas cette condition, y compris NaN. <code>NGE_UQ</code> signifie « non supérieur ou égal, vrai si non ordonné » : c\'est exactement <code>!(area >= 0)</code>. Le résultat est un masque : 32 bits à 1 (vrai) ou à 0 (faux) par couloir.',
+code:`// !IsBackFacing(area)  ==  !(area >= 0)   -> NaN compte comme AVANT
+// NGE = "not greater or equal", U = vrai si NaN, Q = sans exception
+const __m256 front = _mm256_cmp_ps(area, _mm256_setzero_ps(), _CMP_NGE_UQ);
+// couloir = 0xFFFFFFFF (vrai) ou 0x00000000 (faux)`,
+regs:(R)=>{const bad=R.front.map((b,j)=>b!==R.ref[j].front);return laneHdr()+reg('front',variant==='lt'?'✗ _CMP_LT_OQ':'NGE_UQ',bits(R.front,'',{bad}))+reg('scalaire','!IsBackFacing',bits(R.ref.map(r=>r.front),''))}},
+
+{t:'Boîte : min et max des trois coins',ex:'MSVC définit <code>std::min(l, r)</code> comme <code>(r &lt; l) ? r : l</code>, et <code>minps(A, B)</code> rend B si la comparaison échoue (NaN, égalité). L\'équivalent exact est donc <code>min_ps(droite, gauche)</code>. Comme <code>minps</code> n\'est pas commutatif, l\'ordre compte.',
+code:`// std::min(a.x, std::min(b.x, c.x))
+//   std::min(b, c) == (c < b) ? c : b == _mm256_min_ps(c, b)   <- (droite, gauche)
+const __m256 minX = _mm256_min_ps(_mm256_min_ps(cx, bx), ax);
+const __m256 minY = _mm256_min_ps(_mm256_min_ps(cy, by), ay);
+// std::max(l, r) == (l < r) ? r : l == _mm256_max_ps(r, l)
+const __m256 maxX = _mm256_max_ps(_mm256_max_ps(cx, bx), ax);
+const __m256 maxY = _mm256_max_ps(_mm256_max_ps(cy, by), ay);`,
+regs:(R)=>laneHdr()+reg('minX',variant==='order'?'✗ min_ps(a, min_ps(b,c))':'',vec(R.minX,''))+reg('minY','',vec(R.minY,''))+reg('maxX','',vec(R.maxX,''))+reg('maxY','',vec(R.maxY,''))},
+
+{t:'Arrondi au centre de pixel',ex:'Un centre de pixel est en (x + 0,5). Le premier centre couvert est <code>ceil(min − 0,5)</code>, le dernier <code>floor(max − 0,5)</code>. <code>_mm256_round_ps</code> est la version 8 couloirs du <code>vroundss</code> que B1 avait fait apparaître.',
+code:`const __m256 half = _mm256_set1_ps(0.5f);              // 0.5 dans les 8 couloirs
+constexpr int kCeil  = _MM_FROUND_TO_POS_INF | _MM_FROUND_NO_EXC;  // std::ceil
+constexpr int kFloor = _MM_FROUND_TO_NEG_INF | _MM_FROUND_NO_EXC;  // std::floor
+_mm256_round_ps(_mm256_sub_ps(minX, half), kCeil);     // 1er centre a droite de minX
+_mm256_round_ps(_mm256_sub_ps(maxX, half), kFloor);    // dernier centre a gauche de maxX`,
+regs:(R)=>laneHdr()+reg('ceil(minX−½)','',vec(R.box.map(b=>b.rx0),''))+reg('ceil(minY−½)','',vec(R.box.map(b=>b.ry0),''))+reg('floor(maxX−½)','',vec(R.box.map(b=>b.rx1),''))+reg('floor(maxY−½)','',vec(R.box.map(b=>b.ry1),''))},
+
+{t:'Conversion en entiers, +1 sur x1 et y1',ex:'<code>cvttps_epi32</code> tronque chaque couloir en int32. Hors plage ou sur NaN, il rend <code>INT_MIN</code> (0x80000000), comme le <code>cvttss2si</code> du scalaire : les cas extrêmes restent identiques. x1 et y1 sont exclusifs, d\'où le +1 en arithmétique entière.',
+code:`// x0 = int32_t(std::ceil(minX - 0.5f))
+__m256i x0 = _mm256_cvttps_epi32(_mm256_round_ps(_mm256_sub_ps(minX, half), kCeil));
+// x1 = int32_t(std::floor(maxX - 0.5f)) + 1     (borne EXCLUSIVE)
+const __m256i one = _mm256_set1_epi32(1);
+__m256i x1 = _mm256_add_epi32(
+                 _mm256_cvttps_epi32(_mm256_round_ps(_mm256_sub_ps(maxX, half), kFloor)), one);
+// y0, y1 : idem`,
+regs:(R)=>laneHdr()+reg('x0','int32',vec(R.box.map(b=>b.ix0),'',{int:1}))+reg('y0','int32',vec(R.box.map(b=>b.iy0),'',{int:1}))+reg('x1','int32, +1',vec(R.box.map(b=>b.ix1),'',{int:1}))+reg('y1','int32, +1',vec(R.box.map(b=>b.iy1),'',{int:1}))},
+
+{t:'Clamp au viewport',ex:'<code>Viewport::ClampBox</code> en entiers : « si x0 &lt; vp.x alors x0 = vp.x » est un max, « si x1 &gt; vp.x + width » est un min. Le calcul en entiers est exact, sans question d\'ordre.',
+code:`// ClampBox : if (x0 < vp.x) x0 = vp.x;  ==  max(x0, vp.x)
+x0 = _mm256_max_epi32(x0, _mm256_set1_epi32(vp.x));
+y0 = _mm256_max_epi32(y0, _mm256_set1_epi32(vp.y));
+// if (x1 > vp.x + width) x1 = vp.x + width;  ==  min(x1, vp.x + width)
+x1 = _mm256_min_epi32(x1, _mm256_set1_epi32(vp.x + vp.width));
+y1 = _mm256_min_epi32(y1, _mm256_set1_epi32(vp.y + vp.height));`,
+regs:(R)=>laneHdr()+reg('x0','≥ 0',vec(R.box.map(b=>b.x0),'',{int:1}))+reg('y0','≥ 0',vec(R.box.map(b=>b.y0),'',{int:1}))+reg('x1','≤ 32',vec(R.box.map(b=>b.x1),'',{int:1}))+reg('y1','≤ 12',vec(R.box.map(b=>b.y1),'',{int:1}))},
+
+{t:'Masque nonEmpty',ex:'<code>PixelBox::Empty()</code> vaut <code>x0 >= x1 || y0 >= y1</code>. Sa négation est <code>x1 > x0 && y1 > y0</code> : deux comparaisons entières et un ET bit à bit. Une boîte vide ne contient aucun centre de pixel, donc le rejet est exact.',
+code:`// non vide  ==  !(x0 >= x1 || y0 >= y1)  ==  (x1 > x0) && (y1 > y0)
+const __m256i nonEmpty = _mm256_and_si256(_mm256_cmpgt_epi32(x1, x0),
+                                          _mm256_cmpgt_epi32(y1, y0));`,
+regs:(R)=>laneHdr()+reg('x1 > x0','',bits(R.box.map(b=>b.x1>b.x0),''))+reg('y1 > y0','',bits(R.box.map(b=>b.y1>b.y0),''))+reg('nonEmpty','ET',bits(R.nonEmpty,''))},
+
+{t:'movemask : 8 couloirs → 8 bits',ex:'<code>movemask_ps</code> copie le bit de signe de chaque couloir dans un entier : couloir j → bit j. Lisez le binaire de droite à gauche : le bit 0 (à droite) est la face 0. <code>survive</code> est un simple ET d\'entiers.',
+code:`// bit j = bit de signe du couloir j  (0xFFFFFFFF -> 1, 0 -> 0)
+const uint32_t f = uint32_t(_mm256_movemask_ps(front));
+const uint32_t s = f & uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(nonEmpty)));
+//                                   cast : reinterpretation, aucune instruction
+return { f, s };   // FaceMasks8 { front, survive }`,
+regs:(R)=>{const badF=R.front.map((b,j)=>b!==R.ref[j].front),badS=R.surv.map((b,j)=>b!==R.ref[j].surv);
+  return laneHdr()+reg('survive','front & nonEmpty',bits(R.surv,'',{bad:badS}))+reg('scalaire','référence',bits(R.ref.map(r=>r.surv),''))+
+  `<table style="max-width:520px"><tr><th style="text-align:left">entier</th><th>binaire (bit 7 … bit 0)</th><th>hex</th></tr>
+   <tr><td style="text-align:left">front</td><td>${bin(R.fm)}</td><td>${hex(R.fm)}</td></tr>
+   <tr><td style="text-align:left">survive</td><td>${bin(R.sm)}</td><td>${hex(R.sm)}</td></tr>
+   <tr><td style="text-align:left">scalaire</td><td>${bin(R.rs)}</td><td>${hex(R.rs)}</td></tr></table>`}},
+
+{t:'Compaction : countr_zero',ex:'On ne dessine que les survivantes, en scalaire, dans l\'ordre croissant : le même ordre que l\'ancienne boucle, ce qui préserve les égalités de profondeur. <code>countr_zero</code> (instruction <code>tzcnt</code>) donne l\'indice du bit à 1 le plus bas, et <code>s &= s − 1</code> l\'efface. Un lot sans survivante ne coûte aucune itération.',
+code:`uint32_t surv = m.survive & valid;            // valid : masque du dernier lot incomplet
+while (surv)                                  // une iteration par survivante, pas par face
+{
+    const uint32_t k = std::countr_zero(surv); // tzcnt : indice du bit 1 le plus bas
+    surv &= surv - 1u;                         // efface ce bit (blsr)
+    const uint32_t* t = idx + k * 3;           // les 3 indices de la face k
+    SubmitRasterTriangle(renderer, rv[t[0]], rv[t[1]], rv[t[2]], couleur(base + k));
+}`,
+regs:(R)=>{let s=R.sm,rows='',n=0;const it=[];while(s){const k=31-Math.clz32(s&-s);it.push({s,k,next:s&(s-1)});s&=s-1}
+  rows=it.map((r,i)=>`<tr data-it="${i}" data-face="${r.k}"><td>${i+1}</td><td>${bin(r.s)}</td><td>${r.k}</td><td>${bin(r.next)}</td><td>DrawTriangle(face ${r.k})</td></tr>`).join('');
+  return `<div style="display:flex;gap:8px;align-items:center"><button id="replay">Rejouer la boucle</button><span class="note">${it.length} itération${it.length>1?'s':''} pour 8 faces</span></div>
+  <table class="iter"><tr><th>#</th><th>surv</th><th>k = countr_zero</th><th>surv &= surv − 1</th><th>action</th></tr>${rows||'<tr><td colspan="5">surv = 0 : aucune itération</td></tr>'}</table>`}}
+];
+
+/* ---------- objectifs : le POURQUOI de chaque étape ---------- */
+const PHASES=[
+ {n:'Données',q:'que veut-on savoir ?',st:[0]},
+ {n:'1 · Rassembler',q:'mettre la face j dans le couloir j',st:[1,2,3,4]},
+ {n:'2 · Orientation',q:'la face regarde-t-elle la caméra ?',st:[5,6,7]},
+ {n:'3 · Boîte de pixels',q:'touche-t-elle un centre de pixel ?',st:[8,9,10,11,12]},
+ {n:'4 · Décider',q:'qui dessiner, et dans quel ordre ?',st:[13,14]}];
+function pick(R,f){for(let j=0;j<8;j++)if(f(j))return j;return -1}
+const GOALS=[
+{goal:`Pour chacune des 8 faces, répondre à deux questions : <b>la face est-elle tournée vers la caméra ?</b> et <b>sa boîte contient-elle au moins un centre de pixel ?</b> Une face qui répond non à l'une des deux ne sera pas dessinée. Sur V1, c'est le cas d'environ 96 % des faces.`,
+ why:`Une instruction AVX2 applique la même opération à 8 valeurs rangées <b>côte à côte dans un registre</b>. Pour tester 8 faces d'un coup, il faut donc un registre qui contient les 8 x du coin a, un autre les 8 y du coin a, et ainsi de suite.`,
+ simpler:`On ne peut pas charger « les 8 x du coin a » en une lecture : ils sont éparpillés. Chaque face pointe vers un sommet quelconque (l'indice), et dans chaque sommet le x est collé à y, z et invW. Les étapes 1 à 4 servent uniquement à <b>réordonner</b> ces données. C'est une transposition : on passe de « une face par ligne » à « une grandeur par registre ».`,
+ after:`Rien n'est calculé. On sait seulement où se trouvent les 24 sommets dont on a besoin.`,
+ ex:R=>`Exemple : le coin a de la face 5 est <code>rv[idx[15]] = rv[${idx[15]}]</code>, à l'octet ${idx[15]*16} du tampon. Celui de la face 6 est <code>rv[${idx[18]}]</code>, à l'octet ${idx[18]*16}. Ces deux valeurs ne sont pas voisines en mémoire.`},
+{goal:`Amener en registres les 8 sommets du coin a, avec le moins de lectures possible.`,
+ why:`Une lecture de 16 octets ramène un sommet entier en une instruction, et un registre de 256 bits en contient deux. On fait donc 8 lectures pour 8 sommets. Les paires (0,4), (1,5), (2,6), (3,7) ne sont pas un hasard : les instructions de rangement des étapes 2 et 3 <b>ne font jamais passer une valeur d'une moitié de 128 bits à l'autre</b>. La moitié basse doit donc déjà contenir les faces qui finiront dans les couloirs 0 à 3, et la moitié haute celles des couloirs 4 à 7.`,
+ simpler:`Avec les paires (0,1), la face 1 se retrouverait dans la moitié haute et ne pourrait jamais rejoindre le couloir 1. Lire chaque x séparément puis l'insérer coûterait 8 insertions pour les x et 8 de plus pour les y. Un <code>gather</code> coûte davantage, et sur l'i9 il est ralenti par le microcode anti-Downfall.`,
+ after:`Les bonnes données sont en registres, mais rangées « à l'horizontale » : x, y, z et invW d'une même face sont côte à côte. On voudrait l'inverse.`,
+ ex:R=>`Regarde <code>v04</code> : les cases f0 occupent toute la moitié basse, et les cases f4 toute la moitié haute.`},
+{goal:`Première moitié de la transposition : rapprocher les x de faces différentes, et se débarrasser de z et invW.`,
+ why:`Il faut réunir 4 x par moitié, venus de 4 registres différents. Aucune instruction ne prend un élément dans 4 registres à la fois, donc on procède en deux temps. D'abord, on combine les registres deux par deux (unpack) : le x de la face 0 se retrouve à côté du x de la face 1. Ensuite, on combine les deux résultats (shuffle, étape 3).`,
+ simpler:`<code>unpacklo</code> prend les éléments 0 et 1 de chaque sommet, c'est-à-dire x et y : exactement ce qu'on veut garder. <code>unpackhi</code> prendrait z et invW, qui ne servent pas aux tests. Il n'y a rien à écrire pour les jeter.`,
+ after:`Les x vont maintenant par paires de faces : <code>t0</code> contient x0 x1, puis y0 y1 (et x4 x5, y4 y5 en haut).`,
+ ex:R=>`Dans <code>t0</code>, la moitié basse contient f0, f1, f0, f1 : deux x, puis deux y.`},
+{goal:`Finir la transposition : un registre ne contient plus que des x, l'autre que des y, et le couloir j correspond à la face j.`,
+ why:`<code>shuffle</code> prend deux éléments du premier registre et deux du second. On lui demande les deux x de <code>t0</code> et les deux x de <code>t1</code>, ce qui donne x0 x1 x2 x3. La même instruction fait la moitié haute en même temps : x4 x5 x6 x7.`,
+ simpler:`Une fois la transposition faite, chaque calcul du triangle s'écrit comme en scalaire, une ligne de code par opération, mais chaque ligne traite 8 faces. C'est ce qu'on appelle le SIMD vertical : il n'y a plus jamais besoin de déplacer une donnée d'un couloir à l'autre.`,
+ after:`<code>ax</code> et <code>ay</code> sont prêts : les couleurs se suivent f0 … f7, de gauche à droite.`,
+ ex:R=>`Le couloir 5 de <code>ax</code> vaut ${ff(R.ax[5])} : c'est exactement le x de <code>rv[${idx[15]}]</code> dans la table mémoire.`},
+{goal:`Avoir dans le même couloir les trois coins de chaque face : les deux tests utilisent toujours a, b et c ensemble.`,
+ why:`On refait la même recette pour b (k = 1) et pour c (k = 2). Le rangement coûte au total 24 lectures de sommets, 6 unpack et 6 shuffle pour 8 faces. Il n'y a ni branche ni gather.`,
+ simpler:`En scalaire, chaque face lisait ses 6 coordonnées à la volée, puis calculait. Ici on paie ce rangement une fois pour 8 faces, et les étapes 5 à 12 se comptent en <b>une instruction pour 8 faces</b>.`,
+ after:`Six registres de 8 valeurs : toutes les coordonnées utiles du lot, alignées par face.`,
+ ex:R=>``},
+{goal:`Préparer le calcul de l'aire signée du triangle à l'écran.`,
+ why:`L'aire signée d'un triangle vaut le produit vectoriel en 2D de deux de ses arêtes : <code>(a − c) × (b − c)</code>. On commence donc par former ces deux vecteurs, u = a − c et v = b − c, qui partent tous deux du point c.`,
+ simpler:`Mathématiquement, on pourrait partir de a ou utiliser une autre formule. Mais le test doit être <b>identique au bit près</b> à <code>EdgeFunction(a, b, c)</code>, qui soustrait c en premier (c'est la forme antisymétrique qui a supprimé les fissures de couture). Une formule différente arrondirait autrement et pourrait trancher différemment sur une face presque de profil.`,
+ after:`Quatre registres : les deux arêtes des 8 triangles.`,
+ ex:R=>{const j=pick(R,j=>isFinite(R.ux[j]));return j<0?'':`Face ${j} : u = (${ff(R.ux[j])}, ${ff(R.uy[j])}), v = (${ff(R.vx[j])}, ${ff(R.vy[j])}).`}},
+{goal:`Obtenir le <b>sens de parcours</b> de chaque triangle à l'écran : horaire ou anti-horaire.`,
+ why:`Le signe de l'aire donne ce sens. Pour une face avant (CCW en espace vue), Y est inversé en raster, donc l'aire est <b>négative</b>. C'est la convention verrouillée par la TNR §Winding. La valeur absolue (deux fois l'aire) ne sert pas ici.`,
+ simpler:`Une FMA (<code>fmsub</code>) calculerait <code>ux·vy − uy·vx</code> plus vite et plus précisément, avec un seul arrondi. Mais le résultat ne serait plus le même que celui du scalaire, et une face pourrait changer de camp. C'est une décision séparée du chantier (A21 § 5.1).`,
+ after:`8 aires, dont seul le signe compte pour la suite.`,
+ ex:R=>{const f=pick(R,j=>R.area[j]<0),b=pick(R,j=>R.area[j]>=0);return [f>=0?`Face ${f} : aire = ${ff(R.area[f])} &lt; 0, donc face avant.`:'',b>=0?`Face ${b} : aire = ${ff(R.area[b])} ≥ 0, donc face arrière.`:''].join(' ')}},
+{goal:`Transformer 8 nombres en 8 décisions oui/non, <b>sans aucun if</b>.`,
+ why:`Un <code>if</code> par face est une branche. Sur V1, ces branches sont imprévisibles et chaque erreur de prédiction coûte environ 15 à 20 cycles. Une comparaison SIMD produit plutôt un <b>masque</b> : un couloir à 0xFFFFFFFF (oui) ou à 0 (non). Ce masque se combine ensuite par un simple ET bit à bit avec le second test.`,
+ simpler:`On ne s'arrête pas ici pour les faces arrière : en SIMD, on calcule toujours les 8 couloirs et on trie à la fin. Faire la boîte d'une face arrière ne coûte rien de plus, puisque l'instruction traite 8 couloirs de toute façon. Brancher coûterait plus cher. Le choix de <code>_CMP_NGE_UQ</code> plutôt que <code>LT</code> garantit qu'une aire NaN se comporte comme dans le scalaire.`,
+ after:`Première décision, sous forme de masque : <code>front</code>.`,
+ ex:R=>`Ce lot compte ${R.front.filter(Boolean).length} face(s) avant sur 8.`},
+{goal:`Préparer le second test : le triangle couvre-t-il au moins un centre de pixel ?`,
+ why:`Le test exact demanderait 3 fonctions d'arête par pixel candidat, donc trop cher. On utilise un test <b>conservatif</b> : la boîte englobante. Si la boîte ne contient aucun centre de pixel, le triangle n'en contient pas non plus, et le rejet est exact. La boîte, c'est le min et le max des trois coins, sur chaque axe.`,
+ simpler:`L'ordre des arguments n'est pas une coquetterie. <code>minps</code> rend son second opérand quand la comparaison échoue (NaN ou égalité), comme <code>std::min</code> de MSVC rend son premier. Il faut donc écrire <code>min_ps(droite, gauche)</code>. Choisis la variante fausse avec le NaN injecté pour voir le résultat diverger.`,
+ after:`La boîte de chaque triangle, en coordonnées continues (pointillés dans la scène).`,
+ ex:R=>{const j=pick(R,j=>isFinite(R.minX[j]));return j<0?'':`Face ${j} : x de ${ff(R.minX[j])} à ${ff(R.maxX[j])}, y de ${ff(R.minY[j])} à ${ff(R.maxY[j])}.`}},
+{goal:`Passer de la boîte continue aux <b>pixels dont le centre est dedans</b>.`,
+ why:`Le centre du pixel n est en n + 0,5. Le premier centre à droite de minX est <code>ceil(minX − 0,5)</code>, et le dernier à gauche de maxX est <code>floor(maxX − 0,5)</code>. Si le premier dépasse le dernier, aucun centre n'est couvert : c'est le cas typique des petits triangles de V1, qui tiennent entre deux centres.`,
+ simpler:`Arrondir minX et maxX au plus proche donnerait une boîte trop large ou trop étroite d'un pixel, et un triangle survivrait ou disparaîtrait à tort. Le −0,5 suivi de ceil/floor est exactement la règle du rasterizer.`,
+ after:`Les indices du premier et du dernier pixel couvert, encore stockés en float.`,
+ ex:R=>{const j=pick(R,j=>R.front[j]&&!R.nonEmpty[j]&&isFinite(R.minX[j]));const k=j>=0?j:pick(R,j=>isFinite(R.minX[j]));if(k<0)return'';const b=R.box[k];
+   return `Face ${k}, axe x : minX = ${ff(R.minX[k])}, donc ${ff(b.sx0)} puis ceil = ${ff(b.rx0)}. maxX = ${ff(R.maxX[k])}, donc ${ff(b.sx1)} puis floor = ${ff(b.rx1)}. ${b.rx0>b.rx1?`Le premier pixel (${ff(b.rx0)}) est après le dernier (${ff(b.rx1)}) : aucun centre n'est couvert en x.`:`Les pixels ${ff(b.rx0)} à ${ff(b.rx1)} ont leur centre dans la boîte en x.`}`}},
+{goal:`Passer en entiers, et adopter la convention de borne <b>exclusive</b>.`,
+ why:`<code>PixelBox</code> est en int32 : la suite (clamp, test de vide) se fait en arithmétique entière, exacte et sans question d'arrondi. Avec x1 = dernier + 1, la boîte est l'intervalle [x0, x1) et la condition « vide » s'écrit simplement x0 ≥ x1. Une boîte d'un seul pixel a x1 = x0 + 1.`,
+ simpler:`<code>cvttps_epi32</code> renvoie INT_MIN pour une valeur hors plage ou NaN, exactement comme le <code>cvttss2si</code> utilisé par le scalaire. Même un triangle aberrant donne donc le même entier des deux côtés.`,
+ after:`x0, y0 inclusifs et x1, y1 exclusifs, en entiers, pas encore limités à l'écran.`,
+ ex:R=>{const j=pick(R,j=>isFinite(R.minX[j]));if(j<0)return'';const b=R.box[j];return `Face ${j} : [${fi(b.ix0)}, ${fi(b.ix1)}) en x et [${fi(b.iy0)}, ${fi(b.iy1)}) en y, soit ${Math.max(0,b.ix1-b.ix0)} × ${Math.max(0,b.iy1-b.iy0)} centre(s) avant le clamp.`}},
+{goal:`Ne garder que la partie de la boîte qui est <b>dans le viewport</b>.`,
+ why:`Un triangle à cheval sur le bord ne doit compter que ses pixels visibles. Un triangle entièrement hors du viewport obtient après clamp une boîte vide (par exemple x1 ≤ 0 = x0), donc il est rejeté par le même test, sans cas particulier. En écran splitté, c'est aussi ce qui empêche une vue de déborder sur l'autre.`,
+ simpler:`Ce sont les quatre <code>if</code> de <code>ClampBox</code>, chacun réécrit en max ou min entier. Sur des entiers, l'ordre des opérandes n'a aucune importance.`,
+ after:`La boîte définitive de chaque face, en pixels réels de la vue (cadres verts dans la scène).`,
+ ex:R=>{const j=pick(R,j=>{const b=R.box[j];return b.ix0!==b.x0||b.iy0!==b.y0||b.ix1!==b.x1||b.iy1!==b.y1});return j<0?`Aucune face de ce lot ne déborde du viewport : le clamp ne change rien ici, mais il reste indispensable au bord de l'écran.`:`Face ${j} : le clamp a modifié sa boîte (${fi(R.box[j].ix0)}..${fi(R.box[j].ix1)} → ${fi(R.box[j].x0)}..${fi(R.box[j].x1)} en x).`}},
+{goal:`Seconde décision oui/non, sous la même forme de masque que <code>front</code>.`,
+ why:`Comme les deux masques ont le même format (0xFFFFFFFF ou 0 par couloir), on peut les combiner ensuite par un ET bit à bit, sans aucune branche.`,
+ simpler:`L'ancien <code>Empty()</code> était un <code>||</code> suivi d'un <code>if</code> : deux branches par face. Ici, c'est deux comparaisons et un ET pour 8 faces.`,
+ after:`Deux masques : <code>front</code> et <code>nonEmpty</code>.`,
+ ex:R=>`Ce lot compte ${R.nonEmpty.filter(Boolean).length} boîte(s) non vide(s) sur 8, faces arrière comprises : la combinaison avec front arrive à l'étape suivante.`},
+{goal:`Quitter le monde SIMD : obtenir <b>un entier</b> sur lequel le code scalaire peut agir.`,
+ why:`Le dessin reste scalaire. Il lui faut une valeur qu'on peut tester (<code>if (surv)</code>) et parcourir. <code>movemask</code> réduit 8 couloirs de 32 bits à 8 bits, un par face. Un lot où rien ne survit se résume alors à un entier nul, rejeté en une comparaison.`,
+ simpler:`Le ET entre front et nonEmpty se fait ici, sur des entiers de 8 bits, plutôt que sur les registres : c'est le même coût et le résultat est directement prêt pour la boucle. Les compteurs du profileur (<code>popcount</code>) lisent aussi ces entiers.`,
+ after:`<code>FaceMasks8 { front, survive }</code> : la réponse aux deux questions de l'étape 0, pour les 8 faces.`,
+ ex:R=>`survive = ${bin(R.sm)}. Lu de droite à gauche, le bit j vaut 1 si la face j est à dessiner : ${R.surv.map((b,j)=>b?'f'+j:null).filter(Boolean).join(', ')||'aucune'}.`},
+{goal:`N'exécuter le travail coûteux (<code>DrawTriangle</code>, environ 49 ns) <b>que pour les survivantes</b>, dans l'ordre d'origine.`,
+ why:`La boucle fait une itération par bit à 1, pas une par face. <code>countr_zero</code> (instruction <code>tzcnt</code>) donne l'indice du bit le plus bas, et <code>s &= s − 1</code> l'efface. L'ordre croissant reproduit celui de l'ancienne boucle, ce qui compte en cas d'égalité de profondeur.`,
+ simpler:`Une boucle <code>for k in 0..7 if (bit k)</code> réintroduirait 8 branches par lot, celles qu'on vient de supprimer. Avec la compaction, le coût du tri est proportionnel au nombre de survivantes. Sur V1, environ 4 % des faces survivent.`,
+ after:`Les survivantes sont envoyées au rasterizer scalaire. On passe au lot suivant : base += 8.`,
+ ex:R=>`Ici, ${R.surv.filter(Boolean).length} itération(s) pour 8 faces. L'ancienne boucle aurait exécuté 8 fois tout le code des tests, avec ses branches.`}
+];
+
+
+/* ---------- entrées : les résultats des étapes précédentes que l'étape consomme ---------- */
+const fr=n=>`<button class="from" data-go="${n}">← étape ${n}</button>`;
+const idxCorner=k=>idx.filter((_,n)=>n%3===k).map((v,j)=>({v,face:j,tag:'indice',int:1}));
+const rx=(R,key,k)=>R.box.map((b,j)=>({v:b[key],face:j,tag:k||'',int:1}));
+const INPUTS=[
+ R=>`<p class="note">Aucune : l'étape 0 part de la mémoire (à gauche).</p>`,
+ R=>laneHdr()+reg('idx[j*3+0]','mémoire',idxCorner(0))+`<p class="note">Indice du coin a de chaque face. Le couloir j de ce registre fictif dit quel <code>rv[i]</code> lire pour la face j.</p>`,
+ R=>laneHdr()+reg('v04',fr(1),pairReg(0,0,4))+reg('v15',fr(1),pairReg(0,1,5))+reg('v26',fr(1),pairReg(0,2,6))+reg('v37',fr(1),pairReg(0,3,7)),
+ R=>laneHdr()+reg('t0',fr(2),unpackReg(0,0,1,4,5))+reg('t1',fr(2),unpackReg(0,2,3,6,7)),
+ R=>laneHdr()+reg('ax',fr(3),vec(R.ax,'x'))+reg('ay',fr(3),vec(R.ay,'y'))+reg('idx[j*3+1]','mémoire, coin b',idxCorner(1))+reg('idx[j*3+2]','mémoire, coin c',idxCorner(2)),
+ R=>laneHdr()+reg('ax',fr(4),vec(R.ax,'x'))+reg('ay',fr(4),vec(R.ay,'y'))+reg('bx',fr(4),vec(R.bx,'x'))+reg('by',fr(4),vec(R.by,'y'))+reg('cx',fr(4),vec(R.cx,'x'))+reg('cy',fr(4),vec(R.cy,'y')),
+ R=>laneHdr()+reg('ux',fr(5),vec(R.ux,''))+reg('uy',fr(5),vec(R.uy,''))+reg('vx',fr(5),vec(R.vx,''))+reg('vy',fr(5),vec(R.vy,'')),
+ R=>laneHdr()+reg('area',fr(6),vec(R.area,'')),
+ R=>laneHdr()+reg('ax',fr(4),vec(R.ax,'x'))+reg('ay',fr(4),vec(R.ay,'y'))+reg('bx',fr(4),vec(R.bx,'x'))+reg('by',fr(4),vec(R.by,'y'))+reg('cx',fr(4),vec(R.cx,'x'))+reg('cy',fr(4),vec(R.cy,'y'))+`<p class="note">On repart des coordonnées de l'étape 4 : le test de la boîte est indépendant de l'aire. Le masque <code>front</code> attend dans son registre jusqu'à l'étape 13.</p>`,
+ R=>laneHdr()+reg('minX',fr(8),vec(R.minX,''))+reg('minY',fr(8),vec(R.minY,''))+reg('maxX',fr(8),vec(R.maxX,''))+reg('maxY',fr(8),vec(R.maxY,'')),
+ R=>laneHdr()+reg('ceil(minX−½)',fr(9),vec(R.box.map(b=>b.rx0),''))+reg('ceil(minY−½)',fr(9),vec(R.box.map(b=>b.ry0),''))+reg('floor(maxX−½)',fr(9),vec(R.box.map(b=>b.rx1),''))+reg('floor(maxY−½)',fr(9),vec(R.box.map(b=>b.ry1),'')),
+ R=>laneHdr()+reg('x0',fr(10),rx(R,'ix0'))+reg('y0',fr(10),rx(R,'iy0'))+reg('x1',fr(10),rx(R,'ix1'))+reg('y1',fr(10),rx(R,'iy1'))+`<p class="note">Viewport de la vue : x de ${VP.x} à ${VP.x+VP.w}, y de ${VP.y} à ${VP.y+VP.h}, diffusé dans les 8 couloirs par <code>_mm256_set1_epi32</code>.</p>`,
+ R=>laneHdr()+reg('x0',fr(11),rx(R,'x0'))+reg('y0',fr(11),rx(R,'y0'))+reg('x1',fr(11),rx(R,'x1'))+reg('y1',fr(11),rx(R,'y1')),
+ R=>{const badF=R.front.map((b,j)=>b!==R.ref[j].front);return laneHdr()+reg('front',fr(7),bits(R.front,'',{bad:badF}))+reg('nonEmpty',fr(12),bits(R.nonEmpty,''))},
+ R=>{const v=0xFF;return laneHdr()+reg('survive',fr(13),bits(R.surv,''))+`<table style="max-width:420px"><tr><th style="text-align:left">entier</th><th>binaire</th><th>hex</th><th style="text-align:left">origine</th></tr><tr><td style="text-align:left">m.survive</td><td>${bin(R.sm)}</td><td>${hex(R.sm)}</td><td style="text-align:left">${fr(13)}</td></tr><tr><td style="text-align:left">valid</td><td>${bin(v)}</td><td>${hex(v)}</td><td style="text-align:left">lot complet (n = 8)</td></tr></table>`}
+];
+
+/* ---------- rendu ---------- */
+const $=id=>document.getElementById(id);
+function renderRail(){
+  $('rail').innerHTML=ST.map((s,i)=>`<button class="${i===stage?'cur':(i<stage?'done':'')}" data-st="${i}" aria-label="Étape ${i}: ${esc(s.t)}" title="${esc(s.t)}">${i}</button>`).join('');
+  $('stageSel').innerHTML=ST.map((s,i)=>`<option value="${i}" ${i===stage?'selected':''}>${i}. ${s.t}</option>`).join('');
+}
+function triState(R,j){
+  if(stage<7) return 'neutral';
+  if(!R.front[j]) return 'back';
+  if(stage<12) return 'front';
+  return R.nonEmpty[j]?'surv':'empty';
+}
+function renderScene(R){
+  let s='';
+  for(let y=0;y<VP.h;y++)for(let x=0;x<VP.w;x++){s+=`<rect x="${x*S}" y="${y*S}" width="${S}" height="${S}" fill="none" stroke="var(--line)" stroke-width=".5"/><circle cx="${x*S+S/2}" cy="${y*S+S/2}" r="1.4" fill="var(--muted)" opacity=".55"/>`}
+  for(let x=0;x<=VP.w;x+=4)s+=`<text x="${x*S}" y="${VP.h*S+14}" font-size="10" fill="var(--muted)" text-anchor="middle">${x}</text>`;
+  for(let y=0;y<=VP.h;y+=4)s+=`<text x="-3" y="${y*S+3}" font-size="10" fill="var(--muted)" text-anchor="end">${y}</text>`;
+  for(let j=0;j<8;j++){
+    const st=triState(R,j), pts=[0,1,2].map(k=>corner(j,k));
+    const b=R.box[j];
+    if(stage>=8&&stage<=10&&isFinite(R.minX[j])&&isFinite(R.maxX[j])&&isFinite(R.minY[j])&&isFinite(R.maxY[j]))
+      s+=`<rect data-face="${j}" x="${R.minX[j]*S}" y="${R.minY[j]*S}" width="${Math.max(0,(R.maxX[j]-R.minX[j])*S)}" height="${Math.max(0,(R.maxY[j]-R.minY[j])*S)}" fill="none" stroke="var(--l${j})" stroke-dasharray="3 2" stroke-width="1"/>`;
+    if(stage>=11&&b.x1>b.x0&&b.y1>b.y0)
+      s+=`<rect data-face="${j}" x="${b.x0*S}" y="${b.y0*S}" width="${(b.x1-b.x0)*S}" height="${(b.y1-b.y0)*S}" fill="color-mix(in oklab,var(--ok) 10%,transparent)" stroke="var(--ok)" stroke-width="1"/>`;
+    const finite=pts.every(p=>isFinite(p.x)&&isFinite(p.y));
+    const fill={neutral:`color-mix(in oklab,var(--l${j}) 25%,var(--panel))`,back:'none',front:`color-mix(in oklab,var(--l${j}) 25%,var(--panel))`,empty:'color-mix(in oklab,var(--warn) 30%,var(--panel))',surv:'color-mix(in oklab,var(--ok) 40%,var(--panel))'}[st];
+    const stroke={neutral:`var(--l${j})`,back:'var(--muted)',front:`var(--l${j})`,empty:'var(--warn)',surv:'var(--ok)'}[st];
+    const fin=pts.filter(p=>isFinite(p.x)&&isFinite(p.y));
+    const cx=fin.reduce((a,p)=>a+p.x,0)/Math.max(1,fin.length), cyMax=Math.max(...fin.map(p=>p.y));
+    if(finite) s+=`<polygon class="tri" data-face="${j}" points="${pts.map(p=>p.x*S+','+p.y*S).join(' ')}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${st==='back'?'stroke-dasharray="4 3"':''}/>`;
+    else s+=`<text data-face="${j}" x="${cx*S}" y="${cyMax*S-8}" font-size="11" fill="var(--bad)" text-anchor="middle">NaN</text>`;
+    fin.forEach((p,k)=>{if(finite)s+=`<circle data-face="${j}" cx="${p.x*S}" cy="${p.y*S}" r="2" fill="${stroke}"/>`});
+    s+=`<text data-face="${j}" x="${cx*S}" y="${Math.min(cyMax*S+15,VP.h*S+28)}" font-size="12" fill="var(--l${j})" text-anchor="middle" font-weight="500">f${j}</text>`;
+  }
+  $('scene').innerHTML=s;
+  const L=[];
+  if(stage<7)L.push(`<span><span class="sw" style="background:color-mix(in oklab,var(--l0) 25%,var(--panel))"></span>face (couleur = couloir)</span>`);
+  else{L.push(`<span><span class="sw" style="border:1px dashed var(--muted)"></span>face arrière</span>`);
+    if(stage<12)L.push(`<span><span class="sw" style="background:color-mix(in oklab,var(--l0) 25%,var(--panel))"></span>face avant</span>`);
+    else L.push(`<span><span class="sw" style="background:color-mix(in oklab,var(--warn) 30%,var(--panel))"></span>avant, boîte vide</span><span><span class="sw" style="background:color-mix(in oklab,var(--ok) 40%,var(--panel))"></span>survivante</span>`)}
+  if(stage>=8&&stage<=10)L.push(`<span><span class="sw" style="border:1px dashed var(--l2)"></span>boîte float (min, max)</span>`);
+  if(stage>=11)L.push(`<span><span class="sw" style="border:1px solid var(--ok)"></span>boîte entière clampée</span>`);
+  $('legend').innerHTML=L.join('');
+}
+function renderMem(){
+  let h='';for(let j=0;j<8;j++){h+=`<div class="grp" title="face ${j}">${[0,1,2].map(k=>`<span class="ix" data-face="${j}" style="--lc:var(--l${j})">${idx[j*3+k]}</span>`).join('')}</div>`}
+  $('idx').innerHTML=h;
+  const used=[...new Set(idx)].sort((a,b)=>a-b);
+  let t='<tr><th>rv[i]</th><th>x</th><th>y</th><th>z</th><th>invW</th><th style="text-align:left">coins</th></tr>';
+  used.forEach(i=>{const v=V(i);const uses=[];idx.forEach((ii,n)=>{if(ii===i)uses.push(`f${Math.floor(n/3)}.${KN[n%3]}`)});
+    const faces=[...new Set(idx.map((ii,n)=>ii===i?Math.floor(n/3):-1).filter(f=>f>=0))];
+    t+=`<tr data-face="${faces[0]}" data-faces="${faces.join(',')}"><td>${i}</td><td${Number.isNaN(v.x)?' style="color:var(--bad)"':''}>${ff(v.x)}</td><td>${ff(v.y)}</td><td>${ff(v.z)}</td><td>${ff(v.w)}</td><td class="uses">${uses.join(' ')}</td></tr>`});
+  $('rv').innerHTML=t;
+}
+function renderStage(R){
+  const s=ST[stage];
+  $('stNum').textContent=`Étape ${stage} sur ${ST.length-1}`;
+  $('stTitle').textContent=s.t;
+  $('stEx').innerHTML=s.ex;
+  const G=GOALS[stage];
+  $('stGoal').innerHTML=G.goal; $('stWhy').innerHTML=G.why; $('stSimpler').innerHTML=G.simpler; $('stAfter').innerHTML=G.after;
+  const exs=G.ex(R); $('stExample').innerHTML=exs||'<span class="note">Rien de spécifique à ce lot pour cette étape.</span>';
+  $('stPhases').innerHTML=PHASES.map(p=>`<div class="ph${p.st.includes(stage)?' cur':''}"><b>${p.n}</b>${p.q}</div>`).join('');
+  $('stCode').innerHTML=hl(s.code);
+  $('stRegs').innerHTML=s.regs(R);
+  $('stIn').innerHTML=INPUTS[stage](R);
+  const mf=R.front.filter((b,j)=>b!==R.ref[j].front).length, ms=R.surv.filter((b,j)=>b!==R.ref[j].surv).length;
+  $('stWarn').innerHTML=(mf||ms)?`<div class="warnbox">Désaccord avec le scalaire sur ${Math.max(mf,ms)} face(s) : les couloirs entourés de rouge. La TNR B4 échouerait.</div>`:(variant!=='ok'&&!nanOn?`<p class="note">Cette variante fausse ne diffère du scalaire que sur NaN ou ±0 : cochez « Injecter un NaN » pour la voir échouer.</p>`:'');
+  const c=R.front.filter(Boolean).length;
+  $('kpis').innerHTML=`<span class="kpi">front <b>${c}</b></span><span class="kpi">boîtes vides <b>${R.front.filter((b,j)=>b&&!R.nonEmpty[j]).length}</b></span><span class="kpi">survivantes <b>${R.surv.filter(Boolean).length}</b></span><span class="kpi">masque survive <b>${hex(R.sm)}</b></span>`;
+  const rb=$('replay'); if(rb) rb.onclick=replay;
+}
+function render(){
+  const R=classify();
+  renderRail();renderScene(R);renderMem();renderStage(R);applyHover();
+  try{localStorage.setItem('b4stage',String(stage))}catch(e){}
+}
+function applyHover(){
+  const roots=[$('scenePanel'),$('memPanel'),$('stagePanel')];
+  roots.forEach(r=>r.classList.toggle('dim',hover>=0));
+  document.querySelectorAll('[data-face]').forEach(el=>{
+    const fs=el.dataset.faces?el.dataset.faces.split(',').map(Number):[Number(el.dataset.face)];
+    el.classList.toggle('hl',fs.includes(hover));
+    if(el.tagName==='polygon'||el.tagName==='circle'||el.tagName==='text'||el.tagName==='rect'){el.style.opacity=(hover<0||fs.includes(hover))?'':'0.2'}
+  });
+}
+function replay(){
+  clearInterval(anim);const rows=[...document.querySelectorAll('.iter tr[data-it]')];if(!rows.length)return;
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){rows.forEach(r=>r.classList.add('on'));anim=null;return}
+  let i=0;rows.forEach(r=>r.classList.remove('on'));
+  anim=setInterval(()=>{rows.forEach(r=>r.classList.remove('on'));if(i>=rows.length){clearInterval(anim);anim=null;hover=-1;applyHover();return}
+    rows[i].classList.add('on');hover=Number(rows[i].dataset.face);applyHover();i++},800);
+}
+function go(n){clearInterval(anim);anim=null;stage=Math.max(0,Math.min(ST.length-1,n));hover=-1;render()}
+
+/* ---------- événements ---------- */
+$('prev').onclick=()=>go(stage-1);
+$('next').onclick=()=>go(stage+1);
+$('stageSel').onchange=e=>go(Number(e.target.value));
+document.addEventListener('click',e=>{const b=e.target.closest('.from');if(b)go(Number(b.dataset.go))});
+$('rail').onclick=e=>{const b=e.target.closest('button[data-st]');if(b)go(Number(b.dataset.st))};
+$('regen').onclick=()=>{regen();render()};
+$('nan').onchange=e=>{nanOn=e.target.checked;render()};
+$('variant').onchange=e=>{variant=e.target.value;render()};
+document.addEventListener('keydown',e=>{if(e.target.closest('select,input'))return;if(e.key==='ArrowRight')go(stage+1);if(e.key==='ArrowLeft')go(stage-1)});
+document.addEventListener('mouseover',e=>{const el=e.target.closest('[data-face]');const f=el?(el.dataset.faces?Number(el.dataset.faces.split(',')[0]):Number(el.dataset.face)):-1;if(f!==hover&&!anim){hover=f;applyHover()}});
+document.addEventListener('mouseleave',()=>{hover=-1;applyHover()});
+
+try{const s=Number(localStorage.getItem('b4stage'));if(s>=0&&s<ST.length)stage=s}catch(e){}
+regen();render();
+})();
+</script>
+
+</body></html>

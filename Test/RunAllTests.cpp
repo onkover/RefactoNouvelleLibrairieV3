@@ -36,6 +36,7 @@ namespace LV3::Tests
     void TestD3_3e_Materiaux();
     void TestD3_4a_CacheMeshOptions();
     void TestD3_4b_CleMateriaux();
+    bool Test_B4_ClassifyFaces8();
 
 
 #if LV3_DEBUG    
@@ -121,6 +122,21 @@ namespace LV3::Tests
         {
             Logger::success("SUCCES : Test_Rasterizer_EmptyBoxes");
         }
+
+
+        if (!Test_B4_ClassifyFaces8())
+        {
+            Logger::error("ECHEC : Test_B4_ClassifyFaces8()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_B4_ClassifyFaces8()");
+        }
+
+        
+
+
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())
