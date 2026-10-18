@@ -1,0 +1,257 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot B3 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+/* Layout : une colonne de lecture, un pupitre d'étapes, des registres en couloirs 0..7 avec la frontière 128 bits marquée. */
+:root{
+  --bg:#f5f6f4; --panel:#ffffff; --fg:#1d2321; --muted:#5d6864; --line:#d5dbd8;
+  --accent:#0f6e66; --accent-soft:#dcefec; --warn:#a4421f; --warn-soft:#f6e3da; --ok:#2c7a3f;
+  --lane-a:#e9f1ef; --lane-b:#f3eee6;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a19; --panel:#1b2321; --fg:#e3e9e6; --muted:#9aa7a2; --line:#2e3a37;
+  --accent:#5cc1b6; --accent-soft:#1f3633; --warn:#ec8a63; --warn-soft:#3a251c; --ok:#6fcf86;
+  --lane-a:#1f2c2a; --lane-b:#2a2620; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a19; --panel:#1b2321; --fg:#e3e9e6; --muted:#9aa7a2; --line:#2e3a37;
+  --accent:#5cc1b6; --accent-soft:#1f3633; --warn:#ec8a63; --warn-soft:#3a251c; --ok:#6fcf86;
+  --lane-a:#1f2c2a; --lane-b:#2a2620; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:600 1.7rem/1.2 var(--f-display);margin:0;text-wrap:balance}
+h2{font:600 1.2rem/1.3 var(--f-display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);max-width:68ch;margin:6px 0 0}
+.eyebrow{font:500 .72rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{font:500 .8rem var(--f-mono);border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;cursor:pointer}
+nav button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+nav button:focus-visible,.ctl button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.obj{background:var(--accent-soft);border-radius:4px;padding:10px 14px;max-width:80ch}
+.obj b{color:var(--accent)}
+pre{font:13px/1.5 var(--f-mono);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin:0;overflow-x:auto}
+.label{font:500 .75rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.regs{overflow-x:auto}
+table.reg{border-collapse:collapse;font:12.5px var(--f-mono);font-variant-numeric:tabular-nums;min-width:820px}
+table.reg th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px;white-space:nowrap}
+table.reg td{padding:4px 6px;text-align:right;border:1px solid var(--line);white-space:nowrap}
+table.reg td.l0,table.reg td.l1,table.reg td.l2,table.reg td.l3{background:var(--lane-a)}
+table.reg td.l4,table.reg td.l5,table.reg td.l6,table.reg td.l7{background:var(--lane-b)}
+table.reg td.l4{border-left:3px solid var(--fg)}
+table.reg tr.prev td{opacity:.7}
+table.reg tr.new th{color:var(--accent)}
+.tag{display:inline-block;font:500 .7rem var(--f-mono);padding:1px 6px;border-radius:3px;margin-left:4px}
+.tx{color:var(--accent)} .ty{color:var(--warn)} .tz{color:var(--ok)} .tw{color:var(--muted)}
+.mem{display:flex;flex-wrap:wrap;gap:2px;font:11.5px var(--f-mono)}
+.mem span{padding:3px 5px;border:1px solid var(--line);border-radius:2px;min-width:30px;text-align:center}
+.mem .sep{border:none;min-width:8px}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ctl button{font:500 .85rem var(--f-body);border:1px solid var(--accent);background:transparent;color:var(--accent);padding:6px 14px;border-radius:4px;cursor:pointer}
+.bad{background:var(--warn-soft)!important;color:var(--warn)}
+.okv{color:var(--ok);font-weight:600} .kov{color:var(--warn);font-weight:600}
+p{margin:0;max-width:75ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.grid2>div{min-width:0}
+.blk{border:1px solid var(--line);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.prevblk{background:var(--bg)}
+.curblk{border-color:var(--accent);border-width:2px}
+.blkt{font:600 .85rem var(--f-body)}
+.prevblk .blkt{color:var(--muted)} .curblk .blkt{color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">LibraryV3 · phase G · chantier B3</div>
+    <h1>Étage sommets en SoA, 8 sommets par lot</h1>
+    <p class="sub">ProjectPositions8, pas à pas, sur 8 vrais sommets d'une sphère vue par la caméra de V1. Chaque nombre est calculé en float32 (Math.fround après chaque opération), comme le CPU. Couloir 0 à gauche, la barre épaisse marque la frontière des 128 bits.</p>
+  </header>
+  <nav id="nav" aria-label="Étapes"></nav>
+  <section class="panel" id="panel" aria-live="polite"></section>
+  <div class="ctl"><button id="prev">← Étape précédente</button><button id="next">Étape suivante →</button><button id="roll">Tirer 8 autres sommets</button></div>
+</div>
+
+<script>
+const f=Math.fround;
+const add=(a,b)=>a.map((v,i)=>f(v+b[i])), sub=(a,b)=>a.map((v,i)=>f(v-b[i])), mul=(a,b)=>a.map((v,i)=>f(v*b[i])), div=(a,b)=>a.map((v,i)=>f(v/b[i]));
+const set1=v=>Array(8).fill(f(v));
+const fmaS=(a,b,c)=>f(a*b+c); // emulation : produit exact en double, un seul arrondi float
+const bits=x=>{const d=new DataView(new ArrayBuffer(4));d.setFloat32(0,x);return d.getUint32(0).toString(16).padStart(8,'0')};
+const fmt=x=>{if(!isFinite(x))return String(x);const a=Math.abs(x);return (a!==0&&(a<1e-3||a>=1e5))?x.toExponential(3):x.toFixed(a>=100?2:5)};
+
+// ── Camera de V1 : fov 60, 1536x900, reverse-Z infini, near 0.1. Convention LIGNE (p * M).
+const W=1536,H=900,near=0.1,fy=1/Math.tan(Math.PI/6),fx=fy/(W/H);
+function mm(A,B){const R=[];for(let i=0;i<4;i++){R[i]=[];for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=A[i][k]*B[k][j];R[i][j]=s}}return R}
+const ca=Math.cos(.6),sa=Math.sin(.6),cb=Math.cos(.3),sb=Math.sin(.3);
+const rotY=[[ca,0,-sa,0],[0,1,0,0],[sa,0,ca,0],[0,0,0,1]], rotX=[[1,0,0,0],[0,cb,sb,0],[0,-sb,cb,0],[0,0,0,1]];
+const trans=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0.7,-0.4,-6,1]];
+const proj=[[fx,0,0,0],[0,fy,0,0],[0,0,0,-1],[0,0,near,0]];
+const M=mm(mm(mm(rotY,rotX),trans),proj).map(r=>r.map(f));
+const VP={x:0,y:0,w:W,h:H};
+
+function sphereVerts(seed){let s=seed;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  const v=[];for(let i=0;i<8;i++){const t=Math.acos(2*rnd()-1),p=2*Math.PI*rnd();v.push([f(Math.sin(t)*Math.cos(p)),f(Math.cos(t)),f(Math.sin(t)*Math.sin(p))])}return v}
+
+function compute(V){
+  const R={};R.V=V;
+  R.x=V.map(v=>v[0]);R.y=V.map(v=>v[1]);R.z=V.map(v=>v[2]);
+  const row=c=>add(add(add(mul(R.x,set1(M[0][c])),mul(R.y,set1(M[1][c]))),mul(R.z,set1(M[2][c]))),set1(M[3][c]));
+  R.cx=row(0);R.cy=row(1);R.cz=row(2);R.cw=row(3);
+  R.iw=div(set1(1),R.cw);
+  R.xn=mul(R.cx,R.iw);R.yn=mul(R.cy,R.iw);R.zn=mul(R.cz,R.iw);
+  const h=set1(.5);
+  R.xr=add(set1(VP.x),mul(add(mul(R.xn,h),h),set1(VP.w)));
+  R.yr=add(set1(VP.y),mul(sub(h,mul(R.yn,h)),set1(VP.h)));
+  // transposition : unpacklo/hi travaillent DANS chaque moitie
+  const lo=(A,B)=>[A[0],B[0],A[1],B[1],A[4],B[4],A[5],B[5]], hi=(A,B)=>[A[2],B[2],A[3],B[3],A[6],B[6],A[7],B[7]];
+  const sh=(A,B,i0,i1)=>[A[i0],A[i1],B[i0],B[i1],A[4+i0],A[4+i1],B[4+i0],B[4+i1]];
+  R.t0=lo(R.xr,R.yr);R.t1=hi(R.xr,R.yr);R.t2=lo(R.zn,R.iw);R.t3=hi(R.zn,R.iw);
+  R.v04=sh(R.t0,R.t2,0,1);R.v15=sh(R.t0,R.t2,2,3);R.v26=sh(R.t1,R.t3,0,1);R.v37=sh(R.t1,R.t3,2,3);
+  const p20=(A,B)=>[...A.slice(0,4),...B.slice(0,4)], p31=(A,B)=>[...A.slice(4),...B.slice(4)];
+  R.s0=p20(R.v04,R.v15);R.s1=p20(R.v26,R.v37);R.s2=p31(R.v04,R.v15);R.s3=p31(R.v26,R.v37);
+  // reference scalaire (ProjectClip(MulRow(...)))
+  R.ref=V.map(p=>{const r=c=>f(f(f(f(p[0]*M[0][c])+f(p[1]*M[1][c]))+f(p[2]*M[2][c]))+M[3][c]);
+    const cx=r(0),cy=r(1),cz=r(2),cw=r(3),iw=f(1/cw);const xn=f(cx*iw),yn=f(cy*iw),zn=f(cz*iw);
+    return [f(VP.x+f(f(f(xn*.5)+.5)*VP.w)),f(VP.y+f(f(.5-f(yn*.5))*VP.h)),zn,iw]});
+  R.vec=[...R.s0,...R.s1,...R.s2,...R.s3];
+  return R;
+}
+// contre-exemple : MulRow contracte en FMA (ce que /fp:contract ou /fp:fast autoriseraient)
+function fmaVertex(p){const r=c=>f(fmaS(p[2],M[2][c],fmaS(p[1],M[1][c],f(p[0]*M[0][c])))+M[3][c]);
+  const cx=r(0),cy=r(1),cz=r(2),cw=r(3),iw=f(1/cw);const xn=f(cx*iw),yn=f(cy*iw),zn=f(cz*iw);
+  return [f(VP.x+f(fmaS(xn,.5,.5)*VP.w)),f(VP.y+f(f(.5-f(yn*.5))*VP.h)),zn,iw]}
+function fmaStats(n){let bad=0,s=7;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  for(let i=0;i<n;i++){const t=Math.acos(2*rnd()-1),q=2*Math.PI*rnd();const p=[f(Math.sin(t)*Math.cos(q)),f(Math.cos(t)),f(Math.sin(t)*Math.sin(q))];
+    const r=compute1(p),g=fmaVertex(p);if(r.some((v,k)=>bits(v)!==bits(g[k])))bad++}return bad}
+function compute1(p){const r=c=>f(f(f(f(p[0]*M[0][c])+f(p[1]*M[1][c]))+f(p[2]*M[2][c]))+M[3][c]);
+  const cx=r(0),cy=r(1),cz=r(2),cw=r(3),iw=f(1/cw);const xn=f(cx*iw),yn=f(cy*iw),zn=f(cz*iw);
+  return [f(VP.x+f(f(f(xn*.5)+.5)*VP.w)),f(VP.y+f(f(.5-f(yn*.5))*VP.h)),zn,iw]}
+
+
+// ── Contre-exemple rcp (etape 3) ─────────────────────────────
+// EMULATION de _mm256_rcp_ps : 1/w ramene a 12 bits de mantisse (Intel garantit |err rel| <= 1,5 * 2^-12 ;
+// les bits exacts dependent du CPU, d'ou "emulation"). Ensuite, une iteration de Newton-Raphson :
+// r1 = r0 * (2 - w * r0), la recette habituelle pour "rattraper" la precision.
+const u32=x=>{const d=new DataView(new ArrayBuffer(4));d.setFloat32(0,x);return d.getUint32(0)};
+const fromU32=u=>{const d=new DataView(new ArrayBuffer(4));d.setUint32(0,u>>>0);return d.getFloat32(0)};
+const rcpEmu=w=>{const q=u32(f(1/w));return fromU32(((q+0x400)&~0x7FF)>>>0)};          // 23 - 11 = 12 bits gardes
+const rcpNR=(w,r)=>f(r*f(2-f(w*r)));
+const ulps=(a,b)=>{const d=(u32(a)|0)-(u32(b)|0);return d};
+const xrFrom=(cx,iw)=>f(VP.x+f(f(f(f(cx*iw)*.5)+.5)*VP.w));
+const yrFrom=(cy,iw)=>f(VP.y+f(f(.5-f(f(cy*iw)*.5))*VP.h));
+function rcpStats(n){let s=11,bad0=0,bad1=0,maxPx=0;const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296};
+  for(let i=0;i<n;i++){const t=Math.acos(2*rnd()-1),q=2*Math.PI*rnd();const p=[f(Math.sin(t)*Math.cos(q)),f(Math.cos(t)),f(Math.sin(t)*Math.sin(q))];
+    const r=c=>f(f(f(f(p[0]*M[0][c])+f(p[1]*M[1][c]))+f(p[2]*M[2][c]))+M[3][c]);const cx=r(0),cw=r(3);
+    const iw=f(1/cw),r0=rcpEmu(cw),r1=rcpNR(cw,r0);if(u32(r0)!==u32(iw))bad0++;if(u32(r1)!==u32(iw))bad1++;
+    maxPx=Math.max(maxPx,Math.abs(xrFrom(cx,r0)-xrFrom(cx,iw)))}
+  return {bad0,bad1,maxPx}}
+const RCP_N=20000, rcpSt=rcpStats(RCP_N);
+let seed=20261017,R=compute(sphereVerts(seed)),step=0;
+const STATS_N=20000,statBad=fmaStats(STATS_N);
+
+function reg(name,arr,cls,note,tags){
+  return `<tr class="${cls||''}"><th>${name}${note?` <span class="tag" style="color:var(--muted)">${note}</span>`:''}</th>${arr.map((v,i)=>`<td class="l${i}${tags?' '+tags[i]:''}">${typeof v==='number'?fmt(v):v}</td>`).join('')}</tr>`}
+function table(rows){return `<div class="regs"><table class="reg"><tr><th></th>${[0,1,2,3,4,5,6,7].map(i=>`<th>c${i}</th>`).join('')}</tr>${rows.join('')}</table></div>`}
+const T=['tx','ty','tz','tw'];
+const tagged=(A,pat)=>A.map((v,i)=>`<span class="${T[pat[i]]}">${fmt(v)}</span>`);
+
+const P=[0,1,2,3,0,1,2,3];
+const aosMem=()=>{const aos=R.V.map((v,i)=>`<span class="tx">${fmt(v[0])}</span><span class="ty">${fmt(v[1])}</span><span class="tz">${fmt(v[2])}</span><span class="sep"></span>`).join('');return `<div class="label">vertexPositions (AoS, Vec3f, 12 o) — sommets 0 à 7</div><div class="mem">${aos}</div>`};
+const soaMem=()=>{const row=(a,c,n)=>`<div class="mem" style="margin-top:4px"><span class="${c}" style="border:none;min-width:auto">${n}[ ]</span>${a.map(v=>`<span class="${c}">${fmt(v)}</span>`).join('')}</div>`;
+  return `<div class="label">positionsSoA (3 tableaux alignés 64 o)</div>${row(R.x,'tx','x')}${row(R.y,'ty','y')}${row(R.z,'tz','z')}`};
+const R1=()=>[reg('x',R.x),reg('y',R.y),reg('z',R.z)];
+const R2=()=>[reg('cx',R.cx),reg('cy',R.cy),reg('cz',R.cz),reg('cw',R.cw)];
+const R4=()=>[reg('xn',R.xn),reg('yn',R.yn),reg('zn',R.zn)];
+const R6=()=>[reg('t0',tagged(R.t0,[0,1,0,1,0,1,0,1]),'','x0 y0 x1 y1 | x4 y4 x5 y5'),reg('t1',tagged(R.t1,[0,1,0,1,0,1,0,1]),'','x2 y2 x3 y3 | x6 y6 x7 y7'),
+  reg('t2',tagged(R.t2,[2,3,2,3,2,3,2,3]),'','z0 w0 z1 w1 | z4 w4 z5 w5'),reg('t3',tagged(R.t3,[2,3,2,3,2,3,2,3]),'','z2 w2 z3 w3 | z6 w6 z7 w7')];
+const R7=()=>[reg('v04',tagged(R.v04,P),'','sommet 0 | sommet 4'),reg('v15',tagged(R.v15,P),'','1 | 5'),reg('v26',tagged(R.v26,P),'','2 | 6'),reg('v37',tagged(R.v37,P),'','3 | 7')];
+const R8=()=>[reg('dst[0..1]',tagged(R.s0,P),'','sommet 0 | sommet 1'),reg('dst[2..3]',tagged(R.s1,P),'','2 | 3'),reg('dst[4..5]',tagged(R.s2,P),'','4 | 5'),reg('dst[6..7]',tagged(R.s3,P),'','6 | 7')];
+
+const steps=[
+{t:"Données",h:"AoS au chargement, SoA pour le calcul",o:"Pourquoi changer la disposition : un registre AVX2 contient 8 floats. Pour faire « x de 8 sommets » d'une seule instruction, il faut que ces 8 x soient côte à côte en mémoire. La transposition AoS → SoA est faite UNE fois par BakePositionsSoA (RegisterMesh), jamais par frame.",
+ prevT:"Entrée : le mesh tel que l'OBJLoader le livre",prev:aosMem,
+ curT:"Résultat : la SoA cuite par RegisterMesh",cur:soaMem,
+ note:()=>`<p>Bourrage : sphere_hi a 2 143 sommets. PaddedCount = 2 144. Le couloir 2 143 répète le sommet 2 142, donc un lot lit toujours un vrai sommet (w &gt; 0) et il n'y a pas de boucle de queue.</p>
+  <p><b>Contre-exemple écarté :</b> garder l'AoS et calculer un sommet par registre 128 bits ((x,y,z,w) = px·L0 + py·L1 + pz·L2 + L3) donne le même nombre de mul/add, mais 1 division utile sur 4 couloirs : 4 vdivps par lot de 8 au lieu d'une. La division est l'instruction la plus lente de l'étage.</p>`},
+{t:"1 · Charger",h:"Trois chargements alignés",o:"Amener 8 x, 8 y, 8 z en registres. Les données sont alignées sur 64 o par l'allocateur, pour qu'aucun chargement ne chevauche deux lignes de cache. Attention : MSVC compile _mm256_load_ps en vmovups (forme non alignée), donc une adresse mal alignée ne lève AUCUNE faute en Release. Seule l'assertion Debug la détecte.",
+ code:"const __m256 x = _mm256_load_ps(px + i);   // [x0 .. x7]\nconst __m256 y = _mm256_load_ps(py + i);\nconst __m256 z = _mm256_load_ps(pz + i);",
+ prevT:"Étape précédente (Données) : la SoA en mémoire",prev:soaMem,
+ curT:"Cette étape : trois registres ymm",cur:()=>table(R1())},
+{t:"2 · MulRow",h:"Le produit par la matrice, même ordre d'additions",o:"Passer en espace clip. Chaque composante est ((x·m0c + y·m1c) + z·m2c) + m3c, exactement l'ordre de MulRow (évaluation de gauche à droite). Changer l'ordre ou fusionner une mul et une add (FMA) change le dernier bit.",
+ code:"// colonne 3 (w) : m03, m13, m23, m33 diffusés hors de la boucle\nconst __m256 cw = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(\n                      _mm256_mul_ps(x, m03), _mm256_mul_ps(y, m13)),\n                      _mm256_mul_ps(z, m23)), m33);",
+ prevT:"Étape 1 : positions objet",prev:()=>table(R1()),
+ curT:"Cette étape : positions en espace clip",cur:()=>table(R2()),
+ note:()=>`<p>Les 16 coefficients de la mvp de cette vue (ligne r = x, y, z, translation) : ${M.map(r=>'['+r.map(v=>fmt(v)).join(', ')+']').join(' ')}</p>`},
+{t:"3 · Division",h:"Une seule vdivps pour 8 sommets",o:"Calculer 1/w, le dénominateur perspectif (invW du RasterVertex). On divise, on ne prend pas _mm256_rcp_ps : rcp n'a que 12 bits justes, l'image ne serait plus celle du scalaire. Inside garantit w > 0 dans les 8 couloirs (assertion Debug par movemask).",
+ code:"LV3_ASSERT(_mm256_movemask_ps(_mm256_cmp_ps(cw, zero, _CMP_GT_OQ)) == 0xFF);\nconst __m256 invW = _mm256_div_ps(one, cw);   // IEEE exact, comme divss",
+ prevT:"Étape 2 : espace clip (seul cw est lu ici)",prev:()=>table(R2()),
+ curT:"Cette étape : invW (vdivps, la version retenue)",cur:()=>table([reg('invW',R.iw)]),
+ note:()=>{const r0=R.cw.map(rcpEmu),r1=R.cw.map((w,i)=>rcpNR(w,r0[i]));
+  const u0=r0.map((v,i)=>ulps(v,R.iw[i])),u1=r1.map((v,i)=>ulps(v,R.iw[i]));
+  const cell=d=>d===0?'<span class="okv">0</span>':`<span class="kov">${d>0?'+':''}${d}</span>`;
+  const bad=a=>a.map(d=>d!==0?'bad':'');
+  const dx0=R.cx.map((c,i)=>f(xrFrom(c,r0[i])-R.xr[i])),dy0=R.cy.map((c,i)=>f(yrFrom(c,r0[i])-R.yr[i]));
+  const dx1=R.cx.map((c,i)=>f(xrFrom(c,r1[i])-R.xr[i]));
+  const px=d=>d===0?'0':(d>0?'+':'')+d.toPrecision(3);
+  return `<div class="blk" style="border-color:var(--warn);border-width:2px;background:var(--warn-soft)">
+  <div class="blkt" style="color:var(--warn)">✕ Contre-exemple : _mm256_rcp_ps à la place de la division</div>
+  <pre>// NON RETENU
+const __m256 r0   = _mm256_rcp_ps(cw);                         // ~12 bits justes, 1 instruction rapide
+const __m256 invW = _mm256_mul_ps(r0, _mm256_sub_ps(two,        // + 1 Newton-Raphson : ~22-23 bits
+                        _mm256_mul_ps(cw, r0)));                //   (3 instructions de plus)</pre>
+  ${table([reg('invW div',R.iw,'','référence'),reg('rcp seul',r0,'','émulé'),reg('écart (ulp)',u0.map(cell),'','',bad(u0)),
+     reg('rcp + NR',r1),reg('écart (ulp)',u1.map(cell),'','',bad(u1)),
+     reg('Δ xr rcp (px)',dx0.map(px),'','',dx0.map(d=>d?'bad':'')),reg('Δ yr rcp (px)',dy0.map(px),'','',dy0.map(d=>d?'bad':'')),
+     reg('Δ xr rcp+NR (px)',dx1.map(px),'','',dx1.map(d=>d?'bad':''))])}
+  <p>Un ulp (unit in the last place) est le plus petit pas représentable autour d'une valeur. La division donne l'arrondi correct : 0 ulp d'écart avec le divss du scalaire, par définition de l'IEEE 754.</p>
+  <p>Sur ${RCP_N.toLocaleString('fr-FR')} sommets de sphère : rcp seul diffère de la division sur <b>${rcpSt.bad0.toLocaleString('fr-FR')}</b> sommets (${(100*rcpSt.bad0/RCP_N).toFixed(1)} %), avec un décalage de xr allant jusqu'à <b>${rcpSt.maxPx.toFixed(3)} px</b> ; rcp + Newton-Raphson diffère encore sur <b>${rcpSt.bad1.toLocaleString('fr-FR')}</b> sommets (${(100*rcpSt.bad1/RCP_N).toFixed(1)} %).</p>
+  <p><b>Pourquoi on ne le prend pas.</b> 1. rcp seul déplace les sommets d'une fraction de pixel : les arêtes partagées restent cohérentes (même sommet, même invW), mais l'image n'est plus celle du chemin clippé, qui garde la division (ProjectClip par coin) : un mesh qui passe d'Inside à Intersect « tremblerait ». 2. Newton-Raphson ne rend pas le bit exact, il le rapproche ; la règle du chantier B (compteurs raster identiques) tombe. 3. Les bits de rcp dépendent du CPU (Intel et AMD ont des tables différentes) : l'i7 et l'i9 ne produiraient pas la même image. 4. Le gain est faible ici : une vdivps pour 8 sommets est déjà amortie sur ~40 opérations. La division reste la seule voie, sauf décision explicite.</p>
+  <p class="label" style="text-transform:none;letter-spacing:0">Émulation : 1/w ramené à 12 bits de mantisse, l'erreur maximale garantie par Intel (1,5·2⁻¹²) ; les bits réels d'un CPU donné diffèrent un peu, pas l'ordre de grandeur.</p></div>`}},
+{t:"4 · NDC",h:"Multiplier par invW, pas diviser par w",o:"Obtenir les coordonnées normalisées. ProjectClip calcule c.x * invW (et non c.x / c.w) : on refait la même opération, sinon le résultat diffère d'un ulp.",
+ code:"const __m256 xn = _mm256_mul_ps(cx, invW);\nconst __m256 yn = _mm256_mul_ps(cy, invW);\nconst __m256 zn = _mm256_mul_ps(cz, invW);   // reverse-Z : near -> 1",
+ prevT:"Étapes 2 et 3 : cx, cy, cz et invW",prev:()=>table([reg('cx',R.cx),reg('cy',R.cy),reg('cz',R.cz),reg('invW',R.iw,'','ét. 3')]),
+ curT:"Cette étape : NDC",cur:()=>table(R4())},
+{t:"5 · ToRaster",h:"Pixels, avec le flip Y",o:"Copie de Viewport::ToRaster. xr = vp.x + (xn·0,5 + 0,5)·width ; yr = vp.y + (0,5 − yn·0,5)·height. a+b = b+a et a·b = b·a sont exacts en IEEE : seul l'ordre des parenthèses compte.",
+ code:"const __m256 xr = _mm256_add_ps(vpx, _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(xn, half), half), vpw));\nconst __m256 yr = _mm256_add_ps(vpy, _mm256_mul_ps(_mm256_sub_ps(half, _mm256_mul_ps(yn, half)), vph));",
+ prevT:"Étape 4 : NDC",prev:()=>table(R4()),
+ curT:"Cette étape : pixels (viewport 1536 × 900), plus zn et invW qui passent tels quels",cur:()=>table([reg('xr',R.xr),reg('yr',R.yr),reg('zn',R.zn,'','ét. 4'),reg('invW',R.iw,'','ét. 3')]),
+ note:()=>`<p>Ces 4 registres sont les 4 champs des 8 RasterVertex, encore « debout » (un champ par registre).</p>`},
+{t:"6 · unpack",h:"Transposition, 1/3 : entrelacer par paires",o:"Repasser en AoS, car l'étage faces lit les sommets par indice (un _mm_load_ps de 16 o par coin). unpacklo/hi travaillent dans chaque moitié 128 bits.",
+ code:"t0 = _mm256_unpacklo_ps(xr, yr);   // [x0 y0 x1 y1 | x4 y4 x5 y5]\nt1 = _mm256_unpackhi_ps(xr, yr);   // [x2 y2 x3 y3 | x6 y6 x7 y7]\nt2 = _mm256_unpacklo_ps(zn, invW); // [z0 w0 z1 w1 | z4 w4 z5 w5]\nt3 = _mm256_unpackhi_ps(zn, invW); // [z2 w2 z3 w3 | z6 w6 z7 w7]",
+ prevT:"Étape 5 : les 4 champs, un par registre",prev:()=>table([reg('xr',tagged(R.xr,Array(8).fill(0))),reg('yr',tagged(R.yr,Array(8).fill(1))),reg('zn',tagged(R.zn,Array(8).fill(2))),reg('invW',tagged(R.iw,Array(8).fill(3)))]),
+ curT:"Cette étape : paires entrelacées",cur:()=>table(R6())},
+{t:"7 · shuffle",h:"Transposition, 2/3 : un sommet entier par moitié",o:"Réunir x y (de t0/t1) et z invW (de t2/t3) d'un même sommet. _MM_SHUFFLE se lit à l'envers : (1,0,1,0) prend A[0] A[1] B[0] B[1].",
+ code:"v04 = _mm256_shuffle_ps(t0, t2, _MM_SHUFFLE(1,0,1,0)); // [s0 | s4]\nv15 = _mm256_shuffle_ps(t0, t2, _MM_SHUFFLE(3,2,3,2)); // [s1 | s5]\nv26 = _mm256_shuffle_ps(t1, t3, _MM_SHUFFLE(1,0,1,0)); // [s2 | s6]\nv37 = _mm256_shuffle_ps(t1, t3, _MM_SHUFFLE(3,2,3,2)); // [s3 | s7]",
+ prevT:"Étape 6 : paires entrelacées",prev:()=>table(R6()),
+ curT:"Cette étape : un sommet complet (x y z invW) par moitié",cur:()=>table(R7())},
+{t:"8 · permute",h:"Transposition, 3/3 : deux sommets consécutifs par registre",o:"Écrire 128 octets contigus (8 × 16 o) avec 4 stores alignés de 32 o. permute2f128 est la seule instruction qui traverse la frontière 128 bits : 0x20 prend les deux moitiés basses, 0x31 les deux hautes.",
+ code:"_mm256_store_ps(&dst[i + 0].x, _mm256_permute2f128_ps(v04, v15, 0x20)); // [s0 | s1]\n_mm256_store_ps(&dst[i + 2].x, _mm256_permute2f128_ps(v26, v37, 0x20)); // [s2 | s3]\n_mm256_store_ps(&dst[i + 4].x, _mm256_permute2f128_ps(v04, v15, 0x31)); // [s4 | s5]\n_mm256_store_ps(&dst[i + 6].x, _mm256_permute2f128_ps(v26, v37, 0x31)); // [s6 | s7]",
+ prevT:"Étape 7 : sommets appariés (0,4) (1,5) (2,6) (3,7)",prev:()=>table(R7()),
+ curT:"Cette étape : rasterBuf, sommets 0 à 7 dans l'ordre",cur:()=>table(R8()),
+ note:()=>`<p>Mémoire : rasterBuf aligné 64 o, un lot = 128 o = 2 lignes de cache exactes. Avec l'ancien tampon (aligné 16 o seulement), un store de 32 o sur deux chevauchait deux lignes.</p>`},
+{t:"Vérifier",h:"Bit à bit contre le scalaire, et le contre-exemple FMA",o:"La règle du chantier B. Le filet Debug recalcule chaque sommet par ProjectClip(MulRow(...)) depuis l'AoS et compare les 16 octets (memcmp). Ci-dessous : la même comparaison sur ce lot, puis ce que donnerait un MulRow contracté en FMA.",
+ prevT:"Étape 8 : ce que le noyau a écrit dans rasterBuf",prev:()=>table(R8()),
+ curT:"Cette étape : comparaison bit à bit (hexadécimal IEEE 754)",
+ cur:()=>{let rows='';let okAll=true,fmaBad=0;
+  for(let i=0;i<8;i++){const v=R.vec.slice(i*4,i*4+4),r=R.ref[i],g=fmaVertex(R.V[i]);const ok=v.every((x,k)=>bits(x)===bits(r[k]));okAll=okAll&&ok;
+   const gd=g.map((x,k)=>bits(x)!==bits(r[k]));if(gd.some(Boolean))fmaBad++;
+   rows+=`<tr><th>s${i}</th><td>${bits(v[0])}</td><td>${bits(r[0])}</td><td class="${ok?'':'bad'}">${ok?'<span class="okv">identique</span>':'<span class="kov">diffère</span>'}</td><td class="${gd[0]?'bad':''}">${bits(g[0])}</td><td class="${gd[1]?'bad':''}">${bits(g[1])}</td><td>${gd.some(Boolean)?'<span class="kov">'+gd.filter(Boolean).length+' champ(s)</span>':'—'}</td></tr>`}
+  return `<div class="regs"><table class="reg" style="min-width:720px"><tr><th></th><th>xr AVX2</th><th>xr scalaire</th><th>16 octets</th><th>xr FMA</th><th>yr FMA</th><th>FMA vs scalaire</th></tr>${rows}</table></div>
+  <p>Ce lot : ${okAll?'<span class="okv">8 / 8 sommets identiques au bit près</span>':'<span class="kov">désaccord</span>'}. Version FMA : ${fmaBad} / 8 sommets différents.</p>`},
+ note:()=>`<p>Sur ${STATS_N.toLocaleString('fr-FR')} sommets de sphère tirés au hasard avec cette caméra, la version FMA diffère du scalaire sur <b>${statBad.toLocaleString('fr-FR')}</b> sommets (${(100*statBad/STATS_N).toFixed(1)} %). Hors moteur, sur 10 M sommets et 3 000 matrices : 0 désaccord sans FMA, 32 % avec. Un ulp de différence sur xr déplace une arête, donc un pixel de silhouette : la règle « pas de FMA sans décision explicite » n'est pas une coquetterie.</p>`}
+];
+
+const nav=document.getElementById('nav'),panel=document.getElementById('panel');
+steps.forEach((s,i)=>{const b=document.createElement('button');b.textContent=s.t;b.id='st'+i;b.onclick=()=>go(i);nav.appendChild(b)});
+function go(i){step=Math.max(0,Math.min(steps.length-1,i));const s=steps[step];
+  [...nav.children].forEach((b,k)=>b.setAttribute('aria-current',k===step?'true':'false'));
+  panel.innerHTML=`<h2>${s.h}</h2><div class="obj"><b>Objectif.</b> ${s.o}</div>${s.code?`<pre>${s.code.replace(/</g,'&lt;')}</pre>`:''}<div class="blk prevblk"><div class="blkt">◀ ${s.prevT}</div>${s.prev()}</div><div class="blk curblk"><div class="blkt">▶ ${s.curT}</div>${s.cur()}</div>${s.note?s.note():''}`;}
+document.getElementById('prev').onclick=()=>go(step-1);
+document.getElementById('next').onclick=()=>go(step+1);
+document.getElementById('roll').onclick=()=>{seed=(seed*7+13)>>>0;R=compute(sphereVerts(seed));go(step)};
+go(0);
+</script>
+
+</body></html>

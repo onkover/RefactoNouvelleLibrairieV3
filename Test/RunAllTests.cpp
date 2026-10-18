@@ -37,6 +37,7 @@ namespace LV3::Tests
     void TestD3_4a_CacheMeshOptions();
     void TestD3_4b_CleMateriaux();
     bool Test_B4_ClassifyFaces8();
+    bool Test_B3_ProjectPositions8();
 
 
 #if LV3_DEBUG    
@@ -135,7 +136,15 @@ namespace LV3::Tests
         }
 
         
-
+        if (!Test_B3_ProjectPositions8())
+        {
+            Logger::error("ECHEC : Test_B3_ProjectPositions8()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_B3_ProjectPositions8()");
+        }
 
 
         // Validation avant tout démarrage moteur
