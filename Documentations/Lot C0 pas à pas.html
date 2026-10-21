@@ -1,0 +1,364 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot C0 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Mise en page : une colonne de lecture (~72ch), blocs de code avant/après côte à côte au-delà de 900px. */
+:root{
+  --bg:#f5f6f8; --paper:#ffffff; --fg:#1d2330; --mute:#5b6476; --line:#d9dde5;
+  --accent:#2f4fb8; --accent-soft:#e6ebfa; --warn:#b5520f; --warn-soft:#fbeee3;
+  --ok:#1f7a4d; --ok-soft:#e3f3ea; --code-bg:#f0f2f6; --add:#e2f2e8; --del:#f8e6e6;
+  --f-body:"Fira Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Fira Sans Condensed","Fira Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --add:#1b3326; --del:#3a2224; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --add:#1b3326; --del:#3a2224; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.read{max-width:76ch}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:2rem} h2{font-size:1.45rem;margin-bottom:10px} h3{font-size:1.12rem;margin:0 0 6px}
+p{margin:0 0 10px} ul,ol{margin:0 0 10px;padding-left:22px}
+.eyebrow{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--mute);font-size:1.02rem}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px clamp(14px,3vw,28px)}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:1px 4px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-family:var(--f-head);font-weight:700;color:var(--mute)}
+.tbl{overflow-x:auto}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
+.bad{border-left-color:var(--warn);background:var(--warn-soft)}
+.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.pill{display:inline-block;font:600 .72rem var(--f-mono);padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.04em}
+.pill.w{background:var(--warn-soft);color:var(--warn)} .pill.o{background:var(--ok-soft);color:var(--ok)}
+/* échelle d'ablation */
+.ladder{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0}
+.rung{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.rung b{font-family:var(--f-mono);font-size:1.1rem;color:var(--accent)}
+.rung small{color:var(--mute);line-height:1.4}
+.bar{height:10px;border-radius:3px;background:var(--line);display:flex;overflow:hidden}
+.bar i{display:block;height:100%}
+@media (max-width:760px){.ladder{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* démonstration */
+.demo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:12px}
+.demo figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.demo canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;image-rendering:pixelated;background:#0f1218}
+.demo figcaption{font:600 .8rem var(--f-mono)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--mute);margin-top:8px}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+button{font:600 .85rem var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:7px 14px;border-radius:6px;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+button:disabled{opacity:.5;cursor:wait}
+#demoStat{font:.85rem var(--f-mono);color:var(--mute)}
+@media (max-width:700px){.demo{grid-template-columns:1fr}}
+/* code avant/après */
+.step{display:flex;flex-direction:column;gap:10px;padding-top:18px;border-top:1px dashed var(--line)}
+.step:first-of-type{border-top:0;padding-top:0}
+.file{font:600 .82rem var(--f-mono);color:var(--accent)}
+.ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ba.one{grid-template-columns:minmax(0,1fr)}
+.ba figure{margin:0;min-width:0;display:flex;flex-direction:column}
+.ba figcaption{display:flex;justify-content:space-between;align-items:center;font:700 .74rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0}
+.ba figure.av figcaption{background:var(--del)} .ba figure.ap figcaption{background:var(--add)}
+.ba pre{margin:0;overflow-x:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:0 0 6px 6px;padding:10px 12px;font:12.5px/1.5 var(--f-mono);tab-size:4;flex:1}
+.cp{font:600 .7rem var(--f-mono);padding:2px 8px;border-radius:4px;background:transparent;color:var(--fg);border:1px solid var(--line)}
+@media (max-width:900px){.ba{grid-template-columns:minmax(0,1fr)}}
+.check li{margin-bottom:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+.goal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 12px}
+.goal div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.92rem;min-width:0}
+.goal b{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.goal .why b{color:var(--accent)} .goal .uses b{color:var(--warn)}
+.goal .uses{background:var(--code-bg)}
+@media (max-width:700px){.goal{grid-template-columns:1fr}}
+.stepno{font:700 .8rem var(--f-mono);color:var(--paper);background:var(--accent);border-radius:99px;padding:2px 10px;letter-spacing:.05em}
+.sh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.sh h2{margin:0}
+.stack{display:flex;flex-direction:column;gap:12px;margin:12px 0}
+.srow{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center}
+.srow > span{font:700 .9rem var(--f-mono)}
+.sbar{display:flex;height:34px;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.sbar i{display:flex;align-items:center;justify-content:center;font:600 .74rem var(--f-mono);color:#fff;font-style:normal;white-space:nowrap;overflow:hidden;min-width:0}
+.c-prep{background:#3f5fc4}.c-edge{background:#c56a1c}.c-frag{background:#2f8a5c}
+.lesson li{margin-bottom:5px}
+</style>
+
+<div class="wrap">
+
+<header class="read">
+  <div class="eyebrow">Phase G · Chantier C · Leçon C0 · 21 octobre 2026</div>
+  <h1>Découper le dessin avant de l'optimiser</h1>
+  <p class="lede">Le chantier B a rendu les sommets et les faces rapides. Ce qui reste, c'est le dessin des triangles survivants. Cette leçon le découpe en trois postes par une méthode de mesure qui ne perturbe pas ce qu'elle mesure, raye une fausse piste par l'expérience, et décide de la suite : C1, puis C2, puis C3.</p>
+</header>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 1</span><h2>Situer le problème</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Savoir quelle part de <code>Render</code> on attaque, avant de choisir comment.</div>
+    <div class="uses"><b>S'appuie sur</b>Lot B5 (20/10) : V1 Render ≈ 1,35 ms = sommets 0,17 + tests faces 0,22 + dessin ≈ 0,96 ms (estimé par soustraction). V2 : ≈ 99 % de Render est du dessin.</div>
+  </div>
+  <p>Le dessin des survivantes est le poste dominant des deux bancs. Mais « dessin » regroupe trois choses de natures différentes : un coût <strong>par triangle</strong> (appels, préparation), un coût <strong>par pixel testé</strong> (fonctions d'arête), un coût <strong>par pixel couvert</strong> (fragment). Chacun appelle un remède différent. Optimiser sans savoir lequel domine, c'est parier.</p>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 2</span><h2>Lire le code et nommer les coûts</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Écrire, poste par poste, ce que le processeur exécute, pour savoir quoi mesurer.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 1 : les trois natures de coût à séparer.</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Poste</th><th>Payé</th><th>Ce qui s'exécute</th></tr></thead>
+    <tbody>
+      <tr><td>Appels + préparation</td><td>par triangle</td><td><code>DrawTriangle</code> puis <code>RasterizeTriangle</code>, deux appels hors ligne ; aire, échange p1 ↔ p2, <code>TightPixelBox</code>, 3 × <code>IsTopLeft</code>, une division <code>1/area</code></td></tr>
+      <tr><td>Boucle d'arêtes</td><td>par pixel testé</td><td>3 <code>EdgeFunction</code> complètes (21 opérations), 3 tests top-left avec branche</td></tr>
+      <tr><td>Fragments</td><td>par pixel couvert</td><td>barycentriques, <strong>appel indirect</strong> par pointeur de fonction, z interpolé, <code>TestAndSet</code>, <code>SetPixel</code> (4 tests de bornes inutiles : la boîte est déjà rognée)</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:10px">Un détail compte pour la suite : une face avant a une aire raster négative, donc l'échange p1 ↔ p2 de <code>RasterizeTriangle</code> a lieu pour <em>tous</em> les triangles dessinés.</p>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 3</span><h2>Choisir un instrument qui ne mente pas</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Séparer les trois postes de l'étape 2 sans que la mesure les déforme.</div>
+    <div class="uses"><b>S'appuie sur</b>V1 dessine ≈ 18 120 triangles par frame, ≈ 53 ns chacun tout compris. Une paire de bornes du profiler coûte ≈ 30 à 100 ns (<code>overhead_ns</code>).</div>
+  </div>
+  <div class="note bad"><strong>Contre-exemple.</strong> Un chronomètre en tête de <code>RasterizeTriangle</code>. L'instrument coûterait autant ou plus que l'objet mesuré, 18 120 fois par frame. C'est la leçon du compteur par pixel de C3, un étage plus haut : un instrument dans la boucle chaude mesure surtout lui-même.</div>
+  <p><strong>La méthode : l'ablation par paliers.</strong> Quatre binaires identiques à un commutateur près retirent le travail un poste à la fois. Chaque différence entre deux paliers voisins isole un poste.</p>
+  <div class="ladder">
+    <div class="rung"><span class="pill">M</span><b>raster</b><small>Rien n'est dessiné. Tout l'amont reste.</small><div class="bar"><i style="width:100%;background:var(--line)"></i></div></div>
+    <div class="rung"><span class="pill">S</span><b>pixels_setup</b><small>Appels et préparation, puis sortie avant la boucle.</small><div class="bar"><i style="width:34%;background:#3f5fc4"></i></div></div>
+    <div class="rung"><span class="pill">E</span><b>pixels_edges</b><small>Boucle d'arêtes complète, aucun fragment.</small><div class="bar"><i style="width:34%;background:#3f5fc4"></i><i style="width:33%;background:#c56a1c"></i></div></div>
+    <div class="rung"><span class="pill">N</span><b>none</b><small>Le moteur normal.</small><div class="bar"><i style="width:34%;background:#3f5fc4"></i><i style="width:33%;background:#c56a1c"></i><i style="width:33%;background:#2f8a5c"></i></div></div>
+  </div>
+  <p>Préparation = S − M, arêtes = E − S, fragments = N − E. Trois règles rendent l'ablation honnête :</p>
+  <ul>
+    <li><strong>Un puits <code>volatile</code></strong>, écrit une fois par triangle, consomme ce que le palier doit garder. Sans lui, l'optimiseur supprime le calcul dont le résultat n'est plus lu, et le palier mesure du vide.</li>
+    <li><strong>Un seul commutateur change</strong> d'un binaire à l'autre, et l'en-tête CSV déclare le palier (<code>ablation=</code>) : une inversion de binaires se voit à la première ligne.</li>
+    <li><strong>Ordre N E S M M S E N</strong>, deux runs par palier, dans le même lot. La dérive de la machine se répartit symétriquement.</li>
+  </ul>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 4</span><h2>Rayer une fausse piste avant de mesurer</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Vérifier qu'une piste du plan (« une addition par pixel au lieu de 3 <code>EdgeFunction</code> ») respecte l'exigence de bit-exactitude, avant d'en mesurer le gain.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 2 : la boucle d'arêtes coûte 21 opérations par pixel testé. Règle du chantier B : un pas d'optimisation n'est valide que si les compteurs raster et l'image sont identiques.</div>
+  </div>
+  <p>En réels, une fonction d'arête est linéaire : E(x+1) = E(x) + (a.y − b.y). En float, chaque addition arrondit et l'erreur s'accumule le long de la ligne. Deux triangles qui partagent une arête partent de colonnes différentes, n'accumulent pas la même erreur, et perdent l'antisymétrie exacte E(b,a,p) = −E(a,b,p) qui garantit l'absence de couture.</p>
+  <p>La démonstration refait le calcul du moteur en simple précision IEEE (<code>Math.fround</code> à chaque opération), sur des éventails de 8 triangles dans une vue de 1136 × 800. Chaque pixel intérieur doit être couvert exactement une fois.</p>
+  <div class="demo">
+    <figure><figcaption>Évaluation directe (moteur actuel)</figcaption><canvas id="cvD" width="384" height="256" aria-label="Zoom sur l'éventail, évaluation directe"></canvas></figure>
+    <figure><figcaption>Évaluation incrémentale, même éventail</figcaption><canvas id="cvI" width="384" height="256" aria-label="Zoom sur l'éventail, évaluation incrémentale"></canvas></figure>
+  </div>
+  <div class="legend">
+    <span><span class="sw" style="background:#4b6fd6"></span>couvert une fois (une teinte par triangle)</span>
+    <span><span class="sw" style="background:#ff8a2a"></span>doublon</span>
+    <span><span class="sw" style="background:#ff2d55"></span>trou</span>
+    <span><span class="sw" style="background:#e8ecf5"></span>arêtes exactes</span>
+  </div>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px">
+    <button id="btnNext" type="button">Chercher l'éventail défectueux suivant</button>
+    <span id="demoStat">Calcul…</span>
+  </div>
+  <div class="tbl" style="margin-top:14px"><table>
+    <thead><tr><th>Mesure hors moteur (C++, sans FMA)</th><th>Directe</th><th>Incrémentale</th></tr></thead>
+    <tbody>
+      <tr><td>200 000 triangles, 207 M pixels couverts : décisions qui changent</td><td class="num">référence</td><td class="num">273</td></tr>
+      <tr><td>idem, accumulateur ré-amorcé tous les 8 pixels</td><td class="num">référence</td><td class="num">5</td></tr>
+      <tr><td>2 999 éventails : doublons / trous</td><td class="num">0 / 0</td><td class="num">145 / 161 (9 % des éventails)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note bad" style="margin-top:12px"><strong>Verdict : rayée.</strong> Même rare, un écart casse <code>PixelsCovered</code> et rouvre les coutures que l'<code>EdgeFunction</code> antisymétrique avait fermées.</div>
+  <div class="note good"><strong>Ce qui reste exact.</strong> L'évaluation <em>directe</em> de 8 pixels en AVX2 : chaque voie fait les mêmes 7 opérations que le scalaire, donc bit-exact par construction (base de C2). La virgule fixe est exacte aussi, mais elle change la règle d'échantillonnage, donc l'image : ce serait une décision, pas une optimisation.</div>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 5</span><h2>Compter avant de chronométrer (run R1)</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Connaître le nombre d'unités de chaque poste (triangles, pixels testés, pixels couverts) pour pouvoir, à l'étape 6, diviser un temps par un nombre.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 2 : chaque poste a son unité. Les compteurs <code>LV3_RASTER_STATS</code> du chantier 3b, plus <code>PixelsDepthPassed</code> ajouté en C0.</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Triangles dessinés</th><th>Cov0 / 1 / 2-4 / 5+</th><th>Pixels testés</th><th>Pixels couverts</th><th>Testés par couvert</th></tr></thead>
+    <tbody class="num">
+      <tr><td>V1</td><td>18 120</td><td>11 928 / 6 192 / 0 / 0</td><td>18 120</td><td>6 192</td><td>2,93</td></tr>
+      <tr><td>V2</td><td>5 024</td><td>216 / 280 / 512 / 4 016</td><td>352 848</td><td>126 928</td><td>2,78</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:10px"><strong>V1 : chaque triangle dessiné a une boîte serrée d'un seul pixel</strong>, et 66 % ne couvrent rien. Le dessin de V1 est un coût par triangle presque pur. <strong>V2</strong> : chaque pixel allumé entraîne 1,78 test inutile. <strong>Aucun surdessin rejeté</strong> sur les deux scènes (couverts = passés au Z) : trier les triangles avant-arrière n'apporterait rien ici.</p>
+  <div class="note"><strong>Deux leçons de l'instrument.</strong> (1) Sur L, les médianes ne s'additionnent pas (274 + 224 ≠ 493) : un invariant se vérifie frame par frame, jamais sur des médianes. (2) Une erreur de ma part : les <code>PointSplats</code> passaient par le compteur de profondeur sans passer par celui de couverture. Un invariant écrit d'avance (passés ≤ couverts) l'a révélée au premier run.</div>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 6</span><h2>Chronométrer par ablation (run R2)</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Obtenir le poids de chaque poste et son coût unitaire.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 3 : formules S − M, E − S, N − E. Étape 5 : unités (V1 18 120 / 18 120 / 6 192 ; V2 5 024 / 352 848 / 126 928).</div>
+  </div>
+  <p><strong>Nettoyage du lot.</strong> Sur V1, deux runs du milieu (S2, M2) sont perturbés : <code>RenderVerts</code>, dont le code est identique dans les quatre binaires, y monte de 8 à 10 %. On travaille donc sur l'étage faces (<code>Render − RenderVerts</code>), corrigé par ce thermomètre, et on contrôle avec les seuls runs propres : même résultat (préparation 413 contre 407 µs).</p>
+  <div class="stack" aria-label="Décomposition du dessin">
+    <div class="srow"><span>V1</span><div class="sbar"><i class="c-prep" style="width:64.7%">préparation 407 µs · 65 %</i><i class="c-edge" style="width:22.8%">arêtes 144</i><i class="c-frag" style="width:12.5%">79</i></div></div>
+    <div class="srow"><span>V2</span><div class="sbar"><i class="c-prep" style="width:5.4%"></i><i class="c-edge" style="width:68.6%">arêtes 1 173 µs · 69 %</i><i class="c-frag" style="width:26%">fragments 446 · 26 %</i></div></div>
+  </div>
+  <p style="color:var(--mute);font-size:.88rem;margin-top:-4px">Chaque barre vaut 100 % du dessin de sa scène : D = 629 µs pour V1, 1 711 µs pour V2.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Coût unitaire</th><th>V1</th><th>V2</th><th>Lecture</th></tr></thead>
+    <tbody class="num">
+      <tr><td>par triangle</td><td>22,5 ns</td><td>18,4 ns</td><td>constante du chemin actuel</td></tr>
+      <tr><td>par pixel testé</td><td>7,9 ns</td><td>3,3 ns</td><td>V1 : boucle d'un tour, branche imprévisible (66 % non couverts)</td></tr>
+      <tr><td>par pixel couvert</td><td>12,7 ns</td><td>3,5 ns</td><td>V1 : pixels isolés, lignes de cache froides</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th>Prédiction écrite avant la mesure</th><th>Mesure</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>V1 préparation ≥ 70 % (révisée après R1)</td><td class="num">65 %</td><td><span class="pill w">manquée de peu</span></td></tr>
+      <tr><td>V2 arêtes 35 à 55 %</td><td class="num">69 %</td><td><span class="pill w">sous-estimée</span></td></tr>
+      <tr><td>V2 fragments 30 à 50 % (≥ 50 % au cadrage)</td><td class="num">26 %</td><td><span class="pill w">surestimée</span></td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:10px">L'erreur la plus instructive : l'appel indirect par pixel semblait le coupable évident. Il coûte peu (3,5 ns par pixel couvert, Z et couleur compris). Le coupable est la boucle d'arêtes, qui teste 2,78 pixels pour en allumer un. C'est pour cela qu'on mesure.</p>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 7</span><h2>Le biais de l'ablation</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Savoir dans quel sens l'instrument de l'étape 3 peut tromper.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 6, V2 : les binaires S et M ne dessinent presque rien (Render 135 et 43 µs).</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>V2, zones au code identique</th><th>N et E</th><th>S et M</th></tr></thead>
+    <tbody class="num">
+      <tr><td>RenderVerts</td><td>≈ 9 µs</td><td>≈ 12,4 µs (+35 %)</td></tr>
+      <tr><td>Clear</td><td>≈ 380 µs</td><td>≈ 470 µs (+25 %)</td></tr>
+      <tr><td>Present</td><td>≈ 870 µs</td><td>≈ 1 240 µs (+35 %)</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:10px">Retirer du travail allège la charge, et ce portable baisse alors ses fréquences : celle du cœur <strong>et</strong> celle de l'uncore (L3, contrôleur mémoire). Les paliers légers sont donc mesurés sur une machine plus lente. Ici, l'effet ne touche que S − M sur V2 (5 %) et ne change aucune conclusion.</p>
+  <div class="note bad"><strong>Correction d'une affirmation antérieure.</strong> J'avais dit que <code>Clear</code>, limité par la mémoire, est insensible à la fréquence. Il est insensible à la fréquence du <em>cœur</em>, pas à celle de l'<em>uncore</em>, qui suit la charge sur cette machine.</div>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 8</span><h2>C0b : une hypothèse réfutée, deux restantes</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Comprendre pourquoi V2 saute entre deux modes (≈ 2,1 et ≈ 2,7 ms aux lots B3 et B5), sinon V2 ne pourra pas juger C2.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 7 : l'état de fréquence suit la charge. Z-buffer (float) et framebuffer (uint32, pitch = 1536 × 4) ont la même géométrie.</div>
+  </div>
+  <p><strong>H1, le 4K-aliasing.</strong> Un cœur Intel décide d'abord qu'une lecture dépend d'une écriture en cours en comparant les 12 bits bas des adresses. Si l'écart D entre les deux tampons valait un petit multiple de 4 modulo 4096, chaque lecture de profondeur paraîtrait dépendre d'une écriture couleur récente.</p>
+  <p>Sonde : D mod 4096, une valeur par frame. Résultat : <strong>0</strong>, les deux tampons commençant à page + 32, parce qu'ils passent par le même chemin d'allocation. D est donc constant d'un run à l'autre : <strong>H1 ne peut pas expliquer une bimodalité entre runs</strong>. D = 0 est même bénin pour ce motif d'accès (on lit <code>depth[i]</code> avant d'écrire <code>color[i]</code>, et aucun pixel n'est revisité). À revérifier en C2, avec des accès de 32 octets.</p>
+  <p><strong>H2, l'état d'énergie</strong>, renforcée par l'étape 7. <strong>H3, le jumeau SMT</strong> : <code>affinity 4</code> est le premier fil d'un cœur P, dont le second fil reste ouvert aux autres processus ; occupé, il partage les unités de calcul et ralentit la boucle pixels. Expérience décisive, prévue avant C2 : occuper ce second fil exprès et vérifier que V2 passe en mode lent à coup sûr. La bimodalité n'est pas apparue dans le lot R2 (N1 / N2 = 1 742 / 1 767 µs).</p>
+</section>
+
+<section class="read" style="max-width:none">
+  <div class="sh"><span class="stepno">ÉTAPE 9</span><h2>Décider avec la règle écrite d'avance</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Transformer la mesure en ordre de travail, sans renégocier les seuils après coup.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 6 : V1 préparation 65 %, arêtes 23 %, fragments 13 % ; V2 préparation 5 %, arêtes 69 %, fragments 26 %.</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Règle</th><th>Mesure</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Fragments ≥ 40 % → C1</td><td class="num">13 % / 26 %</td><td><span class="pill">préalable seulement</span></td></tr>
+      <tr><td>Arêtes ≥ 40 % → C2</td><td class="num">V2 69 %</td><td><span class="pill o">déclenché</span></td></tr>
+      <tr><td>Préparation ≥ 40 % sur V1 → C3</td><td class="num">V1 65 %</td><td><span class="pill o">déclenché</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3 style="margin-top:16px">Ordre décidé : C1 → C2 → C3</h3>
+  <ol class="lesson">
+    <li><strong>C1, boucle pixels spécialisée par mode.</strong> Le shader devient un paramètre de template, choisi une fois par vue : fin de l'appel indirect par pixel. <code>SetPixelUnchecked</code>, top-left sorti de la boucle (<code>tl ? w ≥ 0 : w &gt; 0</code>, équivalent exact). Image identique par construction. Gain propre modeste ; sa raison d'être est d'ouvrir C2, car on ne vectorise pas une boucle qui appelle une fonction opaque.</li>
+    <li><strong>C2, arêtes par 8 pixels en AVX2.</strong> Évaluation directe (étape 4), masque de couverture, test de profondeur et écriture couleur sous masque. Cible : les 1 173 µs d'arêtes de V2. Exigence : <code>PixelsCovered</code> et image identiques.</li>
+    <li><strong>C3, chemin « boîte d'un pixel » dans l'étage faces.</strong> Par lots de 8, test exact du centre unique, en reproduisant l'échange p1 ↔ p2 (étape 2) et les règles top-left ; rejet des triangles qui ne couvrent rien sans aucun appel, fragment direct pour les autres. Cible : les 407 µs de préparation de V1, plus une partie de ses 144 µs d'arêtes.</li>
+  </ol>
+</section>
+
+<section class="read" style="max-width:none">
+  <h2>Ce qu'il faut retenir</h2>
+  <ul class="lesson">
+    <li>Un instrument qui coûte autant que l'objet mesuré ne mesure que lui-même. Sous les 100 ns, on mesure par ablation.</li>
+    <li>Une ablation honnête : un commutateur à la fois, un puits <code>volatile</code> écrit une fois par unité, le palier déclaré dans l'en-tête, l'ordre A B B A.</li>
+    <li>Compter d'abord, chronométrer ensuite : sans les unités de R1, les temps de R2 ne disent pas si un poste est cher par nature ou par volume.</li>
+    <li>Un invariant écrit avant le run trouve les erreurs d'instrumentation au premier coup. Il se vérifie frame par frame, jamais sur des médianes.</li>
+    <li>En float, linéaire ne veut pas dire incrémental. Une optimisation qui change une décision de couverture sur 200 millions est fausse.</li>
+    <li>Retirer du travail change l'état de fréquence de la machine. Un thermomètre limité par la mémoire suit l'uncore.</li>
+    <li>Écrire la prédiction et la règle avant la mesure. Ici, l'intuition désignait l'appel de fragment ; la mesure a désigné les arêtes.</li>
+  </ul>
+</section>
+
+</div>
+<script>
+/* ── démonstration : raster du moteur en simple précision IEEE ── */
+const f = Math.fround, W = 1136, H = 800;
+function E(ax,ay,bx,by,px,py){ const ux=f(ax-px),uy=f(ay-py),vx=f(bx-px),vy=f(by-py); return f(f(ux*vy)-f(uy*vx)); }
+function isTL(a,b){ const ex=f(b.x-a.x), ey=f(b.y-a.y); return (ey===0 && ex<0) || ey>0; }
+function raster(a,b,c,mode,cnt,own,id){
+  let p=[a,b,c]; const area=E(a.x,a.y,b.x,b.y,c.x,c.y); if(area===0) return; if(area<0) p=[a,c,b];
+  const xs=[p[0].x,p[1].x,p[2].x], ys=[p[0].y,p[1].y,p[2].y];
+  const x0=Math.max(0,Math.ceil(f(Math.min(...xs)-0.5))), x1=Math.min(W,Math.floor(f(Math.max(...xs)-0.5))+1);
+  const y0=Math.max(0,Math.ceil(f(Math.min(...ys)-0.5))), y1=Math.min(H,Math.floor(f(Math.max(...ys)-0.5))+1);
+  const e=[[p[1],p[2]],[p[2],p[0]],[p[0],p[1]]], tl=e.map(q=>isTL(q[0],q[1])), dx=e.map(q=>f(q[0].y-q[1].y));
+  for(let y=y0;y<y1;++y){ const py=f(y+0.5);
+    const wi=e.map(q=>E(q[0].x,q[0].y,q[1].x,q[1].y,f(x0+0.5),py));
+    for(let x=x0;x<x1;++x){ let c=true; const px=f(x+0.5);
+      for(let k=0;k<3;++k){ const w = mode ? wi[k] : E(e[k][0].x,e[k][0].y,e[k][1].x,e[k][1].y,px,py);
+        c = c && (w>0 || (w===0 && tl[k])); wi[k]=f(wi[k]+dx[k]); }
+      if(c){ const i=y*W+x; cnt[i]++; own[i]=id; } } }
+}
+function rng(s){ return () => { s|=0; s=s+0x6D2B79F5|0; let t=Math.imul(s^s>>>15,1|s); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function fan(seed){ const r=rng(seed); const cx=f(200+r()*700), cy=f(150+r()*500), R=20+r()*400, ring=[];
+  for(let i=0;i<8;++i){ const a=6.2831853*(i+r()*0.6)/8; ring.push({x:f(cx+R*Math.cos(a)*(0.6+0.4*r())), y:f(cy+R*Math.sin(a)*(0.6+0.4*r()))}); }
+  return {c:{x:cx,y:cy}, ring}; }
+function run(F,mode){ const cnt=new Uint8Array(W*H), own=new Int8Array(W*H).fill(-1);
+  for(let i=0;i<8;++i) raster(F.c,F.ring[i],F.ring[(i+1)%8],mode,cnt,own,i);
+  const d=[]; for(let y=1;y<H-1;++y) for(let x=1;x<W-1;++x){ const i=y*W+x, v=cnt[i];
+    if(v>=2) d.push([x,y,2]); else if(v===0 && cnt[i-1] && cnt[i+1] && cnt[i-W] && cnt[i+W]) d.push([x,y,0]); }
+  return {cnt,own,d}; }
+const HUES=['#4b6fd6','#5a8fd8','#4f9fb8','#5a7fc0','#6a78d0','#4a88c8','#5c9ad0','#4f6fb0'];
+function draw(cv,F,res,cx,cy){
+  const g=cv.getContext('2d'), CW=48, CH=32, s=cv.width/CW, ox=cx-CW/2, oy=cy-CH/2;
+  g.fillStyle='#0f1218'; g.fillRect(0,0,cv.width,cv.height);
+  for(let j=0;j<CH;++j) for(let i=0;i<CW;++i){ const x=ox+i, y=oy+j; if(x<0||y<0||x>=W||y>=H) continue;
+    const k=y*W+x, v=res.cnt[k]; let col=null;
+    if(v>=2) col='#ff8a2a'; else if(v===1) col=HUES[res.own[k]];
+    else if(res.d.some(q=>q[0]===x&&q[1]===y)) col='#ff2d55';
+    if(col){ g.fillStyle=col; g.fillRect(i*s+0.5,j*s+0.5,s-1,s-1); }
+    g.fillStyle='rgba(255,255,255,.25)'; g.fillRect(i*s+s/2-0.75,j*s+s/2-0.75,1.5,1.5); }
+  g.strokeStyle='#e8ecf5'; g.lineWidth=1.2; g.beginPath();
+  const P=v=>[(v.x-ox)*s,(v.y-oy)*s];
+  for(let i=0;i<8;++i){ const a=P(F.c), b=P(F.ring[i]), c=P(F.ring[(i+1)%8]); g.moveTo(...a); g.lineTo(...b); g.lineTo(...c); }
+  g.stroke();
+  for(const q of res.d){ const i=q[0]-ox, j=q[1]-oy; if(i<0||j<0||i>=CW||j>=CH) continue;
+    g.strokeStyle=q[2]?'#ff8a2a':'#ff2d55'; g.lineWidth=2; g.strokeRect(i*s-3,j*s-3,s+6,s+6); }
+}
+const btn=document.getElementById('btnNext'), stat=document.getElementById('demoStat');
+let seed=41, tried=0;
+function search(){
+  btn.disabled=true; stat.textContent='Recherche…';
+  const step=()=>{
+    for(let n=0;n<4;++n){ seed++; tried++; const F=fan(seed), I=run(F,1);
+      if(I.d.length){ const D=run(F,0); if(D.d.length) continue;
+        const [x,y]=I.d[0]; draw(document.getElementById('cvD'),F,D,x,y); draw(document.getElementById('cvI'),F,I,x,y);
+        const nd=I.d.filter(q=>q[2]).length, nh=I.d.length-nd;
+        stat.textContent=`Éventail n° ${seed} (${tried} essayés) · directe : 0 doublon, 0 trou · incrémentale : ${nd} doublon(s), ${nh} trou(s) · zoom sur le pixel (${x}, ${y})`;
+        tried=0; btn.disabled=false; return; } }
+    stat.textContent=`Recherche… ${tried} éventails sans défaut`; setTimeout(step,0);
+  };
+  setTimeout(step,0);
+}
+btn.addEventListener('click',search);
+search();
+</script>
+
+</body></html>
