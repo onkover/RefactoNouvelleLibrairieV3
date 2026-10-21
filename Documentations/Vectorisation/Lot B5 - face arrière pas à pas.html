@@ -1,0 +1,847 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot B5 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+/* Layout : même pupitre que les lots B3 / B4 — une scène vivante (sphère + carte des lots) au-dessus, les étapes du noyau en dessous. */
+:root{
+  --bg:#f5f6f4; --panel:#ffffff; --fg:#1d2321; --muted:#5d6864; --line:#d5dbd8;
+  --accent:#0f6e66; --accent-soft:#dcefec; --warn:#a4421f; --warn-soft:#f6e3da; --ok:#2c7a3f;
+  --skip:#b9c1be; --lane-a:#e9f1ef; --lane-b:#f3eee6; --sel:#1d2321;
+  --f-display:"IBM Plex Serif",Georgia,serif; --f-body:"IBM Plex Sans",system-ui,sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141a19; --panel:#1b2321; --fg:#e3e9e6; --muted:#9aa7a2; --line:#2e3a37;
+  --accent:#5cc1b6; --accent-soft:#1f3633; --warn:#ec8a63; --warn-soft:#3a251c; --ok:#6fcf86;
+  --skip:#3d4846; --lane-a:#1f2c2a; --lane-b:#2a2620; --sel:#f2f5f3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a19; --panel:#1b2321; --fg:#e3e9e6; --muted:#9aa7a2; --line:#2e3a37;
+  --accent:#5cc1b6; --accent-soft:#1f3633; --warn:#ec8a63; --warn-soft:#3a251c; --ok:#6fcf86;
+  --skip:#3d4846; --lane-a:#1f2c2a; --lane-b:#2a2620; --sel:#f2f5f3; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.55 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:600 1.7rem/1.2 var(--f-display);margin:0;text-wrap:balance}
+h2{font:600 1.2rem/1.3 var(--f-display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);max-width:72ch;margin:6px 0 0}
+.eyebrow{font:500 .72rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{font:500 .8rem var(--f-mono);border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 10px;border-radius:4px;cursor:pointer}
+nav button[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.obj{background:var(--accent-soft);border-radius:4px;padding:10px 14px;max-width:84ch}
+.obj b{color:var(--accent)}
+pre{font:13px/1.5 var(--f-mono);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:10px 12px;margin:0;overflow-x:auto}
+.label{font:500 .75rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.regs{overflow-x:auto}
+table.reg{border-collapse:collapse;font:12.5px var(--f-mono);font-variant-numeric:tabular-nums;min-width:820px}
+table.reg th{font-weight:500;color:var(--muted);text-align:left;padding:4px 8px;white-space:nowrap}
+table.reg td{padding:4px 6px;text-align:right;border:1px solid var(--line);white-space:nowrap}
+table.reg td.l0,table.reg td.l1,table.reg td.l2,table.reg td.l3{background:var(--lane-a)}
+table.reg td.l4,table.reg td.l5,table.reg td.l6,table.reg td.l7{background:var(--lane-b)}
+table.reg td.l4{border-left:3px solid var(--fg)}
+.tag{display:inline-block;font:500 .7rem var(--f-mono);padding:1px 6px;border-radius:3px;margin-left:4px;color:var(--muted)}
+.bad{background:var(--warn-soft)!important;color:var(--warn)}
+.okv{color:var(--ok);font-weight:600} .kov{color:var(--warn);font-weight:600}
+p{margin:0;max-width:78ch}
+.blk{border:1px solid var(--line);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.prevblk{background:var(--bg)}
+.curblk{border-color:var(--accent);border-width:2px}
+.ceblk{border-color:var(--warn);border-width:2px;background:var(--warn-soft)}
+.blkt{font:600 .85rem var(--f-body)}
+.prevblk .blkt{color:var(--muted)} .curblk .blkt{color:var(--accent)} .ceblk .blkt{color:var(--warn)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ctl button{font:500 .85rem var(--f-body);border:1px solid var(--accent);background:transparent;color:var(--accent);padding:6px 14px;border-radius:4px;cursor:pointer}
+.ctl button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.ctl label{font:500 .8rem var(--f-mono);color:var(--muted);display:flex;gap:6px;align-items:center}
+.ctl input[type=range]{width:150px;accent-color:var(--accent)}
+.scene{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:16px}
+@media (max-width:760px){.scene{grid-template-columns:minmax(0,1fr)}}
+.scene>div{min-width:0;display:flex;flex-direction:column;gap:8px}
+canvas{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:4px}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;font:12px var(--f-mono);color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-2px;margin-right:5px;border:1px solid var(--line)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.stat{border:1px solid var(--line);border-radius:4px;padding:8px 10px;min-width:0}
+.stat b{display:block;font:600 1.15rem var(--f-mono);font-variant-numeric:tabular-nums}
+.stat span{font:12px var(--f-body);color:var(--muted)}
+table.num{border-collapse:collapse;font:13px var(--f-mono);font-variant-numeric:tabular-nums}
+table.num th,table.num td{border:1px solid var(--line);padding:5px 9px;text-align:right;white-space:nowrap}
+table.num th{color:var(--muted);font-weight:500;text-align:left}
+/* Schéma d'introduction : deux repères côte à côte (monde | objet), reliés par les deux chemins vers l'œil */
+.schema{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:760px){.schema{grid-template-columns:minmax(0,1fr)}}
+.schema figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.schema svg{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--fg)}
+figcaption{font:12.5px/1.45 var(--f-body);color:var(--muted)}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.read ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:70ch}
+.bridge{display:flex;flex-wrap:wrap;gap:8px 18px;font:12.5px var(--f-mono);color:var(--muted)}
+.bridge b{color:var(--fg);font-weight:500}
+.mat{border-collapse:collapse;font:12.5px var(--f-mono);font-variant-numeric:tabular-nums}
+.mat td,.mat th{border:1px solid var(--line);padding:4px 8px;text-align:right;white-space:nowrap}
+.mat th{color:var(--muted);font-weight:500}
+.mats{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.mats>div{min-width:0;overflow-x:auto}
+.duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:760px){.duo{grid-template-columns:minmax(0,1fr)}}
+.duo>div{min-width:0;display:flex;flex-direction:column;gap:6px}
+.duo .who{font:600 .8rem var(--f-mono);letter-spacing:.04em}
+.duo .sp .who{color:var(--muted)} .duo .b5 .who{color:var(--accent)}
+.duo .b5 pre{border-color:var(--accent)}
+.duo p{font-size:14px}
+.stage{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.stage h3{font:600 1.02rem/1.35 var(--f-display);margin:0;text-wrap:balance}
+table.vs{border-collapse:collapse;font:13px var(--f-body);min-width:640px}
+table.vs th,table.vs td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+table.vs thead th{color:var(--muted);font-weight:500}
+table.vs tbody th{font-weight:600}
+.idea{display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line)}
+.idea h3{font:600 1.02rem/1.35 var(--f-display);margin:0;text-wrap:balance}
+.idea figure{margin:0;display:flex;flex-direction:column;gap:6px;max-width:720px}
+.idea svg{width:100%;height:auto;display:block;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--fg)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">LibraryV3 · phase G · chantier B5</div>
+    <h1>Face arrière en espace objet</h1>
+    <p class="sub">Avant B5, un lot de 8 faces arrière coûte autant qu'un lot visible : 24 sommets rassemblés, deux aires, deux boîtes, pour tout jeter. B5 répond « sûrement arrière » avec 4 lectures contiguës, sans toucher aux sommets. Tout est calculé ici en float32 (Math.fround après chaque opération), sur une sphère UV de 3 968 faces, caméra et viewport de V1 (1536 × 900).</p>
+  </header>
+
+  <section class="panel" aria-label="Schéma d'introduction">
+    <div class="eyebrow">Avant le code · le schéma</div>
+    <h2>Une face, son plan, et l'œil du bon côté</h2>
+    <div class="read">
+      <ol>
+        <li>Une face est un morceau de plan. Son plan coupe l'espace en deux moitiés : la moitié vers laquelle pointe la normale n, et l'autre.</li>
+        <li>La face est vue si et seulement si l'œil est dans la moitié de la normale. La distance signée de l'œil au plan le dit : <b>n·œil + d &gt; 0</b>.</li>
+        <li>Ce test ne dépend d'aucun repère. Dans le repère de l'objet, les plans ne bougent jamais : on les cuit une fois. Il suffit d'y amener l'œil.</li>
+        <li>Deux chemins pour amener l'œil (flèches entre les deux figures) : inverser la matrice du mesh (Scratchapixel), ou lire E dans la mvp (B5). Même point en perspective. E sait en plus être à l'infini (ortho) et porte le signe du miroir.</li>
+      </ol>
+      <div class="ctl" style="align-content:flex-start">
+        <label for="sCam">caméra (tour de l'objet) <input id="sCam" type="range" min="0" max="360" value="200"></label>
+        <label for="sRot">rotation de l'objet <input id="sRot" type="range" min="-180" max="180" value="25"></label>
+        <button id="sPersp" aria-pressed="true">Perspective</button>
+        <button id="sOrtho" aria-pressed="false">Orthographique</button>
+        <button id="sMirror" aria-pressed="false">Miroir</button>
+        <span class="label" style="text-transform:none;letter-spacing:0">Cliquez une arête pour l'étudier.</span>
+      </div>
+    </div>
+    <div class="schema">
+      <figure>
+        <svg id="svgW" viewBox="0 0 560 420" role="img" aria-label="Repère monde : le mesh transformé, la caméra, son écran, le plan de la face étudiée et la distance signée de l'œil à ce plan"></svg>
+        <figcaption>Repère MONDE, vu de dessus (coupe 2D : chaque arête joue le rôle d'une face). Trait plein = face avant pour le rasterizer, pointillé = arrière. Sur l'écran de la caméra, la projection de la face étudiée est fléchée de a vers b : c'est son sens à l'écran, celui que lit EdgeFunction.</figcaption>
+      </figure>
+      <figure>
+        <svg id="svgO" viewBox="0 0 420 420" role="img" aria-label="Repère objet : le même mesh au repos, l'œil ramené dans ce repère, le même plan et la même distance signée"></svg>
+        <figcaption>Repère OBJET : le mesh au repos, tel que BakeFacePlanesSoA l'a vu. Le plan de la face y est fixe pour toujours. Seul l'œil bouge, une fois par (instance, vue).</figcaption>
+      </figure>
+    </div>
+    <div class="bridge" id="sBridge"></div>
+    <div class="regs" id="sRead"></div>
+  </section>
+
+  <section class="panel" aria-label="La méthode en détail" id="detail">
+    <div class="eyebrow">La méthode en détail · d'où sort E</div>
+    <h2>Six idées, et à quoi sert chaque calcul</h2>
+
+    <div class="idea"><h3>1 · Le sens d'un triangle à l'écran ne dépend que du côté de son plan où se trouve l'œil</h3>
+      <p><b>À quoi ça sert :</b> c'est toute la question du backface culling, réduite à une seule grandeur. Une face vue de devant tourne dans un sens (1 → 2 → 3, comme une horloge vue de face) ; vue de derrière, dans l'autre (l'horloge vue à travers le cadran). Entre les deux, l'œil est <b>dans</b> le plan : la face est vue par la tranche, son aire à l'écran est nulle. Le test « avant / arrière » revient donc à demander de quel côté du plan de la face est l'œil, c'est-à-dire le signe de la distance signée <b>n·œil + d</b>. Il ne reste qu'un problème : connaître l'œil dans le repère de l'objet, où les plans sont cuits.</p>
+      <figure><svg id="fig1" viewBox="0 0 600 270" role="img" aria-label="Un plan vu par la tranche ; un œil de chaque côté voit le triangle tourner dans des sens opposés ; un œil dans le plan voit un segment"></svg>
+      <figcaption>Le plan de la face, vu par la tranche. Les vignettes montrent ce que chaque œil voit du triangle 1-2-3. Le rasterizer mesure ce sens de rotation par le signe de l'aire (EdgeFunction).</figcaption></figure>
+    </div>
+
+    <div class="idea"><h3>2 · Une coordonnée clip est un produit scalaire, et « = 0 » est un plan</h3>
+      <p><b>À quoi sert le produit scalaire :</b> à mesurer un point le long d'une direction. MulRow calcule x_clip = x·m[0][0] + y·m[1][0] + z·m[2][0] + 1·m[3][0] : c'est le produit scalaire du point homogène P = (x, y, z, 1) avec la <b>colonne 0</b> de la mvp, que j'appelle c0. De même y_clip = P·c1, z_clip = P·c2, w_clip = P·c3. Une colonne de la mvp est donc une « règle » qui mesure une coordonnée clip.</p>
+      <p>L'ensemble des points où cette mesure vaut 0 est un plan. x_clip = 0 : les points qui tombent sur la ligne verticale centrale de l'écran. w_clip = 0 : les points à profondeur nulle, ceux du plan qui passe par l'œil, parallèle à l'écran. Et comme la mvp part du repère <b>objet</b>, c0, c1, c3 décrivent ces plans directement dans le repère objet, sans aucune inverse.</p>
+      <figure><svg id="fig2" viewBox="0 0 600 340" role="img" aria-label="Vue de dessus en espace vue : la droite x_clip égal zéro, la droite w_clip égal zéro, et deux points d'un même rayon qui ont le même rapport x_clip sur w_clip"></svg>
+      <figcaption>Vue de dessus, repère de la caméra (perspective de V1, focale horizontale f = 1/(tan 30°·aspect) ≈ 1,015). Un pixel, c'est le rapport x_clip / w_clip. Il est le même pour tous les points d'un rayon issu de l'œil. Pour l'œil lui-même, le rapport vaut 0 / 0.</figcaption></figure>
+    </div>
+
+    <div class="idea"><h3>3 · L'œil est le seul point qui annule x_clip, y_clip et w_clip : d'où E·c0 = E·c1 = E·c3 = 0</h3>
+      <p><b>Pourquoi ces trois équations :</b> tous les rayons de la caméra passent par l'œil. Le long d'un rayon, x_clip et w_clip grandissent ensemble (même rapport, même pixel). Le seul point commun à tous les rayons ne peut avoir aucun pixel : il faut que x_clip, y_clip et w_clip y soient nuls tous les trois. Vérification en repère vue : l'œil est (0, 0, 0), donc x_clip = f·0 = 0, y_clip = 0, w_clip = −z = 0.</p>
+      <p>Chaque équation est un plan (idée 2). Les trois plans x_clip = 0, y_clip = 0 et w_clip = 0 passent tous par l'œil, et seulement l'œil leur est commun. Résoudre E·c0 = 0, E·c1 = 0, E·c3 = 0, c'est trouver le point d'intersection de trois plans.</p>
+      <figure><svg id="fig3" viewBox="0 0 600 420" role="img" aria-label="Trois plans translucides, x_clip égal zéro, y_clip égal zéro et w_clip égal zéro, se coupent en un seul point : l'œil"></svg>
+      <figcaption>Repère de la caméra, en perspective cavalière. Les trois plans, chacun donné par une colonne de la mvp, se coupent en un point : l'œil. Dans le repère objet, ils sont simplement déplacés avec la caméra, et la mvp les donne déjà là.</figcaption></figure>
+    </div>
+
+    <div class="idea"><h3>4 · Pourquoi pas c2 (la colonne z)</h3>
+      <p>z_clip ne sert qu'à la profondeur (le Z-buffer). Le pixel (x/w, y/w), et donc le sens de rotation d'un triangle à l'écran, ne lisent jamais z. Et surtout, l'œil n'annule pas z_clip : en reverse-Z, z_clip = near à l'œil (m[3][2] = near dans PerspectiveInfinite). Ajouter E·c2 = 0 donnerait 4 équations pour 4 inconnues, dont la seule solution est E = 0, qui ne veut rien dire. Les colonnes 0, 1 et 3 sont exactement celles que lit la projection à l'écran.</p>
+    </div>
+
+    <div class="idea"><h3>5 · Résoudre : à quoi servent le produit vectoriel et le produit mixte</h3>
+      <p><b>En 3D, le produit vectoriel b × c</b> fabrique un vecteur perpendiculaire à b et à c (sa longueur est l'aire du parallélogramme b, c). Il résout donc d'un coup « v·b = 0 et v·c = 0 ». <b>Le produit mixte a·(b × c)</b> est le déterminant det(a, b, c) : le volume signé du parallélépipède. Si a est dans le plan de b et c (par exemple a = b), le volume est plat : det = 0.</p>
+      <figure><svg id="fig4" viewBox="0 0 600 330" role="img" aria-label="Deux vecteurs b et c dans un plan, leur produit vectoriel perpendiculaire, un troisième vecteur a et sa hauteur au-dessus du plan : le volume signé"></svg>
+      <figcaption>det(a, b, c) = a·(b × c) = aire de la base × hauteur de a au-dessus de la base. C'est la seule chose que calcule HomogeneousEye : quatre déterminants 3 × 3.</figcaption></figure>
+      <p><b>En 4D</b> (les points homogènes ont 4 coordonnées), il faut un vecteur perpendiculaire à <b>trois</b> vecteurs c0, c1, c3. La recette généralise le produit vectoriel. Empilez les trois colonnes dans une matrice C de 4 lignes × 3 colonnes. La composante k de E est le déterminant 3 × 3 de C <b>privée de sa ligne k</b>, avec le signe (−1)<sup>k</sup> : c'est un cofacteur. Les lignes de C sont les r_i = (m[i][0], m[i][1], m[i][3]) du code. Chaque déterminant 3 × 3 se calcule par un produit mixte. Par exemple, E.x = det(r1, r2, r3) = r1·(r2 × r3).</p>
+      <p><b>Pourquoi E est bien perpendiculaire aux trois colonnes :</b> par construction des cofacteurs, E·v = det[v | c0 | c1 | c3] pour tout vecteur v (développement de Laplace selon la 1<sup>re</sup> colonne). Pour v = c0, la matrice a deux colonnes égales : déterminant nul, donc E·c0 = 0. Idem pour c1 et c3. Rien à résoudre : la formule donne directement la solution.</p>
+    </div>
+
+    <div class="idea"><h3>6 · Un exemple à la main</h3>
+      <p>Caméra de V1 à l'origine, objet poussé de 5 unités devant elle (model = translation (0, 0, −5)). Dans le repère objet, l'œil doit être en (0, 0, +5).</p>
+      <div class="regs" id="ex6"></div>
+    </div>
+
+    <div class="idea"><h3>7 · Orthographique et miroir, sans une ligne de plus</h3>
+      <p><b>Ortho :</b> w_clip = 1 pour tous les points (c3 = (0, 0, 0, 1)). Aucun point réel n'a w_clip = 0 : l'œil n'est nulle part à distance finie. La formule donne alors E.w = 0. En coordonnées homogènes, (x, y, z, 0) est un point à l'infini dans la direction (x, y, z) : la direction commune de tous les rayons parallèles. Le test s = n·E.xyz devient « la normale regarde-t-elle vers la caméra ? », le bon test en ortho, sans branche.</p>
+      <figure><svg id="fig5" viewBox="0 0 600 330" role="img" aria-label="Caméra orthographique : rayons parallèles, la droite x_clip égal zéro, pas de droite w_clip égal zéro, l'œil est à l'infini"></svg>
+      <figcaption>En ortho, les plans x_clip = 0 et y_clip = 0 sont parallèles à la direction de visée, et le plan w_clip = 0 est rejeté à l'infini. Ils ne se coupent qu'à l'infini : E = (direction, 0).</figcaption></figure>
+      <p><b>Miroir :</b> les trois équations fixent E à un facteur près, λ. La formule des cofacteurs choisit un λ précis, dont le signe suit le déterminant de la mvp, donc celui de det(model). Avec une échelle négative, λ &lt; 0 et s change de signe. C'est exactement ce que fait l'aire à l'écran, puisque le miroir inverse le sens de rotation de tous les triangles. Le schéma d'introduction (bouton Miroir) le montre arête par arête.</p>
+    </div>
+
+    <div class="idea"><h3>Et donc : s = L·E</h3>
+      <p>En perspective, E = λ·(œil_objet, 1), donc s = n·E.xyz + d·E.w = λ·(n·œil + d) : c'est la distance signée de l'idée 1, au facteur λ près. L'étape 2b (plus bas) montre sur un vrai triangle que ce n'est pas seulement « du même signe » : l'aire à l'écran vaut exactement −K·(L·E)/(w0·w1·w2).</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Algorithme comparé" id="algo">
+    <div class="eyebrow">L'algorithme · B5 face à Scratchapixel</div>
+    <h2>Deux algorithmes, stade par stade</h2>
+    <p>Le problème commun : à chaque frame, pour chaque (instance, vue) et chaque triangle, décider sans projeter ses sommets si la face est arrière. Les deux méthodes reposent sur la même idée géométrique : une face est vue si et seulement si l'œil est du côté de sa normale, signe de n·œil + d. Elles diffèrent sur trois points : comment l'œil est amené dans le repère de l'objet, ce qui arrive aux cas particuliers, et qui a le dernier mot.</p>
+
+    <div class="stage"><h3>Stade 0 · Au chargement, une fois par mesh (identique pour les deux)</h3>
+<pre>pour chaque triangle f = (p0, p1, p2) du mesh :           // en double
+    n_brut = (p1 − p0) × (p2 − p0)          // produit vectoriel : perpendiculaire au triangle,
+                                            //   orientée par l'ordre 0 → 1 → 2 des indices
+    si |n_brut| == 0 : plan[f] = (0, 0, 0, 0) ; continuer   // triangle dégénéré
+    n = n_brut / |n_brut|                   // normale unitaire
+    d = −n · p0                             // pour tout point P : n·P + d = distance signée au plan
+    plan[f] = (n.x, n.y, n.z, d)            // rangé en SoA : nx[], ny[], nz[], d[]
+maxAbsD = max |d|                           // B5 seulement : sert au seuil τ</pre>
+      <p><b>Pourquoi l'espace objet.</b> Les plans des faces n'y bougent jamais : on paie leur calcul une seule fois au chargement, au lieu de transformer des normales à chaque frame. Cela évite aussi un piège classique : en espace monde, une échelle non uniforme oblige à transformer les normales par l'inverse-transposée. Les deux méthodes profitent de cet avantage, elles ne se distinguent qu'à partir du stade 1.</p>
+    </div>
+
+    <div class="stage"><h3>Stade 1 · Une fois par (instance, vue) : amener l'œil dans l'objet</h3>
+      <div class="duo">
+        <div class="sp"><div class="who">SCRATCHAPIXEL</div>
+<pre>// 1a. Caméra dans le MONDE
+//     (inverse rigide : bon marché)
+C_monde = ligne 3 de inverse(view)
+
+// 1b. Ramener ce point dans l'OBJET
+//     (inverse GÉNÉRALE à cause de l'échelle :
+//      Gauss-Jordan ou affine 3×3)
+invModel = inverse(model)
+C_obj    = C_monde · invModel   // un POINT, w = 1</pre>
+          <p>Juste et lisible, mais deux hypothèses restent cachées : la caméra a une position finie (faux en ortho), et le rasterizer juge comme la géométrie (faux en miroir, voir le stade 3).</p>
+        </div>
+        <div class="b5"><div class="who">B5</div>
+<pre>// 1. Lire l'œil dans la mvp (déjà calculée)
+//    r_i = (m[i][0], m[i][1], m[i][3])
+E.x =  r1 · (r2 × r3)    // un déterminant 3×3
+E.y = −r0 · (r2 × r3)    //   par composante,
+E.z =  r0 · (r1 × r3)    //   par produit mixte
+E.w = −r0 · (r1 × r2)
+// seul point envoyé sur x = y = w = 0 :
+//   perspective : E = λ·(œil_objet, 1)
+//   ortho       : E = λ·(direction, 0)
+//   miroir      : λ &lt; 0
+
+// 2. Seuil de prudence (voir stade 3)
+τ = (1/64)·( |E.xyz| + |E.w|·maxAbsD )</pre>
+          <p><b>Aucune inverse</b> : la mvp sert déjà à projeter les sommets. <b>Aucune division</b> : on ne calcule jamais E.xyz / E.w, donc rien ne déborde quand l'œil part à l'infini. <b>Une seule source de vérité</b> : si la projection change (décentrée, filmback, ortho, future caméra), E suit sans retouche. Environ 40 opérations, plus une racine pour τ.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage"><h3>Stade 2 · Pour chaque face : la distance signée</h3>
+      <div class="duo">
+        <div class="sp"><div class="who">SCRATCHAPIXEL</div>
+<pre>s = n · (C_obj − p0)      // = n·C_obj + d</pre></div>
+        <div class="b5"><div class="who">B5</div>
+<pre>s = ((nx·E.x + ny·E.y) + nz·E.z) + d·E.w
+// perspective : s = λ·(n·œil + d)
+// ortho       : s = λ·(n·direction)
+// ordre FIGÉ, sans FMA : le filet Debug
+//   compare SIMD et scalaire au bit près</pre></div>
+      </div>
+      <p>Formules jumelles : quatre produits, trois additions. B5 garde simplement la 4<sup>e</sup> composante E.w au lieu de l'avoir figée à 1.</p>
+    </div>
+
+    <div class="stage"><h3>Stade 3 · Décider</h3>
+      <div class="duo">
+        <div class="sp"><div class="who">SCRATCHAPIXEL</div>
+<pre>si s &lt;= 0 : arrière -> jetée
+sinon     : avant   -> dessinée
+// le test objet DÉCIDE seul ;
+// le rasterizer ne revérifie pas</pre></div>
+        <div class="b5"><div class="who">B5</div>
+<pre>si s &lt; −τ : SÛREMENT arrière -> jetée,
+            sans lire ses sommets
+sinon     : pas assez sûr -> le test ÉCRAN
+            décide, comme avant B5
+            (ClassifyFaces8 : aire raster
+             puis boîte serrée)</pre></div>
+      </div>
+      <p><b>Pourquoi des rôles différents.</b> Chez Scratchapixel, le test objet est la référence. Chez nous, la référence reste l'aire à l'écran, verrouillée par la TNR et mesurée par les compteurs ; B5 n'est qu'un raccourci devant elle. Il ne doit donc <b>jamais contredire l'écran</b>, ce qui exige deux choses. D'abord la même convention de signe dans tous les cas : E la donne par construction, aire_raster = −K·(L·E)/(w0·w1·w2) (étape 2b). Ensuite une marge τ : une face presque rasante a une aire float qui n'est que du bruit d'arrondi, B5 lui laisse la décision.</p>
+    </div>
+
+    <div class="stage"><h3>Stade 4 · B5 seulement : par lots de 8, en AVX2</h3>
+<pre>diffuser E.x, E.y, E.z, E.w et −τ dans 5 registres      // UNE fois, hors de la boucle
+pour chaque lot de 8 faces consécutives :
+    s[0..7]  = 4 lectures contiguës (nx, ny, nz, d), 4 mul, 3 add
+    objBack  = valid &amp; movemask( s &lt; −τ )               // NaN -> 0 : un doute ne rejette jamais
+    si objBack == valid : lot suivant                   // ni gather de sommets, ni test écran
+    m        = ClassifyFaces8(...)                      // lot mixte ou avant : B4 inchangé
+    keep     = valid &amp; ~objBack                         // une face rejetée l'est dans TOUS les cas
+    front    = m.front &amp; keep ; survive = m.survive &amp; keep</pre>
+      <p>C'est ici que se fait le gain : un lot entièrement arrière (environ la moitié sur une sphère) ne coûte plus que 13 instructions, au lieu de 24 lectures dispersées et deux tests.</p>
+    </div>
+
+    <div class="stage"><h3>Le face-à-face</h3>
+      <div class="regs"><table class="vs">
+        <thead><tr><th></th><th>Scratchapixel</th><th>B5</th></tr></thead>
+        <tbody>
+          <tr><th>Œil dans l'objet</th><td>C · inverse(model) : un point</td><td>E lu dans la mvp : un point homogène</td></tr>
+          <tr><th>Calcul par (instance, vue)</th><td>inverse(view) + inverse(model)</td><td>4 produits mixtes, aucune inverse</td></tr>
+          <tr><th>Division</th><td>oui (w de l'inverse)</td><td>jamais</td></tr>
+          <tr><th>Perspective</th><td>juste</td><td>juste (même point, au facteur λ près)</td></tr>
+          <tr><th>Orthographique</th><td class="bad">faux tel quel : il faut une 2<sup>e</sup> formule (direction) et une branche</td><td>même formule, E.w = 0</td></tr>
+          <tr><th>Miroir (det &lt; 0)</th><td class="bad">contredit l'écran : il faut multiplier par signe(det)</td><td>λ &lt; 0 : d'accord avec l'écran</td></tr>
+          <tr><th>Accord avec le rasterizer</th><td>à vérifier cas par cas</td><td>démontré pour toute mvp (Cauchy-Binet)</td></tr>
+          <tr><th>Rôle</th><td>décide seul</td><td>pré-filtre prudent (τ), l'écran garde le dernier mot</td></tr>
+          <tr><th>Compteurs de B3/B4</th><td>changent à la silhouette</td><td>conservés (au plus quelques corrections d'arrondi)</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Pour être juste avec Scratchapixel.</b> Avec ses deux corrections (une branche ortho avec une direction, et un facteur signe(det(model))), sa méthode donne exactement le même résultat que E en arithmétique exacte. Elle n'est pas fausse : elle convient à un moteur où le test objet est le seul test. Dans le nôtre, B5 doit s'accorder avec un test écran qui existe déjà. Il nous faut donc une formule qui hérite de la convention du rasterizer par construction, et non par une liste de corrections qu'on pourrait oublier un jour.</p>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Scène">
+    <div class="ctl">
+      <label for="az">azimut <input id="az" type="range" min="0" max="360" value="35"></label>
+      <label for="el">élévation <input id="el" type="range" min="-80" max="80" value="20"></label>
+      <button id="bPersp" aria-pressed="true">Perspective</button>
+      <button id="bOrtho" aria-pressed="false">Orthographique</button>
+      <button id="bMirror" aria-pressed="false">Miroir (scale x = −1)</button>
+    </div>
+    <div class="scene">
+      <div><div class="label">Ce que voit la caméra (faces avant, l'écran décide)</div><canvas id="cv3" width="640" height="420"></canvas></div>
+      <div><div class="label">Carte des 3 968 faces : 31 anneaux × 128 faces, un lot = 8 cases consécutives</div><canvas id="cvMap" width="896" height="420"></canvas>
+        <div class="legend"><span><i style="background:var(--accent)"></i>avant</span><span><i style="background:var(--skip)"></i>rejetée, lot sauté</span><span><i style="background:var(--warn-soft)"></i>rejetée, lot mixte</span><span><i style="background:var(--warn)"></i>arrière, laissée à l'écran (|s| ≤ τ)</span><span><i style="background:transparent;border:2px solid var(--sel)"></i>lot étudié</span></div>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="ctl"><span class="label">Lot étudié :</span><button id="kSkip">Lot entièrement arrière</button><button id="kMix">Lot mixte (silhouette)</button><button id="kFront">Lot avant</button><button id="kNext">Lot suivant du même genre</button></div>
+  </section>
+
+  <nav id="nav" aria-label="Étapes"></nav>
+  <section class="panel" id="panel" aria-live="polite"></section>
+  <div class="ctl"><button id="prev">← Étape précédente</button><button id="next">Étape suivante →</button></div>
+</div>
+
+<script>
+const f=Math.fround;
+const fmt=x=>{if(typeof x!=='number')return String(x);if(!isFinite(x))return String(x);const a=Math.abs(x);return (a!==0&&(a<1e-3||a>=1e5))?x.toExponential(3):x.toFixed(a>=100?2:5)};
+const nf=n=>n.toLocaleString('fr-FR');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ── Matrices LIGNE (p * M), row-major m[r][c], comme MatrixLib.h
+const mm=(A,B)=>{const R=[];for(let i=0;i<4;i++){R[i]=[];for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s+=A[i][k]*B[k][j];R[i][j]=s}}return R};
+const I4=()=>[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+function inv4(M){const A=M.map((r,i)=>[...r,...I4()[i]]);for(let c=0;c<4;c++){let p=c;for(let r=c+1;r<4;r++)if(Math.abs(A[r][c])>Math.abs(A[p][c]))p=r;[A[c],A[p]]=[A[p],A[c]];const d=A[c][c];for(let k=0;k<8;k++)A[c][k]/=d;for(let r=0;r<4;r++)if(r!==c){const m=A[r][c];for(let k=0;k<8;k++)A[r][k]-=m*A[c][k]}}return A.map(r=>r.slice(4))}
+const W=1536,H=900,ASP=W/H,NEAR=0.1,DIST=3.2;
+const fy=1/Math.tan(Math.PI/6),fx=fy/ASP;
+const PERSP=[[fx,0,0,0],[0,fy,0,0],[0,0,0,-1],[0,0,NEAR,0]];                 // PerspectiveInfinite
+const OH=2.6,OW=OH*ASP,OF=40;
+const ORTHO=[[2/OW,0,0,0],[0,2/OH,0,0],[0,0,1/(OF-NEAR),0],[0,0,OF/(OF-NEAR),1]]; // OrthographicCentered
+
+// ── Sphère UV : 31 anneaux x 64 segments, 2 triangles par quad, ordre anneau par anneau
+const RINGS=31,SEGS=64;const VP=[];const IDX=[];
+for(let r=0;r<=RINGS;r++)for(let s=0;s<=SEGS;s++){const t=Math.PI*r/RINGS,p=2*Math.PI*s/SEGS;VP.push([f(Math.sin(t)*Math.cos(p)),f(Math.cos(t)),f(Math.sin(t)*Math.sin(p))])}
+for(let r=0;r<RINGS;r++)for(let s=0;s<SEGS;s++){const a=r*(SEGS+1)+s,b=a+SEGS+1;IDX.push(a,a+1,b+1, a,b+1,b)}
+const NF=IDX.length/3, NB=NF/8;
+// orientation : normale vers l'exterieur (verifiee sur une face de l'equateur ; on retourne tout sinon)
+(()=>{const k=(15*SEGS+3)*3,[p0,p1,p2]=[VP[IDX[k]],VP[IDX[k+1]],VP[IDX[k+2]]];const u=p1.map((v,i)=>v-p0[i]),w=p2.map((v,i)=>v-p0[i]);
+  const n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];if(n[0]*p0[0]+n[1]*p0[1]+n[2]*p0[2]<0)for(let i=0;i<NF;i++){const t=IDX[3*i+1];IDX[3*i+1]=IDX[3*i+2];IDX[3*i+2]=t}})();
+
+// ── B5, cuisson : plans en double, un seul arrondi float (BakeFacePlanesSoA)
+const PL={nx:[],ny:[],nz:[],d:[]};let maxAbsD=0;
+for(let i=0;i<NF;i++){const p0=VP[IDX[3*i]],p1=VP[IDX[3*i+1]],p2=VP[IDX[3*i+2]];
+  const ux=p1[0]-p0[0],uy=p1[1]-p0[1],uz=p1[2]-p0[2],vx=p2[0]-p0[0],vy=p2[1]-p0[1],vz=p2[2]-p0[2];
+  let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const L=Math.hypot(nx,ny,nz);
+  if(!(L>0)){PL.nx.push(0);PL.ny.push(0);PL.nz.push(0);PL.d.push(0);continue}
+  nx/=L;ny/=L;nz/=L;const d=-(nx*p0[0]+ny*p0[1]+nz*p0[2]);
+  PL.nx.push(f(nx));PL.ny.push(f(ny));PL.nz.push(f(nz));PL.d.push(f(d));maxAbsD=Math.max(maxAbsD,Math.abs(f(d)))}
+maxAbsD=f(maxAbsD);
+const K_MARGIN=f(1/64);
+
+let ST={az:35,el:20,ortho:false,mirror:false}, S=null, kind='skip', sel=0, step=0;
+
+function rotX(a){const c=Math.cos(a),s=Math.sin(a);return [[1,0,0,0],[0,c,s,0],[0,-s,c,0],[0,0,0,1]]}
+function rotY(a){const c=Math.cos(a),s=Math.sin(a);return [[c,0,-s,0],[0,1,0,0],[s,0,c,0],[0,0,0,1]]}
+
+function compute(){
+  const R={};
+  const Sx=ST.mirror?-1:1;
+  const model=mm(mm(mm([[Sx,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]],rotX(ST.el*Math.PI/180)),rotY(ST.az*Math.PI/180)),[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,-DIST,1]]);
+  R.model=model;
+  const M=mm(model,ST.ortho?ORTHO:PERSP).map(r=>r.map(f)); R.M=M;
+  // etage sommets (B3) : ProjectClip(MulRow(...)) en float32
+  R.rv=VP.map(p=>{const c=k=>f(f(f(f(p[0]*M[0][k])+f(p[1]*M[1][k]))+f(p[2]*M[2][k]))+M[3][k]);
+    const cx=c(0),cy=c(1),cz=c(2),cw=c(3),iw=f(1/cw);const xn=f(cx*iw),yn=f(cy*iw);
+    return [f(0+f(f(f(xn*.5)+.5)*W)),f(0+f(f(.5-f(yn*.5))*H)),f(cz*iw),iw]});
+  // EdgeFunction(a, b, c) : forme antisymetrique, c en reference
+  R.area=[];for(let i=0;i<NF;i++){const a=R.rv[IDX[3*i]],b=R.rv[IDX[3*i+1]],c=R.rv[IDX[3*i+2]];
+    const ux=f(a[0]-c[0]),uy=f(a[1]-c[1]),vx=f(b[0]-c[0]),vy=f(b[1]-c[1]);R.area.push(f(f(ux*vy)-f(uy*vx)))}
+  // HomogeneousEye : r_i = (m[i][0], m[i][1], m[i][3])
+  const r=[0,1,2,3].map(i=>[M[i][0],M[i][1],M[i][3]]);R.r=r;
+  const cr=(a,b)=>[f(f(a[1]*b[2])-f(a[2]*b[1])),f(f(a[2]*b[0])-f(a[0]*b[2])),f(f(a[0]*b[1])-f(a[1]*b[0]))];
+  const dt=(a,b)=>f(f(f(a[0]*b[0])+f(a[1]*b[1]))+f(a[2]*b[2]));
+  const c23=cr(r[2],r[3]),c13=cr(r[1],r[3]),c12=cr(r[1],r[2]);R.c23=c23;R.c13=c13;R.c12=c12;
+  R.E=[dt(r[1],c23),f(-dt(r[0],c23)),dt(r[0],c13),f(-dt(r[0],c12))];
+  const E=R.E;R.exyz=f(Math.sqrt(f(f(f(E[0]*E[0])+f(E[1]*E[1]))+f(E[2]*E[2]))));
+  R.tau=f(K_MARGIN*f(R.exyz+f(Math.abs(E[3])*maxAbsD)));
+  // oeil "naif" : origine de la vue ramenee dans l'objet par inverse(model)
+  const iv=inv4(model);R.eyeNaive=[iv[3][0]/iv[3][3],iv[3][1]/iv[3][3],iv[3][2]/iv[3][3]];
+  // s = ((nx*ex + ny*ey) + nz*ez) + d*ew, par face
+  R.s=[];R.rej=[];for(let i=0;i<NF;i++){const s=f(f(f(f(PL.nx[i]*E[0])+f(PL.ny[i]*E[1]))+f(PL.nz[i]*E[2]))+f(PL.d[i]*E[3]));R.s.push(s);R.rej.push(s<-R.tau)}
+  R.naiveBack=[];for(let i=0;i<NF;i++){const p0=VP[IDX[3*i]];const e=R.eyeNaive;R.naiveBack.push(PL.nx[i]*(e[0]-p0[0])+PL.ny[i]*(e[1]-p0[1])+PL.nz[i]*(e[2]-p0[2])<=0)}
+  // lots
+  R.cat=[];R.skip=0;R.mix=0;R.front=0;R.rejN=0;R.corr=0;R.signMis=0;R.naiveMis=0;R.vanish=0;R.frontN=0;
+  for(let b=0;b<NB;b++){let n=0;for(let k=0;k<8;k++)n+=R.rej[b*8+k];R.cat.push(n===8?'skip':n===0?'front':'mix');R[n===8?'skip':n===0?'front':'mix']++;R.rejN+=n}
+  for(let i=0;i<NF;i++){const back=R.area[i]>=0;if(!back)R.frontN++;if(R.rej[i]&&!back)R.corr++;if((R.s[i]>0)===back&&Math.abs(R.area[i])>=1)R.signMis++;
+    if(R.naiveBack[i]!==back)R.naiveMis++; if(!back&&!R.naiveBack[i])R.vanish++}
+  return R;
+}
+function pickBatch(k,from){const list=[];for(let b=0;b<NB;b++)if(S.cat[b]===k)list.push(b);if(!list.length)return -1;if(from===undefined)return list[Math.floor(list.length/2)];const j=list.findIndex(b=>b>from);return list[j<0?0:j]}
+
+// ── Dessin
+function drawScene(){
+  const cv=document.getElementById('cv3'),g=cv.getContext('2d');const Wc=cv.width,Hc=cv.height;g.clearRect(0,0,Wc,Hc);
+  const sc=Math.min(Wc/W,Hc/H),ox=(Wc-W*sc)/2,oy=(Hc-H*sc)/2;
+  g.strokeStyle=css('--line');g.strokeRect(ox,oy,W*sc,H*sc);
+  const acc=css('--accent'),warn=css('--warn'),sl=css('--sel');
+  const L=[.4,.6,.7];
+  for(let i=0;i<NF;i++){if(S.area[i]>=0)continue;const b=Math.floor(i/8);
+    const P=[0,1,2].map(k=>S.rv[IDX[3*i+k]]);
+    const sh=Math.max(.15,PL.nx[i]*L[0]+PL.ny[i]*L[1]+PL.nz[i]*L[2]);
+    g.beginPath();g.moveTo(ox+P[0][0]*sc,oy+P[0][1]*sc);g.lineTo(ox+P[1][0]*sc,oy+P[1][1]*sc);g.lineTo(ox+P[2][0]*sc,oy+P[2][1]*sc);g.closePath();
+    g.fillStyle=S.cat[b]==='mix'?warn:acc;g.globalAlpha=.35+.6*Math.abs(sh);g.fill();g.globalAlpha=1}
+  if(sel>=0)for(let k=0;k<8;k++){const i=sel*8+k;if(S.area[i]>=0)continue;const P=[0,1,2].map(j=>S.rv[IDX[3*i+j]]);
+    g.beginPath();g.moveTo(ox+P[0][0]*sc,oy+P[0][1]*sc);g.lineTo(ox+P[1][0]*sc,oy+P[1][1]*sc);g.lineTo(ox+P[2][0]*sc,oy+P[2][1]*sc);g.closePath();g.strokeStyle=sl;g.lineWidth=1.5;g.stroke()}
+  g.fillStyle=css('--muted');g.font='12px '+css('--f-mono');
+  g.fillText((ST.ortho?'ortho':'perspective')+(ST.mirror?' · miroir : l\'écran dessine l\'intérieur (dette, hors B5)':'')+' · orangé = lot mixte',8,Hc-8);
+
+  const cm=document.getElementById('cvMap'),h=cm.getContext('2d');const Wm=cm.width,Hm=cm.height;h.clearRect(0,0,Wm,Hm);
+  const cols=2*SEGS,cw=Wm/cols,ch=Hm/RINGS;
+  const col={front:acc,skip:css('--skip'),mixRej:css('--warn-soft'),edge:warn};
+  for(let i=0;i<NF;i++){const r=Math.floor(i/cols),c=i%cols,b=Math.floor(i/8);const back=S.area[i]>=0;
+    h.fillStyle=!back&&!S.rej[i]?col.front:S.rej[i]?(S.cat[b]==='skip'?col.skip:col.mixRej):col.edge;
+    h.fillRect(c*cw+.5,r*ch+.5,cw-1,ch-1)}
+  h.strokeStyle=css('--bg');h.lineWidth=2;for(let c=8;c<cols;c+=8){h.beginPath();h.moveTo(c*cw,0);h.lineTo(c*cw,Hm);h.stroke()}
+  if(sel>=0){const i=sel*8,r=Math.floor(i/cols),c=i%cols;h.strokeStyle=css('--sel');h.lineWidth=3;h.strokeRect(c*cw+1,r*ch+1,8*cw-2,ch-2)}
+
+  const st=document.getElementById('stats');
+  st.innerHTML=[[`${nf(S.skip)} / ${nf(NB)}`,`lots sautés (${(100*S.skip/NB).toFixed(1)} %) : aucun gather`],
+    [nf(S.mix),'lots mixtes : ClassifyFaces8 comme en B4'],
+    [nf(S.rejN),`faces rejetées en objet (${(100*S.rejN/NF).toFixed(1)} %)`],
+    [nf(S.skip*24),'chargements de sommets évités'],
+    [String(S.corr),'rejetées que l’écran float disait avant'],
+    [String(S.signMis),'désaccords de signe s / aire (|aire| ≥ 1 px²)']]
+    .map(([v,l])=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`).join('');
+}
+
+// ── Registres
+function reg(name,arr,note,cls){return `<tr><th>${name}${note?` <span class="tag">${note}</span>`:''}</th>${arr.map((v,i)=>`<td class="l${i}${cls&&cls[i]?' '+cls[i]:''}">${typeof v==='number'?fmt(v):v}</td>`).join('')}</tr>`}
+function table(rows){return `<div class="regs"><table class="reg"><tr><th></th>${[0,1,2,3,4,5,6,7].map(i=>`<th>c${i}</th>`).join('')}</tr>${rows.join('')}</table></div>`}
+const lane=fn=>[0,1,2,3,4,5,6,7].map(k=>fn(sel*8+k,k));
+const bit=v=>v?'<span class="okv">1</span>':'0';
+const hexMask=a=>'0x'+a.reduce((m,v,k)=>m|(v?1<<k:0),0).toString(16).toUpperCase().padStart(2,'0');
+const vec=v=>'('+v.map(fmt).join(', ')+')';
+
+const Rarea=()=>[reg('aire ecran',lane(i=>S.area[i]),'B4'),reg('front B4',lane(i=>bit(!(S.area[i]>=0))),'!(aire >= 0)')];
+const Rplanes=()=>[reg('nx',lane(i=>PL.nx[i])),reg('ny',lane(i=>PL.ny[i])),reg('nz',lane(i=>PL.nz[i])),reg('d',lane(i=>PL.d[i]))];
+const Rs=()=>[reg('s = L.E',lane(i=>S.s[i]),'',lane(i=>S.s[i]<0?'':''))];
+
+function catName(){return sel<0?'—':S.cat[sel]==='skip'?'entièrement arrière':S.cat[sel]==='mix'?'mixte':'avant'}
+
+const steps=[
+{t:"Le problème",h:"Un lot arrière coûte autant qu'un lot visible",
+ o:()=>`Comprendre ce que B5 économise. En B4, ClassifyFaces8 rassemble les 3 coins de 8 faces (24 chargements de 16 o à des adresses dispersées, 12 insertions, 6 unpack, 6 shuffle) avant de calculer l'aire. Sur un mesh fermé, la moitié des faces tournent le dos : tout ce travail aboutit à « front = 0 ». Lot étudié n° ${sel} (faces ${sel*8} à ${sel*8+7}), ${catName()}.`,
+ code:"// B4 : les sommets d'abord, la reponse ensuite\nconst FaceMasks8 m = ClassifyFaces8(rv, idx, vp);   // 24 gathers + 2 aires + 2 boites\nconst uint32_t front = m.front & valid;              // lot arriere : 0x00",
+ prevT:"Entrée : les 8 faces du lot, indices dans rasterBuf",
+ prev:()=>table([reg('coin a',lane(i=>IDX[3*i])),reg('coin b',lane(i=>IDX[3*i+1])),reg('coin c',lane(i=>IDX[3*i+2]))]),
+ curT:"Résultat de B4 sur ce lot (aire raster, signe = front)",cur:()=>table(Rarea()),
+ note:()=>`<p>Sur la vue courante, ${nf(NF-S.frontN)} faces sur ${nf(NF)} sont arrière et ${nf(S.skip)} lots sur ${nf(NB)} ne contiennent <b>que</b> des faces arrière. L'ordre des faces d'un mesh généré (anneau par anneau) regroupe les faces voisines dans le même lot : les lots sont presque tous « tout ou rien », seuls ceux de la silhouette sont mixtes (en orangé sur la carte).</p>
+ <p>Idée de B5 : savoir qu'une face est arrière <b>sans</b> ses sommets projetés. La géométrie d'une face (son plan) ne change jamais ; seule la caméra bouge. Il suffit donc d'amener la caméra dans le repère de l'objet, une fois par (instance, vue), et de la comparer aux plans cuits au chargement.</p>`},
+
+{t:"1 · Plans",h:"Les plans des faces, cuits une fois au chargement",
+ o:()=>`Préparer, une seule fois par mesh, ce que le test lira à chaque frame : pour chaque face, son plan L = (n, d), avec n = normalize((p1 − p0) × (p2 − p0)) et d = −n·p0. Pour tout point P de l'objet, n·P + d est sa distance signée au plan. Rangés en SoA (4 tableaux alignés 64 o) : 8 faces = 4 lectures contiguës.`,
+ code:"// BakeFacePlanesSoA (MeshClass.cpp), en DOUBLE, un seul arrondi float a la fin\nn = normalize((p1 - p0) x (p2 - p0));   // MEME orientation que faceNormals\nd = -dot(n, p0);\nfacePlanesSoA.nx[f] = float(n.x); ... facePlanesSoA.d[f] = float(d);\nmaxAbsD = max(maxAbsD, |d|);           // borne du seuil, un scalaire par mesh",
+ prevT:"Étape précédente : les 8 faces du lot (indices)",prev:()=>table([reg('coin a',lane(i=>IDX[3*i])),reg('coin b',lane(i=>IDX[3*i+1])),reg('coin c',lane(i=>IDX[3*i+2]))]),
+ curT:"Cette étape : facePlanesSoA, couloir k = face base + k",cur:()=>table(Rplanes()),
+ note:()=>`<p>maxAbsD de cette sphère : ${fmt(maxAbsD)} (une sphère unité : chaque plan passe presque à distance 1 du centre). Coût mémoire : 16 o par face, 63 Kio pour sphere_hi. Bourrage du dernier lot : des plans <b>nuls</b> (s = 0, jamais rejetés). Une face dégénérée reçoit aussi un plan nul : elle n'est jamais rejetée en objet, l'écran décide comme avant.</p>`},
+
+{t:"2 · Œil homogène",h:"La caméra dans le repère de l'objet, lue dans la mvp",
+ o:()=>`Obtenir, une fois par (instance, vue), le point E qui rend le test exact pour toutes les caméras. E est le point homogène que la mvp envoie sur x = y = w = 0 : le centre de projection. On le lit dans les colonnes 0, 1 et 3 de la mvp (x, y, w du clip) par trois produits mixtes, sans inverser aucune matrice.`,
+ code:"// HomogeneousEye (FaceStage.h) — r_i = (m[i][0], m[i][1], m[i][3])\nE.x =  r1 . (r2 x r3)\nE.y = -r0 . (r2 x r3)\nE.z =  r0 . (r1 x r3)\nE.w = -r0 . (r1 x r2)",
+ prevT:"Entrée : la mvp de cette vue, colonnes 0, 1 et 3 (r0 à r3)",
+ prev:()=>`<div class="regs"><table class="num"><tr><th></th><th>m[i][0]</th><th>m[i][1]</th><th>m[i][3]</th></tr>${S.r.map((v,i)=>`<tr><th>r${i}</th>${v.map(x=>`<td>${fmt(x)}</td>`).join('')}</tr>`).join('')}</table></div>`,
+ curT:"Cette étape : E (4 floats, puis diffusés dans 8 couloirs chacun)",
+ cur:()=>{const E=S.E,ok=Math.abs(E[3])>1e-12;
+  return `<div class="regs"><table class="num"><tr><th>E.x</th><th>E.y</th><th>E.z</th><th>E.w</th></tr><tr>${E.map(x=>`<td>${fmt(x)}</td>`).join('')}</tr></table></div>
+  ${ok?`<p>Perspective : E = λ·(œil objet, 1) avec λ = ${fmt(E[3])}. E.xyz / E.w = ${vec(E.slice(0,3).map(x=>x/E[3]))}. Contrôle par inverse(model) (le chemin naïf, en double) : ${vec(S.eyeNaive)}. Même point.</p>`
+      :`<p>Orthographique : E.w = 0, l'œil est à l'infini. E.xyz = ${vec(E.slice(0,3))} est la direction vers la caméra dans le repère objet. Aucune branche : la même formule s = L·E traite les deux projections.</p>`}
+  <p>${ST.mirror?'Miroir actif : det(model) &lt; 0, le signe de λ a basculé. s change de signe avec lui, exactement comme l\'aire raster : le test reste d\'accord avec l\'écran.':'Activez « Miroir » : le signe de E bascule seul, le test reste d\'accord avec l\'écran.'}</p>`},
+ note:()=>`<p><b>Pourquoi c'est exact.</b> Un sommet projeté vaut (x/w, y/w). L'aire signée de 3 points projetés est det[[x0 y0 w0],[x1 y1 w1],[x2 y2 w2]] / (w0 w1 w2). Ce déterminant 3×3 est le produit de la matrice des 3 sommets homogènes (3×4) par les 3 colonnes x, y, w de la mvp (4×3). La formule de Cauchy-Binet le développe en L·E : L (le plan de la face) ne dépend que de l'objet, E que de la caméra. Après le flip Y de ToRaster : aire_raster = −K · (L·E) / (w0 w1 w2), K &gt; 0. Sur le chemin Inside, w &gt; 0 aux 3 coins : <b>face avant ⇔ s = L·E &gt; 0</b>.</p>
+  <p>Coût par (instance, vue) : 4 produits vectoriels et 4 produits scalaires, une racine pour τ. Quelques dizaines de flops, contre une inverse 4×4 (Gauss-Jordan) pour le chemin naïf.</p>`},
+
+{t:"2b · Cauchy-Binet",h:"Pourquoi L·E a toujours le signe de l'aire à l'écran",
+ o:()=>`Voir, sur un vrai triangle, que l'aire écran et L·E sont <b>le même nombre</b> calculé de deux façons. Les 3 sommets homogènes (x, y, z, 1) forment une matrice P de 3 × 4 ; les colonnes x, y, w de la mvp forment C, de 4 × 3. Le produit X = P·C contient, ligne par ligne, (x_clip, y_clip, w_clip) de chaque coin. Son déterminant donne l'aire écran. La formule de Cauchy-Binet le découpe en 4 termes : un mineur de P (qui ne dépend que de la face) fois un mineur de C (qui ne dépend que de la caméra). Face étudiée : n° ${cbFace()}, la plus grande du lot ${sel} (choisissez un autre lot dans la scène). Valeurs en double.`,
+ code:"det(P·C) = Σ_k  L_k · E_k        (Cauchy-Binet, k = colonne de P retiree)\n  L_k = (-1)^k det(P sans sa colonne k)  ->  (n_brut, d_brut) : le PLAN de la face\n  E_k = (-1)^k det(C sans sa ligne k)    ->  l'oeil homogene de l'etape 2\naire_ndc    = det(P·C) / (w0 w1 w2)\naire_raster = -(W/2)(H/2) · aire_ndc       // flip Y de ToRaster : le signe moins",
+ prevT:"Entrées : P (la face) et C (la caméra)",
+ prev:()=>{const D=cbData();return `<div class="mats"><div><div class="label">P : 3 sommets homogènes</div>${matT(D.P,['x','y','z','1'],['p0','p1','p2'])}</div><div><div class="label">C : colonnes x, y, w de la mvp</div>${matT(D.C,['x_clip','y_clip','w_clip'],['ligne 0','ligne 1','ligne 2','ligne 3'])}</div></div>`},
+ curT:"Les deux calculs du même déterminant",
+ cur:()=>{const D=cbData();const pr=D.L.map((l,k)=>l*D.E[k]);
+  return `<div class="mats"><div><div class="label">X = P·C (un coin par ligne)</div>${matT(D.X,['x_clip','y_clip','w_clip'],['coin a','coin b','coin c'])}<p style="margin-top:6px">det(X), calculé directement : <b>${fmt(D.det)}</b></p></div>
+  <div><div class="label">Cauchy-Binet : 4 termes</div><table class="mat"><tr><th>k</th><th>L_k (face)</th><th>E_k (caméra)</th><th>L_k · E_k</th></tr>${[0,1,2,3].map(k=>`<tr><th>${k}</th><td>${fmt(D.L[k])}</td><td>${fmt(D.E[k])}</td><td>${fmt(pr[k])}</td></tr>`).join('')}<tr><th>Σ</th><td></td><td></td><td><b>${fmt(pr.reduce((a,b)=>a+b,0))}</b></td></tr></table></div></div>
+  <p>Les deux colonnes donnent le même nombre. Aire raster prédite : −(${W}/2)·(${H}/2)·det / (w0·w1·w2) = <b>${fmt(D.areaPred)}</b> px². Aire float du moteur (EdgeFunction sur rasterBuf, étape 0) : <b>${fmt(S.area[cbFace()])}</b> px².</p>`},
+ note:()=>{const D=cbData();const ln=Math.hypot(D.L[0],D.L[1],D.L[2]),i=cbFace();
+  return `<p><b>L est le plan cuit, à un facteur positif près.</b> L.xyz = (p1 − p0) × (p2 − p0) : la normale brute, de longueur ${fmt(ln)} (deux fois l'aire du triangle dans l'objet). L / |L.xyz| = ${vec(D.L.map(x=>x/ln))} ; plan cuit par BakeFacePlanesSoA : ${vec([PL.nx[i],PL.ny[i],PL.nz[i],PL.d[i]])}. Diviser par une longueur positive ne change pas le signe : on peut normaliser au chargement.</p>
+  <p><b>E est l'œil de l'étape 2.</b> E calculé ici en double : ${vec(D.E)} ; en float par HomogeneousEye : ${vec(S.E)}.</p>
+  <p><b>Conclusion.</b> aire_raster = −K · (L·E) / (w0 w1 w2) avec K = W·H/4 &gt; 0. Sur le chemin Inside, w0, w1, w2 &gt; 0 : le signe de l'aire est l'opposé de celui de s = L·E, quelle que soit la mvp (perspective, ortho, décentrée, miroir). L'écran et B5 ne peuvent pas se contredire, sauf par un arrondi sur une face rasante, et la marge τ les laisse à l'écran.</p>`}},
+
+{t:"3 · s = L·E",h:"Quatre lectures, quatre produits, trois additions",
+ o:()=>`Répondre pour 8 faces d'un coup : s = ((nx·ex + ny·ey) + nz·ez) + d·ew. L'ordre des additions est celui du scalaire du filet Debug, sans FMA, pour que le filet compare au bit près. Aucune lecture de sommet.`,
+ code:"const __m256 s = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(\n    _mm256_mul_ps(_mm256_load_ps(nx), ex),     // nx*ex\n    _mm256_mul_ps(_mm256_load_ps(ny), ey)),    // + ny*ey\n    _mm256_mul_ps(_mm256_load_ps(nz), ez)),    // + nz*ez\n    _mm256_mul_ps(_mm256_load_ps(d),  ew));    // + d*ew",
+ prevT:"Étapes 1 et 2 : les plans du lot, et E diffusé",
+ prev:()=>table([...Rplanes(),reg('ex',Array(8).fill(S.E[0]),'diffusé'),reg('ey',Array(8).fill(S.E[1])),reg('ez',Array(8).fill(S.E[2])),reg('ew',Array(8).fill(S.E[3]))]),
+ curT:"Cette étape : s, comparé à l'aire raster de B4 (signes opposés attendus)",
+ cur:()=>table([reg('s',lane(i=>S.s[i])),reg('aire ecran',lane(i=>S.area[i]),'B4'),reg('accord',lane(i=>((S.s[i]>0)===(S.area[i]<0))?'<span class="okv">oui</span>':'<span class="kov">non</span>'),'s>0 ⇔ aire<0')]),
+ note:()=>`<p>Sur toute la sphère, vue courante : ${S.signMis} désaccord de signe parmi les faces d'aire ≥ 1 px². Les seuls désaccords possibles sont des faces presque rasantes, où l'aire float n'est que du bruit d'arrondi : l'étape suivante les laisse à l'écran.</p>`},
+
+{t:"4 · Seuil, masque",h:"« Sûrement arrière », jamais « peut-être »",
+ o:()=>`Ne rejeter que les faces dont la réponse ne fait aucun doute, pour que l'image et les compteurs restent ceux de B4. Seuil τ = (1/64)·(|E.xyz| + |E.w|·maxAbsD) : une fraction de la plus grande valeur que s puisse prendre. Une face est rejetée si s &lt; −τ, c'est-à-dire si elle tourne le dos à plus de 0,9° de l'incidence rasante. Les autres continuent vers ClassifyFaces8, qui décide comme avant.`,
+ code:"// UNE fois par (instance, vue), hors de la boucle des lots\nconst float  tau    = ObjBackThreshold(eye, planes.maxAbsD);\nconst __m256 negTau = _mm256_set1_ps(-tau);\n// par lot\nobjBack = valid & movemask(cmp(s, negTau, _CMP_LT_OQ));   // NaN -> 0 : un doute ne rejette jamais\nif (objBack == valid) continue;                            // lot saute : ni gather, ni test ecran\nm = ClassifyFaces8(rv, idx, vp);                           // lot mixte ou avant : B4 inchange\nkeep = valid & ~objBack;  front = m.front & keep;  surv = m.survive & keep;",
+ prevT:"Étape 3 : s",prev:()=>table(Rs()),
+ curT:"Cette étape : masque objet, puis décision pour le lot",
+ cur:()=>{const rej=lane(i=>S.rej[i]),fr=lane(i=>!(S.area[i]>=0));const all=rej.every(Boolean);
+  return table([reg('−τ',Array(8).fill(f(-S.tau)),'diffusé'),reg('s < −τ',rej.map(bit),'cmp LT_OQ'),reg('front B4',fr.map(bit),'si calculé'),reg('keep',lane((i,k)=>bit(!rej[k])),'valid & ~objBack')])+
+  `<p>objBack = <b>${hexMask(rej)}</b>, valid = 0xFF. ${all?'<span class="okv">objBack == valid : lot sauté.</span> Aucun des 24 sommets n\'est lu, aucun test écran, aucun compteur écran (TrisRasterized compte les faces avant : il n\'y en a pas).':rej.some(Boolean)?'<span class="kov">Lot mixte :</span> ClassifyFaces8 tourne comme en B4 ; les faces rejetées en objet sont ensuite masquées par keep, quel que soit le verdict de l\'écran.':'Aucune face rejetée : lot avant, B4 inchangé (le surcoût de B5 se limite aux 13 instructions du test).'}</p>`},
+ note:()=>`<p>τ de cette vue : ${fmt(S.tau)} (|E.xyz| = ${fmt(S.exyz)}, |E.w| = ${fmt(Math.abs(S.E[3]))}). Sur la carte, les cases rouges sont les faces arrière laissées à l'écran parce que |s| ≤ τ : une mince bande à la silhouette.</p>
+ <p><b>Pourquoi masquer aussi dans les lots mixtes.</b> Si l'on ne sautait que les lots entiers, une face rejetée en objet serait jetée quand ses 7 voisines le sont aussi, et dessinée sinon (quand l'écran se trompe d'un arrondi). Le sort d'une face dépendrait de ses voisines dans le tableau d'indices : réordonner les faces d'un mesh changerait l'image. Avec keep, une face a le même sort quel que soit son lot.</p>`},
+
+{t:"5 · Contre-exemples",h:"Ce qu'il ne faut pas faire",
+ o:()=>`Voir pourquoi le chemin évident est faux. Le chemin naïf : inverser la matrice model pour ramener la position de la caméra dans l'objet, puis tester n·(œil − p0) ≤ 0. Changez de mode (perspective, ortho, miroir) et regardez les chiffres.`,
+ code:"// NON RETENU\nconst Matrix44f inv = modelMatrix.inverse();          // Gauss-Jordan par (instance, vue)\nconst Vec3f eyeObj = MulPoint(inv, cameraPosWorld);  // une POSITION : faux en ortho\nback = dot(n, eyeObj - p0) <= 0;                      // ignore le signe de det(model)",
+ prevT:"Le test retenu (E) sur la vue courante",prev:()=>`<p>Désaccords de signe avec l'écran (|aire| ≥ 1 px²) : <b class="okv">${S.signMis}</b> sur ${nf(NF)} faces.</p>`,
+ curT:"Contre-exemple 1 : la position de l'œil par inverse(model)",
+ cur:()=>{const m=S.naiveMis,pc=(100*m/NF).toFixed(1);
+  return `<div class="blk ceblk"><div class="blkt">✕ n·(œil − p0) ≤ 0</div>
+  <p>Faces où le test naïf contredit l'écran : <b class="kov">${nf(m)}</b> (${pc} %). Faces avant à l'écran que le naïf jetterait : <b class="kov">${nf(S.frontN-S.vanish)}</b> sur ${nf(S.frontN)}.</p>
+  <p>${ST.mirror?'Miroir : le test naïf donne la vérité géométrique, l\'écran applique la convention de sens (aire raster &lt; 0), que le miroir inverse. Les deux tests se contredisent sur presque toutes les faces : en série dans le même pipeline, le pré-filtre jette une moitié de la sphère et l\'écran jette l\'autre. <b>L\'objet disparaît.</b>':ST.ortho?'Orthographique : les rayons sont parallèles, l\'œil n\'a pas de position. Le test naïf traite la caméra comme un point à distance finie et se trompe sur toute une couronne près de la silhouette.':'Perspective sans miroir : le naïf est juste. C\'est ce qui le rend dangereux : il passe ce cas et casse les deux autres. Essayez « Orthographique » puis « Miroir ».'}</p></div>
+  <div class="blk ceblk"><div class="blkt">✕ Remplacer le test écran par le test objet, sans marge (τ = 0)</div>
+  <p>Prototype hors moteur, sphere_hi réelle, 20 000 instances (miroirs et ortho compris) : s et l'aire float sont de signes opposés sur 99,97 % des faces ; les 27 326 désaccords (0,03 %) sont des faces rasantes ou sous-pixel. Remplacer l'écran par l'objet changerait TrisRasterized et les pixels de silhouette. Avec τ, l'écran garde ces cas : les compteurs de B4 sont conservés.</p></div>`},
+ note:()=>`<p><b>Dette révélée en passant (hors B5).</b> Avec une échelle négative, l'écran actuel jette les faces qui regardent la caméra : un objet miroir est dessiné à l'envers (on voit l'intérieur). B5 reproduit fidèlement ce comportement, puisque E suit le signe de det(model). Aucune scène n'utilise d'échelle négative aujourd'hui. Correction prévue plus tard, séparément : inverser la convention de sens quand det(model) &lt; 0 (ce que fait Unity), sur les deux tests à la fois.</p>`},
+
+{t:"Vérifier",h:"Ce que disent les tests, ce qu'il faut mesurer",
+ o:()=>`Valider B5 dans l'ordre du chantier B : test hors moteur, TNR, run Debug des 3 scènes avec le filet, asm Release, lot appairé A (B3, commit a315e25) / B (B5).`,
+ prevT:"Test hors moteur (Test_B5_ObjBackface, exécuté avant livraison)",
+ prev:()=>`<div class="regs"><table class="num"><tr><th>faces testées</th><td>11 907 000</td></tr><tr><th>instances</th><td>3 000 (perspective, ortho, miroir, échelle non uniforme ×0,5 à ×1,5)</td></tr><tr><th>rejetées en objet</th><td>5 911 964 (49,7 %)</td></tr><tr><th>lots sautés</th><td>655 236 / 1 491 000 (43,9 %)</td></tr><tr><th>désaccords SIMD / scalaire</th><td class="okv">0</td></tr><tr><th>désaccords de signe (|aire| ≥ 1 px²)</th><td class="okv">0</td></tr><tr><th>rejets faux (aire exacte en double « avant »)</th><td class="okv">0</td></tr><tr><th>corrections de l'écran float</th><td>257 (aire float « avant », aire exacte « arrière »)</td></tr></table></div>`,
+ curT:"Prédictions pour le lot appairé (à confirmer ou réfuter)",
+ cur:()=>`<div class="regs"><table class="num"><tr><th>Scène</th><th>TrisRasterized, TrisEarlyRejected</th><th>TrisObjRejected</th><th>RenderVerts</th><th>Render − RenderVerts</th><th>Render</th></tr>
+ <tr><th>V1</th><td>identiques à B3 (au plus quelques unités de moins : corrections)</td><td>≈ 50 % des faces Inside</td><td>inchangé</td><td>−0,08 à −0,15 ms</td><td>−6 à −11 %</td></tr>
+ <tr><th>V2</th><td>identiques</td><td>≈ 50 %</td><td>inchangé</td><td>dans le bruit</td><td>inchangé (pixels)</td></tr>
+ <tr><th>L</th><td>identiques</td><td>≈ 50 %</td><td>inchangé</td><td>dans le bruit</td><td>dans le bruit</td></tr></table></div>
+ <p>Thermomètre interne : Clear (code inchangé entre A et B), croisé avec RenderVerts (inchangé lui aussi depuis B3).</p>`,
+ note:()=>`<p><b>Le filet Debug a deux mailles.</b> (1) Dans EmitTriangleList8 : chaque masque SIMD est refait en scalaire, au bit près. (2) Dans RenderView : chaque face rejetée en objet est rejugée par son aire raster calculée en double de bout en bout (ExactRasterArea), indépendante des deux chemins float ; elle doit être arrière. Une face que l'écran float disait avant mais que l'aire exacte dit arrière n'est pas une erreur de B5 : c'est l'écran qui se trompait d'un arrondi.</p>
+ <p>Asm Release attendu dans la boucle des lots : 4 vmovups, 4 vmulps, 3 vaddps, 1 vcmpps, 1 vmovmskps avant le gather ; 0 vfmadd ; les 5 diffusions (ex, ey, ez, ew, −τ) hors de la boucle.</p>`}
+];
+
+// ── Étape 2b : Cauchy-Binet sur un vrai triangle (double)
+const det3=a=>a[0][0]*(a[1][1]*a[2][2]-a[1][2]*a[2][1])-a[0][1]*(a[1][0]*a[2][2]-a[1][2]*a[2][0])+a[0][2]*(a[1][0]*a[2][1]-a[1][1]*a[2][0]);
+// la face du lot dont l'aire est la plus grande (les lots des pôles contiennent des faces dégénérées)
+const cbFace=()=>{const b=Math.max(0,sel)*8;let best=b;for(let k=1;k<8;k++)if(Math.abs(S.area[b+k])>Math.abs(S.area[best]))best=b+k;return best};
+function cbData(){const i=cbFace();
+  const P=[0,1,2].map(k=>[...VP[IDX[3*i+k]],1]);
+  const C=[0,1,2,3].map(k=>[S.M[k][0],S.M[k][1],S.M[k][3]]);
+  const X=P.map(p=>[0,1,2].map(j=>p[0]*C[0][j]+p[1]*C[1][j]+p[2]*C[2][j]+p[3]*C[3][j]));
+  const det=det3(X);
+  const L=[0,1,2,3].map(k=>(k&1?-1:1)*det3(P.map(r=>r.filter((_,c)=>c!==k))));
+  const E=[0,1,2,3].map(k=>(k&1?-1:1)*det3(C.filter((_,r)=>r!==k)));
+  const areaPred=-(W/2)*(H/2)*det/(X[0][2]*X[1][2]*X[2][2]);
+  return {P,C,X,det,L,E,areaPred}}
+function matT(A,cols,rows){return `<table class="mat"><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>${A.map((r,i)=>`<tr><th>${rows[i]}</th>${r.map(v=>`<td>${fmt(v)}</td>`).join('')}</tr>`).join('')}</table>`}
+
+// ════════════════════════════════════════════════════════════
+//  SCHÉMA D'INTRODUCTION — coupe 2D. Une arête = une face, une droite = un plan.
+//  Mêmes conventions que le moteur, une dimension de moins :
+//    clip = (x_c, w_c) = P_objet · [c_x c_w],  écran = x_c / w_c
+//    E = c_x × c_w  (le point que la mvp envoie sur x_c = w_c = 0)
+//    longueur signée à l'écran  ℓ = x_s(b) − x_s(a) = −(L·E)/(w_a w_b),  L = a × b
+// ════════════════════════════════════════════════════════════
+const SC={cam:200,rot:25,ortho:false,mirror:false,face:5};
+const RK=[1.2,1.0,1.3,0.95,1.25,1.05,0.9,1.25,1.0].map(r=>r*1.25);
+// étiquette d'une perpendiculaire œil -> plan : posée à 35 % depuis le pied, décalée de côté
+const clampX=(x,wp,n=18)=>{const hw=n*3.8+8;return Math.max(hw,Math.min(wp-hw,x))};   // n = longueur du texte centré
+function distLabel(F,P,txt,wp){const dx=P[0]-F[0],dy=P[1]-F[1],l=Math.hypot(dx,dy)||1;const x=clampX(F[0]+0.4*dx+16*(-dy/l),wp),y=F[1]+0.4*dy+16*(dx/l)+4;
+  return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" style="fill:var(--fg);font:12px var(--f-mono);paint-order:stroke;stroke:var(--bg);stroke-width:3px">${txt}</text>`}
+const OBJ=RK.map((r,i)=>{const t=2*Math.PI*i/RK.length;return [r*Math.cos(t),0.8*r*Math.sin(t)]});   // sens trigonométrique (CCW)
+const NE=OBJ.length, OC=[0.7,-0.2];                     // centre de l'objet dans le monde
+const FOC=1.6, OK_=0.5, CAMR=3.7;
+function edgeObj(i){const a=OBJ[i],b=OBJ[(i+1)%NE];const dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy);const n=[dy/l,-dx/l];return {a,b,n,d:-(n[0]*a[0]+n[1]*a[1])}}
+const m3=(A,B)=>A.map((r,i)=>[0,1,2].map(j=>r[0]*B[0][j]+r[1]*B[1][j]+r[2]*B[2][j]));
+function inv3(m){const d=det3(m),c=(r0,c0,r1,c1)=>m[r0][c0]*m[r1][c1]-m[r0][c1]*m[r1][c0];
+  return [[c(1,1,2,2)/d,-c(0,1,2,2)/d,c(0,1,1,2)/d],[-c(1,0,2,2)/d,c(0,0,2,2)/d,-c(0,0,1,2)/d],[c(1,0,2,1)/d,-c(0,0,2,1)/d,c(0,0,1,1)/d]]}
+const cross3=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const dot3=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+function schemaState(){
+  const R={};const ph=SC.rot*Math.PI/180,c=Math.cos(ph),s=Math.sin(ph),sx=SC.mirror?-1:1;
+  R.model=m3(m3([[sx,0,0],[0,1,0],[0,0,1]],[[c,s,0],[-s,c,0],[0,0,1]]),[[1,0,0],[0,1,0],[OC[0],OC[1],1]]);   // ligne : p·S·R·T
+  const al=SC.cam*Math.PI/180;R.C=[OC[0]+CAMR*Math.cos(al),OC[1]+CAMR*Math.sin(al)];
+  const fl=Math.hypot(OC[0]-R.C[0],OC[1]-R.C[1]);R.f=[(OC[0]-R.C[0])/fl,(OC[1]-R.C[1])/fl];R.r=[R.f[1],-R.f[0]];
+  // colonnes "monde" de la vue : u = (P - C)·r, v = (P - C)·f
+  const cu=[R.r[0],R.r[1],-(R.C[0]*R.r[0]+R.C[1]*R.r[1])], cv=[R.f[0],R.f[1],-(R.C[0]*R.f[0]+R.C[1]*R.f[1])];
+  const toObj=col=>[0,1,2].map(i=>R.model[i][0]*col[0]+R.model[i][1]*col[1]+R.model[i][2]*col[2]);   // Model · colonne
+  R.cx=toObj(cu).map(v=>v*(SC.ortho?OK_:FOC)); R.cw=SC.ortho?[0,0,1]:toObj(cv);
+  R.E=cross3(R.cx,R.cw);                       // avec ces conventions : E.w > 0 sans miroir, et face avant <=> l > 0
+  const iv=inv3(R.model);R.Cobj=[R.C[0]*iv[0][0]+R.C[1]*iv[1][0]+iv[2][0],R.C[0]*iv[0][1]+R.C[1]*iv[1][1]+iv[2][1]];   // Scratchapixel : C · inverse(model)
+  const xs=p=>{const P=[p[0],p[1],1];return dot3(P,R.cx)/dot3(P,R.cw)};
+  R.edges=[];for(let i=0;i<NE;i++){const e=edgeObj(i);const ell=xs(e.b)-xs(e.a);
+    const sB5=e.n[0]*R.E[0]+e.n[1]*R.E[1]+e.d*R.E[2];
+    const sScr=e.n[0]*R.Cobj[0]+e.n[1]*R.Cobj[1]+e.d;
+    R.edges.push({...e,ell,front:ell>0,sB5,sScr,xa:xs(e.a),xb:xs(e.b)})}
+  return R}
+const W2=(m,p)=>[p[0]*m[0][0]+p[1]*m[1][0]+m[2][0],p[0]*m[0][1]+p[1]*m[1][1]+m[2][1]];   // point objet -> monde
+const D2=(m,v)=>[v[0]*m[0][0]+v[1]*m[1][0],v[0]*m[0][1]+v[1]*m[1][1]];                   // direction (rotation, miroir)
+function svgArrow(x1,y1,x2,y2,col,w,lab,lx,ly,anchor){const a=Math.atan2(y2-y1,x2-x1),h=8;
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" style="stroke:${col};stroke-width:${w||2}"/><polygon points="${x2},${y2} ${x2-h*Math.cos(a-0.4)},${y2-h*Math.sin(a-0.4)} ${x2-h*Math.cos(a+0.4)},${y2-h*Math.sin(a+0.4)}" style="fill:${col}"/>`+(lab?`<text x="${lx}" y="${ly}" text-anchor="${anchor||'start'}" style="fill:${col};font:12px var(--f-mono)">${lab}</text>`:'')}
+function planeShapes(T,n,d,face,sc){
+  // droite n·p + d = 0, et le demi-plan "la face est vue" (côté de n)
+  const p0=[-d*n[0],-d*n[1]],t=[-n[1],n[0]],B=30;
+  const A=T([p0[0]-B*t[0],p0[1]-B*t[1]]),Bp=T([p0[0]+B*t[0],p0[1]+B*t[1]]);
+  const A2=T([p0[0]-B*t[0]+B*n[0],p0[1]-B*t[1]+B*n[1]]),B2=T([p0[0]+B*t[0]+B*n[0],p0[1]+B*t[1]+B*n[1]]);
+  return `<polygon points="${A} ${Bp} ${B2} ${A2}" style="fill:var(--accent-soft);opacity:.75"/>
+  <line x1="${A[0]}" y1="${A[1]}" x2="${Bp[0]}" y2="${Bp[1]}" style="stroke:var(--warn);stroke-width:1.5;stroke-dasharray:6 5"/>`}
+function drawSchema(){
+  const R=schemaState(),e=R.edges[SC.face];
+  // ── MONDE
+  const sw=44,ox=280,oy=210;const Tw=p=>[+(ox+sw*(p[0]-OC[0])).toFixed(1),+(oy-sw*(p[1]-OC[1])).toFixed(1)];   // vue centrée sur l'objet
+  const wv=OBJ.map(p=>W2(R.model,p));
+  let g='';
+  // demi-plan + droite du plan de la face étudiée (transformés : un plan suit l'objet)
+  const nW=D2(R.model,e.n),aW=W2(R.model,e.a),dW=-(nW[0]*aW[0]+nW[1]*aW[1]);
+  g+=planeShapes(Tw,nW,dW);
+  g+=`<text x="10" y="20" style="fill:var(--accent);font:12px var(--f-mono)">côté où la face est vue (géométrie)</text>`;
+  // axes locaux de l'objet
+  const o=Tw(W2(R.model,[0,0])),ax=Tw(W2(R.model,[0.9,0])),ay=Tw(W2(R.model,[0,0.9]));
+  g+=svgArrow(o[0],o[1],ax[0],ax[1],'var(--muted)',1.2,'x',ax[0]+4,ax[1]-4)+svgArrow(o[0],o[1],ay[0],ay[1],'var(--muted)',1.2,'y',ay[0]+4,ay[1]-4);
+  // rayons de la caméra
+  const C=Tw(R.C),f=R.f,r=R.r;
+  if(!SC.ortho){for(const sgn of [-1,1]){const dir=[f[0]+sgn*0.62*r[0],f[1]+sgn*0.62*r[1]];const q=Tw([R.C[0]+dir[0]*9,R.C[1]+dir[1]*9]);g+=`<line x1="${C[0]}" y1="${C[1]}" x2="${q[0]}" y2="${q[1]}" style="stroke:var(--line);stroke-width:1"/>`}}
+  else{for(const sgn of [-1,1]){const st=[R.C[0]+sgn*1.9*r[0],R.C[1]+sgn*1.9*r[1]];const p1=Tw(st),p2=Tw([st[0]+f[0]*9,st[1]+f[1]*9]);g+=`<line x1="${p1[0]}" y1="${p1[1]}" x2="${p2[0]}" y2="${p2[1]}" style="stroke:var(--line);stroke-width:1"/>`}}
+  // arêtes
+  R.edges.forEach((ed,i)=>{const A=Tw(wv[i]),B=Tw(wv[(i+1)%NE]);const sel_=i===SC.face;
+    g+=`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" style="stroke:${sel_?'var(--warn)':ed.front?'var(--accent)':'var(--muted)'};stroke-width:${sel_?4:ed.front?3:1.5};${ed.front||sel_?'':'stroke-dasharray:4 4'}"/>
+    <line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" data-face="${i}" style="stroke:transparent;stroke-width:16;cursor:pointer"/>`});
+  // a, b et normale de la face étudiée
+  const A=Tw(aW),Bw=Tw(W2(R.model,e.b)),mid=W2(R.model,[(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2]),M=Tw(mid),Nn=Tw([mid[0]+0.8*nW[0],mid[1]+0.8*nW[1]]);
+  g+=`<text x="${A[0]-4}" y="${A[1]-6}" text-anchor="end" style="fill:var(--warn);font:600 12px var(--f-mono)">a</text><text x="${Bw[0]+4}" y="${Bw[1]-6}" style="fill:var(--warn);font:600 12px var(--f-mono)">b</text>`;
+  g+=svgArrow(M[0],M[1],Nn[0],Nn[1],'var(--warn)',2,'n',Nn[0]+5,Nn[1]+4);
+  // distance signée œil -> plan (perpendiculaire)
+  if(!SC.ortho){const sd=nW[0]*R.C[0]+nW[1]*R.C[1]+dW,foot=Tw([R.C[0]-sd*nW[0],R.C[1]-sd*nW[1]]);
+    g+=`<line x1="${C[0]}" y1="${C[1]}" x2="${foot[0]}" y2="${foot[1]}" style="stroke:var(--fg);stroke-width:1.2;stroke-dasharray:2 3"/>`+distLabel(foot,C,`distance ${sd>0?'+':''}${sd.toFixed(2)}`,560)}
+  // écran 1D de la caméra et projection de la face étudiée (a -> b)
+  const dS=0.9,half=SC.ortho?1.9:0.62*dS,ctr=[R.C[0]+f[0]*dS,R.C[1]+f[1]*dS];
+  const sp=u=>Tw([ctr[0]+u*r[0],ctr[1]+u*r[1]]);const E1=sp(-half),E2=sp(half);
+  g+=`<line x1="${E1[0]}" y1="${E1[1]}" x2="${E2[0]}" y2="${E2[1]}" style="stroke:var(--fg);stroke-width:2"/>`;
+  const uOf=x=>SC.ortho?x/OK_:x/FOC*dS;
+  R.edges.forEach(ed=>{if(!ed.front)return;const p=sp(Math.max(-half,Math.min(half,uOf(ed.xa)))),q=sp(Math.max(-half,Math.min(half,uOf(ed.xb))));
+    g+=`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" style="stroke:var(--accent);stroke-width:5;opacity:.55"/>`});
+  {const p=sp(uOf(e.xa)),q=sp(uOf(e.xb));const nx=-f[0]*12,ny=f[1]*12;   // décalé vers la caméra
+    g+=svgArrow(p[0]+nx,p[1]+ny,q[0]+nx,q[1]+ny,'var(--warn)',2,'',0,0)}
+  const lab=Tw([ctr[0]+half*r[0]+f[0]*0.45,ctr[1]+half*r[1]+f[1]*0.45]);g+=`<text x="${lab[0]}" y="${lab[1]}" text-anchor="middle" style="fill:var(--fg);font:12px var(--f-mono);paint-order:stroke;stroke:var(--bg);stroke-width:3px">écran</text>`;
+  // caméra
+  const tip=Tw([R.C[0]+f[0]*0.35,R.C[1]+f[1]*0.35]),b1=Tw([R.C[0]+r[0]*0.22,R.C[1]+r[1]*0.22]),b2=Tw([R.C[0]-r[0]*0.22,R.C[1]-r[1]*0.22]);
+  g+=`<polygon points="${tip} ${b1} ${b2}" style="fill:var(--fg)"/><text x="${clampX(C[0],560,SC.ortho?32:6)}" y="${C[1]+(f[1]>0?24:-16)}" text-anchor="middle" style="fill:var(--fg);font:600 12px var(--f-mono);paint-order:stroke;stroke:var(--bg);stroke-width:3px">${SC.ortho?'caméra ortho (rayons parallèles)':'œil C'}</text>`;
+  document.getElementById('svgW').innerHTML=g;
+
+  // ── OBJET
+  const so=36,px=210,py=210;const To=p=>[+(px+so*p[0]).toFixed(1),+(py-so*p[1]).toFixed(1)];
+  let h=planeShapes(To,e.n,e.d);
+  const O=To([0,0]);h+=svgArrow(O[0],O[1],O[0]+so*0.9,O[1],'var(--muted)',1.2,'x',O[0]+so*0.9+4,O[1]+4)+svgArrow(O[0],O[1],O[0],O[1]-so*0.9,'var(--muted)',1.2,'y',O[0]+4,O[1]-so*0.9);
+  R.edges.forEach((ed,i)=>{const A=To(ed.a),B=To(ed.b);const sel_=i===SC.face;
+    h+=`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" style="stroke:${sel_?'var(--warn)':'var(--fg)'};stroke-width:${sel_?4:1.5}"/><line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" data-face="${i}" style="stroke:transparent;stroke-width:16;cursor:pointer"/>`});
+  const Mo=To([(e.a[0]+e.b[0])/2,(e.a[1]+e.b[1])/2]),No=To([(e.a[0]+e.b[0])/2+0.8*e.n[0],(e.a[1]+e.b[1])/2+0.8*e.n[1]]);
+  h+=svgArrow(Mo[0],Mo[1],No[0],No[1],'var(--warn)',2,'n',No[0]+5,No[1]+4);
+  const Ao=To(e.a),Bo=To(e.b);h+=`<text x="${Ao[0]-4}" y="${Ao[1]-6}" text-anchor="end" style="fill:var(--warn);font:600 12px var(--f-mono)">a</text><text x="${Bo[0]+4}" y="${Bo[1]-6}" style="fill:var(--warn);font:600 12px var(--f-mono)">b</text>`;
+  if(!SC.ortho){const eo=[R.E[0]/R.E[2],R.E[1]/R.E[2]],P=To(eo),sd=e.n[0]*eo[0]+e.n[1]*eo[1]+e.d,ft=To([eo[0]-sd*e.n[0],eo[1]-sd*e.n[1]]);
+    h+=`<line x1="${P[0]}" y1="${P[1]}" x2="${ft[0]}" y2="${ft[1]}" style="stroke:var(--fg);stroke-width:1.2;stroke-dasharray:2 3"/>`+distLabel(ft,P,`distance ${sd>0?'+':''}${sd.toFixed(2)}`,420);
+    const Pc=To(R.Cobj);h+=`<circle cx="${Pc[0]}" cy="${Pc[1]}" r="9" style="fill:none;stroke:var(--muted);stroke-width:1.5"/>`;
+    const tx=clampX(P[0],420,20),halo='paint-order:stroke;stroke:var(--bg);stroke-width:3px';
+    h+=`<circle cx="${P[0]}" cy="${P[1]}" r="5" style="fill:var(--fg)"/><text x="${tx}" y="${P[1]-16}" text-anchor="middle" style="fill:var(--fg);font:600 12px var(--f-mono);${halo}">œil = E.xy / E.w</text><text x="${tx}" y="${P[1]+26}" text-anchor="middle" style="fill:var(--muted);font:12px var(--f-mono);${halo}">○ = C·inverse(model)</text>`}
+  else{const l=Math.hypot(R.E[0],R.E[1]),dir=[R.E[0]/l,R.E[1]/l];const st=To([dir[0]*2.4,dir[1]*2.4]),en=To([dir[0]*4.6,dir[1]*4.6]);
+    const halo='paint-order:stroke;stroke:var(--bg);stroke-width:3px';
+    h+=svgArrow(st[0],st[1],en[0],en[1],'var(--fg)',2,'',0,0)+`<text x="${clampX(en[0],420,31)}" y="${en[1]+(dir[1]>0?-12:22)}" text-anchor="middle" style="fill:var(--fg);font:600 12px var(--f-mono);${halo}">vers l'œil à l'infini (E.w = 0)</text>`;
+    const Pc=To(R.Cobj);h+=`<circle cx="${Pc[0]}" cy="${Pc[1]}" r="9" style="fill:none;stroke:var(--warn);stroke-width:1.5"/><text x="${clampX(Pc[0],420,36)}" y="${Pc[1]+(dir[1]>0?26:-16)}" text-anchor="middle" style="fill:var(--warn);font:12px var(--f-mono);${halo}">○ = C·inverse(model) : faux en ortho</text>`}
+  h+=`<text x="10" y="20" style="fill:var(--accent);font:12px var(--f-mono)">plan de la face : fixe, cuit une fois</text>`;
+  document.getElementById('svgO').innerHTML=h;
+
+  // ── Passerelle et lecture
+  document.getElementById('sBridge').innerHTML=`<span><b>Scratchapixel →</b> œil = C · inverse(model) = ${vec(R.Cobj)}</span><span><b>B5 →</b> E = c_x × c_w lu dans la mvp = ${vec(R.E)}${SC.ortho?' (E.w = 0 : un point à l\'infini)':` ; E.xy/E.w = ${vec([R.E[0]/R.E[2],R.E[1]/R.E[2]])}`}</span><span><b>λ = E.w</b> ${R.E[2]>1e-9?'&gt; 0':R.E[2]<-1e-9?'&lt; 0 : le miroir a retourné le signe':'= 0'}</span>`;
+  const v=x=>x?'<span class="okv">avant</span>':'<span class="kov">arrière</span>';
+  const agreeS=(e.sScr>0)===e.front,agreeB=(e.sB5>0)===e.front;
+  document.getElementById('sRead').innerHTML=`<table class="num"><tr><th>Face étudiée (arête ${SC.face})</th><th>calcul</th><th>valeur</th><th>verdict</th><th>accord avec l'écran</th></tr>
+   <tr><th>Rasterizer (la référence)</th><td>longueur signée à l'écran ℓ = x(b) − x(a)</td><td>${fmt(e.ell)}</td><td>${v(e.front)}</td><td>—</td></tr>
+   <tr><th>Scratchapixel</th><td>n·(C·inverse(model)) + d</td><td>${fmt(e.sScr)}</td><td>${v(e.sScr>0)}</td><td>${agreeS?'<span class="okv">oui</span>':'<span class="kov">non</span>'}</td></tr>
+   <tr><th>B5</th><td>s = n·E.xy + d·E.w</td><td>${fmt(e.sB5)}</td><td>${v(e.sB5>0)}</td><td>${agreeB?'<span class="okv">oui</span>':'<span class="kov">non</span>'}</td></tr></table>
+   <p style="margin-top:8px">${SC.mirror?'Miroir : la géométrie (Scratchapixel) et l\'écran ne sont plus d\'accord, car le miroir retourne le sens a → b à l\'écran. E a basculé avec lui (λ &lt; 0) : B5 reste d\'accord avec le rasterizer, sur toutes les arêtes.':SC.ortho?'Ortho : la position C n\'a plus de sens, les rayons sont parallèles. Tournez la caméra : près de la silhouette, Scratchapixel se trompe ; E, à l\'infini, ne se trompe jamais.':'Perspective sans miroir : les deux méthodes trouvent le même œil (le point plein et le cercle se superposent). Passez en ortho, puis en miroir.'}</p>`;
+  for(const id of ['svgW','svgO'])document.getElementById(id).querySelectorAll('[data-face]').forEach(el=>el.addEventListener('click',()=>{SC.face=+el.dataset.face;drawSchema()}));
+}
+const setS=()=>{document.getElementById('sPersp').setAttribute('aria-pressed',String(!SC.ortho));document.getElementById('sOrtho').setAttribute('aria-pressed',String(SC.ortho));document.getElementById('sMirror').setAttribute('aria-pressed',String(SC.mirror));drawSchema()};
+document.getElementById('sCam').oninput=e=>{SC.cam=+e.target.value;drawSchema()};
+document.getElementById('sRot').oninput=e=>{SC.rot=+e.target.value;drawSchema()};
+document.getElementById('sPersp').onclick=()=>{SC.ortho=false;setS()};
+document.getElementById('sOrtho').onclick=()=>{SC.ortho=true;setS()};
+document.getElementById('sMirror').onclick=()=>{SC.mirror=!SC.mirror;setS()};
+
+// ════════════════════════════════════════════════════════════
+//  « LA MÉTHODE EN DÉTAIL » : figures 1 à 5 et exemple numérique
+// ════════════════════════════════════════════════════════════
+const HALO='paint-order:stroke;stroke:var(--bg);stroke-width:3px';
+const T_=(x,y,txt,col,anchor,bold,size)=>`<text x="${x}" y="${y}" text-anchor="${anchor||'start'}" style="fill:${col||'var(--fg)'};font:${bold?600:400} ${size||12}px var(--f-mono);${HALO}">${txt}</text>`;
+const Ln=(a,b,col,w,dash)=>`<line x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}" style="stroke:${col};stroke-width:${w||1.5};${dash?'stroke-dasharray:'+dash:''}"/>`;
+const Pg=(pts,fill,op,stroke)=>`<polygon points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" style="fill:${fill};fill-opacity:${op};${stroke?'stroke:'+stroke+';stroke-width:1':''}"/>`;
+const Ar=(a,b,col,w)=>svgArrow(a[0].toFixed(1),a[1].toFixed(1),b[0].toFixed(1),b[1].toFixed(1),col,w||2,'',0,0);
+const Eye=(p,col)=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" style="fill:${col||'var(--fg)'}"/>`;
+
+function fig1(){let g='';const X=300;
+  g+=Ln([X,30],[X,215],'var(--warn)',3)+T_(X,24,'plan de la face (vu par la tranche)','var(--warn)','middle');
+  g+=Ar([X,125],[X-55,125],'var(--warn)')+T_(X-58,118,'n','var(--warn)','end',true);
+  g+=Pg([[0,30],[X,30],[X,215],[0,215]],'var(--accent)',0.08);
+  // trois yeux
+  const A=[140,170],B=[460,170],C=[X,250];
+  g+=Eye(A)+Ln(A,[X,140],'var(--line)',1,'4 4')+T_(A[0],A[1]+24,'œil A : s = n·œil + d > 0','var(--fg)','middle');
+  g+=Eye(B)+Ln(B,[X,140],'var(--line)',1,'4 4')+T_(B[0],B[1]+24,'œil B : s < 0','var(--fg)','middle');
+  g+=Eye(C)+T_(X-14,C[1]+4,'œil C dans le plan : s = 0','var(--fg)','end');
+  // vignettes : ce que voit chaque œil
+  const tri=(cx,cy,flip)=>{const p1=[cx,cy-30],p2=[cx-28*flip,cy+18],p3=[cx+28*flip,cy+18];
+    return Pg([p1,p2,p3],'var(--accent)',0.25,'var(--fg)')+T_(p1[0],p1[1]-6,'1','var(--fg)','middle',true)+T_(p2[0]-8*flip,p2[1]+12,'2','var(--fg)','middle',true)+T_(p3[0]+8*flip,p3[1]+12,'3','var(--fg)','middle',true)};
+  g+=tri(95,85,1)+T_(150,82,'↺','var(--accent)','start',true,26)+T_(150,104,'1→2→3 trigo','var(--accent)','start');
+  g+=tri(505,85,-1)+T_(450,82,'↻','var(--warn)','end',true,26)+T_(450,104,'1→2→3 horaire','var(--warn)','end');
+  g+=Ln([X+30,250],[X+100,250],'var(--fg)',3)+T_(X+110,254,'segment : aire 0','var(--muted)','start');
+  return g}
+
+function fig2(){let g='';const ex=300,ey=305,s=62,F=fx;   // repère vue : x à droite, "devant" vers le haut
+  const P=(x,fw)=>[ex+s*x,ey-s*fw];
+  // rayons d'écran
+  for(const xn of [-1,-0.5,0.5,1]){const k=xn/F;g+=Ln(P(0,0),P(k*4.5,4.5),'var(--line)',1)}
+  // droites x_c = 0 et w_c = 0
+  g+=Ln(P(0,-0.4),P(0,4.6),'var(--accent)',2.5)+T_(ex+8,ey-s*4.45,'x_clip = P·c0 = 0','var(--accent)','start',true);
+  g+=Ln(P(-4.6,0),P(4.6,0),'var(--warn)',2.5)+T_(ex+s*4.6,ey-8,'w_clip = P·c3 = 0','var(--warn)','end',true);
+  // écran
+  g+=Ln(P(-1/F*1.2,1.2),P(1/F*1.2,1.2),'var(--fg)',3)+T_(ex-s*1/F*1.2-6,ey-s*1.2+4,'écran','var(--fg)','end');
+  // deux points d'un même rayon
+  const k=0.3/F, A=[k*2,2], B=[k*4,4];
+  for(const [Q,nm] of [[A,'P'],[B,'P′']]){const q=P(Q[0],Q[1]);g+=`<circle cx="${q[0]}" cy="${q[1]}" r="5" style="fill:var(--fg)"/>`+T_(q[0]+9,q[1]+4,nm,'var(--fg)','start',true)}
+  g+=Ln(P(0,0),P(k*4.6,4.6),'var(--fg)',1.2,'5 4');
+  const a=P(A[0],A[1]);g+=Ln([ex,a[1]],a,'var(--accent)',1.5,'2 3')+T_((ex+a[0])/2,a[1]-6,'x_clip','var(--accent)','middle');
+  g+=Ln([a[0],ey],a,'var(--warn)',1.5,'2 3')+T_(a[0]+6,ey-s*1,'w_clip','var(--warn)','start');
+  const q=P(k*1.2,1.2);g+=`<circle cx="${q[0]}" cy="${q[1]}" r="4" style="fill:var(--accent)"/>`;
+  g+=T_(14,40,'P et P′ : x_clip / w_clip = 0,3','var(--fg)','start')+T_(14,58,'même rayon → même pixel','var(--muted)','start');
+  g+=Eye([ex,ey])+T_(ex-10,ey+22,'œil : x_clip = w_clip = 0 → 0/0','var(--fg)','end',true);
+  return g}
+
+// perspective cavalière pour les figures 3D : la profondeur (−z) part en haut à droite
+const cav=(ox,oy,s)=>(x,y,z)=>[ox+s*(x+0.5*(-z)*0.82),oy-s*(y+0.5*(-z)*0.57)];
+function fig3(){let g='';const p=cav(250,250,68);
+  const quad=(a,b,c,d,col,op)=>Pg([p(...a),p(...b),p(...c),p(...d)],col,op,col);
+  const Z0=0.7,Z1=-3.3,XX=1.7,YY=1.15;
+  g+=quad([0,-YY,Z0],[0,YY,Z0],[0,YY,Z1],[0,-YY,Z1],'var(--accent)',0.13);          // x_c = 0 : plan x = 0
+  g+=quad([-XX,0,Z0],[XX,0,Z0],[XX,0,Z1],[-XX,0,Z1],'var(--ok)',0.13);              // y_c = 0 : plan y = 0
+  // frustum et écran
+  const sc=1.3,hw=sc/fx,hh=sc/fy,corn=[[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
+  corn.forEach(c=>{g+=Ln(p(0,0,0),p(c[0]*2.4,c[1]*2.4,-sc*2.4),'var(--line)',1)});
+  g+=Pg(corn.map(c=>p(c[0],c[1],-sc)),'var(--bg)',0.0,'var(--fg)')+T_(...p(hw,hh,-sc).map((v,i)=>i?v-6:v+4),'écran','var(--fg)','start');
+  g+=quad([-XX,-YY,0],[XX,-YY,0],[XX,YY,0],[-XX,YY,0],'var(--warn)',0.16);           // w_c = 0 : plan z = 0
+  // axe optique (x_c = y_c = 0) et intersections avec w_c = 0
+  g+=Ln(p(0,0,Z0),p(0,0,Z1),'var(--fg)',1.2,'5 4');
+  g+=Ln(p(-XX,0,0),p(XX,0,0),'var(--fg)',1,'2 3')+Ln(p(0,-YY,0),p(0,YY,0),'var(--fg)',1,'2 3');
+  g+=Eye(p(0,0,0).map(v=>+v.toFixed(1)));
+  g+=T_(...p(-XX,-YY,0).map((v,i)=>i?v+18:v),'w_clip = P·c3 = 0 (plan de l\'œil)','var(--warn)','start',true);
+  g+=T_(...p(0,YY,Z1).map((v,i)=>i?v-8:v),'x_clip = P·c0 = 0','var(--accent)','middle',true);
+  g+=T_(...p(XX,0,Z1).map((v,i)=>i?v+16:v),'y_clip = P·c1 = 0','var(--ok)','end',true);
+  const e=p(0,0,0);g+=Ln([e[0],e[1]],[60,392],'var(--fg)',1)+T_(30,408,'œil = le seul point commun aux trois plans','var(--fg)','start',true);
+  g+=T_(590,24,'axe optique : x_clip = y_clip = 0 (pointillé)','var(--muted)','end');
+  return g}
+
+function fig4(){let g='';const p=cav(230,250,72);
+  const b=[2.0,0,0.2],c=[0.7,0,-1.9],o=[0,0,0];
+  const add=(u,v)=>u.map((x,i)=>x+v[i]);
+  const bc=[b[1]*c[2]-b[2]*c[1],b[2]*c[0]-b[0]*c[2],b[0]*c[1]-b[1]*c[0]];const L=Math.hypot(...bc),un=bc.map(x=>x/L);
+  const a=[0.9,1.6,-0.6];const h=a[0]*un[0]+a[1]*un[1]+a[2]*un[2];
+  // base (b, c) et parallélépipède
+  g+=Pg([p(...o),p(...b),p(...add(b,c)),p(...c)],'var(--accent)',0.22,'var(--accent)');
+  const top=[a,add(a,b),add(add(a,b),c),add(a,c)];
+  g+=Pg(top.map(q=>p(...q)),'var(--warn)',0.08,'var(--muted)');
+  [[o,a],[b,add(a,b)],[add(b,c),add(add(a,b),c)],[c,add(a,c)]].forEach(([u,v])=>{g+=Ln(p(...u),p(...v),'var(--muted)',1,'3 3')});
+  g+=Ar(p(...o),p(...b),'var(--fg)')+T_(...p(...b).map((v,i)=>i?v+18:v),'b','var(--fg)','middle',true);
+  g+=Ar(p(...o),p(...c),'var(--fg)')+T_(...p(...c).map((v,i)=>i?v-8:v+8),'c','var(--fg)','start',true);
+  g+=Ar(p(...o),p(...un.map(x=>x*2.0)),'var(--accent)',2.5)+T_(...p(...un.map(x=>x*2.0)).map((v,i)=>i?v-8:v),'b × c (⟂ à b et c)','var(--accent)','middle',true);
+  g+=Ar(p(...o),p(...a),'var(--warn)',2.5)+T_(...p(...a).map((v,i)=>i?v-8:v+8),'a','var(--warn)','start',true);
+  // hauteur de a au-dessus de la base
+  const foot=a.map((x,i)=>x-h*un[i]);g+=Ln(p(...a),p(...foot),'var(--warn)',1.5,'2 3')+T_(...p(...foot.map((x,i)=>(x+a[i])/2)).map((v,i)=>i?v:v+8),'hauteur = a·(b×c)/|b×c|','var(--warn)','start');
+  g+=T_(590,300,'aire de la base = |b × c|','var(--accent)','end')+T_(590,318,'det(a, b, c) = a·(b × c) = base × hauteur','var(--fg)','end',true);
+  g+=T_(10,24,'a dans le plan de b et c (ex. a = b) : hauteur 0 → det = 0','var(--muted)','start');
+  return g}
+
+function fig5(){let g='';const s=62,cx=300,cy=265;const P=(x,fw)=>[cx+s*x,cy-s*fw];
+  for(const x of [-2.4,-1.2,1.2,2.4])g+=Ln(P(x,0),P(x,3.8),'var(--line)',1);
+  g+=Ln(P(-2.6,0),P(2.6,0),'var(--fg)',3)+T_(cx+s*2.6+6,cy+4,'écran','var(--fg)','start');
+  g+=Ln(P(0,-0.4),P(0,3.8),'var(--accent)',2.5)+T_(cx+8,cy-s*2.6,'x_clip = P·c0 = 0','var(--accent)','start',true);
+  g+=T_(10,24,'w_clip = P·c3 = 1 partout : aucun point réel n\'annule w','var(--warn)','start',true);
+  g+=Ar(P(-3.6,1.0),P(-3.6,-0.55),'var(--fg)',2.5)+T_(cx-s*3.6+10,cy+s*0.45,'E = (vers la caméra, 0)','var(--fg)','start',true)+T_(cx-s*3.6+10,cy+s*0.45+18,'un point à l\'infini','var(--muted)','start');
+  g+=T_(10,44,'rayons parallèles : ils ne se croisent qu\'à l\'infini','var(--muted)','start');
+  return g}
+
+function ex6(){
+  const T5=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,-5,1]];const M=mm(T5,PERSP);
+  const r=[0,1,2,3].map(i=>[M[i][0],M[i][1],M[i][3]]);
+  const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],dt=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const c23=cr(r[2],r[3]),c13=cr(r[1],r[3]),c12=cr(r[1],r[2]);
+  const E=[dt(r[1],c23),-dt(r[0],c23),dt(r[0],c13),-dt(r[0],c12)];
+  const col=j=>[0,1,2,3].map(i=>M[i][j]),ed=(v)=>E[0]*v[0]+E[1]*v[1]+E[2]*v[2]+E[3]*v[3];
+  const v3=v=>'('+v.map(fmt).join(', ')+')';
+  return `<table class="num">
+  <tr><th>lignes de C = [c0 c1 c3]</th><td>r0 = ${v3(r[0])}<br>r1 = ${v3(r[1])}<br>r2 = ${v3(r[2])}<br>r3 = ${v3(r[3])}</td><td style="text-align:left">r3 porte la translation : w_clip = −z + ... → le « 5 »</td></tr>
+  <tr><th>produits vectoriels</th><td>r2 × r3 = ${v3(c23)}<br>r1 × r3 = ${v3(c13)}<br>r1 × r2 = ${v3(c12)}</td><td style="text-align:left">chacun ⟂ aux deux lignes qu'il combine</td></tr>
+  <tr><th>produits mixtes → E</th><td>E.x = r1·(r2×r3) = ${fmt(E[0])}<br>E.y = −r0·(r2×r3) = ${fmt(E[1])}<br>E.z = r0·(r1×r3) = ${fmt(E[2])}<br>E.w = −r0·(r1×r2) = ${fmt(E[3])}</td><td style="text-align:left">4 déterminants 3 × 3</td></tr>
+  <tr><th>œil = E.xyz / E.w</th><td><b>${v3(E.slice(0,3).map(x=>x/E[3]))}</b></td><td style="text-align:left">attendu (0, 0, 5) <span class="okv">✓</span></td></tr>
+  <tr><th>vérifications</th><td>E·c0 = ${fmt(ed(col(0)))}<br>E·c1 = ${fmt(ed(col(1)))}<br>E·c3 = ${fmt(ed(col(3)))}<br>E·c2 = ${fmt(ed(col(2)))}</td><td style="text-align:left">x, y, w nuls à l'œil <span class="okv">✓</span><br>z_clip ≠ 0 : near·E.w (idée 4)</td></tr></table>`}
+
+function drawDetail(){
+  document.getElementById('fig1').innerHTML=fig1();
+  document.getElementById('fig2').innerHTML=fig2();
+  document.getElementById('fig3').innerHTML=fig3();
+  document.getElementById('fig4').innerHTML=fig4();
+  document.getElementById('fig5').innerHTML=fig5();
+  document.getElementById('ex6').innerHTML=ex6();
+}
+
+const nav=document.getElementById('nav'),panel=document.getElementById('panel');
+steps.forEach((s,i)=>{const b=document.createElement('button');b.textContent=s.t;b.onclick=()=>go(i);nav.appendChild(b)});
+function go(i){step=Math.max(0,Math.min(steps.length-1,i));const s=steps[step];
+  [...nav.children].forEach((b,k)=>b.setAttribute('aria-current',k===step?'true':'false'));
+  panel.innerHTML=`<h2>${s.h}</h2><div class="obj"><b>Objectif.</b> ${s.o()}</div>${s.code?`<pre>${s.code.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</pre>`:''}<div class="blk prevblk"><div class="blkt">◀ ${s.prevT}</div>${s.prev()}</div><div class="blk curblk"><div class="blkt">▶ ${s.curT}</div>${s.cur()}</div>${s.note?s.note():''}`}
+function refresh(keepSel){S=compute();if(!keepSel||sel<0||S.cat[sel]!==kind){const b=pickBatch(kind);if(b<0){kind=['skip','mix','front'].find(k=>pickBatch(k)>=0);sel=pickBatch(kind)}else sel=b}drawScene();go(step)}
+const setMode=()=>{document.getElementById('bPersp').setAttribute('aria-pressed',String(!ST.ortho));document.getElementById('bOrtho').setAttribute('aria-pressed',String(ST.ortho));document.getElementById('bMirror').setAttribute('aria-pressed',String(ST.mirror))};
+document.getElementById('az').oninput=e=>{ST.az=+e.target.value;refresh(true)};
+document.getElementById('el').oninput=e=>{ST.el=+e.target.value;refresh(true)};
+document.getElementById('bPersp').onclick=()=>{ST.ortho=false;setMode();refresh(true)};
+document.getElementById('bOrtho').onclick=()=>{ST.ortho=true;setMode();refresh(true)};
+document.getElementById('bMirror').onclick=()=>{ST.mirror=!ST.mirror;setMode();refresh(true)};
+for(const [id,k] of [['kSkip','skip'],['kMix','mix'],['kFront','front']])document.getElementById(id).onclick=()=>{kind=k;sel=pickBatch(k);drawScene();go(step)};
+document.getElementById('kNext').onclick=()=>{const b=pickBatch(kind,sel);if(b>=0)sel=b;drawScene();go(step)};
+document.getElementById('prev').onclick=()=>go(step-1);
+document.getElementById('next').onclick=()=>go(step+1);
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>drawScene())}catch(e){}
+refresh(false);
+drawSchema();
+drawDetail();
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>drawSchema())}catch(e){}
+</script>
+
+</body></html>

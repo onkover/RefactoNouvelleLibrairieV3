@@ -38,7 +38,7 @@ namespace LV3::Tests
     void TestD3_4b_CleMateriaux();
     bool Test_B4_ClassifyFaces8();
     bool Test_B3_ProjectPositions8();
-
+    bool Test_B5_ObjBackface();
 
 #if LV3_DEBUG    
     static int s_failures = 0;
@@ -146,6 +146,15 @@ namespace LV3::Tests
             Logger::success("SUCCES : Test_B3_ProjectPositions8()");
         }
 
+        if (!Test_B5_ObjBackface())
+        {
+            Logger::error("ECHEC : Test_B5_ObjBackface()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_B5_ObjBackface()");
+        }
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())
