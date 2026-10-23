@@ -39,6 +39,8 @@ namespace LV3::Tests
     bool Test_B4_ClassifyFaces8();
     bool Test_B3_ProjectPositions8();
     bool Test_B5_ObjBackface();
+    bool Test_C1_RasterKernels();
+
 
 #if LV3_DEBUG    
     static int s_failures = 0;
@@ -155,6 +157,17 @@ namespace LV3::Tests
         {
             Logger::success("SUCCES : Test_B5_ObjBackface()");
         }
+
+        if (!Test_C1_RasterKernels())
+        {
+            Logger::error("ECHEC : Test_C1_RasterKernels()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_C1_RasterKernels()");
+        }
+
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())

@@ -1,0 +1,1830 @@
+<title>Lot C1 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Même série que « Lot C0 pas à pas » : une colonne de lecture, blocs avant/après côte à côte au-delà de 900px. */
+:root{
+  --bg:#f5f6f8; --paper:#ffffff; --fg:#1d2330; --mute:#5b6476; --line:#d9dde5;
+  --accent:#2f4fb8; --accent-soft:#e6ebfa; --warn:#b5520f; --warn-soft:#fbeee3;
+  --ok:#1f7a4d; --ok-soft:#e3f3ea; --code-bg:#f0f2f6; --add:#e2f2e8; --del:#f8e6e6;
+  --cell:#e9ecf3; --pad:#f3dede; --hit:#2f4fb8; --rowc:#c56a1c;
+  --f-body:"Fira Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Fira Sans Condensed","Fira Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --add:#1b3326; --del:#3a2224;
+  --cell:#262d3b; --pad:#3a2428; --hit:#8ea6ff; --rowc:#f0a066; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --add:#1b3326; --del:#3a2224;
+  --cell:#262d3b; --pad:#3a2428; --hit:#8ea6ff; --rowc:#f0a066; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.read{max-width:76ch}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:2rem} h2{font-size:1.45rem;margin-bottom:10px} h3{font-size:1.12rem;margin:14px 0 6px}
+p{margin:0 0 10px} ul,ol{margin:0 0 10px;padding-left:22px}
+.eyebrow{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--mute);font-size:1.02rem}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px clamp(14px,3vw,28px);min-width:0}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:1px 4px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-family:var(--f-head);font-weight:700;color:var(--mute)}
+.tbl{overflow-x:auto}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
+.bad{border-left-color:var(--warn);background:var(--warn-soft)}
+.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.pill{display:inline-block;font:600 .72rem var(--f-mono);padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.04em}
+.pill.w{background:var(--warn-soft);color:var(--warn)} .pill.o{background:var(--ok-soft);color:var(--ok)}
+button,select{font:600 .85rem var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:7px 14px;border-radius:6px;cursor:pointer}
+select{background:var(--paper);color:var(--fg);border-color:var(--line)}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.goal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 12px}
+.goal div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.92rem;min-width:0}
+.goal b{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.goal .why b{color:var(--accent)} .goal .uses b{color:var(--warn)}
+.goal .uses{background:var(--code-bg)}
+@media (max-width:700px){.goal{grid-template-columns:1fr}}
+.stepno{font:700 .8rem var(--f-mono);color:var(--paper);background:var(--accent);border-radius:99px;padding:2px 10px;letter-spacing:.05em}
+.sh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.sh h2{margin:0}
+/* code avant/après */
+.step{display:flex;flex-direction:column;gap:10px;padding-top:18px;margin-top:18px;border-top:1px dashed var(--line);min-width:0}
+.file{font:600 .82rem var(--f-mono);color:var(--accent)}
+.ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ba.one{grid-template-columns:minmax(0,1fr)}
+.ba figure{margin:0;min-width:0;display:flex;flex-direction:column}
+.ba figcaption{display:flex;justify-content:space-between;align-items:center;font:700 .74rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0}
+.ba figure.av figcaption{background:var(--del)} .ba figure.ap figcaption{background:var(--add)}
+.ba pre{margin:0;overflow:auto;max-height:620px;background:var(--code-bg);border:1px solid var(--line);border-radius:0 0 6px 6px;padding:10px 12px;font:12.5px/1.5 var(--f-mono);tab-size:4;flex:1}
+.cp{font:600 .7rem var(--f-mono);padding:2px 8px;border-radius:4px;background:transparent;color:var(--fg);border:1px solid var(--line)}
+@media (max-width:900px){.ba{grid-template-columns:minmax(0,1fr)}}
+/* chaîne d'un pixel */
+.chain{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:10px}
+.chain ol{margin:0;padding-left:20px;font-size:.9rem}
+.chain li{margin-bottom:3px}
+.chain li.x{color:var(--warn)} .chain li.g{color:var(--ok)}
+.chain h3{margin-top:0}
+@media (max-width:700px){.chain{grid-template-columns:1fr}}
+/* compteur d'appels */
+.calls{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.crow{display:grid;grid-template-columns:120px minmax(0,1fr) 110px;gap:10px;align-items:center;font-size:.88rem}
+.crow b{font-family:var(--f-mono)}
+.ctrack{height:16px;background:var(--cell);border-radius:3px;overflow:hidden}
+.ctrack i{display:block;height:100%;background:var(--warn);transition:width .4s}
+.ctrack i.n{background:var(--ok)}
+.crow span{font:.82rem var(--f-mono);text-align:right}
+@media (max-width:560px){.crow{grid-template-columns:90px minmax(0,1fr) 80px}}
+/* mémoire */
+.mem{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,280px);gap:16px;margin-top:10px;align-items:start}
+@media (max-width:760px){.mem{grid-template-columns:1fr}}
+.memgrid{overflow-x:auto}
+.memgrid table{width:auto;border-collapse:separate;border-spacing:2px;font:10px var(--f-mono)}
+.memgrid td{width:22px;height:22px;padding:0;border:0;text-align:center;background:var(--cell);border-radius:2px;color:var(--mute);vertical-align:middle}
+.memgrid td.pad{background:var(--pad)}
+.memgrid td.row{box-shadow:inset 0 0 0 2px var(--rowc)}
+.memgrid td.hit{background:var(--hit);color:var(--paper)}
+.memctl{display:flex;flex-direction:column;gap:8px;font-size:.88rem}
+.memctl label{display:flex;flex-direction:column;gap:2px}
+.memout{font:.8rem/1.6 var(--f-mono);background:var(--code-bg);padding:8px 10px;border-radius:6px;white-space:pre-wrap}
+/* table de vérité */
+.truth td.eq{color:var(--ok);font-weight:700}
+.truth td.ne{color:var(--warn);font-weight:700}
+.bits{font:.82rem/1.7 var(--f-mono);background:var(--code-bg);padding:10px 12px;border-radius:6px;overflow-x:auto;white-space:pre}
+.bits .d{color:var(--warn);font-weight:700}
+.check{list-style:none;padding-left:0}
+.check li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.check input{margin-top:5px}
+.lesson li{margin-bottom:5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="read">
+  <div class="eyebrow">Phase G · Chantier C · Lot C1 · 21 octobre 2026</div>
+  <h1>Résoudre le shader à la compilation</h1>
+  <p class="lede">C0 a désigné les arêtes (V2) et la préparation (V1). C1 ne vise ni l'un ni l'autre directement : il retire l'appel indirect par pixel, sort de la boucle tout ce qui n'y a rien à faire, et donne à C2 une boucle que le compilateur voit en entier. Image, Z-buffer et compteurs identiques au bit près.</p>
+  <p class="lede" style="font-size:.92rem">Base : LIB <code>82c53f2</code> / EXE <code>5df14f8</code> (C0, poussés le 21/10 à 22 h 53). Version 2 du 22/10 : le code de l'étape 7 est réécrit sur cette base.</p>
+</header>
+
+<section style="border-color:var(--warn)">
+  <div class="sh"><span class="stepno" style="background:var(--warn)">CORRECTIF 22/10</span><h2>« identificateur non déclaré » : cause et reprise</h2></div>
+  <p><strong>Mon erreur.</strong> La version 1 de ce lot a été écrite contre B5 (<code>126efa5</code>), parce que C0 n'était pas encore dans le dépôt. Tes fichiers sont en C0 : <code>Fragment.h</code> y contient en plus <code>depthPassed</code> et un <code>DepthTestAndSet(FragmentContext*, x, y, z)</code> placé juste avant le repère « Implémentations de FragmentCallback ». Mes blocs « avant » ne correspondaient donc pas à ton fichier.</p>
+  <p><strong>Le symptôme.</strong> Les erreurs <code>ShadeFragment_Solid … : identificateur non déclaré</code> dans <code>Renderer.h</code> et dans la TNR ont une seule cause : les 7 déclarations <code>void ShadeFragment_…(…);</code> ne sont plus dans <code>Fragment.h</code> au moment où <code>SetMode</code> les cite. Le cas le plus probable : le bloc C1 a remplacé la fin du fichier au lieu de s'insérer avant le repère, et les déclarations qui suivaient le repère ont disparu. Vérification en 10 secondes : la fin de <code>Fragment.h</code> doit être exactement le bloc « Fin de Fragment.h » de l'étape 7. Si les déclarations y sont et que l'erreur reste, envoie-moi la <em>première</em> erreur de la fenêtre Sortie (pas la Liste d'erreurs), avec fichier et ligne : c'est elle qui compte, les autres en découlent.</p>
+  <p><strong>Ce que la version 2 change, en plus de la base :</strong></p>
+  <ul>
+    <li><strong>C0 est conservé</strong> dans le nouveau chemin. <code>PixelsDepthPassed</code> : <code>Shade()</code> rend <code>true</code> si le fragment passe le Z, le puits compte en registre et verse au contexte une fois par triangle ; <code>LV3_FLUSH_DEPTH_PASSED</code> reste dans <code>DrawTriangle</code>. Ablation <code>LV3_ABLATION_PIXELS</code> 1 et 2 : déplacée dans le noyau (sinon elle ne mesurerait plus rien, le moteur ne passant plus par <code>RasterizeTriangle</code>), structure <code>#if / #elif / #else</code> pour éviter C4702.</li>
+    <li><strong>Le puits copie le contexte</strong> au lieu de le référencer (aliasing, étape 5). Le noyau prend <code>FragmentContext&amp;</code> non const, pour verser <code>depthPassed</code>.</li>
+    <li><strong>À corriger avant tout build de mesure :</strong> dans le <code>config.h</code> poussé, <code>LV3_ABLATION_RASTER</code> vaut <strong>1 par défaut</strong> (état du binaire M de C0). Sans définition en ligne de commande, <code>DrawTriangle</code> est débranché et rien n'est dessiné. Voir le premier bloc de l'étape 7.</li>
+  </ul>
+  <p>Vérifié sur la base C0 (g++ 13) : les trois .cpp compilent sans avertissement en Release, Debug, <code>RASTER_STATS=1</code>, <code>ABLATION_PIXELS=1</code> et <code>=2</code> ; la TNR passe en Debug et en <code>RASTER_STATS=1</code> (avec comparaison de <code>depthPassed</code>).</p>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">SCHÉMA</span><h2>Ce que la boucle fait d'un triangle, pixel par pixel</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Voir, avant le code, où passe chaque appel : par triangle, par ligne, par pixel testé, par pixel couvert.</div>
+    <div class="uses"><b>S'appuie sur</b>Le code du moteur, refait en float32 (<code>Math.fround</code>) : <code>EdgeFunction</code> antisymétrique, échange p1 ↔ p2, <code>TightPixelBox</code>, <code>IsTopLeft</code>.</div>
+  </div>
+  <div class="mem" style="grid-template-columns:minmax(0,1fr) minmax(0,300px)">
+    <div style="min-width:0"><canvas id="cvT" width="480" height="300" style="width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--code-bg);cursor:crosshair" aria-label="Triangle sur la grille de pixels ; cliquer un pixel pour voir ses calculs"></canvas>
+      <div class="legend" style="display:flex;flex-wrap:wrap;gap:14px;font-size:.82rem;color:var(--mute);margin-top:6px">
+        <span><span class="sw" style="display:inline-block;width:11px;height:11px;background:var(--hit);border-radius:2px"></span> couvert : 1 appel indirect AVANT, 0 APRÈS</span>
+        <span><span class="sw" style="display:inline-block;width:11px;height:11px;background:var(--cell);border:1px solid var(--line);border-radius:2px"></span> testé, non couvert</span>
+        <span><span style="color:var(--rowc);font-weight:700">▸</span> BeginRow : pointeurs de ligne</span>
+      </div>
+    </div>
+    <div class="memctl">
+      <label for="tSize">Taille du triangle : <b id="tSizeV"></b><input id="tSize" type="range" min="1" max="12" value="7"></label>
+      <label for="tRot">Rotation : <b id="tRotV"></b><input id="tRot" type="range" min="0" max="359" value="20"></label>
+      <label><span><input id="tSnap" type="checkbox"> sommets sur des centres de pixels (w = 0 exact)</span></label>
+      <label><span><input id="tFlat" type="checkbox"> arête horizontale (règle « top »)</span></label>
+      <div class="memout" id="tOut"></div>
+    </div>
+  </div>
+  <div class="bits" id="tPix" style="margin-top:10px">Cliquer un pixel de la boîte.</div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 1</span><h2>Ce que coûte un pixel couvert aujourd'hui</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Lister ce que le processeur exécute pour un pixel couvert, et trier ce qui est du travail utile de ce qui est de la plomberie.</div>
+    <div class="uses"><b>S'appuie sur</b>C0, R2 : fragments = 12,7 ns par pixel couvert sur V1, 3,5 ns sur V2 (13 % et 26 % du dessin). R1 : V1 6 192 pixels couverts, V2 126 928.</div>
+  </div>
+  <div class="chain">
+    <div>
+      <h3>Avant (B5)</h3>
+      <ol>
+        <li>3 <code>EdgeFunction</code>, 3 tests top-left</li>
+        <li>barycentriques (3 <code>vmulss</code>)</li>
+        <li class="x">appel indirect <code>onFragment(x, y, bary, userData)</code> : cible inconnue du compilateur</li>
+        <li class="x">l'ABI Windows x64 impose de traiter xmm0-5 comme détruits : l'appelant range ce qu'il veut garder</li>
+        <li class="x">le shader relit <code>ctx</code> en mémoire : <code>z0..z2</code>, <code>db</code>, <code>fb</code>, largeur, pitch</li>
+        <li>z interpolé, test de profondeur</li>
+        <li class="x">index <code>y·largeur + x</code> recalculé par pixel</li>
+        <li class="x"><code>SetPixel</code> : 4 tests de bornes (la boîte est déjà rognée au viewport)</li>
+        <li class="x">adresse <code>y·pitch + x·4</code> recalculée par pixel</li>
+        <li>écriture couleur</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Après (C1)</h3>
+      <ol>
+        <li>3 <code>EdgeFunction</code>, 3 tests top-left (règle choisie hors boucle)</li>
+        <li>barycentriques (3 <code>vmulss</code>)</li>
+        <li class="g">shader <strong>inliné</strong> ; le puits travaille sur une <em>copie</em> du contexte, donc <code>z0..z2</code> et la couleur peuvent rester en registres pour tout le triangle (étape 5)</li>
+        <li>z interpolé, test de profondeur sur <code>depthRow[x]</code></li>
+        <li class="g">écriture sur <code>colorRow[x]</code> : les deux pointeurs de ligne sont posés une fois par ligne</li>
+        <li class="g">bornes : une assertion par triangle, en Debug seulement</li>
+      </ol>
+      <div class="note" style="margin-top:12px">La cible de l'appel indirect est toujours la même : le prédicteur ne se trompe pas. Ce qui coûte, c'est la frontière d'appel. Le compilateur ne peut rien sortir de la boucle, rien garder en registre, rien fusionner de part et d'autre.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 2</span><h2>Un appel par triangle, plus un par pixel</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Choisir où se fait la résolution du mode : par pixel (avant), par triangle, ou à la compilation.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 1 : la frontière d'appel est le coût. <code>Renderer::SetMode</code> choisit déjà le shader une fois par vue.</div>
+  </div>
+  <p>Le shader devient un paramètre de template : <code>RasterizeTriangleT&lt;ShaderSolid&gt;</code> est une fonction distincte de <code>RasterizeTriangleT&lt;ShaderDepth&gt;</code>, et chacune contient son shader inliné. <code>SetMode</code> range un pointeur vers l'instance choisie. Le seul appel indirect restant a lieu une fois par triangle, à la place de l'appel direct <code>DrawTriangle → RasterizeTriangle</code> d'avant.</p>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:6px">
+    <label for="callScene" style="font-size:.88rem;color:var(--mute)">Scène (comptes du run R1)</label>
+    <select id="callScene"><option value="v1">V1 : 18 120 triangles, 6 192 pixels couverts</option><option value="v2" selected>V2 : 5 024 triangles, 126 928 pixels couverts</option></select>
+  </div>
+  <div class="calls" aria-live="polite">
+    <div class="crow"><b>Avant</b><div class="ctrack"><i id="barA"></i></div><span id="numA"></span></div>
+    <div class="crow"><b>Après</b><div class="ctrack"><i id="barB" class="n"></i></div><span id="numB"></span></div>
+  </div>
+  <p style="font-size:.86rem;color:var(--mute);margin-top:6px">Appels indirects par frame. Avant : un par pixel couvert. Après : un par triangle qui atteint le noyau.</p>
+  <p id="callNote" style="margin-top:6px"></p>
+  <div class="note bad"><strong>Contre-exemples de résolution au mauvais endroit.</strong> Un <code>switch (mode)</code> dans la boucle pixels : la branche est prévisible, mais chaque pixel la paye et le corps de boucle grossit des cinq shaders. Une fonction virtuelle, un <code>std::function</code> : c'est le pointeur de fonction d'avant, avec un niveau d'indirection en plus. Tous trois résolvent pendant l'exécution ce qui est connu avant le premier pixel de la vue.</div>
+  <div class="note good"><strong>Effet secondaire utile.</strong> Le noyau reçoit un <code>const FragmentContext&amp;</code> typé, plus un <code>void*</code>. La classe de bug n° 17 (mauvais contexte derrière le <code>void*</code>) disparaît de ce chemin. Le contrôle de la sentinelle <code>magic</code> reste sur le chemin générique, qui garde son <code>void*</code>.</div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 3</span><h2>Sortir de la boucle ce qui ne dépend que de la ligne</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Calculer l'adresse de chaque ligne une fois, et supprimer les tests de bornes qui ne peuvent jamais échouer.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 1, lignes rouges 7 à 9. <code>TightPixelBox</code> rogne la boîte au viewport (chantier 3a), et <code>BeginFrame</code> vérifie déjà que les deux tampons ont la même taille.</div>
+  </div>
+  <p>Le framebuffer vient de <code>SDL_LockTexture</code> : ses lignes sont espacées de <code>pitch</code> octets, pas forcément de <code>largeur × 4</code>. Le Z-buffer, lui, est un <code>std::vector</code> compact. Deux adresses de ligne différentes, donc deux pointeurs : <code>FrameBuffer::Row(y)</code> et <code>DepthBuffer::Row(y)</code>, posés par <code>BeginRow(y)</code>.</p>
+  <div class="mem">
+    <div class="memgrid" id="memGrid" aria-label="Tampon couleur avec pitch"></div>
+    <div class="memctl">
+      <label for="memPad">Remplissage de fin de ligne (pitch − largeur, en pixels) : <b id="memPadV">3</b><input id="memPad" type="range" min="0" max="5" value="3"></label>
+      <label for="memY">Ligne du triangle y : <b id="memYV">2</b><input id="memY" type="range" min="0" max="5" value="2"></label>
+      <div class="memout" id="memOut"></div>
+    </div>
+  </div>
+  <div class="note bad"><strong>Contre-exemple.</strong> <code>colorRow = pixels + y * largeur</code>. Juste tant que pitch = largeur × 4, faux dès que SDL ajoute du remplissage : mettez le curseur à 3 et regardez où tomberait la ligne 2. La TNR de C1 utilise exprès un pitch supérieur à la largeur.</div>
+  <p>Les 4 tests de <code>SetPixel</code> deviennent une <code>LV3_ASSERT</code> par triangle sur la boîte : en Release elle disparaît, en Debug elle coûte 18 120 tests par frame sur V1 au lieu de 4 par pixel.</p>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 4</span><h2>La règle top-left, choisie hors de la boucle</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Réécrire le test d'arête sous une forme où <code>tl</code> choisit une comparaison, sans changer une seule décision.</div>
+    <div class="uses"><b>S'appuie sur</b>C0, étape 4 : une optimisation qui change une décision de couverture est fausse. <code>tl0..tl2</code> sont calculés une fois par triangle.</div>
+  </div>
+  <p><code>w &gt; 0 || (w == 0 &amp;&amp; tl)</code> devient <code>tl ? (w &gt;= 0) : (w &gt; 0)</code>. Les cas qui pourraient piéger sont −0 et NaN. La table recalcule les deux formes en simple précision.</p>
+  <div class="tbl"><table class="truth" id="truth"><thead><tr><th>w</th><th>tl</th><th>forme B5</th><th>forme C1</th><th></th></tr></thead><tbody></tbody></table></div>
+  <div class="note bad" style="margin-top:12px"><strong>Contre-exemple mesuré : « sans branche, c'est toujours mieux ».</strong> Combiner les trois tests par <code>&amp;</code> au lieu de <code>&amp;&amp;</code> évite des branches, mais calcule toujours les trois. Sur un grand triangle, la branche est prévisible et la sortie au premier échec économise du travail. Hors moteur (g++ 13, Xeon, min de 41 runs alternés) : V2-like −11 % avec <code>&amp;</code>, −10 % avec <code>&amp;&amp;</code> ; grands triangles −6 % avec <code>&amp;</code>, −17 % avec <code>&amp;&amp;</code>. On garde <code>&amp;&amp;</code>. C2 fera l'inverse, à juste titre : en AVX2, 8 pixels avancent ensemble et le masque remplace la branche.</div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 5</span><h2>Source unique : un shader, une définition</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Garder deux chemins (noyau spécialisé et chemin générique des TNR) sans deux copies de la même formule.</div>
+    <div class="uses"><b>S'appuie sur</b>Règle du chantier 3b (<code>TightPixelBox</code>, source unique du rejet et des compteurs). <code>DrawPoint</code> et 6 TNR appellent encore <code>RasterizeTriangle</code> / <code>ShadeFragment_*</code>.</div>
+  </div>
+  <ul>
+    <li><code>SetupTriangle</code> + <code>ForEachCoveredPixel</code> (Rasterizer.h) : la préparation et la boucle, partagées. Seul le <em>puits</em> diffère : <code>CallbackSink</code> (un appel par pixel, pour les tests) ou <code>ShaderSink&lt;S&gt;</code> (shader inliné).</li>
+    <li><code>ShaderSolid::Shade</code> etc. (Fragment.h) : une définition par shader. Les <code>ShadeFragment_*</code> y délèguent en une ligne.</li>
+    <li><code>DepthTestAndSet</code> (DepthBuffer.h) : le test reverse-Z, utilisé par <code>TestAndSet</code> et par les shaders.</li>
+  </ul>
+  <p>Ainsi la TNR qui compare le chemin générique au noyau ne compare pas deux réécritures : elle vérifie que changer la manière d'appeler ne change rien.</p>
+  <h3>Pourquoi le puits copie le contexte</h3>
+  <p>Le shader écrit un <code>float</code> dans <code>depthRow[x]</code>. Si le puits tenait une <em>référence</em> sur <code>FragmentContext</code>, le compilateur ne pourrait pas prouver que cette écriture ne tombe pas sur <code>ctx.z0</code>, qui est aussi un <code>float</code> en mémoire. Il devrait relire <code>z0..z2</code> (et <code>invW0..2</code>) après chaque pixel écrit. MSVC ne fait pas d'analyse d'alias par type : il suppose toujours le pire. Une copie locale dont l'adresse ne sort pas de la fonction ne peut pas être visée par <code>depthRow</code> : ses champs restent en registres. Coût : environ 64 octets copiés par triangle.</p>
+  <h3>Contre-exemple : la simplification algébrique de z</h3>
+  <p>En réels, w0 + w1 + w2 = 1, donc <code>w0·z0 + w1·z1 + w2·z2 = z0 + w1·(z1 − z0) + w2·(z2 − z0)</code>, avec une multiplication de moins. En float, ce n'est plus le même nombre. Tirez des pixels :</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 8px"><button id="btnBits" type="button">Tirer un pixel</button><span id="bitsStat" style="font:.85rem var(--f-mono);color:var(--mute)"></span></div>
+  <div class="bits" id="bitsOut"></div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th>Hors moteur, chemin B5 contre forme « simplifiée »</th><th>Couleurs différentes</th><th>Profondeurs différentes</th></tr></thead>
+    <tbody class="num">
+      <tr><td>V1-like, 72 480 triangles</td><td>0</td><td>1 525</td></tr>
+      <tr><td>V2-like, 20 096 triangles</td><td>0</td><td>116 911</td></tr>
+      <tr><td>grands, 8 000 triangles</td><td>0</td><td>657 130</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note bad" style="margin-top:10px"><strong>L'image ne suffit pas.</strong> Aucune couleur ne change ici, parce que les triangles tirés ont rarement la même profondeur. Mais le Z-buffer diffère sur la moitié des pixels : la première scène avec deux surfaces proches changera d'image. La TNR de C1 compare donc le Z-buffer bit à bit, pas seulement la couleur. Vérifié : avec cette forme injectée dans <code>ShaderSolid</code>, la TNR échoue (« 0 pixels couleur et 14 977 profondeurs différentes »).</div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 6</span><h2>Vérifier hors moteur avant d'écrire dans le moteur</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Savoir, avant le lot, si C1 est exact et dans quel ordre de grandeur il gagne.</div>
+    <div class="uses"><b>S'appuie sur</b>Étapes 2 à 5. Méthode du chantier B : test hors moteur, puis TNR, puis Debug, puis asm, puis lot appairé.</div>
+  </div>
+  <p>J'ai recompilé les deux chemins à l'identique (g++ 13, <code>-O2 -mavx2 -ffp-contract=off</code>), puis les fichiers du moteur modifiés (syntaxe, Debug, Release, <code>RASTER_STATS=1</code>), et exécuté la nouvelle TNR contre eux.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Contrôle</th><th>Résultat</th></tr></thead>
+    <tbody>
+      <tr><td>5 shaders × 3 familles de triangles (100 576 triangles, 1,48 M pixels allumés par shader) : couleur et Z, bit à bit</td><td><span class="pill o">0 différence</span></td></tr>
+      <tr><td>Chemin générique réécrit (<code>SetupTriangle</code> + <code>CallbackSink</code>) contre B5</td><td><span class="pill o">0 différence</span></td></tr>
+      <tr><td>TNR <code>Test_C1_RasterKernels</code> sur le code moteur modifié (2 vues dont une décalée, pitch &gt; largeur)</td><td><span class="pill o">OK</span></td></tr>
+      <tr><td>Même TNR, forme de z « simplifiée » injectée</td><td><span class="pill w">ÉCHEC attendu</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th>Temps hors moteur, Solid (indicatif : autre CPU, autre compilateur)</th><th>C1 / B5</th></tr></thead>
+    <tbody class="num">
+      <tr><td>V1-like : 18 120 triangles de boîte ≈ 1 pixel</td><td>0,96 à 1,06 (bruit)</td></tr>
+      <tr><td>V2-like : 5 024 triangles, ≈ 70 pixels testés</td><td>0,87 à 0,93</td></tr>
+      <tr><td>grands : 2 000 triangles de 20 à 120 px</td><td>0,82 à 0,88</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:10px">Lecture : le gain suit le nombre de pixels couverts par triangle. Sur V1, un tiers des triangles allume un pixel : le coût par triangle domine, C1 n'y change rien. C'est le rôle de C3.</p>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 7</span><h2>Le code, fichier par fichier</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Appliquer C1 dans un ordre où chaque fichier compile avec ce qui précède.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 3 (<code>Row</code>), étape 4 (<code>InsideEdge</code>), étape 5 (shaders, puits, source unique).</div>
+  </div>
+  <p>Ordre : config.h → DepthBuffer.h → FrameBuffer.h → Rasterizer.h → Rasterizer.cpp → Fragment.h → Fragment.cpp → Renderer.h → Renderer.cpp → EXE. Tous les « avant » sont ceux de LIB <code>82c53f2</code>. Rien ne change dans <code>RenderSystem.cpp</code> ni dans <code>Renderer.cpp</code> hors <code>DrawTriangle</code> (<code>ProbeAlias4K</code>, <code>LV3_FLUSH_DEPTH_PASSED</code>, <code>DrawPoint</code> restent).</p>
+
+  <div class="step">
+    <div class="file">LIB · Core/config.h · défaut de LV3_ABLATION_RASTER</div>
+    <p>Le dépôt a gardé l'état du binaire M de C0. Retour au moteur normal ; un binaire M se fait par la ligne de commande.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>#ifndef LV3_ABLATION_RASTER
+	#define LV3_ABLATION_RASTER 1  // 1 = DrawTriangle debranche (mesure M7 UNIQUEMENT)
+#endif</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>#ifndef LV3_ABLATION_RASTER
+	#define LV3_ABLATION_RASTER 0  // 1 = DrawTriangle debranche (mesure M7 UNIQUEMENT)
+#endif</pre></figure></div>
+  </div>
+
+  <div class="step">
+    <div class="file">LIB · Rendering/DepthBuffer.h · nouvelle fonction libre, avant la classe</div>
+    <p>Le test reverse-Z sort de <code>TestAndSet</code> pour être partagé avec les shaders.</p>
+    <div class="ba one"><figure class="ap"><figcaption>Ajout, juste après <code>namespace LV3 {</code><button class="cp" type="button">Copier</button></figcaption><pre>    // C1 : SOURCE UNIQUE du test de profondeur (reverse-Z, GREATER).
+    // Utilise par TestAndSet (chemin generique) ET par les shaders C1 (Fragment.h).
+    [[nodiscard]] LV3_FORCEINLINE bool DepthTestAndSet(float&amp; dst, float z) noexcept
+    {
+        if (z &lt;= dst) return false;          // REVERSE-Z : on garde le PLUS GRAND
+        dst = z;
+        return true;
+    }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/DepthBuffer.h · TestAndSet + nouvelle Row</div>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>        // Test ET ecriture en une operation : un seul calcul d'index,
+        // et impossible d'oublier l'ecriture apres un test reussi.
+        [[nodiscard]] inline bool TestAndSet(int32_t x, int32_t y, float z) noexcept
+        {
+            float&amp; dst = m_Data[size_t(y) * size_t(m_Width) + size_t(x)];
+            if (z &lt;= dst) return false;          // REVERSE-Z : test GREATER
+            dst = z;
+            return true;
+        }
+
+        int32_t Width()  const noexcept { return m_Width; }
+        int32_t Height() const noexcept { return m_Height; }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>        // Test ET ecriture en une operation : un seul calcul d'index,
+        // et impossible d'oublier l'ecriture apres un test reussi.
+        [[nodiscard]] inline bool TestAndSet(int32_t x, int32_t y, float z) noexcept
+        {
+            return DepthTestAndSet(m_Data[size_t(y) * size_t(m_Width) + size_t(x)], z);
+        }
+
+        // C1 : debut de la ligne y. La boucle pixels le calcule UNE fois par ligne,
+        // puis indexe par x : plus de multiplication y * largeur par pixel.
+        [[nodiscard]] LV3_FORCEINLINE float* Row(int32_t y) noexcept
+        {
+            LV3_ASSERT(y &gt;= 0 &amp;&amp; y &lt; m_Height &amp;&amp; "DepthBuffer::Row : ligne hors du tampon");
+            return m_Data.data() + size_t(y) * size_t(m_Width);
+        }
+
+        int32_t Width()  const noexcept { return m_Width; }
+        int32_t Height() const noexcept { return m_Height; }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/FrameBuffer.h · SetPixelUnchecked + nouvelle Row</div>
+    <p><code>SetPixelUnchecked</code> passe par <code>Row</code> : une seule formule d'adresse de ligne.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>        inline void SetPixelUnchecked(int32_t x, int32_t y, Color color)
+        {
+            uint8_t* row = reinterpret_cast&lt;uint8_t*&gt;(m_Pixels) + y * m_Pitch;
+            reinterpret_cast&lt;uint32_t*&gt;(row)[x] = std::bit_cast&lt;uint32_t&gt;(color);
+        }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>        inline void SetPixelUnchecked(int32_t x, int32_t y, Color color)
+        {
+            Row(y)[x] = std::bit_cast&lt;uint32_t&gt;(color);
+        }
+
+        // C1 : debut de la ligne y, EN TENANT COMPTE DU PITCH (jamais y * largeur :
+        // SDL_LockTexture peut espacer les lignes). Calcule UNE fois par ligne.
+        [[nodiscard]] LV3_FORCEINLINE uint32_t* Row(int32_t y) const noexcept
+        {
+            LV3_ASSERT(m_Pixels != nullptr &amp;&amp; y &gt;= 0 &amp;&amp; y &lt; m_Height &amp;&amp; "FrameBuffer::Row : ligne hors du tampon");
+            return reinterpret_cast&lt;uint32_t*&gt;(static_cast&lt;uint8_t*&gt;(m_Pixels) + size_t(y) * size_t(m_Pitch));
+        }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Rasterizer.h · includes</div>
+    <p><code>std::bit_cast</code> sert au puits d'ablation (palier S).</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>#include &lt;cmath&gt;</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>#include &lt;cmath&gt;
+#include &lt;bit&gt;</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Rasterizer.h · après la déclaration de FaceColor</div>
+    <p>Le macro des compteurs remonte ici depuis le .cpp. Puis <code>TriangleSetup</code>, <code>SetupTriangle</code>, <code>InsideEdge</code>, <code>ForEachCoveredPixel</code>, et les pièces d'ablation C0 (<code>g_ablationSink</code> en <code>extern</code>, <code>AblationConsumeSetup</code>, <code>AblationEdgeSink</code>). <code>IsTopLeft</code> est déclarée plus haut dans le même fichier : l'ordre convient.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    [[nodiscard]] Color FaceColor(int i) noexcept;</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    [[nodiscard]] Color FaceColor(int i) noexcept;
+
+    // ── Compteurs de couverture (chantier 3b) : UN enregistrement par triangle.
+    //    C1 : declare ICI (et non plus dans un espace anonyme du .cpp) car le noyau
+    //    template de Fragment.h enregistre aussi.
+    #if LV3_RASTER_STATS
+        void RecordRasterStats(uint32_t tested, uint32_t tight, uint32_t covered) noexcept;
+        #define LV3_RASTER_RECORD(tested, tight, covered) ::LV3::RecordRasterStats((tested), (tight), (covered))
+    #else
+        // Les arguments DISPARAISSENT : rien n'est evalue quand le commutateur vaut 0.
+        #define LV3_RASTER_RECORD(tested, tight, covered) ((void)0)
+    #endif
+
+    // ════════════════════════════════════════════════════════════
+    //  C1 : PRÉPARATION ET BOUCLE PIXELS, SOURCE UNIQUE
+    //  Le chemin générique (pointeur de fonction, TNR) et les noyaux
+    //  spécialisés par shader (Fragment.h) passent par les MÊMES lignes.
+    // ════════════════════════════════════════════════════════════
+
+    // Tout ce que la boucle pixels lit, calculé UNE fois par triangle.
+    struct TriangleSetup
+    {
+        Vec2f    p0, p1, p2;       // ordre NORMALISÉ : aire positive
+        PixelBox bb;               // boîte serrée, rognée au viewport (= le scissor)
+        float    invArea;          // 1 / aire (positive)
+        bool     flipped;          // p1 &lt;-&gt; p2 échangés : w1 et w2 à remettre dans l'ordre d'origine
+        bool     tl0, tl1, tl2;    // règle top-left des arêtes (p1,p2), (p2,p0), (p0,p1)
+    };
+
+    // false = rien à dessiner (triangle dégénéré ou boîte vide). Même ordre de
+    // calcul que l'ancien RasterizeTriangle : aire, échange, boîte, top-left, 1/aire.
+    [[nodiscard]] LV3_FORCEINLINE bool SetupTriangle(const Vec2f&amp; v0, const Vec2f&amp; v1, const Vec2f&amp; v2,
+        const Viewport&amp; vp, TriangleSetup&amp; s) noexcept
+    {
+        s.p0 = v0; s.p1 = v1; s.p2 = v2;
+        float area = EdgeFunction(s.p0, s.p1, s.p2);
+        if (area == 0.0f) return false;                       // triangle dégénéré
+
+        s.flipped = (area &lt; 0.0f);                            // toujours vrai pour une face AVANT
+        if (s.flipped) { std::swap(s.p1, s.p2); area = -area; }
+
+        s.bb = TightPixelBox(s.p0, s.p1, s.p2, vp);           // source unique, partagée avec le rejet 3b
+        if (s.bb.Empty()) return false;
+
+        s.tl0 = IsTopLeft(s.p1, s.p2);
+        s.tl1 = IsTopLeft(s.p2, s.p0);
+        s.tl2 = IsTopLeft(s.p0, s.p1);
+        s.invArea = 1.0f / area;
+        return true;
+    }
+
+    // Règle top-left, choix fait HORS de la boucle :
+    //     w &gt; 0 || (w == 0 &amp;&amp; tl)   ≡   tl ? (w &gt;= 0) : (w &gt; 0)
+    // Équivalence EXACTE : -0.0 (== 0 et &gt;= 0 tous deux vrais), NaN (tout faux des deux côtés).
+    [[nodiscard]] LV3_FORCEINLINE bool InsideEdge(float w, bool tl) noexcept
+    {
+        return tl ? (w &gt;= 0.0f) : (w &gt; 0.0f);
+    }
+
+    // Parcourt la boîte, appelle sink.BeginRow(y) une fois par ligne et
+    // sink.Pixel(x, bary) pour chaque pixel couvert. Rend le nombre de pixels couverts.
+    // Sink est résolu À LA COMPILATION : aucun appel indirect ici.
+    template&lt;class Sink&gt;
+    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredPixel(const TriangleSetup&amp; s, Sink&amp; sink)
+    {
+        uint32_t covered = 0;
+        for (int32_t y = s.bb.y0; y &lt; s.bb.y1; ++y)
+        {
+            const float py = float(y) + 0.5f;
+            sink.BeginRow(y);                                 // pointeurs de ligne : 1 fois par ligne
+            for (int32_t x = s.bb.x0; x &lt; s.bb.x1; ++x)
+            {
+                const float px = float(x) + 0.5f;
+
+                const float w0 = EdgeFunction(s.p1, s.p2, px, py);
+                const float w1 = EdgeFunction(s.p2, s.p0, px, py);
+                const float w2 = EdgeFunction(s.p0, s.p1, px, py);
+
+                // &amp;&amp; et non &amp; : sur un grand triangle la branche est prévisible,
+                // et la sortie au premier échec évite deux tests (mesuré, voir C1).
+                if (!(InsideEdge(w0, s.tl0) &amp;&amp; InsideEdge(w1, s.tl1) &amp;&amp; InsideEdge(w2, s.tl2))) continue;
+                ++covered;
+
+                // Si les sommets ont été échangés, w1 et w2 le sont aussi :
+                // on les remet dans l'ordre du triangle d'origine.
+                const BarycentricWeights bary = s.flipped
+                    ? BarycentricWeights{ w0 * s.invArea, w2 * s.invArea, w1 * s.invArea }
+                    : BarycentricWeights{ w0 * s.invArea, w1 * s.invArea, w2 * s.invArea };
+
+                sink.Pixel(x, bary);
+            }
+        }
+        return covered;
+    }
+
+    // ── C0 : ablation par paliers (LV3_ABLATION_PIXELS), deplacee ICI en C1 :
+    //    le moteur passe par les noyaux de Fragment.h, plus par RasterizeTriangle.
+    #if LV3_ABLATION_PIXELS
+        // PUITS defini dans Rasterizer.cpp. volatile : l'ecriture ne peut pas etre supprimee.
+        // Forme "s = s + v" : l'affectation composee sur un volatile est depreciee en C++20.
+        extern volatile uint32_t g_ablationSink;
+
+        // Palier S : TOUT ce que la preparation produit est consomme. UNE ecriture par triangle.
+        LV3_FORCEINLINE void AblationConsumeSetup(const TriangleSetup&amp; s) noexcept
+        {
+            g_ablationSink = g_ablationSink
+                + uint32_t(s.bb.x0) + uint32_t(s.bb.y0) + uint32_t(s.bb.x1) + uint32_t(s.bb.y1)
+                + (uint32_t(s.tl0) | (uint32_t(s.tl1) &lt;&lt; 1) | (uint32_t(s.tl2) &lt;&lt; 2) | (uint32_t(s.flipped) &lt;&lt; 3))
+                + std::bit_cast&lt;uint32_t&gt;(s.invArea);
+        }
+
+        // Palier E : la boucle d'aretes complete, AUCUN fragment. Les barycentriques,
+        // jamais lues, disparaissent a l'optimisation ; le compte couvert va au puits.
+        struct AblationEdgeSink
+        {
+            LV3_FORCEINLINE void BeginRow(int32_t) noexcept {}
+            LV3_FORCEINLINE void Pixel(int32_t, const BarycentricWeights&amp;) noexcept {}
+        };
+    #endif</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Rasterizer.cpp · compteurs et puits générique</div>
+    <p><code>RecordRasterStats</code> et <code>g_ablationSink</code> quittent l'espace anonyme (le noyau template de Fragment.h les utilise). Les deux <code>#define LV3_RASTER_RECORD</code> du .cpp sont supprimés : sinon avertissement C4005, redéfinition. Le puits <code>CallbackSink</code> prend place.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    #if LV3_RASTER_STATS
+        namespace
+        {
+            // UN enregistrement par triangle, jamais par pixel (voir contre-exemple).
+            void RecordRasterStats(uint32_t tested, uint32_t tight, uint32_t covered) noexcept
+            {
+                const EProfCounter bucket =
+                    covered == 0 ? EProfCounter::TrisCov0
+                    : covered == 1 ? EProfCounter::TrisCov1
+                    : covered &lt;= 4 ? EProfCounter::TrisCov2to4
+                    : EProfCounter::TrisCov5plus;
+                LV3_PROF_COUNT(bucket, 1);
+                if (tight == 0) LV3_PROF_COUNT(EProfCounter::TrisTightEmpty, 1);
+                LV3_PROF_COUNT(EProfCounter::PixelsTested, tested);
+                LV3_PROF_COUNT(EProfCounter::PixelsTight, tight);
+                LV3_PROF_COUNT(EProfCounter::PixelsCovered, covered);
+            }
+        }
+    
+        #define LV3_RASTER_RECORD(tested, tight, covered) RecordRasterStats((tested), (tight), (covered))
+    
+    #else
+        // Les arguments DISPARAISSENT : tight/covered n'existent pas quand le commutateur vaut 0.
+    #define LV3_RASTER_RECORD(tested, tight, covered) ((void)0)
+    #endif
+
+    #if LV3_ABLATION_PIXELS
+        namespace
+        {
+            // C0 : PUITS d'ablation. Sans lui, l'optimiseur supprime le travail dont
+            // le resultat n'est plus lu, et le palier mesure du vide.
+            // volatile : l'ecriture ne peut pas etre supprimee. UNE ecriture par triangle.
+            // Forme "s = s + v" et non "s += v" : l'affectation composee sur un
+            // volatile est depreciee en C++20.
+            volatile uint32_t g_ablationSink = 0;
+        }
+    #endif</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    #if LV3_RASTER_STATS
+        // UN enregistrement par triangle, jamais par pixel (voir contre-exemple).
+        // C1 : hors de l'espace anonyme, déclarée dans Rasterizer.h (le noyau template l'appelle).
+        void RecordRasterStats(uint32_t tested, uint32_t tight, uint32_t covered) noexcept
+        {
+            const EProfCounter bucket =
+                covered == 0 ? EProfCounter::TrisCov0
+                : covered == 1 ? EProfCounter::TrisCov1
+                : covered &lt;= 4 ? EProfCounter::TrisCov2to4
+                : EProfCounter::TrisCov5plus;
+            LV3_PROF_COUNT(bucket, 1);
+            if (tight == 0) LV3_PROF_COUNT(EProfCounter::TrisTightEmpty, 1);
+            LV3_PROF_COUNT(EProfCounter::PixelsTested, tested);
+            LV3_PROF_COUNT(EProfCounter::PixelsTight, tight);
+            LV3_PROF_COUNT(EProfCounter::PixelsCovered, covered);
+        }
+    #endif
+
+    #if LV3_ABLATION_PIXELS
+        // C0 : PUITS d'ablation, declare dans Rasterizer.h (C1 : le noyau template l'utilise).
+        volatile uint32_t g_ablationSink = 0;
+    #endif
+
+    namespace
+    {
+        // Puits du chemin GÉNÉRIQUE : un appel indirect par pixel couvert.
+        // Ne sert plus qu'aux TNR et aux sondes (ShadeFragment_Count, DepthProbe...).
+        struct CallbackSink
+        {
+            FragmentCallback onFragment;
+            void*            userData;
+            int32_t          y = 0;
+
+            LV3_FORCEINLINE void BeginRow(int32_t row) noexcept { y = row; }
+            LV3_FORCEINLINE void Pixel(int32_t x, const BarycentricWeights&amp; b) { onFragment(x, y, b, userData); }
+        };
+    }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Rasterizer.cpp · RasterizeTriangle (chemin générique)</div>
+    <p>Le corps se réduit à la préparation partagée et à la boucle partagée. Les paliers d'ablation quittent ce chemin (ils sont maintenant dans <code>RasterizeTriangleT</code>). Le bloc de commentaire de diagnostic (« Si des pixels ne sont pas dessinés… Coupes 1 à 3 ») peut rester au-dessus de la fonction, tel quel.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    void RasterizeTriangle(const Vec2f&amp; v0, const Vec2f&amp; v1, const Vec2f&amp; v2,
+        const Viewport&amp; vp,
+        FragmentCallback onFragment, void* userData)
+    {
+
+       /*
+       Si des pixels ne sont pas déssiné
+           * épars comme du bruit (Épars et fins → le biais top-left) est la signature exacte d'un seuil dépendant de l'échelle
+           * Une fente le long d'une arête aurait désigné la géométrie ; 
+           * Fentes nettes le long des arêtes partagées → le biais aussi, mais plus grave
+           * Trous par triangle entier → géométrie ou culling, pas le remplissage
+        3 tests
+        * Coupe 1 — le biais : Remets bias = 0.0f partout dans ta version actuelle. Les trous disparaissent → c'était bien lui, applique le correctif ci-dessus.
+        * Coupe 2 — le Z-buffer : Dans ShadeFragment_Solid, commente if (!ctx-&gt;db-&gt;TestAndSet(...)) return;. Les trous disparaissent → ce sont deux triangles à profondeur quasi identique qui se rejettent mutuellement. Symptôme d'un z-fighting sur géométrie coplanaire.
+        * Coupe 3 — la géométrie : Passe en Wireframe. Regarde de près : les arêtes forment-elles une surface fermée ? S'il y a des vides dans le fil de fer, le problème est dans le mesh ou dans la triangulation en éventail des quads, pas dans le rasterizer.
+       */
+
+        // ── Normalise le sens de parcours : on travaille toujours en aire POSITIVE.
+
+        Vec2f p0 = v0, p1 = v1, p2 = v2;
+        float area = EdgeFunction(p0, p1, p2);
+        if (area == 0.0f) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }   // triangle dégénéré
+
+        const bool flipped = (area &lt; 0.0f);
+        if (flipped) { std::swap(p1, p2); area = -area; }
+
+    //    // ── Bounding box, rognée au VIEWPORT (= le scissor)
+    //    int minX = int(std::floor(std::min({ p0.x, p1.x, p2.x })));
+    //    int minY = int(std::floor(std::min({ p0.y, p1.y, p2.y })));
+    //    int maxX = int(std::ceil(std::max({ p0.x, p1.x, p2.x }))) + 1;
+    //    int maxY = int(std::ceil(std::max({ p0.y, p1.y, p2.y }))) + 1;
+    //    vp.ClampBox(minX, minY, maxX, maxY);
+
+
+    //#if LV3_RASTER_STATS
+    //    const PixelBox tb = TightPixelBox(p0, p1, p2, vp);   // la MEME formule que le rejet 3b
+    //    const uint32_t tight = tb.Area();
+    //    uint32_t       covered = 0;
+    //#endif
+
+    //    if (minX &gt;= maxX || minY &gt;= maxY) { LV3_RASTER_RECORD(0u, tight, 0u); return; }
+
+    // ── CHANTIER 3a : boite SERREE, rognee au VIEWPORT (= le scissor).
+    //    Seuls les pixels dont le CENTRE (x+1/2, y+1/2) peut etre dans le triangle.
+    //    Source UNIQUE, partagee avec le rejet 3b : TightPixelBox.
+    //    Exactitude prouvee AVANT la bascule (C3 § 6, C4 § 7.1) : aucun pixel
+    //    couvert hors de cette boite sur ~1,4 million testes.
+    const PixelBox bb = TightPixelBox(p0, p1, p2, vp);
+
+    #if LV3_RASTER_STATS
+            uint32_t covered = 0;
+    #endif
+
+        if (bb.Empty()) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }
+
+        // ── Règle top-left : évaluée UNE fois par triangle, pas par pixel
+        const bool tl0 = IsTopLeft(p1, p2);
+        const bool tl1 = IsTopLeft(p2, p0);
+        const bool tl2 = IsTopLeft(p0, p1);
+
+        const float invArea = 1.0f / area;
+
+
+
+//#ifdef _DEBUG
+//        const float bboxArea = float(maxX - minX) * float(maxY - minY);   // apres ClampBox
+//        if (bboxArea &gt; 0.0f &amp;&amp; std::fabs(area) &lt; 1e-4f * bboxArea)
+//            Logger::warn("[RASTER] triangle quasi degenere : |area|=" + std::to_string(std::fabs(area))
+//                + "  bbox=" + std::to_string(bboxArea)
+//                + "  ratio=" + std::to_string(std::fabs(area) / bboxArea) + "\n");
+//#endif
+
+
+
+#if LV3_ABLATION_PIXELS == 1
+      // ── C0, palier S : les deux appels + la preparation, AUCUN pixel.
+      //    Tout ce que la preparation produit est CONSOMME par le puits.
+        g_ablationSink = g_ablationSink
+            + uint32_t(bb.x0) + uint32_t(bb.y0) + uint32_t(bb.x1) + uint32_t(bb.y1)
+            + (uint32_t(tl0) | (uint32_t(tl1) &lt;&lt; 1) | (uint32_t(tl2) &lt;&lt; 2) | (uint32_t(flipped) &lt;&lt; 3))
+            + std::bit_cast&lt;uint32_t&gt;(invArea);
+        (void)onFragment; (void)userData;
+#else
+#if LV3_ABLATION_PIXELS == 2
+        uint32_t ablCovered = 0;            // palier E : compteur en REGISTRE
+#endif
+
+        for (int32_t y = bb.y0; y &lt; bb.y1; ++y)
+        {
+            const float py = float(y) + 0.5f;
+            for (int32_t x = bb.x0; x &lt; bb.x1; ++x)
+            {
+                const float px = float(x) + 0.5f;
+
+                const float w0 = EdgeFunction(p1, p2, px, py);
+                const float w1 = EdgeFunction(p2, p0, px, py);
+                const float w2 = EdgeFunction(p0, p1, px, py);
+
+                // Strictement dedans, OU exactement sur une arête top/left.
+                // Aucune constante magique : indépendant de la taille du triangle.
+                if (!(w0 &gt; 0.0f || (w0 == 0.0f &amp;&amp; tl0))) continue;
+                if (!(w1 &gt; 0.0f || (w1 == 0.0f &amp;&amp; tl1))) continue;
+                if (!(w2 &gt; 0.0f || (w2 == 0.0f &amp;&amp; tl2))) continue;
+
+                #if LV3_RASTER_STATS
+                    ++covered;                                  // registre, pas d'appel
+                #endif
+
+                #if LV3_ABLATION_PIXELS == 2
+                    ++ablCovered;     // palier E : aretes seules, AUCUN fragment
+                #else
+                    // Si les sommets ont été échangés, w1 et w2 le sont aussi :
+                    // on les remet dans l'ordre du triangle d'origine.
+                    const BarycentricWeights bary = flipped
+                        ? BarycentricWeights{ w0 * invArea, w2 * invArea, w1 * invArea }
+                    : BarycentricWeights{ w0 * invArea, w1 * invArea, w2 * invArea };
+
+                    onFragment(x, y, bary, userData);
+                #endif
+            }
+        }
+
+        #if LV3_ABLATION_PIXELS == 2
+                g_ablationSink = g_ablationSink + ablCovered;   // UNE ecriture par triangle
+                (void)onFragment; (void)userData; (void)invArea; (void)flipped;
+        #endif
+        #endif // LV3_ABLATION_PIXELS == 1
+
+        // Depuis le 3a, pixels testes == aire de la boite serree, par construction.
+        LV3_RASTER_RECORD(bb.Area(), bb.Area(), covered);
+    }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    // Chemin GÉNÉRIQUE : mêmes préparation et boucle que les noyaux C1
+    // (SetupTriangle + ForEachCoveredPixel), seul le puits diffère.
+    // C1 : plus d'ablation ici, le moteur n'emprunte plus ce chemin (voir RasterizeTriangleT).
+    void RasterizeTriangle(const Vec2f&amp; v0, const Vec2f&amp; v1, const Vec2f&amp; v2,
+        const Viewport&amp; vp,
+        FragmentCallback onFragment, void* userData)
+    {
+        TriangleSetup s;
+        if (!SetupTriangle(v0, v1, v2, vp, s)) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }
+
+        CallbackSink sink{ onFragment, userData };
+        [[maybe_unused]] const uint32_t covered = ForEachCoveredPixel(s, sink);
+
+        // Depuis le 3a, pixels testés == aire de la boîte serrée, par construction.
+        LV3_RASTER_RECORD(s.bb.Area(), s.bb.Area(), covered);
+    }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Fragment.h · includes</div>
+    <p>Les shaders vivent maintenant dans l'en-tête : <code>Saturate</code> (ShaderDepth) et <code>std::bit_cast</code> doivent y être visibles.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>#include "Rasterizer.h"   // BarycentricWeights, FragmentCallback
+#include "FrameBuffer.h"  // FrameBuffer, Color
+#include "DepthBuffer.h"  // DepthBuffer</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>#include "Rasterizer.h"   // BarycentricWeights, FragmentCallback
+#include "FrameBuffer.h"  // FrameBuffer, Color
+#include "DepthBuffer.h"  // DepthBuffer, DepthTestAndSet
+#include "Viewport.h"
+#include "../Maths/MathUtils.h"   // Saturate (ShaderDepth)
+#include &lt;bit&gt;</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Fragment.h · le DepthTestAndSet de C0 est REMPLACÉ par les shaders, le puits et le noyau</div>
+    <p>Remplacer <strong>uniquement</strong> le bloc « avant » (de son commentaire jusqu'à l'accolade fermante), entre <code>AsFragmentContext</code> et le repère « Implémentations de FragmentCallback ». Le repère et les 7 déclarations qui le suivent ne bougent pas. Le noyau <code>RasterizeTriangleT</code> n'est pas <code>LV3_FORCEINLINE</code> : on prend son adresse, il doit exister hors ligne.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    // Test de profondeur de TOUS les shaders : un seul endroit ou compter le surdessin.
+    // Sans RASTER_STATS, c'est exactement l'ancien TestAndSet (inline, aucun surcout).
+    [[nodiscard]] LV3_FORCEINLINE bool DepthTestAndSet(FragmentContext* ctx,
+        int32_t x, int32_t y, float z) noexcept
+    {
+        const bool pass = ctx-&gt;db-&gt;TestAndSet(x, y, z);
+        #if LV3_RASTER_STATS
+                ctx-&gt;depthPassed += pass ? 1u : 0u;   // sans branche : setcc + add
+        #endif
+        return pass;
+    }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    // ════════════════════════════════════════════════════════════
+    //  C1 : SHADERS RÉSOLUS À LA COMPILATION
+    //  Un shader = une struct avec UNE fonction statique Shade(), inlinée
+    //  dans la boucle pixels. Il reçoit la case de profondeur et la case
+    //  couleur de SON pixel : plus d'index, plus de test de bornes, plus de void*.
+    //  Shade() rend true si le fragment a passé le test de profondeur
+    //  (compteur C0 PixelsDepthPassed, sous RASTER_STATS).
+    //  SOURCE UNIQUE : les ShadeFragment_* (chemin générique) y délèguent.
+    //  Remplace le DepthTestAndSet(FragmentContext*, x, y, z) de C0.
+    // ════════════════════════════════════════════════════════════
+
+    // ORDRE FIGÉ : w0·z0 + w1·z1 + w2·z2, de gauche à droite.
+    // Toute réécriture « équivalente » change des bits (contre-exemple C1).
+    [[nodiscard]] LV3_FORCEINLINE float InterpolateDepth(const FragmentContext&amp; c, const BarycentricWeights&amp; b) noexcept
+    {
+        return b.w0 * c.z0 + b.w1 * c.z1 + b.w2 * c.z2;
+    }
+
+    // Dénominateur perspectif : 1/w interpolé affinement, puis inversé par le shader.
+    [[nodiscard]] LV3_FORCEINLINE float InterpolateInvW(const FragmentContext&amp; c, const BarycentricWeights&amp; b) noexcept
+    {
+        return b.w0 * c.invW0 + b.w1 * c.invW1 + b.w2 * c.invW2;
+    }
+
+    struct ShaderSolid
+    {
+        static LV3_FORCEINLINE bool Shade(const FragmentContext&amp; c, const BarycentricWeights&amp; b,
+            float&amp; depth, uint32_t&amp; pixel) noexcept
+        {
+            // 1. PROFONDEUR affine, 2. EARLY-Z avant tout autre calcul (reverse-Z, GREATER)
+            if (!DepthTestAndSet(depth, InterpolateDepth(c, b))) return false;
+            pixel = std::bit_cast&lt;uint32_t&gt;(c.color);
+            return true;
+        }
+    };
+
+    // DEBUG : poids barycentriques en couleur (r = w0, g = w1, b = w2).
+    struct ShaderBarycentric
+    {
+        static LV3_FORCEINLINE bool Shade(const FragmentContext&amp; c, const BarycentricWeights&amp; b,
+            float&amp; depth, uint32_t&amp; pixel) noexcept
+        {
+            if (!DepthTestAndSet(depth, InterpolateDepth(c, b))) return false;
+            pixel = std::bit_cast&lt;uint32_t&gt;(Color{
+                static_cast&lt;uint8_t&gt;(std::clamp(b.w2, 0.f, 1.f) * 255.0f),   // b
+                static_cast&lt;uint8_t&gt;(std::clamp(b.w1, 0.f, 1.f) * 255.0f),   // g
+                static_cast&lt;uint8_t&gt;(std::clamp(b.w0, 0.f, 1.f) * 255.0f),   // r
+                255 });
+            return true;
+        }
+    };
+
+    /*
+    DEBUG : diagnostique la correction de perspective.
+    * Bandes droites, continues, resserrées au loin         : ✅ correct
+    * Bandes qui plient en V sur la diagonale des quads     : ❌ interpolation affine — le dénominateur n'est pas appliqué
+    * Bandes régulièrement espacées jusqu'à l'horizon       : ❌ tu interpoles dist affinement au lieu de 1/dist
+    * Bandes qui sautent d'un triangle à l'autre            : ❌ invW mal rempli sur certains sommets
+    * Écran uniforme                                        : ❌ invW à zéro → dist = inf
+    */
+    struct ShaderLinearDepth
+    {
+        static LV3_FORCEINLINE bool Shade(const FragmentContext&amp; c, const BarycentricWeights&amp; b,
+            float&amp; depth, uint32_t&amp; pixel) noexcept
+        {
+            if (!DepthTestAndSet(depth, InterpolateDepth(c, b))) return false;
+            const float dist = 1.0f / InterpolateInvW(c, b);        // LA division perspective par pixel
+            const uint8_t g = uint8_t((std::fmod(dist, 1.0f)) * 255.0f);   // bandes de 1 unité
+            pixel = std::bit_cast&lt;uint32_t&gt;(MakeColor(g, g, g));
+            return true;
+        }
+    };
+
+    // DEBUG : distance à l'œil dans une plage d'affichage, avec gamma.
+    struct ShaderDepth
+    {
+        static LV3_FORCEINLINE bool Shade(const FragmentContext&amp; c, const BarycentricWeights&amp; b,
+            float&amp; depth, uint32_t&amp; pixel) noexcept
+        {
+            if (!DepthTestAndSet(depth, InterpolateDepth(c, b))) return false;
+            const float dist = 1.0f / InterpolateInvW(c, b);        // w = d, et 1/w est linéaire en écran
+            const float t = Saturate(dist / c.depthDisplayRange);   // plage de debug, pas la lentille
+            const uint8_t g = uint8_t(std::pow(1.0f - t, 1.0f / 2.2f) * 255.0f);
+            pixel = std::bit_cast&lt;uint32_t&gt;(MakeColor(g, g, g));
+            return true;
+        }
+    };
+
+    // FAUX EXPRÈS (TNR) : interpolation AFFINE de la distance au lieu de 1 / (1/w interpolé).
+    struct ShaderLinearDepthWRONG
+    {
+        static LV3_FORCEINLINE bool Shade(const FragmentContext&amp; c, const BarycentricWeights&amp; b,
+            float&amp; depth, uint32_t&amp; pixel) noexcept
+        {
+            if (!DepthTestAndSet(depth, InterpolateDepth(c, b))) return false;
+            const float dist = b.w0 * (1.0f / c.invW0) + b.w1 * (1.0f / c.invW1) + b.w2 * (1.0f / c.invW2);
+            const uint8_t g = uint8_t(std::fmod(dist, 1.0f) * 255.0f);
+            pixel = std::bit_cast&lt;uint32_t&gt;(MakeColor(g, g, g));
+            return true;
+        }
+    };
+
+    // Puits des noyaux C1.
+    // ctx est une COPIE, pas une référence : une écriture float dans depthRow[x]
+    // pourrait, pour le compilateur, modifier ctx.z0 (même type, adresse inconnue).
+    // Avec une référence, il relirait z0..z2 et invW0..2 après CHAQUE pixel écrit.
+    // Une copie locale dont l'adresse ne fuit pas reste en registres. Coût : ~64 octets par triangle.
+    template&lt;class Shader&gt;
+    struct ShaderSink
+    {
+        const FragmentContext ctx;
+        float*    depthRow = nullptr;
+        uint32_t* colorRow = nullptr;
+        #if LV3_RASTER_STATS
+            uint32_t depthPassed = 0;      // C0 : en registre, versé une fois par triangle
+        #endif
+
+        LV3_FORCEINLINE void BeginRow(int32_t y) noexcept
+        {
+            depthRow = ctx.db-&gt;Row(y);
+            colorRow = ctx.fb-&gt;Row(y);
+        }
+        LV3_FORCEINLINE void Pixel(int32_t x, const BarycentricWeights&amp; b) noexcept
+        {
+            [[maybe_unused]] const bool pass = Shader::Shade(ctx, b, depthRow[x], colorRow[x]);
+            #if LV3_RASTER_STATS
+                depthPassed += pass ? 1u : 0u;   // sans branche : setcc + add
+            #endif
+        }
+    };
+
+    // ── LE NOYAU C1 : une instance par shader, choisie UNE fois par vue (Renderer::SetMode).
+    //    Un seul appel indirect par TRIANGLE (au lieu d'un par pixel couvert).
+    //    ctx non const : seul le compteur C0 depthPassed y est écrit (RASTER_STATS),
+    //    vidé ensuite par LV3_FLUSH_DEPTH_PASSED dans DrawTriangle, comme en C0.
+    template&lt;class Shader&gt;
+    void RasterizeTriangleT(const Vec2f&amp; v0, const Vec2f&amp; v1, const Vec2f&amp; v2,
+        const Viewport&amp; vp, FragmentContext&amp; ctx) noexcept
+    {
+        TriangleSetup s;
+        if (!SetupTriangle(v0, v1, v2, vp, s)) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }
+
+        // Ce que SetPixel testait 4 fois par pixel, vérifié UNE fois par triangle, en Debug.
+        LV3_ASSERT(ctx.fb != nullptr &amp;&amp; ctx.db != nullptr &amp;&amp; "RasterizeTriangleT : cibles non posees (BeginFrame ?)");
+        LV3_ASSERT(s.bb.x0 &gt;= 0 &amp;&amp; s.bb.y0 &gt;= 0 &amp;&amp;
+            s.bb.x1 &lt;= ctx.fb-&gt;Width() &amp;&amp; s.bb.y1 &lt;= ctx.fb-&gt;Height() &amp;&amp;
+            "RasterizeTriangleT : boite hors du framebuffer (viewport plus grand que la cible ?)");
+
+    #if LV3_ABLATION_PIXELS == 1
+        AblationConsumeSetup(s);                                   // palier S : aucun pixel
+    #elif LV3_ABLATION_PIXELS == 2
+        AblationEdgeSink edges;                                    // palier E : arêtes, aucun fragment
+        g_ablationSink = g_ablationSink + ForEachCoveredPixel(s, edges);
+    #else
+        ShaderSink&lt;Shader&gt; sink{ ctx };                            // COPIE du contexte (voir ShaderSink)
+        [[maybe_unused]] const uint32_t covered = ForEachCoveredPixel(s, sink);
+        #if LV3_RASTER_STATS
+            ctx.depthPassed += sink.depthPassed;
+        #endif
+        LV3_RASTER_RECORD(s.bb.Area(), s.bb.Area(), covered);
+    #endif
+    }
+
+    using TriangleKernel = void(*)(const Vec2f&amp;, const Vec2f&amp;, const Vec2f&amp;,
+        const Viewport&amp;, FragmentContext&amp;) noexcept;</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Fragment.h · fin du fichier, à contrôler (inchangée)</div>
+    <p>C'est ce bloc qui manque quand <code>Renderer.h</code> signale <code>ShadeFragment_Solid</code> non déclaré.</p>
+    <div class="ba one"><figure class="ap"><figcaption>Fin de Fragment.h</figcaption><pre>    // ── Implémentations de FragmentCallback ──
+    // Signature imposée par le type FragmentCallback défini dans Rasterizer.h
+
+//    void ShadeFragment_Unlit(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData);
+    void ShadeFragment_Depth(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData);
+    void ShadeFragment_Barycentric(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData);
+    void ShadeFragment_LinearDepth(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData);
+    void ShadeFragment_Solid(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData);
+    void ShadeFragment_Count(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData); // TNR
+    void ShadeFragment_LinearDepth_WRONG(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData); // TNR
+} // namespace LV3</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Fragment.cpp · les cinq ShadeFragment_* délèguent</div>
+    <p>Différence de comportement à connaître : <code>Solid</code>, <code>Depth</code> et <code>LinearDepth</code> écrivaient par <code>SetPixel</code> (avec bornes). L'écriture de profondeur juste avant n'avait déjà aucune borne : un pixel hors cible corrompait le Z-buffer de toute façon. Les deux appelants restants vérifient la position (<code>DrawPoint</code> teste le viewport, les TNR restent dans leur cible).</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    void ShadeFragment_Barycentric(int32_t x, int32_t y, const BarycentricWeights&amp; bary, void* userData)
+    {
+        // w0 est le poids de v0, pas de l'arête v0v1
+
+        auto* ctx = AsFragmentContext(userData);
+        const float z = bary.w0 * ctx-&gt;z0 + bary.w1 * ctx-&gt;z1 + bary.w2 * ctx-&gt;z2;
+        if (!DepthTestAndSet(ctx, x, y, z)) return;
+
+        ctx-&gt;fb-&gt;SetPixelUnchecked(x, y, Color{
+            static_cast&lt;uint8_t&gt;(std::clamp(bary.w2, 0.f, 1.f) * 255.0f),   // b
+            static_cast&lt;uint8_t&gt;(std::clamp(bary.w1, 0.f, 1.f) * 255.0f),   // g
+            static_cast&lt;uint8_t&gt;(std::clamp(bary.w0, 0.f, 1.f) * 255.0f),   // r
+            255 });
+    }
+
+    void ShadeFragment_Solid(int32_t x, int32_t y,
+        const BarycentricWeights&amp; b, void* userData)
+    {
+        auto* ctx = AsFragmentContext(userData);
+
+        // ── 1. PROFONDEUR : affine, aucune correction (cf. §1.1) ──
+        const float z = b.w0 * ctx-&gt;z0 + b.w1 * ctx-&gt;z1 + b.w2 * ctx-&gt;z2;
+
+        // ── 2. EARLY-Z : rejeter AVANT tout autre calcul ──
+        if (!DepthTestAndSet(ctx, x, y, z)) return;
+
+        // ── 3. Le dénominateur n'est calculé QUE si le fragment survit ──
+        // (couleur plate ici : rien à corriger. Structure en place pour la suite.)
+        ctx-&gt;fb-&gt;SetPixel(x, y, ctx-&gt;color);
+    }
+
+    /*
+    Fragment de DEBUG : 
+   
+	Permet de diagnostiquer les erreurs de perspective dans le shader de profondeur linéaire.
+    * Bandes droites, continues, resserrées au loin         : 	✅ Chantier B correct
+    * Bandes qui plient en V sur la diagonale des quads 	:   ❌ interpolation affine — le dénominateur n'est pas appliqué
+    * Bandes régulièrement espacées jusqu'à l'horizon	    :   ❌ tu interpoles dist affinement au lieu de 1/dist
+    * Bandes qui sautent d'un triangle à l'autre	        :   ❌ invW mal rempli sur certains sommets
+	* Écran uniforme                                        :   ❌ 	invW à zéro → dist = inf
+    */
+    void ShadeFragment_LinearDepth(int32_t x, int32_t y,
+        const BarycentricWeights&amp; b, void* userData)
+    {
+        auto* ctx = AsFragmentContext(userData);
+
+        const float z = b.w0 * ctx-&gt;z0 + b.w1 * ctx-&gt;z1 + b.w2 * ctx-&gt;z2;
+        if (!DepthTestAndSet(ctx, x, y, z)) return;
+
+        // ── LA division perspective par pixel ──
+        const float den = b.w0 * ctx-&gt;invW0 + b.w1 * ctx-&gt;invW1 + b.w2 * ctx-&gt;invW2;
+        const float dist = 1.0f / den;                 // distance VRAIE à l'œil
+
+        // bandes de 1 unité — le motif plie visiblement si la correction manque
+        const uint8_t g = uint8_t((std::fmod(dist, 1.0f)) * 255.0f);
+        ctx-&gt;fb-&gt;SetPixel(x, y, MakeColor(g, g, g));
+    }
+
+    /*
+	Fragment de DEBUG : Affiche la profondeur linéaire dans une plage de debug, avec un mapping gamma pour l'affichage.
+    */
+    void ShadeFragment_Depth(int32_t x, int32_t y,
+        const BarycentricWeights&amp; b, void* userData)
+    {
+        auto* ctx = AsFragmentContext(userData);
+
+        // 1. profondeur NDC — affine, pour le test de profondeur uniquement
+        const float z = b.w0 * ctx-&gt;z0 + b.w1 * ctx-&gt;z1 + b.w2 * ctx-&gt;z2;
+        if (!DepthTestAndSet(ctx, x, y, z)) return;
+
+        // 2. distance à l'œil — DIRECTE. w = d, et 1/w est linéaire en écran.
+        const float den = b.w0 * ctx-&gt;invW0 + b.w1 * ctx-&gt;invW1 + b.w2 * ctx-&gt;invW2;
+        const float dist = 1.0f / den;
+
+        // 3. normalisation d'AFFICHAGE — plage de debug, pas la lentille
+        const float t = Saturate(dist / ctx-&gt;depthDisplayRange);
+
+        // 4. gamma — inchangé
+        const uint8_t g = uint8_t(std::pow(1.0f - t, 1.0f / 2.2f) * 255.0f);
+        ctx-&gt;fb-&gt;SetPixel(x, y, MakeColor(g, g, g));
+    }
+
+    /*
+	Fragment de DEBUG : permet de compter combien de fragments sont générés par pixel, pour diagnostiquer la TNR top-left.
+    */
+    void ShadeFragment_Count(int32_t x, int32_t y, const BarycentricWeights&amp;, void* userData)
+    {
+        auto* ctx = static_cast&lt;CountContext*&gt;(userData);
+        (*ctx-&gt;counts)[y * ctx-&gt;width + x]++;   // ici width suffit : c'est TON buffer, pas SDL
+    }
+
+
+    void ShadeFragment_LinearDepth_WRONG(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        auto* ctx = AsFragmentContext(userData);
+
+        const float z = b.w0 * ctx-&gt;z0 + b.w1 * ctx-&gt;z1 + b.w2 * ctx-&gt;z2;
+        if (!DepthTestAndSet(ctx, x, y, z)) return;
+
+        // FAUX EXPRÈS : interpolation AFFINE de la distance,
+        // au lieu de 1 / (interpolation affine de 1/w)
+        const float dist = b.w0 * (1.0f / ctx-&gt;invW0)
+            + b.w1 * (1.0f / ctx-&gt;invW1)
+            + b.w2 * (1.0f / ctx-&gt;invW2);
+
+        const uint8_t g = uint8_t(std::fmod(dist, 1.0f) * 255.0f);
+        ctx-&gt;fb-&gt;SetPixel(x, y, MakeColor(g, g, g));
+    }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    namespace
+    {
+        // Chemin GÉNÉRIQUE (void*) : DrawPoint et les TNR.
+        // C1 : MÊME noyau Shade que la boucle spécialisée — une seule définition par shader.
+        template&lt;class Shader&gt;
+        LV3_FORCEINLINE void ShadeAt(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData) noexcept
+        {
+            auto* ctx = AsFragmentContext(userData);
+            [[maybe_unused]] const bool pass = Shader::Shade(*ctx, b, ctx-&gt;db-&gt;Row(y)[x], ctx-&gt;fb-&gt;Row(y)[x]);
+            #if LV3_RASTER_STATS
+                ctx-&gt;depthPassed += pass ? 1u : 0u;   // C0 : vidé par le Renderer
+            #endif
+        }
+    }
+
+    void ShadeFragment_Barycentric(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        ShadeAt&lt;ShaderBarycentric&gt;(x, y, b, userData);
+    }
+
+    void ShadeFragment_Solid(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        ShadeAt&lt;ShaderSolid&gt;(x, y, b, userData);
+    }
+
+    void ShadeFragment_LinearDepth(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        ShadeAt&lt;ShaderLinearDepth&gt;(x, y, b, userData);
+    }
+
+    void ShadeFragment_Depth(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        ShadeAt&lt;ShaderDepth&gt;(x, y, b, userData);
+    }
+
+    void ShadeFragment_LinearDepth_WRONG(int32_t x, int32_t y, const BarycentricWeights&amp; b, void* userData)
+    {
+        ShadeAt&lt;ShaderLinearDepthWRONG&gt;(x, y, b, userData);
+    }
+
+    /*
+	Fragment de DEBUG : permet de compter combien de fragments sont générés par pixel, pour diagnostiquer la TNR top-left.
+    */
+    void ShadeFragment_Count(int32_t x, int32_t y, const BarycentricWeights&amp;, void* userData)
+    {
+        auto* ctx = static_cast&lt;CountContext*&gt;(userData);
+        (*ctx-&gt;counts)[y * ctx-&gt;width + x]++;   // ici width suffit : c'est TON buffer, pas SDL
+    }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Renderer.h · SetMode</div>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>        void SetMode(ERenderMode m) noexcept
+        {
+            m_mode = m;
+            switch (m)                            // résolu UNE fois par VUE
+            {
+            case ERenderMode::Solid:             m_fragment = &amp;ShadeFragment_Solid;       break;
+            case ERenderMode::Depth:             m_fragment = &amp;ShadeFragment_Depth;       break;
+            case ERenderMode::BarycentricColors: m_fragment = &amp;ShadeFragment_Barycentric; break;
+            case ERenderMode::LinearDepth:       m_fragment = &amp;ShadeFragment_LinearDepth;   break;
+			case ERenderMode::ShadeFragment_LinearDepth_WRONG:           m_fragment = &amp;ShadeFragment_LinearDepth_WRONG; break; // TODO : shader de normales
+            default:                             m_fragment = nullptr;                    break;
+            }
+        }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>        void SetMode(ERenderMode m) noexcept
+        {
+            m_mode = m;
+            switch (m)                            // résolu UNE fois par VUE
+            {
+            case ERenderMode::Solid:
+                m_triangle = &amp;RasterizeTriangleT&lt;ShaderSolid&gt;;            m_fragment = &amp;ShadeFragment_Solid;       break;
+            case ERenderMode::Depth:
+                m_triangle = &amp;RasterizeTriangleT&lt;ShaderDepth&gt;;            m_fragment = &amp;ShadeFragment_Depth;       break;
+            case ERenderMode::BarycentricColors:
+                m_triangle = &amp;RasterizeTriangleT&lt;ShaderBarycentric&gt;;      m_fragment = &amp;ShadeFragment_Barycentric; break;
+            case ERenderMode::LinearDepth:
+                m_triangle = &amp;RasterizeTriangleT&lt;ShaderLinearDepth&gt;;      m_fragment = &amp;ShadeFragment_LinearDepth; break;
+            case ERenderMode::ShadeFragment_LinearDepth_WRONG:
+                m_triangle = &amp;RasterizeTriangleT&lt;ShaderLinearDepthWRONG&gt;; m_fragment = &amp;ShadeFragment_LinearDepth_WRONG; break;
+            default:                                // Wireframe (traité à part), Normals, UV : rien
+                m_triangle = nullptr;                                     m_fragment = nullptr;                    break;
+            }
+        }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Renderer.h · membres privés</div>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>        FragmentContext  m_ctx{};
+        FragmentCallback m_fragment = nullptr;</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>        FragmentContext  m_ctx{};
+        TriangleKernel   m_triangle = nullptr;   // C1 : noyau par TRIANGLE, shader inliné dedans
+        FragmentCallback m_fragment = nullptr;   // un fragment isolé : DrawPoint</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">LIB · Rendering/Renderer.cpp · DrawTriangle</div>
+    <p>Deux lignes changent : le garde (<code>m_triangle</code>) et l'appel. <code>DrawPoint</code> ne change pas.</p>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    void Renderer::DrawTriangle(const RasterTriangle&amp; tri, Color color)
+    {
+        if (!IsReady()) return;
+
+        if (m_mode == ERenderMode::Wireframe)
+        {
+            const Vec3f a{ tri.v0.x, tri.v0.y, tri.z0 };
+            const Vec3f b{ tri.v1.x, tri.v1.y, tri.z1 };
+            const Vec3f c{ tri.v2.x, tri.v2.y, tri.z2 };
+            DrawLineClipped(*m_ctx.fb, m_vp, a, b, color);
+            DrawLineClipped(*m_ctx.fb, m_vp, b, c, color);
+            DrawLineClipped(*m_ctx.fb, m_vp, c, a, color);
+            return;
+        }
+        if (!m_fragment) return;
+
+        // Mise à jour EN PLACE : 4 écritures, aucune construction.
+        m_ctx.color = color;                                         // 4 écritures,
+        m_ctx.z0 = tri.z0;  m_ctx.z1 = tri.z1;  m_ctx.z2 = tri.z2;   // aucune construction
+//		m_ctx.depthDisplayRange = m_ctx.depthDisplayRange;
+		m_ctx.invW0 = tri.invW0;  m_ctx.invW1 = tri.invW1;  m_ctx.invW2 = tri.invW2;
+
+        RasterizeTriangle(tri.v0, tri.v1, tri.v2, m_vp, m_fragment, &amp;m_ctx);
+        LV3_FLUSH_DEPTH_PASSED(m_ctx);      // C0 : comptage seulement (RASTER_STATS)
+
+    }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    void Renderer::DrawTriangle(const RasterTriangle&amp; tri, Color color)
+    {
+        if (!IsReady()) return;
+
+        if (m_mode == ERenderMode::Wireframe)
+        {
+            const Vec3f a{ tri.v0.x, tri.v0.y, tri.z0 };
+            const Vec3f b{ tri.v1.x, tri.v1.y, tri.z1 };
+            const Vec3f c{ tri.v2.x, tri.v2.y, tri.z2 };
+            DrawLineClipped(*m_ctx.fb, m_vp, a, b, color);
+            DrawLineClipped(*m_ctx.fb, m_vp, b, c, color);
+            DrawLineClipped(*m_ctx.fb, m_vp, c, a, color);
+            return;
+        }
+        if (!m_triangle) return;
+
+        // Mise à jour EN PLACE : 4 écritures, aucune construction.
+        m_ctx.color = color;                                         // 4 écritures,
+        m_ctx.z0 = tri.z0;  m_ctx.z1 = tri.z1;  m_ctx.z2 = tri.z2;   // aucune construction
+//		m_ctx.depthDisplayRange = m_ctx.depthDisplayRange;
+		m_ctx.invW0 = tri.invW0;  m_ctx.invW1 = tri.invW1;  m_ctx.invW2 = tri.invW2;
+
+        m_triangle(tri.v0, tri.v1, tri.v2, m_vp, m_ctx);   // C1 : 1 appel indirect par triangle
+        LV3_FLUSH_DEPTH_PASSED(m_ctx);      // C0 : comptage seulement (RASTER_STATS)
+
+    }</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">EXE · Test/Test_C1_RasterKernels.cpp · nouveau fichier (Ajouter → Élément existant dans le projet)</div>
+    <p>Chemin générique contre noyau, pour les 5 shaders, couleur et Z au bit près, et sous <code>RASTER_STATS</code> le même <code>depthPassed</code>. Deux vues (plein écran, et 200 × 150 décalée en (37, 21)), pitch supérieur à la largeur, sommets sur des centres de pixels, arêtes horizontales, triangles dégénérés, doublons à sommets tournés (égalités de Z). Garde-fou contre le test trivial : il faut des pixels allumés et des pixels recouverts.</p>
+    <div class="ba one"><figure class="ap"><figcaption>Nouveau fichier<button class="cp" type="button">Copier</button></figcaption><pre>#include "pch.h"
+#include &lt;random&gt;
+#include &lt;cstring&gt;
+#include "rendering/Viewport.h"
+#include "rendering/Rasterizer.h"
+#include "rendering/Fragment.h"
+#include "core/Logger.h"
+
+namespace LV3::Tests
+{
+#if LV3_DEBUG
+    namespace
+    {
+        constexpr int32_t kW = 320, kH = 200;
+
+        // Une cible PROPRE au test : couleur (pitch volontairement &gt; largeur, comme SDL) + profondeur.
+        struct Target
+        {
+            static constexpr int32_t kPitchPx = kW + 16;          // lignes espacees : Row() doit utiliser le pitch
+            std::vector&lt;uint32_t&gt; pixels = std::vector&lt;uint32_t&gt;(size_t(kPitchPx) * kH, 0u);
+            FrameBuffer fb;
+            DepthBuffer db;
+            Target() { fb.Bind(pixels.data(), kPitchPx * 4, kW, kH); db.Resize(kW, kH); db.Clear(); }
+        };
+
+        struct Tri { Vec2f v[3]; float z[3], invW[3]; Color col; };
+
+        // Triangles de toutes tailles, des deux sens, avec les cas limites de la regle top-left.
+        std::vector&lt;Tri&gt; MakeTriangles(uint32_t seed, int count)
+        {
+            std::mt19937 rng(seed);                                // graine FIXE
+            std::uniform_real_distribution&lt;float&gt; U(0.0f, 1.0f);
+            std::vector&lt;Tri&gt; tris;
+            tris.reserve(size_t(count) + size_t(count) / 10);
+            for (int i = 0; i &lt; count; ++i)
+            {
+                const float u = U(rng);
+                const float size = u &lt; 0.4f ? 0.3f + 1.2f * U(rng)        // V1 : boite d'un pixel
+                                 : u &lt; 0.8f ? 3.0f + 27.0f * U(rng)        // V2 : quelques dizaines
+                                 :            30.0f + 270.0f * U(rng);     // grands, debordent la vue
+                const float cx = -20.0f + (kW + 40.0f) * U(rng), cy = -20.0f + (kH + 40.0f) * U(rng);
+                Tri t{};
+                for (int k = 0; k &lt; 3; ++k)
+                {
+                    t.v[k] = { cx + (U(rng) - 0.5f) * size, cy + (U(rng) - 0.5f) * size };
+                    const float w = 0.5f + 40.0f * U(rng);        // distance a l'oeil
+                    t.invW[k] = 1.0f / w;
+                    t.z[k] = 0.1f / w;                             // reverse-Z : proche -&gt; grand
+                }
+                const float e = U(rng);
+                if (e &lt; 0.20f)                                     // sommets SUR des centres de pixels : w == 0 exact
+                    for (auto&amp; p : t.v) p = { std::floor(p.x) + 0.5f, std::floor(p.y) + 0.5f };
+                else if (e &lt; 0.30f) t.v[1].y = t.v[0].y;           // arete horizontale (top)
+                else if (e &lt; 0.35f) t.v[2] = { 0.5f * (t.v[0].x + t.v[1].x), 0.5f * (t.v[0].y + t.v[1].y) }; // degenere
+                t.col = MakeColor(uint8_t(rng()), uint8_t(rng()), uint8_t(rng()));
+                tris.push_back(t);
+
+                if (U(rng) &lt; 0.1f)                                 // MEME triangle, sommets tournes : egalites de Z
+                    tris.push_back(Tri{ { t.v[1], t.v[2], t.v[0] }, { t.z[1], t.z[2], t.z[0] },
+                                        { t.invW[1], t.invW[2], t.invW[0] }, t.col });
+            }
+            return tris;
+        }
+
+        void Fill(FragmentContext&amp; c, const Tri&amp; t)
+        {
+            c.color = t.col;
+            c.z0 = t.z[0];       c.z1 = t.z[1];       c.z2 = t.z[2];
+            c.invW0 = t.invW[0]; c.invW1 = t.invW[1]; c.invW2 = t.invW[2];
+            c.depthDisplayRange = 25.0f;
+        }
+
+        // Compare au BIT pres : couleur (lignes utiles seulement) et profondeur (bit a bit, pas ==).
+        bool SameImage(Target&amp; a, Target&amp; b, size_t&amp; colorDiff, size_t&amp; depthDiff)
+        {
+            colorDiff = depthDiff = 0;
+            for (int32_t y = 0; y &lt; kH; ++y)
+                for (int32_t x = 0; x &lt; kW; ++x)
+                {
+                    const size_t i = size_t(y) * Target::kPitchPx + size_t(x);
+                    if (a.pixels[i] != b.pixels[i]) ++colorDiff;
+                    if (std::memcmp(&amp;a.db.Row(y)[x], &amp;b.db.Row(y)[x], sizeof(float)) != 0) ++depthDiff;
+                }
+            return colorDiff == 0 &amp;&amp; depthDiff == 0;
+        }
+
+        // Generique (pointeur de fonction par pixel, = chemin d'avant C1) contre noyau specialise.
+        template&lt;class Shader&gt;
+        bool CheckShader(const char* name, FragmentCallback generic, const std::vector&lt;Tri&gt;&amp; tris,
+            const Viewport&amp; vp, size_t&amp; litOut)
+        {
+            Target A, B;
+            FragmentContext ca{}, cb{};
+            ca.fb = &amp;A.fb; ca.db = &amp;A.db;
+            cb.fb = &amp;B.fb; cb.db = &amp;B.db;
+            for (const Tri&amp; t : tris)
+            {
+                Fill(ca, t); RasterizeTriangle(t.v[0], t.v[1], t.v[2], vp, generic, &amp;ca);
+                Fill(cb, t); RasterizeTriangleT&lt;Shader&gt;(t.v[0], t.v[1], t.v[2], vp, cb);
+            }
+            size_t cd = 0, dd = 0;
+            bool ok = SameImage(A, B, cd, dd);
+            #if LV3_RASTER_STATS
+                // Compteur C0 : meme nombre de fragments passes au Z par les deux chemins.
+                if (ca.depthPassed != cb.depthPassed)
+                {
+                    Logger::error(std::string("[C1] ") + name + " : depthPassed " + std::to_string(ca.depthPassed)
+                        + " (generique) contre " + std::to_string(cb.depthPassed) + " (noyau)");
+                    ok = false;
+                }
+            #endif
+            litOut = 0;
+            for (int32_t y = 0; y &lt; kH; ++y)
+                for (int32_t x = 0; x &lt; kW; ++x)
+                    litOut += A.pixels[size_t(y) * Target::kPitchPx + size_t(x)] != 0u;
+            if (!ok)
+                Logger::error(std::string("[C1] ") + name + " : " + std::to_string(cd) + " pixels couleur et "
+                    + std::to_string(dd) + " profondeurs differentes");
+            return ok;
+        }
+    }
+
+    // C1 : noyau specialise par shader == chemin generique, AU BIT PRES, pour les 5 shaders,
+    //      plein ecran et sous-viewport decale (scissor), pitch &gt; largeur.
+    bool Test_C1_RasterKernels()
+    {
+        const std::vector&lt;Tri&gt; tris = MakeTriangles(7u, 6000);
+        const Viewport views[2] = { Viewport::FullScreen(kW, kH), Viewport{ 37, 21, 200, 150 } };
+
+        bool ok = true;
+        for (const Viewport&amp; vp : views)
+        {
+            size_t lit[5] = {};
+            ok &amp;= CheckShader&lt;ShaderSolid&gt;("Solid", &amp;ShadeFragment_Solid, tris, vp, lit[0]);
+            ok &amp;= CheckShader&lt;ShaderBarycentric&gt;("Barycentric", &amp;ShadeFragment_Barycentric, tris, vp, lit[1]);
+            ok &amp;= CheckShader&lt;ShaderLinearDepth&gt;("LinearDepth", &amp;ShadeFragment_LinearDepth, tris, vp, lit[2]);
+            ok &amp;= CheckShader&lt;ShaderDepth&gt;("Depth", &amp;ShadeFragment_Depth, tris, vp, lit[3]);
+            ok &amp;= CheckShader&lt;ShaderLinearDepthWRONG&gt;("LinearDepth_WRONG", &amp;ShadeFragment_LinearDepth_WRONG, tris, vp, lit[4]);
+
+            // CONTRE-EXEMPLE du test qui ne teste rien : il faut des pixels allumes ET des Z-tests perdus.
+            std::vector&lt;uint8_t&gt; counts(size_t(kW) * kH, 0);
+            CountContext cc{ &amp;counts, kW };
+            for (const Tri&amp; t : tris) RasterizeTriangle(t.v[0], t.v[1], t.v[2], vp, &amp;ShadeFragment_Count, &amp;cc);
+            size_t covered = 0, multi = 0;
+            for (uint8_t n : counts) { covered += n; multi += n &gt; 1; }
+
+            Logger::info("[C1] vue " + std::to_string(vp.width) + "x" + std::to_string(vp.height)
+                + " : " + std::to_string(tris.size()) + " triangles, " + std::to_string(covered)
+                + " fragments, " + std::to_string(lit[0]) + " pixels allumes (Solid), "
+                + std::to_string(multi) + " pixels recouverts");
+            if (lit[0] == 0 || multi == 0)
+            {
+                Logger::error("[C1] test trivial : aucun pixel allume ou aucun recouvrement");
+                ok = false;
+            }
+        }
+        return ok;
+    }
+#endif
+}</pre></figure></div>
+  </div>
+  <div class="step">
+    <div class="file">EXE · Test/RunAllTests.cpp · déclaration et appel</div>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>    bool Test_B5_ObjBackface();</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>    bool Test_B5_ObjBackface();
+    bool Test_C1_RasterKernels();</pre></figure></div>
+    <div class="ba"><figure class="av"><figcaption>Avant</figcaption><pre>        if (!Test_B5_ObjBackface())
+        {
+            Logger::error("ECHEC : Test_B5_ObjBackface()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_B5_ObjBackface()");
+        }</pre></figure><figure class="ap"><figcaption>Après<button class="cp" type="button">Copier</button></figcaption><pre>        if (!Test_B5_ObjBackface())
+        {
+            Logger::error("ECHEC : Test_B5_ObjBackface()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_B5_ObjBackface()");
+        }
+
+        if (!Test_C1_RasterKernels())
+        {
+            Logger::error("ECHEC : Test_C1_RasterKernels()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_C1_RasterKernels()");
+        }</pre></figure></div>
+  </div>
+</section>
+
+<section>
+  <div class="sh"><span class="stepno">ÉTAPE 8</span><h2>Valider, puis mesurer</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Accepter ou refuser C1 sur des critères écrits avant le premier run.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 6 : ordre de grandeur hors moteur. C0 R1 : compteurs de référence. C0 R2 : D = 629 µs (V1), 1 711 µs (V2) ; fragments 79 et 446 µs.</div>
+  </div>
+  <h3>Prédictions</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Prédiction</th><th>Raisonnement</th></tr></thead>
+    <tbody>
+      <tr><td>Toutes</td><td>Compteurs identiques à B5 et à C0 R1</td><td>exact par construction</td></tr>
+      <tr><td>V1</td><td>Étage faces dans le bruit (0 à −3 %)</td><td>6 192 pixels couverts seulement ; le coût est par triangle</td></tr>
+      <tr><td>V2</td><td>Render −120 à −250 µs (−4 à −9 %), dans le même mode</td><td>fragments 446 µs ; hors moteur −7 à −13 % du dessin</td></tr>
+      <tr><td>L</td><td>Dans le bruit</td><td>≈ 4 500 pixels couverts par frame</td></tr>
+    </tbody>
+  </table></div>
+  <p style="margin-top:8px"><strong>Règle de décision :</strong> compteurs identiques et TNR verte sont obligatoires. Un V2 plus lent (deux runs de chaque côté, même mode) fait refuser C1 et lire l'asm. Un gain faible ne le fait pas refuser : C1 est décidé comme préalable de C2.</p>
+  <h3>Liste de contrôle</h3>
+  <ul class="check" id="checks">
+    <li><input type="checkbox" id="k0"><label for="k0"><code>config.h</code> : <code>LV3_ABLATION_RASTER</code> à 0 par défaut (et <code>LV3_ABLATION_PIXELS</code> à 0).</label></li>
+    <li><input type="checkbox" id="k1"><label for="k1">Build Debug et Release LIB + EXE, aucun avertissement nouveau (C4005, C4189).</label></li>
+    <li><input type="checkbox" id="k2"><label for="k2">TNR Debug : <code>SUCCES : Test_C1_RasterKernels()</code>, les deux lignes <code>[C1] vue …</code> avec des pixels recouverts &gt; 0. Toutes les TNR existantes (TopLeftRule, ClipCoverage, Depth) restent vertes : elles passent maintenant par <code>SetupTriangle</code>.</label></li>
+    <li><input type="checkbox" id="k3"><label for="k3">Run Debug des 3 scènes : aucune assertion (dont la nouvelle « boîte hors du framebuffer »). Passer V1 en mode Depth, LinearDepth, Barycentric : image inchangée à l'œil.</label></li>
+    <li><input type="checkbox" id="k4"><label for="k4">R1 comptage (<code>LV3_RASTER_STATS=1</code>) : V1 TrisCov0/1 = 11 928 / 6 192, PixelsTight 18 120, PixelsCovered 6 192, PixelsDepthPassed 6 192 ; V2 PixelsTight 352 848, PixelsCovered 126 928, PixelsDepthPassed 126 928 ; compteurs B5 identiques. Optionnel : un palier E (<code>ABLATION_PIXELS=2</code>) pour vérifier que l'ablation suit le nouveau chemin (Render nettement sous N, image vide).</label></li>
+    <li><input type="checkbox" id="k5"><label for="k5">Asm Release : <code>/FAs</code> sur <code>Scene/RenderSystem.cpp</code> seul (les instances du template y naissent, via <code>SetMode</code>). Chercher <code>RasterizeTriangleT</code> + <code>ShaderSolid</code> … <code>PROC</code>. Dans la boucle interne : aucun <code>call</code>, 0 <code>vfmadd</code>, z = 3 <code>vmulss</code> + 2 <code>vaddss</code>. Les 3 <code>call IsTopLeft</code> éventuels sont avant la boucle (préparation, piste C3). Retirer <code>/FAs</code> ensuite.</label></li>
+    <li><input type="checkbox" id="k6"><label for="k6">R2 temps : A = binaire B5, B = binaire C1, secteur + mode performances, <code>affinity 4</code>. V1 et L : A B B A. V2 : A B B A A B B A (bimodalité : au moins deux runs de chaque côté dans le même mode). Vérifier la 1ʳᵉ ligne de chaque summary.</label></li>
+    <li><input type="checkbox" id="k7"><label for="k7">Thermomètres : <code>RenderVerts</code> (limité par le calcul) croisé avec <code>Clear</code>. Comparer V1 sur l'étage faces <code>Render − RenderVerts</code>.</label></li>
+  </ul>
+  <h3>Relevé en écrivant C1, non corrigé (bit-exactitude oblige)</h3>
+  <ul>
+    <li>Un z NaN passe le test de profondeur (<code>NaN &lt;= d</code> est faux) et écrit NaN dans le Z-buffer ; ensuite tout fragment passe sur ce pixel. Comportement identique avant et après C1. À ranger dans les dettes ; aujourd'hui la préparation ne produit pas de NaN sur les scènes de mesure.</li>
+    <li><s><code>IsTopLeft</code> hors ligne, 3 appels par triangle.</s> Réfuté par l'asm du 23/10 : l'optimisation à l'édition de liens (<code>/GL</code>) l'inline dans le noyau. Ce n'est pas une pièce de C3.</li>
+  </ul>
+</section>
+
+
+<section>
+  <div class="sh"><span class="stepno" style="background:var(--ok)">RÉSULTATS 23/10</span><h2>R0, R1 et lecture de l'assembleur</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Décider si C1 peut passer au lot de temps (R2) : exactitude prouvée, boucle conforme à la conception.</div>
+    <div class="uses"><b>S'appuie sur</b>Étape 8 : liste de contrôle, compteurs attendus de C0 R1 (V1 11 928 / 6 192 / 18 120 / 6 192 ; V2 352 848 / 126 928 / 126 928).</div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Contrôle</th><th>Attendu</th><th>Obtenu</th><th></th></tr></thead>
+    <tbody class="num">
+      <tr><td>Build Debug + Release, LIB + EXE</td><td>aucun avertissement nouveau</td><td>aucun</td><td><span class="pill o">OK</span></td></tr>
+      <tr><td>TNR <code>Test_C1_RasterKernels</code></td><td>SUCCES</td><td>SUCCES (2 vues, 5 shaders)</td><td><span class="pill o">OK</span></td></tr>
+      <tr><td>Run Debug des 3 scènes</td><td>aucune assertion</td><td>aucune</td><td><span class="pill o">OK</span></td></tr>
+      <tr><td>V1 TrisCov0 / TrisCov1</td><td>11 928 / 6 192</td><td>11 928 / 6 192</td><td><span class="pill o">identique</span></td></tr>
+      <tr><td>V1 PixelsTight / PixelsCovered</td><td>18 120 / 6 192</td><td>18 120 / 6 192</td><td><span class="pill o">identique</span></td></tr>
+      <tr><td>V2 PixelsTight / Covered / DepthPassed</td><td>352 848 / 126 928 / 126 928</td><td>352 848 / 126 928 / 126 928</td><td><span class="pill o">identique</span></td></tr>
+      <tr><td>Asm Release, boucle interne de <code>RasterizeTriangleT&lt;ShaderSolid&gt;</code></td><td>aucun <code>call</code>, 0 <code>vfmadd</code></td><td>aucun <code>call</code>, 0 <code>vfmadd</code></td><td><span class="pill o">conforme</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><strong>Fragments de la TNR : 1 898 722 chez toi, 1 898 720 chez moi.</strong> Ce n'est pas un écart de rasterisation. <code>std::mt19937</code> donne la même suite partout, mais <code>std::uniform_real_distribution</code> n'est pas spécifiée bit à bit par la norme : la STL de MSVC et libstdc++ ne tirent pas les mêmes triangles. Chaque machine compare ses deux chemins sur <em>ses</em> triangles, et c'est cette comparaison qui doit être nulle. Elle l'est des deux côtés.</div>
+
+  <h3>L'assembleur, annoté</h3>
+  <p>Listing compilé avec <code>LV3_RASTER_STATS=1</code> (on y voit <code>call RecordRasterStats</code> et <code>add r8d, eax</code>). Le binaire de mesure R2 doit être compilé sans : la boucle est la même, moins ces deux lignes.</p>
+  <div class="ba one"><figure class="ap"><figcaption>BeginRow : une fois par ligne</figcaption><pre>; BeginRow(y) : une fois par LIGNE
+movsxd  rcx, DWORD PTR [r11+24]        ; db-&gt;m_Width
+movsxd  r10, DWORD PTR [r10+8]         ; fb-&gt;m_Pitch
+mov     rax, QWORD PTR [r11]           ; db-&gt;m_Data.data()
+imul    rcx, rdx                       ; y * largeur
+imul    r10, rdx                       ; y * pitch
+lea     r11, [rax+rcx*4]               ; depthRow
+add     r10, QWORD PTR [rax]           ; colorRow = m_Pixels + y*pitch
+vcvtsi2ss xmm0, xmm0, ebx
+vaddss  xmm11, xmm0, xmm3              ; py = y + 0.5   (hors de la boucle x)</pre></figure></div>
+  <div class="ba one" style="margin-top:10px"><figure class="ap"><figcaption>Boucle x, extraits (RenderSystem.asm, lignes 10 960 à 11 143)</figcaption><pre>$LL147:                                ; ── boucle x ──
+vcvtsi2ss xmm0, xmm0, ecx
+vaddss  xmm2, xmm0, xmm3               ; px = x + 0.5
+vsubss  xmm3,  xmm13, xmm2             ; p1.x - px   (ux de l&#x27;arête 0)
+vsubss  xmm10, xmm14, xmm2             ; p2.x - px   (vx de l&#x27;arête 0 = ux de l&#x27;arête 1)
+vsubss  xmm9,  xmm6,  xmm11            ; p2.y - py
+vsubss  xmm4,  xmm15, xmm11            ; p1.y - py
+vmulss  xmm1, xmm4, xmm10
+vmulss  xmm0, xmm3, xmm9
+vsubss  xmm8, xmm1, xmm0               ; w0
+test    r15b, r15b                     ; tl0 : REtesté à chaque pixel
+je      $LN182
+vcomiss xmm8, xmm5 / setae al          ; tl  : w0 &gt;= 0
+$LN182: vcomiss xmm8, xmm5 / seta al   ; !tl : w0 &gt; 0
+test al, al
+je      $LN145                         ; &amp;&amp; : sortie au 1er échec, w1 et w2 jamais calculés
+vsubss  xmm6, xmm7, xmm2               ; p0.x - px   (2 soustractions nouvelles)
+vsubss  xmm7, xmm0, xmm11              ; p0.y - py
+vmulss / vmulss / vsubss  -&gt; w1        ; réutilise p2.x-px et p2.y-py de l&#x27;arête 0
+... InsideEdge(w1, tl1), je $LN250
+vmulss / vmulss / vsubss  -&gt; w2        ; AUCUNE soustraction nouvelle
+... InsideEdge(w2, tl2), je $LN250
+inc     r9d                            ; ++covered
+vmulss  xmm0, xmm0, xmm12              ; bary : w * invArea (xmm12, calculé par vdivss hors boucle)
+vmulss  xmm4, xmm2, xmm12
+vmulss  xmm2, xmm0, [sink.z1]          ; w1·z1   opérande mémoire : copie du ctx sur la PILE
+vmulss  xmm1, xmm12, xmm8              ; w0 * invArea
+vmulss  xmm0, xmm1, [sink.z0]          ; w0·z0
+vmulss  xmm1, xmm4, [sink.z2]          ; w2·z2
+vaddss  xmm3, xmm2, xmm0               ; w1·z1 + w0·z0   (commutation : exacte)
+vaddss  xmm2, xmm3, xmm1               ; + w2·z2         (association : inchangée)
+vmovss  xmm0, [r11+rax*4]              ; depthRow[x]
+vcomiss xmm0, xmm2 / jb $LN206         ; z &lt;= dst ?
+vmovss  [r11+rax*4], xmm2              ; depthRow[x] = z
+mov     [r10+rax*4], ebp               ; colorRow[x] = couleur  (ebp : registre, tout le triangle)
+add     r8d, eax                       ; depthPassed (RASTER_STATS)
+$LN250:
+vmovss  xmm6, [s.p…] / vmovsd xmm7, [s.p…]   ; recharges : 16 registres xmm ne suffisent pas
+$LN145:
+vmovss  xmm3, __real@3f000000          ; 0.5 rechargé à chaque tour (xmm3 sert aussi de temporaire)
+inc ecx / cmp ecx, edi / jl $LL147</pre></figure></div>
+  <h3>Ce que l'asm confirme</h3>
+  <ul>
+    <li><strong>Plus aucun appel par pixel.</strong> Le shader est inliné : test de profondeur, écriture Z, écriture couleur sont trois instructions mémoire. La couleur reste dans <code>ebp</code> pour tout le triangle.</li>
+    <li><strong>Les lignes sont hissées.</strong> <code>y·pitch</code>, <code>y·largeur</code> et <code>py</code> sont calculés une fois par ligne.</li>
+    <li><strong>La copie du contexte joue son rôle.</strong> <code>z0..z2</code> ne sont pas restés en registres (plus assez de registres xmm), mais ils sont lus dans la copie sur la pile, en opérande mémoire de <code>vmulss</code>. Une lecture L1 intégrée à la multiplication : c'est la forme optimale quand les registres manquent. Aucune relecture à travers le pointeur <code>ctx</code>.</li>
+    <li><strong>z est bit-exact.</strong> MSVC calcule <code>w1·z1 + w0·z0</code> puis <code>+ w2·z2</code>. Échanger les deux termes d'une addition est exact en IEEE 754 (a + b = b + a, bit à bit). Ce qui n'est pas exact, c'est changer le parenthésage, et il est conservé : la somme des deux premiers produits est faite avant d'ajouter le troisième.</li>
+    <li><strong>Une bonne surprise : moins de 21 opérations par pixel.</strong> L'arête 0 calcule <code>p2.x − px</code> et <code>p2.y − py</code> ; l'arête 1 commence par les mêmes soustractions, et le compilateur les réutilise. Même réutilisation pour l'arête 2. Au total 6 soustractions, 6 multiplications, 3 soustractions finales, contre 21 opérations écrites. Le résultat est identique bit à bit, puisque c'est la même opération sur les mêmes valeurs. Avec <code>&amp;&amp;</code>, un pixel rejeté par l'arête 0 ne paie que 9 opérations.</li>
+    <li><strong><code>IsTopLeft</code> est inlinée</strong> par <code>/GL</code> dans la préparation : ma remarque « 3 appels hors ligne par triangle » était fausse, je l'ai barrée.</li>
+  </ul>
+  <h3>Ce que l'asm montre de moins bon (pour C2, pas à corriger en C1)</h3>
+  <ul>
+    <li><strong>Le choix top-left n'est pas sorti de la boucle.</strong> Pour chaque arête, <code>test r15b, r15b / je</code> refait le choix <code>tl ? &gt;= : &gt;</code> à chaque pixel. MSVC ne duplique pas la boucle pour un booléen invariant. Le coût est faible : la branche est parfaitement prévisible. En C2, la question disparaît : le masque <code>GT | (EQ &amp; tlMask)</code> est calculé sans branche pour 8 pixels.</li>
+    <li><strong>Pression sur les registres.</strong> Des sommets de <code>s</code> sont rechargés après chaque fragment, et la constante 0,5 l'est à chaque tour (xmm3 sert aussi de temporaire). AVX2 n'a que 16 registres xmm/ymm : c'est la même limite qu'en B3, et l'argument de B6 (AVX-512, 32 registres). En C2, ces valeurs deviennent des vecteurs diffusés une fois par ligne.</li>
+  </ul>
+  <h3>Suite : R2, le lot de temps</h3>
+  <ul>
+    <li><strong>A</strong> = LIB <code>82c53f2</code> avec <code>LV3_ABLATION_RASTER=0</code>, <code>ABLATION_PIXELS=0</code>, <code>RASTER_STATS=0</code> (le moteur normal de C0, équivalent B5). <strong>B</strong> = C1, mêmes commutateurs.</li>
+    <li>Secteur, mode performances, <code>affinity 4</code>. V1 et L : A B B A. V2 : A B B A A B B A. Vérifier la 1ʳᵉ ligne de chaque summary.</li>
+    <li>Prédictions inchangées : V1 étage faces 0 à −3 % ; V2 Render −120 à −250 µs (−4 à −9 %, même mode) ; L dans le bruit.</li>
+  </ul>
+</section>
+
+
+<section style="border-color:var(--warn)">
+  <div class="sh"><span class="stepno" style="background:var(--warn)">R2 · 1ʳᵉ TENTATIVE · 23/10</span><h2>Lot de temps non recevable : A est le binaire M</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Lire le lot A / B et décider si la prédiction de C1 tient.</div>
+    <div class="uses"><b>S'appuie sur</b>Règle « vérifier la 1ʳᵉ ligne de chaque summary » ; correctif 22/10 : <code>config.h</code> de <code>82c53f2</code> a <code>LV3_ABLATION_RASTER 1</code> par défaut.</div>
+  </div>
+  <p><strong>Les 5 runs A portent <code>ablation=raster</code></strong> dans leur en-tête ; les 6 runs B portent <code>ablation=none</code>. A a été compilé depuis <code>82c53f2</code> tel quel : <code>DrawTriangle</code> y est débranché. Sur V2, A dessine en 44 µs ce que B dessine en 1,8 ms. La comparaison A / B ne mesure pas C1.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Run (ordre A B B A A B B A)</th><th>Scène</th><th>ablation</th><th>Render</th><th>RenderVerts</th><th>Clear</th><th>Present</th></tr></thead>
+    <tbody class="num">
+      <tr><td>C1_A1</td><td>V1</td><td><span class="pill w">raster</span></td><td>735,1</td><td>190,5</td><td>437,8</td><td>897,9</td></tr>
+      <tr><td>C1_B1</td><td>V1</td><td>none</td><td>1 449,3</td><td>186,6</td><td>429,5</td><td>912,5</td></tr>
+      <tr><td>C1_B2</td><td>V1</td><td>none</td><td>1 440,7</td><td>189,3</td><td>409,4</td><td>894,3</td></tr>
+      <tr><td>C2_A1 / A2</td><td>V2</td><td><span class="pill w">raster</span></td><td>44,0 / 43,6</td><td>13,1 / 12,6</td><td>469 / 469</td><td>1 379 / 1 427</td></tr>
+      <tr><td>C2_B1 / B2</td><td>V2</td><td>none</td><td>1 810,9 / 1 807,8</td><td>9,4 / 9,5</td><td>396 / 401</td><td>858 / 882</td></tr>
+      <tr><td>C2_A3 / A4</td><td>V2</td><td><span class="pill w">raster</span></td><td>44,7 / 44,1</td><td>12,7 / 13,0</td><td>493 / 473</td><td>1 423 / 1 392</td></tr>
+      <tr><td>C2_B3 / B4</td><td>V2</td><td>none</td><td>1 943,7 / 1 935,2</td><td>10,9 / 10,7</td><td>433 / 424</td><td>924 / 922</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:.86rem;color:var(--mute)">Médianes en µs. V1 : un seul run A, pas de A2. L : absent.</p>
+  <h3>Ce qu'on peut quand même en tirer</h3>
+  <ul>
+    <li><strong>Le biais d'ablation de C0 se reproduit.</strong> Dans les runs A (qui ne dessinent rien), les zones au code identique sont plus lentes : sur V2, <code>RenderVerts</code> +34 %, <code>Clear</code> +18 %, <code>Present</code> +60 %. La machine baisse ses fréquences quand la charge baisse. Raison de plus pour que A et B fassent le même travail.</li>
+    <li><strong>Le thermomètre fonctionne dans B.</strong> B3/B4 sont 7,1 % plus lents que B1/B2 sur <code>Render</code>, et <code>Clear</code> monte de 7,0 % dans les mêmes runs : c'est la machine qui dérive en cours de lot, pas le code. Ramené à <code>Clear</code>, <code>Render</code> V2 de C1 vaut 4,49 à 4,58 dans les quatre runs.</li>
+    <li><strong>Une estimation entre deux jours, donc indicative seulement.</strong> D = Render(B) − Render(M) donne, pour C1, ≈ 1 765 µs sur V2 (1ʳᵉ moitié) et ≈ 712 µs sur V1 (étage faces). C0 donnait 1 711 et 629 µs. Ces écarts (+3 % et +13 %) sont dans la dérive d'un jour à l'autre (12 à 35 %). Ils ne prouvent rien, mais ils ne montrent pas non plus le gain prédit sur V2 : la prédiction −4 à −9 % est en danger.</li>
+  </ul>
+  <h3>Une hypothèse à tenir prête pour V1</h3>
+  <p>Si le lot propre confirme un V1 plus lent, le coupable probable est un coût <em>par triangle</em> ajouté par C1 : 712 − 629 = 83 µs pour 18 120 triangles, soit ≈ 4,6 ns. Candidats lus dans l'asm : le prologue de <code>RasterizeTriangleT</code> sauvegarde et restaure les registres xmm6 à xmm15 (préservés par l'ABI Windows x64, et le noyau les utilise presque tous), la copie du contexte, et l'appel indirect à la place de l'appel direct. Sur V1, chaque triangle n'a qu'un pixel à tester : ce coût fixe n'est amorti par rien. Ce serait aussi l'argument direct pour C3 : ne plus appeler le noyau pour une boîte d'un pixel.</p>
+  <h3>Refaire le lot</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="r1"><label for="r1"><strong>A</strong> : <code>82c53f2</code> compilé avec <code>LV3_ABLATION_RASTER=0</code> (ligne de commande, ou la seule ligne de <code>config.h</code> modifiée dans la copie A). Contrôle : en-tête <code>ablation=none</code>.</label></li>
+    <li><input type="checkbox" id="r2"><label for="r2">V1 : A B B A complet (il manquait A2). V2 : A B B A A B B A. L : A B B A.</label></li>
+    <li><input type="checkbox" id="r3"><label for="r3">Mêmes compteurs dans A et B (<code>TrisRasterized</code>, <code>TrisEarlyRejected</code>, <code>TrisObjRejected</code>) : déjà vrai ici.</label></li>
+  </ul>
+</section>
+
+
+<section style="border-color:var(--ok)">
+  <div class="sh"><span class="stepno" style="background:var(--ok)">R2 · LOT PROPRE · 23/10</span><h2>Verdict : C1 accepté, prédictions réfutées</h2></div>
+  <div class="goal">
+    <div class="why"><b>Objectif</b>Appliquer la règle écrite à l'étape 8 et confronter les deux prédictions à la mesure.</div>
+    <div class="uses"><b>S'appuie sur</b>Prédictions : V1 étage faces 0 à −3 % ; V2 Render −120 à −250 µs. Règle : compteurs + TNR obligatoires ; V2 plus lent ⇒ refus ; gain faible ⇒ accepté. Hypothèse de la 1ʳᵉ tentative : ≈ 4,6 ns par triangle sur V1.</div>
+  </div>
+  <p>Les 12 en-têtes portent <code>ablation=none</code> ; compteurs identiques dans les 12 runs (V1 <code>TrisRasterized</code> 249 466, <code>TrisEarlyRejected</code> 231 346, <code>TrisObjRejected</code> 250 776 ; V2 5 036 / 12 / 10 656). L n'a pas été mesuré.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>V1, ordre A B B A</th><th>Render</th><th>RenderVerts</th><th>Étage faces</th><th>Clear</th><th>État</th></tr></thead>
+    <tbody class="num">
+      <tr><td>A1 (C0)</td><td>1 356,6</td><td>166,7</td><td>1 189,9</td><td>421,0</td><td><span class="pill o">propre</span></td></tr>
+      <tr><td>B1 (C1)</td><td>1 443,1</td><td>171,2</td><td>1 271,9</td><td>426,3</td><td><span class="pill o">propre</span></td></tr>
+      <tr><td>B2 (C1)</td><td>1 439,5</td><td>169,2</td><td>1 270,3</td><td>432,1</td><td><span class="pill o">propre</span></td></tr>
+      <tr><td>A2 (C0)</td><td>1 401,9</td><td>187,0</td><td>1 214,9</td><td>449,2</td><td><span class="pill w">perturbé</span> RenderVerts +12 %, Clear +7 %</td></tr>
+    </tbody>
+  </table></div>
+  <div class="tbl" style="margin-top:12px"><table>
+    <thead><tr><th>V2, ordre A B B A A B B A</th><th>A1</th><th>B1</th><th>B2</th><th>A2</th><th>A3</th><th>B3</th><th>B4</th><th>A4</th></tr></thead>
+    <tbody class="num">
+      <tr><td>Render</td><td>1 927</td><td>1 918</td><td>1 945</td><td>2 012</td><td>1 983</td><td>1 966</td><td>1 970</td><td>2 042</td></tr>
+      <tr><td>RenderVerts</td><td>10,5</td><td>10,7</td><td>10,4</td><td><b>12,4</b></td><td>10,4</td><td>11,3</td><td>10,7</td><td>11,1</td></tr>
+      <tr><td>Clear</td><td>428</td><td>416</td><td>435</td><td><b>458</b></td><td>431</td><td>442</td><td>417</td><td>424</td></tr>
+      <tr><td>Render / Clear</td><td>4,50</td><td>4,61</td><td>4,48</td><td>4,40</td><td>4,61</td><td>4,45</td><td>4,73</td><td>4,82</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:.86rem;color:var(--mute)">Médianes en µs. Pas de bimodalité dans ce lot : les 8 runs V2 sont entre 1,92 et 2,04 ms.</p>
+
+  <h3>Lecture</h3>
+  <ul>
+    <li><strong>V1 : C1 est plus lent, et c'est net.</strong> Étage faces 1 190 (A1, propre) → 1 271 µs (B1 et B2, propres, à 2 µs l'un de l'autre) : <strong>+81 µs, +6,8 %</strong>. Même en prenant A2 perturbé tel quel, ce qui avantage C1, il reste +69 µs (+5,7 %). Les deux runs A, même le run perturbé, sont plus rapides que les deux runs B. Par triangle dessiné (18 120) : <strong>+3,8 à +4,5 ns</strong>. L'hypothèse tirée de la 1ʳᵉ tentative (≈ 4,6 ns) est confirmée par un lot propre.</li>
+    <li><strong>V2 : gain réel mais petit.</strong> Moyenne A 1 991 → B 1 950 µs : −41 µs (−2,1 %). Sans A2 perturbé : −34 µs (−1,7 %). Rapporté à <code>Clear</code> : −0,3 %. Le gain se situe entre 0 et −2 %, autour de −35 µs.</li>
+    <li><strong>Ce que coûtait vraiment l'appel par pixel.</strong> Sur V2, C1 ajoute le même coût par triangle que sur V1 : 5 024 × ≈ 4 ns ≈ 21 µs. Le gain par pixel est donc d'environ 35 + 21 = 56 µs pour 126 928 pixels couverts : <strong>≈ 0,45 ns par pixel</strong>, sur les 3,5 ns que coûtait un fragment en C0. L'appel indirect à cible constante vers une petite fonction ne coûtait presque rien sur ce cœur : prédit, avec un retour prédit lui aussi, il s'exécutait en parallèle des chargements de profondeur.</li>
+  </ul>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Prédiction (étape 8)</th><th>Mesure</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Compteurs identiques</td><td class="num">identiques (12 runs)</td><td><span class="pill o">confirmée</span></td></tr>
+      <tr><td>V1 étage faces 0 à −3 %</td><td class="num">+5,7 à +6,8 %</td><td><span class="pill w">réfutée, signe faux</span></td></tr>
+      <tr><td>V2 Render −120 à −250 µs (−4 à −9 %)</td><td class="num">≈ −35 µs (0 à −2 %)</td><td><span class="pill w">réfutée, 3 à 7 fois trop optimiste</span></td></tr>
+      <tr><td>L dans le bruit</td><td>non mesuré</td><td><span class="pill">en attente</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Pourquoi je me suis trompé</h3>
+  <ul>
+    <li><strong>V1 :</strong> mon propre banc hors moteur donnait 0,96 à 1,06 sur V1-like. J'ai écrit « dans le bruit, 0 à −3 % » en ne gardant que le bas de la fourchette. Elle contenait déjà +6 %. Une prédiction doit reprendre <em>toute</em> la fourchette de l'instrument, pas la moitié qui arrange.</li>
+    <li><strong>V2 :</strong> j'ai extrapolé un gain mesuré avec g++ sur un Xeon de serveur à MSVC sur un cœur P d'Alder Lake. Ni le compilateur ni la micro-architecture ne sont les mêmes, et c'est précisément le coût d'un appel indirect qui varie le plus de l'un à l'autre. Un banc hors moteur prouve l'<strong>exactitude</strong> ; il ne donne pas l'<strong>ordre de grandeur</strong> d'un gain de quelques nanosecondes.</li>
+    <li><strong>Commun aux deux :</strong> j'ai compté ce que C1 retirait (un appel par pixel) sans compter ce qu'il ajoutait par triangle (prologue plus lourd, copie du contexte, appel indirect à la place d'un appel direct). Sur une scène où chaque triangle a un seul pixel, ce qui est ajouté par triangle l'emporte.</li>
+  </ul>
+
+  <h3>Décision : C1 accepté</h3>
+  <p>La règle écrite avant le lot dit : compteurs et TNR obligatoires (vérifiés), V2 plus lent ⇒ refus (V2 n'est pas plus lent), gain faible ⇒ accepté comme préalable de C2. Elle ne prévoyait pas de régression sur V1, et je ne la réécris pas après coup. Trois raisons de ne pas bloquer :</p>
+  <ol>
+    <li>C2 a besoin de C1 : on ne vectorise pas une boucle qui appelle une fonction opaque par pixel.</li>
+    <li>La régression de V1 est un coût <em>par appel du noyau</em> pour des boîtes d'un pixel. C3 retire justement ces triangles du noyau (test exact du centre unique dans l'étage faces, sans appel). Après C3, ce coût n'existe plus sur V1.</li>
+    <li>Le coût par triangle sera remesuré au lot C2 sur V2, où C2 changera la boucle mais pas le prologue : on saura s'il faut l'attaquer séparément.</li>
+  </ol>
+  <div class="note"><strong>Dette ouverte, chiffrée :</strong> ≈ 4 ns par appel de <code>RasterizeTriangleT</code> en plus de C0. Candidats à départager par l'asm de A (<code>/FAs</code> de <code>Rasterizer.cpp</code> en <code>82c53f2</code>, comparer le prologue de <code>RasterizeTriangle</code> à celui du noyau) : sauvegarde de xmm6 à xmm15 et 5 <code>push</code>, cadre de 304 octets, copie du contexte, appel indirect. À traiter avec C3 si C3 ne la fait pas disparaître d'elle-même.</div>
+  <h3>Avant C2</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="z1"><label for="z1">Commit C1 (LIB + EXE), <code>config.h</code> avec <code>LV3_ABLATION_RASTER 0</code>.</label></li>
+    <li><input type="checkbox" id="z2"><label for="z2">L en A B B A : pour clore la ligne « en attente », sans bloquer C2.</label></li>
+  </ul>
+</section>
+
+<section class="read" style="max-width:none">
+  <h2>Ce qu'il faut retenir</h2>
+  <ul class="lesson">
+    <li>Un appel indirect dont la cible ne change jamais est bien prédit. Il coûte quand même : c'est une frontière que l'optimiseur ne traverse pas.</li>
+    <li>Résoudre une décision au niveau où elle change : le mode change par vue, donc on choisit par vue une fonction entière, pas un pixel à la fois.</li>
+    <li>Ce qui ne dépend que de la ligne se calcule par ligne. Un test qui ne peut pas échouer devient une assertion, à la granularité du triangle.</li>
+    <li>Une adresse de ligne se calcule avec le pitch du tampon, jamais avec sa largeur.</li>
+    <li>Sans branche ne veut pas dire plus rapide. En scalaire, une branche prévisible qui saute du travail gagne ; en SIMD, le masque gagne.</li>
+    <li>Deux formules égales en réels ne le sont pas en float. Une TNR de bit-exactitude compare tout l'état produit, Z-buffer compris.</li>
+    <li>Garder deux chemins sans deux copies : partager la préparation, la boucle et le shader, ne varier que le puits.</li>
+    <li>Compter ce qu'une optimisation ajoute, pas seulement ce qu'elle retire. C1 a retiré un appel par pixel et ajouté ≈ 4 ns par triangle : sur V1, un pixel par triangle, le bilan est négatif.</li>
+    <li>Un banc hors moteur sur un autre CPU et un autre compilateur prouve l'exactitude, pas l'ordre de grandeur d'un gain de quelques nanosecondes. Une prédiction reprend toute la fourchette de son instrument.</li>
+  </ul>
+</section>
+
+</div>
+<script>
+const f=Math.fround;
+/* copier */
+document.querySelectorAll('.cp').forEach(b=>b.addEventListener('click',()=>{
+  const pre=b.closest('figure').querySelector('pre'), t=pre.textContent;
+  const done=()=>{b.textContent='Copié';setTimeout(()=>b.textContent='Copier',1400);};
+  const fallback=()=>{const r=document.createRange();r.selectNodeContents(pre);const s=getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Sélectionné';setTimeout(()=>b.textContent='Copier',1400);};
+  try{navigator.clipboard.writeText(t).then(done,fallback);}catch(e){fallback();}
+}));
+
+/* étape 2 : appels indirects */
+const SC={v1:{tri:18120,pix:6192},v2:{tri:5024,pix:126928}};
+const fmt=n=>n.toLocaleString('fr-FR');
+function calls(){
+  const s=SC[document.getElementById('callScene').value], mx=Math.max(s.pix,s.tri);
+  document.getElementById('barA').style.width=(100*s.pix/mx)+'%';
+  document.getElementById('barB').style.width=(100*s.tri/mx)+'%';
+  document.getElementById('numA').textContent=fmt(s.pix);
+  document.getElementById('numB').textContent=fmt(s.tri);
+  document.getElementById('callNote').textContent = s.pix>s.tri
+    ? `V2 : ${fmt(s.pix)} frontières d'appel par frame deviennent ${fmt(s.tri)}, soit 25 fois moins. C'est ici que C1 doit se voir.`
+    : `V1 : il y a plus de triangles que de pixels couverts. L'appel par triangle devient indirect, mais sa cible est constante : coût d'un appel direct. Rien à gagner sur V1, et rien à perdre.`;
+}
+document.getElementById('callScene').addEventListener('change',calls); calls();
+
+/* étape 3 : mémoire avec pitch */
+const MW=8, MH=6, TX0=2, TX1=6;
+function mem(){
+  const pad=+document.getElementById('memPad').value, y=+document.getElementById('memY').value;
+  document.getElementById('memPadV').textContent=pad; document.getElementById('memYV').textContent=y;
+  const pitch=MW+pad; let h='<table><tbody>';
+  const wrong=y*MW;               // index faux : y * largeur
+  for(let r=0;r<MH;++r){ h+='<tr>';
+    for(let c=0;c<pitch;++c){ const i=r*pitch+c; let cls=c>=MW?'pad':'';
+      if(r===y&&c>=TX0&&c<TX1) cls='hit';
+      if(i===wrong&&pad>0) cls+=' row';
+      h+=`<td class="${cls}">${c<MW?c:''}</td>`; }
+    h+='</tr>'; }
+  document.getElementById('memGrid').innerHTML=h+'</tbody></table>';
+  const wr=Math.floor(wrong/pitch), wc=wrong%pitch;
+  document.getElementById('memOut').textContent=
+`largeur = ${MW} px, pitch = ${pitch*4} octets
+pixels du triangle : x = ${TX0}..${TX1-1}, ligne ${y}
+
+AVANT, par pixel :
+  4 tests de bornes
+  adresse = y·pitch + x·4  (${TX1-TX0} fois)
+
+APRÈS, par ligne :
+  colorRow = base + ${y}·${pitch*4} octets  (1 fois)
+  puis colorRow[x]
+
+FAUX (y·largeur) : ligne ${y} commencerait
+  en mémoire à la ligne ${wr}, colonne ${wc}${pad===0?'  (juste par chance : pitch = largeur·4)':''}`;
+}
+['memPad','memY'].forEach(id=>document.getElementById(id).addEventListener('input',mem)); mem();
+
+/* étape 4 : table de vérité */
+const W=[['+1',1],['+0',0],['−0',-0],['plus petit dénormal',f(1.4e-45)],['−plus petit dénormal',-f(1.4e-45)],['−1',-1],['NaN',NaN]];
+const tb=document.querySelector('#truth tbody'); let rows='';
+for(const [lab,w] of W) for(const tl of [true,false]){
+  const a = w>0 || (w===0 && tl), b = tl ? (w>=0) : (w>0);
+  rows+=`<tr><td>${lab}</td><td>${tl?'vrai':'faux'}</td><td>${a?'dedans':'dehors'}</td><td>${b?'dedans':'dehors'}</td><td class="${a===b?'eq':'ne'}">${a===b?'identique':'DIFFÈRE'}</td></tr>`; }
+tb.innerHTML=rows;
+
+/* étape 5 : bits de z */
+const buf=new DataView(new ArrayBuffer(4));
+const bits=x=>{buf.setFloat32(0,x);return buf.getUint32(0).toString(2).padStart(32,'0');};
+const hex=x=>{buf.setFloat32(0,x);return '0x'+buf.getUint32(0).toString(16).padStart(8,'0');};
+let draws=0, diffs=0;
+function draw(){
+  const r=Math.random;
+  let a=r(),b=r(),c=r(); const s=a+b+c; a/=s;b/=s;c/=s;
+  const area=f(1+r()*400), inv=f(1/area);
+  const w0=f(f(a*area)*inv), w1=f(f(b*area)*inv), w2=f(f(c*area)*inv);
+  const W_=()=>f(0.1/(0.5+40*r())); const z0=W_(),z1=W_(),z2=W_();
+  const zA=f(f(f(w0*z0)+f(w1*z1))+f(w2*z2));
+  const zB=f(f(z0+f(w1*f(z1-z0)))+f(w2*f(z2-z0)));
+  draws++; if(zA!==zB) diffs++;
+  const ba=bits(zA), bb=bits(zB); let mark='';
+  for(let i=0;i<32;i++) mark+= ba[i]===bb[i]?' ':'^';
+  const L=(lab,z,b)=>lab.padEnd(30)+' = '+z.toPrecision(9).padEnd(13)+' '+hex(z)+'  '+b;
+  const head=30+3+13+1+10+2;
+  document.getElementById('bitsOut').innerHTML =
+`w = (${w0.toPrecision(7)}, ${w1.toPrecision(7)}, ${w2.toPrecision(7)})   z = (${z0.toPrecision(7)}, ${z1.toPrecision(7)}, ${z2.toPrecision(7)})
+
+${L('w0·z0 + w1·z1 + w2·z2',zA,ba)}
+${L('z0 + w1·(z1−z0) + w2·(z2−z0)',zB,bb)}
+${' '.repeat(head)}<span class="d">${mark}</span>`;
+  document.getElementById('bitsStat').textContent=`${diffs} pixel(s) sur ${draws} : z différent`;
+}
+document.getElementById('btnBits').addEventListener('click',draw);
+for(let i=0;i<40;i++) draw();
+
+
+/* schéma d'introduction : le raster du moteur en float32 */
+(function(){
+  const cv=document.getElementById('cvT'), g=cv.getContext('2d'), GW=16, GH=10, S=cv.width/GW;
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const E=(ax,ay,bx,by,px,py)=>{const ux=f(ax-px),uy=f(ay-py),vx=f(bx-px),vy=f(by-py);return f(f(ux*vy)-f(uy*vx));};
+  const TL=(a,b)=>{const ex=f(b.x-a.x),ey=f(b.y-a.y);return (ey===0&&ex<0)||ey>0;};
+  let sel=null, st=null;
+  function tri(){
+    const sz=+document.getElementById('tSize').value*0.55, rot=+document.getElementById('tRot').value*Math.PI/180;
+    document.getElementById('tSizeV').textContent=sz.toFixed(2)+' px'; document.getElementById('tRotV').textContent=document.getElementById('tRot').value+'°';
+    const cx=8.1, cy=5.2, ang=[0,2.25,4.1];
+    let v=ang.map(a=>({x:f(cx+sz*Math.cos(a+rot)), y:f(cy+sz*0.8*Math.sin(a+rot))}));
+    if(document.getElementById('tFlat').checked) v[1].y=v[0].y;
+    if(document.getElementById('tSnap').checked) v=v.map(p=>({x:f(Math.floor(p.x)+0.5),y:f(Math.floor(p.y)+0.5)}));
+    return v;
+  }
+  function setup(v){
+    let p0=v[0],p1=v[1],p2=v[2]; let area=E(p0.x,p0.y,p1.x,p1.y,p2.x,p2.y);
+    if(area===0) return null;
+    const flipped=area<0; if(flipped){[p1,p2]=[p2,p1]; area=-area;}
+    const minX=Math.min(p0.x,p1.x,p2.x),minY=Math.min(p0.y,p1.y,p2.y),maxX=Math.max(p0.x,p1.x,p2.x),maxY=Math.max(p0.y,p1.y,p2.y);
+    const bb={x0:Math.max(0,Math.ceil(f(minX-0.5))),y0:Math.max(0,Math.ceil(f(minY-0.5))),x1:Math.min(GW,Math.floor(f(maxX-0.5))+1),y1:Math.min(GH,Math.floor(f(maxY-0.5))+1)};
+    return {p0,p1,p2,area,flipped,bb,tl:[TL(p1,p2),TL(p2,p0),TL(p0,p1)],inv:f(1/area)};
+  }
+  const inside=(w,tl)=>tl?(w>=0):(w>0);
+  function draw(){
+    const v=tri(); st=setup(v);
+    g.clearRect(0,0,cv.width,cv.height);
+    let tested=0,cov=0,rows=0;
+    for(let y=0;y<GH;y++) for(let x=0;x<GW;x++){
+      let c=null; const inBox=st&&x>=st.bb.x0&&x<st.bb.x1&&y>=st.bb.y0&&y<st.bb.y1;
+      if(inBox){ tested++; const px=f(x+0.5),py=f(y+0.5);
+        const w=[E(st.p1.x,st.p1.y,st.p2.x,st.p2.y,px,py),E(st.p2.x,st.p2.y,st.p0.x,st.p0.y,px,py),E(st.p0.x,st.p0.y,st.p1.x,st.p1.y,px,py)];
+        if(inside(w[0],st.tl[0])&&inside(w[1],st.tl[1])&&inside(w[2],st.tl[2])){c=css('--hit');cov++;} else c=css('--cell'); }
+      g.fillStyle=c||'transparent'; if(c) g.fillRect(x*S+1,y*S+1,S-2,S-2);
+      g.strokeStyle=css('--line'); g.lineWidth=1; g.strokeRect(x*S+.5,y*S+.5,S-1,S-1);
+      g.fillStyle=css('--mute'); g.fillRect(x*S+S/2-1,y*S+S/2-1,2,2);
+      if(sel&&sel[0]===x&&sel[1]===y){g.strokeStyle=css('--warn');g.lineWidth=3;g.strokeRect(x*S+2,y*S+2,S-4,S-4);}
+    }
+    if(st){ rows=Math.max(0,st.bb.y1-st.bb.y0);
+      g.fillStyle=css('--rowc'); g.font='bold 14px JetBrains Mono, monospace';
+      for(let y=st.bb.y0;y<st.bb.y1;y++) g.fillText('▸',Math.max(0,st.bb.x0*S-14),y*S+S/2+5);
+      g.strokeStyle=css('--rowc'); g.setLineDash([5,4]); g.lineWidth=1.5; g.strokeRect(st.bb.x0*S,st.bb.y0*S,(st.bb.x1-st.bb.x0)*S,(st.bb.y1-st.bb.y0)*S); g.setLineDash([]); }
+    g.strokeStyle=css('--fg'); g.lineWidth=2; g.beginPath(); g.moveTo(v[0].x*S,v[0].y*S); g.lineTo(v[1].x*S,v[1].y*S); g.lineTo(v[2].x*S,v[2].y*S); g.closePath(); g.stroke();
+    g.fillStyle=css('--fg'); g.font='12px JetBrains Mono, monospace'; v.forEach((p,i)=>g.fillText('v'+i,p.x*S+5,p.y*S-5));
+    document.getElementById('tOut').textContent = !st ? 'aire = 0 : triangle dégénéré, rejeté par SetupTriangle'
+      : `aire = ${st.area.toPrecision(6)}  échange p1↔p2 : ${st.flipped?'oui':'non'}
+tl = (${st.tl.map(b=>b?1:0).join(', ')})
+boîte : ${st.bb.x1-st.bb.x0} × ${st.bb.y1-st.bb.y0} = ${tested} pixels testés
+pixels couverts : ${cov}
+
+AVANT : 1 appel direct (triangle)
+      + ${cov} appels indirects (pixels)
+APRÈS : 1 appel indirect (triangle)
+      + ${rows} BeginRow, 0 appel par pixel`;
+    pix();
+  }
+  function pix(){
+    const o=document.getElementById('tPix');
+    if(!st||!sel){o.textContent='Cliquer un pixel de la boîte.';return;}
+    const [x,y]=sel; if(x<st.bb.x0||x>=st.bb.x1||y<st.bb.y0||y>=st.bb.y1){o.textContent=`Pixel (${x}, ${y}) hors de la boîte serrée : jamais testé.`;return;}
+    const px=f(x+0.5),py=f(y+0.5);
+    const w=[E(st.p1.x,st.p1.y,st.p2.x,st.p2.y,px,py),E(st.p2.x,st.p2.y,st.p0.x,st.p0.y,px,py),E(st.p0.x,st.p0.y,st.p1.x,st.p1.y,px,py)];
+    const ins=w.map((wi,i)=>inside(wi,st.tl[i])), ok=ins[0]&&ins[1]&&ins[2];
+    const b=st.flipped?[f(w[0]*st.inv),f(w[2]*st.inv),f(w[1]*st.inv)]:[f(w[0]*st.inv),f(w[1]*st.inv),f(w[2]*st.inv)];
+    let txt=`pixel (${x}, ${y})   centre (${px}, ${py})
+w0 = ${w[0].toPrecision(7).padStart(12)}   tl0 = ${st.tl[0]?1:0}   InsideEdge → ${ins[0]}
+w1 = ${w[1].toPrecision(7).padStart(12)}   tl1 = ${st.tl[1]?1:0}   InsideEdge → ${ins[1]}
+w2 = ${w[2].toPrecision(7).padStart(12)}   tl2 = ${st.tl[2]?1:0}   InsideEdge → ${ins[2]}
+`;
+    txt += ok ? `couvert → bary (ordre d'origine) = (${b.map(q=>q.toPrecision(6)).join(', ')})   somme = ${f(f(b[0]+b[1])+b[2]).toPrecision(8)}
+AVANT : onFragment(x, y, bary, &m_ctx) → ShadeFragment_Solid → TestAndSet(index) → SetPixel(4 tests)
+APRÈS : ShaderSolid::Shade(copie ctx, bary, depthRow[${x}], colorRow[${x}])   inliné, aucun appel`
+      : `non couvert : ${ins[0]?'':'arête 0 '}${ins[1]?'':'arête 1 '}${ins[2]?'':'arête 2 '}rejette ; aucun shader, ni avant ni après`;
+    o.textContent=txt;
+  }
+  cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();sel=[Math.floor((e.clientX-r.left)/r.width*GW),Math.floor((e.clientY-r.top)/r.height*GH)];draw();});
+  ['tSize','tRot','tSnap','tFlat'].forEach(id=>document.getElementById(id).addEventListener('input',draw));
+  sel=[8,5]; draw();
+  try{ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw); }catch(e){}
+})();
+
+/* liste de contrôle : mémorisée dans ce navigateur seulement */
+document.querySelectorAll('#checks input').forEach(cb=>{
+  try{ cb.checked = localStorage.getItem('c1-'+cb.id)==='1'; }catch(e){}
+  cb.addEventListener('change',()=>{ try{ localStorage.setItem('c1-'+cb.id, cb.checked?'1':'0'); }catch(e){} });
+});
+</script>

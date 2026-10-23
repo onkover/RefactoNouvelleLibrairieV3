@@ -24,6 +24,16 @@
 		* l'interpolation perspective-correcte (z linéaire mais UV et couleurs en 1/w), 
 		* l'exploitation du troisième état du culling,
 		* cone culling par cluster,
+
+		
+provoquer un point d'arret erreur en mode release
+
+		__declspec(noinline) void ma fonction() noexcept
+		{
+		    __debugbreak();
+		...
+		}
+
 */
 
 
