@@ -1,0 +1,2613 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Lot D pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Même série que « Lot C2 pas à pas » : une colonne de lecture, schémas et registres en pleine largeur.
+   Tokens : fond, papier, encre, accent (bloc partiel), ok (bloc plein), warn (rejet, contre-exemple). */
+:root{
+  --bg:#f5f6f8; --paper:#ffffff; --fg:#1d2330; --mute:#5b6476; --line:#d9dde5;
+  --accent:#2f4fb8; --accent-soft:#e6ebfa; --warn:#b5520f; --warn-soft:#fbeee3;
+  --ok:#1f7a4d; --ok-soft:#e3f3ea; --code-bg:#f0f2f6;
+  --cell:#e9ecf3; --pad:#f3dede; --hit:#2f4fb8; --rowc:#c56a1c;
+  --full:#3f9a6b; --full2:#7cc39b; --pix:#2f4fb8; --rej:#c9ced8; --tri:#1d2330;
+  --f-body:"Fira Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Fira Sans Condensed","Fira Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22;
+  --cell:#262d3b; --pad:#3a2428; --hit:#8ea6ff; --rowc:#f0a066;
+  --full:#3c9468; --full2:#2a5f45; --pix:#6f8cf0; --rej:#3a4152; --tri:#f2f4f8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22;
+  --cell:#262d3b; --pad:#3a2428; --hit:#8ea6ff; --rowc:#f0a066;
+  --full:#3c9468; --full2:#2a5f45; --pix:#6f8cf0; --rej:#3a4152; --tri:#f2f4f8; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.read{max-width:78ch}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:2rem} h2{font-size:1.45rem;margin-bottom:10px} h3{font-size:1.12rem;margin:14px 0 6px}
+p{margin:0 0 10px} ul,ol{margin:0 0 10px;padding-left:22px}
+.eyebrow{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--mute);font-size:1.02rem}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px clamp(14px,3vw,28px);min-width:0}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:1px 4px;border-radius:4px}
+.num{font-variant-numeric:tabular-nums}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-family:var(--f-head);font-weight:700;color:var(--mute)}
+.tbl{overflow-x:auto}
+.tbl tr.sel td{background:var(--warn-soft)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
+.bad{border-left-color:var(--warn);background:var(--warn-soft)}
+.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.pill{display:inline-block;font:600 .72rem var(--f-mono);padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.04em}
+.pill.w{background:var(--warn-soft);color:var(--warn)} .pill.o{background:var(--ok-soft);color:var(--ok)}
+button,select{font:600 .85rem var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:7px 14px;border-radius:6px;cursor:pointer}
+select{background:var(--paper);color:var(--fg);border-color:var(--line)}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.goal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 12px}
+.goal div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.92rem;min-width:0}
+.goal b{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.goal .why b{color:var(--accent)} .goal .uses b{color:var(--warn)}
+.goal .uses{background:var(--code-bg)}
+.goal .uses .v{font:.82rem/1.55 var(--f-mono);margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:700px){.goal{grid-template-columns:1fr}}
+.stepno{font:700 .8rem var(--f-mono);color:var(--paper);background:var(--accent);border-radius:99px;padding:2px 10px;letter-spacing:.05em}
+.stepno.w{background:var(--warn)} .stepno.o{background:var(--ok)}
+.sh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.sh h2{margin:0}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.pair figure{margin:0;min-width:0;display:flex;flex-direction:column}
+.pair figcaption{font:700 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--code-bg)}
+.pair figure.v figcaption{background:var(--accent-soft);color:var(--accent)}
+.pair pre,.one pre{margin:0;overflow:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:0 0 6px 6px;padding:9px 11px;font:12px/1.5 var(--f-mono);tab-size:4;flex:1;max-height:640px}
+.one{margin-top:8px;display:flex;flex-direction:column;min-width:0}
+.one figcaption{font:700 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--accent-soft);color:var(--accent)}
+@media (max-width:860px){.pair{grid-template-columns:minmax(0,1fr)}}
+.lanes{overflow-x:auto;margin-top:8px}
+.lanes table{width:auto;min-width:100%;border-collapse:separate;border-spacing:2px;font:11.5px/1.35 var(--f-mono)}
+.lanes th{font:600 11px var(--f-mono);color:var(--mute);text-align:right;padding:3px 6px;white-space:nowrap;border:0}
+.lanes td{padding:3px 6px;text-align:right;background:var(--cell);border:0;border-radius:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lanes td.neg{background:var(--hit);color:var(--paper)}
+.lanes td.pos{opacity:.75}
+.lanes td.ok{background:var(--ok);color:var(--paper)}
+.lanes td.bad{background:var(--warn);color:var(--paper)}
+.lanes td.off{opacity:.35}
+.lanes thead td{background:transparent;color:var(--mute);font-weight:600}
+.lanes tr.sep td,.lanes tr.sep th{border-top:2px solid var(--line)}
+.res{font:.82rem/1.6 var(--f-mono);background:var(--code-bg);padding:8px 10px;border-radius:6px;white-space:pre-wrap;margin-top:8px;overflow-x:auto}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.stage canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--code-bg);touch-action:none;display:block}
+.cap{font:.78rem/1.5 var(--f-mono);color:var(--mute);margin-top:4px}
+.ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 16px;font-size:.88rem;margin-top:12px}
+.ctl label{display:flex;flex-direction:column;gap:2px}
+.ctl label.ck{flex-direction:row;align-items:center;gap:6px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.presets button{padding:5px 10px;font-size:.8rem}
+.presets button[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--mute);margin-top:6px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.kpi b{display:block;font:700 1.15rem var(--f-mono);font-variant-numeric:tabular-nums}
+.kpi span{font-size:.8rem;color:var(--mute)}
+.kpi.o b{color:var(--ok)} .kpi.w b{color:var(--warn)}
+.mini{display:inline-grid;grid-template-columns:repeat(4,26px);gap:2px;vertical-align:top;margin:4px 12px 4px 0}
+.mini span{height:26px;border-radius:3px;background:var(--cell);font:10px/26px var(--f-mono);text-align:center;color:var(--mute)}
+.mini span.t{background:var(--accent-soft);color:var(--accent)}
+.mini span.f{background:var(--full);color:#fff}
+.mini span.p{background:var(--pix);color:#fff}
+.mini span.x{outline:2px solid var(--warn);outline-offset:-2px}
+.grid4{display:inline-grid;grid-template-columns:repeat(4,minmax(72px,auto));gap:3px;font:11px/1.35 var(--f-mono)}
+.grid4 div{padding:4px 6px;border-radius:3px;background:var(--cell);text-align:right;white-space:pre}
+.grid4 div.in{background:var(--pix);color:#fff}
+.toc{columns:2 260px;font-size:.92rem;margin:0;padding-left:20px}
+.toc a{color:var(--accent)}
+.trace{font:.8rem/1.55 var(--f-mono);background:var(--code-bg);padding:8px 10px;border-radius:6px;overflow-x:auto;white-space:pre}
+.check{list-style:none;padding-left:0}
+.check li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.check input{margin-top:5px}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.fig{margin:14px 0 6px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.fig canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--code-bg);display:block;touch-action:none}
+.figrow{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:10px}
+.figrow.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:860px){.figrow,.figrow.even{grid-template-columns:minmax(0,1fr)}}
+.figcap{font-size:.86rem;color:var(--mute)}
+.figcap b{color:var(--fg)}
+.idea{font-size:1.02rem;max-width:78ch}
+.observe{border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--paper);font-size:.92rem}
+.observe>b{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+.observe ul{margin:0;padding-left:18px}
+.observe li{margin-bottom:4px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button{padding:5px 10px;font-size:.8rem;background:transparent;color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.figctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:.86rem}
+.calc{font:.82rem/1.65 var(--f-mono);background:var(--code-bg);padding:8px 12px;border-radius:6px;white-space:pre-wrap;overflow-x:auto}
+details.code,details.regs{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+details.code>summary,details.regs>summary{cursor:pointer;padding:8px 12px;font:600 .85rem var(--f-body);color:var(--accent);list-style:none}
+details.code>summary::before,details.regs>summary::before{content:"▸ ";}
+details[open].code>summary::before,details[open].regs>summary::before{content:"▾ ";}
+details.code>div,details.regs>div{padding:0 12px 12px}
+.part{font:700 .8rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin:6px 0 -14px}
+.bitbox{overflow-x:auto}
+.bitbox table{width:auto;border-collapse:separate;border-spacing:3px;font:11.5px var(--f-mono)}
+.bitbox th{font:600 11px var(--f-mono);color:var(--mute);text-align:right;padding:2px 8px 2px 0;border:0;white-space:nowrap}
+.bitbox td{min-width:26px;height:24px;text-align:center;border:0;border-radius:3px;background:var(--cell);padding:0 4px;white-space:nowrap}
+.bitbox td.b1{background:var(--hit);color:var(--paper);font-weight:700}
+.bitbox td.b0{color:var(--mute)}
+.bitbox td.full1{background:var(--full);color:#fff;font-weight:700}
+.bitbox td.hot{box-shadow:inset 0 0 0 2px var(--warn)}
+.bitbox td.gone{opacity:.3}
+.bitbox tr.res td{border-top:2px solid var(--line)}
+.compass{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center}
+.stat{font:600 .82rem var(--f-mono)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  section{break-inside:auto;border:0;padding:8px 0}
+  .noprint,.presets,.ctl,.btnrow button{display:none!important}
+  .pair pre,.one pre{max-height:none;overflow:visible;white-space:pre-wrap}
+  .lanes,.tbl{overflow:visible}
+  h2{break-after:avoid}
+  .stage{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .goal{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .lanes table{font-size:9.5px}
+  .figrow{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr)!important}
+  details{border:0}
+  details>summary{display:none}
+  .seg,.figctl button{display:none!important}
+}
+</style>
+<div class="wrap">
+
+<header class="read">
+  <div class="eyebrow">Phase G · Jalon D · Cours · 25 octobre 2026 · version 2</div>
+  <h1>Ne pas rastériser : la hiérarchie d'Abrash, pas à pas</h1>
+  <p class="lede">En 2009, pour Larrabee, Michael Abrash a écrit un rastériseur logiciel qui gagne surtout en évitant le travail. Il ne cherche pas à tester les pixels plus vite. Il cherche à en tester le moins possible : une tuile entière est jugée d'un coup, ses 16 blocs sont jugés en une instruction, et un bloc entièrement couvert est dessiné sans un seul test.</p>
+  <p class="lede">Ce cours suit l'ordre de son article. La <b>partie A</b> construit la méthode une idée à la fois, chaque idée avec sa figure animée : l'équation d'arête, le triangle comme intersection de trois demi-plans, les coins de rejet et d'acceptation, la descente, les masques. La <b>partie B</b> traite ce que l'article survole : rendre tout cela exact au bit près, et ce que cela veut dire pour LV3. Le code est replié sous chaque chapitre : on le lit une fois l'idée comprise.</p>
+  <p class="lede" style="font-size:.92rem">Statut : cours, pas un lot à appliquer. Le jalon D est rangé ; il s'ouvrira en D1 à la clôture du chantier C si la règle écrite d'avance le déclenche. Source : M. Abrash, <em>Rasterization on Larrabee</em>, Dr. Dobb's, mai 2009.</p>
+</header>
+
+<section class="noprint">
+  <div class="sh"><span class="stepno">PLAN</span><h2>Le parcours</h2></div>
+  <ol class="toc">
+    <li><a href="#labo">Le laboratoire : votre triangle</a></li>
+    <li><a href="#a1">A1. L'équation d'arête</a></li>
+    <li><a href="#a2">A2. Trois arêtes, un triangle</a></li>
+    <li><a href="#a3">A3. Comment parcourir ? Cinq stratégies</a></li>
+    <li><a href="#a4">A4. Les tuiles</a></li>
+    <li><a href="#a5">A5. Le coin de rejet trivial</a></li>
+    <li><a href="#a6">A6. Le coin d'acceptation triviale</a></li>
+    <li><a href="#a7">A7. L'asymétrie, et la tuile pleine</a></li>
+    <li><a href="#a8">A8. Descendre : 16 blocs d'un coup</a></li>
+    <li><a href="#a9">A9. Du vecteur au masque, du masque aux blocs</a></li>
+    <li><a href="#a10">A10. Le niveau suivant : blocs 4×4</a></li>
+    <li><a href="#a11">A11. Le masque de pixels</a></li>
+    <li><a href="#a12">A12. MSAA : un pas de plus</a></li>
+    <li><a href="#a13">A13. Les faux positifs</a></li>
+    <li><a href="#a14">A14. Tout ensemble</a></li>
+    <li><a href="#b1">B1. La grille sous-pixel</a></li>
+    <li><a href="#b2">B2. Qui possède un centre posé sur une arête ?</a></li>
+    <li><a href="#b3">B3. Retirer les bits sous-pixel</a></li>
+    <li><a href="#b4">B4. Pourquoi 32 bits suffisent</a></li>
+    <li><a href="#b5">B5. Contre-exemples chiffrés</a></li>
+    <li><a href="#b6">B6. Ce que coûte la méthode</a></li>
+    <li><a href="#b7">B7. Transposer dans LV3</a></li>
+    <li><a href="#verifier">Vérifier</a></li>
+    <li><a href="#questions">Questions de fond</a></li>
+  </ol>
+</section>
+
+<section id="labo">
+  <div class="sh"><span class="stepno">LABO</span><h2>Le laboratoire : votre triangle, vos tuiles</h2></div>
+  <p class="idea">Toutes les figures du cours travaillent sur le même triangle et la même sélection. Choisissez-les ici. À gauche, la cible de 256 × 256 pixels découpée en 16 tuiles de 64 × 64 ; faites glisser un sommet, touchez une tuile. À droite, la tuile choisie ; touchez un bloc pour l'étudier dans les chapitres A10 à A12.</p>
+  <div class="stage">
+    <div style="min-width:0">
+      <canvas id="cvA" width="512" height="512" tabindex="0" aria-label="Cible 256 par 256 pixels avec ses 16 tuiles et le triangle ; glisser un sommet, toucher une tuile"></canvas>
+      <div class="cap" id="capA"></div>
+    </div>
+    <div style="min-width:0">
+      <canvas id="cvB" width="512" height="512" tabindex="0" aria-label="Tuile sélectionnée, 64 par 64 pixels, avec ses blocs ; toucher un bloc pour l'étudier"></canvas>
+      <div class="cap" id="capB"></div>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--full)"></i>tuile ou bloc 16×16 plein</span>
+    <span><i style="background:var(--full2)"></i>bloc 4×4 plein</span>
+    <span><i style="background:var(--pix)"></i>pixel produit par un masque</span>
+    <span><i style="background:var(--rej)"></i>rejeté</span>
+    <span><i style="border:2px solid var(--accent)"></i>bloc partiel (on descend)</span>
+    <span><i style="background:var(--warn)"></i>faux positif</span>
+    <span><i style="border:2px solid var(--warn)"></i>sélection</span>
+  </div>
+  <div class="presets" id="presets" role="group" aria-label="Triangles de démonstration"></div>
+  <div class="ctl">
+    <label for="sbSel">Bits sous-pixel s : <select id="sbSel"><option value="4" selected>4 (1/16 de pixel)</option><option value="8">8 (1/256, Larrabee)</option></select></label>
+    <label for="edgeSel">Arête étudiée : <select id="edgeSel"><option value="0">e0 : V1 → V2</option><option value="1">e1 : V2 → V0</option><option value="2">e2 : V0 → V1</option></select></label>
+    <label class="ck"><input id="ckCenters" type="checkbox"> sommets sur des centres de pixels</label>
+    <label class="ck"><input id="ckBox" type="checkbox"> masque de boîte (chapitre A13)</label>
+  </div>
+  <div class="kpis" id="kpis"></div>
+</section>
+
+<div class="part">Partie A · La méthode, une idée à la fois</div>
+
+<section id="a1">
+  <div class="sh"><span class="stepno">A1</span><h2>L'équation d'arête : un nombre qui dit de quel côté</h2></div>
+  <p class="idea">Une arête est un segment, mais pour le rastériseur c'est une droite qui coupe le plan en deux. À chaque point on associe un nombre, la valeur de l'équation d'arête. Elle vaut zéro sur la droite, elle est positive d'un côté, négative de l'autre, et elle grandit à mesure qu'on s'éloigne. Tout le reste de la méthode repose sur ce nombre.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA1" width="560" height="620" aria-label="Grille avec une arête, ses demi-plans et ses lignes de niveau ; toucher un point pour lire sa valeur"></canvas>
+      <div class="figcap"><b>Figure A1.</b> L'exemple de l'article : l'arête va de (12, 8) à (4, 24). Les lignes pointillées relient les points de même valeur. Touchez un point de la grille.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Points de l'article :</span><span class="seg" id="segA1"></span></div>
+      <div class="calc" id="calcA1"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Sur l'arête, la valeur est 0, quel que soit le point.</li>
+        <li>Un pas d'une case vers la droite ajoute toujours la même quantité (A), un pas vers le bas aussi (B). C'est une fonction <em>affine</em> : le pas ne dépend pas de l'endroit.</li>
+        <li>Les lignes de niveau sont parallèles à l'arête et régulièrement espacées : la valeur mesure une distance à la droite, à un facteur près.</li>
+      </ul></div>
+    </div>
+  </div>
+  <p>Abrash écrit l'équation sous la forme <b>B·x + C·y</b>, avec B = y1 − y0 (la hauteur de l'arête) et C = x0 − x1 (moins sa largeur), x et y étant mesurés depuis un sommet de l'arête, où la valeur est connue : zéro. Pour son exemple, cela donne 16·x + 8·y, qu'on peut diviser par 8 sans changer aucun signe : <b>2x + y</b>. Dans la suite du cours, on écrit E = A·x + B·y + C, comme dans le code (le A du cours est le B d'Abrash).</p>
+  <details class="code"><summary>Le code : construire les coefficients d'une arête</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c2s"></pre></figure>
+      <figure class="v"><figcaption>AVX2 : 8 triangles en SoA</figcaption><pre data-code="c2v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a2">
+  <div class="sh"><span class="stepno">A2</span><h2>Trois arêtes, un triangle</h2></div>
+  <p class="idea">Un triangle est l'intersection de trois demi-plans. On oriente les trois équations pour que l'intérieur soit toujours du côté négatif. Un centre de pixel est dans le triangle si, et seulement si, ses trois valeurs sont négatives. Il n'y a rien d'autre à tester.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA2" width="600" height="480" aria-label="Petit triangle sur une grille de pixels, avec ses trois demi-plans ; toucher un pixel pour lire ses trois valeurs"></canvas>
+      <div class="figcap"><b>Figure A2.</b> Chaque centre de pixel est un point blanc. En vert : négatif pour les trois arêtes. Affichez les demi-plans un par un pour voir l'intersection se former.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Demi-plan négatif :</span><span class="seg" id="segA2"></span></div>
+      <div class="calc" id="calcA2"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Plus on s'enfonce dans le triangle, plus les valeurs sont négatives ; plus on s'en éloigne, plus elles sont positives.</li>
+        <li>Un pixel juste dehors n'est en faute que pour une arête : les deux autres sont satisfaites.</li>
+        <li>On sait tester un pixel. La vraie question est : <em>lesquels</em> tester, sans en tester trop ? C'est le chapitre suivant.</li>
+      </ul></div>
+    </div>
+  </div>
+  <details class="code"><summary>Le code : orienter les trois arêtes (intérieur négatif)</summary><div>
+    <p>On calcule l'aire signée du triangle ; si elle est positive, on change le signe des trois équations. Les détails d'exactitude (entiers, règle top-left) sont en partie B.</p>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c2s"></pre></figure>
+      <figure class="v"><figcaption>Démonstration du signe</figcaption><pre data-code="c4p"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a3">
+  <div class="sh"><span class="stepno">A3</span><h2>Comment parcourir ? Cinq stratégies sur le même triangle</h2></div>
+  <p class="idea">Tester un pixel est facile. Le coût vient du nombre de pixels testés pour rien, et des décisions à prendre pour savoir où aller ensuite. Abrash compare trois approches ; on y ajoute les deux boucles actuelles de LV3. Lancez l'animation pour chacune et comparez les compteurs.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA3" width="576" height="576" aria-label="Animation du parcours d'une tuile de 64 par 64 pixels selon la stratégie choisie"></canvas>
+      <div class="figcap"><b>Figure A3.</b> Une tuile de 64 × 64 et un triangle d'une trentaine de pixels. Bleu : couvert. Gris : testé pour rien. Vert : bloc déclaré plein sans test.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="seg" id="segA3" role="group" aria-label="Stratégie"></div>
+      <div class="figctl"><button type="button" id="playA3">▶ Lecture</button><button type="button" class="ghost" id="stepA3">Pas suivant</button><button type="button" class="ghost" id="resetA3">Recommencer</button></div>
+      <div class="calc" id="calcA3"></div>
+      <div class="tbl" id="tabA3"></div>
+    </div>
+  </div>
+  <div class="observe"><b>À observer</b><ul>
+    <li><b>Trapèzes (Pixomatic 1)</b> : aucun pixel testé pour rien, mais on avance ligne par ligne en suivant deux arêtes. Impossible à vectoriser, et des spans d'un pixel de haut ne conviennent pas au shading par blocs.</li>
+    <li><b>Boîte, pixel par pixel (LV3 C1)</b> et <b>boîte, blocs de 8 (LV3 C2)</b> : simples, sans décision de parcours, mais tout le rectangle englobant est testé. Pour un triangle allongé en diagonale, c'est surtout du vide.</li>
+    <li><b>Balayage 4×4</b> : un tampon de 16 pixels qu'on promène à gauche, à droite, puis vers le bas. Vectorisable, mais chaque pas est une décision mal prédite, et il faut sortir du triangle pour savoir qu'on en est sorti.</li>
+    <li><b>Hiérarchie (Abrash)</b> : une instruction juge 16 blocs à la fois ; on ne descend que dans les blocs à cheval sur une arête. Peu de décisions, et l'intérieur est déclaré plein sans être testé.</li>
+  </ul></div>
+</section>
+
+<section id="a4">
+  <div class="sh"><span class="stepno">A4</span><h2>Les tuiles : découper la cible avant de rastériser</h2></div>
+  <p class="idea">Larrabee rend la cible par <b>tuiles</b> (on dit aussi « chunks » ou « bins »). Chaque triangle est d'abord rangé dans le bac de chaque tuile qu'il touche ; puis chaque tuile est rastérisée seule, avec ses tampons de couleur et de profondeur dans le cache. La rastérisation se fait donc en deux temps : trouver les tuiles touchées, puis rastériser le triangle dans chacune.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA4" width="560" height="560" aria-label="Cible découpée en tuiles ; le triangle est rangé dans les bacs des tuiles qu'il touche"></canvas>
+      <div class="figcap"><b>Figure A4.</b> La boîte englobante (pointillés) donne les tuiles candidates. Pour chacune, il reste à savoir si le triangle la touche vraiment : c'est l'objet des deux chapitres suivants.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="calc" id="calcA4"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>90 % des triangles d'une scène tiennent dans une tuile : un test de boîte suffit pour eux.</li>
+        <li>Pour les grands triangles, la boîte surestime : les tuiles dans les coins de la boîte ne sont pas touchées.</li>
+        <li>Pour LV3, les tuiles préparent le multithreading (L13) : un thread par tuile, sans verrou, 32 Ko de tampons par tuile.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="a5">
+  <div class="sh"><span class="stepno">A5</span><h2>Le coin de rejet trivial</h2></div>
+  <p class="idea">Pour savoir si une tuile est entièrement du mauvais côté d'une arête, il suffit de regarder <b>un seul point</b> : le coin de la tuile où l'équation est la plus négative, le plus « à l'intérieur ». Si même ce coin-là est dehors (valeur ≥ 0), aucun point de la tuile ne peut être dedans, et le triangle entier est ignoré pour cette tuile.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA5" width="560" height="560" aria-label="Tuiles avec le coin de rejet de chaque tuile pour l'arête choisie"></canvas>
+      <div class="figcap"><b>Figure A5.</b> L'arête choisie est prolongée (pointillés). Un point par tuile : son coin de rejet, bleu si la valeur y est négative, orange sinon. Tuiles hachurées : rejetées par cette arête.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Arête :</span><span class="seg" data-edgeseg></span></div>
+      <div class="compass">
+        <canvas id="fA5c" width="180" height="180" style="width:150px;height:150px;border:1px solid var(--line);border-radius:6px;background:var(--code-bg)" aria-label="Boussole : direction de croissance de l'équation et coin choisi"></canvas>
+        <div class="calc" id="calcA5c"></div>
+      </div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Le coin de rejet est le même pour toutes les tuiles : il ne dépend que de l'orientation de l'arête, donc des signes de A et B.</li>
+        <li>Abrash : « si vous comprenez ceci, vous avez compris 90 % du rastériseur ». Tout le reste applique ce test à des blocs plus petits.</li>
+        <li>C'est le test du vertex positif d'une AABB contre un plan, celui du frustum culling de LV3, en 2D.</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="calc" id="calcA5"></div>
+  <details class="code"><summary>Le code : les décalages des deux coins</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c6s"></pre></figure>
+      <figure class="v"><figcaption>AVX2 : 8 arêtes</figcaption><pre data-code="c6v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a6">
+  <div class="sh"><span class="stepno">A6</span><h2>Le coin d'acceptation triviale</h2></div>
+  <p class="idea">Le test inverse prend le coin opposé, celui où l'équation est la plus positive, le plus « à l'extérieur ». Si même ce coin-là est dedans (valeur &lt; 0), toute la tuile est du bon côté de cette arête : on n'aura plus besoin de la tester à l'intérieur de la tuile.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA6" width="560" height="560" aria-label="Tuiles avec le coin d'acceptation de chaque tuile pour l'arête choisie"></canvas>
+      <div class="figcap"><b>Figure A6.</b> Un point par tuile : son coin d'acceptation. Tuiles teintées en vert : entièrement du bon côté de l'arête choisie. Le coin d'acceptation est toujours à l'opposé du coin de rejet.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Arête :</span><span class="seg" data-edgeseg></span></div>
+      <div class="calc" id="calcA6"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>On passe du coin de rejet au coin d'acceptation en ajoutant une constante : |A|·(T − 1) + |B|·(T − 1), le chemin en diagonale à travers la tuile.</li>
+        <li>Une tuile peut être acceptée pour une arête et rejetée par une autre. C'est le chapitre suivant.</li>
+      </ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="a7">
+  <div class="sh"><span class="stepno">A7</span><h2>L'asymétrie, et la tuile pleine</h2></div>
+  <p class="idea">Les deux tests ne jouent pas le même rôle. Un <b>rejet</b> par une seule arête suffit à écarter la tuile pour tout le triangle. Une <b>acceptation</b> ne concerne qu'une arête : elle dit seulement qu'on peut l'oublier dans cette tuile. Une tuile n'est pleine que si elle est acceptée par les trois arêtes ; on l'émet alors sans aucune rastérisation.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA7" width="560" height="560" aria-label="Pour chaque tuile, le verdict de chaque arête et le verdict final"></canvas>
+      <div class="figcap"><b>Figure A7.</b> Dans chaque tuile, trois lettres, une par arête : <b>R</b> rejette, <b>A</b> accepte, <b>T</b> traverse. Un R suffit à rejeter ; trois A font une tuile pleine ; sinon la tuile est partielle, avec ses arêtes T comme seules arêtes actives.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="calc" id="calcA7"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Prenez le triangle « Plein écran » du laboratoire : les 16 tuiles sont pleines. Abrash parle d'une vitesse de rastérisation « approximativement infinie ».</li>
+        <li>Dans une tuile partielle, il ne reste souvent qu'une ou deux arêtes actives : tout le travail en dessous en sera réduit d'autant.</li>
+      </ul></div>
+    </div>
+  </div>
+  <details class="code"><summary>Le code : assignation aux tuiles (scalaire, 64 bits)</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c7s"></pre></figure>
+      <figure class="v"><figcaption>Pourquoi ce niveau reste scalaire</figcaption><pre data-code="c7v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a8">
+  <div class="sh"><span class="stepno">A8</span><h2>Descendre : juger 16 blocs d'un coup</h2></div>
+  <p class="idea">Dans une tuile partielle, on recommence le même raisonnement sur ses 16 blocs de 16 × 16. Pour chaque bloc, on veut la valeur de l'arête à son coin de rejet et à son coin d'acceptation. Inutile de les recalculer : depuis le coin de la tuile, il suffit d'ajouter un pas précalculé. Seize pas, seize additions, <b>une seule instruction vectorielle</b>.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA8" width="576" height="576" aria-label="Tuile choisie avec les flèches de pas vers les coins des 16 blocs"></canvas>
+      <div class="figcap"><b>Figure A8.</b> La flèche part du coin de la tuile (rouge) et arrive au coin de chaque bloc (point blanc, avec sa valeur). Chaque flèche est une addition. Blocs grisés : rejetés par cette arête ; teintés en vert (mode acceptation) : acceptés.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Arête :</span><span class="seg" data-edgeseg></span></div>
+      <div class="figctl"><span>Coin :</span><span class="seg" id="segA8"></span></div>
+      <div class="calc" id="calcA8"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Chaque pas vaut A·Δx + B·Δy : il ne dépend que de la position relative du bloc dans la tuile, jamais de la tuile elle-même. La même table de 16 pas sert pour toutes les tuiles.</li>
+        <li>Les multiplications sont faites une fois par triangle, en préparant les tables. Pendant la descente, il n'y a que des additions.</li>
+      </ul></div>
+    </div>
+  </div>
+  <details class="regs"><summary>Les registres, voie par voie (tables et valeurs des 16 blocs)</summary><div>
+    <div class="ctl noprint" style="grid-template-columns:repeat(auto-fit,minmax(220px,max-content))">
+      <label for="lvlSel">Table affichée : <select id="lvlSel"><option value="16">S = 16 (tuile → blocs 16×16)</option><option value="4">S = 4 (16×16 → blocs 4×4)</option><option value="1">S = 1 (4×4 → pixels)</option></select></label>
+    </div>
+    <div class="lanes" id="r8"></div>
+    <p class="cap">Voies 0 à 7 = registre lo (blocs des rangées 0 et 1), 8 à 15 = registre hi (rangées 2 et 3). Bloc i = (colonne i &amp; 3, rangée i &gt;&gt; 2).</p>
+    <div class="lanes" id="r9"></div>
+  </div></details>
+  <details class="code"><summary>Le code : tables de pas et classement des 16 blocs</summary><div>
+    <div class="pair">
+      <figure><figcaption>Tables, scalaire</figcaption><pre data-code="c8s"></pre></figure>
+      <figure class="v"><figcaption>Tables, AVX2 (16 blocs = 2 registres)</figcaption><pre data-code="c8v"></pre></figure>
+    </div>
+    <div class="pair">
+      <figure><figcaption>Classement, scalaire</figcaption><pre data-code="c9s"></pre></figure>
+      <figure class="v"><figcaption>Classement, AVX2</figcaption><pre data-code="c9v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a9">
+  <div class="sh"><span class="stepno">A9</span><h2>Du vecteur au masque, du masque aux blocs</h2></div>
+  <p class="idea">Les 16 valeurs sont comparées à zéro : on obtient 16 bits, un par bloc, pour chaque arête. Un ET entre les arêtes donne le masque composite : 1 là où le bloc passe le test pour toutes les arêtes. Il reste à visiter les bits à 1, et eux seuls : c'est le passage du parallèle au séquentiel.</p>
+  <div class="figctl"><span>Test :</span><span class="seg" id="segA9"></span><button type="button" id="scanA9">Bit suivant</button><button type="button" class="ghost" id="resetA9">Recommencer le parcours</button></div>
+  <div class="bitbox" id="bitsA9" style="margin-top:10px"></div>
+  <div class="figrow even" style="margin-top:6px">
+    <div class="calc" id="calcA9"></div>
+    <div class="observe"><b>À observer</b><ul>
+      <li>Le ET se fait « gratuitement » : une instruction par arête, sur 16 blocs.</li>
+      <li>Chaque bit à 1 du masque d'acceptation est un bloc émis tel quel, sans descendre.</li>
+      <li>Larrabee avait une instruction faite pour ça, <code>bsfi</code> (« trouver le bit suivant à partir de… »). En x64, <code>tzcnt</code> trouve le bit le plus bas et <code>blsr</code> l'efface : la boucle fait exactement autant de tours que de bits à 1.</li>
+    </ul></div>
+  </div>
+  <details class="code"><summary>Le code : parcourir un masque</summary><div>
+    <div class="pair">
+      <figure><figcaption>Larrabee, puis la boucle naïve</figcaption><pre data-code="c10s"></pre></figure>
+      <figure class="v"><figcaption>x64 + BMI1</figcaption><pre data-code="c10v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a10">
+  <div class="sh"><span class="stepno">A10</span><h2>Le niveau suivant : 16 blocs de 4 × 4</h2></div>
+  <p class="idea">Chaque bloc 16 × 16 partiel est traité exactement comme la tuile : 16 enfants de 4 × 4, une table de pas, une addition, un masque. Seules changent la taille des enfants et la table. C'est la force de la méthode : un seul noyau, réutilisé à chaque niveau.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA10" width="576" height="576" aria-label="Bloc 16 par 16 choisi avec les flèches de pas vers ses 16 blocs 4 par 4"></canvas>
+      <div class="figcap"><b>Figure A10.</b> Le bloc 16 × 16 choisi dans le laboratoire, agrandi. Même lecture que la figure A8, un niveau plus bas.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Arête :</span><span class="seg" data-edgeseg></span></div>
+      <div class="figctl"><span>Coin :</span><span class="seg" id="segA10"></span></div>
+      <div class="calc" id="calcA10"></div>
+    </div>
+  </div>
+  <details class="regs"><summary>Les registres, voie par voie (16 blocs 4×4)</summary><div><div class="lanes" id="r11"></div></div></details>
+  <details class="code"><summary>Le code : le même appel, d'autres tables</summary><div>
+    <div class="pair">
+      <figure><figcaption>Appel</figcaption><pre data-code="c11s"></pre></figure>
+      <figure class="v"><figcaption>Même fonction qu'en A8</figcaption><pre data-code="c11v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a11">
+  <div class="sh"><span class="stepno">A11</span><h2>Le masque de pixels</h2></div>
+  <p class="idea">Au fond de la hiérarchie, un bloc 4 × 4 partiel. C'est le seul endroit où l'on travaille pixel par pixel : depuis le coin de rejet du bloc, 16 pas mènent aux 16 centres de pixels. Le signe de chaque somme donne un bit ; le ET des arêtes donne le masque de couverture, prêt pour le shading.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA11" width="576" height="576" aria-label="Bloc 4 par 4 choisi avec les flèches de pas vers les 16 centres de pixels"></canvas>
+      <div class="figcap"><b>Figure A11.</b> Le bloc 4 × 4 choisi. En bleu : pixels du bon côté de l'arête étudiée. Le masque final (en bas) combine les trois arêtes.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Arête :</span><span class="seg" data-edgeseg></span></div>
+      <div class="calc" id="calcA11"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Avec des vecteurs larges, une bonne partie du travail est perdue sur un bloc partiel : beaucoup de voies sont dehors. C'est pourquoi Larrabee s'est arrêté à 16 voies, et pourquoi la hiérarchie ne descend que dans les blocs partiels.</li>
+        <li>Abrash range −pas dans la table et teste « e &lt; −pas » : une comparaison au lieu d'une addition et d'une comparaison. En AVX2, on additionne et on lit le bit de signe : même coût.</li>
+      </ul></div>
+    </div>
+  </div>
+  <details class="regs"><summary>Les registres, voie par voie (16 pixels)</summary><div><div class="lanes" id="r12"></div><div id="r12m" style="margin-top:8px"></div></div></details>
+  <details class="code"><summary>Le code : le masque de 16 pixels</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c12s"></pre></figure>
+      <figure class="v"><figcaption>AVX2</figcaption><pre data-code="c12v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a12">
+  <div class="sh"><span class="stepno">A12</span><h2>MSAA : un pas de plus</h2></div>
+  <p class="idea">L'anticrénelage multi-échantillon teste plusieurs points par pixel. Pour la méthode, un échantillon n'est qu'un autre point d'arrivée : une table de pas de plus par position d'échantillon, une comparaison de plus par arête sur les blocs 4 × 4 partiels. Les blocs pleins n'ont aucun coût supplémentaire : tous leurs échantillons sont couverts.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA12" width="576" height="576" aria-label="Bloc 4 par 4 avec 4 échantillons par pixel ; flèches vers l'échantillon choisi"></canvas>
+      <div class="figcap"><b>Figure A12.</b> Motif 4× standard (positions en 1/16 de pixel : (−2, −6), (6, −2), (−6, 2), (2, 6)). Les flèches vont vers l'échantillon choisi de chaque pixel.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Échantillon :</span><span class="seg" id="segA12"></span></div>
+      <div class="calc" id="calcA12"></div>
+    </div>
+  </div>
+  <details class="code"><summary>Le code : quatre masques au lieu d'un</summary><div><div class="one"><figcaption>MSAA 4×</figcaption><pre data-code="c15s"></pre></div></div></details>
+</section>
+
+<section id="a13">
+  <div class="sh"><span class="stepno">A13</span><h2>Les faux positifs</h2></div>
+  <p class="idea">La hiérarchie n'élimine un bloc que s'il est rejeté par <em>une</em> arête. Un bloc proche d'un sommet aigu peut être du bon côté de chacune des trois droites prises séparément, sans toucher le triangle. On y descend alors pour trouver, au fond, un masque vide. Abrash le montre sur ses figures 27 et 29.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA13" width="576" height="576" aria-label="Tuile avec ses faux positifs mis en évidence"></canvas>
+      <div class="figcap"><b>Figure A13.</b> Blocs entourés d'orange : on y est descendu pour rien. Les droites des arêtes sont prolongées : ces blocs sont du bon côté de chacune, mais dans le « coin » formé par deux d'entre elles, hors du triangle.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><button type="button" class="ghost" id="loadBlade">Charger la lame fine</button><label class="ck"><input id="ckBox2" type="checkbox"> masque de boîte</label></div>
+      <div class="calc" id="calcA13"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Le remède le moins cher : un ET avec le masque des blocs qui croisent la boîte englobante du triangle. Il se calcule en entiers, une fois par niveau.</li>
+        <li>Les faux positifs restants sont dans la boîte mais hors du triangle ; on les paie au niveau pixel, et un masque vide ne coûte qu'un saut.</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="tbl" id="r13"></div>
+  <details class="code"><summary>Le code : le masque de boîte</summary><div>
+    <div class="pair">
+      <figure><figcaption>Sans masque de boîte</figcaption><pre data-code="c13s"></pre></figure>
+      <figure class="v"><figcaption>Avec masque de boîte</figcaption><pre data-code="c13v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="a14">
+  <div class="sh"><span class="stepno">A14</span><h2>Tout ensemble : la descente complète d'une tuile</h2></div>
+  <p class="idea">On rejoue maintenant toute la méthode sur la tuile choisie, dans l'ordre où le moteur l'exécute : juger la tuile, juger ses 16 blocs, émettre les pleins, descendre dans les partiels, juger leurs 16 blocs 4 × 4, puis calculer les masques de pixels. Le compteur suit le travail effectif.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fA14" width="576" height="576" aria-label="Animation de la descente complète dans la tuile choisie"></canvas>
+      <div class="figcap"><b>Figure A14.</b> Chaque pas de l'animation est une décision du moteur. Vert foncé : bloc 16 × 16 émis plein. Vert clair : bloc 4 × 4 émis plein. Bleu : pixels d'un masque.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><button type="button" id="playA14">▶ Lecture</button><button type="button" class="ghost" id="stepA14">Pas suivant</button><button type="button" class="ghost" id="resetA14">Recommencer</button></div>
+      <div class="calc" id="calcA14"></div>
+    </div>
+  </div>
+  <div class="note"><strong>Ce que la structure prépare.</strong> <b>Hi-Z</b> : un bloc 16 × 16 plein peut être comparé à la profondeur la plus éloignée déjà écrite dans ce bloc et rejeté avant tout shading. <b>Textures (L09)</b> : les mipmaps veulent des quads 2 × 2 pour les dérivées d'UV, qu'une émission par blocs 4 × 4 fournit naturellement. <b>Barycentriques</b> : les trois valeurs d'arête, divisées par l'aire × 2, sont les coordonnées barycentriques ; z, 1/w et u/w s'avancent avec les mêmes tables (avec la prudence de C1 sur le parenthésage de z).</div>
+  <details class="code"><summary>Le code : Hi-Z sur un bloc plein</summary><div><div class="one"><figcaption>Hi-Z, reverse-Z de LV3</figcaption><pre data-code="c15v"></pre></div></div></details>
+</section>
+
+<div class="part">Partie B · Rendre la méthode exacte, puis la transposer</div>
+
+<section id="b1">
+  <div class="sh"><span class="stepno">B1</span><h2>La grille sous-pixel : des entiers partout</h2></div>
+  <p class="idea">Les additions de la partie A ne sont exactes qu'en entiers. On accroche donc chaque sommet sur une grille fine : 16 positions par pixel dans ce cours (s = 4), 256 sur Larrabee (s = 8, coordonnées 15.8). C'est le prix d'entrée de la méthode, et c'est aussi ce qui change l'image de LV3 (chapitre B7).</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fB1" width="520" height="520" aria-label="Pixel contenant le sommet V0, agrandi, avec sa grille sous-pixel"></canvas>
+      <div class="figcap"><b>Figure B1.</b> Une fenêtre d'un pixel de côté, centrée sur le sommet choisi. Traits épais : bords de pixels. Croix : position float. Point : position accrochée sur la grille sous-pixel.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Sommet :</span><span class="seg" id="segB1"></span></div>
+      <div class="calc" id="calcB1"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>L'erreur d'accrochage est au plus d'un demi-sous-pixel : 1/32 de pixel avec s = 4.</li>
+        <li>Un sommet partagé par deux triangles donne le même entier dans les deux : c'est la première condition pour qu'il n'y ait ni trou ni doublon.</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="tbl" id="r1"></div>
+  <details class="code"><summary>Le code : accrocher 1 ou 8 sommets</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c1s"></pre></figure>
+      <figure class="v"><figcaption>AVX2</figcaption><pre data-code="c1v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="b2">
+  <div class="sh"><span class="stepno">B2</span><h2>Qui possède un centre posé sur une arête ?</h2></div>
+  <p class="idea">En entiers, un centre de pixel peut tomber <em>exactement</em> sur une arête : E = 0. Deux triangles voisins se partagent cette arête. Si les deux le prennent, il est dessiné deux fois ; si aucun ne le prend, c'est un trou. La règle top-left tranche : il appartient au triangle pour lequel l'arête est à gauche ou en haut. En entiers, elle se réduit à retrancher 1 à la constante de ces arêtes.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fB2" width="560" height="560" aria-label="Trois triangles voisins dont les arêtes partagées passent par des centres de pixels"></canvas>
+      <div class="figcap"><b>Figure B2.</b> Trois triangles voisins, sommets sur des centres. Les arêtes partagées passent par plusieurs centres. Rouge : dessiné deux fois. Orange : jamais dessiné alors qu'il est à l'intérieur.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Règle :</span><span class="seg" id="segB2"></span></div>
+      <div class="calc" id="calcB2"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li><b>E &lt; 0 partout</b> : les centres posés sur une arête partagée ne sont à personne, ce sont des trous.</li>
+        <li><b>E ≤ 0 partout</b> : ils sont à tout le monde, ce sont des doublons (visibles en transparence).</li>
+        <li><b>Top-left</b> : chacun a exactement un propriétaire. Gauche : A &lt; 0. Haute : A = 0 et B &lt; 0 (y vers le bas).</li>
+      </ul></div>
+    </div>
+  </div>
+  <div class="tbl" id="r3"></div>
+  <details class="code"><summary>Le code : le biais de −1</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c3s"></pre></figure>
+      <figure class="v"><figcaption>AVX2 sans branche</figcaption><pre data-code="c3v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="b3">
+  <div class="sh"><span class="stepno">B3</span><h2>Retirer les bits sous-pixel de la partie qui varie</h2></div>
+  <p class="idea">On ne teste jamais que des centres de pixels, dont la partie fractionnaire vaut toujours ½. La valeur au centre s'écrit donc E = 16·(A·x + B·y) + K, où seul K est constant. On sépare K en un quotient et un reste : K = 16·q + r, avec 0 ≤ r &lt; 16. Le reste ne change jamais le signe ; on travaille avec <b>E' = A·x + B·y + q</b>, en pixels entiers. Un pas d'un pixel ajoute A au lieu de 16·A : quatre bits de gagnés.</p>
+  <div class="goal">
+    <div class="why"><b>La preuve en deux lignes</b>Si A·x + B·y + q ≤ −1, alors E ≤ −16 + r ≤ −1 : dedans. Si A·x + B·y + q ≥ 0, alors E ≥ r ≥ 0 : dehors. Les signes de E et de E' sont toujours les mêmes.</div>
+    <div class="uses"><b>Avec votre triangle</b><div class="v" id="u4"></div></div>
+  </div>
+  <div class="fig"><div class="lanes" id="figB3"></div><div class="figcap"><b>Figure B3.</b> La rangée du bloc 4 × 4 choisi, prolongée sur 16 pixels. En haut, E au centre (sous-pixels) ; en bas, E' (pixels). Les deux changent de signe au même pixel.</div></div>
+  <details class="code"><summary>Le code : calculer q une fois par arête</summary><div>
+    <div class="pair">
+      <figure><figcaption>Scalaire</figcaption><pre data-code="c4s"></pre></figure>
+      <figure class="v"><figcaption>La preuve</figcaption><pre data-code="c4p"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="b4">
+  <div class="sh"><span class="stepno">B4</span><h2>Pourquoi 32 bits suffisent dans une tuile</h2></div>
+  <p class="idea">Abrash affirme que dans une tuile de 128 × 128 au plus, 32 bits suffisent pour toute arête qui n'est ni rejetée ni acceptée. Le raisonnement tient en une phrase : une arête qui traverse la tuile s'y annule quelque part, et E' ne varie que de (|A| + |B|) × T sur la tuile ; donc |E'| ≤ (|A| + |B|) × T partout dans la tuile. Le calcul au coin de la tuile se fait une fois en 64 bits, la descente en 32.</p>
+  <div class="fig"><canvas id="fB4" width="900" height="360" aria-label="Bits nécessaires selon la configuration, avec la limite de 32 bits"></canvas>
+  <div class="figcap"><b>Figure B4.</b> Bits signés nécessaires, pour cinq configurations. Trois barres : l'équation brute sur tout l'écran, l'équation factorisée (B3) sur tout l'écran, l'équation factorisée dans une tuile traversée par l'arête. La ligne marque 32 bits.</div></div>
+  <div class="calc" id="u5"></div>
+</section>
+
+<section id="b5">
+  <div class="sh"><span class="stepno w">B5</span><h2>Contre-exemples chiffrés</h2></div>
+  <p class="idea">Quatre « simplifications » qui semblent anodines. Chacune est mesurée ici avec le même code que le reste du cours, sur des éventails de 8 triangles qui partagent leurs arêtes : chaque pixel intérieur doit y être dessiné exactement une fois.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fB5" width="560" height="560" aria-label="Un éventail de 8 triangles ; doublons en rouge et trous en orange selon la variante"></canvas>
+      <div class="figcap"><b>Figure B5.</b> Un éventail, sommets sur des centres. Deux teintes alternées pour les 8 triangles. Rouge : doublon. Orange : trou.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Variante :</span><span class="seg" id="segB5"></span></div>
+      <div class="figctl"><button type="button" class="ghost" id="nextFan">Autre éventail</button></div>
+      <div class="calc" id="calcB5"></div>
+    </div>
+  </div>
+  <h3>Sur 300 éventails</h3>
+  <div class="tbl" id="r16b"></div>
+  <div class="btnrow noprint"><button type="button" id="runFans">Relancer sur 300 éventails</button><button type="button" class="ghost" id="runFansBig">300 grands éventails (rayon 40 à 120 px, plus long)</button><span class="cap" id="fanStatus"></span></div>
+  <h3>K / 16 au lieu de K &gt;&gt; 4</h3>
+  <p>La division entière C++ tronque vers zéro : pour K négatif, q est trop grand de 1 et des pixels intérieurs passent dehors. Le décalage arithmétique donne le plancher.</p>
+  <div class="calc" id="r16a"></div>
+  <h3>Avancer en float par additions</h3>
+  <p>C'est précisément ce que la règle de LV3 interdit (« jamais d'arêtes incrémentales en float »). La virgule fixe rend la même addition exacte : c'est elle qui autorise la méthode d'Abrash.</p>
+  <div class="calc" id="r16c"></div>
+  <h3>Un int32_t trop tôt</h3>
+  <div class="calc" id="r16d"></div>
+</section>
+
+<section id="b6">
+  <div class="sh"><span class="stepno">B6</span><h2>Ce que coûte la méthode, comparée à C2</h2></div>
+  <p class="idea">La hiérarchie paie un prix fixe (préparer les tables, juger les tuiles) pour économiser ensuite sur l'intérieur. Elle ne gagne que si l'intérieur est assez grand. Le modèle ci-dessous compte les instructions de couverture seulement ; c'est un ordre de grandeur, pas une mesure.</p>
+  <div class="fig"><canvas id="fB6" width="900" height="300" aria-label="Coût de la hiérarchie rapporté à C2 selon la taille des triangles"></canvas>
+  <div class="figcap"><b>Figure B6.</b> Instructions de couverture de la hiérarchie divisées par celles de C2, par classe de taille de triangle. Sous la ligne 1, la hiérarchie coûte moins.</div></div>
+  <div class="tbl" id="r14"></div>
+  <div class="note" id="r14n"></div>
+</section>
+
+<section id="b7">
+  <div class="sh"><span class="stepno">B7</span><h2>Transposer dans LV3 : deux voies, une règle</h2></div>
+  <p class="idea">LV3 a trois règles qui contraignent toute transposition : l'image et le Z-buffer doivent rester identiques au bit (TNR), jamais d'arêtes incrémentales en float, et les valeurs d'arête de C2 servent aussi de barycentriques pour z. D'où deux voies.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Voie</th><th>Ce qu'elle fait</th><th>Image</th><th>Gain attendu dans LV3</th></tr></thead>
+    <tbody>
+      <tr><td><b>D-a</b> virgule fixe</td><td>Abrash à la lettre : partie A sur des entiers (B1 à B4).</td><td><span class="pill w">change</span> accrochage sous-pixel ; nouvelles références TNR</td><td>Blocs pleins sans test, masques exacts, MSAA et quads. Mais les barycentriques de z sont à recalculer, alors que C2 les obtenait avec les arêtes.</td></tr>
+      <tr><td><b>D-b</b> pré-filtre prudent</td><td>Hiérarchie au-dessus de C2 : la fonction d'arête float est évaluée <em>directement</em> aux coins d'un bloc 8 × 8, avec une marge τ. Rejet sûr, plein sûr, sinon C2.</td><td><span class="pill o">identique au bit</span></td><td>Surtout le rejet des blocs vides. Un bloc plein évite les comparaisons et le masque, pas les 7 opérations par voie.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><strong>Règle écrite avant la mesure (plan de la phase G).</strong> À la clôture de C, construire la scène V3 (grands triangles) et refaire le découpage de C0 sur le binaire C2 + C3. Si les arêtes pèsent au moins 40 % et que Covered / Tight est sous 50 % sur V3, ouvrir D1 en voie D-b ; sinon, le jalon reste rangé. Décider D-a avant L09 ; D2 (tuiles et binning) avec L13.</div>
+  <details class="code"><summary>Le code : esquisse de la voie D-b</summary><div>
+    <div class="pair">
+      <figure><figcaption>D-b (convention LV3 : positif = dedans)</figcaption><pre data-code="c17s"></pre></figure>
+      <figure class="v"><figcaption>Greffe sur C2 : un bloc 8×8 = 8 appels au sink</figcaption><pre data-code="c17v"></pre></figure>
+    </div>
+  </div></details>
+</section>
+
+<section id="verifier">
+  <div class="sh"><span class="stepno o">VÉRIFIER</span><h2>Tests hors moteur, filets Debug, prédictions</h2></div>
+  <h3>1. Vérification exécutée ici</h3>
+  <p>Le laboratoire compare en permanence la hiérarchie à une évaluation directe de chaque pixel (<span id="uV"></span>). Le bouton refait la comparaison sur une population de triangles.</p>
+  <div class="btnrow noprint"><button type="button" id="runPop">Vérifier 1 500 triangles</button><span class="cap" id="popStatus"></span></div>
+  <div class="calc" id="rV"></div>
+  <h3>2. Test hors moteur à écrire pour D1</h3>
+  <div class="one"><figcaption>Test_D1_Hierarchy.cpp (EXE)</figcaption><pre data-code="cV"></pre></div>
+  <h3>3. Filets Debug (LV3_ASSERT)</h3>
+  <ul>
+    <li>À l'entrée d'une tuile : pour chaque arête active, |E'| &lt; 2<sup>30</sup> (B4).</li>
+    <li>Après chaque descente : la valeur propagée égale l'évaluation directe au premier pixel de l'enfant (une fois sur N, tirage fixe).</li>
+    <li><code>(full &amp; ~touched) == 0</code> à chaque niveau.</li>
+    <li>Somme des pixels émis (blocs pleins + masques) = <code>PixelsCovered</code> du chemin C2 sur la même frame.</li>
+  </ul>
+  <h3>4. Prédictions à écrire avant le lot D1</h3>
+  <p>Quand V3 existera, avant toute mesure : blocs 8 × 8 rejetés par frame, part des pixels émis par des blocs pleins, <code>PixelsTested</code> attendu, effet sur <code>Render</code> pour V1, V2, V3 et L. Règle : compteurs et image identiques, sinon refus ; V1 plus lent de plus de 3 % (runs propres), refus.</p>
+  <h3>5. Liste de contrôle du cours</h3>
+  <ul class="check">
+    <li><input type="checkbox" id="k1"><label for="k1">Je sais placer le coin de rejet d'une arête à partir des signes de A et B, sans calcul.</label></li>
+    <li><input type="checkbox" id="k2"><label for="k2">Je sais dire pourquoi un rejet vaut pour le triangle et une acceptation pour une arête.</label></li>
+    <li><input type="checkbox" id="k3"><label for="k3">Je sais pourquoi la même table de pas sert pour toutes les tuiles.</label></li>
+    <li><input type="checkbox" id="k4"><label for="k4">Je sais pourquoi K &gt;&gt; s et non K / 2<sup>s</sup>, et pourquoi 32 bits suffisent dans une tuile.</label></li>
+    <li><input type="checkbox" id="k5"><label for="k5">Je sais pourquoi la voie D-b ne change pas l'image, et pourquoi elle rapporte moins que D-a.</label></li>
+  </ul>
+</section>
+
+<section id="questions">
+  <div class="sh"><span class="stepno">QUESTIONS</span><h2>Questions de fond</h2></div>
+  <h3>Pourquoi tester les centres et pas les coins géométriques des blocs, comme Abrash ?</h3>
+  <p>Abrash prend le coin géométrique du bloc (le bord du pixel), puis un pas jusqu'au centre au niveau des pixels. C'est correct, et un peu prudent : un bloc dont tous les centres sont dedans peut avoir un coin géométrique dehors, et il ne sera pas déclaré plein. En prenant directement les centres extrêmes (décalage S − 1 au lieu de S), le test colle exactement à ce qu'on échantillonne. Les deux choix donnent la même image ; celui-ci accepte un peu plus de blocs.</p>
+  <h3>Pourquoi le masque des blocs pleins est-il toujours inclus dans celui des blocs touchés ?</h3>
+  <p>Pour une arête, la valeur au coin d'acceptation est le maximum sur le bloc, celle au coin de rejet le minimum. Si le maximum est négatif, le minimum l'est aussi. Accepté implique donc non rejeté, arête par arête, et le ET conserve l'inclusion.</p>
+  <h3>Pourquoi 16 enfants, et pas 8 pour coller à AVX2 ?</h3>
+  <p>16 = 4 × 4 garde des blocs carrés, ce que veulent le shading (quads) et le cache. Sur Larrabee, c'était exactement un registre. En AVX2, c'est deux registres, sans changer la structure. En AVX-512 (i9, B6), on retrouve un registre et de vrais masques k. Pour LV3 en voie D-b, des blocs de 8 × 8 alignés sur les blocs de 8 de C2 sont plus naturels.</p>
+</section>
+
+</div>
+<script type="text/plain" id="c1s">
+// x, y : position raster du sommet en pixels (float), sortie de l'étage sommets (B3).
+// kSubBits = 4 : 16 sous-pixels par pixel (Larrabee : 8, soit 1/256).
+constexpr int32_t kSubBits  = 4;
+constexpr float   kSubScale = float(1 << kSubBits);   // 16.0f : puissance de 2, produit EXACT
+
+// std::lrintf : arrondi au plus proche, pair en cas d'égalité (mode par défaut du CPU).
+// Surtout PAS int32_t(x * 16) : tronque vers 0, biaise d'un demi sous-pixel,
+// et différemment à gauche et à droite de l'origine.
+const int32_t X = int32_t(std::lrintf(x * kSubScale));
+const int32_t Y = int32_t(std::lrintf(y * kSubScale));
+// Garde-bande : |x * 16| < 2^31 est garanti par le clipping (chemin Intersect).
+</script>
+<script type="text/plain" id="c1v">
+// x8, y8 : abscisses et ordonnées de 8 sommets (SoA, alignés 32 o, comme PositionsSoA).
+const __m256  scale = _mm256_set1_ps(16.0f);              // 2^kSubBits, diffusé ×8
+
+// vmulps : exact (puissance de 2). vcvtps2dq : arrondi selon MXCSR = au plus proche, pair
+// en cas d'égalité, EXACTEMENT comme std::lrintf. Chaque voie donne le même entier.
+const __m256i X8 = _mm256_cvtps_epi32(_mm256_mul_ps(x8, scale));
+const __m256i Y8 = _mm256_cvtps_epi32(_mm256_mul_ps(y8, scale));
+// Piège : _mm256_cvttps_epi32 (deux t) TRONQUE. Une lettre de plus, un biais de plus.
+</script>
+<script type="text/plain" id="c2s">
+// E(P) = A·Px + B·Py + C, P en sous-pixels. Convention : E < 0 à l'intérieur.
+struct EdgeEq { int32_t A, B; int64_t C; };
+
+// Aire signée ×2 : (V1 − V0) × (V2 − V0). En 64 bits : produit de deux écarts de coordonnées.
+const int64_t area2 = int64_t(X1 - X0) * (Y2 - Y0) - int64_t(Y1 - Y0) * (X2 - X0);
+if (area2 == 0) return;                    // dégénéré : aucun pixel
+const int32_t sg = (area2 > 0) ? -1 : 1;   // retourne le signe pour que l'intérieur soit < 0
+                                           // (dans LV3, l'orientation est déjà connue : B4/B5)
+
+// Arête a -> b :  (b − a) × (P − a) = (a.y − b.y)·Px + (b.x − a.x)·Py + cste
+auto MakeEdge = [sg](int32_t ax, int32_t ay, int32_t bx, int32_t by) noexcept
+{
+    EdgeEq e;
+    e.A = sg * (ay - by);                                  // pas de E pour +1 sous-pixel en x
+    e.B = sg * (bx - ax);                                  // pas de E pour +1 sous-pixel en y
+    e.C = -(int64_t(e.A) * ax + int64_t(e.B) * ay);        // E(a) = 0 : la droite passe par a
+    return e;
+};
+const EdgeEq e0 = MakeEdge(X1, Y1, X2, Y2);   // opposée au sommet 0 (comme w0 de LV3)
+const EdgeEq e1 = MakeEdge(X2, Y2, X0, Y0);
+const EdgeEq e2 = MakeEdge(X0, Y0, X1, Y1);
+</script>
+<script type="text/plain" id="c2v">
+// 8 triangles à la fois, comme ClassifyFaces8 (B4) : Xa8/Ya8 = sommet a des 8 triangles, etc.
+// sg8 : +1 ou −1 par voie (orientation). _mm256_sign_epi32(v, s) : v si s > 0, −v si s < 0.
+const __m256i A8 = _mm256_sign_epi32(_mm256_sub_epi32(Ya8, Yb8), sg8);   // sg·(a.y − b.y)
+const __m256i B8 = _mm256_sign_epi32(_mm256_sub_epi32(Xb8, Xa8), sg8);   // sg·(b.x − a.x)
+
+// C = −(A·a.x + B·a.y) déborde 32 bits en général (produit de deux coordonnées).
+// _mm256_mul_epi32 fait 4 produits 32×32 → 64 bits (voies paires) : deux passes par lot de 8.
+// En pratique, le setup se fait une fois par TRIANGLE : il reste scalaire dans ce cours,
+// seules les tables (étape 8) et la descente (étapes 9 à 12) sont vectorisées.
+</script>
+<script type="text/plain" id="c3s">
+// Normale sortante (A, B) : E croît vers l'extérieur.
+//   arête GAUCHE : intérieur à droite  → (A, B) pointe vers −x → A < 0
+//   arête HAUTE  : horizontale (A == 0), intérieur en dessous (y vers le bas) → B < 0
+const bool topLeft = (e.A < 0) || (e.A == 0 && e.B < 0);
+
+// E entier : « E <= 0 » équivaut à « E − 1 < 0 ».
+// Arête top-left : on inclut E == 0 → on teste E − 1 < 0.  Sinon : E < 0.
+// Dans les deux cas le test devient « strictement négatif » : le BIT DE SIGNE.
+e.C -= topLeft ? 1 : 0;
+</script>
+<script type="text/plain" id="c3v">
+const __m256i zero = _mm256_setzero_si256();
+const __m256i aNeg = _mm256_cmpgt_epi32(zero, A8);                    // A < 0 → 0xFFFFFFFF
+const __m256i top  = _mm256_and_si256(_mm256_cmpeq_epi32(A8, zero),   // A == 0
+                                      _mm256_cmpgt_epi32(zero, B8));  //   et B < 0
+const __m256i tl8  = _mm256_or_si256(aNeg, top);                      // −1 si top-left, 0 sinon
+
+// Le masque VAUT −1 sur les voies top-left : l'ajouter retranche 1. Aucune branche.
+C8 = _mm256_add_epi32(C8, tl8);     // (si C tient sur 32 bits ; sinon même idée en 64 bits)
+</script>
+<script type="text/plain" id="c4s">
+// Centre du pixel (x, y), en sous-pixels : PX = 16·x + 8, PY = 16·y + 8.
+//   E(PX, PY) = A·(16x + 8) + B·(16y + 8) + C'
+//             = 16·(A·x + B·y) + K            avec K = 8·(A + B) + C'
+// On écrit K = 16·q + r avec 0 <= r < 16 (q = PLANCHER de K / 16).
+const int64_t K = int64_t(8) * (e.A + e.B) + e.C;   // e.C déjà biaisé (étape 3)
+const int64_t q = K >> kSubBits;   // décalage ARITHMÉTIQUE = plancher (garanti en C++20,
+                                   // fait par MSVC sur x64). JAMAIS K / 16 : tronque vers 0.
+
+// Désormais, en pixels ENTIERS :  E'(x, y) = A·x + B·y + q
+//   +1 pixel en x : + A      +1 ligne : + B
+// et E(centre) < 0  <=>  E'(x, y) < 0   (preuve ci-contre)
+</script>
+<script type="text/plain" id="c4p">
+E(centre) = 16·(A·x + B·y + q) + r,   avec 0 <= r < 16
+
+Si A·x + B·y + q <= −1 :
+    E <= −16 + r <= −16 + 15 = −1 < 0        → dedans
+
+Si A·x + B·y + q >= 0 :
+    E >= 0 + r >= 0                          → dehors
+
+Donc signe(E) = signe(E'), pour TOUT centre de pixel.
+Le reste r disparaît : il est le même partout.
+</script>
+<script type="text/plain" id="c6s">
+// Bloc de S×S pixels, premier pixel (x0, y0), où l'arête vaut e = E'(x0, y0).
+// Centres : x0 .. x0 + S − 1, y0 .. y0 + S − 1. E' affine → extrêmes aux coins.
+struct CornerOffsets { int32_t rej, acc; };
+
+constexpr CornerOffsets Corners(int32_t A, int32_t B, int32_t S) noexcept
+{
+    const int32_t a = A * (S - 1);        // écart de E' entre la 1re et la dernière colonne
+    const int32_t b = B * (S - 1);        // idem entre la 1re et la dernière ligne
+    return { std::min(0, a) + std::min(0, b),     // coin de REJET : le plus négatif (le plus dedans)
+             std::max(0, a) + std::max(0, b) };   // coin d'ACCEPTATION : le plus positif
+}
+// rejet  : e + rej >= 0  → aucun centre du bloc n'est dedans : bloc rejeté pour le TRIANGLE
+// accept : e + acc <  0  → tous les centres sont dedans : ARÊTE oubliée pour ce bloc
+</script>
+<script type="text/plain" id="c6v">
+// Pour 8 triangles (ou 8 arêtes) à la fois : min/max entiers, sans branche.
+const __m256i sm1 = _mm256_set1_epi32(S - 1);
+const __m256i a   = _mm256_mullo_epi32(A8, sm1);          // A·(S − 1)
+const __m256i b   = _mm256_mullo_epi32(B8, sm1);          // B·(S − 1)
+const __m256i z   = _mm256_setzero_si256();
+const __m256i rej = _mm256_add_epi32(_mm256_min_epi32(z, a), _mm256_min_epi32(z, b));
+const __m256i acc = _mm256_add_epi32(_mm256_max_epi32(z, a), _mm256_max_epi32(z, b));
+// vpmulld coûte ≈ 10 cycles de latence : c'est du setup, une fois par triangle.
+</script>
+<script type="text/plain" id="c7s">
+constexpr int32_t kTile = 64;
+for (int32_t ty = ty0; ty <= ty1; ++ty)          // tuiles de la boîte englobante
+for (int32_t tx = tx0; tx <= tx1; ++tx)
+{
+    const int32_t x0 = tx * kTile, y0 = ty * kTile;   // premier pixel de la tuile
+    uint32_t active = 0;                              // bit k = arête k traverse la tuile
+    int32_t  eTile[3] = {};
+    bool     rejected = false;
+    for (int k = 0; k < 3; ++k)
+    {
+        // 64 bits ICI SEULEMENT : q peut être grand loin de l'arête (étape 5).
+        const int64_t e = int64_t(E[k].A) * x0 + int64_t(E[k].B) * y0 + E[k].q;
+        if (e + c64[k].rej >= 0) { rejected = true; break; }   // tuile entière dehors
+        if (e + c64[k].acc >= 0)                               // l'arête traverse la tuile :
+        {
+            active |= 1u << k;
+            eTile[k] = int32_t(e);        // tient sur 32 bits PARCE QU'elle traverse (étape 5)
+        }                                 // sinon : arête acceptée, oubliée dans la tuile
+    }
+    if (rejected)    continue;
+    if (active == 0) EmitFullTile(tx, ty);            // « vitesse approximativement infinie »
+    else             Bin(tx, ty, tri, active, eTile); // rastérisée plus tard, tuile par tuile
+}
+</script>
+<script type="text/plain" id="c7v">
+// Abrash fait ce niveau en scalaire, et c'est voulu :
+//  - 90 % des triangles tiennent dans UNE tuile : un test de boîte suffit ;
+//  - les autres coûtent quelques tuiles chacun, négligeable devant leur shading ;
+//  - c'est le seul niveau en 64 bits (q peut être grand loin de l'arête).
+// Pour un très grand triangle, on pourrait réutiliser la hiérarchie
+// (16 tuiles à la fois) : Abrash le note, sans en avoir eu besoin.
+</script>
+<script type="text/plain" id="c8s">
+// Table d'UN niveau pour UNE arête : 16 enfants de taille S, enfant i = (i & 3, i >> 2).
+struct EdgeLevel16Scalar { int32_t step[16], rej[16], acc[16]; };
+
+inline void BuildLevel(int32_t A, int32_t B, int32_t S, EdgeLevel16Scalar& t) noexcept
+{
+    const CornerOffsets c = Corners(A, B, S);
+    for (int i = 0; i < 16; ++i)
+    {
+        const int32_t cx = i & 3, cy = i >> 2;
+        t.step[i] = A * S * cx + B * S * cy;   // du 1er pixel du parent au 1er pixel de l'enfant
+        t.rej[i]  = t.step[i] + c.rej;         // ... puis au coin de rejet de l'enfant
+        t.acc[i]  = t.step[i] + c.acc;         // ... ou au coin d'acceptation
+    }
+}
+// Une fois par triangle : 3 arêtes × 3 niveaux (S = 16, 4, 1).
+// Au niveau pixel (S = 1), rej = acc = step : une seule table utile.
+</script>
+<script type="text/plain" id="c8v">
+struct alignas(32) EdgeLevel16
+{
+    __m256i rejLo, rejHi;          // voies 0-7 = enfants des rangées 0-1, 8-15 = rangées 2-3
+    __m256i accLo, accHi;
+    alignas(32) int32_t step[16];  // relu en SCALAIRE après tzcnt (étape 10)
+};
+
+inline void BuildLevel16(int32_t A, int32_t B, int32_t S, EdgeLevel16& t) noexcept
+{
+    const __m256i cx   = _mm256_setr_epi32(0, 1, 2, 3, 0, 1, 2, 3);   // colonne de l'enfant
+    const __m256i cyLo = _mm256_setr_epi32(0, 0, 0, 0, 1, 1, 1, 1);   // rangée (registre lo)
+    const __m256i cyHi = _mm256_setr_epi32(2, 2, 2, 2, 3, 3, 3, 3);   // rangée (registre hi)
+    const __m256i aS = _mm256_set1_epi32(A * S);                       // pas d'un enfant en x
+    const __m256i bS = _mm256_set1_epi32(B * S);                       // pas d'un enfant en y
+
+    // Les SEULES multiplications de toute la méthode (vpmulld) : une fois par triangle.
+    const __m256i sx = _mm256_mullo_epi32(cx, aS);                          // A·S·cx
+    const __m256i lo = _mm256_add_epi32(sx, _mm256_mullo_epi32(cyLo, bS));  // + B·S·cy
+    const __m256i hi = _mm256_add_epi32(sx, _mm256_mullo_epi32(cyHi, bS));
+    _mm256_store_si256(reinterpret_cast<__m256i*>(t.step),     lo);
+    _mm256_store_si256(reinterpret_cast<__m256i*>(t.step + 8), hi);
+
+    const CornerOffsets c = Corners(A, B, S);
+    const __m256i rej = _mm256_set1_epi32(c.rej), acc = _mm256_set1_epi32(c.acc);
+    t.rejLo = _mm256_add_epi32(lo, rej);  t.rejHi = _mm256_add_epi32(hi, rej);
+    t.accLo = _mm256_add_epi32(lo, acc);  t.accHi = _mm256_add_epi32(hi, acc);
+}
+</script>
+<script type="text/plain" id="c9s">
+struct ChildMasks { uint32_t touched, full; };   // bit i = enfant i
+
+inline ChildMasks Classify16Scalar(const int32_t e[3], const EdgeLevel16Scalar* const t[3],
+                                   uint32_t active) noexcept
+{
+    ChildMasks m{ 0xFFFFu, 0xFFFFu };
+    for (int k = 0; k < 3; ++k)
+    {
+        if (!(active & (1u << k))) continue;               // arête acceptée plus haut
+        for (int i = 0; i < 16; ++i)
+        {
+            if (e[k] + t[k]->rej[i] >= 0) m.touched &= ~(1u << i);   // rejeté par k
+            if (e[k] + t[k]->acc[i] >= 0) m.full    &= ~(1u << i);   // pas plein pour k
+        }
+    }
+    return m;   // 3 × 16 × 2 = 96 additions et 96 comparaisons, 96 branches
+}
+</script>
+<script type="text/plain" id="c9v">
+// Bit de signe de 16 valeurs (2 registres) → masque de 16 bits.
+LV3_FORCEINLINE uint32_t SignMask16(__m256i lo, __m256i hi) noexcept
+{
+    return  uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(lo)))          // bits 0-7
+         | (uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(hi))) << 8);   // bits 8-15
+}
+
+LV3_FORCEINLINE ChildMasks Classify16(const int32_t e[3], const EdgeLevel16* const t[3],
+                                      uint32_t active) noexcept
+{
+    // −1 : tous les bits à 1, donc « négatif » : élément neutre du ET.
+    __m256i rLo = _mm256_set1_epi32(-1), rHi = rLo, aLo = rLo, aHi = rLo;
+    for (int k = 0; k < 3; ++k)                       // déroulé par le compilateur
+    {
+        if (!(active & (1u << k))) continue;          // branche prévisible (même tuile)
+        const __m256i b = _mm256_set1_epi32(e[k]);    // valeur au 1er pixel du parent, ×8
+        rLo = _mm256_and_si256(rLo, _mm256_add_epi32(b, t[k]->rejLo));  // coins de rejet 0-7
+        rHi = _mm256_and_si256(rHi, _mm256_add_epi32(b, t[k]->rejHi));  // coins de rejet 8-15
+        aLo = _mm256_and_si256(aLo, _mm256_add_epi32(b, t[k]->accLo));  // coins d'accept. 0-7
+        aHi = _mm256_and_si256(aHi, _mm256_add_epi32(b, t[k]->accHi));  // coins d'accept. 8-15
+    }
+    // Signe du ET = ET des signes : 1 <=> négatif pour TOUTES les arêtes actives.
+    return { SignMask16(rLo, rHi), SignMask16(aLo, aHi) };
+    // Par arête active : 1 diffusion + 4 vpaddd + 4 vpand. Puis 4 vmovmskps. Aucune comparaison.
+}
+</script>
+<script type="text/plain" id="c10s">
+// Larrabee (listing One d'Abrash) :
+//     kmov eax, k1        ; masque → registre général
+//     bsf  ecx, eax       ; premier bit à 1
+//     jnz  ...
+// Loop:
+//     ...                 ; émettre le bloc ecx
+//     bsfi ecx, eax       ; bit SUIVANT, à partir de ecx (instruction ajoutée pour ça)
+//     jnz  Loop
+//
+// Équivalent scalaire portable :
+for (int i = 0; i < 16; ++i)
+    if (full & (1u << i)) EmitFullBlock(i);   // 16 tours, 16 branches, même si 1 seul bit
+</script>
+<script type="text/plain" id="c10v">
+const ChildMasks m = Classify16(e, tab16, active);
+const uint32_t partial = m.touched & ~m.full;            // full ⊂ touched (voir Questions)
+
+// _tzcnt_u32 : index du bit 1 le plus bas. _blsr_u32 : efface ce bit (x & (x − 1)).
+// La boucle fait EXACTEMENT popcount(m) tours.
+for (uint32_t b = m.full; b != 0; b = _blsr_u32(b))
+{
+    const uint32_t i = _tzcnt_u32(b);
+    EmitFullBlock(x0 + 16 * int32_t(i & 3), y0 + 16 * int32_t(i >> 2), 16);
+}
+for (uint32_t b = partial; b != 0; b = _blsr_u32(b))
+{
+    const uint32_t i = _tzcnt_u32(b);
+    int32_t ce[3];
+    for (int k = 0; k < 3; ++k) ce[k] = e[k] + tab16[k]->step[i];   // UNE addition par arête
+    Descend4(x0 + 16 * int32_t(i & 3), y0 + 16 * int32_t(i >> 2), ce, active);
+}
+</script>
+<script type="text/plain" id="c11s">
+// Dans Descend4 : même classement, tables du niveau S = 4.
+const ChildMasks m4 = Classify16(ce, tab4, active);
+const uint32_t partial4 = m4.touched & ~m4.full;
+// blocs 4×4 pleins : émis ; partiels : étape 12.
+</script>
+<script type="text/plain" id="c11v">
+// Rien de nouveau : Classify16 de l'étape 9.
+// Seules changent les tables (pas = 4 pixels au lieu de 16)
+// et les valeurs de départ ce[k] (étape 10).
+// C'est la force de la méthode : UN noyau, réutilisé
+// à chaque niveau, avec des tables indépendantes
+// de la position.
+</script>
+<script type="text/plain" id="c12s">
+// Niveau pixel : S = 1, donc rej = acc = step (le coin EST le centre).
+inline uint32_t PixelMask16Scalar(const int32_t e[3], const EdgeLevel16Scalar* const pix[3],
+                                  uint32_t active) noexcept
+{
+    uint32_t mask = 0xFFFFu;
+    for (int k = 0; k < 3; ++k)
+    {
+        if (!(active & (1u << k))) continue;
+        for (int p = 0; p < 16; ++p)                 // p = 4·py + px dans le bloc 4×4
+            if (e[k] + pix[k]->step[p] >= 0) mask &= ~(1u << p);
+    }
+    return mask;   // bit p = pixel (x0 + (p & 3), y0 + (p >> 2)) couvert
+}
+</script>
+<script type="text/plain" id="c12v">
+LV3_FORCEINLINE uint32_t PixelMask16(const int32_t e[3], const EdgeLevel16* const pix[3],
+                                     uint32_t active) noexcept
+{
+    __m256i lo = _mm256_set1_epi32(-1), hi = lo;     // neutre du ET
+    for (int k = 0; k < 3; ++k)
+    {
+        if (!(active & (1u << k))) continue;
+        const __m256i b = _mm256_set1_epi32(e[k]);
+        lo = _mm256_and_si256(lo, _mm256_add_epi32(b, pix[k]->rejLo));   // pixels 0-7
+        hi = _mm256_and_si256(hi, _mm256_add_epi32(b, pix[k]->rejHi));   // pixels 8-15
+    }
+    return SignMask16(lo, hi);   // 16 pixels × 3 arêtes : 6 vpaddd, 6 vpand, 2 vmovmskps
+}
+// Variante Abrash (Larrabee, listing Three) : table NÉGÉE −step, et
+//   vcmpgtpi k2{k2}, v_negstep, e   →  « e < −step » : une comparaison par arête.
+</script>
+<script type="text/plain" id="c13s">
+const ChildMasks m = Classify16(e, tab, active);
+// Un enfant près d'un sommet aigu peut n'être rejeté
+// par AUCUNE arête sans toucher le triangle.
+// On le visite pour rien, jusqu'à trouver
+// un masque de pixels vide.
+const uint32_t partial = m.touched & ~m.full;
+</script>
+<script type="text/plain" id="c13v">
+// Enfants qui croisent la boîte du triangle : 2 masques de 4 bits
+// (colonnes et rangées) calculés en entiers, combinés en 16 bits.
+const uint32_t colMask = ColsOverlap(x0, S, bb.x0, bb.x1);   // bit cx
+const uint32_t rowMask = RowsOverlap(y0, S, bb.y0, bb.y1);   // bit cy
+const uint32_t boxMask = Expand4x4(colMask, rowMask);        // bit (4·cy + cx)
+const uint32_t partial = m.touched & boxMask & ~m.full;
+</script>
+<script type="text/plain" id="c15s">
+// Échantillon j du motif MSAA 4× : décalage (dx_j, dy_j) en sous-pixels.
+// Table de pas « pixel » propre à l'échantillon, calculée au setup :
+//   sampleStep_j[p] = A·(16·px + dx_j) + B·(16·py + dy_j)   (sans la factorisation !)
+// Puis, pour un bloc 4×4 partiel : 4 masques au lieu d'un.
+for (int j = 0; j < 4; ++j)
+    sampleMask[j] = PixelMask16(e, sampleTables[j], active);
+// Blocs pleins : couverts pour TOUS les échantillons, aucun coût de plus.
+</script>
+<script type="text/plain" id="c15v">
+// Bloc 16×16 plein : le triangle couvre tout le bloc.
+// zNearTri : profondeur la plus proche du triangle (reverse-Z : la plus GRANDE).
+// hiZ[b]   : profondeur la plus éloignée déjà écrite dans le bloc (la plus PETITE).
+if (zNearTri <= hiZ[b])
+    continue;                 // tout le bloc est caché : ni shading ni Z-test
+EmitFullBlock(b);             // sinon : dessiné ; hiZ[b] mis à jour après
+</script>
+<script type="text/plain" id="c17s">
+// Bloc 8×8 : on évalue la fonction d'arête float de C2 (EdgeFunction, 7 opérations)
+// DIRECTEMENT aux 4 centres extrêmes du bloc. Jamais par additions (règle C0).
+// tau : borne de l'erreur d'arrondi d'EdgeFunction (à démontrer comme ObjBackThreshold, B5).
+for each edge k:
+    wMax[k] = max(w(c00), w(c70), w(c07), w(c77));   // coin le plus « dedans » (LV3 : positif)
+    wMin[k] = min(...);
+if (any k: wMax[k] < -tau)  → bloc SÛREMENT vide : sauté, aucun accès mémoire
+if (all k: wMin[k] > +tau)  → bloc SÛREMENT plein : masque de couverture = 0xFF par ligne
+else                        → ForEachCoveredBlock8 (C2) sur les 8 lignes du bloc
+// Les décisions par pixel restent celles de C2 : image identique au bit.
+</script>
+<script type="text/plain" id="c17v">
+// Le bloc 8×8 de la hiérarchie s'aligne sur les blocs de 8 de C2.
+// Un bloc plein = 8 appels au sink de C2, cover = toutes voies :
+for (int32_t r = 0; r < 8; ++r)
+{
+    sink.BeginRow(y0 + r);
+    // w0..w2 et barycentriques restent calculés par voie (C2) :
+    // en LV3, ce sont eux qui donnent z (même parenthésage, C1).
+    sink.Block(x0, allLanes, 0xFFu, b0, b1, b2);
+}
+// Gain réel : les blocs VIDES sautés. Les blocs pleins évitent
+// les comparaisons et le masque, pas les 7 opérations par voie.
+</script>
+<script type="text/plain" id="cV">
+// Test_D1_Hierarchy.cpp (EXE) — à écrire à l'ouverture de D1.
+// 1. Identité : 100 000 triangles tirés comme la TNR C2 (tailles 1 à 400 px, vues
+//    317 × 203 et 61 × 180 collée au bord), s = 4. Pour chacun :
+//       masque hiérarchique (tuiles → 16×16 → 4×4 → pixels)
+//    == évaluation directe A·x + B·y + q < 0 sur chaque pixel de la vue.
+//    Exigence : 0 différence. Compter aussi blocs pleins / partiels / faux positifs.
+// 2. Étanchéité : 3 000 éventails de 8 triangles, sommets quelconques puis sur des
+//    centres. Exigence : 0 doublon, 0 trou à l'intérieur de l'octogone.
+// 3. Mutations (chacune DOIT faire échouer le test) :
+//       K / 16 au lieu de K >> 4 ; biais top-left retiré ; S au lieu de S − 1 dans
+//       Corners (doit rester EXACT, mais moins de blocs pleins : compteur, pas échec) ;
+//       eTile tronqué en int16_t.
+// 4. Voie D-b : couleur ET Z-buffer identiques à C2 (kSimdAlways) sur les mêmes triangles.
+</script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  Moteur du « Lot D pas à pas » : rastérisation hiérarchique (Abrash)
+//  Entiers en virgule fixe, calculés exactement (|valeurs| < 2^53 en JS).
+//  Convention : E < 0 = intérieur. Arêtes e0 = V1→V2, e1 = V2→V0, e2 = V0→V1.
+// ════════════════════════════════════════════════════════════════════
+const W = 256, H = 256, TILE = 64, NT = 4;
+const f32 = Math.fround;
+const z0 = v => (v === 0 ? 0 : v);              // pas de −0 dans les entiers affichés
+
+// Arrondi au plus proche, pair en cas d'égalité : std::lrintf / _mm256_cvtps_epi32
+function rne(v) {
+  const f = Math.floor(v), d = v - f;
+  if (d > 0.5) return f + 1;
+  if (d < 0.5) return f;
+  return (f % 2 === 0) ? f : f + 1;
+}
+const floorShift = (K, sb) => Math.floor(K / (1 << sb));   // K >> sb (décalage arithmétique)
+const truncDiv   = (K, sb) => Math.trunc(K / (1 << sb));   // K / 16 en C++ : tronque vers 0
+
+// opts.variant : 'tl' (règle top-left), 'strict' (E<0 partout), 'le' (E≤0 partout)
+// opts.trunc   : q = K/16 tronqué au lieu du plancher
+function setupFixed(vf, sb, opts = {}) {
+  const SUB = 1 << sb, half = SUB >> 1;
+  const V = vf.map(v => ({ X: rne(f32(f32(v.x) * SUB)), Y: rne(f32(f32(v.y) * SUB)), fx: f32(v.x), fy: f32(v.y) }));
+  const area2 = (V[1].X - V[0].X) * (V[2].Y - V[0].Y) - (V[1].Y - V[0].Y) * (V[2].X - V[0].X);
+  const T = { sb, SUB, V, area2, degenerate: area2 === 0, sg: area2 > 0 ? -1 : 1, edges: [] };
+  const variant = opts.variant || 'tl';
+  for (const [ia, ib] of [[1, 2], [2, 0], [0, 1]]) {
+    const a = V[ia], b = V[ib];
+    const A = z0(T.sg * (a.Y - b.Y)), B = z0(T.sg * (b.X - a.X));
+    const C = z0(-(A * a.X + B * a.Y));
+    const tl = (A < 0) || (A === 0 && B < 0);
+    const bias = variant === 'strict' ? 0 : variant === 'le' ? 1 : (tl ? 1 : 0);
+    const Cb = C - bias;
+    const K = (A + B) * half + Cb;
+    const q = opts.trunc ? truncDiv(K, sb) : floorShift(K, sb);
+    T.edges.push({ ia, ib, A, B, C, tl, bias, Cb, K, q: z0(q), r: K - q * SUB });
+  }
+  let mnX = Infinity, mnY = Infinity, mxX = -Infinity, mxY = -Infinity;
+  for (const v of V) { mnX = Math.min(mnX, v.X); mxX = Math.max(mxX, v.X); mnY = Math.min(mnY, v.Y); mxY = Math.max(mxY, v.Y); }
+  const x0 = Math.max(0, Math.floor(mnX / SUB)), x1 = Math.min(W - 1, Math.floor(mxX / SUB));
+  const y0 = Math.max(0, Math.floor(mnY / SUB)), y1 = Math.min(H - 1, Math.floor(mxY / SUB));
+  T.bbox = { x0, y0, x1: x1 + 1, y1: y1 + 1, empty: x1 < x0 || y1 < y0 };
+  return T;
+}
+const Ev = (T, k, x, y) => { const e = T.edges[k]; return e.A * x + e.B * y + e.q; };
+function insideFixed(T, x, y) {
+  if (T.degenerate) return false;
+  return Ev(T, 0, x, y) < 0 && Ev(T, 1, x, y) < 0 && Ev(T, 2, x, y) < 0;
+}
+function corners(A, B, S) {
+  const a = A * (S - 1), b = B * (S - 1);
+  return { rej: z0(Math.min(0, a) + Math.min(0, b)), acc: z0(Math.max(0, a) + Math.max(0, b)) };
+}
+// Tables d'un niveau : 16 enfants de taille S, enfant i = (cx, cy) = (i & 3, i >> 2)
+function tables(T, S) {
+  return T.edges.map(e => {
+    const c = corners(e.A, e.B, S);
+    const step = [], rej = [], acc = [];
+    for (let i = 0; i < 16; i++) {
+      const s = z0(e.A * S * (i & 3) + e.B * S * (i >> 2));
+      step.push(s); rej.push(s + c.rej); acc.push(s + c.acc);
+    }
+    return { S, step, rej, acc, off: c };
+  });
+}
+function boxMask(T, x0, y0, S) {
+  let m = 0; const b = T.bbox;
+  for (let i = 0; i < 16; i++) {
+    const cx = x0 + S * (i & 3), cy = y0 + S * (i >> 2);
+    if (cx < b.x1 && cx + S > b.x0 && cy < b.y1 && cy + S > b.y0) m |= 1 << i;
+  }
+  return m;
+}
+// Classement des 16 enfants. e[k] = valeur de l'arête k au PREMIER pixel du parent.
+function classify(e, tab, active, isPixel) {
+  const rv = [[], [], []], av = [[], [], []];
+  let touched = 0xFFFF, full = 0xFFFF;
+  for (let k = 0; k < 3; k++) {
+    for (let i = 0; i < 16; i++) {
+      rv[k].push(e[k] + tab[k].rej[i]);
+      av[k].push(e[k] + tab[k].acc[i]);
+      if (!(active & (1 << k))) continue;
+      if (rv[k][i] >= 0) touched &= ~(1 << i);
+      if (av[k][i] >= 0) full &= ~(1 << i);
+    }
+  }
+  if (isPixel) full = touched;
+  return { e: e.slice(), rv, av, touched, full };
+}
+const popc = m => { let c = 0; while (m) { m &= m - 1; c++; } return c; };
+
+// ── Modèle de comptage d'instructions (couverture seulement, ordre de grandeur)
+const OPS = { setupTri: 40, tablesPerLevelEdge: 10, tileScalar: 18, cls16Base: 7, cls16Edge: 9,
+  pixBase: 4, pixEdge: 5, bitBase: 3, emit: 3, c2Tri: 34, c2Block: 37 };
+
+// Rastérisation hiérarchique complète de la cible 256×256
+function rasterHier(T, opts = {}) {
+  const cov = new Uint8Array(W * H);   // 0 rien, 1 masque pixel, 2 bloc 4 plein, 3 bloc 16 plein, 4 tuile pleine
+  const st = { tiles: [], tilesInBox: 0, tilesRej: 0, tilesFull: 0, tilesPart: 0, full16: 0, part16: 0, full4: 0,
+    part4: 0, fp4: 0, fp16: 0, covered: 0, viaFull: 0, calls16: 0, callsPix: 0, bits: 0, ops: 0,
+    eChecks: 0, eMismatch: 0, maxAbsE: 0 };
+  if (T.degenerate || T.bbox.empty) return { cov, st, T, tab: null };
+  const tab = { 16: tables(T, 16), 4: tables(T, 4), 1: tables(T, 1) };
+  st.ops += OPS.setupTri + 3 * 3 * OPS.tablesPerLevelEdge;
+  const c64 = T.edges.map(e => corners(e.A, e.B, 64));
+  const b = T.bbox;
+  const fill = (x0, y0, S, v) => { for (let y = y0; y < y0 + S; y++) for (let x = x0; x < x0 + S; x++) cov[y * W + x] = v; };
+  const check = (e, x, y) => { st.eChecks++; for (let k = 0; k < 3; k++) if (e[k] !== Ev(T, k, x, y)) st.eMismatch++; };
+  for (let ty = Math.floor(b.y0 / TILE); ty <= Math.floor((b.y1 - 1) / TILE); ty++)
+    for (let tx = Math.floor(b.x0 / TILE); tx <= Math.floor((b.x1 - 1) / TILE); tx++) {
+      st.tilesInBox++; st.ops += OPS.tileScalar;
+      const x0 = tx * TILE, y0 = ty * TILE;
+      const t = { tx, ty, e: [], rej: [], acc: [], state: 'part', active: 0, l16: null, kids16: {} };
+      let rejected = false;
+      for (let k = 0; k < 3; k++) {
+        const e = Ev(T, k, x0, y0);
+        t.e.push(e); t.rej.push(e + c64[k].rej); t.acc.push(e + c64[k].acc);
+        if (e + c64[k].rej >= 0) rejected = true;
+        if (e + c64[k].acc >= 0) t.active |= 1 << k;
+      }
+      st.tiles.push(t);
+      if (rejected) { t.state = 'rej'; st.tilesRej++; continue; }
+      if (t.active === 0) { t.state = 'full'; st.tilesFull++; fill(x0, y0, TILE, 4); st.viaFull += TILE * TILE; st.ops += OPS.emit; continue; }
+      st.tilesPart++;
+      for (let k = 0; k < 3; k++) if (t.active & (1 << k)) st.maxAbsE = Math.max(st.maxAbsE, Math.abs(t.e[k]));
+      const nAct = popc(t.active);
+      // niveau 16×16
+      const L16 = classify(t.e, tab[16], t.active, false); st.calls16++; st.ops += OPS.cls16Base + nAct * OPS.cls16Edge;
+      if (opts.boxMask) L16.touched &= boxMask(T, x0, y0, 16);
+      L16.full &= L16.touched; L16.partial = L16.touched & ~L16.full; t.l16 = L16;
+      for (let m = L16.full; m; m &= m - 1) {
+        const i = 31 - Math.clz32(m & -m); st.full16++; st.bits++; st.ops += OPS.bitBase + OPS.emit;
+        fill(x0 + 16 * (i & 3), y0 + 16 * (i >> 2), 16, 3); st.viaFull += 256;
+      }
+      for (let m = L16.partial; m; m &= m - 1) {
+        const i = 31 - Math.clz32(m & -m); st.part16++; st.bits++; st.ops += OPS.bitBase + nAct;
+        const bx = x0 + 16 * (i & 3), by = y0 + 16 * (i >> 2);
+        const ce = t.e.map((v, k) => v + tab[16][k].step[i]); check(ce, bx, by);
+        const L4 = classify(ce, tab[4], t.active, false); st.calls16++; st.ops += OPS.cls16Base + nAct * OPS.cls16Edge;
+        if (opts.boxMask) L4.touched &= boxMask(T, bx, by, 4);
+        L4.full &= L4.touched; L4.partial = L4.touched & ~L4.full; L4.kids = {};
+        t.kids16[i] = L4;
+        let any = L4.full !== 0;
+        for (let m2 = L4.full; m2; m2 &= m2 - 1) {
+          const j = 31 - Math.clz32(m2 & -m2); st.full4++; st.bits++; st.ops += OPS.bitBase + OPS.emit;
+          fill(bx + 4 * (j & 3), by + 4 * (j >> 2), 4, 2); st.viaFull += 16;
+        }
+        for (let m2 = L4.partial; m2; m2 &= m2 - 1) {
+          const j = 31 - Math.clz32(m2 & -m2); st.part4++; st.bits++; st.ops += OPS.bitBase + nAct;
+          const px = bx + 4 * (j & 3), py = by + 4 * (j >> 2);
+          const ce4 = ce.map((v, k) => v + tab[4][k].step[j]); check(ce4, px, py);
+          const LP = classify(ce4, tab[1], t.active, true); st.callsPix++; st.ops += OPS.pixBase + nAct * OPS.pixEdge;
+          L4.kids[j] = LP;
+          if (LP.touched === 0) st.fp4++; else any = true;
+          for (let p = 0; p < 16; p++) if (LP.touched & (1 << p)) cov[(py + (p >> 2)) * W + px + (p & 3)] = 1;
+        }
+        if (!any) st.fp16++;
+      }
+    }
+  for (let i = 0; i < W * H; i++) if (cov[i]) st.covered++;
+  return { cov, st, T, tab };
+}
+// Force brute : chaque pixel de la cible, évaluation directe
+function rasterBrute(T) {
+  const cov = new Uint8Array(W * H); let n = 0;
+  if (T.degenerate) return { cov, n };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (insideFixed(T, x, y)) { cov[y * W + x] = 1; n++; }
+  return { cov, n };
+}
+// Modèle C2 : blocs de 8 sur chaque ligne de la boîte
+function c2Ops(T) {
+  if (T.degenerate || T.bbox.empty) return { ops: 0, blocks: 0, lanes: 0 };
+  const w = T.bbox.x1 - T.bbox.x0, h = T.bbox.y1 - T.bbox.y0;
+  const blocks = Math.ceil(w / 8) * h;
+  return { ops: OPS.c2Tri + blocks * OPS.c2Block, blocks, lanes: blocks * 8 };
+}
+
+// ── Chemin float de LV3 (C2) : EdgeFunction directe, et la variante incrémentale interdite
+function floatTri(vf) {
+  const p = vf.map(v => ({ x: f32(v.x), y: f32(v.y) }));
+  const area = (p[1].x - p[0].x) * (p[2].y - p[0].y) - (p[1].y - p[0].y) * (p[2].x - p[0].x);
+  const sg = area > 0 ? -1 : 1;
+  const edges = [[1, 2], [2, 0], [0, 1]].map(([ia, ib]) => {
+    const a = p[ia], b = p[ib];
+    const A = sg * f32(a.y - b.y), B = sg * f32(b.x - a.x);
+    return { a, b, A, B, tl: (A < 0) || (A === 0 && B < 0) };
+  });
+  let mnX = Infinity, mnY = Infinity, mxX = -Infinity, mxY = -Infinity;
+  for (const v of p) { mnX = Math.min(mnX, v.x); mxX = Math.max(mxX, v.x); mnY = Math.min(mnY, v.y); mxY = Math.max(mxY, v.y); }
+  return { p, sg, degenerate: area === 0, edges,
+    bbox: { x0: Math.floor(mnX), y0: Math.floor(mnY), x1: Math.floor(mxX) + 1, y1: Math.floor(mxY) + 1 } };
+}
+function EF(a, b, px, py) {           // EdgeFunction de LV3 : mêmes 7 opérations float32
+  const ux = f32(a.x - px), uy = f32(a.y - py), vx = f32(b.x - px), vy = f32(b.y - py);
+  return f32(f32(ux * vy) - f32(uy * vx));
+}
+const inE = (v, tl) => v < 0 || (v === 0 && tl);
+// Pixels couverts (index locaux dans une fenêtre W×H d'origine (ox, oy)).
+// mode 'direct' : EdgeFunction à chaque pixel (C2) ; 'incRow' : amorce directe en début de ligne,
+// puis += A ; 'incFull' : amorce UNE fois au coin de la boîte, += A par pixel, += B par ligne.
+function rasterFloat(F, mode, ox = 0, oy = 0) {
+  const out = [];
+  if (F.degenerate) return out;
+  const x0 = Math.max(ox, F.bbox.x0), x1 = Math.min(ox + W, F.bbox.x1);
+  const y0 = Math.max(oy, F.bbox.y0), y1 = Math.min(oy + H, F.bbox.y1);
+  let rowStart = null;
+  for (let y = y0; y < y1; y++) {
+    const py = f32(y + 0.5);
+    let run = null;
+    if (mode === 'incFull') {
+      if (rowStart === null) rowStart = F.edges.map(e => F.sg * EF(e.a, e.b, f32(x0 + 0.5), py));
+      else for (let k = 0; k < 3; k++) rowStart[k] = f32(rowStart[k] + F.edges[k].B);
+    }
+    for (let x = x0; x < x1; x++) {
+      const px = f32(x + 0.5);
+      let vals;
+      if (mode === 'direct') vals = F.edges.map(e => F.sg * EF(e.a, e.b, px, py));
+      else if (run === null) { run = mode === 'incFull' ? rowStart.slice() : F.edges.map(e => F.sg * EF(e.a, e.b, px, py)); vals = run; }
+      else { for (let k = 0; k < 3; k++) run[k] = f32(run[k] + F.edges[k].A); vals = run; }
+      if (inE(vals[0], F.edges[0].tl) && inE(vals[1], F.edges[1].tl) && inE(vals[2], F.edges[2].tl)) out.push((y - oy) * W + (x - ox));
+    }
+  }
+  return out;
+}
+
+// ── Générateur pseudo-aléatoire reproductible (mulberry32)
+function rng(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+function randomTri(R, minS, maxS) {
+  const s = Math.exp(Math.log(minS) + R() * (Math.log(maxS) - Math.log(minS)));
+  const cx = 20 + R() * 216, cy = 20 + R() * 216;
+  const v = [];
+  for (let i = 0; i < 3; i++) {
+    const ang = R() * 2 * Math.PI, r = s * (0.3 + 0.7 * R());
+    v.push({ x: Math.min(255.9, Math.max(0.1, cx + r * Math.cos(ang))), y: Math.min(255.9, Math.max(0.1, cy + r * Math.sin(ang))) });
+  }
+  return v;
+}
+
+const OX = 1024, OY = 640;   // fenêtre de test float : coordonnées d'écran de LV3
+// Population : hiérarchie = force brute ? incrémental float ≠ direct ? tronqué ≠ plancher ?
+function popTest(n, seed, sb) {
+  const R = rng(seed);
+  const res = { tris: n, hierMismatch: 0, eMismatch: 0, floatTested: 0, incRow: 0, incRowTris: 0, incFull: 0, incFullTris: 0, truncDiff: 0, trisTruncDiff: 0, covered: 0 };
+  for (let t = 0; t < n; t++) {
+    const v = randomTri(R, 1, 120);
+    const T = setupFixed(v, sb);
+    const h = rasterHier(T), bf = rasterBrute(T);
+    res.eMismatch += h.st.eMismatch; res.covered += bf.n;
+    for (let i = 0; i < W * H; i++) if ((h.cov[i] !== 0) !== (bf.cov[i] !== 0)) res.hierMismatch++;
+    const Tt = setupFixed(v, sb, { trunc: true });
+    let d = 0;
+    const bb = T.bbox;
+    if (!T.degenerate && !bb.empty) for (let y = bb.y0; y < bb.y1; y++) for (let x = bb.x0; x < bb.x1; x++)
+      if (insideFixed(T, x, y) !== insideFixed(Tt, x, y)) d++;
+    res.truncDiff += d; if (d) res.trisTruncDiff++;
+    // Float : même triangle placé en coordonnées d'écran réalistes (OX, OY), comme dans LV3 (1536 × 900).
+    const F = floatTri(v.map(p => ({ x: p.x + OX, y: p.y + OY })));
+    const dir = new Set(rasterFloat(F, 'direct', OX, OY));
+    for (const mode of ['incRow', 'incFull']) {
+      const inc = new Set(rasterFloat(F, mode, OX, OY));
+      let fd = 0;
+      for (const i of dir) if (!inc.has(i)) fd++;
+      for (const i of inc) if (!dir.has(i)) fd++;
+      res[mode] += fd; if (fd) res[mode + 'Tris']++;
+    }
+    res.floatTested += Math.max(0, Math.min(OX + W, F.bbox.x1) - Math.max(OX, F.bbox.x0)) * Math.max(0, Math.min(OY + H, F.bbox.y1) - Math.max(OY, F.bbox.y0));
+  }
+  return res;
+}
+
+// Éventails de 8 triangles autour d'un centre : doublons et trous sur les arêtes partagées
+function fanTest(n, seed, sb, onCenters, rMin = 3, rMax = 31) {
+  const R = rng(seed);
+  const names = ['direct', 'incRow', 'incFull', 'fixTL', 'fixStrict', 'fixLE', 'fixTrunc'];
+  const res = {}; for (const k of names) res[k] = { dup: 0, hole: 0, fans: 0 };
+  res.n = n;
+  const snapC = v => onCenters ? Math.floor(v) + 0.5 : v;
+  for (let f = 0; f < n; f++) {
+    const cx = snapC(rMax + 4 + R() * (W - 2 * rMax - 8)), cy = snapC(rMax + 4 + R() * (H - 2 * rMax - 8)), r = rMin + R() * (rMax - rMin), a0 = R() * Math.PI;
+    const c = { x: cx, y: cy }, ring = [];
+    for (let i = 0; i < 8; i++) {
+      const ang = a0 + i * Math.PI / 4 + (R() - 0.5) * 0.3;
+      ring.push({ x: snapC(cx + r * Math.cos(ang)), y: snapC(cy + r * Math.sin(ang)) });
+    }
+    const tris = ring.map((v, i) => [c, v, ring[(i + 1) % 8]]);
+    const x0 = Math.max(0, Math.floor(cx - r - 3)), x1 = Math.min(W, Math.ceil(cx + r + 3));
+    const y0 = Math.max(0, Math.floor(cy - r - 3)), y1 = Math.min(H, Math.ceil(cy + r + 3));
+    const bw = x1 - x0, bh = y1 - y0;
+    // intérieur strict de l'octogone (pour compter les trous)
+    const interiorF = (pts) => {
+      const ar = pts.reduce((s, p, i) => { const q = pts[(i + 1) % 8]; return s + (p.x * q.y - q.x * p.y); }, 0);
+      const sgn = ar > 0 ? 1 : -1;
+      return (px, py) => pts.every((p, i) => { const q = pts[(i + 1) % 8]; return sgn * ((q.x - p.x) * (py - p.y) - (q.y - p.y) * (px - p.x)) > 0; });
+    };
+    const SUB = 1 << sb;
+    const ringS = ring.map(v => ({ x: rne(f32(f32(v.x) * SUB)), y: rne(f32(f32(v.y) * SUB)) }));
+    const inS = interiorF(ringS);
+    const tally = (key, covFn, inside) => {
+      const cnt = new Uint8Array(bw * bh);
+      for (const t of tris) for (const idx of covFn(t)) {
+        const x = idx % W, y = (idx / W) | 0;
+        if (x >= x0 && x < x1 && y >= y0 && y < y1) cnt[(y - y0) * bw + (x - x0)]++;
+      }
+      let dup = 0, hole = 0;
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const k = cnt[(y - y0) * bw + (x - x0)];
+        if (k > 1) dup += k - 1;
+        if (k === 0 && inside(x, y)) hole++;
+      }
+      res[key].dup += dup; res[key].hole += hole; if (dup || hole) res[key].fans++;
+    };
+    const ringO = ring.map(v => ({ x: v.x + OX, y: v.y + OY })), inFO = interiorF(ringO);
+    const insideF = (x, y) => inFO(x + OX + 0.5, y + OY + 0.5);
+    const shift = t => t.map(v => ({ x: v.x + OX, y: v.y + OY }));
+    const insideS = (x, y) => inS(SUB * x + SUB / 2, SUB * y + SUB / 2);
+    tally('direct', t => rasterFloat(floatTri(shift(t)), 'direct', OX, OY), insideF);
+    tally('incRow', t => rasterFloat(floatTri(shift(t)), 'incRow', OX, OY), insideF);
+    tally('incFull', t => rasterFloat(floatTri(shift(t)), 'incFull', OX, OY), insideF);
+    const fixCov = opts => t => { const T = setupFixed(t, sb, opts); const o = []; if (T.degenerate || T.bbox.empty) return o;
+      for (let y = T.bbox.y0; y < T.bbox.y1; y++) for (let x = T.bbox.x0; x < T.bbox.x1; x++) if (insideFixed(T, x, y)) o.push(y * W + x); return o; };
+    tally('fixTL', fixCov({}), insideS);
+    tally('fixStrict', fixCov({ variant: 'strict' }), insideS);
+    tally('fixLE', fixCov({ variant: 'le' }), insideS);
+    tally('fixTrunc', fixCov({ trunc: true }), insideS);
+  }
+  return res;
+}
+
+// Budget de bits : bits signés nécessaires
+const bitsFor = v => v <= 0 ? 1 : Math.ceil(Math.log2(v + 1)) + 1;
+function budget(screenPx, sb, tile) {
+  const SUB = 1 << sb;
+  const coord = screenPx * SUB;            // |X| max (sous-pixels), garde-bande ignorée
+  const AB = coord;                        // |A|, |B| ≤ écart de coordonnées
+  const rawE = 2 * AB * coord;             // |E| brut au pire, sur tout l'écran
+  const tileE = 2 * AB * tile;             // |E'| dans une tuile traversée par l'arête (pas de A par pixel)
+  const screenE = 2 * AB * screenPx;       // |E'| factorisé, sans tuile
+  return { screenPx, sb, tile, AB, bitsAB: bitsFor(AB), bitsRaw: bitsFor(rawE), bitsScreenE: bitsFor(screenE), bitsTileE: bitsFor(tileE) };
+}
+
+if (typeof module !== 'undefined') module.exports = { W, H, TILE, rne, setupFixed, Ev, insideFixed, corners, tables, classify,
+  rasterHier, rasterBrute, c2Ops, floatTri, EF, rasterFloat, rng, randomTri, popTest, fanTest, budget, OPS, popc };
+
+</script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+//  Interface du « Lot D pas à pas »
+// ════════════════════════════════════════════════════════════════════
+(function () {
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('fr-FR').replace(/ | /g, ' ');
+const ff = (n, d = 4) => (n < 0 ? '−' : '') + Math.abs(n).toFixed(d).replace('.', ',');
+const bin16 = m => { let s = ''; for (let i = 15; i >= 0; i--) { s += (m >> i) & 1; if (i % 4 === 0 && i) s += ' '; } return s; };
+const bits = m => { const o = []; for (let i = 0; i < 16; i++) if (m & (1 << i)) o.push(i); return o; };
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const pct = (a, b) => b ? (100 * a / b).toFixed(1).replace('.', ',') + ' %' : '—';
+
+// Code des étapes : texte brut dans <script type="text/plain">, copié tel quel (pas d'échappement à la main)
+document.querySelectorAll('pre[data-code]').forEach(p => {
+  const s = document.getElementById(p.dataset.code);
+  if (s) p.textContent = s.textContent.replace(/^\n/, '').replace(/\s+$/, '');
+});
+
+const PRESETS = [
+  { id: 'grand', label: 'Grand triangle', v: [{ x: 30.3, y: 20.6 }, { x: 230.4, y: 90.2 }, { x: 70.7, y: 235.1 }] },
+  { id: 'moyen', label: 'Moyen, ≈ 10 px (V2)', v: [{ x: 146.3, y: 104.7 }, { x: 157.2, y: 109.1 }, { x: 148.9, y: 116.6 }] },
+  { id: 'petit', label: 'Sub-pixel (V1)', v: [{ x: 100.2, y: 100.3 }, { x: 101.1, y: 100.6 }, { x: 100.6, y: 101.2 }] },
+  { id: 'effile', label: 'Effilé', v: [{ x: 10.2, y: 30.4 }, { x: 245.3, y: 200.6 }, { x: 14.1, y: 36.2 }] },
+  { id: 'aigu', label: 'Lame fine (faux positifs)', v: [{ x: 192.6, y: 194.5 }, { x: 40.5, y: 31.9 }, { x: 117.3, y: 89.3 }] },
+  { id: 'plein', label: 'Plein écran', v: [{ x: -300, y: -50 }, { x: 600, y: -50 }, { x: 128, y: 700 }] },
+  { id: 'horiz', label: 'Arête horizontale', v: [{ x: 40.5, y: 60.5 }, { x: 200.5, y: 60.5 }, { x: 120.5, y: 200.5 }] },
+];
+const S = { v: PRESETS[0].v.map(p => ({ ...p })), preset: 'grand', sb: 4, centers: false, box: false, edge: 0, lvl: 16,
+  sel: { tx: 0, ty: 0, b16: 0, b4: 0 }, auto: true };
+let R = null, P = null, pop = null, fans = null, classes = null;
+
+function effVerts() { return S.v.map(p => S.centers ? { x: Math.floor(p.x) + 0.5, y: Math.floor(p.y) + 0.5 } : { x: p.x, y: p.y }); }
+
+function compute() {
+  const vf = effVerts();
+  const T = setupFixed(vf, S.sb);
+  const Hh = rasterHier(T, { boxMask: S.box });
+  const Halt = rasterHier(T, { boxMask: !S.box });
+  const Bf = rasterBrute(T);
+  let mm = 0; for (let i = 0; i < Hh.cov.length; i++) if ((Hh.cov[i] !== 0) !== (Bf.cov[i] !== 0)) mm++;
+  const tab = T.degenerate ? null : { 16: tables(T, 16), 4: tables(T, 4), 1: tables(T, 1) };
+  R = { vf, T, H: Hh, Halt, Bf, mm, c2: c2Ops(T), tab };
+  if (S.auto) autoSelect();
+  path();
+}
+
+// Sélection automatique : la tuile, le bloc 16×16 et le bloc 4×4 les plus instructifs
+function autoSelect() {
+  const tiles = R.H.st.tiles;
+  let best = null, score = -1;
+  for (const t of tiles) {
+    let s = t.state === 'part' ? 1 : t.state === 'full' ? 0.5 : 0.1;
+    if (t.l16) {
+      // une tuile qui mélange blocs pleins, partiels et rejetés montre toute la méthode
+      const nf = popc(t.l16.full), np = popc(t.l16.partial), nr = 16 - popc(t.l16.touched);
+      s += Math.min(nf, 4) + Math.min(np, 6) + Math.min(nr, 3);
+      for (const k in t.kids16) { const L4 = t.kids16[k]; if (L4.partial && L4.full) { s += 1; break; } }
+    }
+    if (s > score) { score = s; best = t; }
+  }
+  if (!best) {
+    const c = R.T.V.reduce((a, v) => ({ x: a.x + v.X / 3, y: a.y + v.Y / 3 }), { x: 0, y: 0 });
+    S.sel.tx = Math.min(3, Math.max(0, Math.floor(c.x / R.T.SUB / TILE))); S.sel.ty = Math.min(3, Math.max(0, Math.floor(c.y / R.T.SUB / TILE)));
+  } else { S.sel.tx = best.tx; S.sel.ty = best.ty; }
+  autoSub();
+}
+function autoSub() {
+  const t = R.H.st.tiles.find(t => t.tx === S.sel.tx && t.ty === S.sel.ty);
+  S.sel.b16 = 0; S.sel.b4 = 0;
+  if (!t || !t.l16) return;
+  let pick = null;
+  for (const i of bits(t.l16.partial)) { const L4 = t.kids16[i]; if (L4 && L4.partial) { for (const j of bits(L4.partial)) if (L4.kids[j] && L4.kids[j].touched && L4.kids[j].touched !== 0xFFFF) { pick = [i, j]; break; } } if (pick) break; }
+  if (!pick) for (const i of bits(t.l16.partial)) { const L4 = t.kids16[i]; if (L4 && L4.partial) { pick = [i, bits(L4.partial)[0]]; break; } }
+  if (!pick && t.l16.partial) pick = [bits(t.l16.partial)[0], 0];
+  if (!pick && t.l16.full) pick = [bits(t.l16.full)[0], 0];
+  if (pick) { S.sel.b16 = pick[0]; S.sel.b4 = pick[1]; }
+}
+
+// Chemin détaillé de la sélection : recalculé à la demande, même pour un bloc rejeté ou plein
+function path() {
+  const T = R.T;
+  P = { ok: !T.degenerate && !!R.tab };
+  if (!P.ok) return;
+  const tab = R.tab, x0 = S.sel.tx * TILE, y0 = S.sel.ty * TILE;
+  const c64 = T.edges.map(e => corners(e.A, e.B, 64));
+  const e = [0, 1, 2].map(k => Ev(T, k, x0, y0));
+  let active = 0, rejected = false;
+  for (let k = 0; k < 3; k++) { if (e[k] + c64[k].rej >= 0) rejected = true; if (e[k] + c64[k].acc >= 0) active |= 1 << k; }
+  const inBox = !T.bbox.empty && x0 < T.bbox.x1 && x0 + TILE > T.bbox.x0 && y0 < T.bbox.y1 && y0 + TILE > T.bbox.y0;
+  const state = !inBox ? 'hors boîte' : rejected ? 'rejetée' : active === 0 ? 'pleine' : 'partielle';
+  const actUse = active || 7;
+  const L16 = classify(e, tab[16], actUse, false);
+  if (S.box) L16.touched &= boxMaskUI(T, x0, y0, 16);
+  L16.full &= L16.touched; L16.partial = L16.touched & ~L16.full;
+  const b16 = S.sel.b16, bx = x0 + 16 * (b16 & 3), by = y0 + 16 * (b16 >> 2);
+  const ce = e.map((v, k) => v + tab[16][k].step[b16]);
+  const st16 = !(L16.touched & (1 << b16)) ? 'rejeté' : (L16.full & (1 << b16)) ? 'plein' : 'partiel';
+  const L4 = classify(ce, tab[4], actUse, false);
+  if (S.box) L4.touched &= boxMaskUI(T, bx, by, 4);
+  L4.full &= L4.touched; L4.partial = L4.touched & ~L4.full;
+  const b4 = S.sel.b4, px = bx + 4 * (b4 & 3), py = by + 4 * (b4 >> 2);
+  const ce4 = ce.map((v, k) => v + tab[4][k].step[b4]);
+  const st4 = !(L4.touched & (1 << b4)) ? 'rejeté' : (L4.full & (1 << b4)) ? 'plein' : 'partiel';
+  const LP = classify(ce4, tab[1], actUse, true);
+  Object.assign(P, { x0, y0, e, active, actUse, rejected, state, c64, L16, b16, bx, by, ce, st16, L4, b4, px, py, ce4, st4, LP });
+}
+function boxMaskUI(T, x0, y0, S2) {
+  let m = 0; const b = T.bbox;
+  for (let i = 0; i < 16; i++) { const cx = x0 + S2 * (i & 3), cy = y0 + S2 * (i >> 2); if (cx < b.x1 && cx + S2 > b.x0 && cy < b.y1 && cy + S2 > b.y0) m |= 1 << i; }
+  return m;
+}
+
+// ── Dessin ──────────────────────────────────────────────────────────
+const hex = h => { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
+const off = document.createElement('canvas'); off.width = W; off.height = H;
+function drawA() {
+  const cv = $('cvA'), g = cv.getContext('2d'), k = cv.width / W;
+  const col = { 4: hex(css('--full')), 3: hex(css('--full')), 2: hex(css('--full2')), 1: hex(css('--pix')) }, bg = hex(css('--cell'));
+  const og = off.getContext('2d'), img = og.createImageData(W, H), d = img.data, cov = R.H.cov;
+  for (let i = 0; i < W * H; i++) { const c = cov[i] ? col[cov[i]] : bg; d[4 * i] = c[0]; d[4 * i + 1] = c[1]; d[4 * i + 2] = c[2]; d[4 * i + 3] = 255; }
+  og.putImageData(img, 0, 0);
+  g.imageSmoothingEnabled = false; g.drawImage(off, 0, 0, cv.width, cv.height);
+  g.fillStyle = css('--rej'); g.globalAlpha = 0.7;
+  for (const t of R.H.st.tiles) if (t.state === 'rej') g.fillRect(t.tx * TILE * k, t.ty * TILE * k, TILE * k, TILE * k);
+  g.globalAlpha = 1;
+  g.strokeStyle = css('--mute'); g.lineWidth = 1;
+  for (let i = 1; i < NT; i++) { g.beginPath(); g.moveTo(i * TILE * k + .5, 0); g.lineTo(i * TILE * k + .5, cv.height); g.moveTo(0, i * TILE * k + .5); g.lineTo(cv.width, i * TILE * k + .5); g.stroke(); }
+  const b = R.T.bbox;
+  if (!b.empty) { g.setLineDash([5, 4]); g.strokeStyle = css('--warn'); g.strokeRect(b.x0 * k + .5, b.y0 * k + .5, (b.x1 - b.x0) * k, (b.y1 - b.y0) * k); g.setLineDash([]); }
+  const V = R.T.V.map(v => ({ x: v.X / R.T.SUB * k, y: v.Y / R.T.SUB * k }));
+  g.strokeStyle = css('--tri'); g.lineWidth = 1.5; g.beginPath(); g.moveTo(V[0].x, V[0].y); g.lineTo(V[1].x, V[1].y); g.lineTo(V[2].x, V[2].y); g.closePath(); g.stroke();
+  g.font = '600 13px ' + css('--f-mono');
+  V.forEach((v, i) => { g.beginPath(); g.arc(v.x, v.y, 8, 0, 7); g.fillStyle = css('--paper'); g.fill(); g.lineWidth = 2; g.strokeStyle = css('--warn'); g.stroke();
+    g.fillStyle = css('--fg'); g.fillText('V' + i, v.x + 10, v.y - 8); });
+  g.strokeStyle = css('--warn'); g.lineWidth = 3; g.strokeRect(S.sel.tx * TILE * k + 1.5, S.sel.ty * TILE * k + 1.5, TILE * k - 3, TILE * k - 3);
+  const st = R.H.st;
+  $('capA').textContent = `Tuiles de la boîte : ${st.tilesInBox} · rejetées ${st.tilesRej} · pleines ${st.tilesFull} · partielles ${st.tilesPart} · tuile choisie (${S.sel.tx}, ${S.sel.ty})`;
+}
+function drawB() {
+  const cv = $('cvB'), g = cv.getContext('2d'), k = cv.width / TILE, x0 = S.sel.tx * TILE, y0 = S.sel.ty * TILE;
+  g.fillStyle = css('--cell'); g.fillRect(0, 0, cv.width, cv.height);
+  const col = { 4: css('--full'), 3: css('--full'), 2: css('--full2'), 1: css('--pix') };
+  for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) { const c = R.H.cov[(y0 + y) * W + x0 + x]; if (c) { g.fillStyle = col[c]; g.fillRect(x * k, y * k, k, k); } }
+  if (P.ok && P.state !== 'hors boîte') {
+    if (P.rejected) { g.fillStyle = css('--rej'); g.globalAlpha = .7; g.fillRect(0, 0, cv.width, cv.height); g.globalAlpha = 1; }
+    else if (P.active) {
+      const tab = R.tab;
+      for (let i = 0; i < 16; i++) {
+        const bx = 16 * (i & 3), by = 16 * (i >> 2);
+        if (!(P.L16.touched & (1 << i))) { g.fillStyle = css('--rej'); g.globalAlpha = .7; g.fillRect(bx * k, by * k, 16 * k, 16 * k); g.globalAlpha = 1; continue; }
+        if (P.L16.full & (1 << i)) { g.strokeStyle = css('--ok'); g.lineWidth = 2; g.strokeRect(bx * k + 1, by * k + 1, 16 * k - 2, 16 * k - 2); continue; }
+        const ce = P.e.map((v, kk) => v + tab[16][kk].step[i]);
+        const L4 = classify(ce, tab[4], P.actUse, false);
+        if (S.box) L4.touched &= boxMaskUI(R.T, x0 + bx, y0 + by, 4);
+        L4.full &= L4.touched;
+        for (let j = 0; j < 16; j++) {
+          const cx = bx + 4 * (j & 3), cy = by + 4 * (j >> 2);
+          if (!(L4.touched & (1 << j))) { g.fillStyle = css('--rej'); g.globalAlpha = .55; g.fillRect(cx * k, cy * k, 4 * k, 4 * k); g.globalAlpha = 1; continue; }
+          if (L4.full & (1 << j)) continue;
+          const ce4 = ce.map((v, kk) => v + tab[4][kk].step[j]);
+          const LP = classify(ce4, tab[1], P.actUse, true);
+          if (LP.touched === 0) { g.fillStyle = css('--warn'); g.globalAlpha = .45; g.fillRect(cx * k, cy * k, 4 * k, 4 * k); g.globalAlpha = 1; }
+          g.strokeStyle = css('--accent'); g.lineWidth = 1; g.strokeRect(cx * k + .5, cy * k + .5, 4 * k - 1, 4 * k - 1);
+        }
+        g.strokeStyle = css('--accent'); g.lineWidth = 2; g.strokeRect(bx * k + 1, by * k + 1, 16 * k - 2, 16 * k - 2);
+      }
+    }
+  }
+  // arêtes du triangle (sommets accrochés)
+  const V = R.T.V.map(v => ({ x: (v.X / R.T.SUB - x0) * k, y: (v.Y / R.T.SUB - y0) * k }));
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip();
+  [[1, 2], [2, 0], [0, 1]].forEach(([a, b2], i) => { g.strokeStyle = i === S.edge ? css('--warn') : css('--tri'); g.lineWidth = i === S.edge ? 2.5 : 1.5;
+    g.beginPath(); g.moveTo(V[a].x, V[a].y); g.lineTo(V[b2].x, V[b2].y); g.stroke(); });
+  g.restore();
+  // coins de rejet / d'acceptation de la tuile pour l'arête étudiée
+  if (P.ok) {
+    const e = R.T.edges[S.edge];
+    const rx = e.A > 0 ? 0 : 63, ry = e.B > 0 ? 0 : 63, ax = 63 - rx, ay = 63 - ry;
+    const mark = (x, y, c, t) => { g.fillStyle = c; g.fillRect(x * k, y * k, k, k); g.font = '700 12px ' + css('--f-mono'); g.fillText(t, Math.min(cv.width - 12, x * k + k + 2), Math.max(12, Math.min(cv.height - 2, y * k + k))); };
+    mark(rx, ry, css('--warn'), 'R'); mark(ax, ay, css('--ok'), 'A');
+  }
+  // sélection
+  const bx = 16 * (S.sel.b16 & 3), by = 16 * (S.sel.b16 >> 2), cx = bx + 4 * (S.sel.b4 & 3), cy = by + 4 * (S.sel.b4 >> 2);
+  g.strokeStyle = css('--warn'); g.lineWidth = 3; g.strokeRect(bx * k + 1.5, by * k + 1.5, 16 * k - 3, 16 * k - 3);
+  g.lineWidth = 2; g.strokeRect(cx * k + 1, cy * k + 1, 4 * k - 2, 4 * k - 2);
+  g.fillStyle = css('--fg');
+  for (let p = 0; p < 16; p++) { g.beginPath(); g.arc((cx + (p & 3) + .5) * k, (cy + (p >> 2) + .5) * k, 1.6, 0, 7); g.fill(); }
+  $('capB').textContent = P.ok ? `Tuile (${S.sel.tx}, ${S.sel.ty}) ${P.state} · bloc 16×16 n° ${S.sel.b16} ${P.st16} · bloc 4×4 n° ${S.sel.b4} ${P.st4} · R / A : coins de l'arête e${S.edge}` : 'Triangle dégénéré : aucun pixel.';
+}
+function kpis() {
+  const st = R.H.st, ok = R.mm === 0;
+  const items = [
+    [fmt(R.Bf.n), 'pixels couverts', ''],
+    [ok ? 'identique' : fmt(R.mm) + ' écarts', 'hiérarchie = force brute', ok ? 'o' : 'w'],
+    [pct(st.viaFull, st.covered), 'pixels émis par blocs pleins', ''],
+    [`${st.full16} / ${st.part16}`, 'blocs 16×16 pleins / partiels', ''],
+    [`${st.full4} / ${st.part4}`, 'blocs 4×4 pleins / partiels', ''],
+    [fmt(st.fp4), 'faux positifs (4×4 vides)', st.fp4 ? 'w' : ''],
+    [fmt(st.ops), 'instr. couverture (hiérarchie)', ''],
+    [fmt(R.c2.ops), 'instr. couverture (C2)', ''],
+  ];
+  $('kpis').innerHTML = items.map(([b, s, c]) => `<div class="kpi ${c}"><b>${b}</b><span>${s}</span></div>`).join('');
+}
+
+// ── Tableaux voie par voie ──────────────────────────────────────────
+function lanes(rows, selCol) {
+  let h = '<table><thead><tr><th>voie</th>';
+  for (let i = 0; i < 16; i++) h += `<td style="${i === 8 ? 'border-left:2px solid var(--line)' : ''}">${i}${i === 0 ? ' lo' : i === 8 ? ' hi' : ''}</td>`;
+  h += '</tr></thead><tbody>';
+  for (const r of rows) {
+    h += `<tr class="${r.sep ? 'sep' : ''}"><th>${r.h}</th>`;
+    for (let i = 0; i < 16; i++) {
+      const v = r.v[i];
+      let c = r.cls ? r.cls(v, i) : (typeof v === 'number' ? (v < 0 ? 'neg' : 'pos') : '');
+      const sty = (i === 8 ? 'border-left:2px solid var(--line);' : '') + (i === selCol ? 'box-shadow:inset 0 0 0 2px var(--warn);' : '');
+      h += `<td class="${c}" style="${sty}">${typeof v === 'number' ? fmt(v) : v}</td>`;
+    }
+    h += '</tr>';
+  }
+  return h + '</tbody></table>';
+}
+function mini(mask, cls, sel, title) {
+  let h = `<div style="display:inline-block;vertical-align:top;margin-right:14px"><div class="cap">${title}</div><div class="mini">`;
+  for (let i = 0; i < 16; i++) h += `<span class="${(mask >> i) & 1 ? cls : ''} ${i === sel ? 'x' : ''}">${i}</span>`;
+  return h + '</div></div>';
+}
+const and16 = arr => arr.reduce((a, v) => a.map((x, i) => x & v[i]));
+const actEdges = a => [0, 1, 2].filter(k => a & (1 << k));
+const eName = k => `e${k}`;
+
+
+// ════════════════════════════════════════════════════════════════════
+//  Version 2 : figures méthodiques (partie A) et exactitude (partie B)
+// ════════════════════════════════════════════════════════════════════
+const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+const setT = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+const C = n => css(n);
+function cvx(id) { const cv = $(id); return cv ? [cv, cv.getContext('2d')] : [null, null]; }
+function arrow(g, x1, y1, x2, y2, col, w = 1.6, head = 8) {
+  g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w;
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 1) return;
+  const a = Math.atan2(y2 - y1, x2 - x1), hx = x2 - Math.cos(a) * Math.min(head, L) * .9, hy = y2 - Math.sin(a) * Math.min(head, L) * .9;
+  g.beginPath(); g.moveTo(x1, y1); g.lineTo(hx, hy); g.stroke();
+  if (L < 4) return;
+  g.beginPath(); g.moveTo(x2, y2); g.lineTo(x2 - head * Math.cos(a - .38), y2 - head * Math.sin(a - .38)); g.lineTo(x2 - head * Math.cos(a + .38), y2 - head * Math.sin(a + .38)); g.closePath(); g.fill();
+}
+function lineInf(g, ax, ay, bx, by) { const dx = bx - ax, dy = by - ay; g.beginPath(); g.moveTo(ax - dx * 400, ay - dy * 400); g.lineTo(ax + dx * 400, ay + dy * 400); g.stroke(); }
+function hatch(g, x, y, w, h, col, step = 7) {
+  g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip(); g.strokeStyle = col; g.lineWidth = 1;
+  for (let t = -h; t < w; t += step) { g.beginPath(); g.moveTo(x + t, y + h); g.lineTo(x + t + h, y); g.stroke(); }
+  g.restore();
+}
+function text(g, s, x, y, col, font = '600 12px', align = 'left', base = 'alphabetic') { g.fillStyle = col; g.font = font + ' ' + C('--f-mono'); g.textAlign = align; g.textBaseline = base; g.fillText(s, x, y); g.textAlign = 'left'; g.textBaseline = 'alphabetic'; }
+function pill(g, s, x, y, bg, fg, font = '700 12px') { g.font = font + ' ' + C('--f-mono'); const w = g.measureText(s).width + 8; g.fillStyle = bg; g.fillRect(x - w / 2, y - 9, w, 18); text(g, s, x, y + 1, fg, font, 'center', 'middle'); }
+function seg(el, opts, get, setv) {
+  if (!el) return;
+  el.innerHTML = opts.map(o => `<button type="button" data-v="${o.v}">${o.label}</button>`).join('');
+  const sync = () => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(String(get()) === b.dataset.v || (Array.isArray(get()) && get().includes(b.dataset.v)))));
+  el.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; setv(b.dataset.v); sync(); });
+  sync(); el._sync = sync;
+}
+const cornerD = (e, S2, mode) => { const dx = e.A > 0 || e.A === 0 ? 0 : S2 - 1, dy = e.B > 0 || e.B === 0 ? 0 : S2 - 1; return mode === 'rej' ? [dx, dy] : [S2 - 1 - dx, S2 - 1 - dy]; };
+const covCol = () => ({ 4: C('--full'), 3: C('--full'), 2: C('--full2'), 1: C('--pix') });
+function drawTri(g, k, ox, oy, hl, alpha = 1) {
+  const T = R.T, V = T.V.map(v => ({ x: (v.X / T.SUB - ox) * k, y: (v.Y / T.SUB - oy) * k }));
+  g.globalAlpha = alpha;
+  [[1, 2], [2, 0], [0, 1]].forEach(([a, b], i) => { g.strokeStyle = i === hl ? C('--warn') : C('--tri'); g.lineWidth = i === hl ? 2.5 : 1.4; g.beginPath(); g.moveTo(V[a].x, V[a].y); g.lineTo(V[b].x, V[b].y); g.stroke(); });
+  g.globalAlpha = 1; return V;
+}
+
+// ── A1 : l'équation d'arête (exemple de l'article) ─────────────────
+const A1 = { x0: 12, y0: 8, x1: 4, y1: 24, sel: { x: 8, y: 16 } };
+const eA1 = (x, y) => 2 * (x - A1.x0) + 1 * (y - A1.y0);
+function figA1() {
+  const [cv, g] = cvx('fA1'); if (!cv) return;
+  cv.width = 560; cv.height = 640; const k = 20, ox = 0, oy = 0;
+  const neg = hex(C('--accent-soft')), pos = hex(C('--warn-soft'));
+  const img = g.createImageData(cv.width, cv.height), d = img.data;
+  for (let py = 0; py < cv.height; py++) for (let px = 0; px < cv.width; px++) { const v = eA1(px / k, py / k), c = v < 0 ? neg : pos, i = 4 * (py * cv.width + px); d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  g.strokeStyle = C('--line'); g.lineWidth = 1;
+  for (let x = 0; x <= 28; x += 4) { g.beginPath(); g.moveTo(x * k + .5, 0); g.lineTo(x * k + .5, cv.height); g.stroke(); }
+  for (let y = 0; y <= 32; y += 4) { g.beginPath(); g.moveTo(0, y * k + .5); g.lineTo(cv.width, y * k + .5); g.stroke(); }
+  g.fillStyle = C('--mute');
+  for (let x = 0; x <= 28; x++) for (let y = 0; y <= 32; y++) { g.beginPath(); g.arc(x * k, y * k, 1.4, 0, 7); g.fill(); }
+  for (let x = 4; x < 28; x += 4) text(g, String(x), x * k + 3, 13, C('--mute'), '600 11px');
+  for (let y = 4; y < 32; y += 4) text(g, String(y), 3, y * k - 3, C('--mute'), '600 11px');
+  // lignes de niveau : 2x + y = 32 + v
+  g.setLineDash([4, 5]); g.lineWidth = 1;
+  for (const v of [-24, -16, -8, 8, 16, 24]) {
+    g.strokeStyle = v < 0 ? C('--accent') : C('--warn');
+    const c = 32 + v; g.beginPath(); g.moveTo(0, c * k); g.lineTo(cv.width, (c - 2 * 28) * k); g.stroke();
+    let yy = 30.5, xx = (c - yy) / 2; if (xx <= 0.5) { yy = 1.5; xx = (c - yy) / 2; } if (xx > 0.5 && xx < 27) pill(g, (v > 0 ? '+' : '−') + Math.abs(v), xx * k, yy * k, C('--paper'), v < 0 ? C('--accent') : C('--warn'), '700 11px');
+  }
+  g.setLineDash([2, 4]); g.strokeStyle = C('--tri'); lineInf(g, A1.x0 * k, A1.y0 * k, A1.x1 * k, A1.y1 * k); g.setLineDash([]);
+  g.strokeStyle = C('--tri'); g.lineWidth = 3; g.beginPath(); g.moveTo(A1.x0 * k, A1.y0 * k); g.lineTo(A1.x1 * k, A1.y1 * k); g.stroke();
+  [[A1.x0, A1.y0, 'sommet de base (12, 8)'], [A1.x1, A1.y1, '(4, 24)']].forEach(([x, y, t]) => { g.beginPath(); g.arc(x * k, y * k, 6, 0, 7); g.fillStyle = C('--paper'); g.fill(); g.lineWidth = 2; g.strokeStyle = C('--tri'); g.stroke(); text(g, t, x * k + 9, y * k - 8, C('--fg'), '700 12px'); });
+  arrow(g, 9 * k, 22 * k, (9 + 2 * 1.4) * k, (22 + 1.4) * k, C('--warn'), 2.5, 11); text(g, 'E croît', (9 + 2 * 1.4) * k + 6, (22 + 1.4) * k + 14, C('--warn'), '700 12px');
+  text(g, 'côté négatif', 2.2 * k, 6 * k, C('--accent'), '700 13px'); text(g, 'côté positif', 17 * k, 27 * k, C('--warn'), '700 13px');
+  const p = A1.sel, v = eA1(p.x, p.y);
+  g.beginPath(); g.arc(p.x * k, p.y * k, 9, 0, 7); g.fillStyle = v < 0 ? C('--accent') : v > 0 ? C('--warn') : C('--ok'); g.fill(); g.lineWidth = 2; g.strokeStyle = C('--paper'); g.stroke();
+  arrow(g, A1.x0 * k, A1.y0 * k, p.x * k, p.y * k, C('--fg'), 1.4, 9);
+  pill(g, 'E = ' + (v < 0 ? '−' : '') + Math.abs(v), p.x * k + (p.x > 20 ? -40 : 42), p.y * k - 16, C('--fg'), C('--paper'));
+  const xr = p.x - A1.x0, yr = p.y - A1.y0;
+  setT('calcA1', `Point (${p.x}, ${p.y}), mesuré depuis le sommet de base (12, 8) :
+  x' = ${p.x} − 12 = ${xr}      y' = ${p.y} − 8 = ${yr}
+
+Équation d'Abrash : B·x' + C·y'
+  B = y1 − y0 = 24 − 8 = 16
+  C = x0 − x1 = 12 − 4 = 8
+  16·(${xr}) + 8·(${yr}) = ${16 * xr + 8 * yr}
+Divisée par 8 (même signe) :  2·x' + y' = ${2 * xr} + ${yr} = ${v}
+
+→ ${v === 0 ? 'zéro : le point est SUR l\'arête' : v < 0 ? 'négatif : côté intérieur' : 'positif : côté extérieur'}
+Un pas à droite : +2. Un pas vers le bas : +1. Partout.`);
+}
+
+// ── A2 : trois demi-plans ───────────────────────────────────────────
+const A2 = { v: [{ x: 2.4, y: 0.9 }, { x: 10.3, y: 4.2 }, { x: 3.7, y: 7.9 }], on: ['0', '1', '2'], sel: { x: 4, y: 4 } };
+function figA2() {
+  const [cv, g] = cvx('fA2'); if (!cv) return;
+  const T = setupFixed(A2.v, 4), k = 50, cols = 12, rows = 9;
+  cv.width = cols * k; cv.height = rows * k;
+  g.fillStyle = C('--cell'); g.fillRect(0, 0, cv.width, cv.height);
+  const tints = [C('--accent'), C('--ok'), C('--warn')];
+  // demi-plans négatifs : polygone (rectangle du canevas coupé par la droite), une teinte par arête
+  for (const kk of A2.on.map(Number)) {
+    const e = T.edges[kk], f = (x, y) => e.A * (x / k * 16) + e.B * (y / k * 16) + e.Cb;
+    const rect = [[0, 0], [cv.width, 0], [cv.width, cv.height], [0, cv.height]], out = [];
+    for (let i = 0; i < 4; i++) { const p = rect[i], q = rect[(i + 1) % 4], fp = f(...p), fq = f(...q);
+      if (fp < 0) out.push(p);
+      if ((fp < 0) !== (fq < 0)) { const s2 = fp / (fp - fq); out.push([p[0] + s2 * (q[0] - p[0]), p[1] + s2 * (q[1] - p[1])]); } }
+    if (out.length > 2) { g.fillStyle = tints[kk]; g.globalAlpha = .13; g.beginPath(); g.moveTo(...out[0]); out.slice(1).forEach(p => g.lineTo(...p)); g.closePath(); g.fill(); g.globalAlpha = 1; }
+  }
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const ins = A2.on.every(kk => Ev(T, +kk, x, y) < 0) && A2.on.length > 0;
+    if (ins && A2.on.length === 3) { g.fillStyle = C('--full'); g.globalAlpha = .85; g.fillRect(x * k + 1, y * k + 1, k - 2, k - 2); g.globalAlpha = 1; }
+    g.strokeStyle = C('--line'); g.strokeRect(x * k + .5, y * k + .5, k, k);
+    g.beginPath(); g.arc((x + .5) * k, (y + .5) * k, 4, 0, 7); g.fillStyle = C('--paper'); g.fill(); g.strokeStyle = C('--mute'); g.lineWidth = 1; g.stroke();
+  }
+  const V = T.V.map(v => ({ x: v.X / 16 * k, y: v.Y / 16 * k }));
+  [[1, 2], [2, 0], [0, 1]].forEach(([a, b], i) => {
+    g.strokeStyle = tints[i]; g.lineWidth = 2.5; g.beginPath(); g.moveTo(V[a].x, V[a].y); g.lineTo(V[b].x, V[b].y); g.stroke();
+    const mx = (V[a].x + V[b].x) / 2, my = (V[a].y + V[b].y) / 2, e = T.edges[i], n = Math.hypot(e.A, e.B), nx = e.A / n, ny = e.B / n;
+    pill(g, '+', mx + nx * 22, my + ny * 22, C('--paper'), tints[i], '700 14px'); pill(g, '−', mx - nx * 22, my - ny * 22, C('--paper'), tints[i], '700 14px');
+    text(g, 'e' + i, mx + nx * 46, my + ny * 46 + 4, tints[i], '700 13px', 'center');
+  });
+  const p = A2.sel; g.strokeStyle = C('--warn'); g.lineWidth = 3; g.strokeRect(p.x * k + 2, p.y * k + 2, k - 4, k - 4);
+  const vals = [0, 1, 2].map(kk => Ev(T, kk, p.x, p.y));
+  setT('calcA2', `Pixel (${p.x}, ${p.y}), centre (${p.x},5 ; ${p.y},5) :\n` + vals.map((v, i) => `  e${i} = ${fmt(v).padStart(6)}  ${v < 0 ? 'négatif : du bon côté' : 'positif : DEHORS pour e' + i}`).join('\n') +
+    `\n\n→ ${vals.every(v => v < 0) ? 'les trois sont négatives : le pixel est DANS le triangle' : 'au moins une est positive : le pixel est hors du triangle'}\n(valeurs en pixels entiers, forme E' de la partie B)`);
+  A2.T = T;
+}
+
+// ── A3 : cinq stratégies de parcours ─────────────────────────────────
+const A3 = { v: [{ x: 18.3, y: 20.6 }, { x: 50.2, y: 29.4 }, { x: 27.7, y: 52.1 }], strat: 'hier', frame: 0, playing: false, timer: 0, data: null };
+const A3N = { trap: 'Trapèzes (Pixomatic)', box1: 'Boîte, pixel par pixel (C1)', box8: 'Boîte, blocs de 8 (C2)', sweep: 'Balayage 4×4', hier: 'Hiérarchie (Abrash)' };
+function buildA3() {
+  const T = setupFixed(A3.v, 4), ins = (x, y) => x >= 0 && y >= 0 && x < 64 && y < 64 && insideFixed(T, x, y);
+  const b = { x0: T.bbox.x0, y0: T.bbox.y0, x1: Math.min(64, T.bbox.x1), y1: Math.min(64, T.bbox.y1) };
+  let covAll = 0; for (let y = 0; y < 64; y++) for (let x = 0; x < 64; x++) if (ins(x, y)) covAll++;
+  const D = { T, covAll };
+  // Trapèzes
+  { const fr = []; let rows = 0;
+    for (let y = b.y0; y < b.y1; y++) { let lo = -1, hi = -1; for (let x = b.x0; x < b.x1; x++) if (ins(x, y)) { if (lo < 0) lo = x; hi = x; }
+      if (lo >= 0) { fr.push([{ x: lo, y, w: hi - lo + 1, h: 1, k: 'cov' }]); rows++; } }
+    D.trap = { fr, st: { judged: `${rows} lignes`, tested: 0, wasted: 0, dec: rows, vec: 'non' } }; }
+  // Boîte pixel par pixel
+  { const fr = []; let n = 0, c = 0;
+    for (let y = b.y0; y < b.y1; y++) { const f = []; for (let x = b.x0; x < b.x1; x++) { const i = ins(x, y); f.push({ x, y, w: 1, h: 1, k: i ? 'cov' : 'miss' }); n++; if (i) c++; } fr.push(f); }
+    D.box1 = { fr, st: { judged: `${n} pixels`, tested: n, wasted: n - c, dec: n, vec: 'non' } }; }
+  // Boîte blocs de 8
+  { const fr = []; let blocks = 0, c = 0;
+    for (let y = b.y0; y < b.y1; y++) { const f = []; for (let x = b.x0; x < b.x1; x += 8) { blocks++; f.push({ x, y, w: 8, h: 1, k: 'blk' });
+      for (let l = 0; l < 8; l++) { const xx = x + l; if (xx >= b.x1) { f.push({ x: xx, y, w: 1, h: 1, k: 'pad' }); continue; } const i = ins(xx, y); if (i) c++; f.push({ x: xx, y, w: 1, h: 1, k: i ? 'cov' : 'miss' }); } } fr.push(f); }
+    D.box8 = { fr, st: { judged: `${blocks} blocs × 8 voies`, tested: blocks * 8, wasted: blocks * 8 - c, dec: blocks, vec: 'oui, 8 voies' } }; }
+  // Balayage 4×4 (simplifié : gauche, droite, puis descente sous le bloc couvert le plus à gauche)
+  { const fr = [], stampCov = (cx, cy) => { let n = 0; for (let y = cy * 4; y < cy * 4 + 4; y++) for (let x = cx * 4; x < cx * 4 + 4; x++) if (ins(x, y)) n++; return n; };
+    const top = T.V.reduce((a, v) => v.Y < a.Y ? v : a); let start = Math.floor(top.X / 16 / 4), stamps = 0, c = 0;
+    const visit = (cx, cy) => { if (cx < 0 || cx > 15) return; stamps++; const f = [{ x: cx * 4, y: cy * 4, w: 4, h: 4, k: 'blk4' }];
+      for (let y = cy * 4; y < cy * 4 + 4; y++) for (let x = cx * 4; x < cx * 4 + 4; x++) { const i = ins(x, y); if (i) c++; f.push({ x, y, w: 1, h: 1, k: i ? 'cov' : 'miss' }); } fr.push(f); };
+    for (let cy = Math.floor(b.y0 / 4); cy <= Math.floor((b.y1 - 1) / 4); cy++) {
+      const covd = []; for (let cx = 0; cx < 16; cx++) if (stampCov(cx, cy)) covd.push(cx);
+      if (!covd.length) { visit(start, cy); continue; }
+      const L = covd[0], Rr = covd[covd.length - 1];
+      if (start < L) { for (let cx = start; cx <= Rr + 1; cx++) visit(cx, cy); }
+      else if (start > Rr) { for (let cx = start; cx >= L - 1; cx--) visit(cx, cy); }
+      else { for (let cx = start; cx >= L - 1; cx--) visit(cx, cy); for (let cx = start + 1; cx <= Rr + 1; cx++) visit(cx, cy); }
+      start = L;
+    }
+    D.sweep = { fr, st: { judged: `${stamps} tampons × 16`, tested: stamps * 16, wasted: stamps * 16 - c, dec: stamps, vec: 'oui, 16 voies' } }; }
+  // Hiérarchie
+  { const fr = [], tb = { 16: tables(T, 16), 4: tables(T, 4), 1: tables(T, 1) };
+    const c64 = T.edges.map(e => corners(e.A, e.B, 64)); const e0 = [0, 1, 2].map(kk => Ev(T, kk, 0, 0));
+    let act = 0; for (let kk = 0; kk < 3; kk++) if (e0[kk] + c64[kk].acc >= 0) act |= 1 << kk;
+    fr.push([{ x: 0, y: 0, w: 64, h: 64, k: 'tile' }]);
+    const L16 = classify(e0, tb[16], act, false); L16.full &= L16.touched; const p16 = L16.touched & ~L16.full;
+    const f1 = []; for (let i = 0; i < 16; i++) { const r = { x: 16 * (i & 3), y: 16 * (i >> 2), w: 16, h: 16 };
+      f1.push({ ...r, k: !(L16.touched >> i & 1) ? 'rej' : (L16.full >> i & 1) ? 'full' : 'blk16' }); }
+    fr.push(f1);
+    let calls = 1, masks = 0, bitsN = popc(L16.full) + popc(p16), tested = 0, c = 0;
+    for (const i of bits(p16)) {
+      const ce = e0.map((v, kk) => v + tb[16][kk].step[i]), bx = 16 * (i & 3), by = 16 * (i >> 2);
+      const L4 = classify(ce, tb[4], act, false); L4.full &= L4.touched; const p4 = L4.touched & ~L4.full; calls++; bitsN += popc(L4.full) + popc(p4);
+      const f2 = []; for (let j = 0; j < 16; j++) { const r = { x: bx + 4 * (j & 3), y: by + 4 * (j >> 2), w: 4, h: 4 };
+        f2.push({ ...r, k: !(L4.touched >> j & 1) ? 'rej' : (L4.full >> j & 1) ? 'full4' : 'blk4' }); }
+      fr.push(f2);
+      const f3 = [];
+      for (const j of bits(p4)) { masks++; const ce4 = ce.map((v, kk) => v + tb[4][kk].step[j]), LP = classify(ce4, tb[1], act, true), px = bx + 4 * (j & 3), py = by + 4 * (j >> 2);
+        for (let q = 0; q < 16; q++) { const on = LP.touched >> q & 1; tested++; if (on) c++; f3.push({ x: px + (q & 3), y: py + (q >> 2), w: 1, h: 1, k: on ? 'cov' : 'miss' }); } }
+      if (f3.length) fr.push(f3);
+    }
+    D.hier = { fr, st: { judged: `${calls * 16} blocs (${calls} instr.) + ${tested} pixels`, tested: calls * 16 + tested, wasted: tested - c, dec: bitsN, vec: 'oui, 16 voies' } }; }
+  A3.data = D;
+}
+function figA3() {
+  const [cv, g] = cvx('fA3'); if (!cv) return;
+  if (!A3.data) buildA3();
+  const D = A3.data, s = D[A3.strat], k = cv.width / 64;
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  g.strokeStyle = C('--line'); g.lineWidth = .5;
+  for (let i = 0; i <= 64; i++) { g.beginPath(); g.moveTo(i * k, 0); g.lineTo(i * k, cv.height); g.moveTo(0, i * k); g.lineTo(cv.width, i * k); g.stroke(); }
+  const col = { cov: C('--pix'), miss: C('--rej'), full: C('--full'), full4: C('--full2'), pad: C('--pad') };
+  const upto = Math.min(A3.frame, s.fr.length);
+  let shownCov = 0, shownT = 0;
+  for (let f = 0; f < upto; f++) for (const r of s.fr[f]) {
+    if (col[r.k]) { g.fillStyle = col[r.k]; g.fillRect(r.x * k, r.y * k, r.w * k, r.h * k); if (r.k === 'cov') shownCov++; if (r.k === 'cov' || r.k === 'miss') shownT++; }
+    else if (r.k === 'rej') { g.save(); g.globalAlpha = .35; hatch(g, r.x * k, r.y * k, r.w * k, r.h * k, C('--mute'), 10); g.restore(); g.strokeStyle = C('--mute'); g.lineWidth = 1; g.strokeRect(r.x * k + .5, r.y * k + .5, r.w * k - 1, r.h * k - 1); }
+    else { g.strokeStyle = r.k === 'tile' ? C('--warn') : C('--accent'); g.lineWidth = r.k === 'blk16' || r.k === 'tile' ? 2.5 : 1.5; g.strokeRect(r.x * k + 1, r.y * k + 1, r.w * k - 2, r.h * k - 2); }
+  }
+  if (upto > 0) for (const r of s.fr[upto - 1]) if (r.k !== 'tile') { g.strokeStyle = C('--warn'); g.lineWidth = 2; g.strokeRect(r.x * k, r.y * k, r.w * k, r.h * k); break; }
+  const T = D.T, V = T.V.map(v => ({ x: v.X / 16 * k, y: v.Y / 16 * k }));
+  g.strokeStyle = C('--tri'); g.lineWidth = 2; g.beginPath(); g.moveTo(V[0].x, V[0].y); g.lineTo(V[1].x, V[1].y); g.lineTo(V[2].x, V[2].y); g.closePath(); g.stroke();
+  const st = s.st;
+  setT('calcA3', `${A3N[A3.strat]} · pas ${upto} / ${s.fr.length}\n\nÉléments jugés     : ${st.judged}\nPixels testés pour rien : ${st.wasted}\nDécisions de parcours   : ${st.dec}\nVectorisable       : ${st.vec}\nPixels couverts    : ${D.covAll}`);
+  let h = '<table><thead><tr><th>Stratégie</th><th>Jugés</th><th>Testés pour rien</th><th>Décisions</th><th>Vecteurs</th></tr></thead><tbody>';
+  for (const kk of Object.keys(A3N)) { const t = D[kk].st; h += `<tr class="${kk === A3.strat ? 'sel' : ''}"><td>${A3N[kk]}</td><td>${t.judged}</td><td>${t.wasted}</td><td>${t.dec}</td><td>${t.vec}</td></tr>`; }
+  set('tabA3', h + '</tbody></table>');
+}
+function playA3() {
+  if (A3.playing) { A3.playing = false; clearTimeout(A3.timer); $('playA3').textContent = '▶ Lecture'; return; }
+  const s = A3.data[A3.strat]; if (A3.frame >= s.fr.length) A3.frame = 0;
+  A3.playing = true; $('playA3').textContent = '❚❚ Pause';
+  const tick = () => { if (!A3.playing) return; A3.frame++; figA3(); if (A3.frame >= s.fr.length) { A3.playing = false; $('playA3').textContent = '▶ Lecture'; return; }
+    A3.timer = setTimeout(tick, Math.max(40, 2400 / s.fr.length)); };
+  tick();
+}
+
+// ── Vue de la cible entière, réutilisée par A4 à A7 ─────────────────
+const offCov = document.createElement('canvas'); offCov.width = W; offCov.height = H;
+function targetBase(g, cv, opt = {}) {
+  const k = cv.width / W;
+  g.fillStyle = C('--cell'); g.fillRect(0, 0, cv.width, cv.height);
+  if (opt.cov) {
+    if (targetBase.R !== R || targetBase.theme !== C('--pix')) {
+      const col = { 4: hex(C('--full')), 3: hex(C('--full')), 2: hex(C('--full2')), 1: hex(C('--pix')) }, og = offCov.getContext('2d'), img = og.createImageData(W, H), d = img.data;
+      for (let i = 0; i < W * H; i++) { const c = R.H.cov[i]; if (!c) continue; const q = col[c]; d[4 * i] = q[0]; d[4 * i + 1] = q[1]; d[4 * i + 2] = q[2]; d[4 * i + 3] = 255; }
+      og.putImageData(img, 0, 0); targetBase.R = R; targetBase.theme = C('--pix');
+    }
+    g.globalAlpha = opt.cov; g.imageSmoothingEnabled = false; g.drawImage(offCov, 0, 0, cv.width, cv.height); g.globalAlpha = 1;
+  }
+  g.strokeStyle = C('--mute'); g.lineWidth = 1;
+  for (let i = 0; i <= NT; i++) { g.beginPath(); g.moveTo(i * TILE * k + .5, 0); g.lineTo(i * TILE * k + .5, cv.height); g.moveTo(0, i * TILE * k + .5); g.lineTo(cv.width, i * TILE * k + .5); g.stroke(); }
+  return k;
+}
+function tileInfo(tx, ty) {
+  const T = R.T, x0 = tx * TILE, y0 = ty * TILE, b = T.bbox;
+  const inBox = !b.empty && x0 < b.x1 && x0 + TILE > b.x0 && y0 < b.y1 && y0 + TILE > b.y0;
+  const per = T.edges.map((e, kk) => { const v = Ev(T, kk, x0, y0), c = corners(e.A, e.B, 64); return { e: v, rej: v + c.rej, acc: v + c.acc, verdict: v + c.rej >= 0 ? 'R' : v + c.acc < 0 ? 'A' : 'T' }; });
+  const state = per.some(p => p.verdict === 'R') ? 'rej' : per.every(p => p.verdict === 'A') ? 'full' : 'part';
+  return { tx, ty, x0, y0, inBox, per, state };
+}
+function figA4() {
+  const [cv, g] = cvx('fA4'); if (!cv || R.T.degenerate) return;
+  const k = targetBase(g, cv, { cov: .35 }), b = R.T.bbox;
+  for (let ty = 0; ty < NT; ty++) for (let tx = 0; tx < NT; tx++) {
+    const t = tileInfo(tx, ty), x = tx * TILE * k, y = ty * TILE * k, w = TILE * k;
+    if (!t.inBox) { g.fillStyle = C('--bg'); g.globalAlpha = .55; g.fillRect(x + 1, y + 1, w - 2, w - 2); g.globalAlpha = 1; text(g, 'hors boîte', x + w / 2, y + w / 2, C('--mute'), '600 11px', 'center', 'middle'); continue; }
+    pill(g, `bac (${tx},${ty})`, x + w / 2, y + 16, C('--accent'), C('--paper'), '700 11px');
+    const lab = t.state === 'rej' ? 'non touchée' : t.state === 'full' ? 'pleine' : 'partielle';
+    text(g, lab, x + w / 2, y + w - 10, t.state === 'rej' ? C('--warn') : t.state === 'full' ? C('--ok') : C('--accent'), '700 12px', 'center');
+  }
+  if (!b.empty) { g.setLineDash([6, 4]); g.strokeStyle = C('--warn'); g.lineWidth = 1.5; g.strokeRect(b.x0 * k, b.y0 * k, (b.x1 - b.x0) * k, (b.y1 - b.y0) * k); g.setLineDash([]); }
+  drawTri(g, k, 0, 0, -1);
+  const tiles = []; for (let ty = 0; ty < NT; ty++) for (let tx = 0; tx < NT; tx++) tiles.push(tileInfo(tx, ty));
+  const inB = tiles.filter(t => t.inBox);
+  setT('calcA4', `Boîte englobante : x ${b.x0} → ${b.x1 - 1}, y ${b.y0} → ${b.y1 - 1} (pixels)
+Tuiles candidates (boîte) : ${inB.length} sur 16
+  · réellement touchées, partielles : ${inB.filter(t => t.state === 'part').length}
+  · entièrement couvertes          : ${inB.filter(t => t.state === 'full').length}
+  · dans la boîte mais non touchées : ${inB.filter(t => t.state === 'rej').length}
+
+Le triangle est rangé dans le bac des tuiles touchées,
+avec, pour chacune, ses arêtes actives (chapitre A7).`);
+}
+function figCorners(id, mode) {
+  const [cv, g] = cvx(id); if (!cv || R.T.degenerate) return;
+  const k = targetBase(g, cv, { cov: .25 }), T = R.T, kk = S.edge, e = T.edges[kk];
+  const [dx, dy] = cornerD(e, 64, mode);
+  let nRej = 0, nAcc = 0;
+  for (let ty = 0; ty < NT; ty++) for (let tx = 0; tx < NT; tx++) {
+    const x0 = tx * TILE, y0 = ty * TILE, v = Ev(T, kk, x0 + dx, y0 + dy), X = x0 * k, Y = y0 * k, w = TILE * k;
+    if (mode === 'rej' && v >= 0) { nRej++; g.fillStyle = C('--rej'); g.globalAlpha = .6; g.fillRect(X, Y, w, w); g.globalAlpha = 1; hatch(g, X, Y, w, w, C('--mute'), 10); }
+    if (mode === 'acc' && v < 0) { nAcc++; g.fillStyle = C('--full'); g.globalAlpha = .28; g.fillRect(X, Y, w, w); g.globalAlpha = 1; }
+    const cx = (x0 + dx + .5) * k, cy = (y0 + dy + .5) * k;
+    g.beginPath(); g.arc(cx, cy, 7, 0, 7); g.fillStyle = v < 0 ? C('--hit') : C('--warn'); g.fill(); g.lineWidth = 2; g.strokeStyle = C('--paper'); g.stroke();
+    if (tx === S.sel.tx && ty === S.sel.ty) { g.strokeStyle = C('--warn'); g.lineWidth = 3; g.strokeRect(X + 1.5, Y + 1.5, w - 3, w - 3); }
+    pill(g, (v < 0 ? '−' : '+'), cx + (dx ? -16 : 16), cy + (dy ? -14 : 14), C('--paper'), v < 0 ? C('--hit') : C('--warn'), '700 12px');
+  }
+  const V = T.V.map(v => ({ x: v.X / T.SUB * k, y: v.Y / T.SUB * k })), [ia, ib] = [[1, 2], [2, 0], [0, 1]][kk];
+  g.setLineDash([6, 5]); g.strokeStyle = C('--warn'); g.lineWidth = 1.5; lineInf(g, V[ia].x, V[ia].y, V[ib].x, V[ib].y); g.setLineDash([]);
+  drawTri(g, k, 0, 0, kk);
+  const mx = (V[ia].x + V[ib].x) / 2, my = (V[ia].y + V[ib].y) / 2, n = Math.hypot(e.A, e.B);
+  if (n) { arrow(g, mx, my, mx - e.A / n * 50, my - e.B / n * 50, C('--hit'), 2.5, 10); text(g, 'plus négatif', mx - e.A / n * 58, my - e.B / n * 58 + (e.B > 0 ? -6 : 14), C('--hit'), '700 12px', 'center'); }
+  const t = tileInfo(S.sel.tx, S.sel.ty), p = t.per[kk], c = corners(e.A, e.B, 64);
+  if (mode === 'rej') setT('calcA5', `Tuile choisie (${S.sel.tx}, ${S.sel.ty}), arête e${kk} : premier pixel (${t.x0}, ${t.y0}), E' = ${fmt(p.e)}.
+Coin de rejet = pixel (${t.x0 + dx}, ${t.y0 + dy}) : E' = ${fmt(p.e)} + (${fmt(c.rej)}) = ${fmt(p.rej)}  →  ${p.rej >= 0 ? '≥ 0 : la tuile est REJETÉE, le triangle est ignoré dans cette tuile' : '< 0 : au moins un pixel peut être du bon côté ; on garde la tuile'}
+Tuiles rejetées par e${kk} : ${nRej} sur 16.`);
+  else setT('calcA6', `Tuile choisie (${S.sel.tx}, ${S.sel.ty}), arête e${kk} :
+coin d'acceptation = pixel (${t.x0 + dx}, ${t.y0 + dy}) : E' = ${fmt(p.e)} + ${fmt(c.acc)} = ${fmt(p.acc)}  →  ${p.acc < 0 ? '< 0 : toute la tuile est du bon côté, e' + kk + ' est oubliée ici' : '≥ 0 : l\'arête passe dans la tuile (ou la rejette) : elle reste active'}
+De rejet à acceptation : ${fmt(c.acc)} − (${fmt(c.rej)}) = ${fmt(c.acc - c.rej)} = |A|·63 + |B|·63 = ${fmt(Math.abs(e.A) * 63)} + ${fmt(Math.abs(e.B) * 63)}
+Tuiles acceptées par e${kk} : ${nAcc} sur 16.`);
+  if (mode === 'rej') compass(e, kk);
+}
+function compass(e, kk) {
+  const [cv, g] = cvx('fA5c'); if (!cv) return;
+  g.fillStyle = C('--code-bg'); g.fillRect(0, 0, 180, 180);
+  g.strokeStyle = C('--accent'); g.lineWidth = 2; g.strokeRect(30, 30, 120, 120);
+  const [rx, ry] = cornerD(e, 2, 'rej'), [ax, ay] = cornerD(e, 2, 'acc');
+  const P = (x, y) => [30 + x * 120, 30 + y * 120];
+  const [r1, r2] = P(rx, ry), [a1, a2] = P(ax, ay);
+  g.beginPath(); g.arc(r1, r2, 9, 0, 7); g.fillStyle = C('--warn'); g.fill(); text(g, 'R', r1, r2 + 1, C('--paper'), '700 11px', 'center', 'middle');
+  g.beginPath(); g.arc(a1, a2, 9, 0, 7); g.fillStyle = C('--ok'); g.fill(); text(g, 'A', a1, a2 + 1, C('--paper'), '700 11px', 'center', 'middle');
+  const n = Math.hypot(e.A, e.B) || 1; arrow(g, 90, 90, 90 + e.A / n * 50, 90 + e.B / n * 50, C('--fg'), 2.5, 10); text(g, 'E croît', 90, 172, C('--mute'), '600 11px', 'center');
+  setT('calcA5c', `e${kk} : A = ${fmt(e.A)}, B = ${fmt(e.B)}
+A ${e.A > 0 ? '> 0 : E croît vers la droite → minimum à GAUCHE' : e.A < 0 ? '< 0 : E croît vers la gauche → minimum à DROITE' : '= 0 : indifférent en x'}
+B ${e.B > 0 ? '> 0 : E croît vers le bas → minimum en HAUT' : e.B < 0 ? '< 0 : E croît vers le haut → minimum en BAS' : '= 0 : indifférent en y'}
+R = coin de rejet (minimum), A = coin d'acceptation (maximum), toujours opposés.`);
+}
+function figA7() {
+  const [cv, g] = cvx('fA7'); if (!cv || R.T.degenerate) return;
+  const k = targetBase(g, cv, { cov: .3 });
+  const cnt = { rej: 0, full: 0, part: 0 };
+  for (let ty = 0; ty < NT; ty++) for (let tx = 0; tx < NT; tx++) {
+    const t = tileInfo(tx, ty), X = tx * TILE * k, Y = ty * TILE * k, w = TILE * k;
+    if (!t.inBox) { g.fillStyle = C('--bg'); g.globalAlpha = .5; g.fillRect(X, Y, w, w); g.globalAlpha = 1; continue; }
+    cnt[t.state]++;
+    if (t.state === 'rej') { g.fillStyle = C('--rej'); g.globalAlpha = .55; g.fillRect(X, Y, w, w); g.globalAlpha = 1; hatch(g, X, Y, w, w, C('--mute'), 10); }
+    if (t.state === 'full') { g.fillStyle = C('--full'); g.globalAlpha = .45; g.fillRect(X, Y, w, w); g.globalAlpha = 1; }
+    if (t.state === 'part') { g.strokeStyle = C('--accent'); g.lineWidth = 3; g.strokeRect(X + 3, Y + 3, w - 6, w - 6); }
+    t.per.forEach((p, i) => { const colr = p.verdict === 'R' ? C('--warn') : p.verdict === 'A' ? C('--ok') : C('--accent');
+      pill(g, `e${i}:${p.verdict}`, X + w / 2, Y + w / 2 - 22 + i * 22, C('--paper'), colr, '700 12px'); });
+    if (tx === S.sel.tx && ty === S.sel.ty) { g.strokeStyle = C('--warn'); g.lineWidth = 3; g.strokeRect(X + 1.5, Y + 1.5, w - 3, w - 3); }
+  }
+  drawTri(g, k, 0, 0, -1, .8);
+  const t = tileInfo(S.sel.tx, S.sel.ty);
+  setT('calcA7', `Tuiles de la boîte : ${cnt.part} partielles, ${cnt.full} pleines, ${cnt.rej} rejetées.
+
+Tuile choisie (${S.sel.tx}, ${S.sel.ty}) : ${t.per.map((p, i) => `e${i} ${p.verdict === 'R' ? 'rejette' : p.verdict === 'A' ? 'accepte' : 'traverse'}`).join(', ')}
+→ ${t.state === 'rej' ? 'un R suffit : triangle ignoré dans cette tuile' : t.state === 'full' ? 'trois A : tuile PLEINE, émise sans rastérisation' : `partielle ; arête(s) active(s) : ${t.per.map((p, i) => p.verdict === 'T' ? 'e' + i : null).filter(Boolean).join(', ')}`}`);
+}
+
+// ── A8, A10 : descente avec flèches de pas ──────────────────────────
+function figDescent(id, x0, y0, S2, mode, calcId, title) {
+  const [cv, g] = cvx(id); if (!cv || !P.ok) return;
+  const T = R.T, kk = S.edge, e = T.edges[kk], span = 4 * S2, c = cv.width / span, tb = R.tab[S2][kk];
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  const col = covCol(); g.globalAlpha = .4;
+  for (let y = 0; y < span; y++) for (let x = 0; x < span; x++) { const v = R.H.cov[(y0 + y) * W + x0 + x]; if (v) { g.fillStyle = col[v]; g.fillRect(x * c, y * c, c + .5, c + .5); } }
+  g.globalAlpha = 1;
+  if (c >= 8) { g.strokeStyle = C('--line'); g.lineWidth = .5; for (let i = 0; i <= span; i++) { g.beginPath(); g.moveTo(i * c, 0); g.lineTo(i * c, cv.height); g.moveTo(0, i * c); g.lineTo(cv.width, i * c); g.stroke(); } }
+  const eP = Ev(T, kk, x0, y0), [dxC, dyC] = cornerD(e, S2, mode), [pdx, pdy] = cornerD(e, span, mode);
+  const pc = corners(e.A, e.B, span), pVal = eP + (mode === 'rej' ? pc.rej : pc.acc);
+  let nHit = 0; const vals = [];
+  for (let i = 0; i < 16; i++) {
+    const v = eP + (mode === 'rej' ? tb.rej[i] : tb.acc[i]), X = (S2 * (i & 3)) * c, Y = (S2 * (i >> 2)) * c, w = S2 * c; vals.push(v);
+    if (mode === 'rej' && v >= 0) { nHit++; g.fillStyle = C('--rej'); g.globalAlpha = .6; g.fillRect(X, Y, w, w); g.globalAlpha = 1; hatch(g, X, Y, w, w, C('--mute'), 9); }
+    if (mode === 'acc' && v < 0) { nHit++; g.fillStyle = C('--full'); g.globalAlpha = .3; g.fillRect(X, Y, w, w); g.globalAlpha = 1; }
+    g.strokeStyle = C('--accent'); g.lineWidth = 1.5; g.strokeRect(X + .5, Y + .5, w - 1, w - 1);
+  }
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip();
+  const V = T.V.map(v => ({ x: (v.X / T.SUB - x0) * c, y: (v.Y / T.SUB - y0) * c })), [ia, ib] = [[1, 2], [2, 0], [0, 1]][kk];
+  g.setLineDash([6, 5]); g.strokeStyle = C('--warn'); g.lineWidth = 1.5; lineInf(g, V[ia].x, V[ia].y, V[ib].x, V[ib].y); g.setLineDash([]);
+  drawTri(g, c, x0, y0, kk); g.restore();
+  const ox = (pdx + .5) * c, oy = (pdy + .5) * c;
+  for (let i = 0; i < 16; i++) { const tx = (S2 * (i & 3) + dxC + .5) * c, ty = (S2 * (i >> 2) + dyC + .5) * c; arrow(g, ox, oy, tx, ty, C('--warn'), 1.3, 8); }
+  for (let i = 0; i < 16; i++) {
+    const tx = (S2 * (i & 3) + dxC + .5) * c, ty = (S2 * (i >> 2) + dyC + .5) * c, v = vals[i];
+    g.beginPath(); g.arc(tx, ty, 5.5, 0, 7); g.fillStyle = '#ffffff'; g.fill(); g.lineWidth = 2; g.strokeStyle = v < 0 ? C('--hit') : C('--warn'); g.stroke();
+    const lx = tx + (dxC ? -6 : 6), ly = ty + (dyC ? -10 : 16);
+    text(g, fmt(v), lx, ly, v < 0 ? C('--hit') : C('--warn'), '700 10.5px', dxC ? 'right' : 'left');
+  }
+  g.beginPath(); g.arc(ox, oy, 9, 0, 7); g.fillStyle = C('--warn'); g.fill(); text(g, mode === 'rej' ? 'R' : 'A', ox, oy + 1, C('--paper'), '700 11px', 'center', 'middle');
+  const step0 = tb.step, offN = mode === 'rej' ? tb.off.rej : tb.off.acc;
+  setT(calcId, `${title} : premier pixel (${x0}, ${y0}), arête e${kk}, E' = ${fmt(eP)}
+Coin ${mode === 'rej' ? 'de rejet' : 'd\'acceptation'} du parent (point rouge) : ${fmt(pVal)}
+
+Pas vers le bloc i = A·${S2}·colonne + B·${S2}·rangée  (A·${S2} = ${fmt(e.A * S2)}, B·${S2} = ${fmt(e.B * S2)})
+plus le décalage de coin du bloc : ${fmt(offN)}
+  bloc 0 : ${fmt(eP)} + ${fmt(step0[0] + offN)} = ${fmt(vals[0])}
+  bloc 5 : ${fmt(eP)} + ${fmt(step0[5] + offN)} = ${fmt(vals[5])}
+  bloc 15 : ${fmt(eP)} + ${fmt(step0[15] + offN)} = ${fmt(vals[15])}
+
+${mode === 'rej' ? `Blocs rejetés par e${kk} (valeur ≥ 0) : ${nHit} sur 16` : `Blocs acceptés par e${kk} (valeur < 0) : ${nHit} sur 16`}
+(Le code part du premier pixel du parent, pas de son coin : c'est la même somme, la table contient le pas complet.)`);
+}
+
+// ── A9 : masques et parcours des bits ───────────────────────────────
+const A9 = { mode: 'acc', scan: 0 };
+function figA9() {
+  if (!P.ok) return;
+  const tb = R.tab[16], aL = [0, 1, 2], mode = A9.mode;
+  let h = '<table><thead><tr><th></th>' + [...Array(16)].map((_, i) => `<th style="text-align:center">${i}</th>`).join('') + '</tr></thead><tbody>';
+  const masks = [];
+  for (const kk of aL) {
+    const vals = (mode === 'acc' ? tb[kk].acc : tb[kk].rej).map(v => P.e[kk] + v); let m = 0; vals.forEach((v, i) => { if (v < 0) m |= 1 << i; }); masks.push(m);
+    const inact = !(P.active >> kk & 1) && P.active;
+    h += `<tr><th>e${kk} : valeurs au coin${inact ? ' (acceptée par la tuile)' : ''}</th>${vals.map(v => `<td style="font-size:10px">${fmt(v)}</td>`).join('')}</tr>`;
+    h += `<tr><th>e${kk} : &lt; 0 ?</th>${vals.map(v => `<td class="${v < 0 ? 'b1' : 'b0'}">${v < 0 ? 1 : 0}</td>`).join('')}</tr>`;
+  }
+  const comp = masks.reduce((a, m) => a & m, 0xFFFF);
+  let rem = comp; const order = bits(comp); const found = order.slice(0, A9.scan);
+  for (const i of found) rem &= ~(1 << i);
+  const hot = order[A9.scan - 1];
+  h += `<tr class="res"><th>ET des 3 arêtes</th>${[...Array(16)].map((_, i) => { const on = comp >> i & 1; return `<td class="${on ? (mode === 'acc' ? 'full1' : 'b1') : 'b0'} ${i === hot ? 'hot' : ''} ${on && found.includes(i) && i !== hot ? 'gone' : ''}">${on}</td>`; }).join('')}</tr>`;
+  set('bitsA9', h + '</tbody></table>');
+  const sel = hot !== undefined ? hot : -1;
+  set('calcA9', `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start"><div>${mini(comp, mode === 'acc' ? 'f' : 't', sel, mode === 'acc' ? 'blocs pleins (masque)' : 'blocs touchés (masque)')}</div><div class="calc" style="flex:1;min-width:200px">masque  = ${bin16(comp)}\n` +
+    (A9.scan === 0 ? `Appuyez sur « Bit suivant ».` : hot === undefined ? `Plus aucun bit : ${order.length} bloc(s) visité(s), ${order.length} tour(s) de boucle.` :
+      `tzcnt   → ${hot}  (colonne ${hot & 3}, rangée ${hot >> 2})\n         → ${mode === 'acc' ? 'émettre le bloc 16×16 plein' : 'bloc touché : plein ou partiel'} en (${P.x0 + 16 * (hot & 3)}, ${P.y0 + 16 * (hot >> 2)})\nblsr    → ${bin16(rem)}`) + `</div></div>`);
+}
+
+// ── A11 : masque de pixels ───────────────────────────────────────────
+function figA11() {
+  const [cv, g] = cvx('fA11'); if (!cv || !P.ok) return;
+  const T = R.T, kk = S.edge, e = T.edges[kk], c = cv.width / 4, x0 = P.px, y0 = P.py, tp = R.tab[1][kk];
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  const vals = tp.step.map(s2 => P.ce4[kk] + s2);
+  for (let q = 0; q < 16; q++) { const X = (q & 3) * c, Y = (q >> 2) * c;
+    if (vals[q] < 0) { g.fillStyle = C('--pix'); g.globalAlpha = .28; g.fillRect(X, Y, c, c); g.globalAlpha = 1; }
+    if (P.LP.touched >> q & 1) { g.strokeStyle = C('--ok'); g.lineWidth = 4; g.strokeRect(X + 4, Y + 4, c - 8, c - 8); }
+    g.strokeStyle = C('--line'); g.lineWidth = 1; g.strokeRect(X + .5, Y + .5, c, c); }
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip();
+  const V = T.V.map(v => ({ x: (v.X / T.SUB - x0) * c, y: (v.Y / T.SUB - y0) * c })), [ia, ib] = [[1, 2], [2, 0], [0, 1]][kk];
+  g.setLineDash([6, 5]); g.strokeStyle = C('--warn'); g.lineWidth = 2; lineInf(g, V[ia].x, V[ia].y, V[ib].x, V[ib].y); g.setLineDash([]);
+  drawTri(g, c, x0, y0, kk); g.restore();
+  const [dx, dy] = cornerD(e, 4, 'rej'), ox = (dx + .5) * c, oy = (dy + .5) * c;
+  for (let q = 0; q < 16; q++) arrow(g, ox, oy, ((q & 3) + .5) * c, ((q >> 2) + .5) * c, C('--warn'), 1.3, 9);
+  for (let q = 0; q < 16; q++) { const X = ((q & 3) + .5) * c, Y = ((q >> 2) + .5) * c, v = vals[q];
+    g.beginPath(); g.arc(X, Y, 6, 0, 7); g.fillStyle = '#ffffff'; g.fill(); g.lineWidth = 2; g.strokeStyle = v < 0 ? C('--hit') : C('--warn'); g.stroke();
+    pill(g, fmt(v), X, Y + 24, C('--paper'), v < 0 ? C('--hit') : C('--warn'), '700 12px'); text(g, `(${x0 + (q & 3)},${y0 + (q >> 2)})`, X, Y - 16, C('--mute'), '600 10px', 'center'); }
+  g.beginPath(); g.arc(ox, oy, 10, 0, 7); g.fillStyle = C('--warn'); g.fill(); text(g, 'R', ox, oy + 1, C('--paper'), '700 12px', 'center', 'middle');
+  let m = 0; vals.forEach((v, q) => { if (v < 0) m |= 1 << q; });
+  setT('calcA11', `Bloc 4×4 n° ${P.b4} au pixel (${x0}, ${y0}) — ${P.st4}
+Arête e${kk} : E' au premier pixel = ${fmt(P.ce4[kk])}
+Pas vers le pixel (col, rang) = A·col + B·rang  (A = ${fmt(e.A)}, B = ${fmt(e.B)})
+
+masque e${kk}      = ${bin16(m)}   (bleu clair)
+masque des 3 arêtes = ${bin16(P.LP.touched)}   (cadre vert) : ${popc(P.LP.touched)} pixel(s)
+(bit 15 à gauche, bit 0 à droite ; bit = 4·rangée + colonne)${P.LP.touched === 0 && P.st4 === 'partiel' ? '\n→ masque vide : FAUX POSITIF (chapitre A13)' : ''}`);
+}
+
+// ── A12 : MSAA ───────────────────────────────────────────────────────
+const A12 = { j: 0 }, SAMP = [[-2, -6], [6, -2], [-6, 2], [2, 6]];
+function sampleIn(T, x, y, j) {
+  const s = T.SUB, f = s / 16;
+  return T.edges.every(e => e.A * (s * x + s / 2 + SAMP[j][0] * f) + e.B * (s * y + s / 2 + SAMP[j][1] * f) + e.Cb < 0);
+}
+function figA12() {
+  const [cv, g] = cvx('fA12'); if (!cv || !P.ok) return;
+  const T = R.T, c = cv.width / 4, x0 = P.px, y0 = P.py, e = T.edges[S.edge];
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  for (let q = 0; q < 16; q++) { g.strokeStyle = C('--line'); g.lineWidth = 1; g.strokeRect((q & 3) * c + .5, (q >> 2) * c + .5, c, c); }
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip(); drawTri(g, c, x0, y0, -1); g.restore();
+  const [dx, dy] = cornerD(e, 4, 'rej'), ox = (dx + .5) * c, oy = (dy + .5) * c;
+  const masks = [0, 0, 0, 0];
+  for (let q = 0; q < 16; q++) for (let j = 0; j < 4; j++) {
+    const x = x0 + (q & 3), y = y0 + (q >> 2), sx = ((q & 3) + .5 + SAMP[j][0] / 16) * c, sy = ((q >> 2) + .5 + SAMP[j][1] / 16) * c, on = sampleIn(T, x, y, j);
+    if (on) masks[j] |= 1 << q;
+    if (j === A12.j) arrow(g, ox, oy, sx, sy, C('--warn'), 1.1, 7);
+    g.beginPath(); g.arc(sx, sy, j === A12.j ? 7 : 5, 0, 7); g.fillStyle = on ? C('--pix') : C('--paper'); g.fill(); g.lineWidth = 2; g.strokeStyle = j === A12.j ? C('--warn') : C('--mute'); g.stroke();
+  }
+  g.beginPath(); g.arc(ox, oy, 10, 0, 7); g.fillStyle = C('--warn'); g.fill(); text(g, 'R', ox, oy + 1, C('--paper'), '700 12px', 'center', 'middle');
+  setT('calcA12', `Bloc 4×4 au pixel (${x0}, ${y0}), quatre échantillons par pixel :
+` + masks.map((m, j) => `  éch. ${j} : ${bin16(m)} · ${popc(m)}`).join('\n') + `
+  centre : ${bin16(P.LP.touched)} · ${popc(P.LP.touched)}  (sans MSAA)
+
+Coût : une table, une addition et un ET de plus
+par arête et par échantillon, sur les blocs 4×4
+PARTIELS seulement.`);
+}
+
+// ── A13 : faux positifs ──────────────────────────────────────────────
+function figA13() {
+  const [cv, g] = cvx('fA13'); if (!cv) return;
+  let best = null, bestN = -1, total = 0;
+  for (const t of R.H.st.tiles) { if (!t.l16) continue; let n = 0;
+    for (const i in t.kids16) { const L4 = t.kids16[i]; let any = !!L4.full; for (const j in L4.kids) { if (L4.kids[j].touched === 0) n++; else any = true; } if (!any) n++; }
+    total += n; if (n > bestN) { bestN = n; best = t; } }
+  const t = best || R.H.st.tiles.find(q => q.tx === S.sel.tx && q.ty === S.sel.ty);
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  if (!t) { setT('calcA13', 'Aucune tuile partielle.'); return; }
+  const x0 = t.tx * TILE, y0 = t.ty * TILE, k = cv.width / TILE, col = covCol();
+  g.globalAlpha = .45; for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) { const v = R.H.cov[(y0 + y) * W + x0 + x]; if (v) { g.fillStyle = col[v]; g.fillRect(x * k, y * k, k, k); } } g.globalAlpha = 1;
+  const b = R.T.bbox; g.setLineDash([6, 4]); g.strokeStyle = C('--mute'); g.lineWidth = 1.5; g.strokeRect((b.x0 - x0) * k, (b.y0 - y0) * k, (b.x1 - b.x0) * k, (b.y1 - b.y0) * k); g.setLineDash([]);
+  let n4 = 0, n16 = 0;
+  if (t.l16) for (const i in t.kids16) {
+    const L4 = t.kids16[i], bx = 16 * (i & 3), by = 16 * (i >> 2); let any = !!L4.full;
+    for (const j in L4.kids) { const px = bx + 4 * (j & 3), py = by + 4 * (j >> 2);
+      if (L4.kids[j].touched === 0) { n4++; g.fillStyle = C('--warn'); g.globalAlpha = .5; g.fillRect(px * k, py * k, 4 * k, 4 * k); g.globalAlpha = 1; g.strokeStyle = C('--warn'); g.lineWidth = 2; g.strokeRect(px * k + 1, py * k + 1, 4 * k - 2, 4 * k - 2); }
+      else any = true; }
+    if (!any) { n16++; g.strokeStyle = C('--warn'); g.lineWidth = 3; g.setLineDash([8, 5]); g.strokeRect(bx * k + 2, by * k + 2, 16 * k - 4, 16 * k - 4); g.setLineDash([]); }
+  }
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip();
+  const T = R.T, V = T.V.map(v => ({ x: (v.X / T.SUB - x0) * k, y: (v.Y / T.SUB - y0) * k }));
+  g.setLineDash([5, 6]); g.lineWidth = 1.2; g.strokeStyle = C('--mute'); [[1, 2], [2, 0], [0, 1]].forEach(([a, b2]) => lineInf(g, V[a].x, V[a].y, V[b2].x, V[b2].y)); g.setLineDash([]);
+  drawTri(g, k, x0, y0, -1); g.restore();
+  setT('calcA13', `Tuile montrée : (${t.tx}, ${t.ty}), celle qui a le plus de faux positifs.
+  blocs 4×4 partiels au masque vide : ${n4}   (orange plein)
+  blocs 16×16 partiels sans aucun pixel : ${n16}   (tirets orange)
+Sur tout le triangle : ${R.H.st.fp4} bloc(s) 4×4 et ${R.H.st.fp16} bloc(s) 16×16.
+Masque de boîte : ${S.box ? 'ACTIF' : 'inactif'} (pointillés gris : la boîte englobante).`);
+}
+
+// ── A14 : animation de la descente complète ─────────────────────────
+const A14 = { frame: 1e9, playing: false, timer: 0 };
+function framesA14() {
+  const t = R.H.st.tiles.find(q => q.tx === S.sel.tx && q.ty === S.sel.ty), fr = [];
+  if (!t) return { t, fr };
+  fr.push({ kind: 'tile', t, msg: `Tuile (${t.tx}, ${t.ty}) : ${t.state === 'rej' ? 'rejetée par une arête. Fin.' : t.state === 'full' ? 'acceptée par les trois arêtes : émise pleine. Fin.' : 'partielle, arêtes actives ' + actEdges(t.active).map(eName).join(', ') + '.'}`, ops: OPS.tileScalar });
+  if (!t.l16) return { t, fr };
+  const nA = popc(t.active);
+  fr.push({ kind: 'l16', msg: `Classify16 sur les 16 blocs 16×16 : ${popc(t.l16.full)} plein(s), ${popc(t.l16.partial)} partiel(s), ${16 - popc(t.l16.touched)} rejeté(s).`, ops: OPS.cls16Base + nA * OPS.cls16Edge });
+  if (t.l16.full) fr.push({ kind: 'emit16', msg: `tzcnt / blsr sur le masque des pleins : ${popc(t.l16.full)} bloc(s) 16×16 émis sans test.`, ops: popc(t.l16.full) * (OPS.bitBase + OPS.emit) });
+  for (const i of bits(t.l16.partial)) {
+    const L4 = t.kids16[i];
+    fr.push({ kind: 'l4', i, msg: `Bloc 16×16 n° ${i} : Classify16 sur ses 16 blocs 4×4 : ${popc(L4.full)} plein(s), ${popc(L4.partial)} partiel(s).`, ops: OPS.bitBase + nA + OPS.cls16Base + nA * OPS.cls16Edge + popc(L4.full) * (OPS.bitBase + OPS.emit) });
+    if (L4.partial) fr.push({ kind: 'pix', i, msg: `Bloc 16×16 n° ${i} : ${popc(L4.partial)} masque(s) de 16 pixels.`, ops: popc(L4.partial) * (OPS.bitBase + nA + OPS.pixBase + nA * OPS.pixEdge) });
+  }
+  return { t, fr };
+}
+function figA14() {
+  const [cv, g] = cvx('fA14'); if (!cv) return;
+  const { t, fr } = framesA14(), k = cv.width / TILE, x0 = S.sel.tx * TILE, y0 = S.sel.ty * TILE, col = covCol();
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  g.strokeStyle = C('--line'); g.lineWidth = .4; for (let i = 0; i <= TILE; i++) { g.beginPath(); g.moveTo(i * k, 0); g.lineTo(i * k, cv.height); g.moveTo(0, i * k); g.lineTo(cv.width, i * k); g.stroke(); }
+  A14.frame = Math.min(A14.frame, fr.length); const upto = A14.frame; let ops = 0;
+  for (let f = 0; f < upto; f++) {
+    const F = fr[f]; ops += F.ops;
+    if (F.kind === 'tile') { if (t.state === 'rej') { g.fillStyle = C('--rej'); g.globalAlpha = .6; g.fillRect(0, 0, cv.width, cv.height); g.globalAlpha = 1; } if (t.state === 'full') { g.fillStyle = C('--full'); g.fillRect(0, 0, cv.width, cv.height); } g.strokeStyle = C('--warn'); g.lineWidth = 3; g.strokeRect(1.5, 1.5, cv.width - 3, cv.height - 3); }
+    if (F.kind === 'l16') for (let i = 0; i < 16; i++) { const X = 16 * (i & 3) * k, Y = 16 * (i >> 2) * k, w = 16 * k;
+      if (!(t.l16.touched >> i & 1)) { g.fillStyle = C('--rej'); g.globalAlpha = .6; g.fillRect(X, Y, w, w); g.globalAlpha = 1; hatch(g, X, Y, w, w, C('--mute'), 9); }
+      else if (!(t.l16.full >> i & 1)) { g.strokeStyle = C('--accent'); g.lineWidth = 2.5; g.strokeRect(X + 1.5, Y + 1.5, w - 3, w - 3); } }
+    if (F.kind === 'emit16') for (const i of bits(t.l16.full)) { g.fillStyle = C('--full'); g.fillRect(16 * (i & 3) * k, 16 * (i >> 2) * k, 16 * k, 16 * k); }
+    if (F.kind === 'l4') { const L4 = t.kids16[F.i], bx = 16 * (F.i & 3), by = 16 * (F.i >> 2);
+      for (let j = 0; j < 16; j++) { const X = (bx + 4 * (j & 3)) * k, Y = (by + 4 * (j >> 2)) * k, w = 4 * k;
+        if (!(L4.touched >> j & 1)) { g.fillStyle = C('--rej'); g.globalAlpha = .55; g.fillRect(X, Y, w, w); g.globalAlpha = 1; }
+        else if (L4.full >> j & 1) { g.fillStyle = C('--full2'); g.fillRect(X, Y, w, w); }
+        else { g.strokeStyle = C('--accent'); g.lineWidth = 1.2; g.strokeRect(X + .5, Y + .5, w - 1, w - 1); } } }
+    if (F.kind === 'pix') { const L4 = t.kids16[F.i], bx = 16 * (F.i & 3), by = 16 * (F.i >> 2);
+      for (const j of bits(L4.partial)) { const LP = L4.kids[j], px = bx + 4 * (j & 3), py = by + 4 * (j >> 2);
+        for (let q = 0; q < 16; q++) if (LP.touched >> q & 1) { g.fillStyle = col[1]; g.fillRect((px + (q & 3)) * k, (py + (q >> 2)) * k, k, k); }
+        if (LP.touched === 0) { g.strokeStyle = C('--warn'); g.lineWidth = 2; g.strokeRect(px * k + 1, py * k + 1, 4 * k - 2, 4 * k - 2); } } }
+  }
+  const cur = fr[upto - 1];
+  if (cur && (cur.kind === 'l4' || cur.kind === 'pix')) { g.strokeStyle = C('--warn'); g.lineWidth = 3; g.strokeRect(16 * (cur.i & 3) * k + 1.5, 16 * (cur.i >> 2) * k + 1.5, 16 * k - 3, 16 * k - 3); }
+  g.save(); g.beginPath(); g.rect(0, 0, cv.width, cv.height); g.clip(); drawTri(g, k, x0, y0, -1); g.restore();
+  setT('calcA14', `Pas ${upto} / ${fr.length}\n${cur ? cur.msg : 'Appuyez sur Lecture ou Pas suivant.'}\n\nInstructions de couverture cumulées (modèle) : ${fmt(ops)}\n` +
+    (upto === fr.length && fr.length ? `\nTerminé. Pour la même tuile, le chemin C2 jugerait chaque bloc de 8 de la boîte qui tombe dans la tuile.` : ''));
+}
+function playA14() {
+  if (A14.playing) { A14.playing = false; clearTimeout(A14.timer); $('playA14').textContent = '▶ Lecture'; return; }
+  const n = framesA14().fr.length; if (A14.frame >= n) A14.frame = 0;
+  A14.playing = true; $('playA14').textContent = '❚❚ Pause';
+  const tick = () => { if (!A14.playing) return; A14.frame++; figA14(); if (A14.frame >= n) { A14.playing = false; $('playA14').textContent = '▶ Lecture'; return; } A14.timer = setTimeout(tick, 650); };
+  tick();
+}
+
+// ── B1 : grille sous-pixel ──────────────────────────────────────────
+const B1 = { i: 0 };
+function figB1() {
+  const [cv, g] = cvx('fB1'); if (!cv) return;
+  const T = R.T, v = T.V[B1.i], fx = v.fx, fy = v.fy, SUB = T.SUB, c = cv.width, wx = fx - .5, wy = fy - .5;
+  const X = x => (x - wx) * c, Y = y => (y - wy) * c;
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  const step = SUB <= 16 ? 1 / SUB : 1 / 16;
+  g.strokeStyle = C('--line'); g.lineWidth = .8;
+  for (let s2 = Math.ceil(wx / step) * step; s2 <= wx + 1; s2 += step) { g.beginPath(); g.moveTo(X(s2), 0); g.lineTo(X(s2), cv.height); g.stroke(); }
+  for (let s2 = Math.ceil(wy / step) * step; s2 <= wy + 1; s2 += step) { g.beginPath(); g.moveTo(0, Y(s2)); g.lineTo(cv.width, Y(s2)); g.stroke(); }
+  g.strokeStyle = C('--mute'); g.lineWidth = 3;
+  for (let p = Math.ceil(wx); p <= wx + 1; p++) { g.beginPath(); g.moveTo(X(p), 0); g.lineTo(X(p), cv.height); g.stroke(); }
+  for (let p = Math.ceil(wy); p <= wy + 1; p++) { g.beginPath(); g.moveTo(0, Y(p)); g.lineTo(cv.width, Y(p)); g.stroke(); }
+  for (let a = Math.floor(wx); a <= wx + 1; a++) for (let b = Math.floor(wy); b <= wy + 1; b++) { const cx = X(a + .5), cy = Y(b + .5);
+    if (cx > 0 && cx < c && cy > 0 && cy < c) { g.beginPath(); g.arc(cx, cy, 6, 0, 7); g.fillStyle = C('--mute'); g.fill(); text(g, `centre (${a},${b})`, cx + 9, cy - 8, C('--mute'), '600 12px'); } }
+  const xs = X(v.X / SUB), ys = Y(v.Y / SUB), xf = X(fx), yf = Y(fy);
+  g.strokeStyle = C('--warn'); g.lineWidth = 3; g.beginPath(); g.moveTo(xf - 12, yf - 12); g.lineTo(xf + 12, yf + 12); g.moveTo(xf + 12, yf - 12); g.lineTo(xf - 12, yf + 12); g.stroke();
+  arrow(g, xf, yf, xs, ys, C('--fg'), 2, 10);
+  g.beginPath(); g.arc(xs, ys, 9, 0, 7); g.fillStyle = C('--hit'); g.fill();
+  text(g, 'float', xf + 14, yf - 12, C('--warn'), '700 13px'); text(g, 'accroché', xs + 14, ys + 20, C('--hit'), '700 13px');
+  text(g, `1 case = 1/${SUB <= 16 ? SUB : 16} de pixel`, 10, cv.height - 10, C('--mute'), '600 12px');
+  setT('calcB1', `V${B1.i} float  : (${ff(fx, 4)} ; ${ff(fy, 4)}) px
+× ${SUB}        : (${ff(Math.fround(fx * SUB), 3)} ; ${ff(Math.fround(fy * SUB), 3)})
+arrondi       : (${fmt(v.X)} ; ${fmt(v.Y)}) sous-pixels
+soit          : (${ff(v.X / SUB, 4)} ; ${ff(v.Y / SUB, 4)}) px
+écart         : (${ff(v.X / SUB - fx, 4)} ; ${ff(v.Y / SUB - fy, 4)}) px, au plus ${ff(0.5 / SUB, 4)}${SUB > 16 ? '\n(s = 8 : une ligne de grille sur 16 est dessinée)' : ''}`);
+}
+
+// ── B2 : règle top-left ─────────────────────────────────────────────
+const B2 = { variant: 'tl', tris: [[{ x: 1.5, y: 8.5 }, { x: 7.5, y: 2.5 }, { x: 1.5, y: 2.5 }], [{ x: 1.5, y: 8.5 }, { x: 9.5, y: 8.5 }, { x: 7.5, y: 2.5 }], [{ x: 1.5, y: 8.5 }, { x: 5.5, y: 10.5 }, { x: 9.5, y: 8.5 }]] };
+function figB2() {
+  const [cv, g] = cvx('fB2'); if (!cv) return;
+  const n = 11, c = cv.width / n, Ts = B2.tris.map(t => setupFixed(t, 4, { variant: B2.variant }));
+  const poly = [{ x: 1.5, y: 2.5 }, { x: 7.5, y: 2.5 }, { x: 9.5, y: 8.5 }, { x: 5.5, y: 10.5 }, { x: 1.5, y: 8.5 }];
+  const inside = (x, y) => poly.every((p, i) => { const q = poly[(i + 1) % poly.length]; return (q.x - p.x) * (y - p.y) - (q.y - p.y) * (x - p.x) > 0; });
+  const tcol = [C('--pix'), C('--full'), C('--rowc')];
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  let dup = 0, hole = 0;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const own = Ts.map((T, i) => insideFixed(T, x, y) ? i : -1).filter(i => i >= 0), X = x * c, Y = y * c;
+    if (own.length === 1) { g.fillStyle = tcol[own[0]]; g.globalAlpha = .45; g.fillRect(X, Y, c, c); g.globalAlpha = 1; }
+    if (own.length > 1) { dup++; g.fillStyle = C('--warn'); g.fillRect(X, Y, c, c); text(g, '×' + own.length, X + c / 2, Y + c / 2, C('--paper'), '700 13px', 'center', 'middle'); }
+    if (own.length === 0 && inside(x + .5, y + .5)) { hole++; g.fillStyle = C('--warn-soft'); g.fillRect(X, Y, c, c); g.strokeStyle = C('--warn'); g.lineWidth = 2.5; g.setLineDash([5, 4]); g.strokeRect(X + 3, Y + 3, c - 6, c - 6); g.setLineDash([]); text(g, '0', X + c / 2, Y + c / 2, C('--warn'), '700 13px', 'center', 'middle'); }
+    g.strokeStyle = C('--line'); g.lineWidth = 1; g.strokeRect(X + .5, Y + .5, c, c);
+    g.beginPath(); g.arc(X + c / 2, Y + c / 2, 2.5, 0, 7); g.fillStyle = C('--fg'); g.fill();
+  }
+  B2.tris.forEach((t, i) => { g.strokeStyle = C('--tri'); g.lineWidth = 2; g.beginPath(); g.moveTo(t[0].x * c, t[0].y * c); g.lineTo(t[1].x * c, t[1].y * c); g.lineTo(t[2].x * c, t[2].y * c); g.closePath(); g.stroke();
+    const cx = (t[0].x + t[1].x + t[2].x) / 3 * c, cy = (t[0].y + t[1].y + t[2].y) / 3 * c; pill(g, 'T' + (i + 1), cx, cy, C('--paper'), tcol[i], '700 13px'); });
+  const lab = { tl: 'top-left (biais −1 sur les arêtes gauches et hautes)', strict: 'E < 0 partout (aucun biais)', le: 'E ≤ 0 partout (biais −1 partout)' }[B2.variant];
+  setT('calcB2', `Règle : ${lab}
+Centres dessinés deux fois : ${dup}
+Centres intérieurs jamais dessinés : ${hole}
+${dup + hole === 0 ? '→ chaque centre a exactement un propriétaire.' : '→ couture visible : la règle ne partage pas les arêtes communes.'}
+
+Arêtes partagées : T1–T2 (diagonale), T2–T3 (horizontale).
+Pour T3, l'horizontale est une arête HAUTE : avec top-left, ses centres vont à T3.`);
+}
+
+// ── B3 : factorisation, une rangée ──────────────────────────────────
+function figB3() {
+  if (!P.ok) return;
+  const T = R.T, kk = S.edge, e = T.edges[kk], y = P.py, x0 = Math.max(0, Math.min(W - 16, P.px - 6)), SUB = T.SUB;
+  const xs = [...Array(16)].map((_, i) => x0 + i);
+  const raw = xs.map(x => e.A * (SUB * x + SUB / 2) + e.B * (SUB * y + SUB / 2) + e.Cb), ep = xs.map(x => Ev(T, kk, x, y));
+  set('figB3', lanes([
+    { h: 'pixel x', v: xs, cls: () => '' },
+    { h: `E au centre (×${SUB}²)`, v: raw },
+    { h: `${SUB}·E' + r`, v: ep.map(v => SUB * v + e.r) },
+    { h: "E' (pixels)", v: ep, sep: true },
+    { h: 'pas : + A', v: ep.map((v, i) => i ? v - ep[i - 1] : 0), cls: () => '' },
+  ]));
+  set('u4', esc(`Arête e${kk}, rangée y = ${y} : K = ${fmt(e.K)} = ${SUB}·(${fmt(e.q)}) + ${e.r}\nE' change de signe au même pixel que E ; chaque pas vaut A = ${fmt(e.A)}.`));
+}
+
+// ── B4 : budget de bits ─────────────────────────────────────────────
+function figB4() {
+  const [cv, g] = cvx('fB4'); if (!cv) return;
+  const cfg = [[1536, 4, 64], [1536, 8, 64], [1536, 8, 128], [4096, 4, 64], [16384, 8, 128]].map(c => budget(...c));
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  const L = 70, Rr = cv.width - 20, top = 20, bot = cv.height - 60, maxB = 50, yb = b => bot - (bot - top) * b / maxB;
+  g.strokeStyle = C('--line'); g.lineWidth = 1; for (let b = 0; b <= 48; b += 8) { g.beginPath(); g.moveTo(L, yb(b)); g.lineTo(Rr, yb(b)); g.stroke(); text(g, b + ' bits', L - 6, yb(b) + 4, C('--mute'), '600 11px', 'right'); }
+  g.strokeStyle = C('--warn'); g.lineWidth = 2; g.setLineDash([6, 4]); g.beginPath(); g.moveTo(L, yb(32)); g.lineTo(Rr, yb(32)); g.stroke(); g.setLineDash([]); text(g, 'limite int32', L + 6, yb(32) - 6, C('--warn'), '700 12px');
+  const gw = (Rr - L) / cfg.length, cols = [C('--rej'), C('--accent'), C('--full')];
+  cfg.forEach((b, i) => { const vals = [b.bitsRaw, b.bitsScreenE, b.bitsTileE];
+    vals.forEach((v, j) => { const x = L + i * gw + 14 + j * (gw - 28) / 3, w = (gw - 28) / 3 - 6; g.fillStyle = cols[j]; g.fillRect(x, yb(v), w, bot - yb(v)); text(g, String(v), x + w / 2, yb(v) - 4, C('--fg'), '700 11px', 'center'); });
+    text(g, `${b.screenPx} px · s=${b.sb}`, L + i * gw + gw / 2, bot + 18, C('--fg'), '600 11px', 'center'); text(g, `tuile ${b.tile}`, L + i * gw + gw / 2, bot + 33, C('--mute'), '600 11px', 'center'); });
+  [['brut, écran', cols[0]], ['factorisé, écran', cols[1]], ['factorisé, dans la tuile', cols[2]]].forEach(([t, cc], j) => { g.fillStyle = cc; g.fillRect(L + j * 210, cv.height - 16, 12, 12); text(g, t, L + j * 210 + 18, cv.height - 6, C('--fg'), '600 11px'); });
+  const maxAB = Math.max(...R.T.edges.map(e => Math.max(Math.abs(e.A), Math.abs(e.B))));
+  setT('u5', `Votre triangle : |A|, |B| max = ${fmt(maxAB)} ; plus grand |E'| d'une arête active à l'entrée d'une tuile = ${fmt(R.H.st.maxAbsE)} (${bitsNeeded(R.H.st.maxAbsE)} bits signés).`);
+}
+
+// ── B5 : un éventail ────────────────────────────────────────────────
+const B5 = { variant: 'fixStrict', seed: 7 };
+const B5N = { direct: 'float direct (C2)', incRow: 'float incrémental', fixTL: 'fixe + top-left', fixStrict: 'fixe, E < 0', fixLE: 'fixe, E ≤ 0', fixTrunc: 'fixe, K / 16' };
+function figB5() {
+  const [cv, g] = cvx('fB5'); if (!cv) return;
+  const Rg = rng(B5.seed), cx = 28.5 + Math.floor(Rg() * 6), cy = 28.5 + Math.floor(Rg() * 6), r = 14 + Rg() * 10, a0 = Rg() * Math.PI;
+  const ring = []; for (let i = 0; i < 8; i++) { const ang = a0 + i * Math.PI / 4 + (Rg() - .5) * .3; ring.push({ x: Math.floor(cx + r * Math.cos(ang)) + .5, y: Math.floor(cy + r * Math.sin(ang)) + .5 }); }
+  const c0 = { x: cx, y: cy }, tris = ring.map((v, i) => [c0, v, ring[(i + 1) % 8]]);
+  const n = 64, k = cv.width / n, cnt = new Uint8Array(n * n), owner = new Int8Array(n * n).fill(-1);
+  const add = (i, idx) => { const x = idx % W, y = (idx / W) | 0; if (x < n && y < n) { cnt[y * n + x]++; owner[y * n + x] = i; } };
+  tris.forEach((t, i) => {
+    if (B5.variant === 'direct' || B5.variant === 'incRow') { const sh = t.map(v => ({ x: v.x + OX, y: v.y + OY })); for (const idx of rasterFloat(floatTri(sh), B5.variant, OX, OY)) add(i, idx); }
+    else { const opts = { fixTL: {}, fixStrict: { variant: 'strict' }, fixLE: { variant: 'le' }, fixTrunc: { trunc: true } }[B5.variant];
+      const T = setupFixed(t, 4, opts); if (!T.degenerate) for (let y = T.bbox.y0; y < T.bbox.y1; y++) for (let x = T.bbox.x0; x < T.bbox.x1; x++) if (insideFixed(T, x, y)) add(i, y * W + x); }
+  });
+  const inOct = (x, y) => { const ar = ring.reduce((s, p, i) => { const q = ring[(i + 1) % 8]; return s + (p.x * q.y - q.x * p.y); }, 0), sg = ar > 0 ? 1 : -1;
+    return ring.every((p, i) => { const q = ring[(i + 1) % 8]; return sg * ((q.x - p.x) * (y - p.y) - (q.y - p.y) * (x - p.x)) > 0; }); };
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  let dup = 0, hole = 0;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) { const q = cnt[y * n + x], X = x * k, Y = y * k;
+    if (q === 1) { g.fillStyle = owner[y * n + x] % 2 ? C('--pix') : C('--full'); g.globalAlpha = .55; g.fillRect(X, Y, k, k); g.globalAlpha = 1; }
+    else if (q > 1) { dup += q - 1; g.fillStyle = C('--warn'); g.fillRect(X, Y, k, k); }
+    else if (inOct(x + .5, y + .5)) { hole++; g.fillStyle = C('--rowc'); g.globalAlpha = .9; g.fillRect(X, Y, k, k); g.globalAlpha = 1; g.strokeStyle = C('--paper'); g.lineWidth = 1.5; g.strokeRect(X + 2, Y + 2, k - 4, k - 4); } }
+  g.strokeStyle = C('--tri'); g.lineWidth = 1.2; tris.forEach(t => { g.beginPath(); g.moveTo(t[0].x * k, t[0].y * k); g.lineTo(t[1].x * k, t[1].y * k); g.lineTo(t[2].x * k, t[2].y * k); g.closePath(); g.stroke(); });
+  setT('calcB5', `Éventail n° ${B5.seed}, variante « ${B5N[B5.variant]} » :
+  doublons : ${dup}   (rouge)
+  trous    : ${hole}   (orange cerclé)
+${dup + hole === 0 ? '→ étanche : chaque centre intérieur est dessiné une fois.' : '→ couture : les arêtes partagées ne sont pas partagées de façon cohérente.'}`);
+}
+
+// ── B6 : coûts par classe ───────────────────────────────────────────
+function figB6() {
+  const [cv, g] = cvx('fB6'); if (!cv) return;
+  g.fillStyle = C('--paper'); g.fillRect(0, 0, cv.width, cv.height);
+  if (!classes) { text(g, 'Calcul des populations…', 20, 30, C('--mute')); return; }
+  const L = 210, Rr = cv.width - 30, lo = Math.log10(0.02), hi = Math.log10(5), xs = v => L + (Rr - L) * (Math.log10(v) - lo) / (hi - lo);
+  g.strokeStyle = C('--line'); for (const v of [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5]) { g.beginPath(); g.moveTo(xs(v), 10); g.lineTo(xs(v), cv.height - 30); g.stroke(); text(g, String(v).replace('.', ','), xs(v), cv.height - 12, C('--mute'), '600 11px', 'center'); }
+  g.strokeStyle = C('--warn'); g.lineWidth = 2; g.beginPath(); g.moveTo(xs(1), 10); g.lineTo(xs(1), cv.height - 30); g.stroke(); text(g, '= C2', xs(1) + 4, 22, C('--warn'), '700 11px');
+  const bh = (cv.height - 60) / classes.rows.length;
+  classes.rows.forEach((r, i) => { const v = r.h / r.c, y = 16 + i * bh;
+    g.fillStyle = v > 1 ? C('--warn') : C('--full'); const xa = xs(Math.min(v, 1)), xb = xs(Math.max(v, 1)); g.fillRect(xa, y + 6, xb - xa, bh - 16);
+    text(g, r.label, 10, y + bh / 2 + 2, C('--fg'), '600 12px'); text(g, '×' + v.toFixed(2).replace('.', ','), v > 1 ? xb + 6 : xa - 6, y + bh / 2 + 2, C('--fg'), '700 12px', v > 1 ? 'left' : 'right'); });
+}
+
+// ── Étapes chiffrées conservées de la version 1 (tableaux et registres)
+function bitsNeeded(v) { return v <= 0 ? 1 : Math.ceil(Math.log2(v + 1)) + 1; }
+function levelLanes(e, tb, act, L, sel) {
+  const rows = [], aL = actEdges(act);
+  aL.forEach((k, n) => { rows.push({ h: `e${k} + rej`, v: tb[k].rej.map(r => e[k] + r), sep: n === 0 }); rows.push({ h: `e${k} + acc`, v: tb[k].acc.map(a => e[k] + a) }); });
+  const rAnd = and16(aL.map(k => tb[k].rej.map(r => e[k] + r))), aAnd = and16(aL.map(k => tb[k].acc.map(a => e[k] + a)));
+  rows.push({ h: 'ET des rej', v: rAnd, sep: true });
+  rows.push({ h: '→ touched', v: rAnd.map((v, i) => (L.touched >> i) & 1), cls: v => v ? 'neg' : 'off' });
+  rows.push({ h: 'ET des acc', v: aAnd, sep: true });
+  rows.push({ h: '→ full', v: aAnd.map((v, i) => (L.full >> i) & 1), cls: v => v ? 'ok' : 'off' });
+  return lanes(rows, sel);
+}
+function tablesB() {
+  const T = R.T, SUB = T.SUB, E3 = T.edges;
+  let h = `<table><thead><tr><th>Sommet</th><th>x float</th><th>X (entier)</th><th>y float</th><th>Y (entier)</th><th>X / ${SUB}, Y / ${SUB} (px)</th></tr></thead><tbody>`;
+  T.V.forEach((v, i) => { h += `<tr><td>V${i}</td><td>${ff(v.fx, 4)}</td><td><b>${fmt(v.X)}</b></td><td>${ff(v.fy, 4)}</td><td><b>${fmt(v.Y)}</b></td><td>${ff(v.X / SUB, 4)} ; ${ff(v.Y / SUB, 4)}</td></tr>`; });
+  set('r1', h + '</tbody></table>');
+  h = `<table><thead><tr><th>Arête du laboratoire</th><th>A</th><th>B</th><th>gauche (A &lt; 0)</th><th>haute (A = 0, B &lt; 0)</th><th>top-left</th><th>C → C'</th></tr></thead><tbody>`;
+  E3.forEach((e, k) => { h += `<tr><td>e${k} : V${e.ia} → V${e.ib}</td><td>${fmt(e.A)}</td><td>${fmt(e.B)}</td><td>${e.A < 0 ? 'oui' : 'non'}</td><td>${e.A === 0 && e.B < 0 ? 'oui' : 'non'}</td><td>${e.tl ? '<span class="pill o">oui</span>' : 'non'}</td><td>${fmt(e.C)} → ${fmt(e.Cb)}</td></tr>`; });
+  set('r3', h + '</tbody></table>');
+}
+function regs() {
+  if (!P.ok) return;
+  const tb = R.tab[S.lvl], rows = [];
+  tb.forEach((t, k) => { rows.push({ h: `e${k} step`, v: t.step, cls: () => '', sep: k > 0 }); if (S.lvl !== 1) { rows.push({ h: `e${k} rej`, v: t.rej, cls: () => '' }); rows.push({ h: `e${k} acc`, v: t.acc, cls: () => '' }); } });
+  set('r8', lanes(rows));
+  set('r9', '<p class="cap" style="margin-top:12px">Valeurs des 16 blocs 16×16 de la tuile choisie (e + table), puis ET et masques :</p>' + levelLanes(P.e, R.tab[16], P.actUse, P.L16, P.b16));
+  set('r11', levelLanes(P.ce, R.tab[4], P.actUse, P.L4, P.b4));
+  const tp = R.tab[1], aL = actEdges(P.actUse), r2 = [];
+  aL.forEach((k, n) => r2.push({ h: `e${k} + step`, v: tp[k].step.map(s2 => P.ce4[k] + s2), sep: n === 0 }));
+  const andv = and16(aL.map(k => tp[k].step.map(s2 => P.ce4[k] + s2)));
+  r2.push({ h: 'ET (LV3)', v: andv, sep: true });
+  r2.push({ h: 'bit de signe', v: andv.map(v => v < 0 ? 1 : 0), cls: v => v ? 'ok' : 'off' });
+  r2.push({ h: 'Abrash : e &lt; −step', v: [...Array(16)].map((_, p) => aL.every(k => P.ce4[k] < -tp[k].step[p]) ? 1 : 0), cls: v => v ? 'ok' : 'off', sep: true });
+  set('r12', lanes(r2));
+  set('r12m', `<div class="calc">masque = ${bin16(P.LP.touched)}  (${popc(P.LP.touched)} pixel(s))</div>`);
+}
+function late() {
+  const st = R.H.st, sa = R.Halt.st, on = S.box ? st : sa, offS = S.box ? sa : st;
+  set('r13', `<table><thead><tr><th>Triangle courant</th><th>blocs 16×16 partiels</th><th>16×16 sans pixel</th><th>blocs 4×4 partiels</th><th>4×4 vides</th><th>instr. couverture</th></tr></thead><tbody>
+  <tr><td>sans masque de boîte</td><td>${offS.part16}</td><td>${offS.fp16}</td><td>${offS.part4}</td><td>${offS.fp4}</td><td>${fmt(offS.ops)}</td></tr>
+  <tr><td>avec masque de boîte</td><td>${on.part16}</td><td>${on.fp16}</td><td>${on.part4}</td><td>${on.fp4}</td><td>${fmt(on.ops)}</td></tr></tbody></table>`);
+  set('r14', `<table><thead><tr><th>Triangle du laboratoire</th><th>Hiérarchie</th><th>C2 (blocs de 8)</th></tr></thead><tbody>
+  <tr><td>Instructions de couverture (modèle)</td><td><b>${fmt(st.ops)}</b></td><td><b>${fmt(R.c2.ops)}</b></td></tr>
+  <tr><td>dont setup (sommets, arêtes, tables)</td><td>${st.tilesInBox ? 130 : 0}</td><td>34</td></tr>
+  <tr><td>Pixels couverts / émis sans test</td><td>${fmt(st.covered)} / ${fmt(st.viaFull)}</td><td>${fmt(R.Bf.n)} / 0</td></tr></tbody></table>
+  <p class="cap">Modèle : hiérarchie = 130 de setup, 18 par tuile, 7 + 9 par arête active pour juger 16 blocs, 4 + 5 par arête active pour un masque de pixels, 3 par bit parcouru plus une addition par arête pour descendre, 3 par bloc émis. C2 = 34 par triangle, 37 par bloc de 8 de la boîte. Le shading n'est compté ni d'un côté ni de l'autre.</p>`);
+  if (classes) set('r14n', `<strong>Ce que dit le modèle.</strong> Pour un triangle d'un pixel (V1), la hiérarchie coûte environ ${(classes.rows[0].h / classes.rows[0].c).toFixed(1).replace('.', ',')} fois C2 : 130 instructions de setup pour rien ; c'est le chemin C3 qu'il faut à V1. Vers 10 pixels (V2), elle est à ${(classes.rows[1].h / classes.rows[1].c).toFixed(2).replace('.', ',')} : aucun bloc 16×16 n'est plein, il n'y a que des blocs 4×4 partiels. Elle ne rapporte vraiment qu'à partir de quelques dizaines de pixels, quand les blocs pleins prennent le relais. D'où les chemins adaptatifs d'Abrash, et la règle du jalon D : construire une scène de grands triangles avant de juger.`);
+  setT('uV', `triangle courant : ${R.mm === 0 ? 'identique' : R.mm + ' écarts'}, ${fmt(R.Bf.n)} pixels, ${R.H.st.eChecks} propagations contrôlées, ${R.H.st.eMismatch} écart`);
+  counterLive();
+}
+function counterLive() {
+  const T = R.T, Tt = setupFixed(R.vf, S.sb, { trunc: true });
+  let d = 0;
+  if (!T.degenerate && !T.bbox.empty) for (let y = T.bbox.y0; y < T.bbox.y1; y++) for (let x = T.bbox.x0; x < T.bbox.x1; x++) if (insideFixed(T, x, y) !== insideFixed(Tt, x, y)) d++;
+  let t = `Triangle du laboratoire : q tronqué ≠ q plancher sur ${T.edges.filter((e, k) => e.q !== Tt.edges[k].q).length} arête(s) ; ${d} pixel(s) changent de décision.`;
+  T.edges.forEach((e, k) => { if (e.K < 0 && e.K % T.SUB !== 0) t += `\n  e${k} : K = ${fmt(e.K)} → K >> ${T.sb} = ${fmt(e.q)}, mais K / ${T.SUB} = ${fmt(Tt.edges[k].q)} (tronqué vers 0)`; });
+  if (pop) t += `\nPopulation (${pop.tris} triangles, s = ${pop.sb}) : ${fmt(pop.truncDiff)} pixels changent, sur ${pop.trisTruncDiff} triangles. Toujours dans le même sens : des pixels intérieurs perdus.`;
+  setT('r16a', t);
+  if (fans) {
+    const lab = { direct: 'Float direct (C2, LV3)', incRow: 'Float incrémental, amorcé par ligne', incFull: 'Float incrémental, amorcé une fois', fixTL: 'Virgule fixe + top-left (Abrash)', fixStrict: 'Virgule fixe, E < 0 partout', fixLE: 'Virgule fixe, E ≤ 0 partout', fixTrunc: 'Virgule fixe, K / 16 au lieu de K >> 4' };
+    let h = `<table><thead><tr><th>Variante (${fans.a.n} éventails${fans.big ? ', rayon 40 à 120 px' : ''})</th><th>Sommets quelconques : doublons / trous / éventails touchés</th><th>Sommets sur des centres : doublons / trous / éventails touchés</th></tr></thead><tbody>`;
+    for (const k of Object.keys(lab)) { const a = fans.a[k], b = fans.b[k]; h += `<tr><td>${lab[k]}</td><td class="num">${a.dup} / ${a.hole} / ${a.fans}</td><td class="num">${b.dup} / ${b.hole} / ${b.fans}</td></tr>`; }
+    set('r16b', h + '</tbody></table>');
+    const incAll = fans.a.incRow.dup + fans.a.incRow.hole + fans.b.incRow.dup + fans.b.incRow.hole + fans.a.incFull.dup + fans.a.incFull.hole + fans.b.incFull.dup + fans.b.incFull.hole;
+    setT('r16c', `Éventails calculés ici : incrémental amorcé par ligne ${fans.a.incRow.dup + fans.b.incRow.dup} doublons / ${fans.a.incRow.hole + fans.b.incRow.hole} trous ; amorcé une fois ${fans.a.incFull.dup + fans.b.incFull.dup} / ${fans.a.incFull.hole + fans.b.incFull.hole}.` +
+      (pop ? `\nPopulation (${pop.tris} triangles en coordonnées d'écran ≈ 1024 à 1280 px) : ${pop.incRow} décision(s) changée(s) (amorce par ligne), ${pop.incFull} (amorce unique), sur ${fmt(pop.floatTested)} pixels testés.` : '') +
+      `\nRéférence C0 (hors moteur, 21/10) : 273 décisions sur 207 M pixels ; 145 doublons et 161 trous sur 2 999 éventails.` +
+      (incAll === 0 ? `\nLes éventails de ce tirage n'en montrent aucune : l'erreur touche environ un pixel sur un million. Le bouton « grands éventails » en fait apparaître.` : `\nRares, mais pas nulles : une seule suffit pour une couture visible.`));
+  } else set('r16b', '<p class="cap">Calcul des éventails…</p>');
+  const aX = 512n, aY = 768n, bX = 384128n, bY = 230144n, A = aY - bY, B = bX - aX, Cc = -(A * aX + B * aY);
+  const w = v => BigInt.asIntN(32, v), f = v => fmt(Number(v)), out = [];
+  for (const [x, y] of [[700, 420], [0, 899]]) { const PX = BigInt(x * 256 + 128), PY = BigInt(y * 256 + 128); const E = A * PX + B * PY + Cc, E32 = w(w(w(A * PX) + w(B * PY)) + w(Cc));
+    out.push(`pixel (${x}, ${y}) : E exact = ${f(E)} (${E < 0n ? 'dedans' : 'dehors'})   E en int32 = ${f(E32)} (${E32 < 0n ? 'dedans' : 'dehors'})${(E < 0n) !== (E32 < 0n) ? '   ✗ SIGNE FAUX' : '   ✓'}`); }
+  setT('r16d', `Écran de 1536 px, s = 8, arête (2 ; 3) → (1500,5 ; 899) px : A = ${f(A)}, B = ${f(B)}, C = ${f(Cc)}\n` + out.join('\n') +
+    `\n\nPrès de l'arête, l'arithmétique modulo 2^32 retombe juste : les débordements intermédiaires s'annulent quand le RÉSULTAT tient sur 32 bits.\nLoin de l'arête, le résultat lui-même ne tient plus : le signe est faux, une tuile lointaine serait acceptée.\nD'où le niveau tuile en 64 bits, et seulement les arêtes actives en int32 (B4).`);
+}
+
+function figures() {
+  figA4(); figCorners('fA5', 'rej'); figCorners('fA6', 'acc'); figA7();
+  if (P.ok) {
+    figDescent('fA8', P.x0, P.y0, 16, A8m.mode, 'calcA8', `Tuile (${S.sel.tx}, ${S.sel.ty})`);
+    figDescent('fA10', P.bx, P.by, 4, A10m.mode, 'calcA10', `Bloc 16×16 n° ${P.b16} (${P.st16})`);
+  }
+  figA9(); figA11(); figA12(); figA13(); figA14();
+  figB1(); figB3(); figB4(); tablesB(); regs(); late(); figB6();
+}
+const A8m = { mode: 'rej' }, A10m = { mode: 'rej' };
+function renderAll(light) {
+  compute(); drawA(); drawB(); kpis();
+  if (!light) { figures(); syncEdgeSegs(); }
+  $('presets').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === S.preset)));
+}
+function selChanged() { path(); drawA(); drawB(); A9.scan = 0; A14.frame = 1e9; figures(); }
+
+// ── Événements ──────────────────────────────────────────────────────
+$('presets').innerHTML = PRESETS.map(p => `<button type="button" class="ghost" data-id="${p.id}" aria-pressed="false">${p.label}</button>`).join('');
+$('presets').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; const p = PRESETS.find(q => q.id === b.dataset.id);
+  S.v = p.v.map(q => ({ ...q })); S.preset = p.id; S.auto = true; if (p.id === 'horiz') { S.centers = true; $('ckCenters').checked = true; } A9.scan = 0; A14.frame = 1e9; renderAll(); });
+$('sbSel').addEventListener('change', e => { S.sb = +e.target.value; S.auto = true; renderAll(); later(); });
+$('edgeSel').addEventListener('change', e => { S.edge = +e.target.value; renderAll(); });
+$('ckCenters').addEventListener('change', e => { S.centers = e.target.checked; S.auto = true; renderAll(); });
+const setBox = v => { S.box = v; $('ckBox').checked = v; $('ckBox2').checked = v; renderAll(); };
+$('ckBox').addEventListener('change', e => setBox(e.target.checked));
+$('ckBox2').addEventListener('change', e => setBox(e.target.checked));
+$('lvlSel').addEventListener('change', e => { S.lvl = +e.target.value; regs(); });
+const edgeOpts = [{ v: '0', label: 'e0' }, { v: '1', label: 'e1' }, { v: '2', label: 'e2' }];
+const edgeSegs = [...document.querySelectorAll('[data-edgeseg]')];
+edgeSegs.forEach(el => seg(el, edgeOpts, () => String(S.edge), v => { S.edge = +v; $('edgeSel').value = v; drawB(); figures(); syncEdgeSegs(); }));
+function syncEdgeSegs() { edgeSegs.forEach(el => el._sync && el._sync()); }
+seg($('segA1'), [{ v: '8,16', label: '(8, 16)' }, { v: '12,16', label: '(12, 16)' }, { v: '4,12', label: '(4, 12)' }], () => `${A1.sel.x},${A1.sel.y}`, v => { const [x, y] = v.split(',').map(Number); A1.sel = { x, y }; figA1(); });
+seg($('segA2'), edgeOpts, () => A2.on, v => { const i = A2.on.indexOf(v); if (i >= 0) A2.on.splice(i, 1); else A2.on.push(v); A2.on.sort(); figA2(); });
+seg($('segA3'), Object.keys(A3N).map(k => ({ v: k, label: A3N[k] })), () => A3.strat, v => { A3.strat = v; A3.frame = 0; A3.playing = false; clearTimeout(A3.timer); $('playA3').textContent = '▶ Lecture'; figA3(); });
+seg($('segA8'), [{ v: 'rej', label: 'rejet' }, { v: 'acc', label: 'acceptation' }], () => A8m.mode, v => { A8m.mode = v; figDescent('fA8', P.x0, P.y0, 16, v, 'calcA8', `Tuile (${S.sel.tx}, ${S.sel.ty})`); });
+seg($('segA10'), [{ v: 'rej', label: 'rejet' }, { v: 'acc', label: 'acceptation' }], () => A10m.mode, v => { A10m.mode = v; figDescent('fA10', P.bx, P.by, 4, v, 'calcA10', `Bloc 16×16 n° ${P.b16} (${P.st16})`); });
+seg($('segA9'), [{ v: 'acc', label: 'acceptation (blocs pleins)' }, { v: 'rej', label: 'rejet (blocs touchés)' }], () => A9.mode, v => { A9.mode = v; A9.scan = 0; figA9(); });
+seg($('segA12'), [0, 1, 2, 3].map(j => ({ v: String(j), label: 'n° ' + j })), () => String(A12.j), v => { A12.j = +v; figA12(); });
+seg($('segB1'), [0, 1, 2].map(j => ({ v: String(j), label: 'V' + j })), () => String(B1.i), v => { B1.i = +v; figB1(); });
+seg($('segB2'), [{ v: 'tl', label: 'top-left' }, { v: 'strict', label: 'E < 0 partout' }, { v: 'le', label: 'E ≤ 0 partout' }], () => B2.variant, v => { B2.variant = v; figB2(); });
+seg($('segB5'), Object.keys(B5N).map(k => ({ v: k, label: B5N[k] })), () => B5.variant, v => { B5.variant = v; figB5(); });
+$('nextFan').addEventListener('click', () => { B5.seed++; figB5(); });
+$('scanA9').addEventListener('click', () => { A9.scan++; figA9(); });
+$('resetA9').addEventListener('click', () => { A9.scan = 0; figA9(); });
+$('playA3').addEventListener('click', playA3);
+$('stepA3').addEventListener('click', () => { A3.frame = Math.min(A3.frame + 1, A3.data[A3.strat].fr.length); figA3(); });
+$('resetA3').addEventListener('click', () => { A3.frame = 0; figA3(); });
+$('playA14').addEventListener('click', playA14);
+$('stepA14').addEventListener('click', () => { A14.frame = Math.min(A14.frame + 1, framesA14().fr.length); figA14(); });
+$('resetA14').addEventListener('click', () => { A14.frame = 0; figA14(); });
+$('loadBlade').addEventListener('click', () => { const p = PRESETS.find(q => q.id === 'aigu'); S.v = p.v.map(q => ({ ...q })); S.preset = 'aigu'; S.auto = true; renderAll(); });
+$('fA1').addEventListener('pointerdown', ev => { const r = ev.target.getBoundingClientRect(); A1.sel = { x: Math.max(0, Math.min(28, Math.round((ev.clientX - r.left) / r.width * 28))), y: Math.max(0, Math.min(32, Math.round((ev.clientY - r.top) / r.height * 32))) }; figA1(); $('segA1')._sync(); });
+$('fA2').addEventListener('pointerdown', ev => { const r = ev.target.getBoundingClientRect(); A2.sel = { x: Math.min(11, Math.floor((ev.clientX - r.left) / r.width * 12)), y: Math.min(8, Math.floor((ev.clientY - r.top) / r.height * 9)) }; figA2(); });
+
+const cvA = $('cvA'), cvB = $('cvB');
+let drag = -1, raf = 0;
+function posA(ev) { const r = cvA.getBoundingClientRect(); return { x: (ev.clientX - r.left) * W / r.width, y: (ev.clientY - r.top) * H / r.height, s: W / r.width }; }
+cvA.addEventListener('pointerdown', ev => {
+  const p = posA(ev), V = effVerts(); drag = -1; let best = 14 * p.s;
+  V.forEach((v, i) => { const d = Math.hypot(v.x - p.x, v.y - p.y); if (d < best) { best = d; drag = i; } });
+  if (drag >= 0) { cvA.setPointerCapture(ev.pointerId); S.preset = ''; ev.preventDefault(); return; }
+  S.sel.tx = Math.min(3, Math.max(0, Math.floor(p.x / TILE))); S.sel.ty = Math.min(3, Math.max(0, Math.floor(p.y / TILE))); S.auto = false; autoSub(); selChanged();
+});
+cvA.addEventListener('pointermove', ev => { if (drag < 0) return; const p = posA(ev); S.v[drag] = { x: Math.min(255.95, Math.max(0.05, p.x)), y: Math.min(255.95, Math.max(0.05, p.y)) }; S.auto = true;
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; renderAll(true); }); });
+const endDrag = () => { if (drag >= 0) { drag = -1; A9.scan = 0; A14.frame = 1e9; renderAll(); } };
+cvA.addEventListener('pointerup', endDrag); cvA.addEventListener('pointercancel', endDrag);
+cvB.addEventListener('pointerdown', ev => { const r = cvB.getBoundingClientRect(), x = Math.floor((ev.clientX - r.left) * TILE / r.width), y = Math.floor((ev.clientY - r.top) * TILE / r.height);
+  if (x < 0 || y < 0 || x > 63 || y > 63) return; S.sel.b16 = (y >> 4) * 4 + (x >> 4); S.sel.b4 = ((y & 15) >> 2) * 4 + ((x & 15) >> 2); S.auto = false; selChanged(); });
+cvA.addEventListener('keydown', ev => { const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key]; if (!d) return; ev.preventDefault();
+  S.sel.tx = Math.min(3, Math.max(0, S.sel.tx + d[0])); S.sel.ty = Math.min(3, Math.max(0, S.sel.ty + d[1])); S.auto = false; autoSub(); selChanged(); });
+cvB.addEventListener('keydown', ev => { const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key]; if (!d) return; ev.preventDefault();
+  let x = 16 * (S.sel.b16 & 3) + 4 * (S.sel.b4 & 3) + 4 * d[0], y = 16 * (S.sel.b16 >> 2) + 4 * (S.sel.b4 >> 2) + 4 * d[1];
+  x = Math.min(60, Math.max(0, x)); y = Math.min(60, Math.max(0, y)); S.sel.b16 = (y >> 4) * 4 + (x >> 4); S.sel.b4 = ((y & 15) >> 2) * 4 + ((x & 15) >> 2); S.auto = false; selChanged(); });
+
+function runFans(big) {
+  $('fanStatus').textContent = 'calcul…';
+  setTimeout(() => { const t0 = performance.now();
+    fans = big ? { a: fanTest(300, 2026, S.sb, false, 40, 120), b: fanTest(300, 2027, S.sb, true, 40, 120), big: true } : { a: fanTest(300, 2026, S.sb, false), b: fanTest(300, 2027, S.sb, true), big: false };
+    $('fanStatus').textContent = `fait en ${((performance.now() - t0) / 1000).toFixed(1).replace('.', ',')} s`; counterLive(); }, 30);
+}
+function runPop(n, target) {
+  setTimeout(() => { const t0 = performance.now(); pop = popTest(n, 2026, S.sb); pop.sb = S.sb; const ms = performance.now() - t0;
+    setT('rV', `${pop.tris} triangles (tailles 1 à 120 px, graine 2026, s = ${pop.sb}), ${fmt(pop.covered)} pixels couverts :
+  masque hiérarchique ≠ force brute : ${pop.hierMismatch} pixel     ${pop.hierMismatch === 0 ? '✓' : '✗'}
+  valeur propagée (e + pas) ≠ évaluation directe : ${pop.eMismatch}     ${pop.eMismatch === 0 ? '✓' : '✗'}
+  mutation K / 16 : ${fmt(pop.truncDiff)} pixels changent (sur ${pop.trisTruncDiff} triangles) : le test la détecte ${pop.truncDiff ? '✓' : '(aucun cas dans ce tirage)'}
+calculé en ${(ms / 1000).toFixed(1).replace('.', ',')} s`);
+    if (target) $(target).textContent = 'fait'; counterLive(); }, 30);
+}
+function runClasses() {
+  setTimeout(() => { const R2 = rng(2026), n = 120, defs = [['Sub-pixel, ≈ 1 px (V1)', 0.4, 1.4], ['≈ 10 px (V2)', 6, 12], ['30 à 60 px', 30, 60], ['100 à 200 px', 100, 200]];
+    classes = { n, rows: defs.map(([label, a, b]) => { let h = 0, c = 0, vf = 0, cov = 0;
+      for (let i = 0; i < n; i++) { const T = setupFixed(randomTri(R2, a, b), S.sb); const Hh = rasterHier(T, { boxMask: true }); h += Hh.st.ops; c += c2Ops(T).ops; vf += Hh.st.viaFull; cov += Hh.st.covered; }
+      return { label, h: h / n, c: c / n, vf, cov }; }) };
+    late(); figB6(); }, 60);
+}
+function later() { classes = null; runClasses(); runFans(false); runPop(300); }
+
+buildA3(); A3.frame = A3.data[A3.strat].fr.length;
+renderAll(); figA1(); figA2(); figA3(); figB2(); figB5();
+later();
+if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { drawA(); drawB(); figA1(); figA2(); figA3(); figB2(); figB5(); figures(); });
+})();
+
+</script>
+</body></html>

@@ -40,6 +40,8 @@ namespace LV3::Tests
     bool Test_B3_ProjectPositions8();
     bool Test_B5_ObjBackface();
     bool Test_C1_RasterKernels();
+    bool Test_C2_Raster8();
+
 
 
 #if LV3_DEBUG    
@@ -168,6 +170,15 @@ namespace LV3::Tests
             Logger::success("SUCCES : Test_C1_RasterKernels()");
         }
 
+        if (!Test_C2_Raster8())
+        {
+            Logger::error("ECHEC : Test_C2_Raster8()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_C2_Raster8()");
+        }
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())
