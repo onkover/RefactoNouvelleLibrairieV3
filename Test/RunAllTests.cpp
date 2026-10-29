@@ -41,7 +41,7 @@ namespace LV3::Tests
     bool Test_B5_ObjBackface();
     bool Test_C1_RasterKernels();
     bool Test_C2_Raster8();
-
+    bool Test_C3_Pixel1();
 
 
 #if LV3_DEBUG    
@@ -179,6 +179,17 @@ namespace LV3::Tests
         {
             Logger::success("SUCCES : Test_C2_Raster8()");
         }
+
+        if (!Test_C3_Pixel1())
+        {
+            Logger::error("ECHEC : Test_C3_Pixel1()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_C3_Pixel1()");
+        }
+
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())

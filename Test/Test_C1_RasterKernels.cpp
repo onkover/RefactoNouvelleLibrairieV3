@@ -5,6 +5,8 @@
 #include "rendering/Rasterizer.h"
 #include "rendering/Fragment.h"
 #include "core/Logger.h"
+#include "TestRandom.h"   // tirages portables MSVC / g++
+
 
 namespace LV3::Tests
 {
@@ -29,7 +31,9 @@ namespace LV3::Tests
         std::vector<Tri> MakeTriangles(uint32_t seed, int count)
         {
             std::mt19937 rng(seed);                                // graine FIXE
-            std::uniform_real_distribution<float> U(0.0f, 1.0f);
+            //std::uniform_real_distribution<float> U(0.0f, 1.0f);
+            TestRand01 U;            // [0, 1), meme suite sur tous les compilateurs
+
             std::vector<Tri> tris;
             tris.reserve(size_t(count) + size_t(count) / 10);
             for (int i = 0; i < count; ++i)
