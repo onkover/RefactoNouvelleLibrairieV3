@@ -1,0 +1,616 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><title>Lot V3 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Concept : carnet de laboratoire d'un rasterizer CPU. Planche de plan en haut (le niveau vu de dessus),
+   puis des fiches numérotées dont chaque chiffre est calculé sous les yeux du lecteur.
+   Cobalt = géométrie et mesure, ambre = prédiction écrite avant la mesure, vert = vérifié, rouge = contre-exemple. */
+:root{
+  --bg:#ecf0f4; --surface:#ffffff; --surface2:#f4f7fa; --ink:#101b27; --muted:#546479; --line:#ccd5df;
+  --accent:#2b57c4; --accent-soft:#e3ebfc; --warn:#9c5300; --warn-soft:#fbefdc; --ok:#146c43; --ok-soft:#dff3e8;
+  --bad:#ad2118; --bad-soft:#fbe4e1; --code-bg:#f1f4f8; --code-ink:#16222f;
+  --rA:#f3d9d4; --rB:#d3e5f3; --rC:#d7ecd3; --rD:#f1e7c4; --rE:#e2d8f1; --rF:#cfeee7;
+  --f-display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --rA:#4a2f2b; --rB:#26394a; --rC:#2a4128; --rD:#463f22; --rE:#382f4a; --rF:#21423b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --rA:#4a2f2b; --rB:#26394a; --rC:#2a4128; --rD:#463f22; --rE:#382f4a; --rF:#21423b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;
+  padding-block:0 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-stretch:100%;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,46px);font-weight:760;letter-spacing:-.01em;line-height:1.05}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700;letter-spacing:-.005em}
+h3{font-size:17px;font-weight:650}
+p{margin:.55em 0}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.9em}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+header.top{padding-top:calc(34px);display:grid;gap:14px}
+.lede{max-width:70ch;color:var(--muted);font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:8px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.fact b{display:block;font-family:var(--f-display);font-size:26px;font-weight:720;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:3px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
+.tag.m{color:var(--accent)} .tag.p{color:var(--warn)} .tag.ok{color:var(--ok)} .tag.bad{color:var(--bad)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);margin-top:22px;
+  display:flex;gap:2px;overflow-x:auto;padding-block:6px}
+nav.tabs a{font-family:var(--f-mono);font-size:12px;text-decoration:none;color:var(--muted);padding:6px 11px;border-radius:4px;white-space:nowrap}
+nav.tabs a:hover,nav.tabs a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+section{padding-top:38px;display:grid;gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 13px;border-radius:0 5px 5px 0;margin:10px 0}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)} .note.bad{border-color:var(--bad);background:var(--bad-soft)} .note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p:first-child{margin-top:0} .note p:last-child{margin-bottom:0}
+.plan-wrap{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px;overflow-x:auto}
+svg#plan{display:block;min-width:760px;width:100%;height:auto}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px 18px;align-items:end}
+.ctl label{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);font-family:var(--f-mono)}
+.ctl input[type=range]{width:100%;accent-color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:inherit;font-size:13px;font-family:var(--f-mono);background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer}
+button:hover{border-color:var(--accent)} button[aria-pressed="true"],button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+:where(button,select,input,a,summary):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:13px;cursor:pointer}
+.chk input{accent-color:var(--accent)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;vertical-align:top;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tw{overflow-x:auto}
+.badge{font-family:var(--f-mono);font-size:11px;padding:1px 7px;border-radius:3px;font-weight:500;white-space:nowrap}
+.b-in{background:var(--ok-soft);color:var(--ok)} .b-it{background:var(--warn-soft);color:var(--warn)} .b-out{background:var(--surface2);color:var(--muted)}
+details.step{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+details.step>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;gap:12px;align-items:baseline}
+details.step>summary::-webkit-details-marker{display:none}
+details.step>summary .n{font-family:var(--f-mono);font-size:12px;color:var(--accent);min-width:2.2em}
+details.step>summary h3{flex:1}
+details.step>summary::after{content:"+";font-family:var(--f-mono);color:var(--muted)}
+details.step[open]>summary::after{content:"−"}
+.stepbody{padding:0 16px 16px;display:grid;gap:12px;min-width:0}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.io{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.io>div{background:var(--surface2);border-radius:5px;padding:10px 12px;min-width:0}
+.tabs2{display:flex;gap:4px;margin-bottom:6px}
+pre{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:5px;padding:11px 13px;overflow-x:auto;font-family:var(--f-mono);font-size:12.3px;line-height:1.5;tab-size:4}
+pre .c{color:var(--muted)} pre .k{color:var(--accent)} pre .w{color:var(--warn)}
+.regs td,.regs th{text-align:center;font-family:var(--f-mono);font-size:12px;padding:3px 6px}
+.regs td:first-child{text-align:left;color:var(--accent);white-space:nowrap}
+.regs td.neg{color:var(--bad)} .regs td.pos{color:var(--ok)} .regs td.dim{color:var(--muted)}
+.bar{height:14px;border-radius:2px;background:var(--accent);min-width:1px}
+.bars{display:grid;grid-template-columns:minmax(110px,170px) 1fr auto;gap:5px 10px;align-items:center;font-size:13px}
+.bars .nm{font-family:var(--f-mono);font-size:12px;color:var(--muted)} .bars .v{font-family:var(--f-mono);font-size:12px;text-align:right;white-space:nowrap}
+.seg{display:flex;height:22px;border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.seg i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:6px}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.s1{background:#5b86e8}.s2{background:#9a7be0}.s3{background:#e0a248}.s4{background:#4caf82}.s5{background:#d46a7e}.s6{background:#8794a6}
+dl.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:0;font-size:13.5px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;font-family:var(--f-mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.small{font-size:12.5px;color:var(--muted)}
+footer{margin-top:48px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:520px){.bars{grid-template-columns:90px 1fr auto}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">LibraryV3 · phase G · jalon D · lot V3</div>
+  <h1>Lot V3 pas à pas</h1>
+  <p class="lede">Une scène de niveau FPS (six pièces, cinq portails, grands triangles de près, triangles de un à quatre pixels au fond) pour mesurer ce que les scènes V1 et V2 ne montrent pas, puis décider du jalon D (Giesen, Abrash) sur des chiffres écrits avant la mesure.</p>
+  <div class="facts" id="facts"></div>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#schema">Schéma</a><a href="#etapes">Étapes</a><a href="#contre">Contre-exemples</a><a href="#predictions">Prédictions</a><a href="#decision">Décision D</a><a href="#protocole">Protocole</a><a href="#fichiers">Fichiers</a>
+  </nav>
+</header>
+
+<section id="schema">
+  <h2>Le niveau vu de dessus</h2>
+  <p>Le niveau est un seul maillage de 64 934 triangles. Déplacez la caméra, tournez-la, changez la découpe en objets : les classes du frustum, le chemin que le moteur emprunte et le coût de l'étage avant se recalculent. Les rayons verts suivent la visibilité à travers les portails (approximation dans le plan, à hauteur d'œil).</p>
+  <div class="plan-wrap"><svg id="plan" viewBox="0 0 872 274" role="img" aria-label="Plan du niveau vu de dessus"></svg></div>
+  <div class="panel">
+    <div class="row" id="presets" style="margin-bottom:10px"></div>
+    <div class="controls">
+      <div class="ctl"><label for="cx"><span>x (latéral)</span><span id="cxv"></span></label><input id="cx" type="range" min="-16" max="16" step="0.1" value="0"></div>
+      <div class="ctl"><label for="cz"><span>z (profondeur)</span><span id="czv"></span></label><input id="cz" type="range" min="-92" max="40" step="0.1" value="3"></div>
+      <div class="ctl"><label for="cyaw"><span>lacet (0° = regarde −z)</span><span id="cyawv"></span></label><input id="cyaw" type="range" min="-180" max="180" step="1" value="0"></div>
+    </div>
+    <div class="row" style="margin-top:12px;gap:18px">
+      <label class="chk"><input type="checkbox" id="tFr" checked> frustum</label>
+      <label class="chk"><input type="checkbox" id="tRay" checked> visibilité par les portails</label>
+      <label class="chk"><input type="checkbox" id="tNor"> sens des faces des murs</label>
+      <label class="chk"><input type="checkbox" id="tOut"> coque enroulée vers l'extérieur (contre-exemple)</label>
+      <span class="small">Découpe :</span>
+      <button id="mSingle" aria-pressed="true">un mesh = tout le niveau</button>
+      <button id="mRooms" aria-pressed="false">une pièce = un mesh</button>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="lbl">Classe de chaque mesh pour cette caméra</div><div class="tw"><table id="clsTable"></table></div></div>
+    <div class="panel"><div class="lbl">Lecture</div><div id="readout"></div></div>
+  </div>
+</section>
+
+<section id="etapes">
+  <h2>Les étapes</h2>
+  <p>Chaque étape donne son objectif, ce qu'elle reprend de la précédente, le code scalaire et son équivalent AVX2 quand il existe, et le résultat calculé ici, en float32 comme le CPU. Les nombres de comptage viennent d'une simulation du pipeline sur le vrai fichier (outil fourni, en annexe), pas de la mesure : ils sont étiquetés <span class="tag p">prédiction</span> tant que le moteur ne les a pas confirmés.</p>
+  <div id="steps" style="display:grid;gap:10px"></div>
+</section>
+
+<section id="contre">
+  <h2>Contre-exemples chiffrés</h2>
+  <div id="counter" class="grid2"></div>
+</section>
+
+<section id="predictions">
+  <h2>Prédictions écrites avant la mesure</h2>
+  <p>Les comptes sont ceux du simulateur (double précision) : le moteur travaille en float32, attendez ±0,5 % sur les compteurs de faces, ±3 % sur les profondeurs. Les temps viennent du modèle de l'étape 9 et valent un ordre de grandeur, avec la fourchette annoncée.</p>
+  <div class="panel tw"><div class="lbl">Compteurs attendus par frame (4 vues), run de comptage R1</div><table id="predTable"></table></div>
+  <div class="panel tw"><div class="lbl">Compteurs de culling et d'étage avant selon la découpe</div><table id="predFront"></table></div>
+</section>
+
+<section id="decision">
+  <h2>Décision du jalon D</h2>
+  <div id="decisionBox" style="display:grid;gap:12px"></div>
+</section>
+
+<section id="protocole">
+  <h2>Protocole de mesure</h2>
+  <div id="protoBox" style="display:grid;gap:12px"></div>
+</section>
+
+<section id="fichiers">
+  <h2>Fichiers livrés</h2>
+  <div id="filesBox" style="display:grid;gap:12px"></div>
+</section>
+
+<footer>Lot V3 · simulateur et générateur fournis avec la leçon · constantes de coût : vue quad 768×450 · campagnes C0 à C3 (i7-1265U, affinity 4, secteur, mode performances).</footer>
+</div>
+<style>pre.code{background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:12px;line-height:1.5;padding:10px 12px;border-radius:5px;overflow-x:auto;margin:0;white-space:pre}select,input[type=number]{font:inherit;font-size:13px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:3px 6px}ol,ul{margin:6px 0;padding-left:20px}</style>
+<script>window.V3DATA={"engine_verts_total":42346,"pred_rooms":[{"cam":"Bench_Cam_Game","facesSubmitted":64934,"vertsTransformed":42600,"facesInside":61410,"meshesCulled":0,"objRejected":10114},{"cam":"Bench_Cam_Dbg1","facesSubmitted":64934,"vertsTransformed":42600,"facesInside":56708,"meshesCulled":0,"objRejected":8178},{"cam":"Bench_Cam_Dbg2","facesSubmitted":56708,"vertsTransformed":35755,"facesInside":47492,"meshesCulled":4,"objRejected":6966},{"cam":"Bench_Cam_Dbg3","facesSubmitted":64934,"vertsTransformed":42600,"facesInside":8226,"meshesCulled":0,"objRejected":2704}],"room_verts":{"A":204,"B":4582,"C":5628,"D":30127,"E":1624,"F":435},"batches":{"A_mur_proche":[[[-4.0,0.0,-4.0],[-2.0,0.0,-4.0],[-4.0,3.0,-4.0]],[[-2.0,0.0,-4.0],[-2.0,3.0,-4.0],[-4.0,3.0,-4.0]],[[-4.0,3.0,-4.0],[-2.0,3.0,-4.0],[-2.0,4.0,-4.0]],[[-4.0,3.0,-4.0],[-2.0,4.0,-4.0],[-4.0,4.0,-4.0]],[[-2.0,3.0,-4.0],[0.0,3.0,-4.0],[-2.0,4.0,-4.0]],[[0.0,3.0,-4.0],[0.0,4.0,-4.0],[-2.0,4.0,-4.0]],[[0.0,3.0,-4.0],[2.0,3.0,-4.0],[2.0,4.0,-4.0]],[[0.0,3.0,-4.0],[2.0,4.0,-4.0],[0.0,4.0,-4.0]]],"B_eventail":[[[-6.0,0.0,-20.0],[6.0,0.0,-19.0],[6.0,0.0,-20.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-18.0],[6.0,0.0,-19.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-17.0],[6.0,0.0,-18.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-16.0],[6.0,0.0,-17.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-15.0],[6.0,0.0,-16.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-14.0],[6.0,0.0,-15.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-13.0],[6.0,0.0,-14.0]],[[-6.0,0.0,-20.0],[6.0,0.0,-12.0],[6.0,0.0,-13.0]]],"D_mur_fond":[[[0.0,1.6,-90.0],[0.4,1.6,-90.0],[0.4,2.0,-90.0]],[[0.0,1.6,-90.0],[0.4,2.0,-90.0],[0.0,2.0,-90.0]],[[0.4,1.6,-90.0],[0.8,1.6,-90.0],[0.4,2.0,-90.0]],[[0.8,1.6,-90.0],[0.8,2.0,-90.0],[0.4,2.0,-90.0]],[[0.8,1.6,-90.0],[1.2,1.6,-90.0],[1.2,2.0,-90.0]],[[0.8,1.6,-90.0],[1.2,2.0,-90.0],[0.8,2.0,-90.0]],[[1.2,1.6,-90.0],[1.6,1.6,-90.0],[1.2,2.0,-90.0]],[[1.6,1.6,-90.0],[1.6,2.0,-90.0],[1.2,2.0,-90.0]]]},"meta":{"triangles":64934,"positions":33046,"uvs":11263,"order":"near-far","rooms":[{"name":"A_spawn","x0":-4,"x1":4,"y0":0,"y1":4,"z0":-4,"z1":4,"cell":4.0,"mats":["M_Floor","M_Ceil","M_Wall_A"],"open":{"N":[[-2,2,0,3]]}},{"name":"B_hall","x0":-6,"x1":6,"y0":0,"y1":5,"z0":-20,"z1":-4,"cell":1.0,"mats":["M_Floor","M_Ceil","M_Wall_B"],"fan":true,"open":{"S":[[-2,2,0,3]],"N":[[-3.5,3.5,0,3.5]],"E":[[-12,-9,0,2.6]],"W":[[-14,-10,1,2.5]]}},{"name":"C_gallery","x0":-5,"x1":5,"y0":0,"y1":4,"z0":-50,"z1":-20,"cell":0.5,"mats":["M_Floor","M_Ceil","M_Wall_C"],"open":{"S":[[-3.5,3.5,0,3.5]],"N":[[-4.5,4.5,0,3.5]]}},{"name":"D_far","x0":-12,"x1":12,"y0":0,"y1":8,"z0":-90,"z1":-50,"cell":0.4,"mats":["M_Floor","M_Ceil","M_Wall_D"],"open":{"S":[[-4.5,4.5,0,3.5]]}},{"name":"E_side","x0":6,"x1":14,"y0":0,"y1":4,"z0":-16,"z1":-6,"cell":0.5,"mats":["M_Floor","M_Ceil","M_Wall_E"],"open":{"W":[[-12,-9,0,2.6]]}},{"name":"F_annex","x0":-14,"x1":-6,"y0":0,"y1":4,"z0":-18,"z1":-8,"cell":1.0,"mats":["M_Floor","M_Ceil","M_Wall_F"],"open":{"E":[[-14,-10,1,2.5]]}}],"cameras":[{"name":"Bench_Cam_Game","category":"gameplay","priority":10,"pos":[0.0,1.7,3.0],"yaw":0.0},{"name":"Bench_Cam_Dbg1","category":"debug","priority":3,"pos":[3.0,1.7,2.5],"yaw":0.0},{"name":"Bench_Cam_Dbg2","category":"debug","priority":2,"pos":[0.0,1.7,-24.0],"yaw":0.0},{"name":"Bench_Cam_Dbg3","category":"debug","priority":1,"pos":[0.0,1.7,-55.0],"yaw":180.0}],"per_group":{"A_spawn":196,"B_hall":4702,"C_gallery":9216,"D_far":47492,"E_side":2664,"F_annex":664}},"views":[{"cam":"Bench_Cam_Game","submitted":64934,"clipped":24,"front":53964,"back":10966,"earlyRej":33752,"drawn":20212,"cov0":2264,"cov1":6409,"cov24":5857,"cov5":5682,"pix1":772,"narrow":12448,"simd":6992,"tight":1932709,"covered":679313,"depthPassed":414003,"simdTight":1874795,"scalarTight":57914,"blocks":258905,"blocksEmpty":144131,"blocksFull":57611,"lanes":650583,"tiles":41902,"tReject":16494,"tAccept":5031,"tPartial":20377,"tileRowsEdge":102017,"tileRowsFill":40248,"thin":88,"holes":0,"tt":[72146,41902,24724,16461,9170],"trj":[33829,16494,7830,3909,899],"tac":[11943,5031,2091,843,116],"tpa":[26374,20377,14803,11709,8155],"tEdgeBlk":[83168,102017,119959,139531,181075],"tFillBlk":[47772,40248,33456,26976,14848],"fx":[679313,679302,345,677684,6601],"cls":[772,11192,3879,2128,1610,447,142,42],"clsCov":[381,14619,15990,33789,88623,91570,135034,299307],"clsTight":[772,29708,32796,74618,194131,204680,341133,1054871]},{"cam":"Bench_Cam_Dbg1","submitted":64934,"clipped":24,"front":54020,"back":10910,"earlyRej":33548,"drawn":20472,"cov0":2390,"cov1":6051,"cov24":6112,"cov5":5919,"pix1":661,"narrow":12390,"simd":7421,"tight":1843127,"covered":627153,"depthPassed":369653,"simdTight":1788010,"scalarTight":55117,"blocks":246970,"blocksEmpty":137822,"blocksFull":51071,"lanes":599824,"tiles":40499,"tReject":15801,"tAccept":4608,"tPartial":20090,"tileRowsEdge":97340,"tileRowsFill":36864,"thin":117,"holes":0,"tt":[68934,40499,24453,16213,9284],"trj":[32272,15801,7565,3620,783],"tac":[10639,4608,1941,832,129],"tpa":[26023,20090,14947,11761,8372],"tEdgeBlk":[81668,97340,113272,128281,161354],"tFillBlk":[42556,36864,31056,26624,16512],"fx":[627153,627153,406,625068,7067],"cls":[661,11706,3586,2078,1894,417,90,40],"clsCov":[324,15554,15230,33986,104188,83845,80993,293033],"clsTight":[661,31566,31474,73684,229448,187537,233072,1055685]},{"cam":"Bench_Cam_Dbg2","submitted":64934,"clipped":112,"front":47498,"back":7990,"earlyRej":20348,"drawn":27150,"cov0":2021,"cov1":4870,"cov24":12521,"cov5":7738,"pix1":378,"narrow":12558,"simd":14214,"tight":1003057,"covered":444948,"depthPassed":397585,"simdTight":915101,"scalarTight":87956,"blocks":143527,"blocksEmpty":52000,"blocksFull":23168,"lanes":401709,"tiles":32484,"tReject":4978,"tAccept":959,"tPartial":26547,"tileRowsEdge":107787,"tileRowsFill":7672,"thin":40,"holes":0,"tt":[47750,32484,23254,19074,15278],"trj":[10917,4978,2016,916,252],"tac":[3565,959,190,26,0],"tpa":[33268,26547,21048,18132,15026],"tEdgeBlk":[91602,107787,122669,133711,142730],"tFillBlk":[14260,7672,3040,832,0],"fx":[444948,444954,408,443947,8017],"cls":[378,11243,10909,2516,1224,712,168,0],"clsCov":[187,18613,40250,38825,77920,170386,98767,0],"clsTight":[378,37998,84916,80971,166426,389376,242992,0]},{"cam":"Bench_Cam_Dbg3","submitted":64934,"clipped":332,"front":20556,"back":4308,"earlyRej":9759,"drawn":10797,"cov0":269,"cov1":731,"cov24":2808,"cov5":6989,"pix1":56,"narrow":3661,"simd":7080,"tight":981103,"covered":438479,"depthPassed":430435,"simdTight":934798,"scalarTight":46305,"blocks":139546,"blocksEmpty":52809,"blocksFull":25195,"lanes":415528,"tiles":25991,"tReject":4727,"tAccept":1043,"tPartial":20221,"tileRowsEdge":103642,"tileRowsFill":8344,"thin":121,"holes":0,"tt":[41834,25991,16116,11733,7980],"trj":[11065,4727,1744,615,60],"tac":[3898,1043,187,14,0],"tpa":[26871,20221,14185,11104,7920],"tEdgeBlk":[85936,103642,119000,129884,139203],"tFillBlk":[15592,8344,2992,448,0],"fx":[438479,438477,336,438017,5066],"cls":[56,850,5041,2450,1344,950,106,0],"clsCov":[23,1686,22143,40302,88785,229173,56367,0],"clsTight":[56,3305,45929,83598,189560,519159,139496,0]}],"rooms":[{"cam":"Bench_Cam_Game","drawn":[111,2622,3508,11882,1637,452],"covered":[361098,210774,13176,15444,43693,35128],"passed":[361098,45243,5762,1900,0,0],"owned":[308526,31402,3956,1716,0,0],"back":[48,1936,1276,6902,640,164]},{"cam":"Bench_Cam_Dbg1","drawn":[61,2612,3396,12147,1876,380],"covered":[311279,199042,13832,15921,61388,25691],"passed":[311279,52727,3865,0,0,1782],"owned":[304197,37172,2449,0,0,1782],"back":[48,1880,1276,6902,640,164]},{"cam":"Bench_Cam_Dbg2","drawn":[0,0,5624,21526,0,0],"covered":[0,0,388258,56690,0,0],"passed":[0,0,388258,9327,0,0],"owned":[0,0,338632,6968,0,0],"back":[0,0,1024,6966,0,0]},{"cam":"Bench_Cam_Dbg3","drawn":[92,2192,6676,552,961,324],"covered":[2088,10138,264260,153954,4021,4018],"passed":[2088,10137,264256,153954,0,0],"owned":[490,2552,188604,153954,0,0],"back":[60,1840,1220,384,640,164]}],"visible":[{"cam":"Bench_Cam_Game","drawn":20212,"visibleTris":3496,"hiddenTris":16716,"hiddenBlocks":82987,"hiddenCov":258128,"hiddenScalarPx":41347,"visibleBlocks":175918,"visibleCov":421185,"visibleScalarPx":16567},{"cam":"Bench_Cam_Dbg1","drawn":20472,"visibleTris":1656,"hiddenTris":18816,"hiddenBlocks":92701,"hiddenCov":242120,"hiddenScalarPx":46324,"visibleBlocks":154269,"visibleCov":385033,"visibleScalarPx":8793},{"cam":"Bench_Cam_Dbg2","drawn":27150,"visibleTris":7719,"hiddenTris":19431,"hiddenBlocks":21942,"hiddenCov":81687,"hiddenScalarPx":57785,"visibleBlocks":121585,"visibleCov":363261,"visibleScalarPx":30171},{"cam":"Bench_Cam_Dbg3","drawn":10797,"visibleTris":6580,"hiddenTris":4217,"hiddenBlocks":21302,"hiddenCov":71592,"hiddenScalarPx":17568,"visibleBlocks":118244,"visibleCov":366887,"visibleScalarPx":28737}],"total":{"submitted":259736,"clipped":492,"front":176038,"back":34174,"earlyRej":97407,"drawn":78631,"cov0":6944,"cov1":18061,"cov24":27298,"cov5":26328,"pix1":1867,"narrow":41057,"simd":35707,"tight":5759996,"covered":2189893,"depthPassed":1611676,"simdTight":5512704,"scalarTight":247292,"blocks":788948,"blocksEmpty":386762,"blocksFull":157045,"lanes":2067644,"tiles":140876,"tReject":42000,"tAccept":11641,"tPartial":87235,"tileRowsEdge":410786,"tileRowsFill":93128,"thin":366,"holes":0},"rev":[{"cam":"Bench_Cam_Game","submitted":64934,"clipped":24,"front":53964,"back":10966,"earlyRej":33752,"drawn":20212,"cov0":2264,"cov1":6409,"cov24":5857,"cov5":5682,"pix1":772,"narrow":12448,"simd":6992,"tight":1932709,"covered":679313,"depthPassed":674854,"simdTight":1874795,"scalarTight":57914,"blocks":258905,"blocksEmpty":144131,"blocksFull":57611,"lanes":650583,"tiles":41902,"tReject":16494,"tAccept":5031,"tPartial":20377,"tileRowsEdge":102017,"tileRowsFill":40248,"thin":88,"holes":0,"tt":[72146,41902,24724,16461,9170],"trj":[33829,16494,7830,3909,899],"tac":[11943,5031,2091,843,116],"tpa":[26374,20377,14803,11709,8155],"tEdgeBlk":[83168,102017,119959,139531,181075],"tFillBlk":[47772,40248,33456,26976,14848],"fx":[679313,679302,345,677684,6601],"cls":[772,11192,3879,2128,1610,447,142,42],"clsCov":[381,14619,15990,33789,88623,91570,135034,299307],"clsTight":[772,29708,32796,74618,194131,204680,341133,1054871]},{"cam":"Bench_Cam_Dbg1","submitted":64934,"clipped":24,"front":54020,"back":10910,"earlyRej":33548,"drawn":20472,"cov0":2390,"cov1":6051,"cov24":6112,"cov5":5919,"pix1":661,"narrow":12390,"simd":7421,"tight":1843127,"covered":627153,"depthPassed":614789,"simdTight":1788010,"scalarTight":55117,"blocks":246970,"blocksEmpty":137822,"blocksFull":51071,"lanes":599824,"tiles":40499,"tReject":15801,"tAccept":4608,"tPartial":20090,"tileRowsEdge":97340,"tileRowsFill":36864,"thin":117,"holes":0,"tt":[68934,40499,24453,16213,9284],"trj":[32272,15801,7565,3620,783],"tac":[10639,4608,1941,832,129],"tpa":[26023,20090,14947,11761,8372],"tEdgeBlk":[81668,97340,113272,128281,161354],"tFillBlk":[42556,36864,31056,26624,16512],"fx":[627153,627153,406,625068,7067],"cls":[661,11706,3586,2078,1894,417,90,40],"clsCov":[324,15554,15230,33986,104188,83845,80993,293033],"clsTight":[661,31566,31474,73684,229448,187537,233072,1055685]},{"cam":"Bench_Cam_Dbg2","submitted":64934,"clipped":112,"front":47498,"back":7990,"earlyRej":20348,"drawn":27150,"cov0":2021,"cov1":4870,"cov24":12521,"cov5":7738,"pix1":378,"narrow":12558,"simd":14214,"tight":1003057,"covered":444948,"depthPassed":441880,"simdTight":915101,"scalarTight":87956,"blocks":143527,"blocksEmpty":52000,"blocksFull":23168,"lanes":401709,"tiles":32484,"tReject":4978,"tAccept":959,"tPartial":26547,"tileRowsEdge":107787,"tileRowsFill":7672,"thin":40,"holes":0,"tt":[47750,32484,23254,19074,15278],"trj":[10917,4978,2016,916,252],"tac":[3565,959,190,26,0],"tpa":[33268,26547,21048,18132,15026],"tEdgeBlk":[91602,107787,122669,133711,142730],"tFillBlk":[14260,7672,3040,832,0],"fx":[444948,444954,408,443947,8017],"cls":[378,11243,10909,2516,1224,712,168,0],"clsCov":[187,18613,40250,38825,77920,170386,98767,0],"clsTight":[378,37998,84916,80971,166426,389376,242992,0]},{"cam":"Bench_Cam_Dbg3","submitted":64934,"clipped":332,"front":20556,"back":4308,"earlyRej":9759,"drawn":10797,"cov0":269,"cov1":731,"cov24":2808,"cov5":6989,"pix1":56,"narrow":3661,"simd":7080,"tight":981103,"covered":438479,"depthPassed":383368,"simdTight":934798,"scalarTight":46305,"blocks":139546,"blocksEmpty":52809,"blocksFull":25195,"lanes":415528,"tiles":25991,"tReject":4727,"tAccept":1043,"tPartial":20221,"tileRowsEdge":103642,"tileRowsFill":8344,"thin":121,"holes":0,"tt":[41834,25991,16116,11733,7980],"trj":[11065,4727,1744,615,60],"tac":[3898,1043,187,14,0],"tpa":[26871,20221,14185,11104,7920],"tEdgeBlk":[85936,103642,119000,129884,139203],"tFillBlk":[15592,8344,2992,448,0],"fx":[438479,438477,336,438017,5066],"cls":[56,850,5041,2450,1344,950,106,0],"clsCov":[23,1686,22143,40302,88785,229173,56367,0],"clsTight":[56,3305,45929,83598,189560,519159,139496,0]}],"outward":[{"cam":"Bench_Cam_Game","submitted":64934,"clipped":24,"front":11014,"back":53916,"earlyRej":2667,"drawn":8347,"cov0":536,"cov1":1221,"cov24":3003,"cov5":3587,"pix1":4,"narrow":4606,"simd":3737,"tight":683391,"covered":333713,"depthPassed":225472,"simdTight":651045,"scalarTight":32346,"blocks":97940,"blocksEmpty":34929,"blocksFull":24584,"lanes":317651,"tiles":15089,"tReject":3743,"tAccept":2260,"tPartial":9086,"tileRowsEdge":53255,"tileRowsFill":18080,"thin":5,"holes":125471,"tt":[26432,15089,10348,6901,4274],"trj":[7812,3743,1646,788,99],"tac":[5472,2260,744,228,6],"tpa":[13148,9086,7958,5885,4169],"tEdgeBlk":[46337,53255,66157,74840,92243],"tFillBlk":[21888,18080,11904,7296,768],"fx":[333713,333702,431,333364,3869],"cls":[4,2918,3161,1187,622,257,198,0],"clsCov":[2,4038,14339,21004,35352,58610,200368,0],"clsTight":[4,8106,28759,42516,72488,120657,410861,0]},{"cam":"Bench_Cam_Dbg1","submitted":64934,"clipped":24,"front":11070,"back":53860,"earlyRej":2444,"drawn":8626,"cov0":660,"cov1":1166,"cov24":3095,"cov5":3705,"pix1":4,"narrow":4810,"simd":3812,"tight":567087,"covered":281553,"depthPassed":195369,"simdTight":534451,"scalarTight":32636,"blocks":83242,"blocksEmpty":26921,"blocksFull":18250,"lanes":265394,"tiles":13154,"tReject":2786,"tAccept":1504,"tPartial":8864,"tileRowsEdge":51566,"tileRowsFill":12032,"thin":5,"holes":150941,"tt":[22726,13154,9364,6355,4054],"trj":[5903,2786,1181,553,47],"tac":[3925,1504,440,120,0],"tpa":[12898,8864,7743,5682,4007],"tEdgeBlk":[45274,51566,61593,67868,80063],"tFillBlk":[15700,12032,7040,3840,0],"fx":[281553,281553,74,280811,3692],"cls":[4,3301,3072,1085,751,296,117,0],"clsCov":[2,4586,14329,17831,41252,74539,129014,0],"clsTight":[4,9203,28729,36307,84331,150107,258406,0]},{"cam":"Bench_Cam_Dbg2","submitted":64934,"clipped":112,"front":7918,"back":47570,"earlyRej":1274,"drawn":6644,"cov0":121,"cov1":511,"cov24":2274,"cov5":3738,"pix1":4,"narrow":3934,"simd":2706,"tight":199983,"covered":99348,"depthPassed":77589,"simdTight":159059,"scalarTight":40924,"blocks":31487,"blocksEmpty":4915,"blocksFull":604,"lanes":78991,"tiles":4808,"tReject":353,"tAccept":39,"tPartial":4416,"tileRowsEdge":28693,"tileRowsFill":312,"thin":0,"holes":268314,"tt":[9258,4808,4314,3478,3026],"trj":[745,353,91,47,14],"tac":[117,39,0,0,0],"tpa":[8396,4416,4223,3431,3012],"tEdgeBlk":[28240,28693,30954,31253,31342],"tFillBlk":[468,312,0,0,0],"fx":[99348,99354,488,99516,3656],"cls":[4,1393,2185,2738,260,64,0,0],"clsCov":[2,2471,8721,45939,18611,23604,0,0],"clsTight":[4,4968,17596,91933,37354,48128,0,0]},{"cam":"Bench_Cam_Dbg3","submitted":64934,"clipped":332,"front":4380,"back":20484,"earlyRej":1339,"drawn":3041,"cov0":82,"cov1":327,"cov24":1016,"cov5":1616,"pix1":15,"narrow":2158,"simd":868,"tight":185942,"covered":92879,"depthPassed":86062,"simdTight":155214,"scalarTight":30728,"blocks":26930,"blocksEmpty":7725,"blocksFull":4668,"lanes":77551,"tiles":3884,"tReject":749,"tAccept":359,"tPartial":2776,"tileRowsEdge":18629,"tileRowsFill":2872,"thin":0,"holes":261635,"tt":[7276,3884,2932,1908,1264],"trj":[1619,749,371,207,65],"tac":[921,359,119,51,0],"tpa":[4736,2776,2442,1650,1199],"tEdgeBlk":[17140,18629,20992,21863,25620],"tFillBlk":[3684,2872,1904,1632,0],"fx":[92879,92877,44,92726,1145],"cls":[15,541,1147,858,408,4,68,0],"clsCov":[7,1080,4476,12892,25718,736,47970,0],"clsTight":[15,2157,8990,25804,51564,1472,95940,0]}],"classify":{"Bench_Cam_Game":{"A_spawn":"Intersect","B_hall":"Inside","C_gallery":"Inside","D_far":"Inside","E_side":"Intersect","F_annex":"Intersect"},"Bench_Cam_Dbg1":{"A_spawn":"Intersect","B_hall":"Intersect","C_gallery":"Inside","D_far":"Inside","E_side":"Intersect","F_annex":"Intersect"},"Bench_Cam_Dbg2":{"A_spawn":"Outside","B_hall":"Outside","C_gallery":"Intersect","D_far":"Inside","E_side":"Outside","F_annex":"Outside"},"Bench_Cam_Dbg3":{"A_spawn":"Inside","B_hall":"Inside","C_gallery":"Intersect","D_far":"Intersect","E_side":"Inside","F_annex":"Inside"}},"frustum":{"inside_faces":173836,"intersect_faces":77674,"outside_faces":8226,"culled_meshes":4},"K":{"vert_scalar":3.3,"face_intersect":24.0,"vert_simd":0.65,"face_simd":0.5,"prep":22.4,"block":8.1,"scalar_px":6.5,"edge_block":3.5,"edge_px":3.3},"model_single":{"verts":0.5589672,"front":6.233664,"prep":1.7613344,"blocks":6.3904787999999995,"scalar":1.607398,"D":9.7592112,"edges":3.5773816000000003,"fragments":4.4204951999999995,"render":16.551842399999998},"model_rooms":{"verts":0.2401119,"front":1.951094,"prep":1.7613344,"blocks":6.3904787999999995,"scalar":1.607398,"D":9.7592112,"edges":3.5773816000000003,"fragments":4.4204951999999995,"render":11.9504171},"validation":{"A_spawn":{"faces":196,"shell":76,"inward":76,"boundary_edges":30,"edges_gt2":0,"degenerate":0,"thin":0,"max_area":6.0},"B_hall":{"faces":4702,"shell":1262,"inward":1262,"boundary_edges":456,"edges_gt2":0,"degenerate":0,"thin":15,"max_area":8.0},"C_gallery":{"faces":9216,"shell":6912,"inward":6912,"boundary_edges":668,"edges_gt2":0,"degenerate":0,"thin":0,"max_area":0.12},"D_far":{"faces":47492,"shell":37976,"inward":37976,"boundary_edges":762,"edges_gt2":0,"degenerate":0,"thin":0,"max_area":0.4},"E_side":{"faces":2664,"shell":2504,"inward":2504,"boundary_edges":24,"edges_gt2":32,"degenerate":0,"thin":0,"max_area":0.12},"F_annex":{"faces":664,"shell":664,"inward":664,"boundary_edges":12,"edges_gt2":0,"degenerate":0,"thin":0,"max_area":0.5}}};</script>
+<script>(function(){
+"use strict";
+const D = window.V3DATA;
+const f32 = Math.fround;
+const $ = id => document.getElementById(id);
+const nf = n => Math.round(n).toLocaleString('fr-FR').replace(/ /g,' ');
+const f1 = (n,d=1) => Number(n).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const code = s => '<pre class="code">'+esc(s)+'</pre>';
+const NS = 'http://www.w3.org/2000/svg';
+const ROOMS = D.meta.rooms;
+const RN = ROOMS.map(r=>r.name);
+const RV = [D.room_verts.A,D.room_verts.B,D.room_verts.C,D.room_verts.D,D.room_verts.E,D.room_verts.F];
+const RF = RN.map(n=>D.validation[n].faces);
+const CAMN = ['Bench_Cam_Game','Bench_Cam_Dbg1','Bench_Cam_Dbg2','Bench_Cam_Dbg3'];
+const PRESETS = [['Game',0,3,0],['Dbg1',3,2.5,0],['Dbg2',0,-24,0],['Dbg3',0,-55,180],['Hors niveau',0,30,0]];
+const F = 389.7, VW = 768, VH = 450, HX = (VW/2)/F, VT = (VH/2)/F, NEAR = 0.1, EYE = 1.7;
+const ALL = {x0:-14,x1:14,y0:0,y1:8,z0:-90,z1:4};
+const K = Object.assign({}, D.K);
+const S = {x:0, z:3, yaw:0, fr:true, ray:true, nor:false, out:false, mode:'single'};
+
+/* ---------- faits ---------- */
+$('facts').innerHTML = [
+ [nf(D.meta.triangles),'triangles, un seul fichier'],
+ [nf(D.engine_verts_total),'sommets moteur (limite 65 536)'],
+ ['75,3 %','des triangles dessinés sont masqués (4 vues)'],
+ ['6 / 5','pièces / portails']
+].map(a=>'<div class="fact"><b>'+a[0]+'</b><span>'+a[1]+'</span></div>').join('');
+
+/* ---------- frustum 3D (p-vertex / n-vertex, comme Frustum::Classify) ---------- */
+function planes(c){
+  const s=Math.sin(c.yaw*Math.PI/180), co=Math.cos(c.yaw*Math.PI/180);
+  const fw=[s,0,-co], rt=[co,0,s], up=[0,1,0], P=[c.x,EYE,c.z];
+  const add=(a,b,k)=>[a[0]+k*b[0],a[1]+k*b[1],a[2]+k*b[2]];
+  const neg=a=>[-a[0],-a[1],-a[2]];
+  const ns=[add(rt,fw,HX),add(neg(rt),fw,HX),add(up,fw,VT),add(neg(up),fw,VT),fw];
+  return ns.map((n,i)=>{const l=Math.hypot(n[0],n[1],n[2]);const u=n.map(v=>v/l);
+    const off = i===4 ? -(u[0]*(P[0]+fw[0]*NEAR)+u[1]*P[1]+u[2]*(P[2]+fw[2]*NEAR)) : -(u[0]*P[0]+u[1]*P[1]+u[2]*P[2]);
+    return {n:u,d:off};});
+}
+function classify(box,c){
+  const pl=planes(c); let inter=false; const det=[];
+  pl.forEach(p=>{
+    const pv=[p.n[0]>=0?box.x1:box.x0,p.n[1]>=0?box.y1:box.y0,p.n[2]>=0?box.z1:box.z0];
+    const nv=[p.n[0]>=0?box.x0:box.x1,p.n[1]>=0?box.y0:box.y1,p.n[2]>=0?box.z0:box.z1];
+    const dp=p.n[0]*pv[0]+p.n[1]*pv[1]+p.n[2]*pv[2]+p.d, dn=p.n[0]*nv[0]+p.n[1]*nv[1]+p.n[2]*nv[2]+p.d;
+    det.push([dp,dn]);
+  });
+  if(det.some(d=>d[0]<0)) return {cls:'Outside',det};
+  if(det.some(d=>d[1]<0)) return {cls:'Intersect',det};
+  return {cls:'Inside',det};
+}
+const bx = r => ({x0:r.x0,x1:r.x1,y0:r.y0,y1:r.y1,z0:r.z0,z1:r.z1});
+
+/* ---------- portails ---------- */
+const PORTALS = [];
+ROOMS.forEach(r=>{
+  const o=r.open||{};
+  (o.N||[]).forEach(g=>PORTALS.push({ax:'z',c:r.z0,lo:g[0],hi:g[1],y0:g[2],y1:g[3]}));
+  (o.E||[]).forEach(g=>PORTALS.push({ax:'x',c:r.x1,lo:g[0],hi:g[1],y0:g[2],y1:g[3]}));
+});
+function roomAt(x,z){ for(let i=0;i<ROOMS.length;i++){const r=ROOMS[i]; if(x>r.x0&&x<r.x1&&z>r.z0&&z<r.z1) return i;} return -1; }
+function throughPortal(x,z){
+  for(const p of PORTALS){
+    if(p.ax==='z'&&Math.abs(z-p.c)<0.35&&x>=p.lo&&x<=p.hi&&EYE>=p.y0&&EYE<=p.y1) return true;
+    if(p.ax==='x'&&Math.abs(x-p.c)<0.35&&z>=p.lo&&z<=p.hi&&EYE>=p.y0&&EYE<=p.y1) return true;
+  }
+  return false;
+}
+function marchRays(c){
+  const rays=[], seen=new Set(); const r0=roomAt(c.x,c.z); if(r0>=0) seen.add(r0);
+  const N=41;
+  for(let k=0;k<N;k++){
+    const a=(c.yaw+Math.atan(((k/(N-1))*2-1)*HX)*180/Math.PI)*Math.PI/180;
+    const dx=Math.sin(a), dz=-Math.cos(a); let x=c.x,z=c.z; const pts=[[x,z]]; let cur=r0;
+    for(let t=0;t<420;t++){
+      const nx=x+dx*0.25, nz=z+dz*0.25; const nr=roomAt(nx,nz);
+      if(cur>=0 && nr!==cur){
+        if(nr<0 && !throughPortal(nx,nz) && !throughPortal(x,z)) break;
+        if(nr>=0 && !throughPortal(nx,nz) && !throughPortal(x,z)) break;
+      }
+      x=nx; z=nz; cur=nr; if(nr>=0) seen.add(nr); pts.push([x,z]);
+      if(nx<-18||nx>18||nz<-95||nz>45) break;
+    }
+    rays.push(pts);
+  }
+  return {rays,seen};
+}
+
+/* ---------- coût de l'étage avant (par vue, en ms) ---------- */
+function frontCost(c){
+  const out={}; let tot=0; const rows=[];
+  const items = S.mode==='single' ? [{n:'Niveau entier',v:D.engine_verts_total,f:D.meta.triangles,b:ALL}] :
+    ROOMS.map((r,i)=>({n:r.name,v:RV[i],f:RF[i],b:bx(r)}));
+  items.forEach(it=>{
+    const cl=classify(it.b,c).cls; let ms=0;
+    if(cl==='Intersect') ms=(it.v*K.vert_scalar+it.f*K.face_intersect)/1e6;
+    else if(cl==='Inside') ms=(it.v*K.vert_simd+it.f*K.face_simd)/1e6;
+    tot+=ms; rows.push({n:it.n,cl,ms,v:it.v,f:it.f});
+  });
+  out.rows=rows; out.tot=tot; return out;
+}
+
+/* ---------- plan SVG ---------- */
+const plan=$('plan');
+const X = z => (8-z)*8.6+4, Y = x => (x+16)*8.4+3;
+const el=(n,a,p)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+function drawPlan(){
+  plan.innerHTML='';
+  const cam={x:S.x,z:S.z,yaw:S.yaw};
+  const tok='var(--';
+  const col=['--rA','--rB','--rC','--rD','--rE','--rF'];
+  const rs = marchRays(cam);
+  ROOMS.forEach((r,i)=>{
+    const cl=classify(bx(r),cam).cls;
+    el('rect',{x:X(r.z1),y:Y(r.x0),width:(r.z1-r.z0)*8.6,height:(r.x1-r.x0)*8.4,fill:'var('+col[i]+')',stroke:'var(--muted)','stroke-width':1.2,opacity:(S.ray&&!rs.seen.has(i)&&roomAt(cam.x,cam.z)>=0)?0.45:1},plan);
+    const t=el('text',{x:X(r.z1)+4,y:Y(r.x0)+13,'font-size':11,'font-family':'JetBrains Mono, monospace',fill:'var(--ink)'},plan); t.textContent=r.name.split('_')[0]+' · '+cl;
+  });
+  PORTALS.forEach(p=>{
+    if(p.ax==='z') el('line',{x1:X(p.c),x2:X(p.c),y1:Y(p.lo),y2:Y(p.hi),stroke:'var(--surface)','stroke-width':4},plan);
+    else el('line',{x1:X(p.lo),x2:X(p.hi),y1:Y(p.c),y2:Y(p.c),stroke:'var(--surface)','stroke-width':4},plan);
+  });
+  if(S.nor){
+    ROOMS.forEach(r=>{
+      const s=S.out?-1:1, c=S.out?'var(--bad)':'var(--ok)';
+      const mx=(r.x0+r.x1)/2, mz=(r.z0+r.z1)/2, L=1.2*s;
+      [[r.x0,mz,1,0],[r.x1,mz,-1,0],[mx,r.z0,0,1],[mx,r.z1,0,-1]].forEach(a=>{
+        el('line',{x1:X(a[1]),y1:Y(a[0]),x2:X(a[1]+a[3]*L),y2:Y(a[0]+a[2]*L),stroke:c,'stroke-width':2},plan);
+        el('circle',{cx:X(a[1]+a[3]*L),cy:Y(a[0]+a[2]*L),r:2.6,fill:c},plan);
+      });
+    });
+  }
+  if(S.ray) rs.rays.forEach(p=>{ if(p.length<2)return; el('polyline',{points:p.map(q=>X(q[1])+','+Y(q[0])).join(' '),fill:'none',stroke:'var(--ok)','stroke-width':0.8,opacity:0.7},plan); });
+  if(S.fr){
+    const s=Math.sin(S.yaw*Math.PI/180), co=Math.cos(S.yaw*Math.PI/180), L=120;
+    const pts=[[S.x,S.z]]; [-1,1].forEach(k=>{const a=(S.yaw+k*Math.atan(HX)*180/Math.PI)*Math.PI/180; pts.push([S.x+Math.sin(a)*L,S.z-Math.cos(a)*L]);});
+    el('polygon',{points:pts.map(q=>X(q[1])+','+Y(q[0])).join(' '),fill:'var(--accent)','fill-opacity':0.12,stroke:'var(--accent)','stroke-width':1,'stroke-dasharray':'4 3'},plan);
+  }
+  el('circle',{cx:X(S.z),cy:Y(S.x),r:5,fill:'var(--accent)',stroke:'var(--surface)','stroke-width':1.5},plan);
+  const s=Math.sin(S.yaw*Math.PI/180), co=Math.cos(S.yaw*Math.PI/180);
+  el('line',{x1:X(S.z),y1:Y(S.x),x2:X(S.z-co*3),y2:Y(S.x+s*3),stroke:'var(--accent)','stroke-width':2.2},plan);
+  const tx=el('text',{x:868,y:268,'text-anchor':'end','font-size':10,'font-family':'JetBrains Mono, monospace',fill:'var(--muted)'},plan);
+  tx.textContent='z décroît vers la droite · x vers le bas · vue de dessus, 1 m ≈ 8,5 px';
+  return rs;
+}
+
+/* ---------- table des classes + lecture ---------- */
+function badge(c){return '<span class="badge '+(c==='Inside'?'b-in':c==='Intersect'?'b-it':'b-out')+'">'+c+'</span>';}
+function updateSchema(){
+  $('cxv').textContent=f1(S.x)+' m'; $('czv').textContent=f1(S.z)+' m'; $('cyawv').textContent=S.yaw+'°';
+  const rs=drawPlan(); const cam={x:S.x,z:S.z,yaw:S.yaw};
+  const fc=frontCost(cam);
+  const other=(()=>{const m=S.mode; S.mode=m==='single'?'rooms':'single'; const r=frontCost(cam); S.mode=m; return r;})();
+  $('clsTable').innerHTML='<tr><th>Mesh</th><th>Sommets</th><th>Triangles</th><th>Classe</th><th>Coût (ms)</th></tr>'+
+    fc.rows.map(r=>'<tr><td>'+r.n+'</td><td>'+nf(r.v)+'</td><td>'+nf(r.f)+'</td><td>'+badge(r.cl)+'</td><td>'+f1(r.ms,3)+'</td></tr>').join('')+
+    '<tr><td><b>Total, une vue</b></td><td></td><td></td><td></td><td><b>'+f1(fc.tot,3)+'</b></td></tr>';
+  const inRoom=roomAt(S.x,S.z);
+  const vis=rs.seen.size; const hiddenF=RN.reduce((a,n,i)=>a+(rs.seen.has(i)?0:RF[i]),0);
+  const lines=[];
+  lines.push('Caméra '+(inRoom>=0?'dans la pièce <b>'+RN[inRoom]+'</b>':'<b>hors du niveau</b>')+'.');
+  if(S.mode==='single'){
+    lines.push('Un seul mesh : sa boîte englobante contient presque toujours la caméra ou coupe le frustum, donc le chemin <b>Intersect</b> (transformation scalaire, 3 ProjectClip par triangle, aucun B5/C3).');
+  } else {
+    const nIn=fc.rows.filter(r=>r.cl==='Inside').length, nIt=fc.rows.filter(r=>r.cl==='Intersect').length, nO=fc.rows.filter(r=>r.cl==='Outside').length;
+    lines.push('Une pièce par mesh : '+nIn+' Inside (chemin vectorisé B3/B4/B5/C3), '+nIt+' Intersect, '+nO+' Outside (rejeté en bloc).');
+  }
+  lines.push('Découpe inverse pour comparer : '+f1(other.tot,3)+' ms contre '+f1(fc.tot,3)+' ms pour l\'étage avant d\'une vue.');
+  if(S.ray&&inRoom>=0) lines.push('Visibles par les portails : '+vis+' pièce(s) sur 6. Un test de portail éviterait de soumettre '+nf(hiddenF)+' triangles ('+f1(100*hiddenF/D.meta.triangles,0)+' %).');
+  if(S.out) lines.push('<b>Coque vers l\'extérieur :</b> le back-face culling supprime les murs que l\'on regarde. Le niveau paraît vide (voir contre-exemple 1).');
+  $('readout').innerHTML=lines.map(l=>'<p style="margin:0 0 8px">'+l+'</p>').join('');
+  renderSteps();
+}
+
+/* ---------- contrôles ---------- */
+const pre=$('presets');
+PRESETS.forEach(p=>{const b=document.createElement('button');b.textContent=p[0];b.type='button';b.onclick=()=>{S.x=p[1];S.z=p[2];S.yaw=p[3];sync();updateSchema();};pre.appendChild(b);});
+function sync(){$('cx').value=S.x;$('cz').value=S.z;$('cyaw').value=S.yaw;}
+$('cx').oninput=e=>{S.x=+e.target.value;updateSchema();};
+$('cz').oninput=e=>{S.z=+e.target.value;updateSchema();};
+$('cyaw').oninput=e=>{S.yaw=+e.target.value;updateSchema();};
+[['tFr','fr'],['tRay','ray'],['tNor','nor'],['tOut','out']].forEach(a=>{$(a[0]).onchange=e=>{S[a[1]]=e.target.checked;if(a[1]==='out'&&e.target.checked){S.nor=true;$('tNor').checked=true;}updateSchema();};});
+[['mSingle','single'],['mRooms','rooms']].forEach(a=>{$(a[0]).onclick=()=>{S.mode=a[1];$('mSingle').setAttribute('aria-pressed',S.mode==='single');$('mRooms').setAttribute('aria-pressed',S.mode==='rooms');updateSchema();};});
+
+/* ---------- étapes ---------- */
+const stepState={open:{}, room:0, batch:'A_mur_proche', lane:0, k:Object.assign({},{})};
+const lev={giesen:false,abrash:false,portal:false,vecInt:false,rooms:false};
+const sig={s:0.9};
+function stepHTML(n,title,body){
+  const open = stepState.open[n] ? ' open' : '';
+  return '<details class="step" data-n="'+n+'"'+open+'><summary><span class="n">É'+n+'</span><h3>'+title+'</h3></summary><div class="stepbody">'+body+'</div></details>';
+}
+function io(prev,cur){return '<div class="io"><div><div class="lbl">Reprend de l\'étape précédente</div>'+prev+'</div><div><div class="lbl">Résultat de cette étape</div>'+cur+'</div></div>';}
+function goal(t){return '<div class="note"><p><b>Objectif.</b> '+t+'</p></div>';}
+function dualCode(sc,av){return '<div class="grid2"><div><div class="lbl">Scalaire</div>'+code(sc)+'</div><div><div class="lbl">AVX2 (8 couloirs)</div>'+(av?code(av):'<p class="small">Pas d\'équivalent vectorisé : calcul fait une fois par mesh ou par pièce.</p>')+'</div></div>';}
+function regTable(rows,head){
+  return '<div class="tw"><table class="regs"><tr><th></th>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+
+   rows.map(r=>'<tr><td>'+r[0]+'</td>'+r[1].map(v=>{const c=(r[2]&&r[2](v))||'';return '<td class="'+c+'">'+v+'</td>';}).join('')+'</tr>').join('')+'</table></div>';
+}
+function project(P,c,out){ // P monde -> écran, float32
+  const d=f32(f32(c.z)-f32(P[2])), x=f32(f32(P[0])-f32(c.x)), y=f32(f32(P[1])-f32(EYE));
+  const inv=f32(1/d); return [f32(384+f32(f32(F)*f32(x*inv))), f32(225-f32(f32(F)*f32(y*inv))), d];
+}
+function renderSteps(){
+  const cam={x:S.x,z:S.z,yaw:S.yaw};
+  const fc=frontCost(cam); const V=D.views, T=D.total;
+  const html=[];
+
+  // É1 : taille des cellules
+  { const rows=ROOMS.map((r,i)=>{const cx=Math.min(Math.max(S.x,r.x0),r.x1), cz=Math.min(Math.max(S.z,r.z0),r.z1);
+      const d=Math.max(0.2,Math.hypot(cx-S.x,cz-S.z)); const dmid=Math.max(0.2,Math.hypot((r.x0+r.x1)/2-S.x,(r.z0+r.z1)/2-S.z));
+      const sp=f32(f32(F)*f32(r.cell/dmid)); return '<tr><td>'+r.name+'</td><td>'+f1(r.cell,1)+' m</td><td>'+f1(d,1)+' m</td><td>'+f1(dmid,1)+' m</td><td>'+f1(sp,1)+' px</td><td>'+f1(sp*sp/2,1)+' px²</td></tr>';}).join('');
+    html.push(stepHTML(1,'Dimensionner les triangles par pièce',
+     goal('Choisir la taille des cellules de chaque pièce pour obtenir, avec la caméra de jeu, de très grands triangles de près et des triangles de 1 à 4 pixels au fond. Sans ce calcul, le niveau ne reproduit pas la plage de tailles que V1 et V2 n\'ont jamais testée.')+
+     '<p>Une cellule de côté <i>c</i> à la distance <i>d</i> mesure <i>s = f·c/d</i> pixels, avec <i>f</i> = 389,7 (vue quad de 768×450, 450 px de haut, champ vertical 60°). Un triangle d\'une cellule couvre environ <i>s²/2</i> pixels.</p>'+
+     io('<p>Position de la caméra du plan ci-dessus : ('+f1(S.x)+' ; '+f1(S.z)+').</p>','<div class="tw"><table><tr><th>Pièce</th><th>Cellule</th><th>Distance min.</th><th>Distance centre</th><th>s</th><th>Aire triangle</th></tr>'+rows+'</table></div>')+
+     dualCode('float s = f * cell / d;        // une fois par pièce\nfloat area = 0.5f * s * s;','// non vectorisé : 6 pièces, calcul de conception, pas de boucle chaude.')));
+  }
+
+  // É2 : sens d'enroulement
+  { const tri=D.batches.A_mur_proche[0]; const a=tri[0],b=tri[1],c=tri[2];
+    const u=[f32(b[0]-a[0]),f32(b[1]-a[1]),f32(b[2]-a[2])], v=[f32(c[0]-a[0]),f32(c[1]-a[1]),f32(c[2]-a[2])];
+    const n=[f32(f32(u[1]*v[2])-f32(u[2]*v[1])),f32(f32(u[2]*v[0])-f32(u[0]*v[2])),f32(f32(u[0]*v[1])-f32(u[1]*v[0]))];
+    const toIn=[0,0,1]; let dp=f32(f32(n[0]*toIn[0])+f32(n[1]*toIn[1])+f32(n[2]*toIn[2])); if(S.out) dp=f32(-dp);
+    const ok=dp>0;
+    html.push(stepHTML(2,'Enrouler les murs vers l\'intérieur',
+     goal('Faire en sorte que les murs, sols et plafonds des pièces soient des faces avant quand on les regarde de l\'intérieur (le moteur garde l\'aire écran négative). Les objets posés (piliers, caisses) restent enroulés vers l\'extérieur.')+
+     io('<p>Triangle de la cloison nord de A (z = −4), sommets : a = ('+a.join(' ; ')+'), b = ('+b.join(' ; ')+'), c = ('+c.join(' ; ')+').</p>',
+        '<dl class="kv"><dt>n = (b−a)×(c−a)</dt><dd>('+n.join(' ; ')+')</dd><dt>direction vers l\'intérieur</dt><dd>(0 ; 0 ; +1)</dd><dt>n·dir'+(S.out?' (coque inversée)':'')+'</dt><dd>'+dp+'</dd><dt>verdict</dt><dd class="'+(ok?'':'neg')+'">'+(ok?'face avant vue de l\'intérieur':'face arrière : supprimée')+'</dd></dl>')+
+     dualCode('Vec3 n = cross(b - a, c - a);\nbool inward = dot(n, toInterior) > 0.0f;   // contrôle à l\'export','// vérification faite par validate.py sur 100 % de la coque (voir « Vérifier »),\n// pas dans le moteur : le moteur ne conserve que le signe de l\'aire écran (étape 5).')));
+  }
+
+  // É3 : classification frustum
+  { const r=ROOMS[stepState.room]; const cr=classify(bx(r),cam);
+    const names=['gauche','droite','bas','haut','near'];
+    const rows=cr.det.map((d,i)=>'<tr><td>'+names[i]+'</td><td>'+f1(d[0],2)+'</td><td>'+f1(d[1],2)+'</td><td>'+(d[0]<0?'<span class="badge b-out">p-vertex dehors → Outside</span>':d[1]<0?'<span class="badge b-it">n-vertex dehors → Intersect</span>':'<span class="badge b-in">dedans</span>')+'</td></tr>').join('');
+    html.push(stepHTML(3,'Classer la boîte englobante contre le frustum',
+     goal('Décider, par mesh, de l\'un des trois chemins (Outside, Inside, Intersect). Sans ce test, tout le mesh serait traité par le chemin le plus coûteux.')+
+     '<div class="row"><label class="small" for="selRoom">Pièce :</label><select id="selRoom">'+RN.map((n,i)=>'<option value="'+i+'"'+(i===stepState.room?' selected':'')+'>'+n+'</option>').join('')+'</select></div>'+
+     io('<p>Boîte de la pièce : x ['+r.x0+' ; '+r.x1+'], y ['+r.y0+' ; '+r.y1+'], z ['+r.z0+' ; '+r.z1+'] et les 5 plans du frustum (gauche, droite, bas, haut, near) calculés pour la caméra du plan.</p>',
+        '<div class="tw"><table><tr><th>Plan</th><th>p-vertex</th><th>n-vertex</th><th>Verdict</th></tr>'+rows+'</table></div><p>Classe : '+badge(cr.cls)+'</p>')+
+     dualCode('for (int i = 0; i < 5; ++i) {\n  Vec3 p = { n[i].x>=0 ? max.x : min.x, n[i].y>=0 ? max.y : min.y, n[i].z>=0 ? max.z : min.z };\n  Vec3 q = { n[i].x>=0 ? min.x : max.x, n[i].y>=0 ? min.y : max.y, n[i].z>=0 ? min.z : max.z };\n  if (dot(n[i], p) + d[i] < 0) return Outside;\n  if (dot(n[i], q) + d[i] < 0) inter = true;\n}\nreturn inter ? Intersect : Inside;',
+       '// 5 plans : un seul passage AVX2 par mesh serait possible mais le test est fait\n// une fois par mesh (6 par frame) : gain nul. Non vectorisé volontairement.')));
+  }
+
+  // É4 : chemins
+  { html.push(stepHTML(4,'Suivre le chemin Inside ou Intersect',
+     goal('Savoir quels étages vectorisés servent vraiment. Les lots B3, B4, B5 et C3 ne s\'appliquent qu\'au chemin Inside.')+
+     '<div class="grid2"><div class="panel"><div class="lbl">Inside</div><p class="small">ProjectPositions8 (B3) → ClassifyFaces8 (B4) → ObjBackMask8 (B5) → DrawBatch8 pix1 (C3).</p></div>'+
+     '<div class="panel"><div class="lbl">Intersect</div><p class="small">TransformPositions scalaire → boucle par face : 3 ProjectClip, EmitClipTriangle, DrawTriangle (C1 noyau, C2 blocs 8 pixels). Pas de B5 ni de C3.</p></div></div>'+
+     io('<p>Classe du mesh (étape 3) : '+(S.mode==='single'?'niveau entier':'6 pièces')+'.</p>','<div class="tw"><table><tr><th>Mesh</th><th>Classe</th><th>Étage avant (ms, une vue)</th></tr>'+fc.rows.map(r=>'<tr><td>'+r.n+'</td><td>'+badge(r.cl)+'</td><td>'+f1(r.ms,3)+'</td></tr>').join('')+'</table></div><p class="small">Constantes : sommet scalaire '+K.vert_scalar+' ns, face Intersect '+K.face_intersect+' ns, sommet AVX2 '+K.vert_simd+' ns, face AVX2 '+K.face_simd+' ns.</p>')+
+     dualCode('if (cls == Outside)   return;\nif (cls == Inside)    RenderInside(mesh);\nelse                  RenderIntersect(mesh);','// RenderInside enchaîne B3 → B4 → B5 → C3, huit faces par itération.')));
+  }
+
+  // É5 : 8 faces, couloir par couloir
+  { const bt=D.batches[stepState.batch]; const pcam={x:0,z:3,yaw:0};
+    const P=bt.map(t=>t.map(p=>project(p,pcam)));
+    const X0=P.map(t=>t[0][0]),Y0=P.map(t=>t[0][1]),X1=P.map(t=>t[1][0]),Y1=P.map(t=>t[1][1]),X2=P.map(t=>t[2][0]),Y2=P.map(t=>t[2][1]);
+    const ar=P.map((t,i)=>f32(f32(f32(X1[i]-X0[i])*f32(Y2[i]-Y0[i]))-f32(f32(X2[i]-X0[i])*f32(Y1[i]-Y0[i]))));
+    const mnx=P.map((t,i)=>Math.floor(Math.min(X0[i],X1[i],X2[i]))), mxx=P.map((t,i)=>Math.ceil(Math.max(X0[i],X1[i],X2[i])));
+    const mny=P.map((t,i)=>Math.floor(Math.min(Y0[i],Y1[i],Y2[i]))), mxy=P.map((t,i)=>Math.ceil(Math.max(Y0[i],Y1[i],Y2[i])));
+    const l=n=>Array.from({length:8},(_,i)=>i);
+    const r1=a=>a.map(v=>f1(v,1));
+    html.push(stepHTML(5,'Aire, boîte et face avant pour huit triangles',
+     goal('Éliminer les faces arrière et mesurer la boîte de chaque triangle avant tout remplissage. L\'aire écran négative signifie face avant (convention du moteur).')+
+     '<div class="row"><label class="small" for="selBatch">Lot de 8 faces réel :</label><select id="selBatch">'+Object.keys(D.batches).map(k=>'<option'+(k===stepState.batch?' selected':'')+'>'+k+'</option>').join('')+'</select><span class="small">projeté avec la caméra Game (0 ; 1,7 ; 3)</span></div>'+
+     io('<p>Huit triangles consécutifs du fichier, déjà projetés (étape de projection B3, float32). Coordonnées écran en pixels.</p>'+regTable([['X0',r1(X0)],['Y0',r1(Y0)],['X1',r1(X1)],['Y1',r1(Y1)],['X2',r1(X2)],['Y2',r1(Y2)]],l().map(i=>'c'+i)),
+        '<p>Aire = (X1−X0)(Y2−Y0) − (X2−X0)(Y1−Y0), puis boîte et masque.</p>'+regTable([['aire',r1(ar),v=>(+v.replace(/\s/g,'').replace(',','.')<0)?'pos':'neg'],['face avant',ar.map(v=>v<0?'1':'0'),v=>v==='1'?'pos':'dim'],['min x',mnx.map(String)],['max x',mxx.map(String)],['min y',mny.map(String)],['max y',mxy.map(String)]],l().map(i=>'c'+i)))+
+     dualCode('float area = (x1-x0)*(y2-y0) - (x2-x0)*(y1-y0);\nbool front = area < 0.0f;\nint minx = (int)floorf(fminf(x0, fminf(x1, x2)));\nint maxx = (int)ceilf (fmaxf(x0, fmaxf(x1, x2)));',
+       '// registres __m256 : un triangle par couloir, huit à la fois\n__m256 dx1 = _mm256_sub_ps(X1, X0);            // X1 - X0\n__m256 dy2 = _mm256_sub_ps(Y2, Y0);            // Y2 - Y0\n__m256 dx2 = _mm256_sub_ps(X2, X0);\n__m256 dy1 = _mm256_sub_ps(Y1, Y0);\n__m256 a   = _mm256_sub_ps(_mm256_mul_ps(dx1, dy2),\n                           _mm256_mul_ps(dx2, dy1));   // aire, 8 couloirs\n// pas de FMA : l\'arrondi doit rester identique au chemin scalaire (règle C0)\nint front = _mm256_movemask_ps(_mm256_cmp_ps(a, _mm256_setzero_ps(), _CMP_LT_OQ));\n__m256 mnx = _mm256_min_ps(X0, _mm256_min_ps(X1, X2));\n__m256 mxx = _mm256_max_ps(X0, _mm256_max_ps(X1, X2));')));
+    stepState._P=P; stepState._ar=ar;
+  }
+
+  // É6 : bloc de 8 pixels
+  { const P=stepState._P, ar=stepState._ar; const i=Math.min(stepState.lane,7);
+    const t=P[i]; const a=ar[i];
+    const mnx=Math.floor(Math.min(t[0][0],t[1][0],t[2][0])), mny=Math.floor(Math.min(t[0][1],t[1][1],t[2][1])), mxy=Math.ceil(Math.max(t[0][1],t[1][1],t[2][1]));
+    const y=Math.round((mny+mxy)/2); const px=Array.from({length:8},(_,k)=>mnx+k);
+    const E=[0,1,2].map(e=>{const A=t[(e+1)%3], B=t[(e+2)%3];
+      const a_=f32(A[1]-B[1]), b_=f32(B[0]-A[0]), c_=f32(f32(A[0]*B[1])-f32(A[1]*B[0]));
+      return px.map(x=>f32(f32(f32(a_*f32(x+0.5))+f32(b_*f32(y+0.5)))+c_));});
+    const inside=px.map((x,k)=>E.every(e=>a!==0&&(e[k]*a>=0)));
+    const rr=arr=>arr.map(v=>f1(v,1));
+    html.push(stepHTML(6,'Évaluer huit pixels d\'une ligne (bloc C2)',
+     goal('Tester huit pixels contigus d\'un seul coup avec les trois fonctions d\'arête. Un pixel est couvert si les trois valeurs ont le signe de l\'aire.')+
+     '<div class="row"><label class="small" for="selLane">Triangle (couloir de l\'étape 5) :</label><select id="selLane">'+Array.from({length:8},(_,k)=>'<option value="'+k+'"'+(k===i?' selected':'')+'>'+k+'</option>').join('')+'</select><span class="small">ligne y = '+y+', pixels x = '+px[0]+' à '+px[7]+'</span></div>'+
+     io('<p>Triangle '+i+' de l\'étape 5, aire = '+f1(a,1)+' px² ('+(a<0?'face avant':'face arrière')+'). Les arêtes sont réécrites en A·x + B·y + C.</p>',
+       regTable([['E0',rr(E[0]),v=>(+v.replace(',','.')*a>=0)?'pos':'neg'],['E1',rr(E[1]),v=>(+v.replace(',','.')*a>=0)?'pos':'neg'],['E2',rr(E[2]),v=>(+v.replace(',','.')*a>=0)?'pos':'neg'],['couvert',inside.map(v=>v?'1':'0'),v=>v==='1'?'pos':'dim']],px.map(String)))+
+     dualCode('for (int x = x0; x < x0 + 8; ++x) {\n  float e0 = a0*(x+0.5f) + b0*(y+0.5f) + c0;\n  float e1 = a1*(x+0.5f) + b1*(y+0.5f) + c1;\n  float e2 = a2*(x+0.5f) + b2*(y+0.5f) + c2;\n  if (e0*s >= 0 && e1*s >= 0 && e2*s >= 0) Shade(x, y);\n}',
+       '__m256 px  = _mm256_add_ps(_mm256_set1_ps(x0 + 0.5f), lane_iota);   // 0..7\n__m256 e0  = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(A0, px), rowB0), C0);\n__m256 e1  = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(A1, px), rowB1), C1);\n__m256 e2  = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(A2, px), rowB2), C2);\n// rowBk = Bk*(y+0.5) calculé une fois par ligne\nint mask = _mm256_movemask_ps(_mm256_and_ps(_mm256_and_ps(\n    _mm256_cmp_ps(e0, zero, _CMP_LE_OQ), _mm256_cmp_ps(e1, zero, _CMP_LE_OQ)),\n    _mm256_cmp_ps(e2, zero, _CMP_LE_OQ)));       // face avant : E <= 0\n// largeur de boîte >= 3 (kSimdMinBoxWidth) sinon chemin scalaire')));
+  }
+
+  // É7 : compteurs C0
+  { const lbl=['=1','2-4','5-16','17-64','65-256','257-1 024','1 025-8 192','>8 192'];
+    const mx=Math.max(...V.map(v=>0).concat(T.cov0)); const cl=V.reduce((a,v)=>a.map((x,k)=>x+v.cls[k]),Array(8).fill(0));
+    const mc=Math.max(...cl);
+    html.push(stepHTML(7,'Compter pour l\'ablation C0',
+     goal('Savoir quelle part du temps appartient à la préparation, aux arêtes et aux fragments. Le protocole C0 construit quatre binaires N, E, S, M ; la différence entre deux binaires isole un coût.')+
+     io('<p>Faces dessinées ('+nf(T.drawn)+' sur '+nf(T.submitted)+' soumises, 4 vues) et leurs boîtes.</p>',
+        '<div class="bars">'+cl.map((c,k)=>'<span class="nm">'+lbl[k]+' px</span><div><div class="bar" style="width:'+(100*c/mc)+'%"></div></div><span class="v">'+nf(c)+'</span>').join('')+'</div><p class="small">Triangles par classe de taille de boîte (somme des 4 vues).</p>')+
+     '<div class="note"><p>Coûts : préparation = S − M, arêtes = E − S, fragments = N − E. Un seul commutateur LV3_SIMD pilote C1, C2 et C3.</p></div>'+
+     dualCode('S.cls[classOf(boxArea)]++;\nS.tight += boxArea;  S.covered += covered;','// compteurs mis à jour hors du noyau, une fois par triangle : non vectorisables sans fausser la mesure.')));
+  }
+
+  // É8 : triangles masqués et ordre
+  { const vis=D.visible, rv=D.rev;
+    const rows=CAMN.map((c,i)=>{const v=vis[i]; return '<tr><td>'+c.replace('Bench_Cam_','')+'</td><td>'+nf(v.drawn)+'</td><td>'+nf(v.visibleTris)+'</td><td>'+nf(v.hiddenTris)+'</td><td>'+f1(100*v.hiddenTris/v.drawn,1)+' %</td><td>'+f1(100*V[i].depthPassed/V[i].covered,0)+' %</td><td>'+f1(100*rv[i].depthPassed/rv[i].covered,0)+' %</td></tr>';}).join('');
+    const th=vis.reduce((a,v)=>a+v.hiddenTris,0), td=vis.reduce((a,v)=>a+v.drawn,0);
+    html.push(stepHTML(8,'Mesurer les triangles masqués et l\'ordre de dessin',
+     goal('Chiffrer le travail inutile. Le niveau est un seul mesh trié du proche au lointain : le test de profondeur précoce rejette beaucoup de pixels, mais les triangles masqués ont déjà coûté leur préparation.')+
+     io('<p>Pixels couverts par les triangles dessinés, de l\'étape 7.</p>','<div class="tw"><table><tr><th>Vue</th><th>Dessinés</th><th>Visibles</th><th>Masqués</th><th>Part masquée</th><th>Profondeur passée, proche→loin</th><th>loin→proche</th></tr>'+rows+'<tr><td><b>Total</b></td><td>'+nf(td)+'</td><td>'+nf(td-th)+'</td><td>'+nf(th)+'</td><td><b>'+f1(100*th/td,1)+' %</b></td><td></td><td></td></tr></table></div>')+
+     dualCode('if (z >= zbuf[idx]) continue;   // test de profondeur par pixel','__m256 zold = _mm256_loadu_ps(zbuf + idx);\n__m256 pass = _mm256_cmp_ps(z8, zold, _CMP_GT_OQ);   // reverse-Z : plus grand = plus proche\nmask &= _mm256_movemask_ps(pass);')));
+  }
+
+  // É9 : modèle de coût
+  { const kx=K; const m=D.model_single;
+    const drawn=T.drawn, blocks=T.blocks, scal=T.scalarTight;
+    const fr = (()=>{ // front ms 4 vues, selon découpe/levier
+      let tot=0; CAMN.forEach((c,i)=>{ const cc={x:D.meta.cameras[i].pos[0],z:D.meta.cameras[i].pos[2],yaw:D.meta.cameras[i].yaw};
+        const save=S.mode; S.mode=lev.rooms?'rooms':'single';
+        const items = S.mode==='single' ? [{v:D.engine_verts_total,f:D.meta.triangles,b:ALL}] : ROOMS.map((r,j)=>({v:RV[j],f:RF[j],b:bx(r)}));
+        items.forEach(it=>{const cl=classify(it.b,cc).cls; if(cl==='Intersect') tot+=(it.v*kx.vert_scalar+it.f*(lev.vecInt?kx.face_simd:kx.face_intersect))/1e6; else if(cl==='Inside') tot+=(it.v*kx.vert_simd+it.f*kx.face_simd)/1e6;});
+        S.mode=save; }); return tot; })();
+    const prep=drawn*kx.prep/1e6, blk=blocks*kx.block/1e6, sc=scal*kx.scalar_px/1e6;
+    const edges=(blocks*kx.edge_block+scal*kx.edge_px)/1e6; const frag=blk+sc-edges;
+    let Dm=prep+blk+sc, edgesL=edges;
+    if(lev.abrash) { Dm-=0.29*blocks*kx.edge_block/1e6; edgesL-=0.29*blocks*kx.edge_block/1e6; }
+    if(lev.giesen) Dm-=0.10*(prep+blk+sc);
+    if(lev.portal) Dm*=0.59;
+    const verts = (()=>{ if(!lev.rooms) return D.engine_verts_total*4*kx.vert_scalar/1e6; return 0; })();
+    const total=Dm+fr; const base=m.render;
+    const parts=[['Étage avant',fr,'s1'],['Préparation',prep*(Dm/(prep+blk+sc)),'s2'],['Arêtes',Math.max(0,edgesL)*(lev.portal?0.59:1),'s3'],['Fragments',frag*(Dm/(prep+blk+sc)),'s4']];
+    const sum=parts.reduce((a,p)=>a+p[1],0);
+    const kin=['vert_scalar','face_intersect','vert_simd','face_simd','prep','block','scalar_px','edge_block','edge_px'];
+    html.push(stepHTML(9,'Modèle de coût et leviers',
+     goal('Prédire le temps de rendu des 4 vues avant de mesurer, et savoir quel levier vaut la peine. Les constantes viennent des campagnes C0 à C3 ; elles restent des estimations tant que le run de mesure n\'est pas fait.')+
+     '<div class="grid2"><div class="panel"><div class="lbl">Constantes (ns)</div><div class="controls">'+kin.map(k=>'<div class="ctl"><label for="k_'+k+'"><span>'+k+'</span></label><input id="k_'+k+'" type="number" step="0.05" min="0" value="'+K[k]+'" style="width:100%"></div>').join('')+'</div></div>'+
+     '<div class="panel"><div class="lbl">Leviers</div><div style="display:grid;gap:7px">'+
+       [['giesen','Giesen : arêtes incrémentales en virgule fixe (≈ −10 % sur D)'],['abrash','Abrash : tuiles hiérarchiques 8×8 (≈ −29 % évaluations d\'arêtes par bloc)'],['portal','Culling par portails (≈ −41 % sur D)'],['vecInt','Vectoriser le chemin Intersect'],['rooms','Une pièce = un mesh']].map(a=>'<label class="chk"><input type="checkbox" id="lv_'+a[0]+'"'+(lev[a[0]]?' checked':'')+'> '+a[1]+'</label>').join('')+'</div></div></div>'+
+     io('<p>Compteurs des 4 vues : '+nf(drawn)+' faces dessinées, '+nf(blocks)+' blocs 8 pixels, '+nf(scal)+' pixels scalaires.</p>',
+       '<p><b>'+f1(total,2)+' ms</b> pour 4 vues'+(Math.abs(total-base)>0.01?' (référence sans levier : '+f1(base,2)+' ms)':'')+'</p><div class="seg">'+parts.map((p,k)=>'<i class="s'+(k+1)+'" style="width:'+(100*p[1]/sum)+'%"></i>').join('')+'</div><div class="legend">'+parts.map((p,k)=>'<span><b class="s'+(k+1)+'"></b>'+p[0]+' '+f1(p[1],2)+' ms</span>').join('')+'</div>')+
+     dualCode('ms = (verts*Kv + faces*Kf + drawn*Kprep + blocks*Kblk + scalarPx*Kpx) / 1e6;','// modèle arithmétique, pas de code moteur.')));
+    stepState._m={Dm,edgesL,prep,blk,sc,edges,fr};
+  }
+
+  // É10 : règle de décision
+  { const m=D.model_single;
+    const dGi=0.10*(m.D), dAb=0.29*T.blocks*K.edge_block/1e6;
+    const n=d=>Math.max(2,Math.ceil(2*Math.pow(2.8,2)*sig.s*sig.s/(d*d)));
+    const empt=T.blocksEmpty/T.blocks, trej=(T.tReject+T.tAccept)/T.tiles;
+    html.push(stepHTML(10,'Écrire la règle de décision avant la mesure',
+     goal('Fixer le seuil et la taille d\'échantillon qui le rend mesurable. Une règle sans taille d\'échantillon ne tranche rien.')+
+     '<div class="ctl" style="max-width:340px"><label for="sig"><span>bruit d\'un run (σ, ms)</span><span id="sigv">'+f1(sig.s,2)+'</span></label><input id="sig" type="range" min="0.2" max="2" step="0.05" value="'+sig.s+'"></div>'+
+     io('<p>Gains prédits à l\'étape 9 : Giesen '+f1(dGi,2)+' ms ('+f1(100*dGi/m.render,1)+' % du rendu), Abrash '+f1(dAb,2)+' ms ('+f1(100*dAb/m.render,1)+' %).</p>','<div class="tw"><table><tr><th>Levier</th><th>Gain attendu</th><th>Seuil</th><th>Paires A/B nécessaires</th></tr>'+
+       '<tr><td>Giesen</td><td>'+f1(dGi,2)+' ms</td><td>≥ 5 % du rendu ('+f1(0.05*m.render,2)+' ms)</td><td>'+n(dGi)+'</td></tr>'+
+       '<tr><td>Abrash</td><td>'+f1(dAb,2)+' ms</td><td>≥ 5 % du rendu</td><td>'+n(dAb)+'</td></tr></table></div><p class="small">n = 2·(1,96+0,84)²·σ²/Δ², seuil de 5 % ; ordre A B B A, au moins 16 exécutions par binaire quand le bruit est de type V2.</p>')+
+     '<div class="grid2"><div class="panel"><div class="lbl">Déclencheur Abrash</div><p>Blocs vides : <b>'+f1(100*empt,1)+' %</b> des blocs (seuil 40 %). Tuiles rejetées ou acceptées d\'un bloc : <b>'+f1(100*trej,1)+' %</b> (seuil 30 %). Les deux conditions doivent être vraies.</p><p>'+(empt>=0.4&&trej>=0.3?'<span class="tag ok">conditions remplies</span>':'<span class="tag bad">non remplies</span>')+'</p></div>'+
+     '<div class="panel"><div class="lbl">Déclencheur Giesen</div><p>Le temps d\'arêtes (E − S) doit dépasser 15 % du rendu : prédit <b>'+f1(100*m.edges/m.render,1)+' %</b>. L\'image doit rester identique à 0,5 % près de pixels couverts (virgule fixe 8 bits : 0,07 %).</p><p>'+(m.edges/m.render>=0.15?'<span class="tag ok">condition remplie</span>':'<span class="tag bad">non remplie</span>')+'</p></div></div>'+
+     dualCode('bool goAbrash = emptyBlocks >= 0.40 && tileDecided >= 0.30 && gainMs >= 0.05 * renderMs;','// règle de décision : pas de code vectorisé.')));
+  }
+
+  // É11 : vérifier
+  { const val=D.validation; const vr=RN.map(n=>{const v=val[n];return '<tr><td>'+n+'</td><td>'+nf(v.faces)+'</td><td>'+nf(v.shell)+'</td><td>'+(v.shell===v.inward?'<span class="badge b-in">100 %</span>':'<span class="badge b-out">'+f1(100*v.inward/v.shell,1)+' %</span>')+'</td><td>'+v.boundary_edges+'</td><td>'+v.edges_gt2+'</td><td>'+v.degenerate+'</td><td>'+v.thin+'</td></tr>';}).join('');
+    html.push(stepHTML(11,'Vérifier',
+     goal('Contrôler le fichier hors moteur, puis vérifier dans le moteur que les compteurs tombent dans les fourchettes écrites à l\'avance.')+
+     '<div class="lbl">Tests hors moteur (validate.py)</div><div class="tw"><table><tr><th>Pièce</th><th>Triangles</th><th>Coque</th><th>Vers l\'intérieur</th><th>Arêtes de bord</th><th>Arêtes &gt;2 faces</th><th>Dégénérés</th><th>Minces</th></tr>'+vr+'</table></div>'+
+     '<p>Couverture écran : 0 pixel non couvert sur les 4 caméras (simulateur). Aucune jonction en T : les lignes de grille sont communes dans chaque pièce.</p>'+
+     '<div class="lbl">Filets Debug dans le moteur</div><ul><li>Le rapport <code>[CULL]</code> doit donner les classes du tableau de l\'étape 3 pour les 4 caméras.</li><li>FacesSubmitted doit valoir 64 934 par vue pour un mesh unique, sauf Dbg2 avec découpe en pièces (56 708).</li><li>VertsTransformed : 42 346 (un mesh) ou 42 600 (6 pièces, sommets de bord comptés deux fois).</li><li>Les trois contrôles de la table « Prédictions » doivent se vérifier avant d\'ouvrir la campagne de temps.</li></ul>'));
+  }
+  $('steps').innerHTML=html.join('');
+  // rebranche
+  document.querySelectorAll('details.step').forEach(d=>d.addEventListener('toggle',()=>{stepState.open[d.dataset.n]=d.open;}));
+  const sr=$('selRoom'); if(sr) sr.onchange=e=>{stepState.room=+e.target.value;stepState.open[3]=true;renderSteps();};
+  const sb=$('selBatch'); if(sb) sb.onchange=e=>{stepState.batch=e.target.value;stepState.open[5]=true;renderSteps();};
+  const sl=$('selLane'); if(sl) sl.onchange=e=>{stepState.lane=+e.target.value;stepState.open[6]=true;renderSteps();};
+  Object.keys(K).forEach(k=>{const e=$('k_'+k); if(e) e.onchange=ev=>{K[k]=+ev.target.value||0;stepState.open[9]=true;updateSchema();};});
+  Object.keys(lev).forEach(k=>{const e=$('lv_'+k); if(e) e.onchange=ev=>{lev[k]=ev.target.checked;stepState.open[9]=true;renderSteps();};});
+  const sg=$('sig'); if(sg) sg.oninput=ev=>{sig.s=+ev.target.value;stepState.open[10]=true;renderSteps();};
+}
+
+/* ---------- contre-exemples ---------- */
+function counters(){
+  const V=D.views,O=D.outward,R=D.rev,Tt=D.total;
+  const ob=(a,f)=>a.map(v=>v[f]);
+  const sum=a=>a.reduce((x,y)=>x+y,0);
+  const c1='<div class="panel"><div class="lbl">1 · Coque enroulée vers l\'extérieur</div><p>Les murs deviennent des faces arrière quand on est dans la pièce : le back-face culling les supprime.</p><div class="tw"><table><tr><th>Vue</th><th>Avant (bon)</th><th>Avant (extérieur)</th><th>Dessinés</th><th>Pixels couverts</th></tr>'+
+    CAMN.map((c,i)=>'<tr><td>'+c.replace('Bench_Cam_','')+'</td><td>'+nf(V[i].front)+'</td><td class="neg">'+nf(O[i].front)+'</td><td>'+nf(V[i].drawn)+' → '+nf(O[i].drawn)+'</td><td>'+nf(V[i].covered)+' → '+nf(O[i].covered)+'</td></tr>').join('')+'</table></div><p class="small">Le niveau paraît vide et le bench mesure presque rien : la comparaison avec V1 et V2 devient fausse.</p></div>';
+  const c2='<div class="panel"><div class="lbl">2 · Tri du lointain vers le proche</div><p>Sans rejet précoce, chaque pixel masqué est calculé puis écrasé.</p><div class="tw"><table><tr><th>Vue</th><th>Profondeur passée, proche→loin</th><th>loin→proche</th><th>Surcoût</th></tr>'+
+    CAMN.map((c,i)=>'<tr><td>'+c.replace('Bench_Cam_','')+'</td><td>'+nf(V[i].depthPassed)+'</td><td class="neg">'+nf(R[i].depthPassed)+'</td><td>×'+f1(R[i].depthPassed/V[i].depthPassed,2)+'</td></tr>').join('')+'</table></div></div>';
+  const c3='<div class="panel"><div class="lbl">3 · Arêtes incrémentales en float</div><p>Les campagnes C0 ont montré que l\'accumulation flottante change des décisions de couverture : <b>273 décisions</b> différentes sur 207 millions de pixels. Giesen n\'est donc permis qu\'en virgule fixe, et l\'image change d\'un pourcentage borné : 0,07 % de pixels couverts à 8 bits de fraction, 1,2 % à 4 bits.</p>'+
+    code('// À NE PAS FAIRE\nfloat e = e0;\nfor (int x = x0; x < x1; ++x, e += A)   // erreur cumulée, dépend de x0\n  if (e <= 0) Shade(x, y);\n// À FAIRE : entier 32 bits, 8 bits de fraction\nint32_t e = E0_fixed;\nfor (...; e += A_fixed) if (e <= 0) Shade(x, y);')+'</div>';
+  const c4='<div class="panel"><div class="lbl">4 · Tout le niveau dans un seul mesh</div><p>La boîte du niveau contient presque toujours la caméra : chemin Intersect partout.</p><div class="tw"><table><tr><th></th><th>Un mesh</th><th>6 pièces</th></tr><tr><td>Sommets (ms, 4 vues)</td><td class="neg">'+f1(D.model_single.verts,2)+'</td><td>'+f1(D.model_rooms.verts,2)+'</td></tr><tr><td>Étage avant (ms)</td><td class="neg">'+f1(D.model_single.front,2)+'</td><td>'+f1(D.model_rooms.front,2)+'</td></tr><tr><td>Rendu total (ms)</td><td class="neg">'+f1(D.model_single.render,2)+'</td><td>'+f1(D.model_rooms.render,2)+'</td></tr></table></div></div>';
+  const c5='<div class="panel"><div class="lbl">5 · Dépasser 65 536 sommets</div><p>Le moteur ignore sans avertissement un mesh au-delà de LV3_MAX_MESH_VERTICES. Le niveau a '+nf(D.engine_verts_total)+' sommets (position + uv dédoublonnés), soit '+nf(65536-D.engine_verts_total)+' de marge. Si le dédoublonnage était oublié, le compte monterait à '+nf(D.meta.triangles*3)+' sommets en soupe de triangles : le niveau disparaîtrait de l\'écran sans message.</p></div>';
+  $('counter').innerHTML=c1+c2+c3+c4+c5;
+}
+
+/* ---------- prédictions ---------- */
+function preds(){
+  const V=D.views;
+  const row=(lab,f,fmt)=>'<tr><td>'+lab+'</td>'+V.map(v=>'<td>'+(fmt?fmt(f(v)):nf(f(v)))+'</td>').join('')+'<td><b>'+nf(V.reduce((a,v)=>a+f(v),0))+'</b></td></tr>';
+  $('predTable').innerHTML='<tr><th>Compteur</th>'+CAMN.map(c=>'<th>'+c.replace('Bench_Cam_','')+'</th>').join('')+'<th>Somme</th></tr>'+
+    row('Faces soumises',v=>v.submitted)+row('Découpées (near)',v=>v.clipped)+row('Faces avant',v=>v.front)+row('Faces arrière',v=>v.back)+row('Rejet précoce',v=>v.earlyRej)+row('Dessinées',v=>v.drawn)+
+    row('Boîte de 1 pixel (C3)',v=>v.pix1)+row('Blocs 8 pixels',v=>v.blocks)+row('Pixels couverts',v=>v.covered)+row('Profondeur passée',v=>v.depthPassed)+row('Triangles masqués',v=>0,null).replace(/<td>0<\/td>/g,'<td>—</td>');
+  const P=D.pred_rooms;
+  $('predFront').innerHTML='<tr><th>Compteur</th>'+CAMN.map(c=>'<th>'+c.replace('Bench_Cam_','')+'</th>').join('')+'</tr>'+
+    '<tr><td colspan="5" class="small"><b>Un mesh</b> (toujours Intersect)</td></tr>'+
+    '<tr><td>FacesSubmitted</td>'+CAMN.map(()=>'<td>64 934</td>').join('')+'</tr><tr><td>VertsTransformed</td>'+CAMN.map(()=>'<td>42 346</td>').join('')+'</tr><tr><td>FacesInside / ObjRejected</td>'+CAMN.map(()=>'<td>0 / 0</td>').join('')+'</tr>'+
+    '<tr><td colspan="5" class="small"><b>Six pièces</b></td></tr>'+
+    '<tr><td>FacesSubmitted</td>'+P.map(p=>'<td>'+nf(p.facesSubmitted)+'</td>').join('')+'</tr><tr><td>VertsTransformed</td>'+P.map(p=>'<td>'+nf(p.vertsTransformed)+'</td>').join('')+'</tr><tr><td>FacesInside</td>'+P.map(p=>'<td>'+nf(p.facesInside)+'</td>').join('')+'</tr><tr><td>MeshesCulled</td>'+P.map(p=>'<td>'+p.meshesCulled+'</td>').join('')+'</tr><tr><td>ObjRejected (B5)</td>'+P.map(p=>'<td>'+nf(p.objRejected)+'</td>').join('')+'</tr>'+
+    '<tr><td colspan="5" class="small"><b>Classes attendues (rapport [CULL])</b></td></tr>'+RN.map(n=>'<tr><td>'+n+'</td>'+CAMN.map(c=>'<td>'+badge(D.classify[c][n])+'</td>').join('')+'</tr>').join('');
+}
+
+/* ---------- décision, protocole, fichiers ---------- */
+function boxes(){
+  const m=D.model_single, r=D.model_rooms;
+  $('decisionBox').innerHTML=
+   '<div class="note"><p><b>Ce que dit le modèle, avant mesure.</b> Le rendu de 4 vues coûte environ '+f1(m.render,1)+' ms avec un mesh unique et '+f1(r.render,1)+' ms avec six pièces. L\'écart ('+f1(m.render-r.render,1)+' ms) vient presque entièrement de l\'étage avant : le chemin Intersect. Cela doit être corrigé (découpe en pièces ou vectorisation du chemin Intersect) avant de juger les jalons D.</p></div>'+
+   '<div class="grid2"><div class="panel"><div class="lbl">Ordre proposé</div><ol><li>Mesurer R1 (comptage) et vérifier les prédictions.</li><li>Ablation N E S M sur la scène unique, puis sur les six pièces.</li><li>Appliquer la règle de l\'étape 10 à Giesen puis à Abrash.</li></ol></div>'+
+   '<div class="panel"><div class="lbl">Règle</div><p>Un levier est retenu si le gain mesuré en paires A/B est au moins 5 % du rendu, avec un intervalle à 95 % qui exclut zéro, sur le nombre de paires calculé à l\'étape 10 (16 minimum). Sinon il est écarté et noté dans le carnet de route avec les chiffres.</p></div></div>';
+  $('protoBox').innerHTML=
+   '<div class="grid2"><div class="panel"><div class="lbl">R1 · comptage</div><p>Lancer les 4 caméras en Debug et relever les compteurs de la table « Prédictions ».</p></div>'+
+   '<div class="panel"><div class="lbl">R2 · ablation</div><p>Binaires N, E, S, M, dans l\'ordre N E S M M S E N, une fois sur la scène à un mesh, une fois sur la scène en pièces.</p></div>'+
+   '<div class="panel"><div class="lbl">R3 · A/B</div><p>Même binaire, scène unique contre pièces, ordre A B B A, au moins 16 exécutions.</p></div></div>'+
+   code('Library.exe --scene=bench_V_V3.json       --bench=300 --csv=Mesures/V3_single.csv\nLibrary.exe --scene=bench_V_V3_rooms.json --bench=300 --csv=Mesures/V3_rooms.csv')+
+   '<p class="small">Affinity sur 4 cœurs, secteur, mode performances. Écrire les prédictions dans le carnet de route avant le premier run.</p>';
+  $('filesBox').innerHTML=
+   '<div class="tw"><table><tr><th>Fichier</th><th>Destination</th><th>Rôle</th></tr>'+
+   [['level_fps.obj, level_fps.mtl','assets/Meshes','niveau complet, 10 matériaux'],['level_fps_A.obj … level_fps_F.obj','assets/Meshes','une pièce par fichier (découpe en pièces)'],['bench_V_V3.json','assets/GraphScene','scène à un mesh, 4 caméras'],['bench_V_V3_rooms.json','assets/GraphScene','scène à six meshes'],['gen_level_fps.py','à côté de gen_rock_lod.py','générateur du niveau'],['v3sim.cpp','outils','simulateur du pipeline (prédictions)']].map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</table></div>';
+}
+
+counters(); preds(); boxes(); sync(); updateSchema();
+})();
+</script>
+</body></html>

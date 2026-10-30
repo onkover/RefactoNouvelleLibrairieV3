@@ -1,0 +1,53 @@
+triangles=64934 positions=33046 viewport=768x450
+
+== Bench_Cam_Game  pos=(0.0,1.7,3.0) yaw=0 ==
+submitted 64934  clipped 24  front 53964  back 10966 (16.9% des sorties)  earlyRej 33752  drawn 20212
+TrisCov0/1/2-4/5+ = 2264 / 6409 / 5857 / 5682   pix1(1x1) 772   simd(w>=3) 6992
+Tight 1932709  Covered 679313  DepthPassed 414003   Covered/Tight 35.1%   DepthPassed/Covered 60.9%   Tight/tri 95.6
+classes de boite (px) : [=1: 772 tris, cov/tight 49%] [2-4: 11192 tris, cov/tight 49%] [5-16: 3879 tris, cov/tight 49%] [17-64: 2128 tris, cov/tight 45%] [65-256: 1610 tris, cov/tight 46%] [257-1024: 447 tris, cov/tight 45%] [1025-8192: 142 tris, cov/tight 40%] [>8192: 42 tris, cov/tight 28%] 
+thin(boite>=64 et cov/tight<25%) 88
+C2 blocs : 258905  vides 55.7%  pleins 22.3%  voies couvertes/voies 31.4%   scalaire(tight) 57914
+tuiles 8x8 (triangles SIMD) : 0  rejet 0.0%  acceptation 0.0%  partielles 0.0%   lignes d'aretes 258905 -> hierarchie 0 (+0 lignes de remplissage direct)
+JSON {"cam":"Bench_Cam_Game","submitted":64934,"clipped":24,"front":53964,"back":10966,"earlyRej":33752,"drawn":20212,"cov0":2264,"cov1":6409,"cov24":5857,"cov5":5682,"pix1":772,"narrow":12448,"simd":6992,"tight":1932709,"covered":679313,"depthPassed":414003,"simdTight":1874795,"scalarTight":57914,"blocks":258905,"blocksEmpty":144131,"blocksFull":57611,"lanes":650583,"tiles":41902,"tReject":16494,"tAccept":5031,"tPartial":20377,"tileRowsEdge":102017,"tileRowsFill":40248,"thin":88,"holes":0,"tt":[72146,41902,24724,16461,9170],"trj":[33829,16494,7830,3909,899],"tac":[11943,5031,2091,843,116],"tpa":[26374,20377,14803,11709,8155],"tEdgeBlk":[83168,102017,119959,139531,181075],"tFillBlk":[47772,40248,33456,26976,14848],"fx":[679313,679302,345,677684,6601],"cls":[772,11192,3879,2128,1610,447,142,42],"clsCov":[381,14619,15990,33789,88623,91570,135034,299307],"clsTight":[772,29708,32796,74618,194131,204680,341133,1054871]}
+VISIBLE {"cam":"Bench_Cam_Game","drawn":20212,"visibleTris":3496,"hiddenTris":16716,"hiddenBlocks":82987,"hiddenCov":258128,"hiddenScalarPx":41347,"visibleBlocks":175918,"visibleCov":421185,"visibleScalarPx":16567}
+ROOMS {"cam":"Bench_Cam_Game","drawn":[111,2622,3508,11882,1637,452],"covered":[361098,210774,13176,15444,43693,35128],"passed":[361098,45243,5762,1900,0,0],"owned":[308526,31402,3956,1716,0,0],"back":[48,1936,1276,6902,640,164]}
+pixels jamais couverts (fissures ou vide) : 0 / 345600
+
+== Bench_Cam_Dbg1  pos=(3.0,1.7,2.5) yaw=0 ==
+submitted 64934  clipped 24  front 54020  back 10910 (16.8% des sorties)  earlyRej 33548  drawn 20472
+TrisCov0/1/2-4/5+ = 2390 / 6051 / 6112 / 5919   pix1(1x1) 661   simd(w>=3) 7421
+Tight 1843127  Covered 627153  DepthPassed 369653   Covered/Tight 34.0%   DepthPassed/Covered 58.9%   Tight/tri 90.0
+classes de boite (px) : [=1: 661 tris, cov/tight 49%] [2-4: 11706 tris, cov/tight 49%] [5-16: 3586 tris, cov/tight 48%] [17-64: 2078 tris, cov/tight 46%] [65-256: 1894 tris, cov/tight 45%] [257-1024: 417 tris, cov/tight 45%] [1025-8192: 90 tris, cov/tight 35%] [>8192: 40 tris, cov/tight 28%] 
+thin(boite>=64 et cov/tight<25%) 117
+C2 blocs : 246970  vides 55.8%  pleins 20.7%  voies couvertes/voies 30.4%   scalaire(tight) 55117
+tuiles 8x8 (triangles SIMD) : 0  rejet 0.0%  acceptation 0.0%  partielles 0.0%   lignes d'aretes 246970 -> hierarchie 0 (+0 lignes de remplissage direct)
+JSON {"cam":"Bench_Cam_Dbg1","submitted":64934,"clipped":24,"front":54020,"back":10910,"earlyRej":33548,"drawn":20472,"cov0":2390,"cov1":6051,"cov24":6112,"cov5":5919,"pix1":661,"narrow":12390,"simd":7421,"tight":1843127,"covered":627153,"depthPassed":369653,"simdTight":1788010,"scalarTight":55117,"blocks":246970,"blocksEmpty":137822,"blocksFull":51071,"lanes":599824,"tiles":40499,"tReject":15801,"tAccept":4608,"tPartial":20090,"tileRowsEdge":97340,"tileRowsFill":36864,"thin":117,"holes":0,"tt":[68934,40499,24453,16213,9284],"trj":[32272,15801,7565,3620,783],"tac":[10639,4608,1941,832,129],"tpa":[26023,20090,14947,11761,8372],"tEdgeBlk":[81668,97340,113272,128281,161354],"tFillBlk":[42556,36864,31056,26624,16512],"fx":[627153,627153,406,625068,7067],"cls":[661,11706,3586,2078,1894,417,90,40],"clsCov":[324,15554,15230,33986,104188,83845,80993,293033],"clsTight":[661,31566,31474,73684,229448,187537,233072,1055685]}
+VISIBLE {"cam":"Bench_Cam_Dbg1","drawn":20472,"visibleTris":1656,"hiddenTris":18816,"hiddenBlocks":92701,"hiddenCov":242120,"hiddenScalarPx":46324,"visibleBlocks":154269,"visibleCov":385033,"visibleScalarPx":8793}
+ROOMS {"cam":"Bench_Cam_Dbg1","drawn":[61,2612,3396,12147,1876,380],"covered":[311279,199042,13832,15921,61388,25691],"passed":[311279,52727,3865,0,0,1782],"owned":[304197,37172,2449,0,0,1782],"back":[48,1880,1276,6902,640,164]}
+pixels jamais couverts (fissures ou vide) : 0 / 345600
+
+== Bench_Cam_Dbg2  pos=(0.0,1.7,-24.0) yaw=0 ==
+submitted 64934  clipped 112  front 47498  back 7990 (14.4% des sorties)  earlyRej 20348  drawn 27150
+TrisCov0/1/2-4/5+ = 2021 / 4870 / 12521 / 7738   pix1(1x1) 378   simd(w>=3) 14214
+Tight 1003057  Covered 444948  DepthPassed 397585   Covered/Tight 44.4%   DepthPassed/Covered 89.4%   Tight/tri 36.9
+classes de boite (px) : [=1: 378 tris, cov/tight 49%] [2-4: 11243 tris, cov/tight 49%] [5-16: 10909 tris, cov/tight 47%] [17-64: 2516 tris, cov/tight 48%] [65-256: 1224 tris, cov/tight 47%] [257-1024: 712 tris, cov/tight 44%] [1025-8192: 168 tris, cov/tight 41%] [>8192: 0 tris, cov/tight 0%] 
+thin(boite>=64 et cov/tight<25%) 40
+C2 blocs : 143527  vides 36.2%  pleins 16.1%  voies couvertes/voies 35.0%   scalaire(tight) 87956
+tuiles 8x8 (triangles SIMD) : 0  rejet 0.0%  acceptation 0.0%  partielles 0.0%   lignes d'aretes 143527 -> hierarchie 0 (+0 lignes de remplissage direct)
+JSON {"cam":"Bench_Cam_Dbg2","submitted":64934,"clipped":112,"front":47498,"back":7990,"earlyRej":20348,"drawn":27150,"cov0":2021,"cov1":4870,"cov24":12521,"cov5":7738,"pix1":378,"narrow":12558,"simd":14214,"tight":1003057,"covered":444948,"depthPassed":397585,"simdTight":915101,"scalarTight":87956,"blocks":143527,"blocksEmpty":52000,"blocksFull":23168,"lanes":401709,"tiles":32484,"tReject":4978,"tAccept":959,"tPartial":26547,"tileRowsEdge":107787,"tileRowsFill":7672,"thin":40,"holes":0,"tt":[47750,32484,23254,19074,15278],"trj":[10917,4978,2016,916,252],"tac":[3565,959,190,26,0],"tpa":[33268,26547,21048,18132,15026],"tEdgeBlk":[91602,107787,122669,133711,142730],"tFillBlk":[14260,7672,3040,832,0],"fx":[444948,444954,408,443947,8017],"cls":[378,11243,10909,2516,1224,712,168,0],"clsCov":[187,18613,40250,38825,77920,170386,98767,0],"clsTight":[378,37998,84916,80971,166426,389376,242992,0]}
+VISIBLE {"cam":"Bench_Cam_Dbg2","drawn":27150,"visibleTris":7719,"hiddenTris":19431,"hiddenBlocks":21942,"hiddenCov":81687,"hiddenScalarPx":57785,"visibleBlocks":121585,"visibleCov":363261,"visibleScalarPx":30171}
+ROOMS {"cam":"Bench_Cam_Dbg2","drawn":[0,0,5624,21526,0,0],"covered":[0,0,388258,56690,0,0],"passed":[0,0,388258,9327,0,0],"owned":[0,0,338632,6968,0,0],"back":[0,0,1024,6966,0,0]}
+pixels jamais couverts (fissures ou vide) : 0 / 345600
+
+== Bench_Cam_Dbg3  pos=(0.0,1.7,-55.0) yaw=180 ==
+submitted 64934  clipped 332  front 20556  back 4308 (17.3% des sorties)  earlyRej 9759  drawn 10797
+TrisCov0/1/2-4/5+ = 269 / 731 / 2808 / 6989   pix1(1x1) 56   simd(w>=3) 7080
+Tight 981103  Covered 438479  DepthPassed 430435   Covered/Tight 44.7%   DepthPassed/Covered 98.2%   Tight/tri 90.9
+classes de boite (px) : [=1: 56 tris, cov/tight 41%] [2-4: 850 tris, cov/tight 51%] [5-16: 5041 tris, cov/tight 48%] [17-64: 2450 tris, cov/tight 48%] [65-256: 1344 tris, cov/tight 47%] [257-1024: 950 tris, cov/tight 44%] [1025-8192: 106 tris, cov/tight 40%] [>8192: 0 tris, cov/tight 0%] 
+thin(boite>=64 et cov/tight<25%) 121
+C2 blocs : 139546  vides 37.8%  pleins 18.1%  voies couvertes/voies 37.2%   scalaire(tight) 46305
+tuiles 8x8 (triangles SIMD) : 0  rejet 0.0%  acceptation 0.0%  partielles 0.0%   lignes d'aretes 139546 -> hierarchie 0 (+0 lignes de remplissage direct)
+JSON {"cam":"Bench_Cam_Dbg3","submitted":64934,"clipped":332,"front":20556,"back":4308,"earlyRej":9759,"drawn":10797,"cov0":269,"cov1":731,"cov24":2808,"cov5":6989,"pix1":56,"narrow":3661,"simd":7080,"tight":981103,"covered":438479,"depthPassed":430435,"simdTight":934798,"scalarTight":46305,"blocks":139546,"blocksEmpty":52809,"blocksFull":25195,"lanes":415528,"tiles":25991,"tReject":4727,"tAccept":1043,"tPartial":20221,"tileRowsEdge":103642,"tileRowsFill":8344,"thin":121,"holes":0,"tt":[41834,25991,16116,11733,7980],"trj":[11065,4727,1744,615,60],"tac":[3898,1043,187,14,0],"tpa":[26871,20221,14185,11104,7920],"tEdgeBlk":[85936,103642,119000,129884,139203],"tFillBlk":[15592,8344,2992,448,0],"fx":[438479,438477,336,438017,5066],"cls":[56,850,5041,2450,1344,950,106,0],"clsCov":[23,1686,22143,40302,88785,229173,56367,0],"clsTight":[56,3305,45929,83598,189560,519159,139496,0]}
+VISIBLE {"cam":"Bench_Cam_Dbg3","drawn":10797,"visibleTris":6580,"hiddenTris":4217,"hiddenBlocks":21302,"hiddenCov":71592,"hiddenScalarPx":17568,"visibleBlocks":118244,"visibleCov":366887,"visibleScalarPx":28737}
+ROOMS {"cam":"Bench_Cam_Dbg3","drawn":[92,2192,6676,552,961,324],"covered":[2088,10138,264260,153954,4021,4018],"passed":[2088,10137,264256,153954,0,0],"owned":[490,2552,188604,153954,0,0],"back":[60,1840,1220,384,640,164]}
+pixels jamais couverts (fissures ou vide) : 0 / 345600

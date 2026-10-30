@@ -1,0 +1,5 @@
+Les scènes bench_V_* ne sont pas faites pour jouer. Ce sont des instruments de mesure, sur le même modèle que bench_V_V1 et bench_V_V2, qui n’ont pas non plus de contrôle. Il y a trois raisons à cela.
+
+1. Chaque frame doit être identique. Le bench lance 300 frames et en tire un temps moyen. Si la caméra bouge, le nombre de triangles visibles, de pixels couverts et de blocs change à chaque frame. Le temps mesuré mélange alors le coût du moteur avec l’endroit où vous regardiez. Une différence de 3 % entre deux binaires deviendrait invisible dans ce bruit.
+2. Les prédictions sont faites pour un point de vue précis. Les chiffres de l’artefact (53 964 faces avant pour Game, etc.) ne valent que pour la caméra en (0 ; 1,7 ; 3) qui regarde vers −z. Le run R1 vérifie que le moteur retrouve exactement ces compteurs. Avec une caméra mobile, il n’y aurait rien de fixe à comparer.
+3. Les comparaisons A/B en dépendent. Pour juger Giesen ou Abrash, on lance le binaire A puis le binaire B dans l’ordre A B B A, sur la même image. Toute différence de temps doit venir du code, pas de la scène.

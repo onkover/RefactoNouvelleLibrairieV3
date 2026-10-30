@@ -557,25 +557,7 @@ int main(int argc, char* argv[])
 	int frameCount = 0;
 #endif
 
-//#if LV3_PROFILE
-//	{
-//		LV3::Profiler::Begin(8, 2);
-//		for (int i = 0; i < 5; ++i)
-//		{
-//			LV3_PROF_BEGIN_FRAME(static_cast<uint64_t>(i));
-//			{
-//				LV3_PROF_SCOPE(LV3::EProfZone::Render);
-//				std::this_thread::sleep_for(std::chrono::milliseconds(5));
-//			}
-//			LV3_PROF_COUNT(LV3::EProfCounter::Entities, 42);
-//			LV3_PROF_END_FRAME();
-//		}
-//		LV3::Profiler::DumpCsv("prof_smoke.csv", { "smoke", "Release", 0, 0, 0 });
-//	}
-//#endif
 
-		// system("clear");		// Nettoie la console (fonctionne sur Linux/macOS, pour Windows utiliser "cls")
-	
 	Logger::newline();
 	Logger::info("*********************");
 	Logger::info("=== Boucle de jeu ===\n");
@@ -641,7 +623,6 @@ int main(int argc, char* argv[])
 		PlayerInputSystem(registry, input, realDt);
 
 		// --- Mettre à jour la scène
-//		CheckControllerExclusivity(registry);       // CHAQUE frame — invariant FPS/Follow
 		{
 			// Compte dans le budget "Cameras" : c'est l'invariant des controleurs
 			// de camera, meme s'il s'execute ici pour des raisons d'ordre. Les
@@ -651,7 +632,6 @@ int main(int argc, char* argv[])
 		}
 
 		// --- MISE À JOUR DE L'ÉTAT (Logique pure) ---
-		//AnimationSystem(registry, simDt);
 		{
 			LV3_PROF_SCOPE(LV3::EProfZone::Animation);
 			AnimationSystem(registry, simDt);
