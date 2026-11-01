@@ -42,6 +42,7 @@ namespace LV3::Tests
     bool Test_C1_RasterKernels();
     bool Test_C2_Raster8();
     bool Test_C3_Pixel1();
+    bool Test_Da1_Fixed();          // D-a1 : aretes en virgule fixe
 
 
 #if LV3_DEBUG    
@@ -188,6 +189,16 @@ namespace LV3::Tests
         else
         {
             Logger::success("SUCCES : Test_C3_Pixel1()");
+        }
+
+        if (!Test_Da1_Fixed())
+        {
+            Logger::error("ECHEC : Test_Da1_Fixed()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da1_Fixed()");
         }
 
 

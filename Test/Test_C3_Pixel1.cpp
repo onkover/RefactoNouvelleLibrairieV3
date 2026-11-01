@@ -69,6 +69,13 @@ namespace LV3::Tests
             }
             // Les lots lisent 24 indices : nombre de faces ramene a un multiple de 8.
             while ((idx.size() / 3) % 8 != 0) idx.resize(idx.size() - 3);
+
+            #if LV3_RASTER_FIXED
+                // D-a1 : CONTRAT DE L'ETAGE SOMMETS. Un RasterVertex du moteur sort de ProjectClip ou
+                // de ProjectPositions8, donc sur la grille des 1/256 de pixel. Les sommets fabriques
+                // ici a la main doivent respecter le meme contrat (C3 et le noyau le supposent).
+                for (RasterVertex& p : rv) { p.x = SnapToSubpixel(p.x); p.y = SnapToSubpixel(p.y); }
+            #endif
         }
 
         struct Target
