@@ -43,6 +43,8 @@ namespace LV3::Tests
     bool Test_C2_Raster8();
     bool Test_C3_Pixel1();
     bool Test_Da1_Fixed();          // D-a1 : aretes en virgule fixe
+    bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers
+
 
 
 #if LV3_DEBUG    
@@ -201,6 +203,15 @@ namespace LV3::Tests
             Logger::success("SUCCES : Test_Da1_Fixed()");
         }
 
+        if (!Test_Da1b_Bary())
+        {
+            Logger::error("ECHEC : Test_Da1b_Bary()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da1b_Bary()");
+        }
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())

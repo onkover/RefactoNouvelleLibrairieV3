@@ -181,9 +181,17 @@ namespace LV3::Tests
                     TriangleSetup s; EdgeSetupFx fx;
                     if (!SetupTriangleFx(t.v[0], t.v[1], t.v[2], vp, s, fx)) continue;
                     ++fixed;
+                    // D-a1b : PrepareLanesFx ne met plus les arêtes acceptées à 0. On compte celles
+                    // dont TOUTES les voies de la boîte étendue sont >= 0 (coin de rejet lo >= 0) :
+                    // elles portent leurs vraies valeurs, et doivent donner les mêmes pixels.
+                    const int64_t dxe = int64_t(s.bb.x1) + 15 - s.bb.x0, dye = int64_t(s.bb.y1) - s.bb.y0;
+                    for (int k = 0; k < 3; ++k)
+                    {
+                        const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;
+                        accepted += (fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0) >= 0) ? 1u : 0u;
+                    }
                     PrepareLanesFx(s, fx);
                     wide += fx.wide ? 1u : 0u;
-                    for (int k = 0; k < 3; ++k) accepted += (fx.a[k] == 0 && fx.b[k] == 0 && fx.e[k] == 0) ? 1u : 0u;
                 }
                 Logger::info("[D-a1] vue " + std::to_string(vp.width) + "x" + std::to_string(vp.height) + " : "
                     + std::to_string(fixed) + " triangles en virgule fixe, " + std::to_string(wide) + " en voies 64 bits, "

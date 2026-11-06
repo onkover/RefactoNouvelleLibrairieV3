@@ -1,0 +1,831 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot D-a1b pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Concept : la suite du carnet de laboratoire (Lot V3). Une table de rastérisation en haut, grille de pixels
+   et registres entiers sous les yeux ; puis les fiches d'étapes, chacune avec son code avant / après.
+   Cobalt = géométrie et entiers exacts, ambre = prédiction, vert = vérifié, rouge = contre-exemple. */
+:root{
+  --bg:#ecf0f4; --surface:#ffffff; --surface2:#f4f7fa; --ink:#101b27; --muted:#546479; --line:#ccd5df;
+  --accent:#2b57c4; --accent-soft:#e3ebfc; --warn:#9c5300; --warn-soft:#fbefdc; --ok:#146c43; --ok-soft:#dff3e8;
+  --bad:#ad2118; --bad-soft:#fbe4e1; --code-bg:#f1f4f8; --code-ink:#16222f;
+  --cov:#9db7f2; --cov-ink:#1a3d91; --grid:#c6d0dc; --center:#55657a; --tri:#101b27; --boxl:#9c5300;
+  --f-display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --cov:#2d4b8c; --cov-ink:#bcd0ff; --grid:#2a3644; --center:#8c9db1; --tri:#e3e9f0; --boxl:#e8aa55; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --cov:#2d4b8c; --cov-ink:#bcd0ff; --grid:#2a3644; --center:#8c9db1; --tri:#e3e9f0; --boxl:#e8aa55; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0;
+  padding-block:0 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-stretch:100%;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,46px);font-weight:760;letter-spacing:-.01em;line-height:1.05}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700}
+h3{font-size:17px;font-weight:650}
+p{margin:.55em 0} a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.9em}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+header.top{padding-top:34px;display:grid;gap:14px}
+.lede{max-width:72ch;color:var(--muted);font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:8px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.fact b{display:block;font-family:var(--f-display);font-size:26px;font-weight:720;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:3px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
+.tag.m{color:var(--accent)} .tag.p{color:var(--warn)} .tag.ok{color:var(--ok)} .tag.bad{color:var(--bad)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);margin-top:22px;display:flex;gap:2px;overflow-x:auto;padding-block:6px}
+nav.tabs a{font-family:var(--f-mono);font-size:12px;text-decoration:none;color:var(--muted);padding:6px 11px;border-radius:4px;white-space:nowrap}
+nav.tabs a:hover,nav.tabs a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-top:38px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+section>*{min-width:0}
+.stepbody>*{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 13px;border-radius:0 5px 5px 0;margin:10px 0}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)} .note.bad{border-color:var(--bad);background:var(--bad-soft)} .note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p:first-child{margin-top:0} .note p:last-child{margin-bottom:0}
+.lab{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.lab{grid-template-columns:minmax(0,1fr)}}
+canvas#cv,canvas#gcv{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px;background:var(--surface2);touch-action:none;cursor:crosshair}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select,input[type=number]{font:inherit;font-size:13px;font-family:var(--f-mono);background:var(--surface2);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5px 9px}
+button{cursor:pointer} button:hover{border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+input[type=number]{width:118px;font-variant-numeric:tabular-nums}
+:where(button,select,input,a,summary,canvas):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.vtx{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;font-family:var(--f-mono);font-size:12.5px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;vertical-align:top;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.tw{overflow-x:auto}
+.regs td,.regs th{text-align:center;font-family:var(--f-mono);font-size:12px;padding:3px 6px;white-space:nowrap}
+.regs td:first-child,.regs th:first-child{text-align:left;color:var(--accent)}
+.regs td.neg{color:var(--bad)} .regs td.pos{color:var(--ok)} .regs td.dim{color:var(--muted)}
+.regs td.on{background:var(--ok-soft);color:var(--ok);font-weight:600} .regs td.off{color:var(--muted)}
+details.step{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+details.step>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+#steps,#faq,#verif{grid-template-columns:minmax(0,1fr)}
+details.step{min-width:0}
+details.step>summary::-webkit-details-marker{display:none}
+details.step>summary .n{font-family:var(--f-mono);font-size:12px;color:var(--accent);min-width:2.6em}
+details.step>summary h3{flex:1 1 220px;min-width:0}
+details.step>summary .f{font-family:var(--f-mono);font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+details.step>summary::after{content:"+";font-family:var(--f-mono);color:var(--muted)}
+details.step[open]>summary::after{content:"−"}
+.stepbody{padding:0 16px 16px;display:grid;gap:12px;min-width:0;grid-template-columns:minmax(0,1fr)}
+.lbl{font-family:var(--f-mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.io{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.io>div{background:var(--surface2);border-radius:5px;padding:10px 12px;min-width:0}
+.calc{font-family:var(--f-mono);font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:900px){.pair{grid-template-columns:minmax(0,1fr)}}
+.pair>div,.one{min-width:0;display:flex;flex-direction:column}
+.cap{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:5px 5px 0 0;background:var(--surface2);color:var(--muted)}
+.cap.after{background:var(--accent-soft);color:var(--accent)}
+.cap.simd{background:var(--ok-soft);color:var(--ok)}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:12px;line-height:1.5;padding:10px 12px;border:1px solid var(--line);border-radius:0 0 5px 5px;overflow:auto;max-height:560px;white-space:pre;tab-size:4;flex:1}
+.where{font-size:13px;color:var(--muted);margin:2px 0 0}
+.where b{color:var(--ink);font-family:var(--f-mono);font-weight:500;font-size:12.5px}
+.ce{display:grid;gap:8px}
+.ce .big{font-family:var(--f-display);font-size:30px;font-weight:720;color:var(--bad);font-variant-numeric:tabular-nums;line-height:1.1}
+.ce .big.ok{color:var(--ok)}
+ol.apply{margin:6px 0;padding-left:22px} ol.apply li{margin-bottom:6px}
+.check{list-style:none;padding-left:0;margin:0} .check li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.check input{margin-top:5px;accent-color:var(--accent)}
+.small{font-size:12.5px;color:var(--muted)}
+.bars{display:grid;grid-template-columns:minmax(120px,190px) 1fr auto;gap:5px 10px;align-items:center;font-size:13px}
+.bars .nm{font-family:var(--f-mono);font-size:12px;color:var(--muted)} .bars .v{font-family:var(--f-mono);font-size:12px;text-align:right;white-space:nowrap}
+.seg{display:flex;height:20px;border-radius:3px;overflow:hidden;border:1px solid var(--line);min-width:0}
+.seg i{display:block;height:100%}
+.sS{background:#8794a6} .sE{background:#5b86e8} .sF{background:#e0a248}
+footer{margin-top:48px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+/* D-a1b : même carnet que D-a1. Ajouts : grille de reste (r, bias, c) et comparaison de trois barycentriques. */
+.bary3{display:grid;grid-template-columns:auto repeat(3,minmax(0,1fr));gap:4px 10px;font-family:var(--f-mono);font-size:12px;align-items:baseline}
+.bary3 .h{color:var(--muted);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.err-ok{color:var(--ok)} .err-bad{color:var(--bad)}
+.toggle{display:flex;flex-wrap:wrap;gap:6px}
+.kpi{font-family:var(--f-display);font-weight:720;font-size:20px;font-variant-numeric:tabular-nums}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">LibraryV3 · Phase G · Jalon D (rastérisation rapide) · voie D-a1b · rédigé le 4 novembre 2026 · base LIB e97d976 / EXE 90c144b</div>
+  <h1>Lot D-a1b pas à pas</h1>
+  <p class="lede">D-a1 a rendu plus rapide la question « ce pixel est-il dans le triangle ? », mais il a rendu plus lente la question suivante, « où est-il dans le triangle ? ». Ce lot rétablit l'équilibre : les deux réponses sont lues dans les mêmes nombres entiers. À l'écran, rien ne change. Ce qui change, c'est le temps de rendu des scènes à grands triangles, comme un niveau de FPS.</p>
+  <div class="facts">
+    <div class="fact"><b>Image identique</b><span>0 couleur différente sur 1 382 400 pixels testés (scène V3, 4 vues)</span></div>
+    <div class="fact"><b>−9 %</b><span>temps de dessin des triangles, mesuré hors moteur ; le gain réel se mesure au lot A/B</span></div>
+    <div class="fact"><b>Plus précis</b><span>profondeur interpolée sans perte près des bords des triangles</span></div>
+    <div class="fact"><b>(b) rayé</b><span>la seconde moitié prévue du lot coûtait plus qu'elle ne rapportait (section « Décisions »)</span></div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <a href="#contexte">Contexte</a><a href="#probleme">Problème</a><a href="#objectif">Objectif</a><a href="#decisions">Décisions</a><a href="#lexique">Lexique</a>
+  <a href="#prod">Production</a><a href="#methode">Méthode</a><a href="#labo">Labo</a><a href="#etapes">Étapes</a>
+  <a href="#moitie2">24.8 en sommets</a><a href="#contre">Contre-exemples</a><a href="#predictions">Prédictions</a>
+  <a href="#verifier">Vérifier</a><a href="#appliquer">Appliquer</a>
+</nav>
+
+<section id="lire">
+  <div class="panel">
+    <div class="lbl">Comment lire ce document</div>
+    <p>Les cinq premières sections se lisent sans connaître le code : d'où l'on vient, ce qui ne va pas, ce que le lot doit obtenir, les décisions qui vous reviennent, et un lexique. Les actions commencent ensuite : d'abord la configuration de production (action 1), puis D-a1b (action 2) avec la méthode, le labo, les étapes de code avant / après, les contre-exemples, les prédictions et la vérification.</p>
+  </div>
+</section>
+
+<section id="contexte">
+  <div class="eyebrow">Avant de commencer · 1</div>
+  <h2>D'où l'on vient : le rendu d'un triangle et le jalon D</h2>
+  <p>Pour dessiner un triangle, le moteur fait trois choses, pixel par pixel, dans sa boîte englobante :</p>
+  <ol class="apply">
+    <li><b>La couverture.</b> Le centre du pixel est-il dans le triangle ? On calcule trois <i>fonctions d'arête</i>, une par côté. Leur signe dit de quel côté de l'arête se trouve le pixel. Trois signes positifs : le pixel est couvert.</li>
+    <li><b>Les barycentriques.</b> Où est le pixel dans le triangle ? Trois poids b0, b1, b2, de somme 1, qui disent « à 30 % du sommet 0, à 50 % du sommet 1… ». Ils servent à interpoler tout ce qui varie sur le triangle : aujourd'hui la profondeur (test Z), demain les UV et les normales du chantier shading.</li>
+    <li><b>Le fragment.</b> Test de profondeur, puis écriture de la couleur.</li>
+  </ol>
+  <p>Les deux premières tâches utilisent les mêmes nombres : une barycentrique est une fonction d'arête divisée par l'aire du triangle.</p>
+
+  <div class="panel tw">
+    <div class="lbl">Le chemin parcouru, lot par lot</div>
+    <table>
+      <tr><th>Lot</th><th style="text-align:left">Ce qu'il a fait</th><th style="text-align:left">Ce qu'il a montré</th></tr>
+      <tr><td>C2 (25/10)</td><td style="text-align:left">Fonctions d'arête en <b>flottant</b>, calculées directement pour 8 pixels à la fois (AVX2). Les mêmes valeurs servent à la couverture et aux barycentriques.</td><td style="text-align:left">Scène V2 ×2,27. Mais calculer 3 fonctions d'arête complètes par pixel reste cher.</td></tr>
+      <tr><td>V3 (31/10)</td><td style="text-align:left">Scène de niveau FPS (6 pièces, murs proches), puis découpage du temps de rendu par paliers.</td><td style="text-align:left">Les arêtes prennent 41 % du rendu : le jalon D est ouvert, d'abord Giesen (D-a1), ensuite Abrash (D-a2).</td></tr>
+      <tr><td>D-a1 (03/11)</td><td style="text-align:left"><b>Méthode de Giesen en virgule fixe.</b> Les sommets sont posés sur une grille de 1/256 de pixel ; les fonctions d'arête deviennent des entiers exacts, avancés d'un pixel au suivant par une simple addition au lieu d'être recalculés.</td><td style="text-align:left">Rooms −13,9 %. V1 (micro-triangles) +4 à +5 %, accepté par dérogation. Le découpage révèle un effet de bord : les barycentriques coûtent désormais plus cher qu'avant.</td></tr>
+      <tr><td><b>D-a1b (ce lot)</b></td><td style="text-align:left">Tirer les barycentriques des entiers de D-a1.</td><td style="text-align:left">Voir les sections suivantes.</td></tr>
+    </table>
+  </div>
+</section>
+
+<section id="probleme">
+  <div class="eyebrow">Avant de commencer · 2</div>
+  <h2>Le problème laissé par D-a1 : la couverture et les barycentriques ne partagent plus rien</h2>
+  <p>En C2, une seule évaluation flottante servait aux deux tâches. D-a1 a remplacé la couverture par des entiers, beaucoup plus rapides. Mais les barycentriques ont continué d'exiger des flottants : pour chaque bloc de 8 pixels où au moins un pixel est couvert, D-a1 recalcule les trois fonctions d'arête en flottant, depuis le début (fonction <code>BlockBary8</code>). Les entiers, qui contiennent déjà la réponse, sont jetés.</p>
+
+  <div class="panel">
+    <div class="lbl">Ce que chaque version calcule pour un bloc de 8 pixels</div>
+    <svg viewBox="0 0 840 256" width="100%" role="img" aria-label="Partage des calculs entre couverture et barycentriques, C2, D-a1, D-a1b" style="max-width:900px;display:block;font-family:var(--f-mono);font-size:12px">
+      <defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--muted)"/></marker></defs>
+      <g fill="var(--ink)" font-weight="600"><text x="0" y="44">C2</text><text x="0" y="124">D-a1</text><text x="0" y="210">D-a1b</text></g>
+      <rect x="70" y="22" width="250" height="34" rx="4" fill="var(--warn-soft)" stroke="var(--warn)"/>
+      <text x="82" y="43" fill="var(--ink)">3 arêtes flottantes (21 op.)</text>
+      <path d="M322 39 H378" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <path d="M322 39 C350 39 350 70 378 70" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <text x="386" y="43" fill="var(--ink)">couverture (signes)</text>
+      <text x="386" y="74" fill="var(--ink)">barycentriques (× 1/aire)</text>
+      <text x="700" y="58" fill="var(--muted)">un calcul,</text><text x="700" y="74" fill="var(--muted)">deux usages</text>
+      <rect x="70" y="102" width="250" height="34" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="82" y="123" fill="var(--ink)">3 arêtes entières (3 add.)</text>
+      <path d="M322 119 H378" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <text x="386" y="123" fill="var(--ink)">couverture (signes)</text>
+      <rect x="70" y="142" width="250" height="34" rx="4" fill="var(--bad-soft)" stroke="var(--bad)"/>
+      <text x="82" y="163" fill="var(--ink)">+ 3 arêtes flottantes (26 op.)</text>
+      <path d="M322 159 H378" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <text x="386" y="163" fill="var(--ink)">barycentriques</text>
+      <text x="700" y="138" fill="var(--bad)">deux calculs</text><text x="700" y="154" fill="var(--bad)">du même</text><text x="700" y="170" fill="var(--bad)">résultat</text>
+      <rect x="70" y="194" width="250" height="34" rx="4" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="82" y="215" fill="var(--ink)">3 arêtes entières (3 add.)</text>
+      <path d="M322 211 H378" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <path d="M322 211 C350 211 350 242 378 242" stroke="var(--muted)" fill="none" marker-end="url(#ar)"/>
+      <text x="386" y="215" fill="var(--ink)">couverture (signes)</text>
+      <text x="386" y="246" fill="var(--ink)">barycentriques (reste, échelle : 9 op.)</text>
+      <text x="700" y="230" fill="var(--ok)">un calcul,</text><text x="700" y="246" fill="var(--ok)">deux usages</text>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="lbl">Ce que la mesure du 3 novembre a montré (scène rooms, temps par palier, ms)</div>
+    <svg viewBox="0 0 760 196" width="100%" role="img" aria-label="Paliers C2, D-a1 et prédiction D-a1b" style="max-width:860px;display:block;font-family:var(--f-mono);font-size:11px">
+      <!-- 1 ms = 44 px, origine x = 70 -->
+      <g fill="var(--ink)" font-size="12" font-weight="600"><text x="0" y="36">C2</text><text x="0" y="86">D-a1</text><text x="0" y="136">D-a1b</text></g>
+      <rect x="70" y="20" width="59.8" height="26" fill="#8794a6"/><rect x="129.8" y="20" width="270.2" height="26" fill="#5b86e8"/><rect x="400" y="20" width="118.4" height="26" fill="#e0a248"/>
+      <text x="526" y="38" fill="var(--ink)">10,19</text>
+      <rect x="70" y="70" width="46.6" height="26" fill="#8794a6"/><rect x="116.6" y="70" width="132" height="26" fill="#5b86e8"/><rect x="248.6" y="70" width="220.9" height="26" fill="#e0a248"/>
+      <text x="477" y="88" fill="var(--ink)">9,08</text>
+      <rect x="70" y="120" width="46.6" height="26" fill="#8794a6"/><rect x="116.6" y="120" width="132" height="26" fill="#5b86e8"/><rect x="248.6" y="120" width="154.4" height="26" fill="#e0a248"/>
+      <rect x="403" y="120" width="42.3" height="26" fill="#e0a248" opacity=".35"/>
+      <text x="453" y="138" fill="var(--warn)">≈ 7,6 à 8,5 (prédit)</text>
+      <g fill="var(--muted)"><text x="190" y="62">arêtes −51 %</text><text x="300" y="62">fragments +87 %</text></g>
+      <g font-size="11.5" fill="var(--muted)">
+        <rect x="70" y="170" width="11" height="11" fill="#8794a6"/><text x="86" y="180">préparation du triangle</text>
+        <rect x="280" y="170" width="11" height="11" fill="#5b86e8"/><text x="296" y="180">arêtes (couverture)</text>
+        <rect x="460" y="170" width="11" height="11" fill="#e0a248"/><text x="476" y="180">fragments (barycentriques, Z, couleur)</text>
+      </g>
+    </svg>
+    <p class="small">Mesures R2 du 31/10 (C2) et du 03/11 (D-a1), même scène, paliers d'ablation. D-a1b : prédiction tirée du banc hors moteur (fragments −11 % à −30 %), la partie claire marque la fourchette. Le gain total n'apparaît qu'au lot A/B.</p>
+  </div>
+
+  <div class="note bad"><p><b>En une phrase.</b> D-a1 a gagné 3,1 ms sur les arêtes et en a rendu 2,3 ms sur les fragments, parce que les barycentriques y sont recalculées en flottant. Les trois quarts du gain de Giesen sont perdus là.</p></div>
+</section>
+
+<section id="objectif">
+  <div class="eyebrow">Avant de commencer · 3</div>
+  <h2>L'objectif du lot</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Objectif fonctionnel</h3>
+      <ul>
+        <li><b>Même image.</b> Pas un pixel couvert de plus ou de moins, pas une couleur différente. Seules certaines profondeurs bougent au dernier bit, et dans le bon sens (plus justes).</li>
+        <li><b>Rendu plus rapide</b> là où les triangles sont grands : niveau de FPS, objets proches. Rien ne change pour les micro-triangles (V1), qui ne passent pas par ce code.</li>
+        <li><b>Une base saine pour la suite.</b> Le chantier shading interpolera les UV et les normales avec ces mêmes barycentriques : chaque attribut ajouté profitera de leur coût réduit et de leur précision.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Objectif technique</h3>
+      <ul>
+        <li>Rétablir le principe de C2 (un seul calcul pour la couverture et les barycentriques), mais avec les entiers de D-a1.</li>
+        <li>Par bloc de 8 pixels : 9 opérations au lieu de 26 pour les barycentriques.</li>
+        <li>Garder l'égalité au bit près entre tous les chemins (scalaire, AVX2 32 bits, AVX2 64 bits, C3), condition de toutes les TNR depuis C1.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="panel">
+    <h3>L'idée, sans formule</h3>
+    <p>La boucle de D-a1 ne garde pas la fonction d'arête exacte, mais une version divisée par 256 et arrondie vers le bas, pour travailler avec de petits entiers. Ce qui a été arrondi (« le reste ») est <b>le même pour tous les pixels du triangle</b>, parce que la fonction d'arête change toujours par multiples de 256 d'un pixel à l'autre. Il suffit donc de le noter une fois par triangle, puis de le rajouter. On retrouve la valeur exacte, et la barycentrique s'obtient par une addition et une multiplication.</p>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="eyebrow">Avant de commencer · 4</div>
+  <h2>Ce que le plan prévoyait, ce que j'ai mesuré, ce qui est décidé</h2>
+  <p>Le plan du 3 novembre donnait deux objectifs à D-a1b. Je les ai mesurés hors moteur avant d'écrire le code. Le 4 novembre, vous m'avez confié le choix des optimisations, avec une seule contrainte : <b>Giesen reste</b>. Les décisions ci-dessous sont donc prises ; elles restent révisables si une mesure moteur les contredit.</p>
+  <div class="panel tw"><table>
+    <tr><th style="text-align:left">Prévu</th><th style="text-align:left">Pourquoi</th><th style="text-align:left">Mesure hors moteur</th><th style="text-align:left">Décision</th></tr>
+    <tr><td style="text-align:left"><b>(a) Barycentriques tirées des entiers</b></td><td style="text-align:left">récupérer les 2,3 ms rendues par les fragments</td><td style="text-align:left">dessin −8,9 %, fragments −11 %, image identique, précision meilleure</td><td style="text-align:left"><span class="tag ok">retenu</span> à appliquer et mesurer au lot A/B</td></tr>
+    <tr><td style="text-align:left"><b>(b) Coordonnées 24.8 stockées dès l'étage sommets</b></td><td style="text-align:left">supprimer une conversion float → entier, réduire le surcoût de V1</td><td style="text-align:left">−18 µs côté sommets, mais +100 µs ou plus côté faces : perte nette</td><td style="text-align:left"><span class="tag bad">rayé</span> par la mesure</td></tr>
+  </table></div>
+
+  <div class="grid2">
+    <div class="panel">
+      <h3>Pourquoi (b) est rayé</h3>
+      <p>Aujourd'hui, l'étage sommets écrit chaque sommet en float (en pixels, posé sur la grille 1/256). L'étage faces relit les trois coins de chaque face en float pour trois tests : face avant ou arrière (B4), boîte vide (3b), triangle d'un pixel (C3).</p>
+      <p>Si l'on stocke des entiers à la place, l'étage sommets économise une opération par coordonnée. Mais l'étage faces doit reconvertir chaque coin en float avant ses tests. Or un sommet est écrit une fois et ses coins sont relus bien plus souvent (un sommet appartient à environ 6 faces). La conversion ne disparaît pas : elle est déplacée là où elle se répète le plus.</p>
+      <p>Mesures sur le volume de V1 : étage sommets 143 → 125 µs ; étage faces +100 à +200 µs. Le détail est dans la partie « 24.8 en sommets ».</p>
+    </div>
+    <div class="panel">
+      <h3>Le surcoût de Giesen sur V1 : ce qu'il est vraiment</h3>
+      <p>Le 3 novembre, D-a1 a ralenti V1 de 41 à 46 µs (+4 à +5 %). Le plan l'appelait « dette V1 » : c'était un mauvais mot. Ce n'est pas un défaut à corriger, c'est le <b>prix d'entrée de Giesen</b> payé par une scène qui n'en profite pas :</p>
+      <ul>
+        <li>Giesen exige que chaque sommet soit posé sur la grille 1/256 dès l'étage sommets. Tout le moteur paie cet accrochage.</li>
+        <li>Seuls les triangles qui passent par la boucle Giesen en tirent un gain. Ceux de V1 font tous moins d'un pixel et passent par le raccourci C3 : ils paient sans rien recevoir.</li>
+        <li>V1 est une scène de stress <b>construite pour contourner le LOD</b> (<code>gen_bench_render.py</code> : « le .obj est chargé directement, pas de .lod.json »). Dans une scène réelle, ces sphères de 7 px de rayon passeraient en niveau bas ou en point, et ce coût disparaîtrait avec leurs faces.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="note ok">
+    <p><b>Décisions prises (4 novembre).</b></p>
+    <ol class="apply">
+      <li><b>(b) est rayé.</b> La mesure montre une perte nette.</li>
+      <li><b>Le surcoût V1 devient un « coût structurel de Giesen sur micro-triangles, connu et accepté ».</b> Il ne bloque plus aucun lot. Règle pour la suite : un lot ne doit pas l'aggraver (V1 dans ±2 % du lot précédent).</li>
+      <li><b>On le découpe avant de l'optimiser</b>, sans lot supplémentaire : le lot A/B de D-a1b ajoute sur V1 des runs du même binaire en <code>LV3_RASTER_FIXED = 0</code>. La différence avec <code>fixed = 1</code>, lue séparément sur <code>RenderVerts</code> et sur l'étage faces, dit où sont les 41 à 46 µs. On ne connaît aujourd'hui que leur somme.</li>
+      <li><b>Piste rangée, déclenchée seulement par ce découpage</b> : si l'étage sommets porte au moins 30 µs, accrocher par le « nombre magique » (x + 1,5·2¹⁵ − 1,5·2¹⁵ : 2 opérations au lieu de 3, exact pour les meshes Inside qui sont dans la vue) et retravailler B5c (ne projeter que les sommets des faces gardées). Gain attendu au banc : 10 µs au plus, trop faible pour un lot à l'aveugle.</li>
+    </ol>
+    <p>Rien de tout cela ne change ce que vous appliquez pour (a).</p>
+  </div>
+</section>
+
+<section id="lexique">
+  <div class="eyebrow">Avant de commencer · 5</div>
+  <h2>Lexique du lot</h2>
+  <div class="panel tw"><table>
+    <tr><th style="text-align:left">Terme</th><th style="text-align:left">Sens dans ce document</th></tr>
+    <tr><td style="text-align:left">Fonction d'arête E</td><td style="text-align:left">Pour un côté du triangle et un point P : deux fois l'aire signée du petit triangle (côté, P). Positive d'un côté du bord, négative de l'autre.</td></tr>
+    <tr><td style="text-align:left">Aire</td><td style="text-align:left">Somme des trois E, la même en tout point : deux fois l'aire du triangle.</td></tr>
+    <tr><td style="text-align:left">Barycentriques b0, b1, b2</td><td style="text-align:left">E divisé par l'aire, pour chaque côté. Poids d'interpolation de la profondeur (et plus tard des UV, normales).</td></tr>
+    <tr><td style="text-align:left">Grille 1/256, accrochage</td><td style="text-align:left">D-a1 arrondit chaque sommet au 1/256 de pixel le plus proche, dans l'étage sommets. Les coordonnées multipliées par 256 deviennent des entiers.</td></tr>
+    <tr><td style="text-align:left">E′ (E prime)</td><td style="text-align:left">Ce que la boucle de D-a1 garde : (E + bias) divisé par 256, arrondi vers le bas. Son signe suffit pour la couverture.</td></tr>
+    <tr><td style="text-align:left">bias, règle top-left</td><td style="text-align:left">0 ou −1 selon l'orientation du côté : décide à qui appartient un pixel posé exactement sur une arête partagée, pour éviter trous et doublons.</td></tr>
+    <tr><td style="text-align:left">reste c, ofs</td><td style="text-align:left">Nouveau dans D-a1b : ce que la division par 256 a jeté, constant sur le triangle. E = 256·E′ + c ; ofs = c / 256.</td></tr>
+    <tr><td style="text-align:left">invQ</td><td style="text-align:left">Nouveau dans D-a1b : 256 / aire, l'échelle qui transforme E′ + ofs en barycentrique.</td></tr>
+    <tr><td style="text-align:left">Bloc de 8, voie</td><td style="text-align:left">AVX2 traite 8 pixels voisins d'une ligne à la fois ; chacun occupe une « voie » du registre.</td></tr>
+    <tr><td style="text-align:left">Voies 32 / 64 bits</td><td style="text-align:left">Taille des entiers dans le registre. 32 bits dans presque tous les cas ; 64 bits pour les rares triangles géants (coupés par le plan near).</td></tr>
+    <tr><td style="text-align:left">Arête acceptée</td><td style="text-align:left">Côté dont tous les pixels de la boîte sont du bon côté. D-a1 la remplaçait par 0 ; D-a1b la garde (étape 5).</td></tr>
+    <tr><td style="text-align:left">C3</td><td style="text-align:left">Raccourci de l'étage faces pour les triangles dont la boîte fait un seul pixel (tout V1).</td></tr>
+    <tr><td style="text-align:left">Paliers M, S, E, N</td><td style="text-align:left">Ablation : M sans dessin, S préparation seule, E arêtes sans fragment, N complet. Préparation = S − M, arêtes = E − S, fragments = N − E.</td></tr>
+    <tr><td style="text-align:left">ulp</td><td style="text-align:left">Écart entre deux float voisins : « 1 ulp » = le dernier bit change.</td></tr>
+    <tr><td style="text-align:left">Banc hors moteur</td><td style="text-align:left">Le vrai code de la LIB compilé avec g++ sur une autre machine, la scène V3 rejouée dessus. Les rapports comptent, pas les temps absolus.</td></tr>
+  </table></div>
+</section>
+
+<section id="actions-debut">
+  <div class="eyebrow">Les actions</div>
+  <h2>Deux actions demandées le 4 novembre</h2>
+  <p><b>Action 1</b> : remettre la configuration de production. <b>Action 2</b> : D-a1b, objectif (a). Les parties qui suivent sont dans cet ordre.</p>
+</section>
+
+<section id="prod">
+  <div class="eyebrow">Action 1 · Configuration de production</div>
+  <h2>Remettre la configuration de production : déjà fait dans le commit D-a1</h2>
+  <p>J'ai relu les dépôts au commit du 3 novembre (LIB <code>e97d976</code>, EXE <code>90c144b</code>, « lot D-a1 (Giesen) OK »). Les commutateurs de mesure sont tous à leur valeur de production. Il n'y a rien à modifier.</p>
+  <div class="panel tw"><table>
+    <tr><th>Commutateur (Core/config.h)</th><th style="text-align:left">Production</th><th style="text-align:left">Dans le commit</th><th style="text-align:left">État</th></tr>
+    <tr><td>LV3_ABLATION_RASTER</td><td style="text-align:left">0</td><td style="text-align:left">0</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>LV3_ABLATION_PIXELS</td><td style="text-align:left">0</td><td style="text-align:left">0</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>LV3_RASTER_STATS</td><td style="text-align:left">0</td><td style="text-align:left">0</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>LV3_LOD_STATS</td><td style="text-align:left">0</td><td style="text-align:left">0</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>LV3_RASTER_FIXED</td><td style="text-align:left">1 (D-a1 conservé)</td><td style="text-align:left">1</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>LV3_SIMD</td><td style="text-align:left">1</td><td style="text-align:left">1</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+    <tr><td>/FAs (AssemblerOutput, LibraryV3.vcxproj)</td><td style="text-align:left">NoListing</td><td style="text-align:left">NoListing (3 fichiers)</td><td style="text-align:left"><span class="tag ok">conforme</span></td></tr>
+  </table></div>
+  <div class="note warn"><p><b>Deux points hors commutateurs.</b> (1) <code>config.json</code> de l'EXE charge <code>bench_V_V1.json</code>, la scène du dernier run. C'est un choix d'usage, pas un réglage du moteur : remettez la scène que vous voulez voir au lancement. Pour le lot D-a1b, il faudra de toute façon <code>bench_V_V3_rooms.json</code>, <code>bench_V_V2.json</code> et <code>bench_V_V1.json</code>. (2) <code>LV3_PROFILE</code> vaut 1 par défaut alors que le message de compilation annonce « defaut 0 ». Le texte du <code>#pragma message</code> est faux, pas la valeur : le harnais reste armé, comme pour toutes les campagnes de la phase G.</p></div>
+</section>
+
+<section id="methode">
+  <div class="eyebrow">Action 2 · D-a1b · 1 · La méthode</div>
+  <h2>Barycentriques et fonctions d'arête : un seul calcul</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Ce que c'est</h3>
+      <p>Une fonction d'arête E<sub>k</sub>(P) vaut deux fois l'aire signée du petit triangle formé par P et l'arête k. Les trois petits triangles recouvrent le grand : E<sub>0</sub> + E<sub>1</sub> + E<sub>2</sub> = aire, en tout point. Diviser par l'aire donne trois poids positifs dans le triangle, de somme 1 : ce sont les <b>coordonnées barycentriques</b>.</p>
+      <p>Autrement dit, le rastériseur calcule déjà les barycentriques à un facteur près, pour savoir si un pixel est couvert. Il suffit de les normaliser. C'est le sujet du billet de Fabian Giesen <a href="https://fgiesen.wordpress.com/2013/02/06/the-barycentric-conspiracy/">« The barycentric conspiracy »</a> (février 2013), dans la série dont D-a1 a tiré les arêtes incrémentales (<a href="https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/">« Optimizing the basic rasterizer »</a>).</p>
+    </div>
+    <div class="panel">
+      <h3>Ce que D-a1 faisait, et pourquoi c'est un gaspillage</h3>
+      <p>D-a1 décide en entiers (E' ≥ 0), puis, pour chaque bloc non vide, refait en flottant les trois fonctions d'arête de C2 : 4 soustractions, 2 multiplications, 1 soustraction par arête, plus le centre des pixels et la multiplication par 1/aire. 26 opérations par bloc pour un résultat que les registres <code>e0</code>, <code>e1</code>, <code>e2</code> contiennent déjà.</p>
+      <p>Le découpage R2-Da1 l'a mesuré : fragments <b>+87 %</b> (2,69 → 5,02 ms sur rooms), 74 % du gain des arêtes rendu par <code>BlockBary8</code>.</p>
+    </div>
+    <div class="panel">
+      <h3>La seule difficulté : le décalage de 8 bits</h3>
+      <p>La boucle ne garde pas E mais E' = (E + bias) &gt;&gt; 8. Le décalage a jeté 8 bits. On les retrouve <b>une fois par triangle</b> : le reste r = (E + bias) &amp; 255 est le même en tout pixel, car E varie par multiples de 256 d'un pixel à l'autre (E = 256·(A'x + B'y) + K). Donc</p>
+      <p class="mono">E = 256·E' + c,   c = r − bias ∈ [0, 256]</p>
+      <p class="mono">b = E / aire = (E' + c/256) · (256 / aire)</p>
+      <p>c/256 et 256/aire sont exacts (puissances de 2). Par pixel il reste une conversion, une addition, une multiplication.</p>
+    </div>
+    <div class="panel">
+      <h3>Qui fait ainsi</h3>
+      <p>Giesen présente cette organisation comme la manière normale de faire : le setup calcule une fois les équations d'arête, et la même évaluation sert à la couverture et à l'interpolation. Dans sa série sur le rastériseur logiciel d'occlusion culling d'Intel (<a href="https://fgiesen.wordpress.com/2013/02/17/optimizing-sw-occlusion-culling-index/">2013</a>), la profondeur est interpolée à partir des valeurs d'arête de la boucle, sans recalcul.</p>
+      <p><b>Comparaison avec la méthode standard</b> (celle de C2 et de D-a1) : on évalue la couverture d'un côté, l'interpolation de l'autre, chacune avec ses propres arrondis. Elles peuvent se contredire : D-a1 pouvait dire « couvert » d'un pixel dont il calculait ensuite une barycentrique négative.</p>
+    </div>
+  </div>
+  <div class="note ok"><p><b>La précision gagne aussi.</b> E est exact. L'erreur ne vient plus que de trois arrondis relatifs (conversion, addition, multiplication) et de 1/aire : au plus 5·2⁻²⁴ relatif, mesuré 3,8·2⁻²⁴. La formule flottante de D-a1 soustrayait deux produits arrondis : près d'une arête, quand le résultat est petit, son erreur relative atteint 100 % (TNR, 7,7 millions de pixels).</p></div>
+</section>
+
+<section id="labo">
+  <div class="eyebrow">Action 2 · D-a1b · 2 · Laboratoire</div>
+  <h2>Un triangle, ses entiers, trois barycentriques</h2>
+  <p>Faites glisser les sommets (accrochés au 1/256 de pixel), cliquez un pixel. Les entiers sont calculés en BigInt, les flottants en float32 opération par opération (Math.fround), comme le CPU. La troisième colonne est la valeur exacte E / aire en double.</p>
+  <div class="lab">
+    <div>
+      <canvas id="cv" width="960" height="600" aria-label="Grille de pixels et triangle"></canvas>
+      <div class="legend"><span><i style="background:var(--cov)"></i>pixel couvert (E' ≥ 0)</span><span><i style="background:var(--warn)"></i>pixel choisi</span><span><i style="background:var(--boxl)"></i>boîte des centres</span></div>
+    </div>
+    <div class="panel" style="display:grid;gap:10px">
+      <div class="lbl">Cas</div>
+      <div class="toggle" id="presets"></div>
+      <div class="lbl">Décalage de la fenêtre à l'écran</div>
+      <div class="row"><label for="offx" class="small">x0 (px)</label><input type="number" id="offx" value="1100" step="1"><label for="offy" class="small">y0 (px)</label><input type="number" id="offy" value="700" step="1"></div>
+      <p class="small">Plus la fenêtre est loin de l'origine, plus les coordonnées ont de bits et plus la formule flottante de D-a1 arrondit. Les entiers, eux, restent exacts.</p>
+      <div class="lbl">Contre-exemples</div>
+      <div class="toggle">
+        <button id="tZero" aria-pressed="false">arêtes acceptées mises à 0</button>
+        <button id="tOfs" aria-pressed="false">sans ofs (c ignoré)</button>
+      </div>
+      <div id="triInfo" class="calc"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><div class="lbl">Pixel choisi : les trois arêtes</div><div id="pixInfo" class="calc"></div></div>
+    <div class="panel"><div class="lbl">Barycentriques du pixel</div><div id="baryInfo"></div></div>
+  </div>
+  <div class="panel tw"><div class="lbl">Son bloc de 8 voies (AVX2, voies 32 bits) : registres avant et après D-a1b</div><div id="blockInfo"></div></div>
+</section>
+
+<section id="etapes">
+  <div class="eyebrow">Action 2 · D-a1b · 3 · Le code</div>
+  <h2>Les étapes</h2>
+  <p>Chaque fiche donne l'objectif, ce qu'elle reprend de l'étape précédente, le résultat calculé sur le triangle du labo, puis le code <b>avant / après</b>, par fichier et par fonction. Les « avant » sont copiés du commit <code>e97d976</code> / <code>90c144b</code>. Le scalaire et l'AVX2 sont donnés tous les deux quand les deux existent. Trois fichiers LIB changent (<code>Rasterizer.h</code>, <code>PixelStage8.h</code> ; <code>Fragment.h</code> et <code>FaceStage.h</code> n'ont pas une ligne à toucher) et deux fichiers EXE (une TNR corrigée, une TNR nouvelle).</p>
+  <div id="steps" style="display:grid;gap:10px"></div>
+</section>
+
+<section id="moitie2">
+  <div class="eyebrow">Action 2 · D-a1b · 4 · La seconde moitié prévue (objectif b)</div>
+  <h2>Coordonnées 24.8 stockées dès l'étage sommets : mesuré, je propose de la rayer</h2>
+  <p>Le plan prévoyait aussi de ranger X = x·256 en entier dans <code>RasterVertex</code>, pour supprimer la double conversion float → grille → entier et payer la dette V1 (+41 à +46 µs). J'ai mesuré les deux bouts avant d'écrire une ligne pour le moteur.</p>
+  <div class="grid2">
+    <div class="panel tw"><div class="lbl">Étage sommets · ProjectPositions8, 274 568 sommets (V1, 4 vues), meilleur de 200</div>
+      <table>
+        <tr><th>Variante de l'étape 5</th><th>Temps</th><th>vs C2</th></tr>
+        <tr><td>C2 : pas d'accrochage</td><td>118 µs</td><td>—</td></tr>
+        <tr><td>D-a1 : ×256 replié, round, ×1/256</td><td>143 µs</td><td>+25 µs</td></tr>
+        <tr><td>float en 1/256 (round seul)</td><td>133 µs</td><td>+15 µs</td></tr>
+        <tr><td>int32 24.8 (cvtps2dq seul)</td><td>125 µs</td><td>+7 µs</td></tr>
+      </table>
+      <p class="small">Gain possible côté sommets : 18 µs au plus.</p>
+    </div>
+    <div class="panel tw"><div class="lbl">Étage faces · 508 000 faces, chargement des 3 coins, aire B4 et boîte 3b</div>
+      <table>
+        <tr><th>Stockage des sommets</th><th>Temps</th><th>Écart</th></tr>
+        <tr><td>float en pixels (aujourd'hui)</td><td>2 442 à 2 446 µs</td><td>—</td></tr>
+        <tr><td>int32 24.8 → 6 cvtdq2ps + 4 mul par lot</td><td>2 544 à 2 650 µs</td><td>+100 à +200 µs</td></tr>
+      </table>
+      <p class="small">Banc simplifié (chargement scalaire des coins, plus lent que <code>LoadCornerXY8</code>) : seul l'écart compte. L'étage faces LIT les coordonnées environ deux fois plus souvent que l'étage sommets ne les ÉCRIT (une face = 3 coins, un sommet sert ≈ 6 faces mais chaque lot de faces recharge ses coins).</p>
+    </div>
+  </div>
+  <div class="note bad"><p><b>Contre-exemple chiffré.</b> Stocker des entiers dans le sommet déplace la conversion du producteur (une fois par sommet) vers les consommateurs (une fois par coin de face, dans B4, 3b et C3). Bilan sur V1 : −18 µs côté sommets, +100 µs ou plus côté faces. La variante « float en 1/256 » économise 10 µs côté sommets mais oblige la boîte et le centre C3 à remultiplier par 1/256, et change l'unité d'un type lu par une dizaine de fonctions (points, gizmos, clipping, repli C2 hors garde). Je recommande de rayer cette moitié de D-a1b. Elle ne pouvait d'ailleurs pas payer la dette V1 : ≈ 25 µs viennent de l'accrochage lui-même, qui est le contrat de D-a1.</p></div>
+  <div class="note warn"><p><b>Et le surcoût de V1 ?</b> D-a1b ne touche aucun triangle de V1 : tous prennent C3 dans l'étage faces, jamais le noyau. Ce surcoût est le prix d'entrée de Giesen (accrochage des sommets), reclassé en coût structurel accepté ; il sera découpé au lot A/B (section « Décisions »).</p></div>
+</section>
+
+<section id="contre">
+  <h2>Contre-exemples chiffrés</h2>
+  <p>Chiffres du harnais hors moteur (g++ 13, <code>-mavx2 -ffp-contract=off</code>), sur le code du lot avec une seule modification. « Scène V3 » = <code>level_fps.obj</code>, 4 caméras du banc, vues 768 × 450, 1 382 400 pixels écrits, comparés à D-a1b.</p>
+  <div class="grid2" id="counter"></div>
+</section>
+
+<section id="predictions">
+  <h2>Prédictions écrites avant la mesure</h2>
+  <p>Le banc fait passer <code>level_fps.obj</code> par le vrai noyau de la LIB (<code>RasterizeTriangleT&lt;ShaderSolid&gt;</code>, aiguillage moteur), après une projection et un clipping refaits à l'image du moteur. Il retrouve 79 323 triangles dessinés (R1 V3 un mesh : 78 631). Ses temps viennent d'une autre machine : seuls les rapports comptent.</p>
+  <div class="grid2">
+    <div class="panel tw"><div class="lbl">Banc · dessin des triangles, médianes de 31 frames, 4 séquences A B B A, µs</div>
+      <table>
+        <tr><th>Caméra</th><th>D-a1 (A)</th><th>D-a1b (B)</th><th>Écart</th></tr>
+        <tr><td>Game</td><td>2 639</td><td>2 225</td><td>−15,7 %</td></tr>
+        <tr><td>Dbg1</td><td>2 225</td><td>2 102</td><td>−5,5 %</td></tr>
+        <tr><td>Dbg2 (fond, petits triangles)</td><td>2 494</td><td>2 558</td><td>bruit (minima égaux)</td></tr>
+        <tr><td>Dbg3</td><td>2 342</td><td>1 948</td><td>−16,8 %</td></tr>
+        <tr><td><b>Total</b></td><td><b>9 700</b></td><td><b>8 833</b></td><td><b>−8,9 %</b></td></tr>
+      </table>
+    </div>
+    <div class="panel tw"><div class="lbl">Banc · paliers (somme des minima, µs)</div>
+      <table>
+        <tr><th>Palier</th><th>D-a1</th><th>D-a1b</th><th>Écart</th></tr>
+        <tr><td>N (complet)</td><td>8 383</td><td>7 617</td><td>−766</td></tr>
+        <tr><td>E (arêtes seules, ABLATION_PIXELS = 2)</td><td>2 952</td><td>2 777</td><td>−175</td></tr>
+        <tr><td>Fragments N − E</td><td>5 431</td><td>4 840</td><td><b>−11 %</b></td></tr>
+      </table>
+      <p class="small">E baisse un peu aussi : la boucle n'avance plus avant le <code>continue</code> et n'a plus d'arête mise à zéro. À confirmer au moteur, ce peut être du bruit.</p>
+    </div>
+  </div>
+  <div class="panel tw"><div class="lbl">Prédictions pour le lot appairé (A = e97d976 / 90c144b, B = D-a1b)</div>
+    <table>
+      <tr><th>Mesure</th><th style="text-align:left">Prédiction</th><th style="text-align:left">Pourquoi</th></tr>
+      <tr><td>R1 : TrisRasterized, EarlyRejected, TrisCov*, PixelsTight, PixelsCovered, TrisSimd8, LaneBlocks8, TrisPix1</td><td style="text-align:left">identiques à D-a1</td><td style="text-align:left">la décision de couverture n'a pas changé d'un bit</td></tr>
+      <tr><td>R1 : TrisFixedWide</td><td style="text-align:left">0 → ≈ 7 (somme des 4 vues, rooms)</td><td style="text-align:left">plus d'arête acceptée mise à 0 (étape 4)</td></tr>
+      <tr><td>R1 : PixelsDepthPassed</td><td style="text-align:left">identique, ± quelques pixels</td><td style="text-align:left">banc : 0 couleur différente</td></tr>
+      <tr><td>V3 rooms, Render</td><td style="text-align:left"><b>−0,6 à −1,4 ms (−5 à −11 %)</b></td><td style="text-align:left">banc −8,9 % sur le seul dessin ; MSVC peut gagner plus (6 diffusions de sommets et 2 constantes en moins : moins de débordements de registres)</td></tr>
+      <tr><td>V2, Render</td><td style="text-align:left">−3 à −12 %</td><td style="text-align:left">4 920 triangles AVX2, 62 808 blocs dont ≈ 2 pixels couverts par bloc</td></tr>
+      <tr><td>V1, Render</td><td style="text-align:left">0 ± 1 % par rapport à D-a1</td><td style="text-align:left">aucun triangle de V1 ne passe par le noyau (TrisPix1 = 18 120 = tous)</td></tr>
+      <tr><td>V1, fixed = 0 contre fixed = 1 (même binaire D-a1b)</td><td style="text-align:left">+35 à +50 µs pour fixed = 1, dont RenderVerts +15 à +30 µs</td><td style="text-align:left">découpage du surcoût de Giesen ; seuil de la piste « nombre magique » : 30 µs sur RenderVerts</td></tr>
+      <tr><td>L</td><td style="text-align:left">bruit</td><td style="text-align:left">≈ 70 triangles AVX2 par frame</td></tr>
+      <tr><td>R2 rooms (facultatif)</td><td style="text-align:left">N − E −0,5 à −1,5 ms ; E − S ± 5 % ; S − M +0 à +3 %</td><td style="text-align:left">la préparation calcule 3 restes et invQ en plus</td></tr>
+    </table>
+  </div>
+  <div class="note"><p><b>Règle de décision, écrite avant la mesure.</b> D-a1b est accepté si : TNR vertes (dont la nouvelle), filet C3 silencieux en Debug, compteurs R1 conformes, <b>rooms ≥ 3 % de gain</b> sur Render en A B B A (deux séquences si l'écart est sous 5 %), V2 non ralenti de plus de 2 % (au moins 8 runs, bimodalité), V1 dans ±2 % de D-a1 (le surcoût de Giesen sur V1 est accepté, pas jugé ici). Sinon : lecture de l'asm avant toute conclusion.</p></div>
+</section>
+
+<section id="verifier">
+  <h2>Vérifier</h2>
+  <div class="note ok"><p><b>06/11 — appliqué par Onky.</b> TNR vertes, aucune assertion, aucun défaut visible. <b>Asm Release conforme</b> : dans <code>RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</code>, 0 call, 0 FMA, plus aucun vsubps d'EdgeFunction8 ; bloc non vide = 3 vcvtdq2ps + 3 vaddps + 3 vmulps pour les barycentriques ; voies 64 bits : vpaddq, vsubpd, vcvtpd2ps, vinsertf128 (MSVC utilise un seul registre pour les deux constantes magiques, qui ont le même motif de bits) ; scalaire : 3 vcvtsi2ss r64 par pixel couvert. Remarques sans conséquence : ofs0 et ofs2 rechargés depuis la mémoire à chaque bloc non vide (les 16 registres ymm sont pleins), échange flipped par une branche prévisible. Reste : R1 puis lot A/B.</p></div>
+  <div class="note ok"><p><b>06/11 — R1 conforme.</b> rooms : PixelsCovered 2 189 889 (prédit 2 189 887 ± 10), TrisSimd8 36 262 (banc : 36 262), <b>TrisFixedWide 7 (prédit ≈ 7)</b>, TrisPix1 1 865, invariants vérifiés. V2 : couverture identique à C2/C3 (126 928 pixels). V1 : TrisPix1 18 772, contre 18 120 avant D-a1 : l'accrochage fait passer <b>652 triangles de plus par C3, dont 668 de plus qui ne couvrent aucun pixel</b>. C'est une part du surcoût de Giesen sur V1 (≈ 13 µs estimés) que la séquence C B B C confirmera. Reste : lot A/B de temps.</p></div>
+  <div class="note warn"><p><b>06/11 — 1re séquence rooms A B B A : non recevable.</b> Render brut 12,86 → 14,47 ms (+12,5 %), mais les zones au code inchangé ralentissent autant ou plus avec B : RenderVerts +16,5 %, Clear +12 %, Present +21,5 %. Témoin ClearDepth : 14,6 % d'écart dans la séquence (seuil 5 %). Corrigé par les thermomètres : de −3,4 % à +3,7 % selon le témoin, donc aucune conclusion. À refaire : deux séquences A B B A dans la même séance.</p></div>
+  <div class="note ok"><p><b>06/11 — 2e séquence rooms : recevable, objectif tenu.</b> Render 9 452 → 8 834 µs, <b>−618 µs (−6,5 %)</b> ; corrigé par Clear −5,9 %, par ClearDepth −6,1 %. Témoins conformes (ClearDepth 2,2 % d'écart, |A1 − A2| 1,8 %). Prédiction −5 à −11 % confirmée, en bas de fourchette. Reste : V2 et V1.</p></div>
+  <div class="note ok"><p><b>06/11 — V2, 8 runs : non-régression tenue, gain ≈ −7 %.</b> Render 875,8 → 813,0 µs (−7,2 % ; −7,3 % par Clear, −8,4 % par ClearDepth). Les 4 runs B sont tous plus rapides que les 4 runs A. Chaque séquence prise seule manque de peu la règle de validité (dérive interne), d'où un chiffre indicatif ; mais aucune lecture ne permet un ralentissement. Reste : V1.</p></div>
+  <div class="note ok"><p><b>06/11 — V1 : aucune aggravation. LOT D-a1b ACCEPTÉ.</b> V1 Render 1 025,8 → 1 023,6 µs (−0,2 % ; prédit 0 ± 1 %). Bilan contre la règle écrite avant la mesure : rooms <b>−6,5 %</b> (≥ 3 % exigé), V2 <b>≈ −7 %</b> (non-ralentissement exigé), V1 <b>−0,2 %</b> (±2 % exigé), TNR, filet C3, asm et R1 conformes. Reste : le commit, puis la séquence V1 C B B C (diagnostic, non bloquante).</p></div>
+  <div class="note ok"><p><b>06/11 — V1 C B B C : le surcoût de Giesen est situé.</b> fixed = 0 → 1 : Render +24 µs (+2,5 %). <b>Étage sommets +35 µs (+20 %)</b> : c'est l'accrochage. <b>Étage faces −11 µs</b> : les 652 appels C3 de plus sont compensés par les faces dégénérées et les rejets en moins (hypothèse géométrique réfutée). Le seuil de 30 µs est atteint : la piste « nombre magique » (banc : −20 µs, la moitié du surcoût ; égalité au bit vérifiée sur 204 millions de valeurs, sauf −0/+0) devient le lot D-a1d.</p></div>
+  <div id="verif" style="display:grid;gap:12px"></div>
+</section>
+
+<section id="appliquer">
+  <h2>Ordre d'application</h2>
+  <div class="panel"><ul class="check" id="applyList"></ul></div>
+</section>
+
+<footer>Lot D-a1b · LibraryV3 · harnais hors moteur g++ 13.3 (AVX2, -ffp-contract=off) sur une copie de travail de la LIB e97d976 · 4 novembre 2026</footer>
+</div>
+
+<script>
+const CODES = {"es_before": "    struct EdgeSetupFx\n    {\n        int64_t e[3];      // E' au premier pixel de la boîte (bb.x0, bb.y0)\n        int64_t a[3];      // pas d'UN pixel vers la droite (A' = Ya - Yb)\n        int64_t b[3];      // pas d'UNE ligne vers le bas   (B' = Xb - Xa)\n        bool    wide;      // true : E' sort de int32 sur la boîte étendue -> voies AVX2 de 64 bits\n        // (rempli par PrepareLanesFx, juste avant les voies AVX2)\n    };", "es_after": "    struct EdgeSetupFx\n    {\n        int64_t e[3];      // E' au premier pixel de la boîte (bb.x0, bb.y0)\n        int64_t a[3];      // pas d'UN pixel vers la droite (A' = Ya - Yb)\n        int64_t b[3];      // pas d'UNE ligne vers le bas   (B' = Xb - Xa)\n        // D-a1b : ce que le décalage >> 8 a retiré, pour retrouver E EXACT depuis E' :\n        //     E = 256 E' + c,   c = r - bias  dans [0, 256]   ->   E / 256 = E' + ofs,  ofs = c / 256\n        float   ofs[3];    // c / 256 : EXACT (c entier <= 256, 2^-8 puissance de 2)\n        float   invQ;      // 256 / aire = s.invArea * 2^-8 : EXACT (division par une puissance de 2)\n        bool    wide;      // true : E' sort de int32 sur la boîte étendue -> voies AVX2 de 64 bits\n        // (rempli par PrepareLanesFx, juste avant les voies AVX2)\n    };\n\n    // D-a1b : barycentrique d'UNE arête tirée de son E' ENTIER.\n    //     b = E / aire = (E' + c/256) * (256 / aire)\n    //  float(e) : conversion entier -> float ARRONDIE AU PLUS PROCHE (cvtsi2ss), exacte si |e| < 2^24.\n    //  + ofs     : exacte si |E| < 2^24 (E / 256 a 8 bits de fraction), sinon UN arrondi.\n    //  * invQ    : UN arrondi.\n    //  Pendant AVX2 : BaryFromFixed8 (PixelStage8.h), mêmes opérations, même ordre : bits identiques.\n    [[nodiscard]] LV3_FORCEINLINE float BaryFromFixed(int64_t e, float ofs, float invQ) noexcept\n    {\n        return (float(e) + ofs) * invQ;\n    }", "inv_before": "        // 4. 1 / aire, en px² : float(area) arrondi UNE fois, * 2^-16 exact, puis une vraie division.\n        s.invArea = 1.0f / (float(area) * kSubpixelArea);", "inv_after": "        // 4. 1 / aire, en px² : float(area) arrondi UNE fois, * 2^-16 exact, puis une vraie division.\n        //    D-a1b : invQ = 256 / aire, l'échelle des E' : * 2^-8, exact (puissance de 2).\n        s.invArea = 1.0f / (float(area) * kSubpixelArea);\n        fx.invQ = s.invArea * kSubpixelInv;", "edge_before": "        const auto Edge = [&](int64_t xa, int64_t ya, int64_t xb, int64_t yb, int k) noexcept -> bool\n        {\n            const int64_t A = ya - yb;                        // pas d'un pixel en x\n            const int64_t B = xb - xa;                        // pas d'une ligne en y\n            // Top-left, en entiers : arête b - a = (B, -A). Même règle que IsTopLeft :\n            //   haute = (dy == 0 && dx < 0) ; gauche = (dy > 0)\n            const bool tl = (A == 0 && B < 0) || (A < 0);\n            // E au centre P : la forme ANTISYMÉTRIQUE de C2, en entiers (exacte).\n            const int64_t E = (xa - px) * (yb - py) - (ya - py) * (xb - px);\n            // E' = plancher((E + bias) / 256) : >> ARITHMÉTIQUE (C++20), JAMAIS / 256 (contre-exemple).\n            fx.e[k] = (E + (tl ? 0 : -1)) >> kSubpixelBits;\n            fx.a[k] = A;\n            fx.b[k] = B;\n            return tl;\n        };", "edge_after": "        const auto Edge = [&](int64_t xa, int64_t ya, int64_t xb, int64_t yb, int k) noexcept -> bool\n        {\n            const int64_t A = ya - yb;                        // pas d'un pixel en x\n            const int64_t B = xb - xa;                        // pas d'une ligne en y\n            // Top-left, en entiers : arête b - a = (B, -A). Même règle que IsTopLeft :\n            //   haute = (dy == 0 && dx < 0) ; gauche = (dy > 0)\n            const bool tl = (A == 0 && B < 0) || (A < 0);\n            // E au centre P : la forme ANTISYMÉTRIQUE de C2, en entiers (exacte).\n            const int64_t E = (xa - px) * (yb - py) - (ya - py) * (xb - px);\n            // E' = plancher((E + bias) / 256) : >> ARITHMÉTIQUE (C++20), JAMAIS / 256 (contre-exemple).\n            const int64_t bias = tl ? 0 : -1;\n            const int64_t eb = E + bias;                      // = 256 E' + r,  0 <= r < 256\n            fx.e[k] = eb >> kSubpixelBits;\n            // D-a1b : le reste r (8 bits bas, & 255 : exact en complément à deux, négatifs compris).\n            //   E = 256 E' + r - bias  ->  c = r - bias = r + (tl ? 0 : 1), dans [0, 256].\n            fx.ofs[k] = float(int32_t(eb & 255) - int32_t(bias)) * kSubpixelInv;\n            fx.a[k] = A;\n            fx.b[k] = B;\n            return tl;\n        };", "prep_before": "    LV3_FORCEINLINE void PrepareLanesFx(const TriangleSetup& s, EdgeSetupFx& fx) noexcept\n    {\n        const int64_t dxe = int64_t(s.bb.x1) + 15 - s.bb.x0;\n        const int64_t dye = int64_t(s.bb.y1) - s.bb.y0;\n        bool wide = false;\n   \n        for (int k = 0; k < 3; ++k)\n        {\n            const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;\n            const int64_t lo = fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0);    // coin de rejet\n            const int64_t hi = fx.e[k] + (ax > 0 ? ax : 0) + (by > 0 ? by : 0);    // coin d'acceptation\n        \n            // ACCEPTATION TRIVIALE : l'arête ne coupe pas la boîte, tous ses pixels sont de son\n            // bon côté. Remplacée par la constante 0 (>= 0 : dedans). Sans cela, une longue arête\n            // lointaine (sommet clippé au near) forcerait les voies 64 bits. Sans branche (cmov).\n            const bool accept = (lo >= 0);\n            fx.e[k] = accept ? 0 : fx.e[k];\n            fx.a[k] = accept ? 0 : fx.a[k];\n            fx.b[k] = accept ? 0 : fx.b[k];\n            wide |= !accept & ((lo < INT32_MIN) | (hi > INT32_MAX));\n        }\n\n        fx.wide = wide;\n    }", "prep_after": "    LV3_FORCEINLINE void PrepareLanesFx(const TriangleSetup& s, EdgeSetupFx& fx) noexcept\n    {\n        const int64_t dxe = int64_t(s.bb.x1) + 15 - s.bb.x0;\n        const int64_t dye = int64_t(s.bb.y1) - s.bb.y0;\n        bool wide = false;\n   \n        for (int k = 0; k < 3; ++k)\n        {\n            const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;\n            const int64_t lo = fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0);    // coin de rejet\n            const int64_t hi = fx.e[k] + (ax > 0 ? ax : 0) + (by > 0 ? by : 0);    // coin d'acceptation\n\n            // D-a1b : PLUS d'acceptation triviale (arête remplacée par 0). Les voies portent\n            // désormais les barycentriques : une arête mise à 0 donnerait b = ofs * invQ, faux\n            // (contre-exemple 1). Une arête acceptée a lo >= 0 : ses vraies valeurs passent le\n            // test de couverture sans le changer. Seul reste le choix de la largeur, sur les\n            // VRAIES valeurs (scène V3 : 7 triangles en 64 bits sur 36 262 en AVX2).\n            wide |= (lo < INT32_MIN) | (hi > INT32_MAX);\n        }\n\n        fx.wide = wide;\n    }", "scal_before": "    template<class Sink>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredPixelFx(const TriangleSetup& s, const EdgeSetupFx& fx, Sink& sink)\n    {\n        uint32_t covered = 0;\n        const int64_t a0 = fx.a[0], a1 = fx.a[1], a2 = fx.a[2];\n        const int64_t b0 = fx.b[0], b1 = fx.b[1], b2 = fx.b[2];\n        int64_t r0 = fx.e[0], r1 = fx.e[1], r2 = fx.e[2];     // E' au début de la ligne\n\n        for (int32_t y = s.bb.y0; y < s.bb.y1; ++y)\n        {\n            const float py = float(y) + 0.5f;\n            sink.BeginRow(y);\n            int64_t e0 = r0, e1 = r1, e2 = r2;\n\n            for (int32_t x = s.bb.x0; x < s.bb.x1; ++x)\n            {\n                if ((e0 | e1 | e2) >= 0)                      // couvert : décision ENTIÈRE, exacte\n                {\n                    ++covered;\n                    const float px = float(x) + 0.5f;\n                    const float w0 = EdgeFunction(s.p1, s.p2, px, py);\n                    const float w1 = EdgeFunction(s.p2, s.p0, px, py);\n                    const float w2 = EdgeFunction(s.p0, s.p1, px, py);\n                    const BarycentricWeights bary = s.flipped\n                                ? BarycentricWeights{ w0 * s.invArea, w2 * s.invArea, w1 * s.invArea }\n                                : BarycentricWeights{ w0 * s.invArea, w1 * s.invArea, w2 * s.invArea };\n                    sink.Pixel(x, bary);\n                }\n                e0 += a0; e1 += a1; e2 += a2;                 // un pixel à droite : 3 additions\n            }\n            r0 += b0; r1 += b1; r2 += b2;                     // une ligne plus bas : 3 additions\n        }\n        return covered;\n    }", "scal_after": "    template<class Sink>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredPixelFx(const TriangleSetup& s, const EdgeSetupFx& fx, Sink& sink)\n    {\n        uint32_t covered = 0;\n        const int64_t a0 = fx.a[0], a1 = fx.a[1], a2 = fx.a[2];\n        const int64_t b0 = fx.b[0], b1 = fx.b[1], b2 = fx.b[2];\n        int64_t r0 = fx.e[0], r1 = fx.e[1], r2 = fx.e[2];     // E' au début de la ligne\n        const float o0 = fx.ofs[0], o1 = fx.ofs[1], o2 = fx.ofs[2], inv = fx.invQ;\n        const bool  flipped = s.flipped;\n\n        for (int32_t y = s.bb.y0; y < s.bb.y1; ++y)\n        {\n            sink.BeginRow(y);\n            int64_t e0 = r0, e1 = r1, e2 = r2;\n\n            for (int32_t x = s.bb.x0; x < s.bb.x1; ++x)\n            {\n                if ((e0 | e1 | e2) >= 0)                      // couvert : décision ENTIÈRE, exacte\n                {\n                    ++covered;\n                    // D-a1b : barycentriques tirées des MÊMES entiers que la décision.\n                    // Avant (D-a1) : 3 EdgeFunction flottantes (21 opérations) refaites ici.\n                    const float w0 = BaryFromFixed(e0, o0, inv);\n                    const float w1 = BaryFromFixed(e1, o1, inv);\n                    const float w2 = BaryFromFixed(e2, o2, inv);\n                    // Échange défait : w1 et w2 dans l'ordre du triangle d'origine.\n                    const BarycentricWeights bary = flipped\n                                ? BarycentricWeights{ w0, w2, w1 }\n                                : BarycentricWeights{ w0, w1, w2 };\n                    sink.Pixel(x, bary);\n                }\n                e0 += a0; e1 += a1; e2 += a2;                 // un pixel à droite : 3 additions\n            }\n            r0 += b0; r1 += b1; r2 += b2;                     // une ligne plus bas : 3 additions\n        }\n        return covered;\n    }", "abl_before": "        LV3_FORCEINLINE void AblationConsumeSetupFx(const TriangleSetup& s, const EdgeSetupFx& fx) noexcept\n        {\n            AblationConsumeSetup(s);\n            uint64_t h = 0;\n            for (int k = 0; k < 3; ++k) h += uint64_t(fx.e[k]) ^ uint64_t(fx.a[k]) ^ uint64_t(fx.b[k]);\n            g_ablationSink = g_ablationSink + uint32_t(h ^ (h >> 32));\n        }", "abl_after": "        LV3_FORCEINLINE void AblationConsumeSetupFx(const TriangleSetup& s, const EdgeSetupFx& fx) noexcept\n        {\n            AblationConsumeSetup(s);\n            uint64_t h = std::bit_cast<uint32_t>(fx.invQ);\n            for (int k = 0; k < 3; ++k)\n                h += (uint64_t(fx.e[k]) ^ uint64_t(fx.a[k]) ^ uint64_t(fx.b[k])) + std::bit_cast<uint32_t>(fx.ofs[k]);\n            g_ablationSink = g_ablationSink + uint32_t(h ^ (h >> 32));\n        }", "help_before": "    // Barycentriques d'un bloc : la formule DIRECTE de C2 (EdgeFunction8 * 1/aire),\n    // sur les sommets accrochés de s. Partagée par les deux largeurs de voie.\n    struct BaryInputs8\n    {\n        __m256 p0x, p0y, p1x, p1y, p2x, p2y, inv, half;\n        __m256i lane;\n        bool flipped;\n    };\n\n    [[nodiscard]] LV3_FORCEINLINE BaryInputs8 MakeBaryInputs8(const TriangleSetup& s) noexcept\n    {\n        return { _mm256_set1_ps(s.p0.x), _mm256_set1_ps(s.p0.y),\n                 _mm256_set1_ps(s.p1.x), _mm256_set1_ps(s.p1.y),\n                 _mm256_set1_ps(s.p2.x), _mm256_set1_ps(s.p2.y),\n                 _mm256_set1_ps(s.invArea), _mm256_set1_ps(0.5f),\n                 _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7), s.flipped };\n    }\n\n    LV3_FORCEINLINE void BlockBary8(const BaryInputs8& bi, int32_t x, __m256 py,\n        __m256& b0, __m256& b1, __m256& b2) noexcept\n    {\n        // Centres x+i+0.5 : même calcul que C2 (cvtepi32 exact, puis + 0.5).\n        const __m256 px = _mm256_add_ps(_mm256_cvtepi32_ps(_mm256_add_epi32(_mm256_set1_epi32(x), bi.lane)), bi.half);\n        const __m256 w0 = EdgeFunction8(bi.p1x, bi.p1y, bi.p2x, bi.p2y, px, py);\n        const __m256 w1 = EdgeFunction8(bi.p2x, bi.p2y, bi.p0x, bi.p0y, px, py);\n        const __m256 w2 = EdgeFunction8(bi.p0x, bi.p0y, bi.p1x, bi.p1y, px, py);\n        b0 = _mm256_mul_ps(w0, bi.inv);\n        b1 = _mm256_mul_ps(bi.flipped ? w2 : w1, bi.inv);\n        b2 = _mm256_mul_ps(bi.flipped ? w1 : w2, bi.inv);\n    }", "help_after": "    // Constantes des barycentriques, diffusées UNE fois par triangle.\n    struct BaryFx8\n    {\n        __m256 o0, o1, o2;      // c / 256 de chaque arête (exact)\n        __m256 inv;             // 256 / aire (exact à partir de s.invArea)\n    };\n\n    [[nodiscard]] LV3_FORCEINLINE BaryFx8 MakeBaryFx8(const EdgeSetupFx& fx) noexcept\n    {\n        return { _mm256_set1_ps(fx.ofs[0]), _mm256_set1_ps(fx.ofs[1]), _mm256_set1_ps(fx.ofs[2]),\n                 _mm256_set1_ps(fx.invQ) };\n    }\n\n    // BaryFromFixed (Rasterizer.h) voie par voie, sur 8 E' en int32.\n    //   cvtepi32_ps : arrondi au plus proche (MXCSR), comme float(int64) du scalaire :\n    //                 pour une même valeur entière, le MÊME float.\n    //   add puis mul : deux arrondis, même ordre que le scalaire. JAMAIS de fmadd (contre-exemple B3).\n    [[nodiscard]] LV3_FORCEINLINE __m256 BaryFromFixed8(__m256i e, __m256 ofs, __m256 inv) noexcept\n    {\n        return _mm256_mul_ps(_mm256_add_ps(_mm256_cvtepi32_ps(e), ofs), inv);\n    }\n\n    // int64 -> float, 4 voies + 4 voies -> 8 float. AVX2 n'a PAS de vcvtqq2ps (AVX-512DQ).\n    //   1. int64 -> double EXACT par le « nombre magique » 1,5 * 2^52 (valable pour |v| < 2^51) :\n    //        bits(1,5 * 2^52) + v  =  bits(1,5 * 2^52 + v)   (v s'ajoute à la mantisse)\n    //        puis - 1,5 * 2^52  ->  v, exactement.\n    //      Bornes D-a1 : |E'| < 2^58 / 2^8 = 2^50 : la précondition tient toujours.\n    //   2. double -> float : UN arrondi au plus proche.\n    //   Arrondi(exact(v)) = arrondi(v) : MÊME float que float(int64) du scalaire (cvtsi2ss).\n    [[nodiscard]] LV3_FORCEINLINE __m256 Int64x8ToFloat(__m256i lo, __m256i hi) noexcept\n    {\n        const __m256i magicI = _mm256_set1_epi64x(0x4338000000000000LL);      // bits de 1,5 * 2^52\n        const __m256d magicD = _mm256_set1_pd(6755399441055744.0);             // 1,5 * 2^52\n        const __m256d dlo = _mm256_sub_pd(_mm256_castsi256_pd(_mm256_add_epi64(lo, magicI)), magicD);\n        const __m256d dhi = _mm256_sub_pd(_mm256_castsi256_pd(_mm256_add_epi64(hi, magicI)), magicD);\n        return _mm256_set_m128(_mm256_cvtpd_ps(dhi), _mm256_cvtpd_ps(dlo));   // [voies 0..3 | voies 4..7]\n    }", "f32_before": "    template<class Sink8>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredBlock8Fx32(const TriangleSetup& s, const EdgeSetupFx& fx, Sink8& sink) noexcept\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1;           // C2b : locales, jamais relues en mémoire\n        const int32_t by0 = s.bb.y0, by1 = s.bb.y1;\n        const BaryInputs8 bi = MakeBaryInputs8(s);\n\n        // ── Une fois par triangle. Les conversions int64 -> int32 sont EXACTES :\n        //    la préparation a prouvé que E', 7 A' et 8 A' tiennent sur la boîte étendue.\n        const __m256i lane = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);\n        const __m256i a0 = _mm256_set1_epi32(int32_t(fx.a[0]));\n        const __m256i a1 = _mm256_set1_epi32(int32_t(fx.a[1]));\n        const __m256i a2 = _mm256_set1_epi32(int32_t(fx.a[2]));\n        const __m256i off0 = _mm256_mullo_epi32(lane, a0);    // [0  A'  2A' ... 7A'] : décalage de chaque voie\n        const __m256i off1 = _mm256_mullo_epi32(lane, a1);\n        const __m256i off2 = _mm256_mullo_epi32(lane, a2);\n        const __m256i step0 = _mm256_slli_epi32(a0, 3);       // 8 A' : d'un bloc au suivant\n        const __m256i step1 = _mm256_slli_epi32(a1, 3);\n        const __m256i step2 = _mm256_slli_epi32(a2, 3);\n\n        // 4e « arête » : la BOÎTE. eb = (x1 - 1) - (x + i) >= 0  <=>  la voie est dans la boîte.\n        // Elle entre dans le même OU que les trois autres : plus de comparaison de boîte.\n        const __m256i boxRow = _mm256_sub_epi32(_mm256_set1_epi32(bx1 - 1 - bx0), lane);\n        const __m256i boxStep = _mm256_set1_epi32(-8);\n        const __m256i minus1 = _mm256_set1_epi32(-1);\n\n        int32_t r0 = int32_t(fx.e[0]), r1 = int32_t(fx.e[1]), r2 = int32_t(fx.e[2]);\n        const int32_t rb0 = int32_t(fx.b[0]), rb1 = int32_t(fx.b[1]), rb2 = int32_t(fx.b[2]);\n\n        uint32_t covered = 0;\n\n        #if LV3_RASTER_STATS\n            uint32_t blocks = 0;\n        #endif\n\n        for (int32_t y = by0; y < by1; ++y)\n        {\n            const __m256 py = _mm256_set1_ps(float(y) + 0.5f);\n            sink.BeginRow(y);\n\n            // Début de ligne : E' du pixel x0, plus le décalage de chaque voie.\n            __m256i e0 = _mm256_add_epi32(_mm256_set1_epi32(r0), off0);\n            __m256i e1 = _mm256_add_epi32(_mm256_set1_epi32(r1), off1);\n            __m256i e2 = _mm256_add_epi32(_mm256_set1_epi32(r2), off2);\n            __m256i eb = boxRow;\n\n            for (int32_t x = bx0; x < bx1; x += 8)\n            {\n                // ── TESTER : le bit de signe de (e0 | e1 | e2 | eb) vaut 1 dès qu'UNE valeur est < 0.\n                const __m256i any = _mm256_or_si256(_mm256_or_si256(e0, e1), _mm256_or_si256(e2, eb));\n                const uint32_t bits = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(any))) & 0xFFu;\n\n                // ── AVANCER : 8 pixels à droite. AVANT le continue : un bloc vide avance aussi.\n                e0 = _mm256_add_epi32(e0, step0);\n                e1 = _mm256_add_epi32(e1, step1);\n                e2 = _mm256_add_epi32(e2, step2);\n                eb = _mm256_add_epi32(eb, boxStep);\n\n                #if LV3_RASTER_STATS\n                    ++blocks;\n                #endif\n                if (bits == 0) continue;                      // bloc vide : 4 OU, 1 movemask, 4 additions\n                covered += uint32_t(_mm_popcnt_u32(bits));\n\n                // Masque de voie complet (0xFFFFFFFF / 0) : any > -1  <=>  any >= 0.\n                const __m256 cover = _mm256_castsi256_ps(_mm256_cmpgt_epi32(any, minus1));\n\n                __m256 b0, b1, b2;\n                BlockBary8(bi, x, py, b0, b1, b2);\n                sink.Block(x, cover, bits, b0, b1, b2);\n            }\n            r0 += rb0; r1 += rb1; r2 += rb2;                  // une ligne plus bas : 3 additions scalaires\n        }\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisSimd8, 1);\n            LV3_PROF_COUNT(EProfCounter::LaneBlocks8, blocks);\n        #endif\n        return covered;\n    }", "f32_after": "    template<class Sink8>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredBlock8Fx32(const TriangleSetup& s, const EdgeSetupFx& fx, Sink8& sink) noexcept\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1;           // C2b : locales, jamais relues en mémoire\n        const int32_t by0 = s.bb.y0, by1 = s.bb.y1;\n        const bool    flipped = s.flipped;\n        const BaryFx8 bf = MakeBaryFx8(fx);\n\n        // ── Une fois par triangle. Les conversions int64 -> int32 sont EXACTES :\n        //    la préparation a prouvé que E' tient sur la boîte étendue.\n        const __m256i lane = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);\n        const __m256i a0 = _mm256_set1_epi32(int32_t(fx.a[0]));\n        const __m256i a1 = _mm256_set1_epi32(int32_t(fx.a[1]));\n        const __m256i a2 = _mm256_set1_epi32(int32_t(fx.a[2]));\n        const __m256i off0 = _mm256_mullo_epi32(lane, a0);    // [0  A'  2A' ... 7A'] : décalage de chaque voie\n        const __m256i off1 = _mm256_mullo_epi32(lane, a1);\n        const __m256i off2 = _mm256_mullo_epi32(lane, a2);\n        const __m256i step0 = _mm256_slli_epi32(a0, 3);       // 8 A' : d'un bloc au suivant\n        const __m256i step1 = _mm256_slli_epi32(a1, 3);\n        const __m256i step2 = _mm256_slli_epi32(a2, 3);\n\n        // 4e « arête » : la BOÎTE. eb = (x1 - 1) - (x + i) >= 0  <=>  la voie est dans la boîte.\n        const __m256i boxRow = _mm256_sub_epi32(_mm256_set1_epi32(bx1 - 1 - bx0), lane);\n        const __m256i boxStep = _mm256_set1_epi32(-8);\n        const __m256i minus1 = _mm256_set1_epi32(-1);\n\n        int32_t r0 = int32_t(fx.e[0]), r1 = int32_t(fx.e[1]), r2 = int32_t(fx.e[2]);\n        const int32_t rb0 = int32_t(fx.b[0]), rb1 = int32_t(fx.b[1]), rb2 = int32_t(fx.b[2]);\n\n        uint32_t covered = 0;\n\n        #if LV3_RASTER_STATS\n            uint32_t blocks = 0;\n        #endif\n\n        for (int32_t y = by0; y < by1; ++y)\n        {\n            sink.BeginRow(y);\n\n            // Début de ligne : E' du pixel x0, plus le décalage de chaque voie.\n            __m256i e0 = _mm256_add_epi32(_mm256_set1_epi32(r0), off0);\n            __m256i e1 = _mm256_add_epi32(_mm256_set1_epi32(r1), off1);\n            __m256i e2 = _mm256_add_epi32(_mm256_set1_epi32(r2), off2);\n            __m256i eb = boxRow;\n\n            for (int32_t x = bx0; x < bx1; x += 8)\n            {\n                // ── TESTER : le bit de signe de (e0 | e1 | e2 | eb) vaut 1 dès qu'UNE valeur est < 0.\n                const __m256i any = _mm256_or_si256(_mm256_or_si256(e0, e1), _mm256_or_si256(e2, eb));\n                const uint32_t bits = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(any))) & 0xFFu;\n\n                #if LV3_RASTER_STATS\n                    ++blocks;\n                #endif\n                if (bits != 0)\n                {\n                    covered += uint32_t(_mm_popcnt_u32(bits));\n\n                    // Masque de voie complet (0xFFFFFFFF / 0) : any > -1  <=>  any >= 0.\n                    const __m256 cover = _mm256_castsi256_ps(_mm256_cmpgt_epi32(any, minus1));\n\n                    // ── D-a1b : BARYCENTRIQUES depuis e0, e1, e2 (AVANT l'avance).\n                    //    Voies non couvertes : valeurs quelconques, jamais écrites (cover).\n                    const __m256 w0 = BaryFromFixed8(e0, bf.o0, bf.inv);\n                    const __m256 w1 = BaryFromFixed8(e1, bf.o1, bf.inv);\n                    const __m256 w2 = BaryFromFixed8(e2, bf.o2, bf.inv);\n                    sink.Block(x, cover, bits, w0, flipped ? w2 : w1, flipped ? w1 : w2);   // échange défait\n                }\n\n                // ── AVANCER : 8 pixels à droite. APRÈS la lecture des barycentriques.\n                //    Débordement int32 possible APRÈS la dernière voie utile : vpaddd est modulaire\n                //    (aucun comportement indéfini en SIMD), et ces voies sont masquées par eb.\n                e0 = _mm256_add_epi32(e0, step0);\n                e1 = _mm256_add_epi32(e1, step1);\n                e2 = _mm256_add_epi32(e2, step2);\n                eb = _mm256_add_epi32(eb, boxStep);\n            }\n            r0 += rb0; r1 += rb1; r2 += rb2;                  // une ligne plus bas : 3 additions scalaires\n        }\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisSimd8, 1);\n            LV3_PROF_COUNT(EProfCounter::LaneBlocks8, blocks);\n        #endif\n        return covered;\n    }", "f64_before": "    template<class Sink8>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredBlock8Fx64(const TriangleSetup& s, const EdgeSetupFx& fx, Sink8& sink) noexcept\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1;\n        const int32_t by0 = s.bb.y0, by1 = s.bb.y1;\n        const BaryInputs8 bi = MakeBaryInputs8(s);\n\n        // Décalages par voie, calculés en scalaire int64 : [0 A' 2A' 3A'] et [4A' 5A' 6A' 7A'].\n        const int64_t A0 = fx.a[0], A1 = fx.a[1], A2 = fx.a[2];\n        const __m256i lo0 = _mm256_setr_epi64x(0, A0, 2 * A0, 3 * A0), hi0 = _mm256_setr_epi64x(4 * A0, 5 * A0, 6 * A0, 7 * A0);\n        const __m256i lo1 = _mm256_setr_epi64x(0, A1, 2 * A1, 3 * A1), hi1 = _mm256_setr_epi64x(4 * A1, 5 * A1, 6 * A1, 7 * A1);\n        const __m256i lo2 = _mm256_setr_epi64x(0, A2, 2 * A2, 3 * A2), hi2 = _mm256_setr_epi64x(4 * A2, 5 * A2, 6 * A2, 7 * A2);\n        const __m256i st0 = _mm256_set1_epi64x(8 * A0), st1 = _mm256_set1_epi64x(8 * A1), st2 = _mm256_set1_epi64x(8 * A2);\n\n        // Bit i de la voie i : pour reconstruire un masque de voie depuis les bits du bloc.\n        const __m256i laneBit = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);\n\n        int64_t r0 = fx.e[0], r1 = fx.e[1], r2 = fx.e[2];\n\n        uint32_t covered = 0;\n        #if LV3_RASTER_STATS\n            uint32_t blocks = 0;\n        #endif\n\n        for (int32_t y = by0; y < by1; ++y)\n        {\n            const __m256 py = _mm256_set1_ps(float(y) + 0.5f);\n            sink.BeginRow(y);\n\n            __m256i e0l = _mm256_add_epi64(_mm256_set1_epi64x(r0), lo0), e0h = _mm256_add_epi64(_mm256_set1_epi64x(r0), hi0);\n            __m256i e1l = _mm256_add_epi64(_mm256_set1_epi64x(r1), lo1), e1h = _mm256_add_epi64(_mm256_set1_epi64x(r1), hi1);\n            __m256i e2l = _mm256_add_epi64(_mm256_set1_epi64x(r2), lo2), e2h = _mm256_add_epi64(_mm256_set1_epi64x(r2), hi2);\n\n            for (int32_t x = bx0; x < bx1; x += 8)\n            {\n                // Signe des 3 arêtes : OU, puis movemask_pd = 1 bit par voie de 64 bits.\n                const __m256i anyL = _mm256_or_si256(_mm256_or_si256(e0l, e1l), e2l);   // voies 0..3\n                const __m256i anyH = _mm256_or_si256(_mm256_or_si256(e0h, e1h), e2h);   // voies 4..7\n                const uint32_t neg = uint32_t(_mm256_movemask_pd(_mm256_castsi256_pd(anyL)))\n                    | (uint32_t(_mm256_movemask_pd(_mm256_castsi256_pd(anyH))) << 4);\n\n                // Boîte en SCALAIRE : n voies utiles dans ce bloc.\n                const int32_t n = bx1 - x;\n                const uint32_t box = n >= 8 ? 0xFFu : ((1u << n) - 1u);\n                const uint32_t bits = ~neg & box;\n\n                e0l = _mm256_add_epi64(e0l, st0); e0h = _mm256_add_epi64(e0h, st0);\n                e1l = _mm256_add_epi64(e1l, st1); e1h = _mm256_add_epi64(e1h, st1);\n                e2l = _mm256_add_epi64(e2l, st2); e2h = _mm256_add_epi64(e2h, st2);\n\n                #if LV3_RASTER_STATS\n                    ++blocks;\n                #endif\n                if (bits == 0) continue;\n                covered += uint32_t(_mm_popcnt_u32(bits));\n\n                // bits -> masque de voie : (bits & bit_i) == bit_i.\n                const __m256i bv = _mm256_and_si256(_mm256_set1_epi32(int32_t(bits)), laneBit);\n                const __m256 cover = _mm256_castsi256_ps(_mm256_cmpeq_epi32(bv, laneBit));\n\n                __m256 b0, b1, b2;\n                BlockBary8(bi, x, py, b0, b1, b2);\n                sink.Block(x, cover, bits, b0, b1, b2);\n            }\n            r0 += fx.b[0]; r1 += fx.b[1]; r2 += fx.b[2];\n        }\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisSimd8, 1);\n            LV3_PROF_COUNT(EProfCounter::LaneBlocks8, blocks);\n            LV3_PROF_COUNT(EProfCounter::TrisFixedWide, 1);\n        #endif\n\n        return covered;\n    }", "f64_after": "    template<class Sink8>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredBlock8Fx64(const TriangleSetup& s, const EdgeSetupFx& fx, Sink8& sink) noexcept\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1;\n        const int32_t by0 = s.bb.y0, by1 = s.bb.y1;\n        const bool    flipped = s.flipped;\n        const BaryFx8 bf = MakeBaryFx8(fx);\n\n        // Décalages par voie, calculés en scalaire int64 : [0 A' 2A' 3A'] et [4A' 5A' 6A' 7A'].\n        const int64_t A0 = fx.a[0], A1 = fx.a[1], A2 = fx.a[2];\n        const __m256i lo0 = _mm256_setr_epi64x(0, A0, 2 * A0, 3 * A0), hi0 = _mm256_setr_epi64x(4 * A0, 5 * A0, 6 * A0, 7 * A0);\n        const __m256i lo1 = _mm256_setr_epi64x(0, A1, 2 * A1, 3 * A1), hi1 = _mm256_setr_epi64x(4 * A1, 5 * A1, 6 * A1, 7 * A1);\n        const __m256i lo2 = _mm256_setr_epi64x(0, A2, 2 * A2, 3 * A2), hi2 = _mm256_setr_epi64x(4 * A2, 5 * A2, 6 * A2, 7 * A2);\n        const __m256i st0 = _mm256_set1_epi64x(8 * A0), st1 = _mm256_set1_epi64x(8 * A1), st2 = _mm256_set1_epi64x(8 * A2);\n\n        // Bit i de la voie i : pour reconstruire un masque de voie depuis les bits du bloc.\n        const __m256i laneBit = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);\n\n        int64_t r0 = fx.e[0], r1 = fx.e[1], r2 = fx.e[2];\n\n        uint32_t covered = 0;\n        #if LV3_RASTER_STATS\n            uint32_t blocks = 0;\n        #endif\n\n        for (int32_t y = by0; y < by1; ++y)\n        {\n            sink.BeginRow(y);\n\n            __m256i e0l = _mm256_add_epi64(_mm256_set1_epi64x(r0), lo0), e0h = _mm256_add_epi64(_mm256_set1_epi64x(r0), hi0);\n            __m256i e1l = _mm256_add_epi64(_mm256_set1_epi64x(r1), lo1), e1h = _mm256_add_epi64(_mm256_set1_epi64x(r1), hi1);\n            __m256i e2l = _mm256_add_epi64(_mm256_set1_epi64x(r2), lo2), e2h = _mm256_add_epi64(_mm256_set1_epi64x(r2), hi2);\n\n            for (int32_t x = bx0; x < bx1; x += 8)\n            {\n                // Signe des 3 arêtes : OU, puis movemask_pd = 1 bit par voie de 64 bits.\n                const __m256i anyL = _mm256_or_si256(_mm256_or_si256(e0l, e1l), e2l);   // voies 0..3\n                const __m256i anyH = _mm256_or_si256(_mm256_or_si256(e0h, e1h), e2h);   // voies 4..7\n                const uint32_t neg = uint32_t(_mm256_movemask_pd(_mm256_castsi256_pd(anyL)))\n                    | (uint32_t(_mm256_movemask_pd(_mm256_castsi256_pd(anyH))) << 4);\n\n                // Boîte en SCALAIRE : n voies utiles dans ce bloc.\n                const int32_t n = bx1 - x;\n                const uint32_t box = n >= 8 ? 0xFFu : ((1u << n) - 1u);\n                const uint32_t bits = ~neg & box;\n\n                #if LV3_RASTER_STATS\n                    ++blocks;\n                #endif\n                if (bits != 0)\n                {\n                    covered += uint32_t(_mm_popcnt_u32(bits));\n\n                    // bits -> masque de voie : (bits & bit_i) == bit_i.\n                    const __m256i bv = _mm256_and_si256(_mm256_set1_epi32(int32_t(bits)), laneBit);\n                    const __m256 cover = _mm256_castsi256_ps(_mm256_cmpeq_epi32(bv, laneBit));\n\n                    // D-a1b : mêmes barycentriques que la voie 32 bits, conversion int64 en deux temps.\n                    const __m256 w0 = _mm256_mul_ps(_mm256_add_ps(Int64x8ToFloat(e0l, e0h), bf.o0), bf.inv);\n                    const __m256 w1 = _mm256_mul_ps(_mm256_add_ps(Int64x8ToFloat(e1l, e1h), bf.o1), bf.inv);\n                    const __m256 w2 = _mm256_mul_ps(_mm256_add_ps(Int64x8ToFloat(e2l, e2h), bf.o2), bf.inv);\n                    sink.Block(x, cover, bits, w0, flipped ? w2 : w1, flipped ? w1 : w2);\n                }\n\n                e0l = _mm256_add_epi64(e0l, st0); e0h = _mm256_add_epi64(e0h, st0);\n                e1l = _mm256_add_epi64(e1l, st1); e1h = _mm256_add_epi64(e1h, st1);\n                e2l = _mm256_add_epi64(e2l, st2); e2h = _mm256_add_epi64(e2h, st2);\n            }\n            r0 += fx.b[0]; r1 += fx.b[1]; r2 += fx.b[2];\n        }\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisSimd8, 1);\n            LV3_PROF_COUNT(EProfCounter::LaneBlocks8, blocks);\n            LV3_PROF_COUNT(EProfCounter::TrisFixedWide, 1);\n        #endif\n\n        return covered;\n    }", "tst_before": "                    ++fixed;\n                    PrepareLanesFx(s, fx);\n                    wide += fx.wide ? 1u : 0u;\n                    for (int k = 0; k < 3; ++k) accepted += (fx.a[k] == 0 && fx.b[k] == 0 && fx.e[k] == 0) ? 1u : 0u;", "tst_after": "                    ++fixed;\n                    // D-a1b : PrepareLanesFx ne met plus les arêtes acceptées à 0. On compte celles\n                    // dont TOUTES les voies de la boîte étendue sont >= 0 (coin de rejet lo >= 0) :\n                    // elles portent leurs vraies valeurs, et doivent donner les mêmes pixels.\n                    const int64_t dxe = int64_t(s.bb.x1) + 15 - s.bb.x0, dye = int64_t(s.bb.y1) - s.bb.y0;\n                    for (int k = 0; k < 3; ++k)\n                    {\n                        const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;\n                        accepted += (fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0) >= 0) ? 1u : 0u;\n                    }\n                    PrepareLanesFx(s, fx);\n                    wide += fx.wide ? 1u : 0u;", "newtest": "#include \"pch.h\"\n#include <random>\n#include <cstring>\n#include <cmath>\n#include \"rendering/Viewport.h\"\n#include \"rendering/Rasterizer.h\"\n#include \"rendering/PixelStage8.h\"\n#include \"core/Logger.h\"\n#include \"TestRandom.h\"   // tirages portables MSVC / g++\n\n// ════════════════════════════════════════════════════════════\n//  TNR D-a1b : barycentriques tirées des E' entiers\n//   (1) reconstruction EXACTE : 256 E' + c == E calculé directement en int64, en tout pixel ;\n//   (2) précision : |b - E / aire| <= 5 * 2^-24 * b (cinq arrondis au plus), comparée à D-a1 ;\n//   (3) Int64x8ToFloat == float(int64) du scalaire, au bit près (voies 64 bits == scalaire).\n//  (L'égalité C3 == noyau au bit près est vérifiée par Test_C3_Pixel1, inchangé.)\n// ════════════════════════════════════════════════════════════\nnamespace LV3::Tests\n{\n#if LV3_DEBUG && LV3_RASTER_FIXED\n    namespace\n    {\n        // E en un centre de pixel, DIRECTEMENT en int64 (forme antisymétrique de C2).\n        int64_t EdgeDirect(int64_t xa, int64_t ya, int64_t xb, int64_t yb, int32_t x, int32_t y)\n        {\n            const int64_t px = (int64_t(x) << kSubpixelBits) + 128, py = (int64_t(y) << kSubpixelBits) + 128;\n            return (xa - px) * (yb - py) - (ya - py) * (xb - px);\n        }\n\n        std::string Sci(double v) { char b[32]; std::snprintf(b, sizeof b, \"%.3g\", v); return b; }\n\n        struct BarySink\n        {\n            std::vector<int32_t>* xs; std::vector<int32_t>* ys; std::vector<BarycentricWeights>* bs;\n            int32_t y = 0;\n            void BeginRow(int32_t r) noexcept { y = r; }\n            void Pixel(int32_t x, const BarycentricWeights& b) noexcept { xs->push_back(x); ys->push_back(y); bs->push_back(b); }\n        };\n    }\n\n    bool Test_Da1b_Bary()\n    {\n        bool ok = true;\n        const Viewport vp = Viewport::FullScreen(1536, 900);\n\n        // ── (1) + (2) ─────────────────────────────────────────────\n        {\n            std::mt19937 rng(17u);\n            TestRand01 U;\n            uint64_t tris = 0, probes = 0, badRebuild = 0, pixels = 0, badBound = 0;\n            double maxRelB = 0.0, maxRelA = 0.0;              // B = D-a1b, A = formule flottante de D-a1\n            std::vector<int32_t> xs, ys; std::vector<BarycentricWeights> bs;\n            for (int i = 0; i < 4000; ++i)\n            {\n                const float size = U(rng) < 0.5f ? 2.0f + 30.0f * U(rng) : 30.0f + 270.0f * U(rng);\n                const float cx = 1536.0f * U(rng), cy = 900.0f * U(rng);\n                Vec2f v[3];\n                for (auto& p : v) p = { SnapToSubpixel(cx + (U(rng) - 0.5f) * size), SnapToSubpixel(cy + (U(rng) - 0.5f) * size) };\n                if (U(rng) < 0.05f) v[0] = { SnapToSubpixel(v[0].x + 3.0e5f * (U(rng) - 0.5f)), SnapToSubpixel(v[0].y + 3.0e5f * (U(rng) - 0.5f)) };\n                TriangleSetup s; EdgeSetupFx fx;\n                if (!SetupTriangleFx(v[0], v[1], v[2], vp, s, fx)) continue;\n                ++tris;\n\n                // Sommets entiers APRÈS échange, dans l'ordre des arêtes de C1.\n                const int64_t X0 = ToFixed(s.p0.x), Y0 = ToFixed(s.p0.y), X1 = ToFixed(s.p1.x), Y1 = ToFixed(s.p1.y);\n                const int64_t X2 = ToFixed(s.p2.x), Y2 = ToFixed(s.p2.y);\n                const int64_t area = (X0 - X2) * (Y1 - Y2) - (Y0 - Y2) * (X1 - X2);\n                auto E = [&](int k, int32_t x, int32_t y)\n                {\n                    return k == 0 ? EdgeDirect(X1, Y1, X2, Y2, x, y) : k == 1 ? EdgeDirect(X2, Y2, X0, Y0, x, y) : EdgeDirect(X0, Y0, X1, Y1, x, y);\n                };\n\n                // (1) 32 pixels tirés dans la boîte : E' par pas entiers, puis 256 E' + c == E.\n                for (int j = 0; j < 32; ++j)\n                {\n                    const int32_t dx = int32_t(U(rng) * float(s.bb.x1 - s.bb.x0 - 1) + 0.5f);\n                    const int32_t dy = int32_t(U(rng) * float(s.bb.y1 - s.bb.y0 - 1) + 0.5f);\n                    for (int k = 0; k < 3; ++k)\n                    {\n                        const int64_t ep = fx.e[k] + fx.a[k] * dx + fx.b[k] * dy;\n                        const int64_t c = int64_t(fx.ofs[k] * kSubpixelScale);      // exact\n                        ++probes;\n                        if ((ep << kSubpixelBits) + c != E(k, s.bb.x0 + dx, s.bb.y0 + dy) || c < 0 || c > 256) ++badRebuild;\n                    }\n                }\n\n                // (2) tous les pixels couverts : b contre E / aire exact (long double, 64 bits de mantisse).\n                xs.clear(); ys.clear(); bs.clear();\n                BarySink sink{ &xs, &ys, &bs };\n                (void)ForEachCoveredPixelFx(s, fx, sink);\n                for (size_t p = 0; p < bs.size(); ++p)\n                {\n                    ++pixels;\n                    const float bB[3] = { bs[p].w0, s.flipped ? bs[p].w2 : bs[p].w1, s.flipped ? bs[p].w1 : bs[p].w2 };\n                    const float px = float(xs[p]) + 0.5f, py = float(ys[p]) + 0.5f;\n                    const float wA[3] = { EdgeFunction(s.p1, s.p2, px, py), EdgeFunction(s.p2, s.p0, px, py), EdgeFunction(s.p0, s.p1, px, py) };\n                    for (int k = 0; k < 3; ++k)\n                    {\n                        const long double ex = (long double)E(k, xs[p], ys[p]) / (long double)area;\n                        if (ex <= 0.0L) continue;                 // sur l'arête : erreur relative indéfinie\n                        const double relB = double(std::fabs((long double)bB[k] - ex) / ex);\n                        const double relA = double(std::fabs((long double)(wA[k] * s.invArea) - ex) / ex);\n                        maxRelB = std::max(maxRelB, relB);\n                        maxRelA = std::max(maxRelA, relA);\n                        if (relB > 5.0 * 0x1p-24) ++badBound;\n                    }\n                }\n            }\n            Logger::info(\"[D-a1b] \" + std::to_string(tris) + \" triangles, \" + std::to_string(probes) + \" sondes E' -> E, \"\n                + std::to_string(badRebuild) + \" reconstructions fausses ; \" + std::to_string(pixels) + \" pixels couverts, \"\n                + std::to_string(badBound) + \" hors borne 5 ulp ; erreur relative max D-a1b \" + Sci(maxRelB)\n                + \" contre D-a1 \" + Sci(maxRelA));\n            ok &= (badRebuild == 0 && badBound == 0 && tris > 0 && pixels > 0);\n        }\n\n        // ── (3) int64 -> float : voies 64 bits == scalaire ─────────────\n        {\n            std::mt19937_64 rng(23u);\n            uint64_t bad = 0, n = 0;\n            const int64_t edge[8] = { 0, -1, (1LL << 24) + 1, -(1LL << 24) - 3, (1LL << 50) - 1, -(1LL << 50) + 1, 16777217LL * 257, -33554435LL };\n            for (int i = 0; i < 200000; ++i)\n            {\n                alignas(32) int64_t v[8];\n                for (int k = 0; k < 8; ++k)\n                {\n                    const int sh = 1 + int(rng() % 50);                           // |v| < 2^50\n                    v[k] = i == 0 ? edge[k] : int64_t(rng() >> (64 - sh)) * ((rng() & 1) ? 1 : -1);\n                }\n                alignas(32) float f[8];\n                _mm256_store_ps(f, Int64x8ToFloat(_mm256_load_si256(reinterpret_cast<const __m256i*>(v)),\n                    _mm256_load_si256(reinterpret_cast<const __m256i*>(v + 4))));\n                for (int k = 0; k < 8; ++k, ++n)\n                {\n                    const float ref = float(v[k]);\n                    if (std::memcmp(&ref, &f[k], 4) != 0) ++bad;\n                }\n            }\n            Logger::info(\"[D-a1b] int64 -> float : \" + std::to_string(n) + \" valeurs, \" + std::to_string(bad) + \" differences\");\n            ok &= (bad == 0);\n        }\n        return ok;\n    }\n#else\n    bool Test_Da1b_Bary() { return true; }    // D-a1 inactif (LV3_RASTER_FIXED = 0) ou Release\n#endif\n}\n", "run_before": "    bool Test_Da1_Fixed();          // D-a1 : aretes en virgule fixe\n...\n        if (!Test_Da1_Fixed())\n        {\n            Logger::error(\"ECHEC : Test_Da1_Fixed()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1_Fixed()\");\n        }", "run_after": "    bool Test_Da1_Fixed();          // D-a1 : aretes en virgule fixe\n    bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers\n...\n        if (!Test_Da1_Fixed())\n        {\n            Logger::error(\"ECHEC : Test_Da1_Fixed()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1_Fixed()\");\n        }\n\n        if (!Test_Da1b_Bary())\n        {\n            Logger::error(\"ECHEC : Test_Da1b_Bary()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1b_Bary()\");\n        }", "vcx_after": "    <ClCompile Include=\"Test\\Test_Da1_Fixed.cpp\" />\n    <ClCompile Include=\"Test\\Test_Da1b_Bary.cpp\" />"};
+</script>
+<script>
+'use strict';
+/* ═══════════ outils ═══════════ */
+const f = Math.fround;
+const esc = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const nf = v => { const s = String(v); const neg = s[0]==='-'; const d = neg ? s.slice(1) : s; return (neg?'−':'') + d.replace(/\B(?=(\d{3})+(?!\d))/g,' '); };
+const fl = (v,d=6) => { if (!isFinite(v)) return String(v); const s = Number(v).toPrecision(d); return (Number(s) < 0 ? '−' + s.slice(1) : s); };
+const f9 = v => fl(v, 9);
+function ulp32(x){ x = Math.abs(x); if (x === 0) return 2**-149; const e = Math.floor(Math.log2(x)); return 2**(Math.max(e,-126) - 23); }
+function roundEven(v){ const r = Math.round(v); return (Math.abs(v % 1) === 0.5 && r % 2 !== 0) ? r - 1 : r; }
+const snap = v => f(roundEven(v * 256) / 256);
+const SH = 8n;
+const big = v => BigInt(v);
+function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || '#888'; }
+function EdgeF(ax,ay,bx,by,px,py){ const ux=f(ax-px), uy=f(ay-py), vx=f(bx-px), vy=f(by-py); return f(f(ux*vy) - f(uy*vx)); }
+
+/* ═══════════ état du labo ═══════════ */
+const GW = 24, GH = 15;          // fenêtre de 24 x 15 pixels
+const PRESETS = {
+  'Triangle courant': [[3.2,2.1],[19.7,5.4],[8.3,13.6]],
+  'Arête haute acceptée': [[2.0,1.3],[21.5,1.3],[11.2,13.8]],
+  'Triangle mince': [[1.4,2.2],[22.6,9.9],[2.9,4.1]],
+};
+const S = { rel: PRESETS['Triangle courant'].map(p=>({x:p[0],y:p[1]})), ox: 1100, oy: 700, sel: null, zero:false, noofs:false, drag:-1 };
+
+function setup(){
+  const vs = S.rel.map(p => ({ x: snap(S.ox + p.x), y: snap(S.oy + p.y) }));
+  let X = vs.map(v => big(roundEven(v.x*256))), Y = vs.map(v => big(roundEven(v.y*256)));
+  let P = vs.slice();
+  let area = (X[0]-X[2])*(Y[1]-Y[2]) - (Y[0]-Y[2])*(X[1]-X[2]);
+  if (area === 0n) return { vs, degenerate:true };
+  const flipped = area < 0n;
+  if (flipped){ [X[1],X[2]]=[X[2],X[1]]; [Y[1],Y[2]]=[Y[2],Y[1]]; [P[1],P[2]]=[P[2],P[1]]; area = -area; }
+  const mn = a => a.reduce((m,v)=> v<m?v:m), mx = a => a.reduce((m,v)=> v>m?v:m);
+  let x0 = Number((mn(X)+127n) >> SH), y0 = Number((mn(Y)+127n) >> SH);
+  let x1 = Number((mx(X)-128n) >> SH) + 1, y1 = Number((mx(Y)-128n) >> SH) + 1;
+  x0 = Math.max(x0, S.ox); y0 = Math.max(y0, S.oy); x1 = Math.min(x1, S.ox+GW); y1 = Math.min(y1, S.oy+GH);
+  if (x0 >= x1 || y0 >= y1) return { vs, empty:true };
+  const invArea = f(1 / f(f(Number(area)) * 2**-16));
+  const invQ = f(invArea * 2**-8);
+  const px = (big(x0) << SH) + 128n, py = (big(y0) << SH) + 128n;
+  const pairs = [[1,2],[2,0],[0,1]];
+  const E = pairs.map(([a,b]) => {
+    const A = Y[a]-Y[b], B = X[b]-X[a];
+    const tl = (A===0n && B<0n) || A<0n;
+    const bias = tl ? 0n : -1n;
+    const Ep = (X[a]-px)*(Y[b]-py) - (Y[a]-py)*(X[b]-px);
+    const eb = Ep + bias;
+    const e = eb >> SH, r = eb & 255n, c = r - bias;
+    // coin de rejet sur la boîte étendue [x0, x1+15] x [y0, y1]
+    const ax = A * big(x1 + 15 - x0), by = B * big(y1 - y0);
+    const lo = e + (ax<0n?ax:0n) + (by<0n?by:0n), hi = e + (ax>0n?ax:0n) + (by>0n?by:0n);
+    return { a, b, A, B, tl, bias, E0:Ep, e, r, c, ofs: f(Number(c) * 2**-8), accept: lo >= 0n, lo, hi };
+  });
+  const I32 = 2n**31n;
+  const wide = E.some(k => k.lo < -I32 || k.hi >= I32);
+  return { vs, X, Y, P, area, flipped, box:{x0,y0,x1,y1}, invArea, invQ, E, wide };
+}
+function Eprime(T, k, x, y){ const K = T.E[k]; return K.e + K.A * big(x - T.box.x0) + K.B * big(y - T.box.y0); }
+function Edirect(T, k, x, y){ const K = T.E[k]; const px = (big(x)<<SH)+128n, py=(big(y)<<SH)+128n;
+  return (T.X[K.a]-px)*(T.Y[K.b]-py) - (T.Y[K.a]-py)*(T.X[K.b]-px); }
+function covered(T, x, y){ for (let k=0;k<3;++k) if (Eprime(T,k,x,y) < 0n) return false; return true; }
+function baryB(T, x, y){   // D-a1b, ordre des arêtes (avant échange défait)
+  return [0,1,2].map(k => { const K = T.E[k];
+    let e = Eprime(T,k,x,y); if (S.zero && K.accept) e = 0n;
+    const fe = f(Number(e)); const s = S.noofs ? fe : f(fe + K.ofs); return { fe, s, b: f(s * T.invQ), e }; });
+}
+function baryA(T, x, y){   // D-a1 : formule flottante de C2 sur les sommets accrochés (après échange)
+  const px = f(x + 0.5), py = f(y + 0.5), p = T.P;
+  const w = [EdgeF(p[1].x,p[1].y,p[2].x,p[2].y,px,py), EdgeF(p[2].x,p[2].y,p[0].x,p[0].y,px,py), EdgeF(p[0].x,p[0].y,p[1].x,p[1].y,px,py)];
+  return w.map(v => ({ w: v, b: f(v * T.invArea) }));
+}
+function baryX(T, x, y){ return [0,1,2].map(k => Number(Edirect(T,k,x,y)) / Number(T.area)); }
+
+/* ═══════════ dessin ═══════════ */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const SC = cv.width / GW;
+let CUR = null;
+function toCv(v){ return { x: (v.x - S.ox) * SC, y: (v.y - S.oy) * SC }; }
+function draw(){
+  const T = CUR; ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle = css('--surface2'); ctx.fillRect(0,0,cv.width,cv.height);
+  if (T.box){
+    for (let y=T.box.y0;y<T.box.y1;++y) for (let x=T.box.x0;x<T.box.x1;++x) if (covered(T,x,y)){
+      ctx.fillStyle = css('--cov'); ctx.fillRect((x-S.ox)*SC,(y-S.oy)*SC,SC,SC);
+    }
+    ctx.strokeStyle = css('--boxl'); ctx.lineWidth = 2; ctx.setLineDash([6,4]);
+    ctx.strokeRect((T.box.x0-S.ox)*SC,(T.box.y0-S.oy)*SC,(T.box.x1-T.box.x0)*SC,(T.box.y1-T.box.y0)*SC); ctx.setLineDash([]);
+  }
+  ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+  for (let i=0;i<=GW;++i){ ctx.beginPath(); ctx.moveTo(i*SC,0); ctx.lineTo(i*SC,cv.height); ctx.stroke(); }
+  for (let j=0;j<=GH;++j){ ctx.beginPath(); ctx.moveTo(0,j*SC); ctx.lineTo(cv.width,j*SC); ctx.stroke(); }
+  ctx.fillStyle = css('--center');
+  for (let j=0;j<GH;++j) for (let i=0;i<GW;++i){ ctx.beginPath(); ctx.arc((i+.5)*SC,(j+.5)*SC,1.6,0,7); ctx.fill(); }
+  if (S.sel){ ctx.strokeStyle = css('--warn'); ctx.lineWidth = 3; ctx.strokeRect((S.sel.x-S.ox)*SC+1.5,(S.sel.y-S.oy)*SC+1.5,SC-3,SC-3); }
+  const p = T.vs.map(toCv);
+  ctx.strokeStyle = css('--tri'); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p[0].x,p[0].y); ctx.lineTo(p[1].x,p[1].y); ctx.lineTo(p[2].x,p[2].y); ctx.closePath(); ctx.stroke();
+  if (T.E){ T.E.forEach((K,k)=>{ if (!K.accept) return; const a = toCv(T.P[K.a]), b = toCv(T.P[K.b]);
+    ctx.strokeStyle = css('--ok'); ctx.lineWidth = 5; ctx.globalAlpha = .55; ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke(); ctx.globalAlpha = 1; }); }
+  ctx.font = '600 15px ' + css('--f-mono');
+  p.forEach((q,k)=>{ ctx.fillStyle = css('--accent'); ctx.beginPath(); ctx.arc(q.x,q.y,7,0,7); ctx.fill(); ctx.fillStyle = css('--ink'); ctx.fillText('V'+k, q.x+10, q.y-8); });
+}
+
+/* ═══════════ panneaux ═══════════ */
+function ulps(v, ex){ return Math.abs(v - ex) / ulp32(ex); }
+function cls(u){ return u <= 6 ? 'err-ok' : 'err-bad'; }
+function panels(){
+  const T = CUR;
+  const ti = document.getElementById('triInfo');
+  if (T.degenerate || T.empty){ ti.textContent = T.degenerate ? 'Aire entière nulle : rien à dessiner.' : 'Boîte vide : rien à dessiner.'; return; }
+  ti.textContent = 'aire (2^-16 px²) = ' + nf(T.area) + (T.flipped ? '   (échange p1 <-> p2 : face avant)' : '') +
+    '\ninvArea = 1/(float(aire)·2^-16) = ' + f9(T.invArea) + '\ninvQ = invArea · 2^-8 = ' + f9(T.invQ) + '  (exact)' +
+    '\nboîte x [' + T.box.x0 + ', ' + T.box.x1 + ')  y [' + T.box.y0 + ', ' + T.box.y1 + ')' +
+    '\nvoies : ' + (T.wide ? '64 bits (vraies valeurs hors int32)' : '32 bits') +
+    '\narêtes acceptées (en vert) : ' + (T.E.filter(k=>k.accept).length ? T.E.map((k,i)=>k.accept?'k'+i:null).filter(Boolean).join(', ') : 'aucune');
+  if (!S.sel || S.sel.x < T.box.x0 || S.sel.x >= T.box.x1 || S.sel.y < T.box.y0 || S.sel.y >= T.box.y1){ pickDefault(T); }
+  const { x, y } = S.sel;
+  const cov = covered(T, x, y);
+  const B = baryB(T,x,y), A = baryA(T,x,y), X = baryX(T,x,y);
+  let s = 'pixel (' + x + ', ' + y + ')  centre (' + (x+.5) + ', ' + (y+.5) + ')  ' + (cov ? 'COUVERT' : 'non couvert') + '\n';
+  T.E.forEach((K,k) => { const ep = Eprime(T,k,x,y), ed = Edirect(T,k,x,y);
+    s += '\nk' + k + ' arête (p' + K.a + ', p' + K.b + ')  tl=' + (K.tl?1:0) + '  bias=' + K.bias + (K.accept?'  [acceptée]':'') +
+      '\n   E   direct = ' + nf(ed) +
+      '\n   E\'  = (E + bias) >> 8 = ' + nf(ep) +
+      '\n   r = (E + bias) & 255 = ' + K.r + '   c = r − bias = ' + K.c + '   ofs = c/256 = ' + f9(K.ofs) +
+      '\n   256·E\' + c = ' + nf(256n*ep + K.c) + (256n*ep + K.c === ed ? '  = E  ✓' : '  ≠ E  ✗'); });
+  document.getElementById('pixInfo').textContent = s;
+  // échange défait pour l'affichage : ordre du triangle d'origine
+  const ord = T.flipped ? [0,2,1] : [0,1,2];
+  let h = '<div class="bary3"><span class="h">poids</span><span class="h">D-a1 (flottant)</span><span class="h">D-a1b (entiers)</span><span class="h">exact E/aire</span>';
+  let sumA = 0, sumB = 0;
+  ord.forEach((k,i)=>{ const ex = X[k], ua = ulps(A[k].b, ex), ub = ulps(B[k].b, ex); sumA += A[k].b; sumB += B[k].b;
+    h += '<span>b'+i+'</span><span class="'+cls(ua)+'">'+f9(A[k].b)+'<br><small>'+fl(ua,3)+' ulp</small></span><span class="'+cls(ub)+'">'+f9(B[k].b)+'<br><small>'+fl(ub,3)+' ulp</small></span><span>'+fl(ex,12)+'</span>'; });
+  h += '<span>Σ</span><span>'+f9(sumA)+'</span><span>'+f9(sumB)+'</span><span>1</span></div>';
+  h += '<p class="small">D-a1b : b = (float(E\') + ofs) · invQ, trois arrondis. D-a1 : w = (ax−px)(by−py) − (ay−py)(bx−px) en float, puis w · invArea.' + (cov ? '' : ' Pixel non couvert : valeurs calculées mais jamais écrites.') + (S.zero ? ' <b>Contre-exemple actif : une arête acceptée vaut 0 dans les voies.</b>' : '') + (S.noofs ? ' <b>Contre-exemple actif : ofs ignoré.</b>' : '') + '</p>';
+  document.getElementById('baryInfo').innerHTML = h;
+  // bloc de 8
+  const xb = T.box.x0 + 8 * Math.floor((x - T.box.x0) / 8);
+  const lanes = [...Array(8)].map((_,i) => xb + i);
+  const inBox = lanes.map(xx => xx < T.box.x1);
+  let t = '<table class="regs"><tr><th>registre</th>' + lanes.map((xx,i)=>'<th>voie '+i+'<br>x='+xx+'</th>').join('') + '</tr>';
+  for (let k=0;k<3;++k){
+    const K = T.E[k];
+    t += '<tr><td>e'+k+' (int32)</td>' + lanes.map((xx,i)=>{ let e = Eprime(T,k,xx,y); if (S.zero && K.accept) e = 0n; return '<td class="'+(inBox[i]?(e>=0n?'pos':'neg'):'dim')+'">'+nf(e)+'</td>'; }).join('') + '</tr>';
+  }
+  t += '<tr><td>cover</td>' + lanes.map((xx,i)=>{ const c = inBox[i] && covered(T,xx,y); return '<td class="'+(c?'on':'off')+'">'+(c?'1':'0')+'</td>'; }).join('') + '</tr>';
+  for (let k=0;k<3;++k){
+    t += '<tr><td>b'+k+' D-a1b</td>' + lanes.map((xx,i)=>{ const c = inBox[i] && covered(T,xx,y); return '<td class="'+(c?'':'dim')+'">'+fl(baryB(T,xx,y)[k].b,6)+'</td>'; }).join('') + '</tr>';
+  }
+  t += '</table><p class="small">D-a1b lit e0, e1, e2 tels quels : vcvtdq2ps, vaddps ofs, vmulps invQ (3 × 3 = 9 instructions). D-a1 recalculait px, puis 3 × EdgeFunction8 et 3 vmulps (26 instructions). Voies grisées : hors de la boîte ou non couvertes, jamais écrites.</p>';
+  document.getElementById('blockInfo').innerHTML = t;
+}
+function pickDefault(T){
+  // un pixel couvert proche d'une arête : là où D-a1 arrondit le plus
+  let best = null, bu = -1;
+  for (let y=T.box.y0;y<T.box.y1;++y) for (let x=T.box.x0;x<T.box.x1;++x){ if (!covered(T,x,y)) continue;
+    const A = baryA(T,x,y), X = baryX(T,x,y); const u = Math.max(...[0,1,2].map(k=>X[k]>0?ulps(A[k].b,X[k]):0)); if (u > bu){ bu = u; best = {x,y}; } }
+  S.sel = best || { x: T.box.x0, y: T.box.y0 };
+}
+
+/* ═══════════ interaction ═══════════ */
+function refresh(){ CUR = setup(); draw(); panels(); renderSteps(); }
+function evPos(e){ const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * GW, y: (e.clientY - r.top) / r.height * GH }; }
+cv.addEventListener('pointerdown', e => { const p = evPos(e);
+  const k = S.rel.findIndex(q => Math.hypot(q.x - p.x, q.y - p.y) < 0.6);
+  if (k >= 0){ S.drag = k; cv.setPointerCapture(e.pointerId); }
+  else { S.sel = { x: S.ox + Math.floor(p.x), y: S.oy + Math.floor(p.y) }; draw(); panels(); renderSteps(); } });
+cv.addEventListener('pointermove', e => { if (S.drag < 0) return; const p = evPos(e);
+  S.rel[S.drag] = { x: Math.min(GW-0.05, Math.max(0.05, p.x)), y: Math.min(GH-0.05, Math.max(0.05, p.y)) }; refresh(); });
+cv.addEventListener('pointerup', () => { S.drag = -1; });
+const pre = document.getElementById('presets');
+Object.keys(PRESETS).forEach((name,i) => { const b = document.createElement('button'); b.textContent = name; b.setAttribute('aria-pressed', i===0?'true':'false');
+  b.onclick = () => { S.rel = PRESETS[name].map(p=>({x:p[0],y:p[1]})); S.sel = null; [...pre.children].forEach(c=>c.setAttribute('aria-pressed', c===b?'true':'false')); refresh(); };
+  pre.appendChild(b); });
+document.getElementById('offx').onchange = e => { S.ox = Math.max(0, Math.min(1048000, Math.round(+e.target.value||0))); S.sel=null; refresh(); };
+document.getElementById('offy').onchange = e => { S.oy = Math.max(0, Math.min(1048000, Math.round(+e.target.value||0))); S.sel=null; refresh(); };
+for (const [id,key] of [['tZero','zero'],['tOfs','noofs']]){ const b = document.getElementById(id);
+  b.onclick = () => { S[key] = !S[key]; b.setAttribute('aria-pressed', S[key]?'true':'false'); refresh(); }; }
+
+/* ═══════════ étapes ═══════════ */
+const code = id => '<pre class="code">' + esc(CODES[id] || ('// ' + id)) + '</pre>';
+const pair = (a,b,ca,cb,kind) => '<div class="pair"><div><div class="cap">'+ca+'</div>'+code(a)+'</div><div><div class="cap '+(kind||'after')+'">'+cb+'</div>'+code(b)+'</div></div>';
+const one = (id,cap,kind) => '<div class="one"><div class="cap '+(kind||'after')+'">'+cap+'</div>'+code(id)+'</div>';
+const where = t => '<p class="where">' + t + '</p>';
+const goal = t => '<div class="note"><p><b>Objectif.</b> ' + t + '</p></div>';
+const io = (a,b) => '<div class="io"><div><div class="lbl">Reprend de l’étape précédente</div><div class="calc">'+a+'</div></div><div><div class="lbl">Résultat de cette étape</div><div class="calc">'+b+'</div></div></div>';
+const OPEN = { 1:true };
+const stepHTML = (n,title,file,body) => '<details class="step" data-n="'+n+'"'+(OPEN[n]?' open':'')+'><summary><span class="n">É'+n+'</span><h3>'+title+'</h3><span class="f">'+file+'</span></summary><div class="stepbody">'+body+'</div></details>';
+document.getElementById('steps').addEventListener('toggle', e => { const d = e.target; if (d.dataset && d.dataset.n) OPEN[d.dataset.n] = d.open; }, true);
+
+function renderSteps(){
+  const T = CUR; if (!T || !T.E) { document.getElementById('steps').innerHTML = '<p class="small">Triangle dégénéré ou hors de la fenêtre : déplacez un sommet.</p>'; return; }
+  const H = [];
+  const eTxt = T.E.map((K,k)=>'k'+k+'  E au 1er pixel = '+nf(K.E0)+'  bias = '+K.bias).join('\n');
+  const rTxt = T.E.map((K,k)=>'k'+k+'  E\' = '+nf(K.e)+'   r = '+K.r+'   c = '+K.c+'   ofs = '+f9(K.ofs)).join('\n');
+  H.push(stepHTML(1,'Garder ce que le décalage jette : le reste c de chaque arête','Rendering/Rasterizer.h · struct EdgeSetupFx, BaryFromFixed (nouvelle)',
+    goal('Retrouver E exact depuis E\' en tout pixel, sans recalcul. E varie de 256·A\' ou 256·B\' d\'un pixel à l\'autre : ses 8 bits bas ne changent jamais. On les range une fois par triangle (ofs = c/256), avec l\'échelle invQ = 256/aire. BaryFromFixed est la formule scalaire de référence, que l\'AVX2 recopiera opération pour opération.')+
+    io('Préparation D-a1 du triangle du labo :\n'+eTxt, 'Deux champs de plus dans EdgeSetupFx :\n  float ofs[3]   (c / 256, exact)\n  float invQ     (256 / aire, exact)\nBaryFromFixed(e, ofs, invQ) = (float(e) + ofs) · invQ')+
+    where('<b>Rendering/Rasterizer.h</b> : la structure, puis la fonction ajoutée juste après elle.')+
+    pair('es_before','es_after','Avant','Après')));
+
+  H.push(stepHTML(2,'Calculer c et ofs dans la préparation entière','Rendering/Rasterizer.h · SetupTriangleFx, lambda Edge',
+    goal('Le décalage arithmétique donne E\' = plancher((E + bias)/256). Le reste est r = (E + bias) & 255 : en complément à deux, « & 255 » donne le bon reste même pour E négatif (c\'est le reste de la division plancher). Puis E = 256·E\' + r − bias, d\'où c = r − bias = r + (tl ? 0 : 1), entre 0 et 256. c est un entier sur 9 bits : float(c)·2⁻⁸ est exact.')+
+    io(eTxt, rTxt + '\n\nVérification (pixel choisi, panneau du labo) : 256·E\' + c = E direct.')+
+    where('<b>Rendering/Rasterizer.h</b>, SetupTriangleFx, étape 5 : la lambda <code>Edge</code>.')+
+    pair('edge_before','edge_after','Avant','Après')));
+
+  H.push(stepHTML(3,'invQ : l\'échelle des E\', sans division de plus','Rendering/Rasterizer.h · SetupTriangleFx, étape 4',
+    goal('b = (E/256)·(256/aire). invArea = 1/(aire·2⁻¹⁶) existe déjà ; 256/aire = invArea·2⁻⁸. Multiplier par une puissance de 2 ne fait que changer l\'exposant : aucun arrondi, aucune division supplémentaire.')+
+    io('aire = '+nf(T.area)+' (2⁻¹⁶ px²)\ninvArea = '+f9(T.invArea), 'invQ = invArea · 2⁻⁸ = '+f9(T.invQ)+'\n= 256 / aire exactement au sens float : fl(1/a)·2⁻⁸ = fl(1/(a·2⁸))')+
+    where('<b>Rendering/Rasterizer.h</b>, SetupTriangleFx, étape 4.')+
+    pair('inv_before','inv_after','Avant','Après')));
+
+  const B = baryB(T,S.sel.x,S.sel.y);
+  const bTxt = B.map((v,k)=>'k'+k+'  float(E\') = '+f9(v.fe)+'\n    + ofs  = '+f9(v.s)+'\n    · invQ = '+f9(v.b)).join('\n');
+  H.push(stepHTML(4,'La boucle scalaire : barycentriques tirées des entiers','Rendering/Rasterizer.h · ForEachCoveredPixelFx',
+    goal('Le pendant scalaire (boîtes de moins de 3 pixels de large, LV3_SIMD = 0, références TNR). Il garde e0, e1, e2 en int64 pour décider ; il les réutilise pour les barycentriques. Les 3 EdgeFunction flottantes (21 opérations) deviennent 3 × (cvtsi2ss, addss, mulss). py disparaît : plus aucun centre de pixel flottant n\'est calculé.')+
+    io('ofs = ['+T.E.map(k=>f9(k.ofs)).join(', ')+']\ninvQ = '+f9(T.invQ)+'\npixel ('+S.sel.x+', '+S.sel.y+') : E\' = ['+B.map(v=>nf(v.e)).join(', ')+']', bTxt + (T.flipped ? '\n\nÉchange défait : { b0, b2, b1 }.' : ''))+
+    where('<b>Rendering/Rasterizer.h</b> : la fonction entière.')+
+    pair('scal_before','scal_after','Avant (scalaire)','Après (scalaire)')));
+
+  const acc = T.E.map((K,k)=>K.accept?'k'+k+' acceptée (lo = '+nf(K.lo)+' ≥ 0)':'k'+k+' coupe la boîte').join('\n');
+  H.push(stepHTML(5,'PrepareLanesFx : plus d\'arête mise à zéro','Rendering/Rasterizer.h · PrepareLanesFx',
+    goal('D-a1 remplaçait une arête acceptée (tous ses pixels du bon côté) par la constante 0, pour qu\'une longue arête lointaine ne force pas les voies 64 bits. Avec D-a1b, les voies portent les barycentriques : une arête à 0 donnerait b = ofs·invQ, faux sur tout le triangle (contre-exemple 1). Une arête acceptée a toutes ses valeurs ≥ 0 : la garder ne change pas le test. Ne reste que le choix de la largeur, sur les VRAIES valeurs.')+
+    io(acc, 'Mesuré sur la scène V3 (banc, 4 vues) :\n  36 262 triangles en AVX2\n  21 854 ont au moins une arête acceptée\n  vraies valeurs hors int32 : 7 triangles\n=> 7 triangles passent en voies 64 bits (D-a1 : 0).\nTNR D-a1 : 196 -> 198, 127 -> 129, 113 -> 115.')+
+    where('<b>Rendering/Rasterizer.h</b> : la fonction entière.')+
+    pair('prep_before','prep_after','Avant','Après')));
+
+  H.push(stepHTML(6,'AVX2 : de BlockBary8 à BaryFromFixed8, et la conversion int64','Rendering/PixelStage8.h · BaryInputs8, MakeBaryInputs8, BlockBary8 (supprimées) → BaryFx8, MakeBaryFx8, BaryFromFixed8, Int64x8ToFloat',
+    goal('Les pendants vectoriels de BaryFromFixed. Voies 32 bits : vcvtdq2ps arrondit au plus proche comme cvtsi2ss : même float pour le même entier. Voies 64 bits : AVX2 n\'a pas de conversion int64 → float (vcvtqq2ps est AVX-512DQ). On passe par le double avec le nombre magique 1,5·2⁵² : exact pour |v| < 2⁵¹ (bornes D-a1 : |E\'| < 2⁵⁰), puis UN arrondi double → float. arrondi(exact(v)) = arrondi(v) : les voies 64 bits donnent les mêmes bits que le scalaire (TNR (3) : 1 600 000 valeurs, 0 différence).')+
+    io('Sous D-a1 : 9 registres diffusés par triangle pour les barycentriques (6 coordonnées, inv, 0,5, lane).', 'Sous D-a1b : 4 registres diffusés (o0, o1, o2, invQ).\nPar bloc non vide : 3 vcvtdq2ps + 3 vaddps + 3 vmulps.')+
+    where('<b>Rendering/PixelStage8.h</b> : remplacer le bloc <code>BaryInputs8 … BlockBary8</code> (juste avant « VOIES 32 BITS ») par le bloc de droite. Le commentaire d\'en-tête de la section D-a1 peut recevoir la ligne « D-a1b ».')+
+    pair('help_before','help_after','Avant (supprimé)','Après (ajouté)','simd')));
+
+  H.push(stepHTML(7,'Voies 32 bits : lire les barycentriques avant d\'avancer','Rendering/PixelStage8.h · ForEachCoveredBlock8Fx32',
+    goal('Les barycentriques doivent voir E\' du bloc courant. D-a1 avançait e0..e2 AVANT le continue (un bloc vide avance aussi) ; on garde la même logique en inversant l\'ordre : « si bits, lire puis dessiner ; avancer dans tous les cas ». py et BaryInputs8 disparaissent. L\'avance peut déborder int32 APRÈS la dernière voie utile : vpaddd est modulaire en SIMD (aucun comportement indéfini) et ces voies sont masquées par eb.')+
+    io('Bloc du pixel choisi : voir le tableau « Son bloc de 8 voies » du labo.', 'Par bloc non vide : 26 → 9 opérations flottantes.\nBanc V3 : fragments −11 %, dessin −8,9 %.')+
+    where('<b>Rendering/PixelStage8.h</b> : la fonction entière.')+
+    pair('f32_before','f32_after','Avant (AVX2, int32)','Après (AVX2, int32)','simd')));
+
+  H.push(stepHTML(8,'Voies 64 bits : mêmes barycentriques, conversion en deux temps','Rendering/PixelStage8.h · ForEachCoveredBlock8Fx64',
+    goal('Même réorganisation que l\'étape 7 ; chaque registre d\'arête est une paire (4 int64 bas, 4 int64 hauts) convertie par Int64x8ToFloat. Ces triangles sont rares (7 par frame sur V3) : le coût de la conversion (2 vpaddq, 2 vsubpd, 2 vcvtpd2ps, 1 vinsertf128 par arête) n\'a pas d\'importance, l\'exactitude si.')+
+    io('Préparation : fx.wide calculé sur les vraies valeurs (étape 5).', 'TNR D-a1 : chemin int64 forcé == scalaire au bit près, 5 shaders, 3 vues.')+
+    where('<b>Rendering/PixelStage8.h</b> : la fonction entière.')+
+    pair('f64_before','f64_after','Avant (AVX2, int64)','Après (AVX2, int64)','simd')));
+
+  H.push(stepHTML(9,'Ablation, palier S : consommer aussi ofs et invQ','Rendering/Rasterizer.h · AblationConsumeSetupFx',
+    goal('Le palier S (LV3_ABLATION_PIXELS = 1) doit consommer TOUT ce que la préparation produit, sinon l\'optimiseur supprime le calcul de c et de invQ et le palier mesure moins que le vrai moteur.')+
+    io('S − M sous D-a1 : 1,06 ms (rooms).', 'Prédit S − M : +0 à +3 %.')+
+    where('<b>Rendering/Rasterizer.h</b>, sous <code>#if LV3_ABLATION_PIXELS</code>.')+
+    pair('abl_before','abl_after','Avant','Après')));
+
+  const c3 = 'Domaine C3 : boîte NON rognée de 1 × 1, étendue < 2 px.\n  float : w = E·2⁻¹⁶ exact (produits ≤ 24 bits), aire exacte\n  b_C3 = fl(E·2⁻¹⁶ · fl(1/(aire·2⁻¹⁶)))\n  entiers : E\'+ofs = E·2⁻⁸ exact, invQ = fl(1/(aire·2⁻⁸))\n  b_D-a1b = fl(E·2⁻⁸ · fl(1/(aire·2⁻⁸)))\nLes puissances de 2 commutent avec chaque arrondi :\n  b_C3 = b_D-a1b au bit près.';
+  H.push(stepHTML(10,'C3 : rien à changer, et pourquoi','Rendering/FaceStage.h · ClassifyFacesT8 étape 9e, Pixel1Reference',
+    goal('Le filet Debug compare au bit les barycentriques de C3 (flottantes, étape 9e) à celles du noyau (Pixel1Reference, qui appelle ForEachCoveredPixelFx, donc D-a1b). Il faut prouver qu\'elles restent égales, sinon le filet tire à la première frame.')+
+    io('Contrat D-a1 : sur la boîte non rognée 1 × 1, le flottant de C3 est exact.', c3 + '\n\nTNR Test_C3_Pixel1 sur le code D-a1b : 12 353 / 6 236 / 3 363, SUCCÈS (égalité memcmp des b0, b1, b2).')));
+
+  H.push(stepHTML(11,'TNR : corriger le compteur de D-a1, ajouter Test_Da1b_Bary','EXE · Test/Test_Da1_Fixed.cpp · Test/Test_Da1b_Bary.cpp (nouveau) · Test/RunAllTests.cpp · RefactoNouvelleLibrairieV3.vcxproj',
+    goal('Test_Da1_Fixed exige que chaque chemin ait servi ; il comptait les arêtes acceptées par « e = a = b = 0 », qui n\'existe plus : il échouerait en « test trivial ». On compte désormais les arêtes dont le coin de rejet est ≥ 0. Test_Da1b_Bary prouve les trois propriétés nouvelles : reconstruction exacte de E, borne d\'erreur, conversion int64 identique au scalaire.')+
+    io('Journal D-a1 actuel : 861 / 678 / 511 arêtes acceptées (calculées par la mise à zéro).', 'Journal attendu :\n[D-a1] vue 317x203 : 3484 … 198 en voies 64 bits, 112 hors garde, 861 aretes acceptees\n[D-a1] vue 203x150 : 1942 … 129 …, 678 …\n[D-a1] vue 61x180 : 927 … 115 …, 511 …\n[D-a1b] 3922 triangles, 376512 sondes E\' -> E, 0 reconstructions fausses ; 7666559 pixels couverts, 0 hors borne 5 ulp ; erreur relative max D-a1b 2.26e-07 contre D-a1 1\n[D-a1b] int64 -> float : 1600000 valeurs, 0 differences')+
+    where('<b>Test/Test_Da1_Fixed.cpp</b>, dans le bloc (1), la boucle « CONTRE-EXEMPLE du test qui ne teste rien ».')+
+    pair('tst_before','tst_after','Avant','Après')+
+    where('<b>Test/Test_Da1b_Bary.cpp</b> : fichier nouveau, à ajouter au projet EXE (TestRandom.h existe déjà).')+
+    one('newtest','Nouveau fichier')+
+    where('<b>Test/RunAllTests.cpp</b> : déclaration et appel, après Test_Da1_Fixed.')+
+    pair('run_before','run_after','Avant','Après')+
+    where('<b>RefactoNouvelleLibrairieV3.vcxproj</b> (ou Ajouter → Élément existant dans Visual Studio) : à côté de Test_Da1_Fixed.cpp.')+
+    one('vcx_after','Après')));
+
+  document.getElementById('steps').innerHTML = H.join('');
+}
+
+/* ═══════════ contre-exemples ═══════════ */
+const CE = [
+  { t:'1 · Garder la mise à zéro des arêtes acceptées', big:'163 406', u:'couleurs fausses (11,8 %) sur la scène V3', d:'PrepareLanesFx de D-a1 conservé, barycentriques lues dans les voies : une arête acceptée vaut 0, donc b = ofs·invQ ≈ 0 sur tout le triangle. 826 930 profondeurs fausses ; TNR D-a1 : 8 048 couleurs et 13 585 profondeurs différentes entre scalaire et AVX2. Le test de couverture, lui, reste juste : seul le contrôle des barycentriques voit l\'erreur.' },
+  { t:'2 · Oublier le reste c (b = float(E\')·invQ)', big:'91 %', u:'des profondeurs fausses (1 258 234 px), écart relatif jusqu\'à 0,497', d:'Biais de c/256 par arête, énorme près des arêtes où E\' est petit. 52 couleurs changent. Test_Da1_Fixed ne le voit que sur la voie 64 bits non mutée (41 155 profondeurs) ; Test_Da1b_Bary le voit partout : 9 756 230 poids hors de la borne 5 ulp.' },
+  { t:'3 · Une FMA : fmadd(float(e), invQ, ofs·invQ)', big:'7 167', u:'profondeurs AVX2 ≠ scalaire (TNR D-a1, vue 317 × 203)', d:'Égal en réels, pas en float : un arrondi au lieu de deux. Sur la scène V3, 157 136 profondeurs et 8 couleurs diffèrent de D-a1b. Règle B3 inchangée : pas de FMA sans décision explicite, et jamais sur un seul des deux chemins.' },
+  { t:'4 · Stocker les sommets en int32 24.8', big:'+100 µs', u:'étage faces, contre −18 µs côté sommets (V1)', d:'La conversion change de côté : une fois par sommet produit, puis une fois par coin de face lu (6 vcvtdq2ps et 4 vmulps par lot de 8 faces). Voir la partie 4.' },
+];
+document.getElementById('counter').innerHTML = CE.map(c=>'<div class="panel ce"><h3>'+c.t+'</h3><div class="big">'+c.big+'</div><div class="small">'+c.u+'</div><p>'+c.d+'</p></div>').join('') +
+  '<div class="panel ce"><h3>Témoin · D-a1 contre D-a1b</h3><div class="big ok">0</div><div class="small">couleur différente sur 1 382 400 pixels</div><p>174 289 profondeurs bougent (12,6 %), de 1 ulp (médiane) à 6 ulp, écart relatif ≤ 4,4·10⁻⁷. C\'est la différence attendue entre deux arrondis de la même valeur, dont l\'un est plus juste.</p></div>';
+
+/* ═══════════ vérifier ═══════════ */
+const VER = [
+  ['Hors moteur (fait, g++ 13)', ['TNR D-a1, C1, C2, C3 vertes en Debug, SIMD = 0, RASTER_STATS = 1, RASTER_FIXED = 0 ; compilation ABLATION_PIXELS = 1 et 2.', 'Test_Da1b_Bary vert ; mutations 2 et 3 détectées (contre-exemples).', 'Test_C3_Pixel1 vert : égalité au bit C3 / noyau conservée (étape 10).', 'Aucun avertissement -Wall -Wextra dans Rasterizer.h et PixelStage8.h (D-a1 en avait un, ligne 392, disparu avec la mise à zéro).']],
+  ['TNR Debug (vous)', ['Toutes les TNR : SUCCÈS, journaux de l\'étape 11 (les chiffres viennent de TestRandom.h, identiques MSVC / g++).', 'Si Test_Da1_Fixed échoue en « test trivial » : l\'étape 11 n\'est pas appliquée.']],
+  ['Filets Debug (vous)', ['Run Debug des 3 scènes (V1, V2, V3 rooms), modes Solid, Depth, LinearDepth, Barycentric : aucune assertion. Le filet C3 de RenderSystem compare les barycentriques au bit : il prouve l\'étape 10 sur données réelles.', 'À l\'œil, mode Barycentric : image identique à D-a1.']],
+  ['Asm Release (/FAs sur Scene/RenderSystem.cpp)', ['RasterizeBlocks8Fx<ShaderSolid,0> : dans le corps du bloc non vide, 3 vcvtdq2ps, 3 vaddps, 3 vmulps avant Shade8 ; plus aucun des vsubps de EdgeFunction8 ; 0 vfmadd ; aucun call.', 'Voies 64 bits (RasterizeBlocks8Fx<…,1> ou chemin wide) : vpaddq, vsubpd, vcvtpd2ps, vinsertf128.', 'ForEachCoveredPixelFx (dans RasterizeTriangleFx) : 3 vcvtsi2ss à opérande 64 bits par pixel couvert.', 'Retirer /FAs après lecture.']],
+  ['R1 comptage (RASTER_STATS = 1)', ['Compteurs communs identiques à D-a1 sur V1, V2, rooms ; TrisFixedWide ≈ 7 sur rooms.']],
+  ['Lot appairé (affinity 4, secteur, mode performances)', ['A = e97d976 / 90c144b, B = D-a1b, tous deux en-tête ablation=none, fixed=1, simd=1.', 'rooms : A B B A (seconde séquence si |écart| < 5 %) ; V2 : A B B A A B B A ; V1 : A B B A.', 'Découpage du surcoût V1 : binaire D-a1b compilé deux fois, C = LV3_RASTER_FIXED 0 et B = 1 ; V1 en C B B C ; comparer RenderVerts et l’étage faces (Render − RenderVerts) séparément.', 'Témoins : ClearDepth < 5 % et |A1 − A2| < 3 % par séquence.', 'Facultatif, R2 rooms : séquence entrelacée M0 M1 S1 S0 S0 S1 E1 E0 N0 N1 dans une même séance.']],
+];
+document.getElementById('verif').innerHTML = VER.map(([t,l])=>'<div class="panel"><h3>'+t+'</h3><ul>'+l.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>').join('');
+
+const APPLY = [
+  'Configuration de production : rien à changer (section 1) ; choisir la scène de config.json.',
+  'Rasterizer.h : étapes 1, 2, 3, 4, 5, 9.',
+  'PixelStage8.h : étapes 6, 7, 8.',
+  'Compiler Debug et Release, 0 avertissement.',
+  'EXE : étape 11 (Test_Da1_Fixed, Test_Da1b_Bary, RunAllTests, vcxproj).',
+  'TNR Debug : toutes vertes, journaux conformes.',
+  'Run Debug des 3 scènes, 4 modes : aucune assertion.',
+  'Asm Release (/FAs RenderSystem.cpp), puis retirer /FAs.',
+  'R1 comptage, puis lot appairé A/B, plus la séquence V1 fixed = 0 / 1.',
+  'M\'envoyer les summaries : je compare aux prédictions avant tout commit.',
+];
+document.getElementById('applyList').innerHTML = APPLY.map((t,i)=>'<li><input type="checkbox" id="ap'+i+'"><label for="ap'+i+'">'+esc(t)+'</label></li>').join('');
+try { const st = JSON.parse(localStorage.getItem('da1b-apply')||'[]'); st.forEach((v,i)=>{ const c=document.getElementById('ap'+i); if (c) c.checked=v; }); } catch(e) {}
+document.getElementById('applyList').addEventListener('change', () => { try { localStorage.setItem('da1b-apply', JSON.stringify(APPLY.map((_,i)=>document.getElementById('ap'+i).checked))); } catch(e) {} });
+
+refresh();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+
+</script>
+
+</body></html>
