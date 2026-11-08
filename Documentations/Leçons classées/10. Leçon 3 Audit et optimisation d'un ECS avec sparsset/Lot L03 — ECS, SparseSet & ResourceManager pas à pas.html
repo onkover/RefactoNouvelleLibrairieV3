@@ -1,0 +1,1330 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L03 — ECS, SparseSet &amp; ResourceManager pas à pas</title>
+<style>
+:root{--bg:#fbfaf7;--surf:#ffffff;--surf2:#f2f0ea;--text:#1f1d1a;--muted:#6b665e;--bd:#d9d5cc;--acc:#1f6feb;--accbg:#e6f0ff;--ok:#1a7f37;--okbg:#e3f5e8;--bad:#c4281c;--badbg:#fde8e6;--warn:#8a5a00;--warnbg:#fff1cf;--code:#f4f2ec;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--surf:#201f24;--surf2:#2a2930;--text:#ece9e2;--muted:#a09b92;--bd:#3a3841;--acc:#6ea8ff;--accbg:#1c2b44;--ok:#5bd17f;--okbg:#17301f;--bad:#ff8a80;--badbg:#3a1a18;--warn:#f0c060;--warnbg:#3a2e12;--code:#1b1a1f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17161a;--surf:#201f24;--surf2:#2a2930;--text:#ece9e2;--muted:#a09b92;--bd:#3a3841;--acc:#6ea8ff;--accbg:#1c2b44;--ok:#5bd17f;--okbg:#17301f;--bad:#ff8a80;--badbg:#3a1a18;--warn:#f0c060;--warnbg:#3a2e12;--code:#1b1a1f;color-scheme:dark}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--sans)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surf);z-index:30}
+header.top{max-width:1040px;margin:0 auto;padding:28px 18px 8px}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px}
+h2{font-size:22px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+p{margin:8px 0}
+.sub{color:var(--muted);margin:0 0 12px}
+nav.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surf);border-bottom:.5px solid var(--bd);overflow-x:auto;white-space:nowrap;padding:8px 14px}
+nav.bar a{display:inline-block;margin-right:14px;color:var(--muted);text-decoration:none;font-size:14px}
+nav.bar a:hover{color:var(--acc)}
+main{max-width:1040px;margin:0 auto;padding:0 18px 80px}
+section{margin:34px 0;padding-top:6px}
+.card{background:var(--surf);border:.5px solid var(--bd);border-radius:12px;padding:16px 18px;margin:14px 0}
+.note{border-left:3px solid var(--acc);background:var(--accbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.warn{border-left:3px solid var(--warn);background:var(--warnbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.bad{border-left:3px solid var(--bad);background:var(--badbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.good{border-left:3px solid var(--ok);background:var(--okbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:.5px solid var(--bd);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--surf2);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--mono)}
+code,.mono{font-family:var(--mono);font-size:13px}
+code.i{background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);border:.5px solid var(--bd);border-radius:8px;padding:10px 12px;overflow-x:auto;font:12.5px/1.5 var(--mono);margin:8px 0;white-space:pre}
+pre.d span{display:block}
+pre.d .add{background:var(--okbg);color:var(--ok)}
+pre.d .del{background:var(--badbg);color:var(--bad)}
+.v-before .add{display:none}.v-after .del{display:none}
+button,select,input{font:inherit;color:var(--text)}
+button{background:var(--surf2);border:.5px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+select,input[type=number]{background:var(--surf);border:.5px solid var(--bd);border-radius:6px;padding:4px 8px}
+label{margin-right:14px;white-space:nowrap}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:10px 0}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;border:.5px solid var(--bd);background:var(--surf2);margin-right:6px}
+.tag.ok{background:var(--okbg);color:var(--ok);border-color:transparent}
+.tag.ko{background:var(--badbg);color:var(--bad);border-color:transparent}
+.tag.w{background:var(--warnbg);color:var(--warn);border-color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:.5px solid var(--bd);border-radius:8px;padding:6px 10px;background:var(--surf2);cursor:pointer;font:12.5px var(--mono)}
+.chip.sel{outline:2px solid var(--acc)}.chip.dead{opacity:.5;cursor:default}.chip.live{background:var(--okbg);color:var(--ok)}
+.cells{display:flex;gap:4px;flex-wrap:wrap;margin:4px 0 10px}
+.cell{min-width:46px;text-align:center;border:.5px solid var(--bd);border-radius:6px;padding:3px 4px;font:12px var(--mono);background:var(--surf2)}
+.cell small{display:block;color:var(--muted);font-size:10px}
+.cell.on{background:var(--okbg);color:var(--ok)}.cell.hot{background:var(--accbg);color:var(--acc)}.cell.err{background:var(--badbg);color:var(--bad)}
+.page{border:1px dashed var(--bd);border-radius:8px;padding:4px 6px;margin:4px 0}
+.step{border:.5px solid var(--bd);border-radius:12px;background:var(--surf);margin:22px 0;overflow:hidden}
+.step>h3{margin:0;padding:12px 18px;background:var(--surf2);border-bottom:.5px solid var(--bd);font-size:17px}
+.step .body{padding:6px 18px 16px}
+.lbl{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+details{border:.5px solid var(--bd);border-radius:10px;background:var(--surf);padding:8px 14px;margin:10px 0}
+summary{cursor:pointer;font-weight:600}
+.small{font-size:13px;color:var(--muted)}
+.kpi{display:inline-block;margin:4px 12px 4px 0}.kpi b{font-family:var(--mono)}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Lot L03 — ECS, SparseSet &amp; ResourceManager, pas à pas</h1>
+  <p class="sub">LibraryV3 · C++23 · moteur 100 % CPU · leçon 3 (nouvel ordre) · tout ce qui est chiffré ci-dessous est recalculé dans la page par une simulation fidèle du code C++.</p>
+  <div class="ctl"><button class="p" id="btnExport">Exporter en HTML (rejouer hors ligne)</button><span class="small" id="expMsg"></span></div>
+</header>
+<nav class="bar">
+  <a href="#pourquoi">1 · Pourquoi ce lot</a><a href="#methode">2 · La méthode</a><a href="#labo">3 · Laboratoire</a><a href="#avantapres">4 · Avant / après</a><a href="#technique">5 · Fonctionnement</a><a href="#etapes">6 · Pas à pas</a><a href="#fond">7 · Questions de fond</a><a href="#roadmap">8 · Roadmap &amp; écarts</a>
+</nav>
+<main>
+
+<section id="pourquoi">
+<h2>1 · Pourquoi ce lot existe</h2>
+<div class="card">
+<h3 style="margin-top:0">Ce qui a déjà été fait</h3>
+<p><b>L01</b> a posé le socle du projet (en-tête précompilé, configuration Visual Studio, énumérations). <b>L02</b> a posé les mathématiques (<code class="i">Vec3f</code>, <code class="i">Matrix44f</code>, <code class="i">Quatf</code>). L’ordre des leçons a ensuite changé : avant de calculer des matrices de caméra et de dessiner des triangles, il faut savoir <b>où vivent les objets de la scène</b> et <b>comment on les parcourt</b>. D’où ce lot, placé avant caméra/frustum et rasterizer.</p>
+<h3>Le contexte</h3>
+<p>Le moteur est 100 % CPU : chaque cycle perdu à attendre la mémoire est un cycle de moins pour le rasterizer. Une scène contient des centaines ou milliers d’objets (planètes, caméra, lumières, déclencheurs). À chaque image, des systèmes doivent les animer, composer leurs matrices, tester leurs collisions, puis les dessiner. L’ancien moteur utilisait un graphe de nœuds (objets alloués un par un, hiérarchie d’héritage). Le dépôt contenait déjà un ECS à sparse set, un <code class="i">Registry</code> et un <code class="i">ResourceManager</code> à handles typés : ce lot les a <b>audités, corrigés et prouvés</b>.</p>
+<h3>L’objectif fonctionnel</h3>
+<ul>
+<li><b>Stocker et retrouver</b> les données d’un objet en temps constant, sans cache miss inutile.</li>
+<li><b>Parcourir</b> « tous les objets qui ont un Transform <i>et</i> un Mesh » à vitesse maximale, y compris quand la scène change.</li>
+<li><b>Supprimer un objet sans corrompre la scène</b> : un objet détruit ne doit jamais être confondu avec celui qui prend sa place.</li>
+<li><b>Charger une ressource une seule fois</b> (mesh, matériau, texture) et la <b>référencer</b> depuis les composants sans jamais la posséder.</li>
+</ul>
+<h3>Pourquoi c’est important pour la suite</h3>
+<p>Tous les lots suivants (matrices caméra, frustum, culling, rasterizer) lisent ces structures. Une erreur ici ne plante pas : elle produit des résultats <i>presque</i> justes (mauvais composant lu, mesh perdu, scène qui dérive). Corriger plus tard coûterait dix fois plus.</p>
+<div class="note">Cet artefact reste lisible un an plus tard : il pose d’abord le contexte et les décisions, puis la méthode, puis un laboratoire à manipuler, puis le détail technique étape par étape. Tout le lot reste dans le sujet de L03 ; quand une notion de lot supérieur remet une décision en cause, elle est notée dans la section 8 (roadmap) sans être traitée ici.</div>
+</div>
+
+<h3>Les décisions à prendre, et leur pourquoi</h3>
+<div class="scroll"><table>
+<tr><th>Décision</th><th>Choix retenu</th><th>Pourquoi</th><th>Alternative écartée</th><th>Statut</th></tr>
+<tr><td>Identité d’une entité</td><td>Ticket 32 bits : 24 bits d’index + 8 bits de génération</td><td>Détecte un handle périmé en une comparaison ; même taille qu’avant</td><td>struct 8 octets (double la mémoire) ; uint64 (inutile à cette échelle)</td><td><span class="tag ok">acté</span> boucle à 256 générations : risque 1/256 assumé. <b>Écart avec le dépôt</b> : le Carnet de route (bug 54) acte depuis un repack 16/16 (65 536 générations) ; la leçon garde 24/8 comme base didactique, voir roadmap L3-1</td></tr>
+<tr><td>Annuaire entité → composant</td><td>Sparse paginé, pages de 4096 cases allouées à la demande</td><td>Coût mémoire proportionnel aux entités réellement touchées</td><td>vector plat (coût ∝ plus grand index) ; <code class="i">unordered_map</code> (perd l’accès sans hachage)</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Type → pool</td><td>ID entier par variable statique templée</td><td>Accès tableau O(1), sans RTTI</td><td><code class="i">map&lt;type_index&gt;</code> (O(log N) + RTTI)</td><td><span class="tag ok">acté</span> non atomique : à revoir si multi-thread</td></tr>
+<tr><td>Itération multi-composants</td><td>Vue à pivot minimal + pointeurs typés capturés + itérateur proxy par valeur</td><td>Borne le travail par le plus petit pool ; zéro passage par le Registry dans la boucle</td><td>boucle sur toutes les entités ; pivot arbitraire</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Groupes / archetypes</td><td>Pas maintenant</td><td>On n’optimise une vue que si le profiler la désigne</td><td>owning groups (EnTT), archetypes (Unity DOTS)</td><td><span class="tag w">à décider</span> après profilage</td></tr>
+<tr><td>Composant et ressource</td><td>Le composant porte un <b>handle</b>, jamais un <code class="i">shared_ptr</code></td><td>Une seule source de vérité ; composant = donnée pure copiable en <code class="i">memcpy</code></td><td><code class="i">shared_ptr</code> dans le composant (deux propriétaires)</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Handles de ressources</td><td>Entiers croissants, jamais recyclés, sans génération</td><td>Pas de recyclage = pas de problème ABA</td><td>génération dans le handle (coût sans bénéfice ici)</td><td><span class="tag ok">acté</span> à rouvrir si un jour on recycle les ids</td></tr>
+<tr><td>Cache de ressources</td><td>Clé canonique + map miroir + <code class="i">std::expected</code></td><td>Pas de doublons ; déchargement O(1) ; échec explicite</td><td>clé brute ; scan linéaire ; handle invalide muet</td><td><span class="tag ok">acté</span> granularité d’erreur limitée par <code class="i">OBJLoader</code></td></tr>
+</table></div>
+</section>
+
+<section id="methode">
+<h2>2 · La méthode : un ECS à sparse set</h2>
+<div class="card">
+<h3 style="margin-top:0">Ce que c’est, vulgarisé</h3>
+<p>Imagine un entrepôt avec <b>un rayon par type de pièce</b> (un rayon « Transform », un rayon « Mesh »…). Dans chaque rayon, les pièces sont rangées <b>sans aucun trou</b>, côte à côte. Un <b>registre d’accueil</b> (le « sparse ») dit, pour chaque objet de la scène, à quelle place se trouve sa pièce dans chaque rayon, ou « rien ». Un second carnet (le « miroir ») dit, pour chaque place du rayon, à quel objet elle appartient. Un objet n’est qu’un <b>numéro de ticket</b> ; ce qu’il « est » dépend uniquement des rayons où il possède une pièce.</p>
+<h3>Sources et usage</h3>
+<ul>
+<li><b>Structure de données</b> : <i>sparse set</i>, décrite par Preston Briggs et Linda Torczon, « An Efficient Representation for Sparse Sets », <i>ACM Letters on Programming Languages and Systems</i>, 1993.</li>
+<li><b>Application à l’ECS</b> : bibliothèque <b>EnTT</b> de Michele Caini (« skypjack »), <code class="i">github.com/skypjack/entt</code>, et sa série d’articles « ECS back and forth » (<code class="i">skypjack.github.io</code>). Le README d’EnTT cite notamment Minecraft parmi ses utilisateurs.</li>
+<li><b>Variante concurrente</b> : les <i>archetypes</i> (Unity DOTS, Flecs, Unreal Mass), où les entités de même « signature » de composants vivent ensemble.</li>
+</ul>
+</div>
+<h3>Comparaison avec les méthodes standard</h3>
+<div class="scroll"><table>
+<tr><th></th><th>Objets + héritage</th><th><code class="i">unordered_map&lt;Entity,T&gt;</code></th><th><b>Sparse set (ce lot)</b></th><th>Archetypes</th></tr>
+<tr><td>Accès à un composant</td><td>pointeur + appel virtuel</td><td>hachage + bucket</td><td><b>2 lectures directes</b></td><td>table de signature puis index</td></tr>
+<tr><td>Parcours d’un seul type</td><td>saut de pointeur par objet (cache miss en série)</td><td>nœuds dispersés</td><td><b>tableau contigu, prefetcher actif</b></td><td>contigu par chunk</td></tr>
+<tr><td>Ajouter / retirer un composant</td><td>changer de classe</td><td>O(1)</td><td><b>O(1)</b> (swap-and-pop)</td><td>déplacer l’entité vers un autre archetype (coûteux)</td></tr>
+<tr><td>Parcours multi-composants</td><td>test par objet</td><td>test par entité</td><td>pivot sur le plus petit pool + <code class="i">Contains</code> O(1)</td><td><b>le plus rapide</b> (déjà trié par signature)</td></tr>
+<tr><td>Mémoire</td><td>fragmentée</td><td>surcoût par nœud</td><td>annuaire creux (borné par la pagination)</td><td>compacte</td></tr>
+<tr><td>Complexité à écrire</td><td>faible</td><td>faible</td><td>moyenne</td><td>élevée</td></tr>
+</table></div>
+<div class="note">Il n’y a pas de gagnant absolu : le sparse set est le meilleur compromis simplicité / ajout-suppression rapides ; les archetypes gagnent en itération pure mais coûtent cher à chaque changement de composition. Pour un moteur pédagogique où la composition d’une entité change peu, le sparse set est le bon choix — et on pourra passer aux groupes plus tard sans changer l’API.</div>
+</section>
+
+<section id="labo">
+<h2>3 · Laboratoire : manipuler l’ECS avant de lire le code</h2>
+<p>Un vrai <code class="i">Registry</code> avec deux pools (Transform, Mesh). Active ou coupe chaque décision du lot pour <b>voir</b> ce qu’elle évite. Cliquez une entité pour la sélectionner.</p>
+<div class="card">
+  <div class="ctl">
+    <label><input type="checkbox" id="lbVer" checked> Entités versionnées (F1)</label>
+    <label><input type="checkbox" id="lbPag" checked> Sparse paginé (B7)</label>
+    <label>Taille de page (démo) <select id="lbPS"><option>4</option><option selected>8</option><option>16</option></select></label>
+    <button id="lbReset">Réinitialiser</button>
+  </div>
+  <div class="ctl">
+    <button data-lb="create">Créer une entité</button><button data-lb="addT">+ Transform</button><button data-lb="addM">+ Mesh</button><button data-lb="remT">− Transform</button><button data-lb="remM">− Mesh</button><button data-lb="destroy">Détruire</button>
+  </div>
+  <div class="ctl"><span class="small">Cas particuliers :</span>
+    <button data-lb="capture">Capturer le handle sélectionné</button><button data-lb="check">Interroger le handle capturé</button><button data-lb="dbl">Détruire 2× la sélection</button><button data-lb="late">Créer l’entité d’index 20 000</button><button data-lb="wrap">Boucler la génération (256 cycles)</button>
+  </div>
+  <div id="labOut"></div>
+</div>
+</section>
+
+<section id="avantapres"><h2>4 · Algorithme initial → ce que le lot change</h2>
+<p>Chaque bloc montre le code du dépôt <b>avant</b> le lot et le code <b>après</b>. Rouge = retiré, vert = ajouté.</p>
+<div class="ctl"><span class="small">Affichage :</span><label><input type="radio" name="vw" value="" checked> diff</label><label><input type="radio" name="vw" value="v-before"> avant seul</label><label><input type="radio" name="vw" value="v-after"> après seul</label></div>
+<div id="diffs"></div>
+</section>
+
+<section id="technique"><h2>5 · Fonctionnement technique</h2>
+<div id="tech"></div>
+</section>
+
+<section id="etapes"><h2>6 · Le pas à pas</h2>
+<p>Fil rouge : une scène de 5 entités (A, B, C, D puis E, qui prend la place de B). Chaque étape affiche ce qu’elle reçoit de la précédente et ce qu’elle produit. Les réglages ci-dessous s’appliquent à <b>toutes</b> les étapes.</p>
+<div class="card"><div class="ctl">
+ <label><input type="checkbox" data-p="legacy"> Revenir à l’ancien code (entités brutes, avant F1)</label>
+ <label><input type="checkbox" data-p="dbl"> Appeler <code class="i">DestroyEntity(B)</code> deux fois</label>
+ <label><input type="checkbox" data-p="paged" checked> Sparse paginé</label>
+</div></div>
+<div id="steps"></div>
+</section>
+
+<section id="fond"><h2>7 · Questions de fond</h2><div id="fondOut"></div></section>
+
+<section id="roadmap"><h2>8 · Roadmap, écarts et décisions à prendre</h2><div id="roadOut"></div></section>
+
+</main>
+<script>
+const SRC = '<!doctype html>\n' + document.documentElement.outerHTML;   // capturé AVANT tout rendu : sert à l'export
+const $ = id => document.getElementById(id);
+/*ENGINE-START*/
+const INV = 0xFFFFFFFF;
+const U = x => x >>> 0;
+const EI = e => U(e & 0xFFFFFF);
+const EG = e => (e >>> 24) & 255;
+const ME = (i, g) => U(((g & 255) << 24) | (i & 0xFFFFFF));
+const HX = e => '0x' + U(e).toString(16).toUpperCase().padStart(8, '0');
+const f32 = Math.fround;
+const fmt = n => Number(n).toLocaleString('fr-FR').replace(/\u202f/g, '\u00a0');
+
+/* ---------- Registry (Entity.hpp + cycle de vie) ---------- */
+class Reg {
+  constructor(o = {}) {
+    this.legacy = !!o.legacy;           // true = Entity brute (avant F1)
+    this.bug = o.bug || new Set();      // injection de bugs pour la section « Vérifier »
+    this.gen = []; this.alive = []; this.free = []; this.observers = []; this.seen = [];
+    this.n = 0; this.pools = []; this.assertFail = []; this.used = new Set();
+  }
+  idx(e) { return this.legacy ? e : EI(e); }
+  create() {
+    let i;
+    if (this.free.length) i = this.free.pop();
+    else { i = this.gen.length; this.gen.push(0); this.alive.push(false); }
+    this.alive[i] = true; this.n++; this.used.add(i);
+    return this.legacy ? i : ME(i, this.gen[i]);
+  }
+  forceIndex(i) {
+    while (this.gen.length <= i) { this.gen.push(0); this.alive.push(false); }
+    this.alive[i] = true; this.n++; this.used.add(i);
+    return this.legacy ? i : ME(i, this.gen[i]);
+  }
+  isAlive(e) {
+    if (this.legacy) return this.alive[e] === true;      // avant F1 : « le slot est occupé »
+    const i = EI(e);
+    return i < this.gen.length && this.gen[i] === EG(e);
+  }
+  destroy(e) {
+    if (!this.legacy && !this.bug.has('noAssertDbl') && !this.isAlive(e)) {
+      this.assertFail.push('DestroyEntity : double destruction ou handle périmé (' + HX(e) + ')');
+      return false;
+    }
+    const i = this.idx(e);
+    if (!this.legacy && this.bug.has('orderInverted')) this.gen[i] = (this.gen[i] + 1) & 255;
+    for (const p of this.pools) p.onDestroyed(e);
+    for (const f of this.observers) this.seen.push(f(e));
+    if (!this.legacy && !this.bug.has('orderInverted') && !this.bug.has('noGenInc')) this.gen[i] = (this.gen[i] + 1) & 255;
+    this.alive[i] = false; this.n--; this.free.push(i);
+    return true;
+  }
+  snap() { return { gen: this.gen.slice(0, 8), alive: this.alive.slice(0, 8).map(Boolean), free: this.free.slice(), n: this.n }; }
+}
+
+/* ---------- SparseSet (sparse plat ou paginé, dense, miroir) ---------- */
+class SS {
+  constructor(name, reg, o = {}) {
+    this.name = name; this.reg = reg;
+    this.paged = !!o.paged; this.PS = o.page || 8;
+    this.flatSize = 10000;                    // resize(MAX_ENTITIES_INIT) de l'ancien constructeur
+    this.flat = new Map(); this.pages = new Map();
+    this.dense = []; this.ents = []; this.touched = new Set(); this.oob = [];
+  }
+  sidx(e) { return this.reg.bug.has('rawIndex') ? e : this.reg.idx(e); }   // bug injecté : m_Sparse[entity]
+  getS(i) {
+    if (this.paged) {
+      const pg = this.pages.get(Math.floor(i / this.PS));
+      return pg ? pg[i % this.PS] : INV;
+    }
+    if (i >= this.flatSize) { this.oob.push('lecture m_Sparse[' + i + '] hors limites (taille ' + this.flatSize + ')'); return INV; }
+    const v = this.flat.get(i); return v === undefined ? INV : v;
+  }
+  setS(i, v) {
+    if (this.paged) {
+      const p = Math.floor(i / this.PS);
+      if (!this.pages.has(p)) this.pages.set(p, new Array(this.PS).fill(INV));
+      this.pages.get(p)[i % this.PS] = v;
+    } else {
+      if (i >= this.flatSize) { this.oob.push('écriture m_Sparse[' + i + '] hors limites (taille ' + this.flatSize + ')'); return; }
+      this.flat.set(i, v);
+    }
+    if (v !== INV) this.touched.add(i);
+  }
+  ensure(i) { if (!this.paged && i >= this.flatSize) this.flatSize = i + 1; }   // EnsureSparseFits
+  has(e) {
+    const d = this.getS(this.reg.idx(e));
+    return d !== INV && d < this.dense.length && this.ents[d] === e;
+  }
+  get(e) {
+    if (!this.has(e)) this.reg.assertFail.push('Get : composant absent pour ' + HX(e));
+    return this.dense[this.getS(this.sidx(e))];
+  }
+  add(e, val, emplace) {
+    const i = this.reg.idx(e); this.ensure(i);
+    if (this.has(e)) {
+      if (emplace) this.reg.assertFail.push('Emplace : le composant existe déjà');
+      this.dense[this.getS(i)] = val; return 'update';
+    }
+    if (this.getS(i) !== INV) this.reg.assertFail.push('Add : composant fantôme d’une génération antérieure détecté (' + HX(e) + ')');
+    const di = this.dense.length;
+    this.setS(this.sidx(e), di);
+    this.dense.push(val); this.ents.push(e);
+    return 'insert';
+  }
+  remove(e) {
+    if (!this.has(e)) return null;
+    const i = this.reg.idx(e), to = this.getS(i), last = this.dense.length - 1;
+    const info = { to, last, moved: null, swapped: false };
+    if (to !== last) {
+      const le = this.ents[last];
+      this.dense[to] = this.dense[last]; this.ents[to] = le;
+      if (!this.reg.bug.has('noRedirect')) this.setS(this.reg.idx(le), to);
+      info.swapped = true; info.moved = le;
+    }
+    this.dense.pop(); this.ents.pop(); this.setS(i, INV);
+    return info;
+  }
+  onDestroyed(e) { if (this.has(e)) this.remove(e); }
+  check() {
+    const v = [];
+    if (this.dense.length !== this.ents.length) v.push('tailles dense/miroir différentes');
+    this.ents.forEach((e, i) => { if (this.getS(this.reg.idx(e)) !== i) v.push('sparse[' + this.reg.idx(e) + '] ≠ ' + i); });
+    return v;
+  }
+  /* mémoire avec les VRAIES valeurs (page = 4096 entrées de 4 octets) */
+  memFlat() { return Math.max(10000, ...[...this.touched].map(i => i + 1), 0) * 4; }
+  memPaged() {
+    const pages = new Set([...this.touched].map(i => Math.floor(i / 4096)));
+    if (!pages.size) return 0;
+    return pages.size * 4096 * 4 + (Math.max(...pages) + 1) * 8;
+  }
+}
+
+/* ---------- ResourceManager (simulation : clés de cache, miroir, erreurs) ---------- */
+function canon(p, ci) {
+  const parts = [];
+  for (const s of p.replace(/\\/g, '/').split('/')) {
+    if (s === '' || s === '.') continue;
+    if (s === '..') { parts.pop(); continue; }
+    parts.push(ci ? s.toLowerCase() : s);
+  }
+  return parts.join('/');
+}
+class RMsim {
+  constructor(o) { this.o = o; this.pathToMesh = new Map(); this.meshes = new Map(); this.idToPath = new Map(); this.next = 1; this.loads = 0; }
+  exists(p) { return canon(p, this.o.ci) === canon(this.o.real, this.o.ci); }
+  load(p) {
+    const key = this.o.canon ? canon(p, this.o.ci) : p;
+    if (this.pathToMesh.has(key)) return { id: this.pathToMesh.get(key), hit: true, key };
+    if (!this.exists(p)) return { err: 'FileNotFound', key };
+    const id = this.next++; this.loads++;
+    this.meshes.set(id, key); this.pathToMesh.set(key, id); this.idToPath.set(id, key);
+    return { id, hit: false, key };
+  }
+  unload(id) {
+    let reads = 0;
+    if (this.o.mirror) {
+      reads = 1; const k = this.idToPath.get(id);
+      if (k !== undefined) { this.pathToMesh.delete(k); this.idToPath.delete(id); }
+    } else {
+      for (const [k, v] of this.pathToMesh) { reads++; if (v === id) { this.pathToMesh.delete(k); break; } }
+      this.idToPath.delete(id);
+    }
+    this.meshes.delete(id);
+    return reads;
+  }
+}
+
+/* ---------- Scénario fil rouge (partagé par toutes les étapes) ---------- */
+function scenario(P) {
+  const reg = new Reg({ legacy: P.legacy });
+  const T = new SS('Transform', reg, P), M = new SS('Mesh', reg, P);
+  reg.pools = [T, M];
+  const nm = new Map(); const S = { reg, T, M, nm, rows: [] };
+  const mk = n => { const e = reg.create(); nm.set(e, n); return e; };
+  const row = (op, res) => S.rows.push({ op, res, ...reg.snap() });
+  const A = mk('A'), B = mk('B'), C = mk('C'), D = mk('D');
+  row('CreateEntity ×4 (A,B,C,D)', [A, B, C, D].map(HX).join(' '));
+  const d1 = reg.destroy(B); row('DestroyEntity(B)', d1 ? 'ok' : 'refusé');
+  let dblRes = null;
+  if (P.dbl) { dblRes = reg.destroy(B); row('DestroyEntity(B) une 2ᵉ fois', dblRes ? 'ACCEPTÉ (corruption)' : 'assert : refusé'); }
+  const E = mk('E'); row('CreateEntity() → E', HX(E));
+  let F = null; if (P.dbl) { F = mk('F'); row('CreateEntity() → F', HX(F)); }
+  S.h = { A, B, C, D, E, F }; S.dblRes = dblRes; S.bStale = B;
+  S.alive = { B: reg.isAlive(B), E: reg.isAlive(E) };
+  S.s2snap = reg.snap();
+  /* étape 3 : composants */
+  const names = n => nm.get(n) || '?';
+  const tl = [A, C, D, E]; if (F !== null) tl.push(F);
+  for (const e of tl) T.add(e, 'Tf(' + (e === E ? 'E' : names(e)) + ')');
+  for (const e of [C, E]) M.add(e, 'Me(' + (e === E ? 'E' : names(e)) + ')');
+  S.s3Sp = new Map([...T.touched].map(i => [i, T.getS(i)]));
+  S.ctB = T.has(B); S.getB = S.ctB ? T.get(B) : null;
+  S.s3 = { Td: T.dense.slice(), Te: T.ents.slice(), Md: M.dense.slice(), Me: M.ents.slice() };
+  /* étape 5 : suppression d'un composant Transform */
+  const target = S.h[P.rem] !== null && S.h[P.rem] !== undefined ? S.h[P.rem] : C;
+  if (P.noRedirect) reg.bug.add('noRedirect');
+  const before = { Td: T.dense.slice(), Te: T.ents.slice() };
+  S.rem = { target, before, info: T.remove(target) };
+  reg.bug.delete('noRedirect');
+  S.rem.after = { Td: T.dense.slice(), Te: T.ents.slice() };
+  S.rem.viol = T.check();
+  S.rem.movedHas = S.rem.info && S.rem.info.moved !== null ? T.has(S.rem.info.moved) : null;
+  return S;
+}
+
+/* ---------- Suite de tests (miroir du C++) + injection de bugs ---------- */
+function runSuite(opt) {
+  const res = [];
+  const t = (name, fn) => { let ok = false, d = ''; try { ok = !!fn(); } catch (x) { d = String(x); } res.push({ name, ok, d }); };
+  const mk = () => { const reg = new Reg(opt); const H = new SS('Health', reg, { paged: true, page: 8 }); reg.pools = [H]; return { reg, H }; };
+  { const { reg, H } = mk();
+    const a = reg.create(); H.add(a, 'H1'); reg.destroy(a); const b = reg.create(); H.add(b, 'H2');
+    t('F1·1  même slot, ticket différent', () => EI(a) === EI(b) && a !== b);
+    t('F1·2  IsAlive(périmé)=faux, IsAlive(neuf)=vrai', () => !reg.isAlive(a) && reg.isAlive(b));
+    t('F1·3  Contains(périmé)=faux, Contains(neuf)=vrai', () => !H.has(a) && H.has(b));
+    t('F1·4  aucun composant fantôme détecté', () => !reg.assertFail.some(s => s.includes('fantôme')));
+    t('F1·5  Get(neuf) lit bien son propre composant', () => H.get(b) === 'H2');
+  }
+  { const { reg, H } = mk(); reg.observers.push(e => reg.isAlive(e)); const o = reg.create(); H.add(o, 'o'); reg.destroy(o);
+    t('F1·8  (contrat futur) un observateur voit l’entité vivante pendant la notification', () => reg.seen.length === 1 && reg.seen[0] === true);
+  }
+  { const { reg, H } = mk(); const a = reg.create(); reg.destroy(a); const ok2 = reg.destroy(a);
+    t('F1·6  double DestroyEntity refusé (assert)', () => ok2 === false);
+    const x = reg.create(), y = reg.create();
+    t('F1·7  deux entités vivantes n’ont jamais le même handle', () => x !== y);
+  }
+  { const { reg, H } = mk(); const es = [0, 1, 2, 3].map(() => reg.create());
+    // recycler un slot pour que les génération > 0 interviennent dans le sparse
+    reg.destroy(es[1]); es[1] = reg.create();
+    es.forEach((e, i) => H.add(e, 'v' + i));
+    H.remove(es[0]);
+    t('SS·1  swap-and-pop : le déplacé reste lisible', () => H.get(es[3]) === 'v3');
+    t('SS·2  invariant sparse↔miroir (CheckInvariants)', () => H.check().length === 0);
+    t('SS·3  aucun accès hors limites du sparse', () => H.oob.length === 0);
+  }
+  { const { reg, H } = mk(); let s = 12345; const rnd = () => (s = Math.imul(s, 1103515245) + 12345 >>> 0) / 4294967296; const live = [];
+    for (let k = 0; k < 300; k++) { const r = rnd();
+      if (r < .5 || !live.length) { const e = reg.create(); H.add(e, 'x'); live.push(e); }
+      else { const j = Math.floor(rnd() * live.length); const e = live.splice(j, 1)[0]; reg.destroy(e); } }
+    t('SS·4  300 opérations pseudo-aléatoires : invariant tenu', () => H.check().length === 0 && live.every(e => H.has(e)));
+  }
+  { const { reg, H } = mk(); const e = reg.forceIndex(20000); H.add(e, 'late');
+    t('B7·1  entité tardive (idx 20000) : aller-retour sans hors-limites', () => H.get(e) === 'late' && H.oob.length === 0);
+    t('B7·2  sparse paginé moins coûteux que le plat (valeurs réelles)', () => H.memPaged() < H.memFlat());
+  }
+  { const rm = new RMsim({ canon: true, mirror: true, ci: true, real: 'assets/meshes/cube.obj' });
+    const a = rm.load('Assets\\Meshes\\cube.obj'), b = rm.load('./assets/meshes/../meshes/cube.obj'), c = rm.load('assets/meshes/sphere.obj');
+    t('F5·1  deux écritures du même chemin = un seul mesh', () => a.id === b.id && rm.loads === 1);
+    t('F5·2  fichier absent → FileNotFound (pas de handle muet)', () => c.err === 'FileNotFound');
+    rm.unload(a.id); const r = rm.load('assets/meshes/cube.obj');
+    t('F5·3  après UnloadMesh, recharger donne un NOUVEL id', () => !r.err && r.id !== a.id);
+  }
+  return res;
+}
+/*ENGINE-END*/
+
+/* ====================== UI : helpers ====================== */
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const code = t => '<pre>' + esc(t.replace(/^\n/, '').replace(/\s+$/, '')) + '</pre>';
+const tag = (t, c) => '<span class="tag ' + (c || '') + '">' + t + '</span>';
+const okko = (b, y, n) => b ? tag(y || 'vrai', 'ok') : tag(n || 'faux', 'ko');
+function diff(lines) {
+  return '<pre class="d">' + lines.map(l => {
+    const k = l[0], t = esc(l.slice(1)) || ' ';
+    return '<span class="' + (k === '+' ? 'add' : k === '-' ? 'del' : '') + '">' + (k === '+' ? '+ ' : k === '-' ? '− ' : '  ') + t + '</span>';
+  }).join('') + '</pre>';
+}
+function lanes(rows, n = 8) {
+  let h = '<div class="scroll"><table><tr><th>registre</th>';
+  for (let i = 0; i < n; i++) h += '<th class="n">couloir ' + i + '</th>';
+  h += '</tr>';
+  for (const r of rows) {
+    h += '<tr><td class="mono">' + r.l + '</td>';
+    for (let i = 0; i < n; i++) {
+      const v = r.v[i]; const c = r.c ? r.c(v, i) : '';
+      h += '<td class="n"' + (c ? ' style="' + c + '"' : '') + '>' + (r.f ? r.f(v) : v) + '</td>';
+    }
+    h += '</tr>';
+  }
+  return h + '</table></div>';
+}
+const bad = 'background:var(--badbg);color:var(--bad)', good = 'background:var(--okbg);color:var(--ok)';
+function cellsHtml(arr, cls) { return '<div class="cells">' + arr.map((v, i) => '<div class="cell ' + (cls ? cls(v, i) : '') + '"><small>' + i + '</small>' + v + '</div>').join('') + '</div>'; }
+
+/* ====================== LABORATOIRE ====================== */
+const LB = { st: null, sel: -1, cap: null, log: [], names: new Map(), nc: 0, opt: {} };
+function labInit() {
+  const o = { legacy: !$('lbVer').checked, paged: $('lbPag').checked, page: +$('lbPS').value };
+  LB.opt = o; const reg = new Reg(o);
+  LB.reg = reg; LB.T = new SS('Transform', reg, o); LB.M = new SS('Mesh', reg, o); reg.pools = [LB.T, LB.M];
+  LB.sel = -1; LB.cap = null; LB.log = []; LB.names = new Map(); LB.nc = 0;
+  for (let k = 0; k < 3; k++) labAct('create', true);
+  LB.log = ['Laboratoire prêt : ' + (o.legacy ? 'entités BRUTES (ancien code)' : 'entités versionnées') + ', sparse ' + (o.paged ? 'paginé (pages de ' + o.page + ' en démo, 4096 en réel)' : 'plat (10 000 cases)') + '.'];
+}
+const nameOf = e => LB.names.get(e) || '?';
+function labAct(a, quiet) {
+  const { reg, T, M } = LB; const L = m => { if (!quiet) LB.log.unshift(m); };
+  const sel = LB.sel >= 0 ? LB.slotHandle(LB.sel) : null;
+  if (a === 'create') { const e = reg.create(); LB.names.set(e, String.fromCharCode(65 + (LB.nc++ % 26))); LB.sel = reg.idx(e); L('CreateEntity() → ' + HX(e) + ' (' + nameOf(e) + ')' + (reg.gen[reg.idx(e)] ? ' — slot recyclé, génération ' + reg.gen[reg.idx(e)] : '')); return; }
+  if (a === 'late') { const e = reg.forceIndex(20000); LB.names.set(e, 'Z'); LB.sel = 20000; L('Entité tardive créée : ' + HX(e) + ' (index 20 000). Ajoute-lui un composant pour voir le coût mémoire du sparse.'); return; }
+  if (sel === null) { L('Sélectionne d’abord une entité vivante.'); return; }
+  const e = sel;
+  if (a === 'addT') { reg.assertFail.length = 0; const r = T.add(e, 'Tf(' + nameOf(e) + ')', true); L('Emplace Transform sur ' + nameOf(e) + ' → ' + r + (reg.assertFail.length ? ' ⚠ ' + reg.assertFail.join(' ; ') : '')); }
+  else if (a === 'addM') { reg.assertFail.length = 0; const r = M.add(e, 'Me(' + nameOf(e) + ')', true); L('Emplace Mesh sur ' + nameOf(e) + ' → ' + r + (reg.assertFail.length ? ' ⚠ ' + reg.assertFail.join(' ; ') : '')); }
+  else if (a === 'remT') { const i = T.remove(e); L(i ? 'Remove Transform(' + nameOf(e) + ') : ' + (i.swapped ? 'swap-and-pop, ' + nameOf(i.moved) + ' déplacé de ' + i.last + ' vers ' + i.to : 'c’était le dernier, simple pop') : 'rien à retirer'); }
+  else if (a === 'remM') { const i = M.remove(e); L(i ? 'Remove Mesh(' + nameOf(e) + ') : ' + (i.swapped ? 'swap-and-pop' : 'simple pop') : 'rien à retirer'); }
+  else if (a === 'destroy') { reg.assertFail.length = 0; const ok = reg.destroy(e); L('DestroyEntity(' + HX(e) + ') → ' + (ok ? 'ok, composants retirés des deux pools' : 'refusé') + (reg.assertFail.length ? ' ⚠ ' + reg.assertFail.join(' ; ') : '')); }
+  else if (a === 'dbl') { reg.assertFail.length = 0; const ok1 = reg.destroy(e); const ok2 = reg.destroy(e); const a1 = reg.create(), a2 = reg.create(); LB.names.set(a1, 'X'); LB.names.set(a2, 'Y'); L('Double DestroyEntity → 1ᵉʳ ' + (ok1 ? 'ok' : 'refusé') + ', 2ᵉ ' + (ok2 ? 'ACCEPTÉ' : 'refusé') + '. Deux CreateEntity() donnent ' + HX(a1) + ' et ' + HX(a2) + (a1 === a2 ? ' — IDENTIQUES : deux entités vivantes, un seul slot (corruption).' : ' — distincts, scène saine.')); }
+  else if (a === 'capture') { LB.cap = e; L('Handle capturé : ' + HX(e) + ' (' + nameOf(e) + '), comme le ferait TriggerComponent::overlapping_entities.'); }
+  else if (a === 'check') { if (LB.cap === null) { L('Capture d’abord un handle.'); return; } const c = LB.cap; L('Handle capturé ' + HX(c) + ' → IsAlive=' + reg.isAlive(c) + ', Transform.Contains=' + T.has(c) + (T.has(c) ? ' → lit « ' + T.get(c) + ' »' + (nameOf(c) !== undefined && T.get(c) !== 'Tf(' + nameOf(c) + ')' ? ' ⚠ ce n’est PAS le composant de l’entité capturée (ABA)' : '') : '')); }
+  else if (a === 'wrap') {
+    const h = e; let cur = e; const idx = reg.idx(e);
+    for (let k = 0; k < 256; k++) { reg.destroy(cur); cur = reg.create(); }
+    LB.names.set(cur, nameOf(h)); LB.sel = reg.idx(cur);
+    L('256 cycles détruire/recréer sur le slot ' + idx + ' : handle de départ ' + HX(h) + ', handle final ' + HX(cur) + (cur === h ? ' — IDENTIQUES : la génération (8 bits) a bouclé, un handle ancien redevient « vivant » (risque 1/256 assumé).' : ' — différents.'));
+  }
+}
+LB.slotHandle = i => { const r = LB.reg; if (i >= r.gen.length || !r.alive[i]) return null; return r.legacy ? i : ME(i, r.gen[i]); };
+function poolHtml(P) {
+  let h = '<div class="lbl">' + P.name + ' — ' + P.dense.length + ' composant(s)</div>';
+  h += '<div class="small">m_Sparse (annuaire)</div>';
+  if (!P.paged) {
+    const used = [...P.touched], mx = Math.max(7, ...used.filter(i => i < 24)); const cs = [];
+    for (let i = 0; i <= mx; i++) { const v = P.getS(i); cs.push([i, v]); }
+    h += '<div class="cells">' + cs.map(([i, v]) => '<div class="cell ' + (v !== INV ? 'on' : '') + '"><small>idx ' + i + '</small>' + (v === INV ? '∅' : v) + '</div>').join('') + '<div class="cell"><small>…</small>' + fmt(P.flatSize) + ' cases</div></div>';
+  } else {
+    const ps = [...P.pages.keys()].sort((a, b) => a - b);
+    h += ps.length ? ps.map(p => '<div class="page"><span class="small">page ' + p + ' (idx ' + p * P.PS + '–' + (p * P.PS + P.PS - 1) + ')</span><div class="cells">' + P.pages.get(p).map((v, k) => '<div class="cell ' + (v !== INV ? 'on' : '') + '"><small>' + (p * P.PS + k) + '</small>' + (v === INV ? '∅' : v) + '</div>').join('') + '</div></div>').join('') : '<span class="small">(aucune page allouée)</span>';
+    h += '<div class="small">' + (Math.floor(Math.max(...[...P.touched, 0]) / P.PS) + 1 - ps.length) + ' autre(s) page(s) de la plage jamais allouée(s) : 0 octet.</div>';
+  }
+  h += '<div class="small">m_Dense (composants contigus) · m_Entities (miroir)</div>';
+  h += P.dense.length ? '<div class="cells">' + P.dense.map((v, i) => '<div class="cell hot"><small>' + i + ' · ' + HX(P.ents[i]).slice(2) + '</small>' + esc(v) + '</div>').join('') + '</div>' : '<div class="small">(vide)</div>';
+  const v = P.check(); h += v.length ? '<div class="bad">Invariant rompu : ' + esc(v.join(' ; ')) + '</div>' : '';
+  if (P.oob.length) h += '<div class="bad">Accès hors limites : ' + esc(P.oob.slice(-2).join(' ; ')) + '</div>';
+  return h;
+}
+function labRender() {
+  const { reg, T, M } = LB;
+  let h = '<div class="lbl">Registry — slots (cliquer pour sélectionner)</div><div class="chips">';
+  const shown = [...reg.used].sort((a, b) => a - b);
+  for (const i of shown) {
+    const live = reg.alive[i], hd = reg.legacy ? i : ME(i, reg.gen[i]);
+    h += '<div class="chip ' + (live ? 'live' : 'dead') + (LB.sel === i ? ' sel' : '') + '" data-slot="' + i + '">' + (live ? (nameOf(hd)) + ' · ' : 'libre · ') + HX(hd) + '<br><span class="small">slot ' + i + ' · gen ' + reg.gen[i] + '</span></div>';
+  }
+  h += '</div><div class="small">file des slots libres (LIFO) : [' + reg.free.join(', ') + '] · vivantes : ' + reg.n + '</div>';
+  if (LB.cap !== null) h += '<div class="note">Handle capturé : <code>' + HX(LB.cap) + '</code> — IsAlive : ' + okko(reg.isAlive(LB.cap)) + ' · Transform.Contains : ' + okko(T.has(LB.cap)) + '</div>';
+  h += '<div class="cols"><div>' + poolHtml(T) + '</div><div>' + poolHtml(M) + '</div></div>';
+  const mf = T.memFlat(), mp = T.memPaged();
+  h += '<div class="lbl">Mémoire du sparse Transform, valeurs réelles (pages de 4096)</div><span class="kpi">plat : <b>' + fmt(mf) + ' o</b></span><span class="kpi">paginé : <b>' + fmt(mp) + ' o</b></span><span class="kpi">rapport : <b>×' + (mp ? (mf / mp).toFixed(1) : '—') + '</b></span>';
+  h += '<div class="lbl">Journal</div>' + LB.log.slice(0, 7).map(l => '<div class="small">› ' + esc(l) + '</div>').join('');
+  return h;
+}
+
+/* ====================== AVANT / APRÈS ====================== */
+const DIFFS = [
+  ['Entity.hpp — de l’indice au ticket daté (F1)', [
+    '-using Entity = uint32_t;               // un simple numéro, recyclable : handle périmé indétectable',
+    '+using Entity = std::uint32_t;          // [ génération 8 bits | index 24 bits ]',
+    '+inline constexpr std::uint32_t ENTITY_INDEX_BITS = 24u;',
+    '+inline constexpr std::uint32_t ENTITY_INDEX_MASK = (1u << ENTITY_INDEX_BITS) - 1u;',
+    '+constexpr std::uint32_t EntityIndex(Entity e) noexcept { return e & ENTITY_INDEX_MASK; }',
+    '+constexpr std::uint8_t  EntityGeneration(Entity e) noexcept { return std::uint8_t(e >> ENTITY_INDEX_BITS); }',
+    '+constexpr Entity MakeEntity(std::uint32_t i, std::uint8_t g) noexcept',
+    '+{ return (Entity(g) << ENTITY_INDEX_BITS) | (i & ENTITY_INDEX_MASK); }',
+    '+static_assert(MakeEntity(2u, 1u) == 0x01000002u);   // test unitaire gratuit, à la compilation']],
+  ['Registry — cycle de vie des entités (F1)', [
+    ' Entity CreateEntity()',
+    ' {',
+    '-    if (!m_FreeEntities.empty()) { e = m_FreeEntities.back(); m_FreeEntities.pop_back(); return e; }',
+    '-    return m_EntityCount++;',
+    '+    if (!m_FreeIndices.empty()) { idx = m_FreeIndices.back(); m_FreeIndices.pop_back(); }',
+    '+    else { idx = m_Generations.size(); m_Generations.push_back(0); m_Alive.push_back(false); }',
+    '+    m_Alive[idx] = true; ++m_AliveCount;',
+    '+    return MakeEntity(idx, m_Generations[idx]);',
+    ' }',
+    '+bool IsAlive(Entity e) const noexcept',
+    '+{ const auto i = EntityIndex(e); return i < m_Generations.size() && m_Generations[i] == EntityGeneration(e); }',
+    ' void DestroyEntity(Entity e)',
+    ' {',
+    '-    for (auto& s : m_Storages) if (s) s->OnEntityDestroyed(e);   // aucune garde : double destruction possible',
+    '-    m_FreeEntities.push_back(e);',
+    '+    assert(IsAlive(e) && "double destruction ou handle périmé");',
+    '+    if (!IsAlive(e)) return;',
+    '+    for (auto& s : m_Storages) if (s) s->OnEntityDestroyed(e);',
+    '+    ++m_Generations[EntityIndex(e)];             // périme tous les handles émis pour ce slot',
+    '+    m_Alive[EntityIndex(e)] = false; --m_AliveCount; m_FreeIndices.push_back(EntityIndex(e));',
+    ' }']],
+  ['SparseSet — Contains / Get / Add / Emplace / Remove (F1 + B3 + B6)', [
+    '-virtual bool ConstainsEntity(Entity e) const = 0;                 // faute de frappe dans l’interface',
+    '+virtual bool Contains(Entity e) const = 0;',
+    ' bool Contains(Entity e) const override',
+    ' {',
+    '-    if (e >= m_Sparse.size()) return false;',
+    '-    const uint32_t d = m_Sparse[e];',
+    '+    const uint32_t d = m_Sparse.Get(EntityIndex(e));               // le sparse s’indexe par l’INDEX',
+    '     return d != INVALID_INDEX && d < m_Dense.size() && m_Entities[d] == e;   // == compare index ET génération',
+    ' }',
+    ' T& Get(Entity e)',
+    ' {',
+    '-    return m_Dense[m_Sparse[e]];                                  // aucune garde',
+    '+    assert(Contains(e));',
+    '+    return m_Dense[m_Sparse.Get(EntityIndex(e))];',
+    ' }',
+    '+template<class... A> T& Emplace(Entity e, A&&... a)             // construit À SA PLACE FINALE',
+    '+{ assert(!Contains(e)); m_Sparse.Set(EntityIndex(e), m_Dense.size()); m_Entities.push_back(e);',
+    '+  return m_Dense.emplace_back(std::forward<A>(a)...); }',
+    ' void Remove(Entity e)',
+    ' {',
+    '     if (!Contains(e)) return;',
+    '-    m_Dense[to] = std::move(m_Dense[last]);                        // self-move quand to == last',
+    '+    if (to != last) {                                              // pas de self-move',
+    '+        m_Dense[to] = std::move(m_Dense[last]); m_Entities[to] = lastEntity;',
+    '+        m_Sparse.Set(EntityIndex(lastEntity), to);                 // rediriger l’annuaire du déplacé',
+    '+    }',
+    ' }']],
+  ['SparseSet — l’annuaire devient paginé (B7)', [
+    '-std::vector<uint32_t> m_Sparse;                    // 10 000 cases dès la construction, ∝ plus grand index',
+    '+PagedSparseArray     m_Sparse;                     // pages de 4096 cases allouées à la demande',
+    '-SparseSet() { m_Sparse.resize(MAX_ENTITIES_INIT, INVALID_INDEX); }',
+    '+SparseSet() = default;',
+    '-void EnsureSparseFits(Entity e) { if (e >= m_Sparse.size()) m_Sparse.resize(e + 1, INVALID_INDEX); }',
+    '+// supprimé : Set() alloue sa page lui-même',
+    '+uint32_t Get(uint32_t i) const { page = i / 4096; return (page < m_pages.size() && m_pages[page]) ? (*m_pages[page])[i % 4096] : INVALID_INDEX; }']],
+  ['ComponentView — l’itérateur utilise enfin ses pointeurs (F3)', [
+    '-if (!m_view->m_registry->template hasComponent<ComponentTypes>(e)) ok = false;   // GetTypeID + bounds + static_cast, par composant, par entité',
+    '+const bool all = std::apply([e](auto*... s){ return (s->Contains(e) && ...); }, m_view->m_storages_ptr_tuple);',
+    '-using reference = value_type&;  mutable std::optional<value_type> m_currentTuple;   // contournement',
+    '+using reference = value_type;                    // itérateur proxy : retour PAR VALEUR',
+    '+reference operator*() const { /* std::apply + Get() direct */ }',
+    '-for (auto& [e, a, b] : view)',
+    '+for (auto&& [e, a, b] : view)                    // une prvalue ne se lie pas à auto&']],
+  ['MeshComponent — de la possession à la référence (F4)', [
+    ' struct MeshComponent {',
+    '-    std::shared_ptr<MeshClass> m_mesh;           // second propriétaire, concurrent du ResourceManager',
+    '-    std::string m_texture;                        // vestige : la texture vit dans Material → SubMesh',
+    '+    MeshHandle m_mesh;                            // un ticket de 4 octets, résolu au point d’usage',
+    '     float m_orbitalSpeed = 0, m_rotationSpeed = 0, m_currentOrbitAngle = 0, m_currentRotationAngle = 0;',
+    ' };',
+    '+static_assert(std::is_trivially_copyable_v<MeshComponent>);',
+    ' // ParseMesh :',
+    '-MeshHandle hMesh = ctx.pRM.LoadMesh(...);  /* validé puis JAMAIS stocké : le mesh était perdu */  addComponent(entity, m);',
+    '+ctx.registry.emplaceComponent<MeshComponent>(entity, hMesh, speed, rot, 0.0f, 0.0f);']],
+  ['ResourceManager — clé canonique, miroir, erreur explicite (F5)', [
+    '-auto it = m_pathToMesh.find(filepath);                       // « assets/x.obj » ≠ « Assets/x.obj » ≠ « assets\\x.obj »',
+    '+const std::string key = CanonicalKey(filepath);              // weakly_canonical + generic_string',
+    '+auto it = m_pathToMesh.find(key);',
+    '+if (!fs::exists(filepath)) return std::unexpected(EMeshLoadError::FileNotFound);',
+    '+m_pathToMesh.emplace(key, h); m_meshIdToPath.emplace(h.id, key);   // les deux moitiés de la bijection',
+    ' void UnloadMesh(MeshHandle h)',
+    ' {',
+    '-    for (auto it = m_pathToMesh.begin(); it != m_pathToMesh.end(); ++it) if (it->second == h) { erase(it); break; }   // O(N)',
+    '+    if (auto p = m_meshIdToPath.find(h.id); p != m_meshIdToPath.end()) { m_pathToMesh.erase(p->second); m_meshIdToPath.erase(p); }  // O(1)',
+    '     m_meshes.erase(h.id);',
+    ' }']]
+];
+function diffsHtml() { return DIFFS.map(([t, l]) => '<div class="card"><h3 style="margin-top:0">' + esc(t) + '</h3>' + diff(l) + '</div>').join(''); }
+/* ====================== TECHNIQUE (§5) ====================== */
+function techHtml() {
+  return `
+<div class="card">
+<h3 style="margin-top:0">5.1 · Le chemin d’un <code class="i">addComponent</code> (6 sauts)</h3>
+<p>Clique « Suivant » : chaque saut dit ce que le CPU lit en mémoire. Le but du design est que ce chemin soit court, direct et sans branche imprévisible.</p>
+<div class="ctl"><button id="hopBtn" class="p">Suivant</button><button id="hopRst">Recommencer</button></div><div id="hopOut"></div>
+</div>
+<div class="card">
+<h3 style="margin-top:0">5.2 · Pourquoi le dense défile vite : lignes de cache et chargements dépendants</h3>
+<p>Un CPU lit la mémoire par <b>lignes de 64 octets</b>. Le tableau dense est contigu : une ligne rapporte plusieurs composants et le prefetcher lit la suite avant qu’on la demande. Avec des objets dispersés sur le tas, il faut une ligne par objet, et l’adresse de l’objet suivant n’est connue qu’après avoir lu le pointeur courant (<i>pointer chasing</i>).</p>
+<div class="ctl"><label>Nombre de composants <input type="range" id="cN" min="100" max="100000" step="100" value="10000"></label><label>Taille d’un composant (octets) <select id="cS"><option>16</option><option>20</option><option selected>64</option><option>164</option></select></label></div>
+<div id="cacheOut"></div>
+<p class="small">Hypothèses du modèle (modifiables, ce ne sont pas des mesures) :
+<label>latence d’un accès RAM (ns) <input type="number" id="cL" value="100" min="10" max="400" style="width:70px"></label>
+<label>coût d’une ligne diffusée par le prefetcher (ns) <input type="number" id="cP" value="4" min="1" max="50" style="width:70px"></label></p>
+<p>Pour mesurer sur ta machine (Release x64, jamais Debug) : un <code class="i">std::vector&lt;SmallComponent&gt;</code> de 1 000 000 éléments parcouru directement, contre un <code class="i">vector&lt;unique_ptr&lt;SmallComponent&gt;&gt;</code> mélangé avec <code class="i">std::shuffle</code>, en lisant un champ et en écrivant la somme dans une variable <code class="i">volatile</code>.</p>
+</div>
+<div class="card">
+<h3 style="margin-top:0">5.3 · Les trois tableaux sont une bijection à double sens</h3>
+<div class="cols"><div>
+<table><tr><th>Sens</th><th>Tableau</th><th>Question</th></tr>
+<tr><td>identité → adresse</td><td><code class="i">m_Sparse</code></td><td>où est le composant de E7 ?</td></tr>
+<tr><td>adresse → identité</td><td><code class="i">m_Entities</code></td><td>à qui est la case 3 ?</td></tr></table>
+<p>Invariant sacré : pour tout <code class="i">i</code>, <code class="i">m_Sparse[EntityIndex(m_Entities[i])] == i</code>. Le miroir stocke le handle <b>complet</b> : c’est lui qui rend <code class="i">Contains</code> capable de refuser un handle périmé.</p></div>
+<div>${code(`
+#if LV3_ASSERTS_ENABLED   // commutateur des filets du projet (pas LV3_DEBUG, qui gouverne les dumps)
+void CheckInvariants() const
+{
+    assert(m_Dense.size() == m_Entities.size());
+    for (uint32_t i = 0; i < m_Entities.size(); ++i)
+        assert(m_Sparse.Get(EntityIndex(m_Entities[i])) == i);
+}
+#endif`)}</div></div>
+</div>
+<div class="warn"><b>Correction apportée pendant ce lot.</b> Les notes précédentes affirmaient que, dans <code class="i">DestroyEntity</code>, incrémenter la génération <i>avant</i> de notifier les storages « détruit tout » (composants fantômes). La simulation de l’étape 10 montre que c’est <b>inexact pour ce code</b> : <code class="i">SparseSet::Contains</code> ne lit jamais <code class="i">m_Generations</code>, il compare seulement <code class="i">m_Entities[dense] == entity</code> avec le handle reçu en paramètre. L’ordre « notifier puis incrémenter » reste la bonne convention, mais uniquement parce qu’un futur observateur qui appellerait <code class="i">IsAlive(e)</code> pendant la notification verrait sinon l’entité déjà morte. C’est un contrat futur, pas un bug actuel.</div>`;
+}
+const HOPS = [
+  ['Ton code appelle <code>registry.addComponent(E, t)</code>', 'aucune lecture : appel direct (template inline)'],
+  ['<code>ComponentTypeManager::GetTypeID&lt;Transform&gt;()</code>', '1 lecture : la variable statique déjà initialisée (0 si c’est le 1ᵉʳ type)'],
+  ['<code>m_Storages</code> : vérifier la taille, lire le slot <code>[typeID]</code>', '2 lectures : taille du vector + pointeur du slot'],
+  ['Slot vide ? → <code>make_unique&lt;SparseSet&lt;T&gt;&gt;()</code> (une seule fois)', '0 lecture ensuite : le pool existe'],
+  ['<code>static_cast&lt;SparseSet&lt;T&gt;*&gt;</code> (légitime : l’ID prouve le type)', 'aucune instruction machine : conversion de type à la compilation'],
+  ['<code>SparseSet::Emplace</code> : écrire le sparse, pousser le miroir, construire dans le dense', '3 écritures contiguës en fin de tableau (cache chaud)']
+];
+
+/* ====================== ÉTAPES ====================== */
+const sample8 = S => { const h = S.h; return [h.A, h.B, h.C, h.D, h.E, h.F !== null ? h.F : ME(1, 2), ME(9, 0), 0xFFFFFFFF]; };
+const nmS = (S, e) => { const o = { [S.h.A]: 'A', [S.h.C]: 'C', [S.h.D]: 'D', [S.h.E]: 'E' }; return o[e] || (e === S.h.B ? 'B (périmé)' : e === 0xFFFFFFFF ? 'NULL_ENTITY' : '?'); };
+
+const STEPS = [
+{ n: 1, title: 'Étape 1 · Découper et recomposer un handle',
+  ctl: () => '',
+  out: (P, S) => {
+    const hs = sample8(S), sz = 10000 * 4;
+    const rows = hs.map(e => ({ e, i: EI(e), g: EG(e), re: ME(EI(e), EG(e)) }));
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Toute la sécurité du lot repose sur une idée : un handle contient <b>deux informations</b> dans 32 bits. L’<b>index</b> sert à ranger (c’est le seul à pouvoir indexer un tableau), la <b>génération</b> sert à reconnaître l’époque. Ces trois fonctions sont les seules à connaître le découpage.</p>
+<div class="lbl">Résultat de l’étape précédente</div><p>Aucune : c’est le point de départ. Les 8 handles ci-dessous sont ceux du scénario (A, B, C, D, E, ${S.h.F !== null ? 'F' : 'un handle de génération 2'}) plus un index hors scène et <code class="i">NULL_ENTITY</code>. ${P.legacy ? tag('ancien code : génération toujours 0', 'w') : ''}</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+constexpr uint32_t EntityIndex(Entity e) noexcept      { return e & ENTITY_INDEX_MASK; }              // 24 bits bas
+constexpr uint8_t  EntityGeneration(Entity e) noexcept { return uint8_t(e >> ENTITY_INDEX_BITS); }    // 8 bits hauts
+constexpr Entity   MakeEntity(uint32_t i, uint8_t g) noexcept
+{ return (Entity(g) << ENTITY_INDEX_BITS) | (i & ENTITY_INDEX_MASK); }`)}
+<div class="lbl">Équivalent vectorisé — AVX2 (8 couloirs ; AVX-512 : mêmes opérations en <code>_mm512_*</code>, 16 couloirs)</div>${code(`
+__m256i e   = _mm256_loadu_si256((const __m256i*)handles);     // e[k] = handle k, un handle par couloir de 32 bits
+const __m256i mask = _mm256_set1_epi32(0x00FFFFFF);            // 24 bits bas à 1, recopié dans les 8 couloirs
+__m256i idx = _mm256_and_si256(e, mask);                       // EntityIndex      : e & 0x00FFFFFF
+__m256i gen = _mm256_srli_epi32(e, 24);                        // EntityGeneration : e >> 24 (décalage LOGIQUE : pas d'extension de signe)
+__m256i re  = _mm256_or_si256(_mm256_slli_epi32(gen, 24),      // MakeEntity : (gen << 24) | (idx & mask)
+                              _mm256_and_si256(idx, mask));`)}
+<div class="lbl">Résultat de l’étape — calculé (entiers 32 bits non signés ; ce lot n’utilise aucun float jusqu’à l’étape 8)</div>
+${lanes([
+  { l: 'e (handle)', v: hs, f: HX },
+  { l: 'idx = e & mask', v: rows.map(r => r.i), f: v => v },
+  { l: 'gen = e >> 24', v: rows.map(r => r.g), f: v => v },
+  { l: 're = MakeEntity', v: rows.map(r => r.re), f: HX, c: (v, i) => v === hs[i] ? good : bad }
+])}
+<p class="small">Couloir 7 : <code>NULL_ENTITY</code> = index 0xFFFFFF + génération 255 ; <code>CreateEntity</code> n’émet jamais cet index (assert sur <code>idx &lt; ENTITY_INDEX_MASK</code>).</p>
+<div class="lbl">Contre-exemple chiffré — utiliser le handle comme indice</div>
+<div class="bad">Avec un sparse de 10 000 cases = <b>${fmt(sz)} octets</b>, lire <code>m_Sparse[entity]</code> au lieu de <code>m_Sparse[EntityIndex(entity)]</code> revient à sauter de <code>handle × 4</code> octets :</div>
+${lanes([
+  { l: 'décalage = e × 4 (octets)', v: hs, f: e => fmt(U(e) * 4), c: e => U(e) * 4 >= sz ? bad : good },
+  { l: 'dans le vector ?', v: hs, f: e => U(e) * 4 < sz ? 'oui' : 'HORS LIMITES', c: e => U(e) * 4 < sz ? good : bad }
+])}
+<p>Dès qu’un slot a été recyclé une seule fois (génération 1), son handle vaut au moins 16 777 216 : lecture à plus de 67 Mo de l’adresse de base, comportement indéfini, aucun message d’erreur en Release.</p>`;
+  }
+},
+{ n: 2, title: 'Étape 2 · Cycle de vie : CreateEntity, DestroyEntity, IsAlive',
+  ctl: () => '',
+  out: (P, S) => {
+    const r = S.reg, hs = sample8(S);
+    const gens = r.gen.slice(); while (gens.length < 12) gens.push(0);
+    const lanesAlive = hs.map(e => { const i = EI(e), g = EG(e), inR = i < r.gen.length, cur = inR ? r.gen[i] : 0; return { i, g, inR, cur, alive: inR && cur === g }; });
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Donner à chaque entité une vie dont la fin est <b>détectable</b>. Détruire un slot incrémente sa génération : tous les handles émis avant deviennent périmés, en une comparaison, sans table ni allocation.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div><p>Les fonctions <code>EntityIndex</code>, <code>EntityGeneration</code>, <code>MakeEntity</code> validées à l’étape 1 (le <code>static_assert</code> et les 8 couloirs).</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+Entity CreateEntity()
+{
+    uint32_t idx;
+    if (!m_FreeIndices.empty()) { idx = m_FreeIndices.back(); m_FreeIndices.pop_back(); }   // LIFO : slot encore « chaud » en cache
+    else { idx = m_Generations.size(); m_Generations.push_back(0); m_Alive.push_back(false); }
+    m_Alive[idx] = true; ++m_AliveCount;
+    return MakeEntity(idx, m_Generations[idx]);
+}
+bool IsAlive(Entity e) const noexcept
+{ const uint32_t i = EntityIndex(e); return i < m_Generations.size() && m_Generations[i] == EntityGeneration(e); }
+void DestroyEntity(Entity e)
+{
+    assert(IsAlive(e));  if (!IsAlive(e)) return;                 // double destruction détectée
+    for (auto& s : m_Storages) if (s) s->OnEntityDestroyed(e);    // retirer les composants
+    ++m_Generations[EntityIndex(e)];                              // uint8_t : 255 → 0, boucle assumée
+    m_Alive[EntityIndex(e)] = false; --m_AliveCount; m_FreeIndices.push_back(EntityIndex(e));
+}`)}
+<div class="lbl">Équivalent vectorisé — IsAlive sur 8 handles (AVX2)</div>${code(`
+__m256i e   = _mm256_loadu_si256((const __m256i*)handles);
+__m256i idx = _mm256_and_si256(e, _mm256_set1_epi32(0x00FFFFFF));          // EntityIndex
+__m256i gen = _mm256_srli_epi32(e, 24);                                    // EntityGeneration
+// idx < taille ? (comparaison signée correcte car idx < 2^24)
+__m256i inR = _mm256_cmpgt_epi32(_mm256_set1_epi32((int)m_Generations.size()), idx);
+// gather de 32 bits à (base + idx*1) : on lit 4 octets et on ne garde que l'octet bas.
+// ATTENTION : lit jusqu'à 3 octets APRÈS le dernier élément -> m_Generations doit être suivi de 3 octets de bourrage.
+// Le masque inR évite toute lecture pour les couloirs hors limites.
+__m256i raw = _mm256_mask_i32gather_epi32(_mm256_setzero_si256(), (const int*)m_Generations.data(), idx, inR, 1);
+__m256i cur = _mm256_and_si256(raw, _mm256_set1_epi32(0xFF));              // génération courante du slot
+__m256i ok  = _mm256_and_si256(_mm256_cmpeq_epi32(cur, gen), inR);         // même génération ET index valide
+int bits = _mm256_movemask_ps(_mm256_castsi256_ps(ok));                    // 1 bit par couloir`)}
+<div class="lbl">Résultat de l’étape — la séquence réelle du scénario</div>
+<div class="scroll"><table><tr><th>opération</th><th>résultat</th><th>générations (slots 0–7)</th><th>slots libres</th><th class="n">vivantes</th></tr>
+${S.rows.map(x => '<tr><td>' + esc(x.op) + '</td><td class="mono">' + esc(x.res) + '</td><td class="mono">[' + x.gen.join(',') + ']</td><td class="mono">[' + x.free.join(',') + ']</td><td class="n">' + x.n + '</td></tr>').join('')}</table></div>
+<p>Handle de B avant sa destruction : <code>${HX(S.h.B)}</code> · handle de E (même slot 1) : <code>${HX(S.h.E)}</code> · <code>IsAlive(B)</code> ${okko(S.alive.B)} · <code>IsAlive(E)</code> ${okko(S.alive.E)} ${P.legacy ? tag('ancien code : « vivant » = slot occupé, B et E sont indiscernables', 'w') : ''}</p>
+${lanes([
+  { l: 'handle', v: hs, f: HX },
+  { l: 'idx', v: lanesAlive.map(x => x.i) },
+  { l: 'gen du handle', v: lanesAlive.map(x => x.g) },
+  { l: 'idx < taille ?', v: lanesAlive.map(x => x.inR), f: v => v ? 'oui' : 'non' },
+  { l: 'génération courante (gather)', v: lanesAlive.map(x => x.cur) },
+  { l: 'vivant ?', v: lanesAlive.map(x => x.alive), f: v => v ? 'OUI' : 'non', c: v => v ? good : bad }
+])}
+<div class="lbl">Contre-exemple chiffré — pas de génération, pas de garde</div>
+<div class="bad">${P.legacy
+  ? 'Ancien code actif : la file des slots libres vaut <b>[' + S.rows[S.rows.length - 1].free.join(',') + ']</b> après les opérations ci-dessus. ' + (P.dbl ? 'La 2ᵉ destruction de B a été <b>acceptée</b> : le slot 1 est dans la file deux fois, donc E et F reçoivent le même handle <code>' + HX(S.h.E) + '</code> — deux entités vivantes, un seul slot.' : 'Coche « Appeler DestroyEntity(B) deux fois » : le slot 1 entre deux fois dans la file, et deux CreateEntity() suivants renvoient le même handle.') + ' Et un handle de B conservé (<code>' + HX(S.h.B) + '</code>) désigne désormais E : <code>IsAlive</code> répond « vivant ».'
+  : 'Code corrigé actif. Décoche « revenir à l’ancien code » pour comparer. ' + (P.dbl ? 'La 2ᵉ destruction de B est <b>refusée</b> par l’assert (' + esc(S.reg.assertFail[0] || '') + ').' : 'Coche « Appeler DestroyEntity(B) deux fois » : l’assert de DestroyEntity la refuse, la file reste saine.')}</div>`;
+  }
+},
+{ n: 3, title: 'Étape 3 · Le SparseSet : Emplace, Contains, Get',
+  ctl: () => '',
+  out: (P, S) => {
+    const T = S.T, sp = S.s3Sp, hs = [S.h.A, S.h.B, S.h.C, S.h.D, S.h.E, 0x00000009, ME(1, 2), S.h.F !== null ? S.h.F : ME(4, 0)];
+    const lan = hs.map(e => { const i = EI(e), inR = true, d = (sp.get(i) !== undefined) ? sp.get(i) : INV, valid = d !== INV && d < S.s3.Te.length, ge = valid ? S.s3.Te[d] : null; return { i, d, valid, ge, m: valid && ge === e }; });
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Poser les trois tableaux : le sparse (annuaire identité → place), le dense (composants contigus) et le miroir (place → identité). <code>Contains</code> est le test d’existence O(1) dont dépend tout le reste ; <code>Emplace</code> construit le composant <b>directement à sa place finale</b>.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Les handles vivants de l’étape 2 : A=<code>${HX(S.h.A)}</code>, C=<code>${HX(S.h.C)}</code>, D=<code>${HX(S.h.D)}</code>, E=<code>${HX(S.h.E)}</code>${S.h.F !== null ? ', F=<code>' + HX(S.h.F) + '</code>' : ''} ; B=<code>${HX(S.h.B)}</code> est périmé. Transform est ajouté à A, C, D, E${S.h.F !== null ? ', F' : ''} ; Mesh à C et E.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+bool Contains(Entity e) const override
+{
+    const uint32_t d = m_Sparse.Get(EntityIndex(e));                  // 1ʳᵉ lecture : annuaire
+    return d != INVALID_INDEX && d < m_Dense.size()
+        && m_Entities[d] == e;                                       // 2ᵉ lecture : miroir ; '==' compare index ET génération
+}
+template<class... A> T& Emplace(Entity e, A&&... a)
+{
+    assert(!Contains(e));
+    m_Sparse.Set(EntityIndex(e), m_Dense.size());                    // annuaire : cette entité → prochaine place
+    m_Entities.push_back(e);                                         // miroir : cette place → cette entité (handle COMPLET)
+    return m_Dense.emplace_back(std::forward<A>(a)...);              // construction directe dans le buffer du vector
+}`)}
+<div class="lbl">Équivalent vectorisé — Contains sur 8 handles (AVX2, sparse plat)</div>${code(`
+__m256i idx = _mm256_and_si256(e, _mm256_set1_epi32(0x00FFFFFF));
+__m256i inR = _mm256_cmpgt_epi32(_mm256_set1_epi32((int)sparseSize), idx);          // l'index tient dans l'annuaire ?
+// gather de sparse[idx] (échelle 4 octets) ; les couloirs hors limites gardent la valeur INVALID (-1)
+__m256i d   = _mm256_mask_i32gather_epi32(_mm256_set1_epi32(-1), (const int*)sparse, idx, inR, 4);
+// d != INVALID ET d < denseSize. Piège : INVALID = 0xFFFFFFFF = -1 en signé, donc (denseSize > d) est VRAI pour -1.
+// Astuce : exiger aussi (d > -1), ce qui élimine exactement la valeur INVALID.
+__m256i v   = _mm256_and_si256(_mm256_cmpgt_epi32(_mm256_set1_epi32((int)denseSize), d),
+                               _mm256_cmpgt_epi32(d, _mm256_set1_epi32(-1)));
+// gather du miroir seulement là où v est vrai (évite de lire hors du tableau)
+__m256i g   = _mm256_mask_i32gather_epi32(_mm256_setzero_si256(), (const int*)entities, d, v, 4);
+__m256i ok  = _mm256_and_si256(_mm256_cmpeq_epi32(g, e), v);                       // handle complet identique
+int bits    = _mm256_movemask_ps(_mm256_castsi256_ps(ok));`)}
+<p class="small">Avec le sparse <b>paginé</b>, les 8 couloirs n’ont plus une base commune : le gather unique n’est valable que si tous les index tombent dans la même page (cas courant d’indices voisins) ; sinon on retombe sur une boucle scalaire. Voir étape 4.</p>
+<div class="lbl">Résultat de l’étape — état des pools après les ajouts</div>
+<div class="cols"><div><div class="small">Transform · dense / miroir</div>${cellsHtml(S.s3.Td, () => 'hot')}${cellsHtml(S.s3.Te.map(e => HX(e).slice(2)), () => '')}</div>
+<div><div class="small">Mesh · dense / miroir</div>${cellsHtml(S.s3.Md, () => 'hot')}${cellsHtml(S.s3.Me.map(e => HX(e).slice(2)), () => '')}</div></div>
+${lanes([
+  { l: 'handle interrogé', v: hs, f: HX },
+  { l: 'sparse[idx] (gather)', v: lan.map(x => x.d), f: v => v === INV ? '∅' : v },
+  { l: 'd valide ?', v: lan.map(x => x.valid), f: v => v ? 'oui' : 'non' },
+  { l: 'miroir[d]', v: lan.map(x => x.ge), f: v => v === null ? '—' : HX(v) },
+  { l: 'Contains', v: lan.map(x => x.m), f: v => v ? 'OUI' : 'non', c: v => v ? good : bad }
+])}
+<div class="lbl">Contre-exemple chiffré — le handle périmé de B interroge le pool Transform</div>
+<div class="${P.legacy ? 'bad' : 'good'}">Contains(B=<code>${HX(S.h.B)}</code>) = <b>${S.ctB}</b>${P.legacy ? ' — le slot 1 appartient maintenant à E : on lit « ' + esc(S.getB) + ' », le composant d’une AUTRE entité. C’est le problème ABA : aucun crash, une valeur fausse.' : ' — le slot 1 contient bien le composant de E, mais le miroir y stocke ' + HX(S.h.E) + ', pas ' + HX(S.h.B) + ' : le <code>==</code> sur handle complet refuse le périmé.'}</div>`;
+  }
+},
+{ n: 4, title: 'Étape 4 · Le sparse paginé (B7)',
+  ctl: () => `<div class="ctl"><label>Index de l’entité tardive <select data-p="late"><option value="4095">4 095</option><option value="4096">4 096</option><option value="50000">50 000</option><option value="500000" selected>500 000</option><option value="16777214">16 777 214</option></select></label></div>`,
+  out: (P, S) => {
+    const T = S.T, late = +P.late;
+    const used = [...T.touched].sort((a, b) => a - b);
+    const flatNow = Math.max(10000, ...used.map(i => i + 1)) * 4;
+    const pgNow = new Set(used.map(i => Math.floor(i / 4096)));
+    const pagedNow = pgNow.size * 4096 * 4 + (Math.max(...pgNow) + 1) * 8;
+    const flatLate = Math.max(10000, late + 1) * 4, pgL = new Set([...used, late].map(i => Math.floor(i / 4096)));
+    const pagedLate = pgL.size * 4096 * 4 + (Math.max(...pgL) + 1) * 8;
+    const ex = [0, 1, 2, 3, 4095, 4096, late, 16777214];
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Garder l’accès O(1) sans hachage <b>et</b> arrêter de payer 4 octets par entité possible. Le sparse plat coûte « plus grand index × 4 octets » même pour 3 composants. La pagination découpe l’espace des index en pages de 4096 cases, créées seulement quand une entité de la plage reçoit le composant.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Les index réellement écrits dans le sparse Transform : <code>[${used.join(', ')}]</code> (ils viennent de l’étape 3). Mesh : <code>[${[...S.M.touched].join(', ')}]</code>.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+uint32_t PagedSparseArray::Get(uint32_t idx) const noexcept
+{
+    const uint32_t page = idx / PAGE_SIZE;                      // 4096 : le compilateur émet un décalage (idx >> 12)
+    if (page >= m_pages.size() || !m_pages[page]) return INVALID_INDEX;   // page jamais allouée = personne n'a ce composant
+    return (*m_pages[page])[idx % PAGE_SIZE];                   // idx & 4095
+}
+void PagedSparseArray::Set(uint32_t idx, uint32_t v)
+{
+    const uint32_t page = idx / PAGE_SIZE;
+    if (page >= m_pages.size()) m_pages.resize(page + 1);       // agrandit le tableau de POINTEURS (8 o par page)
+    if (!m_pages[page]) { m_pages[page] = std::make_unique<Page>(); m_pages[page]->fill(INVALID_INDEX); }
+    (*m_pages[page])[idx % PAGE_SIZE] = v;
+}`)}
+<div class="lbl">Équivalent vectorisé — page et décalage de 8 index (AVX2)</div>${code(`
+__m256i page = _mm256_srli_epi32(idx, 12);                             // idx / 4096  (puissance de 2 : décalage, pas de division)
+__m256i off  = _mm256_and_si256(idx, _mm256_set1_epi32(4095));         // idx % 4096
+// Lecture : chaque couloir peut viser une page différente (donc une base différente).
+// Deux gathers 64 bits récupèrent les 8 pointeurs de page (4 couloirs chacun), puis un gather 32 bits
+// à base nulle lit pageptr + off*4 en adresses absolues. Les pages nulles sont masquées.
+__m256i p0 = _mm256_i32gather_epi64((const long long*)m_pages.data(), _mm256_castsi256_si128(page), 8);
+// ... idem pour la moitié haute, puis _mm256_mask_i64gather_epi32(zero, nullptr, addr, mask, 1)
+// Si les 8 index sont dans la MÊME page : un seul gather 32 bits sur la base de cette page suffit.`)}
+<div class="lbl">Résultat de l’étape — page et décalage, calculés</div>
+${lanes([
+  { l: 'idx', v: ex, f: v => fmt(v) },
+  { l: 'page = idx >> 12', v: ex.map(i => i >> 12), f: v => fmt(v) },
+  { l: 'décalage = idx & 4095', v: ex.map(i => i & 4095), f: v => fmt(v) },
+  { l: 'page déjà allouée ?', v: ex.map(i => pgNow.has(i >> 12)), f: v => v ? 'oui' : 'non', c: v => v ? good : '' }
+])}
+<table><tr><th></th><th class="n">sparse plat (octets)</th><th class="n">sparse paginé (octets)</th><th class="n">rapport</th></tr>
+<tr><td>Scène du scénario (index ${used.join(', ')})</td><td class="n">${fmt(flatNow)}</td><td class="n">${fmt(pagedNow)}</td><td class="n">×${(flatNow / pagedNow).toFixed(1)}</td></tr>
+<tr><td>+ une entité d’index ${fmt(late)} avec un composant</td><td class="n">${fmt(flatLate)}</td><td class="n">${fmt(pagedLate)}</td><td class="n">×${(flatLate / pagedLate).toFixed(1)}</td></tr></table>
+<div class="lbl">Contre-exemple chiffré</div>
+<div class="bad">Le sparse plat paie <b>${fmt(flatLate)} octets</b> pour indexer ${used.length + 1} composants, soit ${fmt(Math.round(flatLate / (used.length + 1)))} octets par composant. Avec 10 types de composants rares, multiplie par 10. Le paginé paie <b>${fmt(pagedLate)} octets</b> (${pgL.size} page(s) de 16 384 octets + ${Math.max(...pgL) + 1} pointeurs de 8 octets).</div>
+<p class="small">Compromis honnête : le pointeur de page ajoute une indirection à chaque lecture (une page est une ligne de cache supplémentaire à la première lecture) ; elle est compensée parce qu’on touche rarement plus de quelques pages dans une scène réelle.</p>`;
+  }
+},
+{ n: 5, title: 'Étape 5 · Remove : le swap-and-pop et l’invariant',
+  ctl: () => `<div class="ctl"><label>Retirer le Transform de <select data-p="rem"><option>A</option><option selected>C</option><option>D</option><option>E</option></select></label><label><input type="checkbox" data-p="noRedirect"> Oublier de rediriger le sparse (bug)</label></div>`,
+  out: (P, S) => {
+    const R = S.rem, info = R.info, T = S.T;
+    const be = R.before.Te.slice(); while (be.length < 8) be.push(0xFFFFFFFF);
+    const keep = be.map(e => e !== R.target && e !== 0xFFFFFFFF);
+    const comp = []; be.forEach((e, i) => { if (keep[i]) comp.push(e); });
+    const owner = R.before.Te.indexOf(info ? info.moved : -1);
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Supprimer un composant <b>sans laisser de trou</b> dans le dense (sinon l’itération redevient trouée et le prefetcher perd son tapis roulant). On comble le trou avec le <b>dernier</b> élément, puis on redirige l’annuaire de l’élément déplacé — c’est là que le miroir est indispensable.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Pool Transform après l’étape 3 : dense <code>[${R.before.Td.join(', ')}]</code>, miroir <code>[${R.before.Te.map(HX).join(', ')}]</code>. Cible : <code>${HX(R.target)}</code>.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+void Remove(Entity e)
+{
+    if (!Contains(e)) return;
+    const uint32_t idx = EntityIndex(e), toRemove = m_Sparse.Get(idx), last = m_Dense.size() - 1;
+    if (toRemove != last)                                         // évite le self-move quand on retire le dernier
+    {
+        const Entity lastEntity = m_Entities[last];               // « à qui est la dernière case ? » : UNE lecture grâce au miroir
+        m_Dense[toRemove]    = std::move(m_Dense[last]);          // combler le trou
+        m_Entities[toRemove] = lastEntity;                        // le miroir suit le déménagement
+        m_Sparse.Set(EntityIndex(lastEntity), toRemove);          // rediriger l'annuaire du déplacé (SANS ça : composant perdu)
+    }
+    m_Dense.pop_back(); m_Entities.pop_back();
+    m_Sparse.Set(idx, INVALID_INDEX);                             // débrancher l'entité retirée
+}`)}
+<div class="lbl">Équivalent vectorisé</div>
+<p>Aucun pour une suppression <b>unitaire</b> : elle touche une case, dépend de données (qui est le dernier ?) et enchaîne des écritures dépendantes. Il existe en revanche un équivalent pour une <b>purge en lot</b> (détruire 1 000 entités d’un coup, compacter le dense) : la compression par masque d’AVX-512.</p>${code(`
+// Purge en lot : garder seulement les entités encore vivantes, tassées sans trous (AVX-512F, 16 couloirs)
+__m512i  ents = _mm512_loadu_si512(denseEntities + i);           // 16 handles
+__mmask16 keep = /* bit k = 1 si le handle du couloir k est toujours vivant (IsAlive en lot, étape 2) */;
+// compress : écrit en séquence, sans trous, UNIQUEMENT les couloirs dont le bit vaut 1
+__m512i packed = _mm512_maskz_compress_epi32(keep, ents);
+_mm512_storeu_si512(out + n, packed);                           // on écrit 16 cases, mais seules les popcnt(keep) premières comptent
+n += _mm_popcnt_u32(keep);                                      // nombre d'éléments conservés
+// (_mm512_mask_compressstoreu_epi32 écrit directement en mémoire mais est réputé lent sur certains CPU, dont AMD Zen 4 : à mesurer.)`)}
+<div class="lbl">Résultat de l’étape — calculé</div>
+${cellsHtml(R.before.Td.map((v, i) => v + ' · ' + HX(R.before.Te[i]).slice(4)), (v, i) => R.before.Te[i] === R.target ? 'err' : (info && info.swapped && i === info.last ? 'hot' : ''))}
+<p>${info ? (info.swapped
+  ? 'Case <b>' + info.to + '</b> libérée → le dernier (<code>' + HX(info.moved) + '</code>, case ' + info.last + ') y est déplacé, <code>sparse[' + EI(info.moved) + '] ← ' + info.to + '</code>' + (P.noRedirect ? ' ' + tag('NON FAIT (bug injecté)', 'ko') : '') + ', puis pop.'
+  : 'C’était déjà la dernière case : simple pop, aucun swap.') : 'Rien à retirer.'}</p>
+${cellsHtml(R.after.Td.map((v, i) => v + ' · ' + HX(R.after.Te[i]).slice(4)), () => 'on')}
+<p>Invariant sparse ↔ miroir : ${R.viol.length ? tag('ROMPU', 'ko') + ' ' + esc(R.viol.join(' ; ')) : tag('tenu', 'ok')} ${info && info.swapped ? '· Contains(déplacé) : ' + okko(R.movedHas) : ''}</p>
+<p><b>Purge en lot (démo AVX-512, 8 couloirs affichés) :</b></p>
+${lanes([
+  { l: 'handle du dense', v: be, f: e => e === 0xFFFFFFFF ? '—' : HX(e).slice(2) },
+  { l: 'keep (vivant ?)', v: keep, f: v => v ? '1' : '0', c: v => v ? good : bad }
+])}
+<p>Résultat de <code>compress</code> : <code>[${comp.map(e => HX(e).slice(2)).join(', ')}]</code>, ${comp.length} élément(s) conservé(s), tassés sans trous.</p>
+<div class="lbl">Contre-exemple chiffré</div>
+<div class="bad"><b>Sans miroir</b>, retrouver le propriétaire de la dernière case oblige à scanner le sparse : jusqu’à <b>${fmt(T.paged ? 16777215 : T.flatSize)}</b> lectures pour UNE suppression, contre <b>1</b> avec le miroir. ${info && info.swapped ? 'Ici le propriétaire est à l’index ' + EI(info.moved) + ' : ' + (EI(info.moved) + 1) + ' lectures seraient nécessaires dans cette petite scène, et des milliers dans une grande.' : ''}<br><b>Sans redirection</b> : coche « Oublier de rediriger » ; le déplacé devient introuvable (Contains faux) alors que son composant existe toujours dans le dense.</div>`;
+  }
+},
+{ n: 6, title: 'Étape 6 · Résoudre un type en storage',
+  ctl: () => `<div class="ctl"><label>Ordre des premiers appels <select data-p="order"><option value="TM" selected>Transform puis Mesh</option><option value="MT">Mesh puis Transform</option></select></label></div>`,
+  out: (P, S) => {
+    const o = P.order === 'TM' ? ['Transform', 'Mesh'] : ['Mesh', 'Transform'];
+    const id = {}; o.forEach((n, i) => id[n] = i);
+    const file = { Transform: 0, Mesh: 1 };  // fichier écrit par une exécution où Transform est arrivé en premier
+    const inv = ['Transform', 'Mesh'].map(n => ({ n, wrote: file[n], reads: o[file[n]] }));
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Le Registry range des pools de types différents dans un même <code>vector</code> (type erasure : un ancêtre commun non-template) et doit retrouver le bon en O(1) sans RTTI. Chaque type reçoit un <b>numéro</b> à son premier appel, qui sert d’indice dans le vector.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Les pools Transform et Mesh des étapes 3 à 5 sont les deux occupants de <code>m_Storages</code>.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+template <typename T> static uint32_t GetTypeID()
+{
+    static uint32_t id = s_NextID++;      // une fonction (donc UNE variable statique) par type T ; initialisée au 1er appel seulement
+    return id;
+}
+template <typename C> SparseSet<C>* getStorage()
+{
+    const uint32_t id = ComponentTypeManager::GetTypeID<C>();
+    if (id >= m_Storages.size()) m_Storages.resize(id + 1);
+    if (!m_Storages[id]) m_Storages[id] = std::make_unique<SparseSet<C>>();   // création paresseuse
+    return static_cast<SparseSet<C>*>(m_Storages[id].get());                 // sûr : l'ID prouve le type
+}`)}
+<div class="lbl">Équivalent vectorisé</div>
+<p>Aucun, et c’est normal : il s’agit d’une résolution <b>unique par système et par frame</b> (un seul <code>getStorage</code> avant la boucle), pas d’une boucle chaude. Le vectoriser n’apporterait rien.</p>
+<div class="lbl">Résultat de l’étape — calculé</div>
+<table><tr><th>ordre du 1ᵉʳ appel</th><th>type</th><th class="n">ID attribué</th><th>slot de <code>m_Storages</code></th></tr>
+${o.map((n, i) => '<tr><td>' + (i + 1) + '</td><td>' + n + '</td><td class="n">' + i + '</td><td class="mono">m_Storages[' + i + '] → SparseSet&lt;' + n + 'Component&gt;</td></tr>').join('')}</table>
+<p>Résolution de <code>getComponent&lt;${o[1]}&gt;</code> : lecture de la statique (${id[o[1]]}) → <code>m_Storages[${id[o[1]]}]</code> → cast → <code>Get</code>.</p>
+<div class="lbl">Contre-exemple chiffré — écrire un typeID dans un fichier</div>
+<div class="bad">Une exécution où Transform arrive premier écrit « composant 0 = … » dans un fichier. Une autre exécution relit ce fichier avec l’ordre choisi ci-dessus :
+<table style="margin-top:8px"><tr><th>type écrit</th><th class="n">ID écrit</th><th>relu comme</th><th></th></tr>
+${inv.map(x => '<tr><td>' + x.n + '</td><td class="n">' + x.wrote + '</td><td>' + x.reads + '</td><td>' + (x.n === x.reads ? tag('correct', 'ok') : tag('CONFONDU', 'ko')) + '</td></tr>').join('')}</table>
+Règle : un typeID ne franchit jamais la frontière du processus ; les fichiers et le réseau identifient les composants par <b>nom</b>.</div>`;
+  }
+},
+{ n: 7, title: 'Étape 7 · Itérer plusieurs composants : pivot minimal',
+  ctl: () => `<div class="ctl"><label><input type="checkbox" data-p="bigPivot"> Pivoter sur le plus GROS pool (erreur)</label><label>Taille du grand pool <input type="range" data-p="N" data-num min="100" max="100000" step="100" value="10000"> <output id="oN">10 000</output></label><label>Taille du petit pool <input type="range" data-p="K" data-num min="1" max="500" step="1" value="12"> <output id="oK">12</output></label></div>`,
+  out: (P, S) => {
+    const T = S.T, M = S.M;
+    const pivot = P.bigPivot ? (T.ents.length >= M.ents.length ? T : M) : (T.ents.length <= M.ents.length ? T : M);
+    const other = pivot === T ? M : T;
+    const cand = pivot.ents.map(e => ({ e, ok: other.has(e) }));
+    const res = cand.filter(c => c.ok);
+    const pad = pivot.ents.slice(0, 8); while (pad.length < 8) pad.push(0xFFFFFFFF);
+    const lv = pad.map(e => e !== 0xFFFFFFFF), mOther = pad.map(e => e !== 0xFFFFFFFF && other.has(e));
+    const bits = mOther.reduce((a, b, i) => a | (b ? 1 << i : 0), 0);
+    const N = +P.N, K = +P.K, vis = P.bigPivot ? N : K, kk = 2;
+    const readsDirect = vis * 2, readsReg = vis * 5;
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Répondre à « donne-moi toutes les entités qui ont Transform <b>et</b> Mesh » en visitant le moins de candidats possible. L’intersection est bornée par le plus petit pool : on parcourt son dense (contigu) et on interroge l’autre par <code>Contains</code> (O(1)).</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Après l’étape 5 : Transform = <code>${T.dense.length}</code> composant(s) [${T.ents.map(e => nmS(S, e)).join(', ')}], Mesh = <code>${M.dense.length}</code> [${M.ents.map(e => nmS(S, e)).join(', ')}]. Les <code>Get</code> et <code>Contains</code> sont ceux des étapes 3 et 5, les pointeurs typés viennent de l’étape 6.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+// ComponentView : pointeurs typés capturés UNE fois (constructeur), pivot = plus petit pool
+std::tuple<SparseSet<Cs>*...> m_storages_ptr_tuple;
+const IComponentStorage* m_mainStorage;
+
+void SkipInvalidEntities()
+{
+    while (m_index < entities.size())
+    {
+        const Entity e = entities[m_index];
+        const bool all = std::apply([e](auto*... s){ return (s->Contains(e) && ...); },   // fold : court-circuite au 1er échec
+                                    m_view->m_storages_ptr_tuple);
+        if (all) break;  ++m_index;
+    }
+}
+reference operator*() const           // itérateur PROXY : retour par VALEUR
+{
+    const Entity e = entities[m_index];
+    return std::apply([e](auto*... s){ return value_type{ e, s->Get(e)... }; }, m_view->m_storages_ptr_tuple);
+}`)}
+<div class="lbl">Équivalent vectorisé — filtrer 8 candidats d’un coup (AVX2)</div>${code(`
+// Pivot = plus petit pool ; on traite ses entités par blocs de 8.
+__m256i e = _mm256_loadu_si256((const __m256i*)(pivotEntities + i));        // 8 candidats
+int m = (i + 8 <= n) ? 0xFF : (1 << (n - i)) - 1;                           // masque de queue : couloirs valides du dernier bloc
+for (auto* s : otherStorages)
+    m &= s->ContainsMask8(e);                                              // = le bloc « Contains sur 8 handles » (étape 3), bits movemask
+while (m)                                                                   // ne reste que les entités possédant TOUS les composants
+{
+    int lane = _tzcnt_u32(m);                                               // plus petit couloir restant
+    process(pivotEntities[i + lane]);                                       // traitement scalaire de l'élément retenu
+    m &= m - 1;                                                             // efface le plus petit bit à 1
+}`)}
+<div class="lbl">Résultat de l’étape — la vraie vue Transform ∩ Mesh</div>
+<p>Pivot : <b>${pivot.name}</b> (${pivot.ents.length}). Candidats visités : <b>${cand.length}</b> · appels <code>Contains</code> : <b>${cand.length}</b> · résultats : <b>${res.length}</b> [${res.map(c => nmS(S, c.e)).join(', ') || 'aucun'}]${P.bigPivot ? ' ' + tag('pivot sur le plus gros', 'w') : ''}</p>
+${lanes([
+  { l: 'candidat (pivot, bloc de 8)', v: pad, f: e => e === 0xFFFFFFFF ? '—' : HX(e).slice(2) },
+  { l: 'couloir valide ?', v: lv, f: v => v ? '1' : '0' },
+  { l: 'Contains dans l’autre pool', v: mOther, f: v => v ? '1' : '0', c: v => v ? good : bad }
+])}
+<p>Masque obtenu : <code>0b${bits.toString(2).padStart(8, '0')}</code> = ${bits} ; couloirs retenus : [${[0, 1, 2, 3, 4, 5, 6, 7].filter(i => bits >> i & 1).join(', ')}].</p>
+<div class="lbl">Contre-exemple chiffré — scène plus grande (réglages ci-dessus)</div>
+<div class="bad">Grand pool : <b>${fmt(N)}</b> composants, petit pool : <b>${fmt(K)}</b>. Pivot minimal : <b>${fmt(K)}</b> candidats ; pivot sur le gros : <b>${fmt(N)}</b> candidats, soit <b>×${(N / K).toFixed(0)}</b> de travail pour le même résultat. Lectures mémoire logiques par <code>Contains</code> : directes via le tuple = 2 (sparse + miroir) ; en repassant par le Registry à chaque entité (<code>hasComponent&lt;T&gt;</code> : statique du typeID, taille de <code>m_Storages</code>, pointeur du slot, puis les 2 précédentes) = 5. Pour ${fmt(vis)} candidats : <b>${fmt(readsDirect)}</b> lectures contre <b>${fmt(readsReg)}</b> (modèle simplifié, à confirmer au profileur).</div>`;
+  }
+},
+{ n: 8, title: 'Étape 8 · Un composant est un ticket : MeshComponent par handle',
+  ctl: () => `<div class="ctl"><label>Nombre de meshes dans la scène <input type="range" data-p="nMesh" data-num min="10" max="100000" step="10" value="500"> <output id="oNM">500</output></label></div>`,
+  out: (P, S) => {
+    const n = +P.nMesh, oldSz = 64, newSz = 20;
+    const lines = (cnt, sz) => Math.floor((cnt - 1) * sz / 64) + 1;
+    const spd = [0.5, 1.0, 0.1, 2.0, 0.7, 1.3, 0.02, 3.0].map(f32), dt = f32(0.016);
+    const ang = [0, 1.5, 100, 6.28318, 1000, 12345.678, 3.0, 16777216].map(f32);
+    const sc = ang.map((a, i) => f32(a + f32(spd[i] * dt)));
+    const fm = ang.map((a, i) => f32(spd[i] * dt + a));
+    const inc = ang.map((a, i) => f32(spd[i] * dt));
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Réunir les deux idées : un composant chaud est une <b>donnée pure</b> qui <b>référence</b> sa ressource par handle. Il devient petit, trivialement copiable (le swap-and-pop de l’étape 5 se réduit à un <code>memcpy</code>), et le <code>ResourceManager</code> reste l’unique propriétaire.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Le swap-and-pop (étape 5) déplace des composants en permanence ; le dense parcouru par pivot (étape 7) lit des composants contigus. Plus le composant est petit et plat, mieux ces deux mécanismes fonctionnent.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+struct MeshComponent {
+    MeshHandle m_mesh;                                  // 4 octets : résolu par resourceManager.GetMesh(m_mesh) AU POINT D'USAGE
+    float m_orbitalSpeed = 0, m_rotationSpeed = 0, m_currentOrbitAngle = 0, m_currentRotationAngle = 0;
+};
+static_assert(std::is_trivially_copyable_v<MeshComponent>);
+static_assert(sizeof(MeshComponent) == 20);             // à confirmer sur ta machine : c'est un calcul, pas une mesure
+
+// Système consommateur : le handle peut légitimement ne plus résoudre (mesh déchargé)
+const MeshClass* mesh = rm.GetMesh(meshComp.m_mesh);
+if (!mesh) continue;
+
+// AnimationSystem, version scalaire
+for (auto&& [e, mesh] : registry.ViewGroup<MeshComponent>()) {
+    mesh.m_currentOrbitAngle    += mesh.m_orbitalSpeed  * dt;
+    mesh.m_currentRotationAngle += mesh.m_rotationSpeed * dt;
+}`)}
+<div class="lbl">Équivalent vectorisé — AnimationSystem sur 8 meshes (AVX2 + FMA, float32)</div>${code(`
+// Il faut une disposition SoA (un tableau par champ) : en AoS (struct de 20 octets) les 8 vitesses ne sont pas contiguës
+// et il faudrait un gather (_mm256_i32gather_ps) bien plus lent qu'un chargement.
+__m256 ang = _mm256_loadu_ps(orbitAngle + i);          // 8 angles courants
+__m256 spd = _mm256_loadu_ps(orbitSpeed + i);          // 8 vitesses
+__m256 dtv = _mm256_set1_ps(dt);                       // le même dt dans les 8 couloirs
+ang = _mm256_fmadd_ps(spd, dtv, ang);                  // ang = spd*dt + ang, UN SEUL arrondi (FMA) : peut différer d'1 ulp de mul puis add
+_mm256_storeu_ps(orbitAngle + i, ang);`)}
+<div class="lbl">Résultat de l’étape — calculé en float32</div>
+<table><tr><th></th><th class="n">taille (octets)</th><th class="n">composants par ligne de 64 o</th><th class="n">lignes lues pour ${fmt(n)} meshes</th></tr>
+<tr><td>Avant : <code>shared_ptr</code> (16) + <code>std::string</code> (32, MSVC x64) + 4 float (16)</td><td class="n">${oldSz}</td><td class="n">1</td><td class="n">${fmt(lines(n, oldSz))}</td></tr>
+<tr><td>Après : <code>MeshHandle</code> (4) + 4 float (16)</td><td class="n">${newSz}</td><td class="n">${(64 / newSz).toFixed(1)}</td><td class="n">${fmt(lines(n, newSz))}</td></tr></table>
+<p class="small">Tailles calculées par addition des champs (MSVC x64, alignement 8 pour le <code>shared_ptr</code>), à confirmer par <code>static_assert(sizeof(...))</code>. Lignes = lecture d’un champ par composant, tableau contigu aligné sur une ligne.</p>
+${lanes([
+  { l: 'angle courant', v: ang, f: v => v.toPrecision(9) },
+  { l: 'vitesse', v: spd, f: v => v.toPrecision(9) },
+  { l: 'incrément = f32(vit × dt)', v: inc, f: v => v.toPrecision(9) },
+  { l: 'scalaire : f32(ang + incr)', v: sc, f: v => v.toPrecision(9) },
+  { l: 'FMA : f32(vit×dt + ang)', v: fm, f: v => v.toPrecision(9) },
+  { l: 'écart FMA − scalaire', v: sc.map((s, i) => fm[i] - s), f: v => v === 0 ? '0' : v.toExponential(2), c: v => v === 0 ? '' : bad },
+  { l: 'angle a progressé ?', v: sc.map((s, i) => s !== ang[i]), f: v => v ? 'oui' : 'NON (absorbé)', c: v => v ? good : bad }
+])}
+<p class="small">L’émulation du FMA se fait en double précision puis arrondi float32 (le produit de deux float32 est exact en double). Le dernier couloir illustre une limite float32 sans rapport avec l’ECS : à 16 777 216 un incrément de 0,048 est absorbé. Les angles de <code>MeshComponent</code> ne sont jamais ramenés dans [0, 2π[ : noté à la section 8.</p>
+<div class="lbl">Contre-exemple chiffré — le composant qui possède</div>
+<div class="bad">Avec <code>shared_ptr</code> + <code>std::string</code>, chaque swap-and-pop déplace <b>${oldSz}</b> octets <i>et</i> met à jour un compteur de références ; chaque copie du composant fait un incrément atomique. Surtout, ParseMesh chargeait le mesh via le ResourceManager <b>puis ne le stockait jamais</b> dans le composant : le deuxième propriétaire restait vide. Deux sources de vérité = un trou entre les deux.</div>`;
+  }
+},
+{ n: 9, title: 'Étape 9 · ResourceManager : clé canonique, miroir, erreur explicite, RAII',
+  ctl: () => `<div class="ctl"><label><input type="checkbox" data-p="canon" checked> Clé canonique (F5)</label><label><input type="checkbox" data-p="ci" checked> Système de fichiers insensible à la casse (Windows)</label><label><input type="checkbox" data-p="mirror" checked> Map miroir id → chemin</label><label>Meshes chargés <input type="range" data-p="nRM" data-num min="10" max="5000" step="10" value="500"> <output id="oRM">500</output></label><label>Taille d’un mesh (Ko) <input type="range" data-p="meshKB" data-num min="50" max="5000" step="50" value="850"> <output id="oKB">850</output></label></div>`,
+  out: (P, S) => {
+    const rm = new RMsim({ canon: P.canon, ci: P.ci, mirror: P.mirror, real: 'assets/meshes/cube.obj' });
+    const reqs = ['assets/meshes/cube.obj', 'Assets/Meshes/cube.obj', 'assets\\meshes\\cube.obj', './assets/meshes/../meshes/cube.obj', 'assets/meshes/sphere.obj'];
+    const rs = reqs.map(p => ({ p, r: rm.load(p) }));
+    const nRM = +P.nRM, kb = +P.meshKB;
+    const scanAvg = Math.round(nRM / 2);
+    return `
+<div class="lbl">Objectif — pourquoi ce calcul</div>
+<p>Un même fichier doit donner <b>un seul</b> mesh en mémoire, se décharger <b>en O(1)</b>, et dire <b>pourquoi</b> il échoue quand il échoue. Le composant (étape 8) ne porte que le handle ; tout ceci se passe derrière <code>GetMesh</code>.</p>
+<div class="lbl">Résultat de l’étape précédente utilisé</div>
+<p>Le handle de 4 octets du <code>MeshComponent</code> est la clé de <code>m_meshes</code>. Cette étape décrit ce qui produit et détruit ce handle.</p>
+<div class="lbl">Code concerné — scalaire</div>${code(`
+std::expected<MeshHandle, EMeshLoadError> ResourceManager::LoadMeshChecked(const std::string& fp, const OBJLoadOptions& o)
+{
+    const std::string key = CanonicalKey(fp);                         // weakly_canonical + generic_string
+    if (auto it = m_pathToMesh.find(key); it != m_pathToMesh.end()) return it->second;   // déjà chargé : pas de doublon
+    if (!fs::exists(fp)) return std::unexpected(EMeshLoadError::FileNotFound);           // cause fiable, vérifiée ici
+    MeshHandle h = OBJLoader::Load(fp, *this, o);
+    if (!h.IsValid()) return std::unexpected(EMeshLoadError::ParseFailed);               // fusionne « vide » et « malformé »
+    m_pathToMesh.emplace(key, h);  m_meshIdToPath.emplace(h.id, key);                    // les DEUX moitiés de la bijection
+    return h;
+}
+void ResourceManager::UnloadMesh(MeshHandle h)
+{
+    if (auto p = m_meshIdToPath.find(h.id); p != m_meshIdToPath.end()) { m_pathToMesh.erase(p->second); m_meshIdToPath.erase(p); }  // O(1)
+    m_meshes.erase(h.id);
+}
+ResourceManager::~ResourceManager() { UnloadAll(); }                  // RAII : le nettoyage de fin de programme existe déjà`)}
+<div class="lbl">Équivalent vectorisé</div>
+<p>Aucun retenu : un chargement est une opération d’entrées/sorties, hors boucle chaude. Seule piste théorique : hacher les chemins avec l’instruction CRC32 (SSE4.2, <code>_mm_crc32_u64</code>) ; gain négligeable face au coût d’un accès disque, donc non retenu.</p>
+<div class="lbl">Résultat de l’étape — cinq demandes de chargement</div>
+<div class="scroll"><table><tr><th>chemin demandé</th><th>clé de cache</th><th>résultat</th></tr>
+${rs.map(x => '<tr><td class="mono">' + esc(x.p) + '</td><td class="mono">' + esc(x.r.key) + '</td><td>' + (x.r.err ? tag('unexpected(' + x.r.err + ')', 'ko') : x.r.hit ? tag('cache : id ' + x.r.id, 'ok') : tag('chargé : id ' + x.r.id, 'w')) + '</td></tr>').join('')}</table></div>
+<p>Meshes réellement chargés : <b>${rm.loads}</b> · entrées de <code>m_pathToMesh</code> : <b>${rm.pathToMesh.size}</b> · de <code>m_meshIdToPath</code> : <b>${rm.idToPath.size}</b>.</p>
+<p class="small">À vérifier sur ta machine : <code>weakly_canonical</code> ne ramène la casse à celle du disque que pour les composants <i>existants</i> et selon la plateforme. Test : charger <code>Assets/Meshes/cube.obj</code> puis <code>assets/meshes/cube.obj</code> et contrôler que <code>GetMeshCount() == 1</code>.</p>
+<div class="lbl">Contre-exemple chiffré</div>
+<div class="bad"><b>Sans clé canonique</b> : ces cinq demandes ${P.canon ? 'ne chargent qu’<b>un</b> mesh (' + fmt(kb) + ' Ko) : la clé canonique ramène les quatre écritures à une seule' : 'chargent <b>' + rm.loads + '</b> copies du même fichier, soit ' + fmt(rm.loads * kb) + ' Ko au lieu de ' + fmt(kb) + ' Ko, sans le moindre message d’erreur'}.<br>
+<b>Sans miroir</b> : décharger un mesh parmi ${fmt(nRM)} parcourt la map jusqu’à le trouver : en moyenne <b>${fmt(scanAvg)}</b> comparaisons (pire cas ${fmt(nRM)}) contre <b>1</b> avec le miroir. Décharger un niveau entier (${fmt(nRM)} meshes) coûte <b>${fmt(Math.round(nRM * (nRM + 1) / 2))}</b> comparaisons au total contre <b>${fmt(nRM)}</b>. ${P.mirror ? tag('miroir actif : 1 lecture', 'ok') : tag('miroir coupé : scan', 'ko')}<br>
+<b>Pourquoi UnloadMesh n’est jamais appelée aujourd’hui</b> : aucun système de niveaux n’existe encore. En fin de programme, <code>~ResourceManager()</code> appelle <code>UnloadAll()</code> (RAII, déterministe) : un <code>clear()</code> global est volontairement plus efficace que <code>${fmt(nRM)}</code> appels à <code>UnloadMesh</code>.</div>`;
+  }
+},
+{ n: 10, title: 'Étape 10 · Vérifier : tests hors moteur, filets Debug, prédictions du lot appairé',
+  ctl: () => '',
+  out: (P, S) => {
+    const base = runSuite({});
+    const MUT = [
+      ['Entités brutes (avant F1)', { legacy: true }],
+      ['Génération jamais incrémentée', { bug: new Set(['noGenInc']) }],
+      ['Sparse indexé par le handle brut', { bug: new Set(['rawIndex']) }],
+      ['Swap-and-pop sans redirection du sparse', { bug: new Set(['noRedirect']) }],
+      ['Double destruction non détectée', { bug: new Set(['noAssertDbl']) }],
+      ['Génération incrémentée AVANT la notification', { bug: new Set(['orderInverted']) }]
+    ];
+    const mr = MUT.map(([n, o]) => [n, runSuite(o)]);
+    const names = base.map(b => b.name);
+    let h = `
+<div class="lbl">Objectif — pourquoi cette étape</div>
+<p>Un chantier de fondation ne se termine pas quand « ça compile », mais quand chaque invariant est <b>prouvé</b> et qu’on sait <b>quel filet</b> attrape quelle erreur. Ici les tests sont exécutés dans la page sur la simulation fidèle ; leur équivalent C++ est donné pour ton projet.</p>
+<div class="lbl">Résultat des étapes précédentes utilisé</div>
+<p>Registry (2), SparseSet (3-5), paginé (4), view (7), handles (8), ResourceManager (9) : la suite ci-dessous les exerce tous.</p>
+<div class="lbl">Tests hors moteur — suite saine : ${base.filter(x => x.ok).length} / ${base.length}</div>
+<div class="scroll"><table>${base.map(b => '<tr><td>' + esc(b.name) + '</td><td>' + okko(b.ok, 'PASS', 'FAIL') + '</td></tr>').join('')}</table></div>
+<div class="lbl">Tests mutants — on casse le code exprès : quel test le voit ?</div>
+<div class="scroll"><table><tr><th>bug injecté</th><th>tests en échec</th></tr>
+${mr.map(([n, r]) => { const f = r.filter(x => !x.ok); return '<tr><td>' + esc(n) + '</td><td>' + (f.length ? f.map(x => tag(esc(x.name.slice(0, 6)), 'ko')).join('') + ' <span class="small">' + f.length + ' / ' + r.length + '</span>' : tag('aucun : le code reste correct', 'ok')) + '</td></tr>'; }).join('')}</table></div>
+<p>Dernière ligne : inverser l’ordre notifier / incrémenter ne fait échouer que le test F1·8, qui encode un <b>contrat futur</b> (un observateur qui consulte <code>IsAlive</code> pendant la notification). Le <code>SparseSet</code> actuel n’en dépend pas : voir l’encart orange de la section 5.</p>
+<div class="lbl">Équivalent C++ dans <code>RefactoNouvelleLibrairieV3</code> (Debug x64)</div>${code(`
+void TestF1_EntityVersioning()
+{
+    LV3::Registry reg;
+    LV3::Entity a = reg.CreateEntity();  reg.addComponent(a, LV3::HealthComponent{100,100});
+    reg.DestroyEntity(a);
+    LV3::Entity b = reg.CreateEntity();
+    assert(LV3::EntityIndex(a) == LV3::EntityIndex(b) && a != b);        // même slot, ticket différent
+    assert(!reg.IsAlive(a) && reg.IsAlive(b));
+    assert(!reg.hasComponent<LV3::HealthComponent>(a) && !reg.hasComponent<LV3::HealthComponent>(b));
+    // test destructeur MANUEL : reg.DestroyEntity(a); doit faire détoner l'assert
+}
+void TestF5_ResourceManager_UnloadMesh() { /* charger 3 meshes, décharger le 1er, vérifier les deux sens de la bijection, recharger : id différent */ }`)}
+<div class="lbl">Filets Debug — qui attrape quoi</div>
+<div class="scroll"><table><tr><th>Filet</th><th>Où</th><th>Erreur attrapée</th><th>Comment le déclencher exprès</th></tr>
+<tr><td><code>assert(IsAlive(e))</code></td><td>DestroyEntity</td><td>double destruction, handle périmé</td><td>détruire deux fois la même entité</td></tr>
+<tr><td><code>assert(Contains(e))</code></td><td>SparseSet::Get</td><td>lecture d’un composant absent</td><td><code>getComponent</code> sur une entité sans le composant</td></tr>
+<tr><td><code>assert(m_Sparse.Get(idx) == INVALID_INDEX)</code></td><td>SparseSet::Add</td><td>composant fantôme d’une génération antérieure (DestroyEntity n’a pas notifié un pool)</td><td>retirer l’appel <code>OnEntityDestroyed</code> dans DestroyEntity</td></tr>
+<tr><td><code>assert(!Contains(e))</code></td><td>SparseSet::Emplace</td><td>création d’un composant déjà présent</td><td>appeler <code>emplaceComponent</code> deux fois</td></tr>
+<tr><td><code>assert(idx &lt; ENTITY_INDEX_MASK)</code></td><td>CreateEntity</td><td>capacité de 16,7 M d’index épuisée</td><td>en pratique : jamais</td></tr>
+<tr><td><code>static_assert</code> ×3</td><td>Entity.hpp</td><td>changement du découpage 24/8</td><td>modifier <code>ENTITY_INDEX_BITS</code></td></tr>
+<tr><td><code>CheckInvariants()</code></td><td>SparseSet (à écrire, sous <code>LV3_ASSERTS_ENABLED</code>)</td><td>bijection sparse ↔ miroir rompue</td><td>supprimer la ligne de redirection de Remove</td></tr></table></div>`;
+    // prédictions du lot appairé : caméra / frustum (lot suivant, qui consomme ce lot)
+    const reg = new Reg({}); const Tp = new SS('T', reg, { paged: true, page: 8 }), Cp = new SS('C', reg, { paged: true, page: 8 }), Mp = new SS('M', reg, { paged: true, page: 8 }); reg.pools = [Tp, Cp, Mp];
+    const sc = ['Sun', 'Earth', 'Moon', 'Cam', 'Ship'].map(n => ({ n, e: reg.create() }));
+    sc.forEach(x => Tp.add(x.e, 't'));  Cp.add(sc[3].e, 'c');  [0, 1, 2, 4].forEach(i => Mp.add(sc[i].e, 'm'));
+    const pv = Cp.dense.length <= Tp.dense.length ? Cp : Tp, cand = pv.ents.length, cam = sc[3].e;
+    const preds = [
+      ['<code>ViewGroup&lt;Camera, Transform&gt;</code> sur 5 entités dont 1 caméra', 'pivot = Camera ; ' + cand + ' candidat ; ' + cand + ' appel Contains ; 1 itération', 'compter les itérations dans CameraSystem'],
+      ['<code>activeCamera</code> mémorisé entre deux frames', 'IsAlive(' + HX(cam) + ') = vrai tant que la caméra n’est pas détruite ; faux juste après DestroyEntity', 'assert(registry.IsAlive(activeCamera)) en tête de RenderSystem'],
+      ['<code>WorldTransformSystem</code> sur Sun → Earth → Moon + Ship + Cam', '2 racines (Sun, Ship) + Cam si elle n’a pas de parent ; 5 entités visitées au total', 'compteur dans UpdateWorldTransforms'],
+      ['<code>RenderSystem</code>, 4 entités avec Mesh', '4 handles résolus ; <code>GetMesh</code> jamais nul', 'compter les <code>continue</code> sur mesh nul : attendu 0'],
+      ['Allocations par frame dans ces systèmes', '0 allocation tas (aucun <code>new</code>, aucune copie de <code>HierarchyComponent</code>)', 'surcharger <code>operator new</code> en Debug et compter']
+    ];
+    h += `<div class="lbl">Prédictions du lot appairé — caméra &amp; frustum (qui consomme ce lot)</div>
+<p>Valeurs attendues <b>calculées</b> sur une scène de 5 entités simulée ici ; à confronter à ce que tu mesureras dans le lot suivant.</p>
+<div class="scroll"><table><tr><th>Ce que le lot suivant fera</th><th>Prédiction</th><th>Comment le vérifier</th></tr>${preds.map(p => '<tr><td>' + p[0] + '</td><td>' + p[1] + '</td><td>' + p[2] + '</td></tr>').join('')}</table></div>`;
+    return h;
+  }
+}
+];
+/* ====================== QUESTIONS DE FOND ====================== */
+const FOND = [
+['Quel est le rôle exact du tableau sparse ?', `<p>C’est l’<b>annuaire identité → adresse</b>. Son index est l’index de l’entité, sa valeur est la place du composant dans le dense (ou <code>INVALID_INDEX</code>). Il rend trois services : <b>traduire</b> (<code>Get</code> = deux lectures directes, sans hachage), <b>tester l’existence</b> (<code>Contains</code>), et servir de <b>pivot au swap-and-pop</b> (on réécrit l’annuaire de l’élément déplacé). Prix : un tableau « creux » dimensionné par le plus grand index, d’où la pagination (étape 4). Règle : <i>le sparse trouve, le dense défile, le miroir témoigne.</i></p>`],
+['Pourquoi le tableau dense est-il « cache-friendly » ?', `<p>Le CPU lit la RAM par lignes de 64 octets (≈ 200 cycles pour un accès non caché, contre ≈ 4 en L1). Le dense est contigu : une ligne rapporte plusieurs composants, et le <i>prefetcher</i> matériel charge les lignes suivantes pendant qu’on traite les précédentes dès qu’il reconnaît un motif linéaire. Des objets dispersés exigent une ligne chacun et des chargements <b>dépendants</b> (on ne connaît l’adresse du suivant qu’après avoir lu le pointeur courant). Nuance : « contigu » ne suffit pas — un composant qui contient des <code>std::string</code> ou un <code>std::set</code> n’est contigu qu’en façade ; chaque indirection redevient un saut dans le tas. Voir le modèle chiffré en 5.2.</p>`],
+['Comment le Registry retrouve-t-il le bon SparseSet pour un type ?', `<p>Deux temps. <b>Ranger</b> : les pools partagent l’ancêtre non-template <code>IComponentStorage</code> (type erasure) et vivent dans un <code>vector&lt;unique_ptr&lt;IComponentStorage&gt;&gt;</code>. <b>Retrouver</b> : <code>GetTypeID&lt;T&gt;()</code> contient une variable statique locale initialisée au premier appel avec un compteur ; chaque type instancie sa propre fonction donc sa propre variable. L’ID sert d’indice dans le vector. Le <code>static_cast</code> final est légitime car l’ID est à la fois la clé et la preuve du type. Pièges : l’ID dépend de l’ordre d’exécution (jamais sérialisé), chaque DLL aurait son propre compteur (non concerné : LIB statique), et le compteur n’est pas atomique (étape 6).</p>`],
+['Comment un système itère-t-il efficacement sur plusieurs composants ?', `<p>Il pivote sur le <b>plus petit pool</b> (l’intersection ne peut pas être plus grande), parcourt son dense contigu, et interroge les autres pools par <code>Contains</code> O(1). Le coût est O(M×K). L’erreur classique était de capturer les pointeurs typés puis de repasser par le Registry à chaque entité (corrigé en F3). Trois règles : construire la vue <b>une fois</b> par système ; dense brut pour un seul composant ; <b>ne jamais ajouter ni retirer</b> pendant l’itération (réallocation, swap-and-pop) — noter dans un tampon de commandes et appliquer après. Les groupes (EnTT) ou archetypes attendent un verdict du profileur.</p>`],
+['Pourquoi faut-il un miroir <code>m_Entities</code> ?', `<p>Parce que la bijection doit se lire <b>dans les deux sens</b>. Le swap-and-pop doit savoir « à qui appartient la dernière case ? » : le composant ne le sait pas (donnée pure), le sparse ne répond que dans l’autre sens ; sans miroir, il faudrait scanner tout le sparse. Le miroir fournit aussi l’identité pendant l’itération et, depuis F1, <b>valide la génération</b> (<code>m_Entities[d] == e</code>). Stocker le propriétaire <i>dans</i> le composant ruinerait la pureté, diluerait le cache et dupliquerait la vérité.</p>`],
+['B3 — pourquoi renommer <code>ConstainsEntity</code> tout de suite ?', `<p>La méthode est <b>virtuelle pure</b> : chaque classe dérivée doit reproduire exactement le nom pour l’<code>override</code>. Corriger la faute à 2 occurrences est une opération de cinq minutes ; la corriger à 11 fichiers ne l’est plus. Autre décision : n’avoir qu’un seul mot (<code>Contains</code>) plutôt que <code>Has</code> + <code>Contains</code> pour le même concept.</p>`],
+['B6 — pourquoi <code>Emplace</code> plutôt que <code>Add</code> ?', `<p><code>Add(Entity, T)</code> prend le composant par valeur : construction du temporaire, copie ou déplacement vers le paramètre, déplacement vers le dense. Avec une lvalue nommée (<code>t</code> dans <code>ParseTrigger</code>) c’est une <b>copie</b>, pas un déplacement. <code>Emplace(e, args…)</code> transmet les arguments du constructeur (références universelles + <code>std::forward</code>) jusqu’à <code>emplace_back</code> : l’objet naît une seule fois, à sa place finale. <code>Add</code> reste légitime pour mettre à jour un composant existant ou transférer un objet déjà construit ; règle simple : lvalue nommée → <code>std::move</code>, temporaire → rien à faire.</p>`],
+['D4 — pourquoi les handles de ressources n’ont-ils pas de génération ?', `<p>Le problème ABA n’existe que si un identifiant est <b>recyclé</b>. <code>m_nextMeshId</code> ne fait qu’augmenter : après <code>UnloadMesh</code>, l’id n’est jamais redistribué, donc un handle périmé résout toujours à « absent » (<code>GetMesh → nullptr</code>). Ajouter une génération serait un coût sans bénéfice. À rouvrir si un jour on recycle les ids de ressources.</p>`],
+['Pourquoi <code>UnloadMesh</code> n’est appelée nulle part, et le nettoyage de fin de programme ?', `<p>Elle sert au déchargement <b>sélectif en cours de session</b> (changement de niveau, hot-reload) ; aucun système de niveaux n’existe encore. En fin de programme, <code>~ResourceManager()</code> appelle <code>UnloadAll()</code> : c’est le <b>RAII</b> du C++ (destruction déterministe garantie par le langage), pas la récupération mémoire de l’OS à la fin du processus. La différence compte : le RAII s’exécute aussi en cas de sortie anticipée, libère des ressources non-mémoire (futurs objets GPU), et permet de recharger un niveau sans quitter le processus.</p>`],
+['La génération sur 8 bits boucle : est-ce grave ?', `<p>Après 256 destructions/créations du même slot, un handle ancien redevient « vivant » (le laboratoire du §3 le montre avec « Boucler la génération »). Probabilité qu’un handle périmé tombe exactement sur la bonne génération : 1/256 au bout de 256 recyclages. Acceptable pour un moteur mono-scène ; si un jour une scène recycle massivement les mêmes slots ou garde des handles très longtemps, passer à 20 bits d’index / 12 de génération (comme EnTT) ou à un handle 64 bits.</p>`]
+];
+function fondHtml() { return FOND.map(([q, a]) => '<details><summary>' + q + '</summary>' + a + '</details>').join(''); }
+
+/* ====================== ROADMAP ====================== */
+const ROAD = [
+['L3-1', 'Découpage de l’entité : la leçon dit 24/8, le Carnet de route (bug 54) acte 16/16 dans le dépôt', 'écart à entériner', 'Vérifier <code>Scene/Entity.hpp</code> ; si 16/16 est en place, reporter dans la leçon (§4.2, <code>static_assert</code>, étapes 1 et 2) : 65 536 entités max, risque 1/65 536', 'Décision d’architecture déjà tranchée avec toi, jamais reportée dans la leçon ; les chiffres « 1/256 » de ce lot valent pour la base 24/8.'],
+['L3-17', '<code>DestroyEntity</code> du dépôt : précondition Debug <code>HasOutgoingLinks</code> et <code>DestroyHierarchy</code> (bug 53) absentes de la leçon', 'écart à entériner', 'Ajouter un encadré « hiérarchie et destruction » renvoyant au bug 53, ou le traiter dans la leçon de hiérarchie', 'La leçon décrit un <code>DestroyEntity</code> sans ces deux garde-fous.'],
+['HIER-1', '<code>HierarchyComponent::m_parent</code> n’est pas initialisé', 'à vérifier', 'Initialiser à <code>NULL_ENTITY</code> dans Component.hpp et remplacer <code>{}</code> par <code>NULL_ENTITY</code> dans <code>HierarchyComponent{ {}, {}, true }</code> (ParseHierarchy, linkChildToParent)', 'Une racine pointerait sur l’entité d’index 0. Aucun bug visible aujourd’hui (WorldTransformSystem lit <code>m_isRoot</code>), mais F1 rend enfin la valeur sentinelle exprimable : recommandé avant le lot caméra.'],
+['TRIG-1', '<code>TriggerComponent</code> : <code>radius</code> et <code>is_colliding</code> sans valeur par défaut', 'à confirmer', 'Restaurer <code>= 1.0f</code> et <code>= false</code> si ce n’est pas déjà fait', 'Un <code>TriggerComponent</code> construit sans tout renseigner aurait un rayon aléatoire. ParseTrigger assigne tout, d’où l’absence de symptôme.'],
+['TRIG-2', '<code>TriggerSystem</code> : collision N² sans broad-phase', 'décision plus tard', 'Grille uniforme ou quadtree avant la narrow-phase sphère/sphère', 'Chantier à part entière (structures spatiales).'],
+['VIEW-1', '<code>ComponentView</code> : membres et branche mortes après F3', 'à décider', 'Supprimer <code>m_registry</code> et <code>m_componentTypeIDs</code> (plus lus), ou les garder pour diagnostic ; noter que <code>any_storage_null</code> n’est jamais vrai (<code>getStorage</code> non-const crée le pool)', 'Construire une vue sur un type inexistant crée un pool vide : effet de bord à connaître.'],
+['ENT-1', 'Entity.hpp : <code>using Entity</code> déclaré deux fois', 'cosmétique', 'Garder une seule déclaration (<code>std::uint32_t</code>) après <code>&lt;cstdint&gt;</code>', 'Légal mais trompeur.'],
+['TYPE-1', '<code>GetTypeID</code> non atomique ; compteur nommé <code>s_NextNextID</code>', 'à rouvrir si multi-thread', '<code>std::atomic&lt;uint32_t&gt;</code> + <code>fetch_add(relaxed)</code> ; renommer', 'Deux threads déclenchant le 1ᵉʳ appel de deux types peuvent recevoir le même ID.'],
+['RM-1', 'ResourceManager sans thread-safety (D5) ; dossier <code>Ressources</code> en français (D6)', 'ouvert', 'Documenter le contrat mono-thread dans le header ; renommer le dossier (cosmétique)', 'Les retours de pointeurs bruts vers l’intérieur des maps seront à repenser pour un chargement asynchrone.'],
+['RM-2', 'Casse des chemins : comportement dépendant de la plateforme', 'à vérifier', 'Test : charger <code>Assets/Meshes/cube.obj</code> puis <code>assets/meshes/cube.obj</code> → <code>GetMeshCount() == 1</code> ?', '<code>weakly_canonical</code> ne ramène la casse que pour les composants existants et selon l’OS.'],
+['OBJ-1', '<code>OBJLoader::ParseFile</code> : erreur booléenne ; test mort dans <code>Load</code>', 'décision plus tard', 'Retourner <code>expected&lt;void, EParseError&gt;</code> ; supprimer le <code>if (rawFaces.empty())</code> inatteignable', '<code>EMeshLoadError::ParseFailed</code> fusionne « vide » et « malformé » tant que ce n’est pas fait.'],
+['ANIM-1', 'Angles d’animation jamais ramenés dans [0, 2π[', 'hors sujet L03, noté', 'Décider d’un modulo après mise à jour des angles', 'En float32, la résolution se dégrade quand l’angle grandit (étape 8, dernier couloir).'],
+['SIZE-1', 'Taille de <code>TransformComponent</code> annoncée « ~152 octets » à l’audit', 'corrigé ici', 'Remplacer par 164 (3 × Vec3f = 36 + 2 × Matrix44f = 128) et ajouter un <code>static_assert(sizeof(...))</code>', 'Erreur de calcul de ma part ; la conclusion (plusieurs lignes de cache) est inchangée.'],
+['ORD-1', 'Note « l’ordre notifier / incrémenter est sacré »', 'corrigé ici', 'Garder la convention, retirer l’affirmation « détruit tout » des supports', 'Prouvé faux pour ce code par la suite de tests (étape 10) ; reste utile pour de futurs observateurs.'],
+['DBG-1', 'Filets de l’ECS : <code>assert</code> standard, et <code>CheckInvariants</code> proposé sous <code>LV3_DEBUG</code>', 'à décider', '<code>LV3_DEBUG</code> existe mais gouverne les dumps ; les filets passent par <code>LV3_ASSERT</code> / <code>LV3_ASSERTS_ENABLED</code> (Carnet 0.3, E3). Passer l’ECS à <code>LV3_ASSERT</code>, garder <code>CheckInvariants</code> sous <code>LV3_ASSERTS_ENABLED</code>', 'Un filet sous le mauvais commutateur est inactif en <code>RelWithAsserts</code>.'],
+['SER-1', 'Sérialisation d’entités versionnées', 'sans objet aujourd’hui', 'Le Serializer actuel identifie les nœuds par nom (string) : rien à changer. Si une sauvegarde est ajoutée : table de remappage au chargement', 'Un handle brut écrit dans un fichier n’a pas de sens à la relecture.'],
+['GRP-1', 'Groupes possédants / archetypes', 'en attente du profileur', 'Ne rien faire tant qu’une vue précise n’est pas désignée comme goulot', 'YAGNI.']
+];
+function roadHtml() {
+  return `<p>Rien ci-dessous n’est acté : ce sont des <b>décisions ou dettes à prendre plus tard</b>, collectées pendant ce lot. Les écarts entre ce que la leçon décrit et ce que le dépôt contient sont signalés avec leur raison.</p>
+<div class="scroll"><table><tr><th>Réf.</th><th>Sujet</th><th>État</th><th>Action / décision</th><th>Pourquoi ça compte</th></tr>${ROAD.map(r => '<tr><td class="mono">' + r[0] + '</td><td>' + r[1] + '</td><td>' + tag(r[2], /ouvert/.test(r[2]) ? 'ko' : /corrigé|sans objet|cosm/.test(r[2]) ? 'ok' : 'w') + '</td><td>' + r[3] + '</td><td>' + r[4] + '</td></tr>').join('')}</table></div>
+<div class="note">Les points <b>HIER-1</b> et <b>TRIG-1</b> sont les deux seuls qui touchent du code déjà livré avec un risque réel, mais ils s’appuient sur des fichiers plus anciens que plusieurs correctifs du Carnet de route (<code>NULL_ENTITY</code> déjà utilisé par <code>DestroyHierarchy</code>, <code>TriggerComponent</code> enrichi d’un <code>role</code>) : <b>vérifier sur le dépôt actuel avant d’agir</b>. Les autres lignes sont de la documentation, du nettoyage ou des décisions d’architecture futures. La même liste, numérotée L3-n, est fournie sous forme de section à coller dans <code>Plan_Phase_G_LibraryV3.md</code>.</div>`;
+}
+
+/* ====================== GLUE ====================== */
+const P = { legacy: false, paged: true, page: 8, dbl: false, rem: 'C', noRedirect: false, order: 'TM', bigPivot: false, late: '500000', N: 10000, K: 12, nMesh: 500, canon: true, ci: true, mirror: true, nRM: 500, meshKB: 850 };
+let S = null;
+function stepsInit() {
+  $('steps').innerHTML = STEPS.map(s => '<div class="step"><h3>' + s.title + '</h3><div class="body">' + s.ctl() + '<div data-out="' + s.n + '"></div></div></div>').join('');
+}
+function stepsRender() {
+  S = scenario(P);
+  for (const s of STEPS) { const el = document.querySelector('[data-out="' + s.n + '"]'); if (el) el.innerHTML = s.out(P, S); }
+}
+function hopRender(k) {
+  let h = '<table><tr><th>#</th><th>Saut</th><th>Lectures mémoire</th></tr>';
+  HOPS.forEach((x, i) => { h += '<tr style="' + (i === k ? 'background:var(--accbg)' : i > k ? 'opacity:.35' : '') + '"><td>' + (i + 1) + '</td><td>' + x[0] + '</td><td>' + x[1] + '</td></tr>'; });
+  $('hopOut').innerHTML = h + '</table>';
+}
+let hop = 0;
+function cacheRender() {
+  const N = +$('cN').value, sz = +$('cS').value, L = +$('cL').value, pf = +$('cP').value;
+  const denseLines = sz < 64 ? Math.ceil(N * sz / 64) : N;
+  const dep = N;
+  const tD = denseLines * pf, tP = dep * L;
+  $('cacheOut').innerHTML = '<table><tr><th></th><th class="n">lignes de cache lues</th><th class="n">chargements dépendants</th><th class="n">temps estimé (hypothèses ci-dessous)</th></tr>' +
+    '<tr><td>Dense contigu (' + fmt(N) + ' × ' + sz + ' o, lecture d’un champ)</td><td class="n">' + fmt(denseLines) + '</td><td class="n">0</td><td class="n">' + fmt(Math.round(tD / 1000)) + ' µs</td></tr>' +
+    '<tr><td>Objets dispersés (pointeurs)</td><td class="n">' + fmt(N) + '</td><td class="n">' + fmt(dep) + '</td><td class="n">' + fmt(Math.round(tP / 1000)) + ' µs</td></tr></table>' +
+    '<p class="small">Rapport estimé : <b>×' + (tP / tD).toFixed(1) + '</b>. ' + (sz >= 64 ? 'Avec des composants ≥ 64 octets, lire UN champ touche une ligne par composant même en contigu : l’avantage vient alors du prefetcher (adresses prévisibles, pas de chargements dépendants) et d’une disposition par champ (SoA) si un système n’utilise qu’une partie du composant.' : 'Avec des composants de ' + sz + ' octets, ' + (64 / sz).toFixed(1) + ' composants partagent chaque ligne.') + '</p>';
+}
+function exportHtml() {
+  const msg = $('expMsg'), name = 'Lot_L03_ECS_pas_a_pas.html';
+  const fallback = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([SRC], { type: 'text/html' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = 'Fichier généré.'; };
+  const use = window.claude && window.claude.use ? window.claude.use('downloads') : Promise.resolve(null);
+  use.then(dl => { if (!dl) { fallback(); return; } return dl.save({ filename: name, data: SRC }).then(() => { msg.textContent = 'Enregistré : rouvre le fichier dans un navigateur pour rejouer les scénarios.'; }); })
+     .catch(e => { msg.textContent = e && e.code === 'declined' ? 'Annulé.' : 'Export indisponible dans cette vue.'; });
+}
+function boot() {
+  $('diffs').innerHTML = diffsHtml();
+  $('tech').innerHTML = techHtml();
+  $('fondOut').innerHTML = fondHtml();
+  $('roadOut').innerHTML = roadHtml();
+  stepsInit(); stepsRender();
+  labInit(); $('labOut').innerHTML = labRender();
+  hopRender(-1); cacheRender();
+  document.addEventListener('input', onCtl); document.addEventListener('change', onCtl);
+  document.addEventListener('click', ev => {
+    const lb = ev.target.closest('[data-lb]'); if (lb) { labAct(lb.dataset.lb); $('labOut').innerHTML = labRender(); return; }
+    const sl = ev.target.closest('[data-slot]'); if (sl) { LB.sel = +sl.dataset.slot; $('labOut').innerHTML = labRender(); return; }
+    if (ev.target.id === 'hopBtn') { hop = Math.min(hop + 1, HOPS.length); hopRender(hop - 1); }
+    if (ev.target.id === 'hopRst') { hop = 0; hopRender(-1); }
+    if (ev.target.id === 'lbReset') { labInit(); $('labOut').innerHTML = labRender(); }
+    if (ev.target.id === 'btnExport') exportHtml();
+  });
+}
+function onCtl(ev) {
+  const t = ev.target;
+  if (t.name === 'vw') { $('diffs').className = t.value; return; }
+  if (['lbVer', 'lbPag', 'lbPS'].includes(t.id)) { labInit(); $('labOut').innerHTML = labRender(); return; }
+  if (['cN', 'cS', 'cL', 'cP'].includes(t.id)) { cacheRender(); return; }
+  const k = t.dataset && t.dataset.p; if (!k) return;
+  P[k] = t.type === 'checkbox' ? t.checked : (t.dataset.num !== undefined ? Number(t.value) : t.value);
+  const outs = { N: 'oN', K: 'oK', nMesh: 'oNM', nRM: 'oRM', meshKB: 'oKB' };
+  if (outs[k] && $(outs[k])) $(outs[k]).textContent = fmt(P[k]);
+  stepsRender();
+}
+boot();
+</script>
+</body>
+</html>

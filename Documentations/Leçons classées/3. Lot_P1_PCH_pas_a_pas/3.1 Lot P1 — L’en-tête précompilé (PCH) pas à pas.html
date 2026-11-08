@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot P1 — L’en-tête précompilé (PCH) pas à pas</title>
+<style>
+:root{
+  --bg:#f4f6f8;--card:#ffffff;--ink:#17222d;--mute:#53616f;--line:#d3dae1;
+  --acc:#0a6c74;--accbg:#e0f0f1;--err:#b3261e;--errbg:#fbe9e7;
+  --ok:#1b6e3c;--okbg:#e3f2e8;--warn:#85570a;--warnbg:#fbf0d6;--code:#edf0f3;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){color-scheme:light dark}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11161b;--card:#1a2128;--ink:#e6ebf0;--mute:#9aa7b4;--line:#2c3743;
+    --acc:#5cc3cb;--accbg:#12353a;--err:#ff8f85;--errbg:#3b1b18;
+    --ok:#82d49e;--okbg:#14301f;--warn:#f0c46a;--warnbg:#3a2d10;--code:#222b34;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11161b;--card:#1a2128;--ink:#e6ebf0;--mute:#9aa7b4;--line:#2c3743;
+  --acc:#5cc3cb;--accbg:#12353a;--err:#ff8f85;--errbg:#3b1b18;
+  --ok:#82d49e;--okbg:#14301f;--warn:#f0c46a;--warnbg:#3a2d10;--code:#222b34;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:18px 14px 60px}
+h1{font-size:1.6rem;line-height:1.25;margin:.2rem 0 .6rem;font-weight:650}
+h2{font-size:1.25rem;margin:2.2rem 0 .6rem;font-weight:650}
+h3{font-size:1.05rem;margin:0 0 .4rem;font-weight:650}
+p{margin:.5rem 0}
+.lead{color:var(--mute)}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 4px}
+nav a{padding:5px 11px;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;font-size:.88rem;background:var(--card)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+label{display:block;font-size:.86rem;color:var(--mute)}
+select,input[type=range]{width:100%;margin-top:3px}
+select{padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink);font:inherit}
+.chk{display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-size:.92rem}
+.chk input{margin-top:6px}
+button{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--acc);background:var(--acc);color:var(--card);cursor:pointer}
+button.alt{background:transparent;color:var(--acc)}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+pre{background:var(--code);border-radius:8px;padding:10px 12px;overflow-x:auto;font:13px/1.5 "Cascadia Code",Consolas,monospace;margin:.5rem 0;white-space:pre}
+code{font:13px "Cascadia Code",Consolas,monospace;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+.verdict{border-radius:8px;padding:10px 12px;margin-top:10px;border:1px solid}
+.v-ok{background:var(--okbg);border-color:var(--ok);color:var(--ink)}
+.v-err{background:var(--errbg);border-color:var(--err);color:var(--ink)}
+.v-warn{background:var(--warnbg);border-color:var(--warn);color:var(--ink)}
+.tag{display:inline-block;font-size:.78rem;padding:1px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mute);margin-right:4px}
+.io{display:grid;grid-template-columns:1fr;gap:8px;margin:8px 0}
+@media(min-width:640px){.io{grid-template-columns:1fr 1fr}}
+.io>div{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);font-size:.92rem}
+.io b{display:block;font-size:.8rem;color:var(--mute);font-weight:600;margin-bottom:2px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;display:block;overflow-x:auto}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;white-space:nowrap}
+th{color:var(--mute);font-weight:600}
+.bar{height:20px;border-radius:4px;background:var(--acc);min-width:2px}
+.bar.r{background:var(--err)}
+.simd{border-left:3px solid var(--line);padding:2px 10px;color:var(--mute);font-size:.9rem;margin:8px 0 0}
+svg text{fill:var(--ink);font:12px "Segoe UI",system-ui,sans-serif}
+svg .m{fill:var(--mute);font-size:11px}
+.n{fill:var(--card);stroke:var(--line);stroke-width:1.2}
+.n-ok{fill:var(--okbg);stroke:var(--ok);stroke-width:1.5}
+.n-err{fill:var(--errbg);stroke:var(--err);stroke-width:1.5}
+.n-acc{fill:var(--accbg);stroke:var(--acc);stroke-width:1.5}
+.n-warn{fill:var(--warnbg);stroke:var(--warn);stroke-width:1.5}
+.n-off{fill:none;stroke:var(--mute);stroke-width:1.2;stroke-dasharray:5 4}
+.ln{stroke:var(--mute);stroke-width:1.4;fill:none}
+.ln-err{stroke:var(--err);stroke-dasharray:5 4}
+.dim{opacity:.18}
+.segs{display:flex;gap:8px;flex-wrap:wrap}
+.seg{flex:1 1 180px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--card);color:var(--ink);border:1px solid var(--line);text-align:left}
+.seg[aria-pressed="true"]{border:2px solid var(--acc);background:var(--accbg)}
+.seg span{font-size:.85rem;font-weight:600}
+.cols{display:grid;grid-template-columns:1fr;gap:14px;margin-top:12px}
+@media(min-width:700px){.cols{grid-template-columns:1fr 1fr}}
+.src span{display:block}
+.src .ign{text-decoration:line-through;opacity:.6;color:var(--warn)}
+.src .bad{color:var(--err)}
+#steps,#verdict,.card{overflow-anchor:none}
+#verdict{min-height:120px}
+.lab{font-size:.86rem;color:var(--mute)}
+.opts{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.opts button{padding:6px 10px;background:var(--card);color:var(--ink);border:1px solid var(--line);font-size:.88rem}
+.opts button[aria-pressed="true"]{background:var(--accbg);border:2px solid var(--acc);font-weight:600}
+footer{margin-top:2rem;color:var(--mute);font-size:.85rem}
+@media (prefers-reduced-motion:no-preference){svg g{transition:opacity .35s}}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <h1>Lot P1 — L’en-tête précompilé (PCH), pas à pas</h1>
+  <p class="lead"><b>Objectif.</b> Comprendre ce que fait réellement Visual Studio avec <code>pch.h</code>, <code>pch.cpp</code> et <code>LibraryV3.pch</code>, pour ne plus jamais subir l’erreur <code>C1083</code> et savoir quoi mettre (ou ne pas mettre) dans le PCH.</p>
+  <p class="lead"><b>Introduction.</b> Sans PCH, chaque <code>.cpp</code> relit et ré-analyse toute la STL. Avec PCH, un seul fichier (<code>pch.cpp</code>) fait ce travail et fige l’état du compilateur dans <code>LibraryV3.pch</code>. Tous les autres le rechargent. La mécanique est simple, mais elle repose sur un ordre strict : <em>quelqu’un doit écrire le .pch avant que les autres le lisent</em>.</p>
+  <nav aria-label="Sections">
+    <a href="#schema">Schéma</a><a href="#etapes">Étapes</a><a href="#contre">Contre-exemples</a><a href="#cout">Coût</a><a href="#verifier">Vérifier</a><a href="#fond">Questions de fond</a>
+  </nav>
+</header>
+
+<h2 id="schema">1. Comprendre avant le code : le schéma dynamique</h2>
+<p>L’état initial reproduit ton erreur : <code>pch.cpp</code> en <code>Use</code> dans les deux configurations. Corrige Debug seulement, puis bascule sur Release : l’erreur revient. Les deux pastilles ci-dessous montrent l’état des deux configurations en permanence.</p>
+
+<div class="card">
+  <div class="segs" role="group" aria-label="Configuration en cours de build">
+    <button class="seg" id="segDebug" aria-pressed="true"><b>Debug|x64</b><span id="stDebug"></span></button>
+    <button class="seg" id="segRelease" aria-pressed="false"><b>Release|x64</b><span id="stRelease"></span></button>
+  </div>
+  <div class="grid" style="margin-top:10px">
+    <div><span class="lab">pch.cpp en Debug|x64</span>
+      <div class="opts" id="pchDebug" role="group" aria-label="pch.cpp en Debug"><button data-v="Use">Use (/Yu)</button><button data-v="Create">Create (/Yc)</button><button data-v="NotUsing">NotUsing</button></div></div>
+    <div><span class="lab">pch.cpp en Release|x64</span>
+      <div class="opts" id="pchRelease" role="group" aria-label="pch.cpp en Release"><button data-v="Use">Use (/Yu)</button><button data-v="Create">Create (/Yc)</button><button data-v="NotUsing">NotUsing</button></div></div>
+    <div><span class="lab">Défaut du projet (tous les autres .cpp)</span>
+      <div class="opts" id="def" role="group" aria-label="Défaut du projet"><button data-v="Use">Use (/Yu)</button><button data-v="NotUsing">NotUsing</button></div></div>
+    <label>Nombre de .cpp dans le projet : <b id="Nv">24</b>
+      <input type="range" id="N" min="2" max="80" value="24"></label>
+  </div>
+
+  <svg id="svg" width="100%" viewBox="0 0 680 320" role="img" aria-label="Flux de compilation PCH" style="margin-top:12px"></svg>
+
+  <div class="cols">
+    <div>
+      <h3>Logger.cpp : ce que le compilateur lit</h3>
+      <label class="chk"><input type="checkbox" id="logInc" checked><span>Contient <code>#include "pch.h"</code></span></label>
+      <label class="chk"><input type="checkbox" id="codeBefore"><span>Contient un <code>#define LV3_X 1</code> placé avant l’include</span></label>
+      <pre class="src" id="src"></pre>
+      <p id="srcNote" class="lead" style="font-size:.92rem"></p>
+    </div>
+    <div>
+      <h3>Verdict du build</h3>
+      <div id="verdict" class="verdict" aria-live="polite"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <button id="replay">Rejouer le build</button>
+        <button class="alt" id="fix">Corriger : pch.cpp en Create (Debug et Release)</button>
+        <button class="alt" id="brk">Reproduire mon erreur</button>
+      </div>
+      <p id="actMsg" class="lead" aria-live="polite" style="min-height:3.4em;margin:8px 0 0;font-size:.92rem">Le bouton « Corriger » règle pch.cpp sur Create dans les deux configurations, comme si tu changeais les deux listes toi-même.</p>
+    </div>
+  </div>
+</div>
+
+<h2 id="etapes">2. L’algorithme, étape par étape</h2>
+<p>Chaque étape donne son objectif, le code concerné, le résultat de l’étape précédente qu’elle consomme et celui qu’elle produit, <b>calculé en direct</b> à partir des réglages du schéma (durées en float32, <code>Math.fround</code>). Aucune étape de build ne manipule de tableau de données : il n’existe donc pas d’équivalent SIMD. Chaque étape indique l’analogue qui existe réellement.</p>
+<div id="steps"></div>
+
+<h2 id="contre">3. Contre-exemples chiffrés</h2>
+<div class="card"><h3>Contre-exemple 1 : pch.cpp en /Yu (ton erreur)</h3>
+  <pre><code>pch.cpp : Use   →  cl /Yu"pch.h" … pch.cpp   →  C1083</code></pre>
+  <p>Les <b class="vN"></b> fichiers sont en <code>Use</code>, aucun n’écrit le .pch. Résultat chiffré, quel que soit le nombre de cœurs : <b><span class="vN"></span> erreurs C1083</b> (identiques), <b>0 .obj</b>, <b>0 .lib</b>. Tu as vu la première ; la liste complète en contient autant que de fichiers. Corriger un seul fichier (<code>pch.cpp</code>) les supprime toutes : une seule cause.</p></div>
+
+<div class="card"><h3>Contre-exemple 2 : mettre un en-tête instable dans pch.h</h3>
+  <pre><code>// pch.h
+#include &lt;vector&gt;            // stable : OK
+#include "Core/Logger.h"      // ✗ évolue souvent : tout dépend de lui</code></pre>
+  <label>Fichiers qui incluent réellement Logger.h : <b id="mv">6</b>
+    <input type="range" id="m" min="1" max="24" value="6"></label>
+  <p>Tu modifies <code>Logger.h</code> (supplément analysé dans le PCH : +<span id="c2extra"></span>).</p>
+  <table><tr><th></th><th>Fichiers recompilés</th><th>Temps modélisé</th></tr>
+  <tr><td>Logger.h dans pch.h (✗)</td><td id="c2nBad"></td><td id="c2tBad"></td></tr>
+  <tr><td>Logger.h hors PCH (✓)</td><td id="c2nGood"></td><td id="c2tGood"></td></tr></table>
+  <p>Rapport : <b>×<span id="c2ratio"></span></b> plus lent à chaque modification de <code>Logger.h</code>. Règle : le PCH ne contient que ce qui ne change jamais (STL, Core stable).</p></div>
+
+<div class="card"><h3>Contre-exemple 3 : une macro avant l’include (silencieux)</h3>
+  <pre><code>// Core/Logger.cpp
+#define LV3_VERBOSE 1        // ✗ placé AVANT l’include
+#include "pch.h"
+#include "Logger.h"
+
+#if LV3_VERBOSE
+    // code de trace
+#endif</code></pre>
+  <table><tr><th>Mode du fichier</th><th>LV3_VERBOSE vu par #if</th><th>Code de trace compilé</th></tr>
+  <tr><td>/Yu (utiliser)</td><td>0 (ligne ignorée)</td><td>non</td></tr>
+  <tr><td>NotUsing</td><td>1</td><td>oui</td></tr></table>
+  <p>Même source, deux comportements selon un réglage de projet, et aucun message. Règle : toute macro vit dans <code>Config.h</code> (donc dans le PCH) ou dans les propriétés du projet (<code>/D</code>). Tu peux le voir en direct dans le schéma : coche la case « #define avant l’include » une fois le .pch écrit.</p></div>
+
+<h2 id="cout">4. Modèle de coût : ce que le PCH fait gagner</h2>
+<div class="card">
+  <p>Modèle simplifié. Les paramètres ci-dessous sont illustratifs : mesure les tiens avec <code>/Bt+</code> (voir « Vérifier »).</p>
+  <div class="grid">
+    <label>H : analyse de pch.h (STL…) <b id="Hv">420</b> ms<input type="range" id="H" min="50" max="1500" value="420"></label>
+    <label>s : écriture du .pch <b id="sv">80</b> ms<input type="range" id="s" min="10" max="300" value="80"></label>
+    <label>L : chargement du .pch <b id="Lv">35</b> ms<input type="range" id="L" min="5" max="150" value="35"></label>
+    <label>c : coût propre d’un .cpp <b id="cv">60</b> ms<input type="range" id="c" min="5" max="800" value="60"></label>
+    <label>K : processus parallèles (/MP) <b id="Kv">8</b><input type="range" id="K" min="1" max="32" value="8"></label>
+  </div>
+  <div id="cost" style="margin-top:12px">
+    <p id="costForm"></p>
+    <div style="display:grid;grid-template-columns:80px 1fr 90px;gap:6px;align-items:center">
+      <span>Sans PCH</span><div class="bar r" id="barNo"></div><span id="tNo"></span>
+      <span>Avec PCH</span><div class="bar" id="barYes"></div><span id="tYes"></span>
+    </div>
+    <p>Gain modélisé : <b>×<span id="gain"></span></b>. Le PCH est en plus <b>séquentiel</b> pour sa première étape : avec beaucoup de cœurs, (H + s) devient le plancher incompressible.</p>
+  </div>
+</div>
+
+<h2 id="verifier">5. Étape finale : vérifier</h2>
+<div class="card"><h3>V1 : test hors moteur, le fichier projet</h3>
+  <pre><code>Select-String -Path LibraryV3.vcxproj -Pattern 'PrecompiledHeader'</code></pre>
+  <p>Attendu : pour <code>pch.cpp</code>, une ligne <code>Create</code> pour Debug|x64 <b>et</b> une pour Release|x64. Toute autre ligne <code>Create</code> est une erreur.</p></div>
+<div class="card"><h3>V2 : test hors moteur, la ligne de commande réelle</h3>
+  <p>Outils → Options → Projets et solutions → Build et exécution → niveau de détail « Détaillé ». Après un Rebuild, cherche dans la sortie :</p>
+  <pre><code>/Yc"pch.h"   → exactement 1 occurrence
+/Yu"pch.h"   → <span class="vN1"></span> occurrences</code></pre></div>
+<div class="card"><h3>V3 : filet Debug, détecter un .cpp sans PCH</h3>
+  <pre><code>// pch.h
+#define LV3_PCH_INCLUDED 1
+
+// Logger.h (et tout en-tête local)
+#ifndef LV3_PCH_INCLUDED
+#error "pch.h doit être inclus en premier"
+#endif</code></pre>
+  <p>Ce filet attrape un <code>.cpp</code> compilé en <code>NotUsing</code> qui a oublié l’include. Il n’attrape <b>pas</b> le contre-exemple 3 (macro ignorée) : celui-là se prévient par la règle « aucune directive avant l’include ».</p></div>
+<div class="card"><h3>V4 : mesurer H, L, c chez toi</h3>
+  <p>Propriétés C/C++ → Ligne de commande → Options supplémentaires : <code>/Bt+</code>. La sortie donne, par fichier, le temps du front-end (<code>c1xx.dll</code>). Reporte ces valeurs dans les curseurs de la section 4.</p></div>
+<div class="card"><h3>V5 : prédictions du lot, coche quand ton build les confirme</h3>
+  <label class="chk"><input type="checkbox"><span><b>Rebuild (Debug)</b> : <span id="p0"></span></span></label>
+  <label class="chk"><input type="checkbox"><span><b>Build juste après, sans rien changer</b> : 0 fichier compilé, « à jour ».</span></label>
+  <label class="chk"><input type="checkbox"><span><b>Modifier un seul .cpp (hors pch.h)</b> : 1 fichier recompilé ; le .pch n’est pas réécrit.</span></label>
+  <label class="chk"><input type="checkbox"><span><b>Modifier pch.h</b> : <span id="p3"></span></span></label>
+  <label class="chk"><input type="checkbox"><span><b>Modifier Logger.h (hors PCH)</b> : <span id="p4"></span></span></label></div>
+
+<h2 id="fond">6. Questions de fond</h2>
+<div class="card">
+  <h3>Pourquoi « No such file or directory » et pas une erreur de réglage ?</h3>
+  <p>Le compilateur ne connaît pas ton intention. Il lit la ligne de commande <code>/Yu"pch.h" /Fp"x64\Debug\LibraryV3.pch"</code>, va chercher ce fichier, ne le trouve pas, et s’arrête. Il n’a aucun moyen de savoir qu’un autre fichier aurait dû le produire. Le message décrit le symptôme (fichier absent), jamais la cause (personne ne l’a écrit).</p>
+  <h3>Pourquoi un seul créateur ?</h3>
+  <p>Le <code>.pch</code> est un instantané binaire de l’état interne du compilateur après l’analyse de <code>pch.h</code>. Il y a un fichier de sortie par configuration : deux sources qui l’écriraient ne donneraient aucune garantie sur celui qui reste, surtout avec <code>/MP</code>. Règle : un <code>/Yc</code> par configuration, rien d’autre.</p>
+  <h3>Pourquoi Debug et Release séparément ?</h3>
+  <p>Les propriétés Visual Studio sont stockées par couple configuration|plateforme. Corriger Debug|x64 ne touche pas Release|x64. Dans la boîte de propriétés, choisis « Toutes les configurations » ou corrige les deux.</p>
+  <h3>Correction d’une affirmation de mon message précédent</h3>
+  <div class="verdict v-warn">Je t’ai dit que tout ce qui précède <code>#include "pch.h"</code> (commentaire, <code>#pragma once</code>…) pouvait faire échouer la compilation. C’était imprécis. Les commentaires sont sans effet. Pour un fichier en <code>/Yu</code>, le compilateur <b>ignore silencieusement toutes les directives du préprocesseur placées avant l’include</b> (<code>#define</code>, <code>#pragma</code>…). Pas d’erreur : le code compile, mais sans ton <code>#define</code>. C’est plus dangereux qu’une erreur : voir le contre-exemple 3.</div>
+  <h3>Un commutateur passé par <code>/D</code> recompile-t-il tout, où qu’il soit lu ? (ajout du lot L01, partie B)</h3>
+  <p>Oui. <code>LV3.Common.props</code> qui pose <code>/DLV3_PROFILE=1</code> change la <b>ligne de commande</b> de chaque <code>.cpp</code> de la LIB et de l’EXE. MSBuild mémorise la ligne de commande de chaque fichier (fichiers <code>.tlog</code>) : si elle diffère, il recompile, <code>pch.cpp</code> compris, que le symbole soit lu dans <code>config.h</code> (dans le PCH) ou dans un seul <code>.cpp</code>. Le placement du <code>#define</code> ne change donc rien au coût d’un commutateur de build ; il change la <b>garantie d’unicité</b> de sa valeur (écart E4 du lot L01, bug 0.3). Le PCH ne fait payer « trop » que pour une valeur <i>éditée dans un header</i> du PCH et lue par peu de fichiers : c’est elle qui doit sortir du PCH (<code>EngineSettings.h</code>).</p>
+  <p>Troisième cas, le moins cher : une valeur lue dans <code>engine.json</code> ne passe par aucun compilateur. La modifier ne recompile rien ; il suffit de relancer (lot L01, partie B, DB1).</p>
+  <h3>Piège à anticiper pour tes kernels AVX2 / AVX-512</h3>
+  <p>Le .pch fige l’état du compilateur avec ses options. Si tu compiles un fichier avec des options différentes des autres (par exemple <code>/arch:AVX512</code> uniquement sur un fichier de kernels), le compilateur peut refuser de réutiliser le .pch (erreur du type « option incohérente avec l’en-tête précompilé », <code>C2855</code> typiquement). Le comportement exact dépend de l’option : à tester par un build quand tu arriveras à ces fichiers. Solution usuelle : <code>NotUsing</code> pour ce seul fichier, ou ses propres options regroupées sur un petit nombre de fichiers.</p>
+</div>
+
+<div class="card" id="exportBox">
+  <button id="export">Exporter cette page en .html</button>
+  <span id="exportMsg" class="lead"></span>
+</div>
+
+<footer>LibraryV3 · Lot P1 — PCH · modèle de coût illustratif, vérifications Visual Studio 2026 à effectuer chez toi</footer>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const f=Math.fround;
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const ms=x=>f(x).toFixed(1)+' ms';
+const setAll=(sel,txt)=>document.querySelectorAll(sel).forEach(e=>e.textContent=txt);
+const S={cfg:'Debug',pch:{Debug:'Use',Release:'Use'},def:'Use',logInc:true,codeBefore:false,N:24,K:8,H:420,L:35,c:60,s:80,m:6,extra:140};
+let stage=99;
+
+function sim(cfg){
+  const N=Math.max(2,S.N),pm=S.pch[cfg],def=S.def;
+  const path='LibraryV3\\x64\\'+cfg+'\\LibraryV3.pch';
+  const r={cfg,path,rows:[],errs:[],built:false,tPch:0,nOk:0,cost:0,objs:0,warns:[],errCount:0,logger:'OK'};
+  if(pm==='Create'){r.built=true;r.tPch=f(S.H+S.s);r.objs++;r.rows.push({n:'pch.cpp',m:'/Yc',ok:true,note:'écrit le .pch'});}
+  else if(pm==='NotUsing'){r.tPch=f(S.H+S.c);r.objs++;r.rows.push({n:'pch.cpp',m:'aucun',ok:true,note:'compilé seul, aucun .pch écrit'});}
+  else{r.errs.push({n:'pch.cpp',cnt:1,code:'C1083',msg:path});r.rows.push({n:'pch.cpp',m:'/Yu',ok:false,note:'C1083 : lit un .pch que personne n’a écrit'});}
+  const groups=[{n:'Core/Logger.cpp',cnt:1,inc:S.logInc,cb:S.codeBefore,lg:true},{n:'autres .cpp',cnt:N-2,inc:true,cb:false}];
+  groups.forEach(g=>{
+    if(g.cnt<=0)return;
+    let ok=true,note='',tag='OK';
+    if(def==='Use'){
+      if(!r.built){ok=false;note='C1083 : .pch absent';tag='C1083';r.errs.push({n:g.n,cnt:g.cnt,code:'C1083',msg:path});}
+      else if(!g.inc){ok=false;note='C1010 : #include "pch.h" introuvable';tag='C1010';r.errs.push({n:g.n,cnt:g.cnt,code:'C1010',msg:'fin de fichier inattendue lors de la recherche de l’en-tête précompilé'});}
+      else{note='charge le .pch';if(g.cb){note+=' · #define avant l’include IGNORÉ';tag='#define ignoré';r.warns.push('Le #define placé avant l’include de '+g.n+' est ignoré en /Yu, sans aucun message.');}}
+    }else{
+      note='analyse complète de pch.h (pas de gain)';tag='sans PCH';
+      if(!g.inc){note+=' · pch.h absent';tag='sans pch.h';r.warns.push(g.n+' sans include de pch.h en NotUsing : compile seulement si ses en-têtes incluent eux-mêmes la STL utilisée.');}
+    }
+    if(g.lg)r.logger=tag;
+    r.rows.push({n:g.n+(g.cnt>1?' ×'+g.cnt:''),m:def==='Use'?'/Yu':'aucun',ok,note});
+    if(ok){r.objs+=g.cnt;r.nOk+=g.cnt;r.cost=def==='Use'?f(S.L+S.c):f(S.H+S.c);}
+  });
+  r.errCount=r.errs.reduce((a,e)=>a+e.cnt,0);
+  r.libOk=r.errCount===0;
+  r.tTotal=f(r.tPch+(r.nOk>0?Math.ceil(r.nOk/S.K)*r.cost:0));
+  return r;
+}
+
+function renderSvg(){
+  const r=sim(S.cfg),pm=S.pch[S.cfg];
+  const vis=n=>stage>=n?'':' class="dim"';
+  const lg=r.rows.find(x=>x.n==='Core/Logger.cpp'),ot=r.rows.find(x=>x.n.startsWith('autres'));
+  const cls=x=>!x?'n':(x.ok?'n-ok':'n-err');
+  const modeTxt={Create:'/Yc (créer)',Use:'/Yu (utiliser)',NotUsing:'sans PCH'}[pm];
+  const defTxt=S.def==='Use'?'/Yu (utiliser)':'sans PCH';
+  const lgCls=lg&&lg.ok&&r.warns.some(w=>w.indexOf('Logger')>-1)?'n-warn':cls(lg);
+  let s=`<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>`;
+  s+=`<g${vis(0)}><rect class="n" x="20" y="14" width="150" height="46" rx="6"/><text x="95" y="33" text-anchor="middle">pch.h</text><text class="m" x="95" y="50" text-anchor="middle">STL + Core stable</text></g>`;
+  s+=`<g${vis(1)}><line class="ln" x1="95" y1="60" x2="95" y2="112" marker-end="url(#ar)"/><rect class="${cls(r.rows[0])}" x="20" y="114" width="150" height="62" rx="6"/><text x="95" y="136" text-anchor="middle">pch.cpp</text><text class="m" x="95" y="154" text-anchor="middle">${modeTxt}</text><text class="m" x="95" y="168" text-anchor="middle">${S.cfg}|x64</text></g>`;
+  s+=`<g${vis(2)}><line class="ln${r.built?'':' ln-err'}" x1="170" y1="145" x2="236" y2="145" marker-end="url(#ar)"/><rect class="${r.built?'n-acc':'n-off'}" x="238" y="114" width="150" height="62" rx="6"/><text x="313" y="138" text-anchor="middle">LibraryV3.pch</text><text class="m" x="313" y="156" text-anchor="middle">${r.built?'écrit : '+ms(r.tPch):'ABSENT'}</text></g>`;
+  s+=`<g${vis(3)}>`;
+  s+=`<line class="ln${r.built?'':' ln-err'}" x1="388" y1="130" x2="450" y2="76" marker-end="url(#ar)"/>`;
+  s+=`<line class="ln${r.built?'':' ln-err'}" x1="388" y1="152" x2="450" y2="176" marker-end="url(#ar)"/>`;
+  s+=`<rect class="${lgCls}" x="452" y="40" width="200" height="68" rx="6"/><text x="552" y="62" text-anchor="middle">Core/Logger.cpp</text><text class="m" x="552" y="80" text-anchor="middle">${defTxt}</text><text x="552" y="98" text-anchor="middle" style="font-weight:600">${esc(r.logger)}</text>`;
+  s+=`<rect class="${cls(ot)}" x="452" y="146" width="200" height="60" rx="6"/><text x="552" y="170" text-anchor="middle">${Math.max(0,S.N-2)} autres .cpp</text><text class="m" x="552" y="188" text-anchor="middle">${defTxt}</text></g>`;
+  s+=`<g${vis(4)}><line class="ln" x1="552" y1="206" x2="552" y2="244" marker-end="url(#ar)"/><path class="ln" d="M652 74 H668 V272 H654" marker-end="url(#ar)"/>`;
+  s+=`<rect class="${r.libOk?'n-ok':'n-off'}" x="452" y="246" width="200" height="52" rx="6"/><text x="552" y="268" text-anchor="middle">LibraryV3.lib</text><text class="m" x="552" y="285" text-anchor="middle">${r.libOk?r.objs+' .obj archivés':'non produit'}</text></g>`;
+  $('svg').innerHTML=s;
+}
+
+function renderVerdict(){
+  const r=sim(S.cfg),v=$('verdict');
+  if(r.errCount>0){
+    const e=r.errs[0];
+    v.className='verdict v-err';
+    v.innerHTML=`<b>${r.errCount} erreur(s) ${e.code}</b> · 0 .lib.<br>Première : <code>${esc(e.n)}</code> — ${esc(e.msg)}.<br>`+
+      (e.code==='C1083'?`Cause : aucun fichier de ${S.cfg} n’est en <code>/Yc</code>, donc <code>LibraryV3.pch</code> n’est jamais écrit. Correction : <code>pch.cpp</code> → Create pour <b>${S.cfg}|x64</b>.`:`Cause : le fichier n’inclut pas <code>pch.h</code>. Correction : <code>#include "pch.h"</code> comme première directive.`);
+  }else if(r.warns.length){
+    v.className='verdict v-warn';
+    v.innerHTML=`<b>Build réussi mais piège actif.</b><br>${r.warns.map(esc).join('<br>')}`;
+  }else{
+    v.className='verdict v-ok';
+    v.innerHTML=`<b>Build ${S.cfg} réussi</b> : ${r.objs} .obj, 1 .lib, temps modélisé ${ms(r.tTotal)} avec ${S.K} processus.`;
+  }
+}
+
+function renderChips(){
+  ['Debug','Release'].forEach(c=>{
+    const r=sim(c),st=$('st'+c);
+    st.textContent=r.errCount?('✗ '+r.errCount+' erreur(s)'):(r.warns.length?'⚠ piège actif':'✓ build OK');
+    st.style.color=r.errCount?'var(--err)':(r.warns.length?'var(--warn)':'var(--ok)');
+    $('seg'+c).setAttribute('aria-pressed',S.cfg===c?'true':'false');
+  });
+}
+
+function renderSrc(){
+  const r=sim(S.cfg),use=S.def==='Use';
+  const L=[];
+  if(S.codeBefore)L.push([ '#define LV3_X 1', use&&r.built&&S.logInc?'ign':'' ]);
+  L.push(S.logInc?['#include "pch.h"','']:['// (pas d’include de pch.h)','bad']);
+  L.push(['#include "Logger.h"','']);
+  $('src').innerHTML=L.map(l=>`<span class="${l[1]}">${esc(l[0])}</span>`).join('\n');
+  let n;
+  if(use&&!r.built)n='Effet masqué : le .pch n’existe pas, le compilateur échoue (C1083) avant de lire ces lignes. Écris d’abord le .pch (pch.cpp en Create pour '+S.cfg+'), puis rejoue ces cases.';
+  else if(use&&!S.logInc)n='En /Yu, le compilateur cherche l’include dans le source ; il ne le trouve pas : C1010.';
+  else if(use&&S.codeBefore)n='La ligne barrée est ignorée en /Yu : aucune erreur, mais LV3_X n’existe pas.';
+  else if(!use&&S.codeBefore)n='Sans PCH, le fichier est lu en entier : le #define est actif. Même source, comportement différent.';
+  else if(!use&&!S.logInc)n='Sans PCH, l’include absent n’est pas détecté par le compilateur.';
+  else n='Source conforme : include en première ligne, rien avant.';
+  $('srcNote').textContent=n;
+}
+
+const STEPS=[
+ {t:'E1 — Résoudre les propriétés par fichier',
+  obj:'Pourquoi : un projet Visual Studio stocke un mode PCH par fichier et par configuration. Rien ne se compile avant que ce tableau soit résolu.',
+  code:`<!-- LibraryV3.vcxproj -->
+<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+  <ClCompile>
+    <PrecompiledHeader>Use</PrecompiledHeader>
+    <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+  </ClCompile>
+</ItemDefinitionGroup>
+<ClCompile Include="pch.cpp">
+  <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+  <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+</ClCompile>`,
+  simd:'Équivalent vectorisé : aucun (lecture d’un fichier XML). Analogue : MSBuild évalue les conditions de toutes les configurations en une passe.'},
+ {t:'E2 — Vérifier l’unicité du créateur',
+  obj:'Pourquoi : il faut exactement un fichier en /Yc par configuration. Zéro : le .pch n’existe jamais. Plusieurs : deux écrivains pour le même fichier.',
+  code:`// Pseudo-code du contrôle (ce que tu dois vérifier toi-même)
+int creators = 0;
+for (const auto& src : sources[cfg])
+    creators += (src.pch == Pch::Create);
+// creators == 0  -> C1083 en cascade sur tous les /Yu
+// creators  > 1  -> résultat non déterministe`,
+  simd:'Équivalent vectorisé : aucun. Un comptage sur ~30 fichiers ne justifie pas de SIMD (le coût est dans le compilateur, pas dans la boucle).'},
+ {t:'E3 — Compiler le créateur : écrire le .pch',
+  obj:'Pourquoi : analyser pch.h une seule fois et figer l’état du compilateur dans un fichier, pour que les N-1 autres fichiers sautent cette analyse.',
+  code:`cl /c /Yc"pch.h" /Fp"x64\\Debug\\LibraryV3.pch" pch.cpp
+
+// pch.cpp : volontairement presque vide
+#include "pch.h"`,
+  simd:'Équivalent vectorisé : aucun. Étape forcément séquentielle : tous les autres fichiers attendent son résultat (c’est la limite de /MP).'},
+ {t:'E4 — Compiler les consommateurs',
+  obj:'Pourquoi : recharger l’état figé au lieu de ré-analyser la STL, puis ne compiler que le code propre du fichier.',
+  code:`cl /c /Yu"pch.h" /Fp"x64\\Debug\\LibraryV3.pch" Core\\Logger.cpp
+
+// Pseudo-code de cl.exe pour un fichier /Yu
+if (!fileExists(pchPath))      error(C1083);   // ton erreur
+auto inc = findLine("#include \\"pch.h\\"");
+if (!inc)                      error(C1010);
+restoreCompilerState(pchPath);                 // état figé rechargé
+skipSourceUpTo(inc);                           // TOUT ce qui précède est ignoré
+compile(restOfFile);`,
+  simd:'Équivalent vectorisé : aucun. Analogue réel : /MP lance K processus cl.exe en parallèle (K fichiers à la fois), c’est le « multi-lane » du build.'},
+ {t:'E5 — Archiver en .lib',
+  obj:'Pourquoi : le projet est une bibliothèque statique. lib.exe assemble les .obj ; il ne s’exécute que si les étapes précédentes n’ont produit aucune erreur.',
+  code:`lib /OUT:x64\\Debug\\LibraryV3.lib x64\\Debug\\*.obj`,
+  simd:'Équivalent vectorisé : aucun (opération sur fichiers). Rien à optimiser ici.'}
+];
+
+function buildSteps(){
+  $('steps').innerHTML=STEPS.map((st,i)=>`
+   <div class="card"><h3>${st.t}</h3>
+    <p>${st.obj}</p>
+    <pre><code>${esc(st.code)}</code></pre>
+    <div class="io"><div><b>Résultat de l’étape précédente utilisé</b><span id="in${i}"></span></div><div><b>Résultat de cette étape (calculé)</b><span id="out${i}"></span></div></div>
+    <p class="simd">${st.simd}</p>
+   </div>`).join('');
+}
+
+function renderSteps(){
+  const r=sim(S.cfg),pm=S.pch[S.cfg],crs=pm==='Create'?1:0;
+  const tbl='<table><tr><th>Fichier</th><th>Mode</th><th>Résultat</th></tr>'+r.rows.map(x=>`<tr><td>${esc(x.n)}</td><td>${x.m}</td><td style="color:var(--${x.ok?'ok':'err'})">${x.ok?'OK':'ÉCHEC'} · ${esc(x.note)}</td></tr>`).join('')+'</table>';
+  const io=[
+   {i:'Fichier .vcxproj et configuration choisie : <b>'+S.cfg+'|x64</b>.',
+    o:`pch.cpp : <b>${pm}</b> en ${S.cfg} (Debug : ${S.pch.Debug}, Release : ${S.pch.Release}). Autres fichiers : <b>${S.def}</b>.`},
+   {i:'Table des modes de E1.',
+    o:`Créateurs en ${S.cfg} : <b>${crs}</b> `+(crs===1?'<span style="color:var(--ok)">(attendu : 1)</span>':'<span style="color:var(--err)">(attendu : 1) → le .pch ne sera jamais écrit</span>')},
+   {i:`Créateurs = ${crs}.`,
+    o:r.built?`pch.h analysé puis sérialisé : H + s = ${ms(S.H)} + ${ms(S.s)} = <b>${ms(r.tPch)}</b>. Fichier <code>${esc(r.path)}</code> écrit.`:`<span style="color:var(--err)">Aucun .pch écrit</span> pour ${S.cfg}.`+(pm==='Use'?' pch.cpp lui-même échoue en C1083.':'')},
+   {i:r.built?'.pch présent.':'<b>.pch absent.</b>',
+    o:tbl+`<p>${r.nOk} fichier(s) OK, coût unitaire <b>${ms(r.cost)}</b> (${S.def==='Use'?'L + c':'H + c'}), ${S.K} en parallèle.</p>`},
+   {i:`${r.errCount} erreur(s), ${r.objs} .obj.`,
+    o:r.libOk?`LibraryV3.lib produit (<b>${r.objs}</b> .obj). Temps total modélisé : <b>${ms(r.tTotal)}</b>.`:`<span style="color:var(--err)">Étape sautée : LibraryV3.lib non produit.</span>`}
+  ];
+  io.forEach((x,i)=>{$('in'+i).innerHTML=x.i;$('out'+i).innerHTML=x.o;});
+}
+
+function renderCounter(){
+  const N=Math.max(2,S.N),K=S.K,W=n=>Math.ceil(n/K);
+  S.m=Math.min(S.m,N);
+  const mi=$('m');mi.max=N;mi.value=S.m;$('mv').textContent=S.m;
+  setAll('.vN',N);
+  const tBad=f(f(f(S.H+S.extra)+S.s)+f(W(N-1)*f(S.L+S.c)));
+  const tGood=f(W(S.m)*f(S.L+S.c));
+  $('c2extra').textContent=ms(S.extra);
+  $('c2nBad').textContent=N;$('c2tBad').textContent=ms(tBad);
+  $('c2nGood').textContent=S.m;$('c2tGood').textContent=ms(tGood);
+  $('c2ratio').textContent=f(tBad/Math.max(tGood,0.001)).toFixed(1);
+}
+
+function renderCost(){
+  const N=Math.max(2,S.N),K=S.K,W=n=>Math.ceil(n/K);
+  const noP=f(W(N)*f(S.H+S.c));
+  const withP=f(f(S.H+S.s)+f(W(N-1)*f(S.L+S.c)));
+  const mx=Math.max(noP,withP);
+  $('costForm').innerHTML=`Sans PCH : ⌈${N}/${K}⌉ × (H + c) &nbsp;·&nbsp; Avec PCH : (H + s) + ⌈${N-1}/${K}⌉ × (L + c)`;
+  $('barNo').style.width=(noP/mx*100).toFixed(1)+'%';
+  $('barYes').style.width=(withP/mx*100).toFixed(1)+'%';
+  $('tNo').textContent=ms(noP);$('tYes').textContent=ms(withP);
+  $('gain').textContent=f(noP/withP).toFixed(2);
+}
+
+function renderVerify(){
+  const N=Math.max(2,S.N),K=S.K,m=Math.min(S.m,N);
+  const first=f(f(S.H+S.s)+Math.ceil((N-1)/K)*f(S.L+S.c));
+  setAll('.vN1',N-1);
+  $('p0').textContent=`${N} fichiers compilés, 1 seul /Yc, 0 erreur, 1 .lib. Temps modélisé ${ms(first)}.`;
+  $('p3').textContent=`${N} fichiers recompilés (le .pch est réécrit puis rechargé par tous).`;
+  $('p4').textContent=`${m} fichiers recompilés (ceux qui l’incluent), jamais le .pch.`;
+}
+
+function renderOpts(){[['pchDebug',S.pch.Debug],['pchRelease',S.pch.Release],['def',S.def]].forEach(([id,v])=>$(id).querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===v?'true':'false')));}
+const LOCK=['steps','verdict','src','srcNote','actMsg'];
+function keepMax(){LOCK.forEach(id=>{const e=$(id),hh=e.offsetHeight;if(hh>(parseFloat(e.dataset.mh)||0)){e.dataset.mh=hh;e.style.minHeight=hh+'px';}});}
+function prewarm(){
+  const keep=JSON.stringify(S),ld=[$('logInc').checked,$('codeBefore').checked],am=$('actMsg').textContent;
+  $('actMsg').textContent='Rien à changer : pch.cpp était déjà en Create dans Debug et Release. Utilise « Reproduire mon erreur » pour revenir à l’état d’origine. Utilise « Reproduire mon erreur » pour revenir à l’état d’origine.';
+  LOCK.forEach(id=>{const e=$(id);e.dataset.mh=0;e.style.minHeight='';});
+  const M=['Use','Create','NotUsing'];
+  for(const cfg of ['Debug','Release'])for(const d of M)for(const r of M)for(const df of ['Use','NotUsing'])for(const li of [true,false])for(const cb of [false,true]){
+    S.cfg=cfg;S.pch.Debug=d;S.pch.Release=r;S.def=df;S.logInc=li;S.codeBefore=cb;renderAll();
+  }
+  Object.assign(S,JSON.parse(keep));$('logInc').checked=ld[0];$('codeBefore').checked=ld[1];$('actMsg').textContent=am;renderAll();
+}
+function renderAll(){
+  const y=window.scrollY;
+  renderOpts();renderChips();renderSvg();renderVerdict();renderSrc();renderSteps();renderCounter();renderCost();renderVerify();keepMax();
+  if(Math.abs(window.scrollY-y)>1)window.scrollTo(0,y);
+}
+
+function rr(){stage=99;renderAll();}
+function bind(id,key,labelId){
+  $(id).addEventListener('input',e=>{S[key]=+e.target.value;$(labelId).textContent=e.target.value;rr();});
+}
+bind('N','N','Nv');bind('H','H','Hv');bind('s','s','sv');bind('L','L','Lv');bind('c','c','cv');bind('K','K','Kv');
+$('m').addEventListener('input',e=>{S.m=+e.target.value;rr();});
+$('segDebug').addEventListener('click',()=>{S.cfg='Debug';rr();});
+$('segRelease').addEventListener('click',()=>{S.cfg='Release';rr();});
+function optsBind(id,set){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;set(b.dataset.v);$('actMsg').textContent='';rr();});}
+optsBind('pchDebug',v=>S.pch.Debug=v);
+optsBind('pchRelease',v=>S.pch.Release=v);
+optsBind('def',v=>S.def=v);
+$('logInc').addEventListener('change',e=>{S.logInc=e.target.checked;rr();});
+$('codeBefore').addEventListener('change',e=>{S.codeBefore=e.target.checked;rr();});
+$('fix').addEventListener('click',()=>{
+  const was=S.pch.Debug==='Create'&&S.pch.Release==='Create';
+  S.pch.Debug='Create';S.pch.Release='Create';rr();
+  $('actMsg').textContent=was?'Rien à changer : pch.cpp était déjà en Create dans Debug et Release. Utilise « Reproduire mon erreur » pour revenir à l’état d’origine.':'Corrigé : pch.cpp est maintenant en Create (Debug et Release). Les deux pastilles passent au vert.';
+});
+$('brk').addEventListener('click',()=>{S.pch.Debug='Use';S.pch.Release='Use';S.def='Use';S.logInc=true;S.codeBefore=false;$('logInc').checked=true;$('codeBefore').checked=false;rr();$('actMsg').textContent='État d’origine restauré : pch.cpp en Use dans les deux configurations, c’est ton erreur C1083.';});
+$('replay').addEventListener('click',()=>{
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches){rr();return;}
+  stage=-1;renderSvg();let i=0;
+  const t=setInterval(()=>{stage=i++;renderSvg();if(i>4){clearInterval(t);stage=99;}},650);
+});
+$('export').addEventListener('click',()=>{
+  try{
+    const html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+    a.download='Lot_P1_PCH_pas_a_pas.html';
+    document.body.appendChild(a);a.click();a.remove();
+    $('exportMsg').textContent=' Export lancé.';
+  }catch(e){$('exportMsg').textContent=' Export impossible ici : utilise le fichier .html fourni dans le chat.';}
+});
+buildSteps();
+renderAll();
+prewarm();
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(prewarm,250);});
+</script>
+</body>
+</html>

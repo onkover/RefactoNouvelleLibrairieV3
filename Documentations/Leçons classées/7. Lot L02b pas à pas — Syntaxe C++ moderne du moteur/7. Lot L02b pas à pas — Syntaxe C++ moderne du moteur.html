@@ -1,0 +1,945 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L02b pas à pas — Syntaxe C++ moderne du moteur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EDF0F3; --surface:#FFFFFF; --ink:#18222E; --muted:#566270; --line:#C9D1DA;
+  --accent:#2A55C9; --accent-soft:#DCE5FA; --bad:#B4322A; --bad-soft:#F8E1DE;
+  --good:#237A4B; --good-soft:#DDF1E5; --warn:#8A5E0E; --warn-soft:#F6EBD3;
+  --code-bg:#F4F6F9; --hl:#FFF3BF;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10151C; --surface:#18202A; --ink:#DCE3EC; --muted:#93A0AF; --line:#2C3744;
+    --accent:#86A3FF; --accent-soft:#1F2C4D; --bad:#F0857B; --bad-soft:#3A1E1C;
+    --good:#6FCB98; --good-soft:#173626; --warn:#E2B45C; --warn-soft:#3A2E14;
+    --code-bg:#121922; --hl:#3B3418; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10151C; --surface:#18202A; --ink:#DCE3EC; --muted:#93A0AF; --line:#2C3744;
+  --accent:#86A3FF; --accent-soft:#1F2C4D; --bad:#F0857B; --bad-soft:#3A1E1C;
+  --good:#6FCB98; --good-soft:#173626; --warn:#E2B45C; --warn-soft:#3A2E14;
+  --code-bg:#121922; --hl:#3B3418; color-scheme: dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;}
+code,pre,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+a{color:var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 80px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px}
+nav.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;padding-top:28px;font-size:14px}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li{margin:0 0 6px}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent)}
+nav.toc .dl{margin-top:18px}
+main{min-width:0}
+header.hero{padding:34px 0 10px}
+.kicker{color:var(--muted);font-size:15px;margin:0 0 6px}
+h1{font-size:clamp(30px,4.4vw,46px);line-height:1.1;margin:0 0 14px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:26px;line-height:1.25;margin:56px 0 12px;font-weight:600}
+h3{font-size:19px;margin:30px 0 8px;font-weight:600}
+h4{font-size:16px;margin:18px 0 6px;font-weight:600}
+p,li{max-width:74ch}
+.lead{font-size:18px;color:var(--ink);max-width:68ch}
+.muted{color:var(--muted)}
+section{scroll-margin-top:20px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 18px 16px;margin:16px 0}
+.bad{border-left:4px solid var(--bad);background:var(--bad-soft)}
+.good{border-left:4px solid var(--good);background:var(--good-soft)}
+.warn{border-left:4px solid var(--warn);background:var(--warn-soft)}
+.callout{border-radius:8px;padding:12px 16px;margin:14px 0}
+.callout p{margin:.3em 0}
+pre{background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:12px 0;overflow-x:auto;font-size:13.5px;line-height:1.55;margin:10px 0}
+pre .ln{display:block;padding:0 14px;white-space:pre}
+pre .ln.add{background:var(--good-soft);box-shadow:inset 3px 0 var(--good)}
+pre .ln.del{background:var(--bad-soft);box-shadow:inset 3px 0 var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 60%,transparent)}
+pre .kw{color:var(--accent);font-weight:600}
+pre .cm{color:var(--muted)}
+code.i{background:var(--code-bg);border:1px solid var(--line);border-radius:4px;padding:0 4px;font-size:.9em}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tblwrap{overflow-x:auto;margin:10px 0}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:600;background:var(--code-bg)}
+button,select,input{font:inherit;color:inherit}
+button{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:5px 8px}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:8px 0}
+.row label{display:flex;gap:8px;align-items:center;font-size:14.5px}
+input[type=range]{accent-color:var(--accent);width:150px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.out{font-family:"IBM Plex Mono",monospace;font-size:13.5px;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.tag{display:inline-block;border-radius:5px;padding:1px 7px;font-size:13px;font-weight:600}
+.tag.ok{background:var(--good-soft);color:var(--good)}
+.tag.ko{background:var(--bad-soft);color:var(--bad)}
+.tag.wa{background:var(--warn-soft);color:var(--warn)}
+
+/* héros : la déclaration disséquée */
+.decl{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:22px 0 10px}
+.decl .line{font-family:"IBM Plex Mono",monospace;font-size:clamp(12.5px,1.6vw,16px);white-space:pre;overflow-x:auto;padding:4px 0}
+.tok{border:none;background:none;padding:1px 3px;margin:0 -1px;border-radius:4px;font:inherit;color:var(--accent);font-weight:600;border-bottom:2px dotted var(--accent);cursor:pointer}
+.tok[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-bottom-color:transparent}
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:16px}
+.lane{border:1px solid var(--line);border-radius:8px;padding:10px;min-height:92px;font-size:13.5px;line-height:1.45;color:var(--muted);transition:background .25s,border-color .25s,color .25s}
+.lane b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+.lane.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.declsum{margin-top:12px;font-size:15px}
+
+/* chaîne de compilation */
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin:14px 0}
+.stage{flex:1 1 140px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface);font-size:13.5px}
+.stage b{display:block;font-size:14.5px}
+.stage.after{border-color:var(--good);box-shadow:inset 0 3px var(--good)}
+.stage .new{color:var(--good);font-weight:600}
+
+/* stepper */
+.steps-nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.steps-nav button{font-size:13.5px;padding:5px 10px}
+.step{display:none}
+.step.on{display:block}
+.io{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.io h4{margin-top:4px}
+.lanesTbl td,.lanesTbl th{font-family:"IBM Plex Mono",monospace;font-size:12.5px;padding:5px 7px;white-space:nowrap}
+.lanesTbl td.diff{background:var(--bad-soft);color:var(--bad);font-weight:600}
+.lanesTbl td.same{color:var(--good)}
+.tabs{display:flex;gap:6px;margin-top:8px}
+
+/* mémoire */
+svg text{font-family:"IBM Plex Mono",monospace}
+.svgbox{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:8px}
+
+@media (max-width:860px){
+  .wrap{grid-template-columns:1fr;gap:0}
+  nav.toc{position:static;padding-top:16px}
+  nav.toc ol{display:flex;flex-wrap:wrap;gap:4px 14px}
+  .lanes{grid-template-columns:1fr 1fr}
+  .grid2,.io{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc" aria-label="Sommaire">
+  <ol>
+    <li><a href="#pourquoi">1. Pourquoi ce lot</a></li>
+    <li><a href="#rappel">2. Ce qu’on a déjà fait</a></li>
+    <li><a href="#contexte">3. Contexte et objectif</a></li>
+    <li><a href="#chaine">4. Avant / après</a></li>
+    <li><a href="#technique">5. Fonctionnement</a></li>
+    <li><a href="#etapes">6. Étapes pas à pas</a></li>
+    <li><a href="#contre">7. Contre-exemples chiffrés</a></li>
+    <li><a href="#ecarts">8. Écarts et décisions</a></li>
+    <li><a href="#questions">9. Questions de fond</a></li>
+  </ol>
+  <div class="dl"><button id="dlBtn" type="button" hidden>Télécharger en HTML</button><div id="dlMsg" class="muted" style="font-size:13px"></div></div>
+</nav>
+
+<main>
+<header class="hero">
+  <p class="kicker">LibraryV3, reconstruction des leçons. Détour entre la leçon 02 et la leçon 03.</p>
+  <h1>Lot L02b pas à pas : la syntaxe C++ moderne du moteur</h1>
+  <p class="lead">Cinq mots reviennent sur presque chaque ligne de <code class="i">Maths/</code> et de <code class="i">Core/</code>. Chacun s’adresse à un lecteur différent de la chaîne de compilation. Touche un mot pour voir qui le lit et ce qu’il en fait.</p>
+
+  <div class="decl" role="group" aria-label="Déclarations disséquées">
+    <div class="line"><button class="tok" data-k="inline">inline</button> Vec3f V3Cross(const Vec3f&amp; a, const Vec3f&amp; b) <button class="tok" data-k="noexcept">noexcept</button>;</div>
+    <div class="line"><button class="tok" data-k="nodiscard">[[nodiscard]]</button> <button class="tok" data-k="force">LV3_FORCEINLINE</button> float dot(const Vec3f&amp; o) const <button class="tok" data-k="noexcept">noexcept</button>;</div>
+    <div class="line">struct <button class="tok" data-k="align">LV3_ALIGN_SIMD</button> PixelBlock { float r[8], g[8], b[8], a[8]; };</div>
+    <div class="lanes" id="lanes"></div>
+    <p class="declsum" id="declsum"></p>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<section id="pourquoi">
+<h2>1. Pourquoi ce lot</h2>
+<p>La leçon 02 a écrit la librairie mathématique avec <code class="i">noexcept</code>, <code class="i">constexpr</code> et <code class="i">LV3_FORCEINLINE</code> partout, et la leçon 01 a créé <code class="i">Compiler.h</code> pour les macros d’inlining et d’alignement. Ces mots ont été posés comme une convention, sans qu’on dise quel problème chacun résout. Résultat prévisible : on les recopie, on les oublie là où ils comptent, on les met là où ils nuisent.</p>
+<p>La leçon 03 (ECS, <code class="i">SparseSet</code>, <code class="i">ResourceManager</code>) va s’appuyer sur eux bien plus lourdement : des handles avec <code class="i">IsValid()</code>, des composants rangés dans des <code class="i">std::vector</code> qui se réallouent, des compteurs écrits par plusieurs threads. Si on ne sait pas pourquoi un déplacement doit être <code class="i">noexcept</code>, la leçon 03 produit des copies silencieuses. Si on ne sait pas ce que garantit <code class="i">alignas</code>, le rasterizer AVX2 plante un jour sur trois.</p>
+<div class="callout good"><p><b>Ce lot répond à une seule question par mot :</b> quel lecteur de la chaîne le lit, quel bug il empêche, quand il ne faut pas l’écrire. Il n’ajoute aucune fonctionnalité au moteur.</p></div>
+</section>
+
+<section id="rappel">
+<h2>2. Ce qu’on a déjà fait</h2>
+<div class="tblwrap"><table>
+<tr><th>Lot</th><th>Ce qui a été construit</th><th>Ce qui concerne ce lot</th></tr>
+<tr><td>L01</td><td>PCH, <code class="i">config.h</code>, enums, <code class="i">Compiler.h</code>, <code class="i">Platform.h</code></td><td><code class="i">Compiler.h</code> naît avec <code class="i">FORCEINLINE</code> et <code class="i">ALIGN_SIMD</code>. L’écart E9 (relevé du 07/11) note qu’il porte aujourd’hui <code class="i">alignas(32)</code>, <code class="i">alignas(64)</code> et <code class="i">LV3_NOINLINE</code>.</td></tr>
+<tr><td>L02</td><td><code class="i">Vec2f</code>, <code class="i">Vec3f</code>, <code class="i">Vec4f</code>, <code class="i">Matrix44f</code>, <code class="i">Quat</code>, conventions de repère et de profondeur</td><td>Toutes les fonctions sont <code class="i">noexcept</code> ; la leçon demandait <code class="i">alignas(16)</code> sur <code class="i">Vec4</code>/<code class="i">Mat4</code> « dès la conception ».</td></tr>
+<tr><td>L02b (ici)</td><td>Rien de nouveau dans le code</td><td>Le sens de <code class="i">inline</code>, <code class="i">noexcept</code>, <code class="i">[[nodiscard]]</code>, <code class="i">LV3_FORCEINLINE</code>, <code class="i">LV3_ALIGN_SIMD</code>, <code class="i">LV3_ALIGN_CACHE</code>, et les règles qui en sortent.</td></tr>
+<tr><td>Plus tard</td><td>L04 (rasterizer), chantier C2 (<code class="i">PixelStage8.h</code>, AVX2)</td><td>Utilisent déjà <code class="i">[[nodiscard]] LV3_FORCEINLINE</code> (<code class="i">EdgeFunction</code>, <code class="i">NearDistance</code>) et <code class="i">LV3_NOINLINE</code> (<code class="i">RasterizeBlocks8</code>). On s’y réfère seulement quand ça éclaire une décision d’ici.</td></tr>
+</table></div>
+</section>
+
+<section id="contexte">
+<h2>3. Contexte et objectif fonctionnel</h2>
+<p>Un moteur CPU passe sa vie dans quelques boucles : une par sommet, une par pixel. Dans ces boucles, une fonction de trois multiplications (<code class="i">dot</code>) est appelée des dizaines de millions de fois par frame. Tout ce qui ajoute un coût autour d’elle (un appel réel, un chargement mal aligné, une ligne de cache disputée entre deux cœurs) se multiplie par ce nombre. Et tout ce qui laisse passer un bug silencieux (un résultat jeté, une copie au lieu d’un déplacement) produit une image fausse sans message d’erreur.</p>
+<p><b>Objectif fonctionnel :</b> que chaque mot-clé du moteur soit écrit pour une raison qu’on sait dire, et vérifié par la machine (compilateur, <code class="i">static_assert</code>, filet Debug) plutôt que par la relecture.</p>
+<h3>Les décisions que ce lot prépare</h3>
+<p>Elles sont proposées, rien n’est acté. Le détail et ce que chaque choix engage sont en section 8.</p>
+<div class="tblwrap"><table>
+<tr><th>#</th><th>Proposition</th><th>Pourquoi la trancher maintenant</th></tr>
+<tr><td>D19</td><td><code class="i">[[nodiscard]]</code> sur toute fonction dont le retour est la seule raison d’exister</td><td>La leçon 03 crée des handles : <code class="i">h.IsValid();</code> sans <code class="i">if</code> doit refuser de compiler.</td></tr>
+<tr><td>D20</td><td><code class="i">noexcept</code> partout dans <code class="i">Maths/</code> ; déplacements <code class="i">noexcept</code> (ou règle du zéro) verrouillés par <code class="i">static_assert</code></td><td>La leçon 03 range les composants dans des <code class="i">std::vector</code>.</td></tr>
+<tr><td>D21</td><td><code class="i">LV3_FORCEINLINE</code> réservé aux fonctions triviales des boucles chaudes ; C4714 traité en erreur</td><td>Évite que la macro se propage à des fonctions de 200 lignes.</td></tr>
+<tr><td>D22</td><td><code class="i">LV3_ALIGN_CACHE</code> pour les seules données écrites par plusieurs threads ; <code class="i">LV3_ALIGN_SIMD</code> seulement si un chargement aligné les consomme</td><td>Le rendu par tuiles multi-thread arrive ; les données de masse ne doivent pas payer de remplissage.</td></tr>
+</table></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="chaine">
+<h2>4. La chaîne de compilation, avant et après ce lot</h2>
+<p>Le « processus » de ce lot n’est pas un algorithme de rendu : c’est la chaîne qui transforme un header en instructions CPU. Chaque mot-clé agit à un endroit précis de cette chaîne. Le lot ne change pas la chaîne ; il ajoute des contrôles à trois de ses étapes (surlignés en vert dans la vue « après »).</p>
+<div class="row" role="group" aria-label="Vue">
+  <button type="button" id="vAvant" aria-pressed="true">Avant (état relevé)</button>
+  <button type="button" id="vApres" aria-pressed="false">Après (proposé)</button>
+</div>
+<div class="chain" id="chainBox"></div>
+<div id="chainCode"></div>
+<div class="callout warn"><p><b>À vérifier d’abord.</b> La vue « avant » vient des copies des headers rangées dans le projet (<code class="i">Vec2f.h</code>, <code class="i">Vec3f.h</code>, <code class="i">Compiler.h</code>) et de tes messages. Certaines copies sont antérieures au dépôt (le <code class="i">Plane.h</code> rangé est encore en <code class="i">namespace LibV2</code>). Le dépôt ne m’est pas lisible fichier par fichier : chaque écart de la section 8 marqué « à vérifier » doit être confirmé sur ton disque avant toute décision.</p></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="technique">
+<h2>5. Fonctionnement</h2>
+
+<h3 id="t-inline">5.1 <code class="i">inline</code> : une consigne pour l’éditeur de liens</h3>
+<p>Le sens d’origine (« recopie le corps au lieu d’appeler ») est mort depuis longtemps : le compilateur décide seul. Le sens qui reste est une exception à la <b>règle de la définition unique</b> (ODR) : une fonction <code class="i">inline</code> peut être définie dans plusieurs fichiers objets, à condition que toutes les définitions soient identiques. MSVC la range dans une section COMDAT « en garder une » ; l’éditeur de liens garde la première et jette les autres.</p>
+<p>Sont <code class="i">inline</code> sans qu’on l’écrive : une fonction membre définie dans sa classe, une fonction <code class="i">constexpr</code>, une fonction template (règle voisine), une variable <code class="i">static constexpr</code> membre (C++17).</p>
+<div class="panel">
+  <div class="row">
+    <label>Fichiers .cpp qui incluent <code class="i">Vectorlib.h</code> <input type="range" id="tuN" min="1" max="8" value="3"><span id="tuNv" class="mono">3</span></label>
+    <label>Mot devant <code class="i">V3Cross</code>
+      <select id="tuMode"><option value="inline">inline</option><option value="none">rien</option><option value="static">static</option></select></label>
+  </div>
+  <div class="out" id="tuOut"></div>
+</div>
+<div class="callout bad"><p><b>Contre-exemple : <code class="i">static</code> pour faire taire LNK2005.</b> Ça compile, mais chaque .cpp reçoit sa copie privée, avec une adresse différente. Le binaire grossit d’une copie par fichier (le curseur ci-dessus donne le compte), et un <code class="i">static</code> local à la fonction (un cache, un compteur) existe en autant d’exemplaires qu’il y a de fichiers : un compteur incrémenté dans <code class="i">Mesh.cpp</code> n’est pas celui lu dans <code class="i">Camera.cpp</code>.</p></div>
+
+<h3 id="t-noexcept">5.2 <code class="i">noexcept</code> : un contrat que la bibliothèque standard lit</h3>
+<p><code class="i">noexcept</code> promet qu’aucune exception ne sortira de la fonction. Si la promesse est trahie, le programme appelle <code class="i">std::terminate()</code>, sans rattrapage possible.</p>
+<p>Sous Windows x64, les exceptions utilisent des tables de déroulement : tant qu’aucune n’est levée, leur coût d’exécution est presque nul. Le gain de <code class="i">noexcept</code> n’est donc pas d’abord une affaire de cycles. Il est à trois endroits : moins de tables et de code de nettoyage chez l’appelant, plus de liberté pour l’optimiseur, et surtout <b>le choix que fait la bibliothèque standard</b>. Quand un <code class="i">std::vector</code> se réalloue, il passe par <code class="i">std::move_if_noexcept</code> : il déplace les éléments si leur constructeur de déplacement est <code class="i">noexcept</code> (ou s’ils ne sont pas copiables), sinon il les <b>copie</b>, pour pouvoir revenir en arrière si une copie échoue.</p>
+<div class="panel">
+  <p class="muted" style="margin-top:0">Simulation de <code class="i">push_back</code> sur un <code class="i">std::vector&lt;Mesh&gt;</code> vide, croissance MSVC (capacité × 1,5). Chaque <code class="i">Mesh</code> possède un <code class="i">std::vector&lt;Vertex&gt;</code> (32 octets par sommet).</p>
+  <div class="row">
+    <label>Nombre de <code class="i">push_back</code> <input type="range" id="vN" min="10" max="5000" step="10" value="1000"><span id="vNv" class="mono">1000</span></label>
+    <label>Sommets par mesh <input type="range" id="vV" min="100" max="100000" step="100" value="10000"><span id="vVv" class="mono">10000</span></label>
+  </div>
+  <div class="row">
+    <label>Le type <code class="i">Mesh</code>
+      <select id="vMode">
+        <option value="zero">règle du zéro (rien de déclaré)</option>
+        <option value="nx">déplacement déclaré noexcept</option>
+        <option value="plain">déplacement déclaré sans noexcept</option>
+        <option value="dtor">seulement un destructeur déclaré</option>
+      </select></label>
+  </div>
+  <div class="out" id="vOut"></div>
+</div>
+<div class="callout bad"><p><b>Contre-exemple le plus sournois : déclarer un destructeur « pour faire propre ».</b> <code class="i">~Mesh() {}</code> supprime le constructeur de déplacement implicite. La copie reste disponible, donc tout compile, et chaque réallocation recopie tous les sommets de tous les meshes. Choisis « seulement un destructeur déclaré » ci-dessus pour le chiffrer.</p></div>
+
+<h3 id="t-nodiscard">5.3 <code class="i">[[nodiscard]]</code> : jeter le résultat devient un avertissement</h3>
+<p>Attribut C++17. Si l’appelant ignore la valeur rendue, le compilateur émet C4834 (MSVC). Il n’a aucun effet sur le code produit : c’est un contrôle, rien d’autre. Il vaut pour toute fonction qui ne fait que <i>répondre</i> : appeler une fonction pure sans lire sa réponse est toujours un bug.</p>
+<div class="panel">
+  <div class="row">
+    <label>API de <code class="i">Vec3f</code>
+      <select id="ndApi">
+        <option value="snap">normalize() const, renvoie une copie (copie du projet)</option>
+        <option value="snapnd">idem, avec [[nodiscard]]</option>
+        <option value="pair">normalized() [[nodiscard]] + normalize() en place</option>
+      </select></label>
+  </div>
+  <div class="row">
+    <label>Ligne écrite par le développeur
+      <select id="ndLine">
+        <option value="stmt">L.normalize();</option>
+        <option value="assign">L = L.normalize();  /  L = L.normalized();</option>
+      </select></label>
+  </div>
+  <div class="out" id="ndOut"></div>
+</div>
+
+<h3 id="t-force">5.4 <code class="i">LV3_FORCEINLINE</code> : l’inlining comme optimisation</h3>
+<p>Trois niveaux d’autorité : <code class="i">inline</code> ne parle qu’à l’éditeur de liens ; <code class="i">__forceinline</code> (MSVC) ou <code class="i">__attribute__((always_inline))</code> (GCC, Clang) ordonne au compilateur d’inliner sans appliquer son analyse coût/bénéfice. La macro existe pour cacher les deux dialectes. Son contraire, <code class="i">LV3_NOINLINE</code>, interdit l’inlining : C2 l’utilise sur <code class="i">RasterizeBlocks8</code> pour ne pas alourdir le prologue du noyau scalaire.</p>
+<p>Ce que l’inlining apporte vraiment dans une boucle, au-delà du coût de l’appel : <b>le corps devient visible</b>. Une boucle qui contient un <code class="i">call</code> opaque ne peut pas être vectorisée automatiquement ; une fois <code class="i">dot</code> inliné, la boucle n’est plus que des multiplications et des additions que l’optimiseur peut regrouper.</p>
+<p>Limites qu’il faut connaître : en Debug (<code class="i">/Ob0</code>, défaut de la configuration Debug), MSVC n’inline <i>rien</i>, pas même <code class="i">__forceinline</code>. En <code class="i">/Ob1</code>, seules les fonctions marquées (<code class="i">inline</code>, définies dans la classe, <code class="i">__forceinline</code>) sont candidates. Et <code class="i">__forceinline</code> peut être refusé (récursion, certains appels virtuels, fonctions à arguments variables) : MSVC le signale par C4714, désactivé par défaut au niveau W3.</p>
+<div class="panel">
+  <p class="muted" style="margin-top:0">Modèle pédagogique, pas une mesure : surcoût d’un appel réel ≈ 5 cycles, seuil heuristique d’inlining ≈ 30 instructions (l’heuristique réelle de MSVC est plus complexe), 4 octets par instruction.</p>
+  <div class="row">
+    <label>Build <select id="fBuild"><option value="ob0">Debug /Ob0</option><option value="ob1">/Ob1</option><option value="ob2" selected>Release /Ob2</option></select></label>
+    <label>Marque <select id="fMark"><option value="none">fonction libre, aucune</option><option value="inl">inline (ou définie dans la classe)</option><option value="force" selected>LV3_FORCEINLINE</option></select></label>
+  </div>
+  <div class="row">
+    <label>Taille du corps (instructions) <input type="range" id="fSize" min="1" max="200" value="4"><span id="fSizev" class="mono">4</span></label>
+    <label>Sites d’appel dans le code <input type="range" id="fSites" min="1" max="60" value="12"><span id="fSitesv" class="mono">12</span></label>
+  </div>
+  <div class="row">
+    <label>Appels par frame <select id="fCalls"><option value="518400">960×540</option><option value="2073600" selected>1920×1080</option><option value="8294400">3840×2160</option></select></label>
+  </div>
+  <div class="out" id="fOut"></div>
+</div>
+
+<h3 id="t-align">5.5 <code class="i">alignas</code> et <code class="i">LV3_ALIGN_SIMD</code> : où commence l’objet en mémoire</h3>
+<p><code class="i">alignas(N)</code> impose que l’adresse de l’objet soit un multiple de N, et arrondit <code class="i">sizeof</code> au multiple de N (pour que le deuxième élément d’un tableau soit aligné lui aussi). Il ne réordonne pas les membres.</p>
+<p>Deux raisons de s’en soucier. D’abord la <b>légalité</b> : <code class="i">_mm256_load_ps</code> exige une adresse multiple de 32, sinon violation d’accès. Ensuite la <b>ligne coupée</b> : <code class="i">_mm256_loadu_ps</code> accepte n’importe quelle adresse, et depuis Haswell il coûte autant que la version alignée tant que les 32 octets restent dans une même ligne de cache de 64 octets. Le vrai coût apparaît quand le chargement chevauche deux lignes (« split load ») : deux accès au lieu d’un.</p>
+<p>Qui respecte <code class="i">alignas</code> : la pile, les globales, les membres, <code class="i">new</code> depuis C++17 (il appelle l’<code class="i">operator new</code> sur-aligné quand <code class="i">alignof &gt; 16</code>), <code class="i">std::vector</code> par son allocateur. Qui l’ignore : <code class="i">malloc</code> (16 octets garantis sous MSVC x64), un pointeur calculé à la main dans un tampon d’octets.</p>
+<div class="panel">
+  <div class="row">
+    <label>Type <select id="aType">
+      <option value="vec3">Vec3f (12 o)</option>
+      <option value="vec4">Vec4f (16 o)</option>
+      <option value="mat">Matrix44f (64 o)</option>
+      <option value="pix8" selected>float r[8] d’un PixelBlock (32 o)</option>
+      <option value="stats">TileStats (16 o)</option>
+    </select></label>
+    <label>Alignement demandé <select id="aAl"><option value="0">aucun</option><option value="16">alignas(16)</option><option value="32" selected>LV3_ALIGN_SIMD (32)</option><option value="64">LV3_ALIGN_CACHE (64)</option></select></label>
+    <label>Allocation <select id="aAlloc"><option value="new">pile, globale ou new (C++17)</option><option value="malloc">malloc</option><option value="raw">pointeur dans un tampon d’octets</option></select></label>
+    <button type="button" id="aRoll">Tirer une adresse</button>
+  </div>
+  <div class="svgbox"><svg id="aSvg" width="760" height="150" role="img" aria-label="Disposition en mémoire sur trois lignes de cache"></svg></div>
+  <div class="out" id="aOut"></div>
+</div>
+
+<h3 id="t-cache">5.6 <code class="i">LV3_ALIGN_CACHE</code> : la paix entre les cœurs</h3>
+<p>Un cœur ne possède jamais un octet, il possède une ligne de 64 octets. Si deux threads écrivent dans la même ligne, même dans des variables différentes, la ligne passe d’un cache L1 à l’autre à chaque écriture de l’autre thread : c’est le <b>faux partage</b>. <code class="i">alignas(64)</code> sur une structure par thread donne à chacune sa propre ligne.</p>
+<div class="panel">
+  <div class="row">
+    <button type="button" id="fsAl" aria-pressed="false">TileStats avec LV3_ALIGN_CACHE</button>
+    <label>Écritures par thread <select id="fsN"><option>1000</option><option selected>100000</option><option>1000000</option></select></label>
+    <button type="button" id="fsRun">Rejouer l’entrelacement</button>
+  </div>
+  <div class="svgbox"><svg id="fsSvg" width="760" height="120" role="img" aria-label="Deux compteurs et leurs lignes de cache"></svg></div>
+  <div class="out" id="fsOut"></div>
+  <p class="muted" style="font-size:13.5px;margin-bottom:0">Entrelacement simulé : chaque écriture vient du thread 0 ou 1 au hasard. Un transfert de ligne est compté quand l’écrivain n’est pas le propriétaire actuel de la ligne. Coûts de modèle : 1 cycle si la ligne est déjà là, ≈ 60 cycles par transfert entre cœurs.</p>
+</div>
+<div class="callout bad"><p><b>Contre-exemple : aligner les données de masse sur 64.</b> <code class="i">alignas(64)</code> sur un <code class="i">Vec3f</code> de 12 octets fait payer 52 octets de vide par élément : un tableau d’un million de positions passe de 12 Mo à 64 Mo, et chaque ligne de cache chargée ne contient plus qu’une position au lieu de cinq.</p></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="etapes">
+<h2>6. Étapes pas à pas</h2>
+<p>On suit une seule fonction, <code class="i">dot</code>, du header jusqu’aux registres, puis jusqu’aux pixels. Chaque étape fait agir un des mots du lot. Les valeurs sont calculées en float32, comme le CPU (chaque opération est arrondie à 24 bits de mantisse).</p>
+<div class="steps-nav" id="stepsNav"></div>
+<div id="stepsBox"></div>
+<div class="row"><button type="button" id="stPrev">Étape précédente</button><button type="button" id="stNext">Étape suivante</button></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="contre">
+<h2>7. Contre-exemples chiffrés</h2>
+<div class="tblwrap"><table id="contreTbl">
+<tr><th>Ce qu’il ne faut pas faire</th><th>Ce qui se passe</th><th>Chiffre</th></tr>
+</table></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="ecarts">
+<h2>8. Écarts entre la leçon et le code, décisions à prendre</h2>
+<p>Rien n’est acté. La colonne « Nature » dit ce que l’écart est, pas un verdict. La numérotation continue celle du relevé L01 (E1 à E13, D8 et D9) du <code class="i">Plan_Phase_G_LibraryV3.md</code>. Les décisions de lot sont numérotées D19 à D22, à la suite de la D18 du lot L02, pour ne pas se confondre avec les D10 à D13 de ce lot-là.</p>
+<div class="tblwrap"><table>
+<tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr>
+<tr><td>E14</td><td>Préfixe <code class="i">LV2_</code> survivant : <code class="i">LV2_ALIGN_SIMD</code>, <code class="i">LV2_ALIGN_CACHE</code> dans <code class="i">Compiler.h</code>, et <code class="i">LV2_FORCEINLINE</code> dans les copies de <code class="i">Vec2f.h</code> / <code class="i">Vec3f.h</code>. E9 relève pourtant <code class="i">LV3_ALIGN_CACHE</code> dans le dépôt.</td><td>Dette mineure, à vérifier (les deux sources se contredisent)</td><td>Renommer en <code class="i">LV3_</code>. Si les deux préfixes coexistent, garder un alias <code class="i">LV2_</code> le temps d’une migration ou tout renommer en une fois (chaque oubli sort en C2146 ou C3646 sur la ligne fautive).</td></tr>
+<tr><td>E15</td><td>La leçon 02 demandait <code class="i">alignas(16)</code> sur <code class="i">Vec4</code>/<code class="i">Mat4</code> ; je ne sais pas si <code class="i">Vec4f</code> et <code class="i">Matrix44f</code> en portent un aujourd’hui.</td><td>À vérifier, puis à acter</td><td><code class="i">Vec4f</code> : 16 (un <code class="i">__m128</code>). <code class="i">Matrix44f</code> fait exactement 64 octets : alignée sur 16, elle chevauche deux lignes 3 fois sur 4 ; alignée sur 64, jamais. Le choix coûte 0 octet de remplissage pour la matrice, puisque sa taille est déjà 64.</td></tr>
+<tr><td>E16</td><td>Copie de <code class="i">Vec3f.h</code> : <code class="i">normalize() const</code> renvoie une copie, sans <code class="i">[[nodiscard]]</code>. La leçon 02 écrit <code class="i">normalized()</code>.</td><td>Dette, à vérifier (le piège de la section 5.3)</td><td>Soit <code class="i">[[nodiscard]] normalized()</code> + <code class="i">normalize()</code> en place (appels existants à revoir un par un), soit garder le nom et ajouter seulement <code class="i">[[nodiscard]]</code> (aucun site à réécrire, le compilateur signale les mauvais).</td></tr>
+<tr><td>E17</td><td><code class="i">[[nodiscard]]</code> absent des fonctions pures de <code class="i">Vec2f</code>/<code class="i">Vec3f</code> (<code class="i">dot</code>, <code class="i">cross</code>, <code class="i">length</code>, opérateurs) dans les copies, présent dans les headers plus récents (<code class="i">EdgeFunction</code>, <code class="i">NearDistance</code>, <code class="i">Plane::Normalized</code>).</td><td>Incohérence</td><td>Appliquer D19 à <code class="i">Maths/</code>. Les opérateurs arithmétiques (<code class="i">a + b;</code> seul) peuvent en bénéficier aussi ; la bibliothèque standard ne le fait pas, c’est un choix.</td></tr>
+<tr><td>E18</td><td>La leçon 02 rend les opérations <code class="i">constexpr</code> ; les copies du dépôt utilisent <code class="i">LV2_FORCEINLINE</code> sans <code class="i">constexpr</code>.</td><td>Évolution ou régression, à vérifier</td><td>Les deux se combinent (<code class="i">EdgeFunction</code> est <code class="i">[[nodiscard]] LV3_FORCEINLINE constexpr</code>). <code class="i">constexpr</code> permet des <code class="i">static_assert</code> sur les maths ; <code class="i">std::sqrt</code> n’est <code class="i">constexpr</code> qu’à partir de C++26, donc <code class="i">length()</code> reste hors <code class="i">constexpr</code>.</td></tr>
+<tr><td>E19</td><td>Options de projet : C4834 et C4714 en erreur (<code class="i">/we4834 /we4714</code>) dans <code class="i">LV3.Common.props</code></td><td>Évolution proposée</td><td>Activer, ou rester sur l’avertissement. En erreur, D19 et D21 deviennent des contrôles de build et non des conventions.</td></tr>
+</table></div>
+<h3>Décisions de lot proposées, non actées</h3>
+<ul>
+<li><b>D19</b> : <code class="i">[[nodiscard]]</code> sur toute fonction pure. Se tranche avec E16, E17, E19.</li>
+<li><b>D20</b> : <code class="i">noexcept</code> partout dans <code class="i">Maths/</code> ; tout type rangé dans un <code class="i">std::vector</code> du moteur porte <code class="i">static_assert(std::is_nothrow_move_constructible_v&lt;T&gt;)</code>. Préférer la règle du zéro à un destructeur vide.</li>
+<li><b>D21</b> : <code class="i">LV3_FORCEINLINE</code> sur les fonctions triviales des boucles par sommet et par pixel uniquement ; <code class="i">LV3_NOINLINE</code> pour isoler un chemin froid d’un noyau. Se tranche avec E19.</li>
+<li><b>D22</b> : <code class="i">LV3_ALIGN_CACHE</code> pour les données écrites par plusieurs threads ; <code class="i">LV3_ALIGN_SIMD</code> si un chargement aligné les consomme ; chaque hypothèse d’alignement verrouillée par <code class="i">static_assert(alignof…)</code>. Se tranche avec E15.</li>
+</ul>
+<h3>Bloc à ajouter au plan (section « Décisions en attente »)</h3>
+<pre id="planBlock"></pre>
+</section>
+
+<!-- ================================================================ -->
+<section id="questions">
+<h2>9. Questions de fond</h2>
+
+<h3>Q1. « Que signifient <code class="i">inline</code> et <code class="i">noexcept</code> ? »</h3>
+<p>Réponse détaillée en 5.1 et 5.2. Deux précisions par rapport à ma première réponse dans la discussion. J’avais écrit que <code class="i">noexcept</code> rend le code « parfois plus rapide » : c’est vrai sur certaines plateformes, mais sous Windows x64 le coût d’exécution des exceptions non levées est déjà presque nul ; le gain mesurable vient des choix de la bibliothèque standard et de la taille du code. Et l’ODR est la seule raison d’être d’<code class="i">inline</code> aujourd’hui : une fonction libre définie dans un header sans <code class="i">inline</code> donne LNK2005 dès le deuxième .cpp.</p>
+
+<h3>Q2. « Que signifie <code class="i">[[nodiscard]]</code> ? »</h3>
+<p>Réponse détaillée en 5.3. Forme C++20 utile pour expliquer le refus : <code class="i">[[nodiscard("renvoie une copie ; utiliser normalize() pour modifier en place")]]</code>. Le texte apparaît dans l’avertissement.</p>
+
+<h3>Q3. « Pourquoi <code class="i">LV3_FORCEINLINE</code> sur <code class="i">u()</code> ? »</h3>
+<p>Réponse détaillée en 5.4. Précision : j’avais dit que la macro garantit l’inlining « même en Debug optimisé (<code class="i">/Ob1</code>) ». C’est exact pour <code class="i">/Ob1</code>, mais la configuration Debug par défaut est <code class="i">/Ob0</code>, où rien n’est inliné, macro comprise. Pour <code class="i">u()</code>, définie dans la classe, <code class="i">/Ob1</code> la rend déjà candidate ; la macro sert surtout à supprimer l’heuristique quand la fonction grossit ou que l’appelant devient gros.</p>
+
+<h3>Q4. « Comment utiliser <code class="i">LV3_ALIGN_SIMD</code> et <code class="i">LV3_ALIGN_CACHE</code> ? »</h3>
+<p>Réponse détaillée en 5.5 et 5.6. Précision : j’avais dit que <code class="i">_mm256_loadu_ps</code> est « légèrement plus lent ». Sur une adresse alignée, il ne l’est pas (depuis Haswell). Ce qui coûte, c’est un chargement qui chevauche deux lignes de cache. L’alignement sur 32 sert donc deux choses : rendre <code class="i">_mm256_load_ps</code> légal, et garantir qu’aucun bloc de 32 octets ne coupe une ligne.</p>
+<p>Placement de la macro, les trois formes :</p>
+<pre id="q4code"></pre>
+</section>
+</main>
+</div>
+
+<script>
+"use strict";
+/* ---------- source de la page pour le téléchargement (capturée avant tout rendu) ---------- */
+const PAGE_SOURCE = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+const $ = (id) => document.getElementById(id);
+const f32 = Math.fround;
+const fmt = (x, d = 6) => (Number.isFinite(x) ? x.toFixed(d) : String(x));
+function bitsHex(x){ const b=new DataView(new ArrayBuffer(4)); b.setFloat32(0,x); return "0x"+b.getUint32(0).toString(16).toUpperCase().padStart(8,"0"); }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ---------- rendu de code : "+ " ajouté, "- " retiré, coloration minimale ---------- */
+const KW = /\b(inline|noexcept|constexpr|static_assert|alignas|alignof|struct|const|static|return|float|void|bool|LV3_FORCEINLINE|LV3_NOINLINE|LV3_ALIGN_SIMD|LV3_ALIGN_CACHE|LV2_FORCEINLINE|LV2_ALIGN_SIMD|LV2_ALIGN_CACHE|__forceinline|__m256)\b|\[\[nodiscard[^\]]*\]\]/g;
+function codeHTML(src){
+  return src.replace(/^\n/,"").split("\n").map(line=>{
+    let cls="ln";
+    if(line.startsWith("+ ")){cls+=" add";line="  "+line.slice(2);}
+    else if(line.startsWith("- ")){cls+=" del";line="  "+line.slice(2);}
+    let h=esc(line);
+    const ci=h.indexOf("//");
+    let code=ci>=0?h.slice(0,ci):h, cm=ci>=0?h.slice(ci):"";
+    code=code.replace(KW,m=>`<span class="kw">${m}</span>`);
+    return `<span class="${cls}">${code}${cm?`<span class="cm">${cm}</span>`:""}</span>`;
+  }).join("");
+}
+function setCode(el, src){ el.innerHTML = codeHTML(src); }
+
+/* =============================== HÉROS =============================== */
+const LANES = ["Préprocesseur","Compilateur","Éditeur de liens","Bibliothèque standard","Exécution (CPU)"];
+const TOK = {
+  inline:{lanes:{2:"Accepte une définition par fichier objet (COMDAT) et en garde une seule.",1:"Indice faible : la fonction devient candidate à l’inlining, sans obligation."},
+    sum:"<b>inline</b> lève la règle de la définition unique. Sans lui, une fonction libre définie dans un header donne LNK2005 dès le deuxième .cpp. Détail en 5.1."},
+  noexcept:{lanes:{1:"Pas de nettoyage à prévoir chez l’appelant ; plus de liberté d’optimisation.",3:"std::vector déplace au lieu de copier (move_if_noexcept).",4:"Si une exception sort quand même : std::terminate()."},
+    sum:"<b>noexcept</b> est un contrat lu par le compilateur et par la bibliothèque standard. Une division par zéro flottante donne inf ou NaN, elle ne lance rien : tout Maths/ peut le promettre. Détail en 5.2."},
+  nodiscard:{lanes:{1:"Avertissement C4834 si le résultat est ignoré. Aucun effet sur le code produit."},
+    sum:"<b>[[nodiscard]]</b> transforme un appel inutile en avertissement de compilation, le moment le moins cher pour trouver le bug. Détail en 5.3."},
+  force:{lanes:{0:"Remplacé par __forceinline (MSVC) ou __attribute__((always_inline)) inline (GCC, Clang).",1:"Inlining sans analyse coût/bénéfice, sauf en /Ob0 ou cas refusés (C4714)."},
+    sum:"<b>LV3_FORCEINLINE</b> est une optimisation, à réserver aux fonctions triviales des boucles chaudes. Détail en 5.4."},
+  align:{lanes:{0:"Remplacé par alignas(32).",1:"alignof = 32, sizeof arrondi à un multiple de 32, adresses de pile alignées.",3:"new (C++17) et std::allocator appellent l’operator new sur-aligné.",4:"_mm256_load_ps devient légal ; aucun bloc de 32 o ne coupe une ligne de cache."},
+    sum:"<b>LV3_ALIGN_SIMD</b> fixe où commence l’objet en mémoire. malloc ne le respecte pas. Détail en 5.5."}
+};
+function renderLanes(k){
+  const t=TOK[k];
+  $("lanes").innerHTML=LANES.map((n,i)=>{
+    const txt=t&&t.lanes[i];
+    return `<div class="lane${txt?" on":""}"><b>${n}</b>${txt||"Ne lit pas ce mot."}</div>`;
+  }).join("");
+  $("declsum").innerHTML=t?t.sum:"";
+  document.querySelectorAll(".tok").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.k===k)));
+}
+document.querySelectorAll(".tok").forEach(b=>b.addEventListener("click",()=>renderLanes(b.dataset.k)));
+renderLanes("inline");
+
+/* =============================== AVANT / APRÈS =============================== */
+const STAGES = [
+  {n:"Header", a:"Vec3f.h, Compiler.h", b:"+ static_assert sur alignof / sizeof / nothrow move", newB:true},
+  {n:"Préprocesseur", a:"LV?_FORCEINLINE devient __forceinline ; LV?_ALIGN_SIMD devient alignas(32)", b:"Préfixe unique LV3_ (E14)", newB:true},
+  {n:"Compilateur, une fois par .cpp", a:"Inlining, alignement, avertissements au niveau W3", b:"+ /we4834 et /we4714 : nodiscard et forceinline refusé deviennent des erreurs (E19)", newB:true},
+  {n:"Éditeur de liens", a:"Fusionne les COMDAT inline, /OPT:REF /OPT:ICF en Release", b:"Inchangé", newB:false},
+  {n:"Exécution", a:"Chargements AVX2, threads de rendu", b:"+ filet Debug LV3_ASSERT_ALIGNED sur les pointeurs passés aux noyaux", newB:true}
+];
+const CODE_AVANT = String.raw`
+// Core/Compiler.h (copie du projet)
+#define LV2_ALIGN_SIMD  alignas(32)   // AVX2
+#define LV2_ALIGN_CACHE alignas(64)   // Ligne de cache
+#define LV2_FORCEINLINE __forceinline
+
+// Maths/Vec3f.h (copie du projet)
+LV2_FORCEINLINE float dot(const Vec3f& v) const noexcept { return x*v.x+y*v.y+z*v.z; }
+LV2_FORCEINLINE Vec3f normalize() const noexcept {   // renvoie une COPIE
+    float i = 1.f / length(); return {x*i,y*i,z*i};
+}`;
+const CODE_APRES = String.raw`
+// Core/Compiler.h (proposé)
+- #define LV2_ALIGN_SIMD  alignas(32)
+- #define LV2_ALIGN_CACHE alignas(64)
+- #define LV2_FORCEINLINE __forceinline
++ #define LV3_ALIGN_SIMD  alignas(32)   // AVX2 : un ymm
++ #define LV3_ALIGN_CACHE alignas(64)   // une ligne de cache, anti faux partage
++ #define LV3_FORCEINLINE __forceinline
++ #define LV3_NOINLINE    __declspec(noinline)
+
+// Maths/Vec3f.h (proposé)
+- LV2_FORCEINLINE float dot(const Vec3f& v) const noexcept { return x*v.x+y*v.y+z*v.z; }
++ [[nodiscard]] LV3_FORCEINLINE constexpr float dot(const Vec3f& v) const noexcept
++ { return x*v.x + y*v.y + z*v.z; }
+- LV2_FORCEINLINE Vec3f normalize() const noexcept {
++ [[nodiscard]] LV3_FORCEINLINE Vec3f normalized() const noexcept {   // copie
+      float i = 1.f / length(); return {x*i,y*i,z*i};
+  }
++ LV3_FORCEINLINE void normalize() noexcept { *this = normalized(); }  // en place
+
+// Rendering/PixelBlock.h (proposé)
++ static_assert(alignof(PixelBlock) == 32, "_mm256_load_ps exige 32 octets");
++ static_assert(sizeof(PixelBlock) % 32 == 0, "le bloc suivant d'un tableau doit rester aligné");`;
+function renderChain(after){
+  $("vAvant").setAttribute("aria-pressed",String(!after));
+  $("vApres").setAttribute("aria-pressed",String(after));
+  $("chainBox").innerHTML=STAGES.map(s=>`<div class="stage${after&&s.newB?" after":""}"><b>${s.n}</b>${after?`<span class="${s.newB?"new":""}">${esc(s.b)}</span>`:esc(s.a)}</div>`).join("");
+  $("chainCode").innerHTML=`<pre></pre>`;
+  setCode($("chainCode").firstChild, after?CODE_APRES:CODE_AVANT);
+}
+$("vAvant").onclick=()=>renderChain(false);
+$("vApres").onclick=()=>renderChain(true);
+renderChain(false);
+
+/* =============================== 5.1 ODR =============================== */
+const TU_NAMES=["Mesh","Camera","Rasterizer","Clipper","Frustum","Scene","Transform","Renderer"];
+function renderTU(){
+  const n=+$("tuN").value, m=$("tuMode").value; $("tuNv").textContent=n;
+  const sym="LV3::V3Cross(const Vec3f&, const Vec3f&)";
+  let s="Tables de symboles des fichiers objets\n";
+  for(let i=0;i<n;i++){
+    const kind=m==="inline"?"COMDAT, sélection « en garder une »":m==="none"?"symbole externe fort":"symbole local (interne au .obj)";
+    s+=`  ${(TU_NAMES[i]+".obj").padEnd(16)} ${sym}  [${kind}]\n`;
+  }
+  s+="\nÉditeur de liens\n";
+  if(m==="inline") s+=`  1 définition gardée, ${n-1} jetée(s). Une seule adresse pour V3Cross.\n  Si tous les appels d’un .cpp ont été inlinés, ce .obj n’émet même pas le symbole.`;
+  else if(m==="none") s+= n===1? "  Une seule définition : aucun conflit… jusqu’au deuxième .cpp."
+     : TU_NAMES.slice(1,n).map(t=>`  error LNK2005: ${sym} already defined in Mesh.obj (${t}.obj)`).join("\n")+`\n  fatal error LNK1169: one or more multiply defined symbols found`;
+  else s+=`  ${n} copies privées gardées, ${n} adresses différentes.\n  Ça lie, mais : &V3Cross diffère d’un .cpp à l’autre, et un « static int compteur »\n  dans le corps existe en ${n} exemplaires.`;
+  $("tuOut").textContent=s;
+}
+["tuN","tuMode"].forEach(id=>$(id).addEventListener("input",renderTU)); renderTU();
+
+/* =============================== 5.2 noexcept / vector =============================== */
+function msvcGrowth(n){ // renvoie la liste des réallocations {from,to}
+  let cap=0,size=0; const r=[];
+  for(let i=0;i<n;i++){
+    if(size===cap){ const need=size+1; let g=cap+(cap>>1); if(g<need)g=need; if(size>0) r.push({moved:size,from:cap,to:g}); cap=g; }
+    size++;
+  }
+  return {reallocs:r,cap};
+}
+function fmtBytes(b){ if(b>=1e9)return (b/1e9).toFixed(2)+" Go"; if(b>=1e6)return (b/1e6).toFixed(1)+" Mo"; if(b>=1e3)return (b/1e3).toFixed(1)+" ko"; return b+" o"; }
+function renderVec(){
+  const n=+$("vN").value, v=+$("vV").value, m=$("vMode").value;
+  $("vNv").textContent=n; $("vVv").textContent=v;
+  const g=msvcGrowth(n); const total=g.reallocs.reduce((a,r)=>a+r.moved,0);
+  const moves = (m==="zero"||m==="nx");
+  const why={zero:"déplacement implicite, noexcept car celui de std::vector l’est",nx:"déplacement déclaré noexcept",plain:"déplacement déclaré mais pas noexcept : move_if_noexcept choisit la copie",dtor:"destructeur déclaré : plus de déplacement implicite, la copie est utilisée"}[m];
+  const bytes = moves? total*24 : total*(v*32);
+  const allocs = moves? 0 : total;
+  let s=`${g.reallocs.length} réallocations, capacité finale ${g.cap}, ${total} éléments relogés\n`;
+  s+=`Type : ${why}\n\n`;
+  s+= moves? `→ ${total} déplacements : 3 pointeurs volés chacun, ${fmtBytes(bytes)} touchés, 0 allocation\n`
+           : `→ ${total} copies : ${total} allocations de ${fmtBytes(v*32)} et ${fmtBytes(bytes)} recopiés\n`;
+  s+=`\nstatic_assert(std::is_nothrow_move_constructible_v<Mesh>) : ${moves?"passe":"ÉCHOUE à la compilation (c’est le but)"}`;
+  $("vOut").textContent=s;
+  updateContre();
+}
+["vN","vV","vMode"].forEach(id=>$(id).addEventListener("input",renderVec));
+
+/* =============================== 5.3 nodiscard =============================== */
+function normF32(x,y,z){
+  const len=f32(Math.sqrt(f32(f32(f32(x*x)+f32(y*y))+f32(z*z))));
+  const i=f32(1/len); return [f32(x*i),f32(y*i),f32(z*i),len];
+}
+function lenF32(x,y,z){ return f32(Math.sqrt(f32(f32(f32(x*x)+f32(y*y))+f32(z*z)))); }
+function renderND(){
+  const api=$("ndApi").value, line=$("ndLine").value;
+  const L=[1,2,2];
+  const ln = line==="stmt"? (api==="pair"?"L.normalize();":"L.normalize();") : (api==="pair"?"L = L.normalized();":"L = L.normalize();");
+  let warn="", ok=true;
+  if(line==="stmt"){
+    if(api==="snap"){ warn="(aucun message : le compilateur est muet)"; ok=false; }
+    else if(api==="snapnd"){ warn="warning C4834: discarding return value of function with [[nodiscard]] attribute"; ok=false; }
+    else { warn="(aucun message : normalize() modifie L en place, c’est voulu)"; ok=true; }
+  } else { warn="(aucun message)"; ok=true; }
+  const res= ok? normF32(...L) : [...L, lenF32(...L)];
+  const len= ok? lenF32(res[0],res[1],res[2]) : res[3];
+  const n=[0,0,1]; // normale vers la lumière
+  const ndl=f32(f32(f32(n[0]*res[0])+f32(n[1]*res[1]))+f32(n[2]*res[2]));
+  let s=`Vec3f L(1, 2, 2);\n${ln}\n\nCompilateur : ${warn}\n\n`;
+  s+=`L après la ligne = (${fmt(res[0])}, ${fmt(res[1])}, ${fmt(res[2])})   longueur ${fmt(len)}\n`;
+  s+=`N·L pour N = (0,0,1) : ${fmt(ndl)}   ${ok?"correct":"faux : "+fmt(ndl/0.666667,2)+" × la valeur attendue 0.666667"}\n`;
+  s+=`Pixel 8 bits (albédo 0.5) : ${Math.min(255,Math.round(0.5*Math.max(ndl,0)*255))}${ok?"":" au lieu de "+Math.round(0.5*0.6666667*255)+(0.5*ndl>=1?" (saturé)":"")}`;
+  $("ndOut").textContent=s;
+}
+["ndApi","ndLine"].forEach(id=>$(id).addEventListener("input",renderND)); renderND();
+
+/* =============================== 5.4 forceinline =============================== */
+function inlineDecision(build,mark,size){
+  if(build==="ob0") return {inl:false,why:"/Ob0 : aucun inlining, même __forceinline"};
+  if(mark==="force") return {inl:true,why:"__forceinline : analyse coût/bénéfice ignorée"};
+  if(build==="ob1" && mark==="none") return {inl:false,why:"/Ob1 : fonction non marquée, pas candidate"};
+  if(size<=30) return {inl:true,why:"heuristique : corps court, inliné"};
+  return {inl:false,why:"heuristique : corps trop long, appel conservé"};
+}
+function renderForce(){
+  const b=$("fBuild").value,m=$("fMark").value,sz=+$("fSize").value,sites=+$("fSites").value,calls=+$("fCalls").value;
+  $("fSizev").textContent=sz; $("fSitesv").textContent=sites;
+  const d=inlineDecision(b,m,sz);
+  const overhead=d.inl?0:calls*5;
+  const binInl=sz*4*sites, binCall=sz*4+sites*5;
+  let s=`Décision : ${d.inl?"INLINÉ":"APPEL CONSERVÉ"}  (${d.why})\n\n`;
+  s+=`Surcoût d’appel par frame : ${d.inl?"0":(overhead/1e6).toFixed(1)+" M cycles"}${d.inl?"":"  ≈ "+(overhead/3e9*1000).toFixed(2)+" ms à 3 GHz"}\n`;
+  s+=`Taille dans le binaire   : ${fmtBytes(d.inl?binInl:binCall)}  (${d.inl?sites+" copies du corps":"1 corps + "+sites+" call"})\n`;
+  s+=`Boucle appelante         : ${d.inl?"corps visible, vectorisable par l’optimiseur":"call opaque, pas de vectorisation automatique"}\n`;
+  if(d.inl && sz>30) s+=`\n⚠ Corps de ${sz} instructions forcé en ${sites} endroits : ${fmtBytes(binInl)} de code dupliqué.\n  Le cache d’instructions L1 fait 32 ko : au-delà, l’inlining ralentit.`;
+  $("fOut").textContent=s;
+}
+["fBuild","fMark","fSize","fSites","fCalls"].forEach(id=>$(id).addEventListener("input",renderForce)); renderForce();
+
+/* =============================== 5.5 alignas =============================== */
+const ATYPES={vec3:{size:12,nat:4,n:"Vec3f",simd:false},vec4:{size:16,nat:4,n:"Vec4f",simd:false},mat:{size:64,nat:4,n:"Matrix44f",simd:false},pix8:{size:32,nat:4,n:"float r[8]",simd:true},stats:{size:16,nat:8,n:"TileStats",simd:false}};
+let aSeed=7;
+function rnd(){ aSeed=(aSeed*1103515245+12345)&0x7fffffff; return aSeed/0x7fffffff; }
+let aBase=0;
+function rollAddr(){
+  const t=ATYPES[$("aType").value], al=Math.max(t.nat,+$("aAl").value||0), alloc=$("aAlloc").value;
+  const step = Math.min(64, alloc==="new"? al : alloc==="malloc"? 16 : 4);
+  aBase = Math.floor(rnd()*(64/step))*step;   // adresse possible pour cet allocateur, modulo 64
+  renderAlign();
+}
+function renderAlign(){
+  const t=ATYPES[$("aType").value], req=+$("aAl").value, al=Math.max(t.nat,req||0), alloc=$("aAlloc").value;
+  const size=Math.ceil(t.size/al)*al;
+  const honoured = alloc==="new" || (alloc==="malloc" && al<=16);
+  let base=aBase;
+  if(honoured) base = base - (base % al);
+  const count = Math.max(1, Math.min(6, Math.floor(160/size)));
+  const svg=$("aSvg"); const W=760, X0=20, scale=(W-40)/192;
+  let h="";
+  for(let l=0;l<3;l++){ h+=`<rect x="${X0+l*64*scale}" y="22" width="${64*scale}" height="56" fill="none" stroke="var(--line)" stroke-width="1.5"/>`;
+    h+=`<text x="${X0+l*64*scale+4}" y="16" font-size="11" fill="var(--muted)">ligne ${l}  [${l*64}..${l*64+63}]</text>`;}
+  let straddle=0, misal=0, rows=[];
+  for(let i=0;i<count;i++){
+    const a=base+i*size; if(a+t.size>192) break;
+    const first=Math.floor(a/64), last=Math.floor((a+t.size-1)/64);
+    const st= first!==last; if(st) straddle++;
+    const m32 = a%32!==0; if(m32) misal++;
+    const pad=size-t.size;
+    const col= st? "var(--bad)" : "var(--accent)";
+    h+=`<rect x="${X0+a*scale}" y="${30}" width="${t.size*scale}" height="40" fill="${col}" fill-opacity=".28" stroke="${col}"/>`;
+    if(pad>0) h+=`<rect x="${X0+(a+t.size)*scale}" y="30" width="${pad*scale}" height="40" fill="var(--muted)" fill-opacity=".12" stroke="var(--line)" stroke-dasharray="3 3"/>`;
+    h+=`<text x="${X0+a*scale+3}" y="54" font-size="11" fill="var(--ink)">[${i}]@${a}</text>`;
+    rows.push({i,a,st,m32});
+  }
+  h+=`<text x="${X0}" y="100" font-size="11" fill="var(--muted)">adresses en octets modulo 192 · rouge = chevauche deux lignes · pointillé = remplissage</text>`;
+  svg.innerHTML=h;
+  let s=`${t.n} : sizeof = ${size} o (taille utile ${t.size}, remplissage ${size-t.size}), alignof = ${al}\n`;
+  s+=`Allocation : ${alloc==="new"?"alignement respecté":alloc==="malloc"?(al<=16?"malloc garantit 16, suffisant ici":"malloc garantit 16 seulement : alignas("+al+") IGNORÉ"):"aucune garantie au-delà de 4"}\n`;
+  s+=`Éléments posés : ${rows.length}, dont ${straddle} à cheval sur deux lignes\n`;
+  if(t.simd){
+    const a0=rows[0]?rows[0].a:0;
+    s+=`_mm256_load_ps(r) sur [0]@${a0} : ${a0%32===0?"légal":"VIOLATION D’ACCÈS 0xC0000005 (adresse non multiple de 32)"}\n`;
+    s+=`_mm256_loadu_ps(r) : toujours légal, ${rows[0]&&rows[0].st?"mais chargement coupé en deux lignes":"une seule ligne, même coût que load_ps"}`;
+  }
+  if($("aType").value==="mat") { const k=64/Math.min(al,64); s+=`\nMatrix44f alignée sur ${al} : ${al>=64?"ne chevauche jamais":"chevauche deux lignes dans "+(k-1)+" cas sur "+k+" des adresses possibles"}`; }
+  if(req===64 && t.size<64 && $("aType").value!=="stats") s+=`\n⚠ Donnée de masse alignée sur 64 : ${size-t.size} o de vide par élément, ×1 000 000 = ${fmtBytes((size-t.size)*1e6)} gaspillés`;
+  $("aOut").textContent=s;
+}
+["aType","aAl","aAlloc"].forEach(id=>$(id).addEventListener("input",()=>{aBase=0;renderAlign();}));
+$("aRoll").onclick=rollAddr; renderAlign();
+
+/* =============================== 5.6 faux partage =============================== */
+let fsAligned=false, fsSeed=99;
+function fsRnd(){ fsSeed=(fsSeed*1664525+1013904223)>>>0; return fsSeed/4294967296; }
+function renderFS(){
+  $("fsAl").setAttribute("aria-pressed",String(fsAligned));
+  const n=+$("fsN").value;
+  let owner=-1, transfers=0, w=[0,0];
+  const owners=[-1,-1];
+  while(w[0]<n||w[1]<n){
+    let t = w[0]>=n?1: w[1]>=n?0: (fsRnd()<.5?0:1);
+    const line = fsAligned? t : 0;
+    if(fsAligned){ if(owners[line]!==t){ if(owners[line]!==-1) transfers++; owners[line]=t; } }
+    else { if(owner!==t){ if(owner!==-1) transfers++; owner=t; } }
+    w[t]++;
+  }
+  const cycles = 2*n + transfers*60;
+  const ideal = 2*n;
+  const svg=$("fsSvg"); const X0=20, sc=5.5;
+  let h="";
+  for(let l=0;l<2;l++){ h+=`<rect x="${X0+l*64*sc}" y="24" width="${64*sc}" height="44" fill="none" stroke="var(--line)" stroke-width="1.5"/><text x="${X0+l*64*sc+4}" y="17" font-size="11" fill="var(--muted)">ligne ${l}</text>`; }
+  const a1 = fsAligned?64:16;
+  h+=`<rect x="${X0}" y="32" width="${16*sc}" height="28" fill="var(--accent)" fill-opacity=".3" stroke="var(--accent)"/><text x="${X0+4}" y="50" font-size="11" fill="var(--ink)">stats[0]</text>`;
+  h+=`<rect x="${X0+a1*sc}" y="32" width="${16*sc}" height="28" fill="var(--good)" fill-opacity=".3" stroke="var(--good)"/><text x="${X0+a1*sc+4}" y="50" font-size="11" fill="var(--ink)">stats[1]</text>`;
+  if(fsAligned){ h+=`<rect x="${X0+16*sc}" y="32" width="${48*sc}" height="28" fill="var(--muted)" fill-opacity=".1" stroke="var(--line)" stroke-dasharray="3 3"/><rect x="${X0+80*sc}" y="32" width="${48*sc}" height="28" fill="var(--muted)" fill-opacity=".1" stroke="var(--line)" stroke-dasharray="3 3"/>`; }
+  h+=`<text x="${X0}" y="92" font-size="11" fill="var(--muted)">cœur 0 écrit stats[0], cœur 1 écrit stats[1] · ${fsAligned?"chacun sa ligne":"même ligne de 64 o"}</text>`;
+  svg.innerHTML=h;
+  let s=`sizeof(TileStats) = ${fsAligned?64:16} o, stats[1] commence à l’octet ${a1}\n`;
+  s+=`Écritures : ${n} par thread, ${2*n} au total\n`;
+  s+=`Transferts de ligne entre cœurs : ${transfers}\n`;
+  s+=`Coût modèle : ${(cycles/1e6).toFixed(2)} M cycles, soit ×${(cycles/ideal).toFixed(1)} par rapport à l’idéal`;
+  $("fsOut").textContent=s;
+  if(!fsAligned){ fsLast={transfers,ratio:cycles/ideal,n}; updateContre(); }
+}
+let fsLast={transfers:0,ratio:1,n:0};
+$("fsAl").onclick=()=>{fsAligned=!fsAligned;renderFS();};
+$("fsN").addEventListener("input",renderFS);
+$("fsRun").onclick=()=>{fsSeed=(fsSeed+7919)>>>0;renderFS();};
+
+/* =============================== ÉTAPES =============================== */
+const st = { compiler:"msvc", inlineOn:true, bug:false, simdTab:"s", align:32, fma:false };
+// Données d'entrée float32 : 8 normales (une par couloir), lumière brute (1,2,2)
+const RAW_N=[[0,0,1],[0,1,1],[1,0,1],[1,1,1],[-2,1,1],[0,-1,2],[-3,2,3],[0,1,-1]];
+const NRM = RAW_N.map(v=>normF32(...v).slice(0,3));
+function lightNow(){ return st.bug? [1,2,2] : normF32(1,2,2).slice(0,3); }
+function dotLane(n,L){ return f32(f32(f32(n[0]*L[0])+f32(n[1]*L[1]))+f32(n[2]*L[2])); }
+function fmaF(a,b,c){ return f32(a*b+c); } // produit exact en double (24+24 bits), puis arrondi
+function dotLaneFMA(n,L){ let t=f32(n[0]*L[0]); t=fmaF(n[1],L[1],t); return fmaF(n[2],L[2],t); }
+const ALB=0.8;
+
+const STEPS=[
+ {id:"pp", t:"1. Préprocesseur",
+  obj:"Remplacer les macros par le dialecte du compilateur, pour que le reste du moteur reste portable. Aucune analyse : c’est du texte.",
+  inp:()=>`Source de Vec3f.h :\n[[nodiscard]] LV3_FORCEINLINE float dot(const Vec3f& o) const noexcept;`,
+  ctrl:()=>`<div class="row"><label>Compilateur <select data-k="compiler"><option value="msvc"${st.compiler==="msvc"?" selected":""}>MSVC</option><option value="clang"${st.compiler==="clang"?" selected":""}>Clang ou GCC</option></select></label></div>`,
+  code:()=>String.raw`
+// Core/Compiler.h
+#if defined(_MSC_VER)
+    #define LV3_FORCEINLINE __forceinline
+#else
+    #define LV3_FORCEINLINE __attribute__((always_inline)) inline
+#endif`,
+  vec:null,
+  out:()=>`Texte vu par le compilateur :\n[[nodiscard]] ${st.compiler==="msvc"?"__forceinline":"__attribute__((always_inline)) inline"} float dot(const Vec3f& o) const noexcept;\n\n[[nodiscard]] et noexcept traversent le préprocesseur intacts : ce sont des mots du langage, pas des macros.`},
+ {id:"tu", t:"2. Compilation de chaque .cpp",
+  obj:"Chaque .cpp est compilé seul, avec sa propre copie de tout header inclus. Comprendre cette étape, c’est comprendre pourquoi une fonction de header doit être inline.",
+  inp:()=>`Étape 1 : la déclaration expansée, incluse par Mesh.cpp, Camera.cpp et Rasterizer.cpp.`,
+  ctrl:()=>`<div class="row"><label><input type="checkbox" data-k="inlineOn"${st.inlineOn?" checked":""}> V3Cross (fonction libre du header) marquée inline</label></div>`,
+  code:()=>String.raw`
+// Maths/Vectorlib.h — fonction LIBRE définie dans un header
+inline Vec3f V3Cross(const Vec3f& a, const Vec3f& b) noexcept
+{ return { a.y*b.z - a.z*b.y, a.z*b.x - a.x*b.z, a.x*b.y - a.y*b.x }; }
+
+// dot est MEMBRE et définie dans la classe : inline implicite, rien à écrire.`,
+  vec:null,
+  out:()=>["Mesh","Camera","Rasterizer"].map(t=>`${(t+".obj").padEnd(15)} V3Cross  [${st.inlineOn?"COMDAT « en garder une »":"externe fort"}]   Vec3f::dot [COMDAT]`).join("\n")},
+ {id:"ld", t:"3. Édition de liens",
+  obj:"Réunir les fichiers objets. Une définition par symbole, sauf exception inline.",
+  inp:()=>`Étape 2 : trois .obj, chacun avec sa copie de V3Cross ${st.inlineOn?"en COMDAT":"en symbole fort"}.`,
+  ctrl:()=>"",
+  code:()=>`// Rien à écrire : c’est le contenu des .obj de l’étape 2 qui décide.`,
+  vec:null,
+  out:()=>st.inlineOn?`LibraryV3.lib puis RefactoNouvelleLibrairieV3.exe : OK\n1 copie de V3Cross gardée, 2 jetées.`:`error LNK2005: V3Cross already defined in Mesh.obj (Camera.obj)\nerror LNK2005: V3Cross already defined in Mesh.obj (Rasterizer.obj)\nfatal error LNK1169\n\nRemets la case « inline » de l’étape 2 pour continuer.`},
+ {id:"nd", t:"4. Normaliser la lumière",
+  obj:"N·L n’est un cosinus que si L est de longueur 1. C’est ici que [[nodiscard]] protège : la ligne qui « normalise » doit vraiment modifier L.",
+  inp:()=>`Lumière brute L = (1, 2, 2), longueur 3.`,
+  ctrl:()=>`<div class="row"><label><input type="checkbox" data-k="bug"${st.bug?" checked":""}> Écrire le bug : <code class="i">L.normalize();</code> avec l’API qui renvoie une copie</label></div>`,
+  code:()=> st.bug? String.raw`
+Vec3f L(1.f, 2.f, 2.f);
+- L.normalize();          // renvoie une copie, jetée. Sans [[nodiscard]] : silence.`
+  : String.raw`
+Vec3f L(1.f, 2.f, 2.f);
++ L = L.normalized();     // [[nodiscard]] : oublier le "L =" donnerait C4834
+
+// Vec3f::normalized(), en float32 :
+//   len = sqrt(x*x + y*y + z*z);  i = 1.f / len;  return {x*i, y*i, z*i};`,
+  vec:null,
+  out:()=>{const L=lightNow(); return `L = (${L.map(v=>fmt(v,7)).join(", ")})\nlongueur = ${fmt(lenF32(...L),7)}\nbits    = ${L.map(bitsHex).join("  ")}${st.bug?"\n\n⚠ L n’a pas changé : tous les N·L de l’étape 5 seront multipliés par 3.":""}`;}},
+ {id:"dot", t:"5. N·L dans la boucle chaude",
+  obj:"Calculer l’éclairage diffus de 8 sommets. dot est inlinée (LV3_FORCEINLINE) : la boucle ne contient plus d’appel, l’optimiseur peut la vectoriser ; ou on écrit nous-mêmes le pendant AVX2, 8 couloirs d’un coup.",
+  inp:()=>{const L=lightNow(); return `Étape 4 : L = (${L.map(v=>fmt(v,6)).join(", ")})\n8 normales unitaires (float32), rangées en SoA nx[8], ny[8], nz[8].`;},
+  ctrl:()=>`<div class="row"><label><input type="checkbox" data-k="fma"${st.fma?" checked":""}> Contre-exemple : pendant vectorisé écrit avec _mm256_fmadd_ps</label></div>`,
+  code:()=>String.raw`
+// Scalaire : une normale à la fois. dot inlinée = 3 mul + 2 add, aucun call.
+for (int i = 0; i < 8; ++i)
+    d[i] = n[i].dot(L);          // ((nx*lx + ny*ly) + nz*lz), arrondi après chaque opération`,
+  vec:()=> st.fma? String.raw`
+// Vectorisé AVX2 — CONTRE-EXEMPLE : FMA = un seul arrondi par mul+add
+const __m256 lx = _mm256_set1_ps(L.x), ly = _mm256_set1_ps(L.y), lz = _mm256_set1_ps(L.z);
+__m256 d = _mm256_mul_ps(_mm256_load_ps(nx), lx);       // d = nx*lx
+d = _mm256_fmadd_ps(_mm256_load_ps(ny), ly, d);          // d = ny*ly + d, UN arrondi
+d = _mm256_fmadd_ps(_mm256_load_ps(nz), lz, d);          // d = nz*lz + d, UN arrondi
+_mm256_store_ps(out, d);                                  // peut différer du scalaire au dernier bit`
+  : String.raw`
+// Vectorisé AVX2 : les 8 normales d'un coup, MÊME ordre d'opérations que le scalaire
+const __m256 lx = _mm256_set1_ps(L.x);                   // L.x copié dans les 8 couloirs
+const __m256 ly = _mm256_set1_ps(L.y);
+const __m256 lz = _mm256_set1_ps(L.z);
+__m256 d = _mm256_mul_ps(_mm256_load_ps(nx), lx);        // d[k] = nx[k]*lx      (arrondi)
+d = _mm256_add_ps(d, _mm256_mul_ps(_mm256_load_ps(ny), ly)); // d[k] += ny[k]*ly (2 arrondis)
+d = _mm256_add_ps(d, _mm256_mul_ps(_mm256_load_ps(nz), lz)); // d[k] += nz[k]*lz (2 arrondis)
+_mm256_store_ps(out, d);                                 // identique au scalaire, bit pour bit
+// _mm256_load_ps : nx, ny, nz doivent être alignés sur 32 (étape 6).`,
+  out:()=>{
+    const L=lightNow(); let rows="", diffs=0;
+    NRM.forEach((n,k)=>{const s=dotLane(n,L), v=st.fma?dotLaneFMA(n,L):s; const df=bitsHex(s)!==bitsHex(v); if(df)diffs++;
+      rows+=`<tr><td>${k}</td><td>${fmt(n[0],5)}</td><td>${fmt(n[1],5)}</td><td>${fmt(n[2],5)}</td><td>${fmt(s,7)}</td><td>${bitsHex(s)}</td><td class="${df?"diff":"same"}">${bitsHex(v)}</td></tr>`;});
+    return {html:`<div class="tblwrap"><table class="lanesTbl"><tr><th>couloir</th><th>nx</th><th>ny</th><th>nz</th><th>d scalaire</th><th>bits scalaire</th><th>bits ${st.fma?"FMA":"AVX2"}</th></tr>${rows}</table></div><p>${st.fma?`<span class="tag ${diffs?"ko":"ok"}">${diffs} couloir(s) différent(s) du scalaire</span> Un seul bit d’écart suffit à casser une TNR qui compare les deux chemins. MSVC ne contracte pas a*b+c en FMA sous /fp:precise depuis VS 2022 : le scalaire garde 2 arrondis, le pendant vectorisé doit faire pareil.`:`<span class="tag ok">8 couloirs identiques bit pour bit</span> Même ordre d’opérations, mêmes arrondis.`}${st.bug?` <span class="tag ko">L non normalisée</span> valeurs ×3.`:""}</p>`};
+  }},
+ {id:"al", t:"6. Ranger dans un PixelBlock aligné",
+  obj:"Écrire l’éclairage dans un bloc de 8 pixels en SoA, avec des chargements alignés. LV3_ALIGN_SIMD rend _mm256_load_ps légal sur chaque tableau du bloc.",
+  inp:()=>`Étape 5 : d[8] = ${NRM.map(n=>fmt(dotLane(n,lightNow()),4)).join(", ")}\nAlbédo rouge = ${ALB}`,
+  ctrl:()=>`<div class="row"><label>Le PixelBlock est <select data-k="align"><option value="32"${st.align===32?" selected":""}>struct LV3_ALIGN_SIMD PixelBlock (adresse 0x…1A40)</option><option value="16"${st.align===16?" selected":""}>sans alignas, alloué par malloc (adresse 0x…1A50)</option></select></label></div>`,
+  code:()=>String.raw`
+struct LV3_ALIGN_SIMD PixelBlock { float r[8], g[8], b[8], a[8]; };   // 128 o, alignof 32
+static_assert(alignof(PixelBlock) == 32);
+
+// Scalaire
+for (int i = 0; i < 8; ++i)
+    px.r[i] = albedo * std::max(d[i], 0.f);       // diffus de Lambert, négatif écrêté à 0`,
+  vec:()=>String.raw`
+// Vectorisé AVX2
+const __m256 alb  = _mm256_set1_ps(albedo);          // albédo dans les 8 couloirs
+const __m256 zero = _mm256_setzero_ps();
+__m256 dv = _mm256_load_ps(d);                        // d[8] de l'étape 5 (aligné)
+dv = _mm256_max_ps(dv, zero);                         // écrête les faces tournées
+_mm256_store_ps(px.r, _mm256_mul_ps(alb, dv));        // px.r doit être multiple de 32 !`,
+  out:()=>{
+    const L=lightNow(); const addr=st.align===32?0x1A40:0x1A50;
+    if(st.align!==32 && st.simdTab==="v") return `Adresse de px.r = 0x…${addr.toString(16).toUpperCase()}  (0x${addr.toString(16)} mod 32 = ${addr%32})\n\n_mm256_store_ps(px.r, …) : exception 0xC0000005, violation d’accès.\nEn Debug, LV3_ASSERT_ALIGNED(px.r, 32) arrête avant, avec le nom du fichier et la ligne.\nLe scalaire, lui, fonctionne : le bug n’apparaît qu’en activant le chemin AVX2.`;
+    const r=NRM.map(n=>f32(ALB*Math.max(dotLane(n,L),0)));
+    return `Adresse de px.r = 0x…${addr.toString(16).toUpperCase()}  (mod 32 = ${addr%32}) ${addr%32===0?"légal pour _mm256_load_ps / store_ps":"(onglet scalaire : pas de chargement vectoriel, donc pas de plantage)"}\n\npx.r      = ${r.map(v=>fmt(v,4)).join("  ")}\nrouge 8 b = ${r.map(v=>String(Math.min(255,Math.round(v*255))).padStart(6)).join("")}${st.bug?"\n\n⚠ L non normalisée : "+r.filter(v=>v>1).length+" pixel(s) saturé(s) à 255.":""}`;
+  }},
+ {id:"nx", t:"7. Ranger les blocs dans un std::vector",
+  obj:"Les PixelBlock et les Mesh vivent dans des std::vector qui se réallouent. noexcept décide si la réallocation déplace ou recopie.",
+  inp:()=>`Étape 6 : PixelBlock de 128 o (trivialement copiable : déplacer = copier, aucun enjeu).\nMesh : possède un std::vector<Vertex>, là l’enjeu est réel.`,
+  ctrl:()=>"",
+  code:()=>String.raw`
+struct Mesh {                       // règle du zéro : rien de déclaré
+    std::vector<Vertex> vertices;   // déplacement implicite noexcept
+    std::vector<uint32_t> indices;
+};
+static_assert(std::is_nothrow_move_constructible_v<Mesh>,
+              "un vector<Mesh> recopierait tous les sommets à chaque réallocation");
+
+- struct MeshKO { std::vector<Vertex> vertices; ~MeshKO() {} };  // destructeur « propre »
+- // plus de déplacement implicite -> le static_assert ci-dessus échoue : tant mieux`,
+  vec:null,
+  out:()=>{const g=msvcGrowth(1000), tot=g.reallocs.reduce((a,r)=>a+r.moved,0); return `1000 push_back, croissance MSVC : ${g.reallocs.length} réallocations, ${tot} éléments relogés.\nMesh  : ${tot} déplacements (2 vectors, 6 pointeurs volés chacun), 0 allocation.\nMeshKO (10 000 sommets) : ${tot} copies, ${tot} allocations, ${fmtBytes(tot*320000)} recopiés.\nRejoue avec d’autres valeurs en section 5.2.`;}},
+ {id:"vf", t:"8. Vérifier",
+  obj:"Faire contrôler chaque hypothèse du lot par la machine : compilateur, test hors moteur, filet Debug. Et noter ce que le test doit trouver avant de le lancer.",
+  inp:()=>`Étapes 1 à 7 : six hypothèses (inline, nodiscard, forceinline, alignement, nothrow move, ordre des arrondis).`,
+  ctrl:()=>"",
+  code:()=>String.raw`
+// EXE : Test/Test_L02b_Syntaxe.cpp (hors moteur, appelé par RunAllTests.cpp)
+static_assert(alignof(PixelBlock) == 32 && sizeof(PixelBlock) == 128);
+static_assert(alignof(TileStats) == 64 && sizeof(TileStats) % 64 == 0);
+static_assert(std::is_nothrow_move_constructible_v<Mesh>);
+static_assert(noexcept(std::declval<Vec3f>().dot(Vec3f{})));
+
+struct Counted {                                  // compte copies et déplacements
+    static inline int copies = 0, moves = 0;
+    Counted() = default;
+    Counted(const Counted&)     { ++copies; }
+    Counted(Counted&&) noexcept { ++moves;  }    // retirer noexcept : copies != 0
+};
+bool Test_L02b_VectorMoves() {
+    std::vector<Counted> v;  for (int i = 0; i < 1000; ++i) v.emplace_back();
+    return Counted::copies == 0 && Counted::moves == 2137;   // prédiction ci-dessous
+}
+bool Test_L02b_DotScalarEqualsAvx2();   // compare d[8] bit pour bit (étape 5)
+
+// LIB : filet Debug, Core/config.h
+#define LV3_ASSERT_ALIGNED(p, n) LV3_ASSERT((reinterpret_cast<uintptr_t>(p) & ((n) - 1)) == 0)
+
+// LV3.Common.props (si E19 est acté) : /we4834 /we4714`,
+  vec:null,
+  out:()=>{const g=msvcGrowth(1000), tot=g.reallocs.reduce((a,r)=>a+r.moved,0); return `Prédictions (à confirmer par le test, pas à recopier dedans sans l’avoir lancé) :\n  alignof(PixelBlock) = 32, sizeof = 128\n  sizeof(TileStats) = 64\n  1000 emplace_back : ${g.reallocs.length} réallocations, ${tot} déplacements, 0 copie\n    (capacités MSVC 1,2,3,4,6,9,13,19,28,42,63,94,141,211,316,474,711,1066)\n  sans noexcept sur Counted(Counted&&) : ${tot} copies, 0 déplacement\n  Test_L02b_DotScalarEqualsAvx2 : 8/8 couloirs identiques avec mul+add, ${NRM.filter(n=>bitsHex(dotLane(n,normF32(1,2,2).slice(0,3)))!==bitsHex(dotLaneFMA(n,normF32(1,2,2).slice(0,3)))).length}/8 différents avec FMA pour ces données\n  L.normalize(); avec [[nodiscard]] et /we4834 : erreur C4834, le build s’arrête\n\nSi 2137 ne sort pas : la croissance de ta version de MSVC diffère, note la vraie valeur.`;}}
+];
+let cur=0;
+function renderSteps(){
+  $("stepsNav").innerHTML=STEPS.map((s,i)=>`<button type="button" data-i="${i}" aria-pressed="${i===cur}">${s.t}</button>`).join("");
+  const s=STEPS[cur];
+  const hasVec=!!s.vec;
+  if(!hasVec) st.simdTab="s";
+  const codeSrc = (hasVec && st.simdTab==="v")? s.vec() : s.code();
+  const out=s.out();
+  const outHTML = typeof out==="string"? `<div class="out">${esc(out)}</div>` : out.html;
+  $("stepsBox").innerHTML=`<div class="panel">
+    <h3 style="margin-top:0">${s.t}</h3>
+    <p><b>Objectif.</b> ${s.obj}</p>
+    ${s.ctrl()}
+    <div class="io">
+      <div><h4>Résultat de l’étape précédente utilisé</h4><div class="out">${esc(s.inp())}</div></div>
+      <div><h4>Code</h4>
+        <div class="tabs">${hasVec?`<button type="button" data-tab="s" aria-pressed="${st.simdTab==="s"}">Scalaire</button><button type="button" data-tab="v" aria-pressed="${st.simdTab==="v"}">Vectorisé AVX2</button>`:`<span class="muted" style="font-size:13.5px">Pas de pendant vectorisé : étape de compilation ou de structure.</span>`}</div>
+        <pre id="stepCode"></pre></div>
+    </div>
+    <h4>Résultat de cette étape</h4>${outHTML}
+  </div>`;
+  setCode($("stepCode"),codeSrc);
+  $("stepsNav").querySelectorAll("button").forEach(b=>b.onclick=()=>{cur=+b.dataset.i;renderSteps();});
+  $("stepsBox").querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{st.simdTab=b.dataset.tab;renderSteps();});
+  $("stepsBox").querySelectorAll("[data-k]").forEach(el=>el.addEventListener("input",()=>{
+    const k=el.dataset.k; st[k]= el.type==="checkbox"? el.checked : (k==="align"? +el.value : el.value); renderSteps();}));
+  $("stPrev").disabled=cur===0; $("stNext").disabled=cur===STEPS.length-1;
+}
+$("stPrev").onclick=()=>{if(cur>0){cur--;renderSteps();}};
+$("stNext").onclick=()=>{if(cur<STEPS.length-1){cur++;renderSteps();}};
+renderSteps();
+
+/* =============================== CONTRE-EXEMPLES =============================== */
+function updateContre(){
+  const g=msvcGrowth(+$("vN").value), tot=g.reallocs.reduce((a,r)=>a+r.moved,0), v=+$("vV").value;
+  const fmaDiff=NRM.filter(n=>{const L=normF32(1,2,2).slice(0,3);return bitsHex(dotLane(n,L))!==bitsHex(dotLaneFMA(n,L));}).length;
+  const rows=[
+    ["<code class='i'>static</code> au lieu d’<code class='i'>inline</code> sur une fonction de header","Lie sans erreur, une copie privée par .cpp","8 .cpp : 8 copies, 8 adresses, 8 compteurs statiques"],
+    ["Fonction libre de header sans <code class='i'>inline</code>","LNK2005 dès le deuxième .cpp","n .cpp : n−1 erreurs LNK2005"],
+    ["Destructeur vide <code class='i'>~Mesh() {}</code>","Le déplacement implicite disparaît, la copie prend le relais",`${tot} copies de ${fmtBytes(v*32)} pour ${$("vN").value} push_back : ${fmtBytes(tot*v*32)}`],
+    ["<code class='i'>L.normalize();</code> sur une API qui renvoie une copie, sans <code class='i'>[[nodiscard]]</code>","Aucun message, L reste de longueur 3","N·L ×3 ; albédo 0,5 : pixel 255 (saturé) au lieu de 85"],
+    ["<code class='i'>LV3_FORCEINLINE</code> sur une fonction de 200 instructions appelée en 60 endroits","Code dupliqué, cache d’instructions saturé","48 ko de code pour une fonction, plus que le L1i de 32 ko"],
+    ["<code class='i'>_mm256_fmadd_ps</code> dans le pendant d’un scalaire mul+add",`Écart au dernier bit`,`${fmaDiff}/8 couloirs différents sur les données de l’étape 5`],
+    ["<code class='i'>_mm256_load_ps</code> sur un bloc alloué par <code class='i'>malloc</code>","Violation d’accès, aléatoire selon l’adresse","1 adresse sur 2 plante (malloc garantit 16, pas 32)"],
+    ["<code class='i'>alignas(64)</code> sur un tableau de <code class='i'>Vec3f</code>","52 o de vide par élément","1 M de positions : 64 Mo au lieu de 12 Mo"],
+    ["Compteurs par thread sans <code class='i'>LV3_ALIGN_CACHE</code>","Faux partage",`modèle : ×${fsLast.ratio.toFixed(1)} sur ${fsLast.n} écritures par thread (section 5.6, version non alignée)`]
+  ];
+  const t=$("contreTbl"); t.innerHTML=`<tr><th>Ce qu’il ne faut pas faire</th><th>Ce qui se passe</th><th>Chiffre</th></tr>`+rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+}
+renderVec(); renderFS();
+
+/* =============================== BLOCS DE TEXTE =============================== */
+$("planBlock").textContent =
+`### Décisions en attente — syntaxe moderne L02b (relevé du 07/11/2026)
+
+**Aucune décision à ce stade : tout ce qui suit reste à acter.**
+Origine : artefact « Lot L02b pas à pas — Syntaxe C++ moderne », section 8. Les copies de headers
+rangées dans le projet peuvent être antérieures au dépôt : vérifier E14 à E18 sur le disque d'abord.
+A vérifier si nature relevée existe toujours.
+
+| # | Sujet | Nature relevée | À décider |
+|---|-------|----------------|-----------|
+| E14 | Préfixe LV2_ survivant (LV2_ALIGN_SIMD, LV2_ALIGN_CACHE, LV2_FORCEINLINE) ; contredit E9 | Dette mineure, à vérifier | Tout renommer en LV3_, ou alias LV2_ le temps d'une migration. |
+| E15 | alignas(16) demandé par L02 sur Vec4/Mat4 ; état actuel inconnu | À vérifier puis acter | Vec4f : 16. Matrix44f (64 o) : 64 pour ne jamais chevaucher deux lignes (16 : 3 cas sur 4). |
+| E16 | Vec3f::normalize() const renvoie une copie, sans [[nodiscard]] | Dette, à vérifier | normalized() [[nodiscard]] + normalize() en place, ou [[nodiscard]] seul. |
+| E17 | [[nodiscard]] absent des fonctions pures de Vec2f/Vec3f, présent ailleurs | Incohérence | Appliquer D19 à Maths/. |
+| E18 | constexpr de la leçon 02 absent des copies du dépôt | À vérifier | Remettre constexpr (compatible avec LV3_FORCEINLINE), sauf ce qui appelle std::sqrt. |
+| E19 | /we4834 /we4714 dans LV3.Common.props | Évolution proposée | Activer ou rester en avertissement. |
+
+**Décisions de lot proposées, non actées** (numérotées D19 à D22, à la suite de la D18 de L02) :
+- D19 : [[nodiscard]] sur toute fonction pure. Se tranche avec E16, E17, E19.
+- D20 : noexcept partout dans Maths/ ; static_assert(is_nothrow_move_constructible_v<T>) pour tout type rangé dans un std::vector ; règle du zéro plutôt qu'un destructeur vide.
+- D21 : LV3_FORCEINLINE sur les fonctions triviales des boucles chaudes ; LV3_NOINLINE pour isoler un chemin froid. Se tranche avec E19.
+- D22 : LV3_ALIGN_CACHE pour les données écrites par plusieurs threads ; LV3_ALIGN_SIMD si un chargement aligné les consomme ; static_assert(alignof) systématique. Se tranche avec E15.`;
+
+setCode($("q4code"), String.raw`
+struct LV3_ALIGN_SIMD Vec8f { float v[8]; };       // 1. sur un type : toutes ses instances
+LV3_ALIGN_SIMD float scanline[8];                  // 2. sur une variable : celle-ci seulement
+struct RenderJob {                                 // 3. sur un membre : décale le membre
+    int frameIndex;
+    LV3_ALIGN_CACHE std::atomic<int> counter;      //    et aligne toute la structure sur 64
+};
+static_assert(alignof(RenderJob) == 64 && offsetof(RenderJob, counter) == 64);`);
+
+/* =============================== TÉLÉCHARGEMENT =============================== */
+(async()=>{
+  try{
+    if(!window.claude||typeof window.claude.use!=="function") return;
+    const dl=await window.claude.use("downloads"); if(!dl) return;
+    const b=$("dlBtn"); b.hidden=false;
+    b.onclick=async()=>{
+      try{ await dl.save({filename:"Lot_L02b_Syntaxe_Moderne.html",data:PAGE_SOURCE}); $("dlMsg").textContent="Fichier enregistré."; }
+      catch(e){ $("dlMsg").textContent = e&&e.code==="declined" ? "" : "Téléchargement indisponible ici."; }
+    };
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
+
+</body></html>

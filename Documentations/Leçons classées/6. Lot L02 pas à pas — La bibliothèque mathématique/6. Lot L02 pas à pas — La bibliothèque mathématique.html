@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L02 pas à pas — La bibliothèque mathématique</title>
+<style>
+:root {
+  --bg:#f8f7f4; --surface:#ffffff; --surface2:#f1efe8; --text:#2c2c2a; --text2:#5f5e5a; --text3:#888780;
+  --border:#d3d1c7; --accent:#185fa5; --accent-bg:#e6f1fb; --accent-text:#0c447c;
+  --green:#3b6d11; --green-bg:#eaf3de; --red:#a32d2d; --red-bg:#fcebeb; --amber:#854f0b; --amber-bg:#faeeda;
+  --purple:#3c3489; --purple-bg:#eeedfe; --teal:#0f6e56; --teal-bg:#e1f5ee;
+  --axis-x:#c0392b; --axis-y:#2e8b2e; --axis-z:#1f5fbf;
+  --radius:8px; --mono:'Cascadia Mono','Consolas','Courier New',monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:#1a1a18; --surface:#242422; --surface2:#2c2c2a; --text:#e8e6df; --text2:#b4b2a9; --text3:#888780;
+    --border:#444441; --accent:#378add; --accent-bg:#042c53; --accent-text:#85b7eb;
+    --green:#97c459; --green-bg:#173404; --red:#f09595; --red-bg:#501313; --amber:#ef9f27; --amber-bg:#412402;
+    --purple:#afa9ec; --purple-bg:#26215c; --teal:#5dcaa5; --teal-bg:#04342c;
+    --axis-x:#ff7a6b; --axis-y:#7fd67f; --axis-z:#6fa8ff;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#1a1a18; --surface:#242422; --surface2:#2c2c2a; --text:#e8e6df; --text2:#b4b2a9; --text3:#888780;
+  --border:#444441; --accent:#378add; --accent-bg:#042c53; --accent-text:#85b7eb;
+  --green:#97c459; --green-bg:#173404; --red:#f09595; --red-bg:#501313; --amber:#ef9f27; --amber-bg:#412402;
+  --purple:#afa9ec; --purple-bg:#26215c; --teal:#5dcaa5; --teal-bg:#04342c;
+  --axis-x:#ff7a6b; --axis-y:#7fd67f; --axis-z:#6fa8ff;
+}
+:root { color-scheme: light dark; box-sizing: border-box; padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px); }
+html { scroll-padding-top: env(safe-area-inset-top,0px); }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); z-index:10; background:var(--surface); }
+.hero { background: var(--surface); border-bottom: 1px solid var(--border); padding: 2rem 2rem 1.5rem; }
+.hero h1 { font-size: 1.4rem; font-weight: 500; margin-bottom: .3rem; }
+.hero .sub { color: var(--text2); font-size: .9rem; max-width: 760px; }
+.badge { display:inline-block; font-size:.75rem; padding:2px 10px; border-radius:20px; font-weight:500; margin-left:.4rem; }
+.badge-blue{background:var(--accent-bg);color:var(--accent-text)} .badge-green{background:var(--green-bg);color:var(--green)}
+.badge-red{background:var(--red-bg);color:var(--red)} .badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-purple{background:var(--purple-bg);color:var(--purple)} .badge-teal{background:var(--teal-bg);color:var(--teal)}
+.tabs { display:flex; border-bottom:1px solid var(--border); background:var(--surface); padding:0 2rem; overflow-x:auto; position:sticky; top:env(safe-area-inset-top,0px); z-index:5; }
+.tab-btn { background:none; border:none; border-bottom:2px solid transparent; padding:.75rem 1.1rem; cursor:pointer; color:var(--text2); font-size:.9rem; white-space:nowrap; font-family:inherit; }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+.tab-btn:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tab-panel { display:none; padding:2rem; max-width:940px; margin:0 auto; }
+.tab-panel.active { display:block; }
+h2 { font-size:1.15rem; font-weight:500; margin:2.2rem 0 .75rem; }
+h2:first-child { margin-top:0; }
+h3 { font-size:1rem; font-weight:500; margin:1.5rem 0 .5rem; }
+p { margin-bottom:.75rem; color:var(--text2); max-width: 78ch; }
+p strong, li strong { color: var(--text); font-weight: 500; }
+ul, ol { margin: 0 0 .9rem 1.3rem; color: var(--text2); }
+li { margin-bottom: .3rem; }
+code { font-family: var(--mono); font-size: .86em; background: var(--surface2); padding: 1px 5px; border-radius: 4px; color: var(--text); }
+pre { font-family: var(--mono); font-size: .8rem; line-height: 1.5; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: .9rem 1rem; overflow-x: auto; margin: .4rem 0 1rem; color: var(--text); white-space: pre; }
+pre .c { color: var(--text3); } pre .k { color: var(--purple); } pre .hl { background: var(--amber-bg); color: var(--amber); display:inline-block; width:100%; }
+pre .del { background: var(--red-bg); color: var(--red); display:inline-block; width:100%; text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--red) 50%, transparent); }
+pre .add { background: var(--green-bg); color: var(--green); display:inline-block; width:100%; }
+.callout { border-left: 3px solid var(--accent); background: var(--accent-bg); color: var(--accent-text); padding: .75rem 1rem; border-radius: 0 var(--radius) var(--radius) 0; margin: .8rem 0 1.1rem; font-size: .92rem; }
+.callout.red { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+.callout.green { border-color: var(--green); background: var(--green-bg); color: var(--green); }
+.callout.amber { border-color: var(--amber); background: var(--amber-bg); color: var(--amber); }
+.callout code { background: transparent; color: inherit; padding: 0; }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; margin: .5rem 0 1.1rem; }
+th, td { border-bottom: 1px solid var(--border); padding: .45rem .55rem; text-align: left; vertical-align: top; }
+th { font-weight: 500; color: var(--text); background: var(--surface2); }
+td { color: var(--text2); }
+.twrap { overflow-x: auto; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; margin: .8rem 0 1.2rem; }
+.panel h3:first-child { margin-top: 0; }
+.ctrls { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .55rem 1rem; margin: .6rem 0 .8rem; }
+.ctrls label { font-size: .82rem; color: var(--text2); display: flex; flex-direction: column; gap: 2px; }
+.ctrls label span.v { font-family: var(--mono); color: var(--text); }
+.ctrls input[type=range] { width: 100%; accent-color: var(--accent); }
+.ctrls input[type=number] { font-family: var(--mono); font-size: .85rem; padding: 3px 6px; border: 1px solid var(--border); border-radius: 5px; background: var(--surface2); color: var(--text); width: 100%; }
+.ctrls .grp { font-size: .82rem; color: var(--text2); display: flex; flex-direction: column; gap: 2px; }
+.livebar { position: sticky; top: calc(env(safe-area-inset-top,0px) + var(--tabsH, 46px)); z-index: 4; background: var(--surface); border: 1px solid var(--accent); border-radius: var(--radius); padding: .6rem .9rem .5rem; margin: -.4rem 0 1.2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: .3rem 1.2rem; box-shadow: 0 6px 10px -8px color-mix(in srgb, var(--text) 35%, transparent); }
+.livebar .lb { font-size: .82rem; color: var(--text2); display: flex; flex-direction: column; gap: 2px; }
+.livebar .lb .v { font-family: var(--mono); color: var(--text); margin-left: .3rem; }
+.livebar input[type=range] { width: 100%; accent-color: var(--accent); }
+.lbsum { grid-column: 1 / -1; font-family: var(--mono); font-size: .74rem; color: var(--text); display: flex; flex-wrap: wrap; gap: .15rem 1.4rem; border-top: 1px solid var(--border); padding-top: .35rem; }
+.lbsum span b { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-weight: 500; color: var(--text3); margin-right: .35rem; }
+.io > div.flash, .lanes.flash .row.res > div:not(:first-child) { animation: lv3flash .7s ease-out; }
+@keyframes lv3flash { from { background: var(--amber-bg); } }
+.chk { display:flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin: .4rem 0 .6rem; font-size: .85rem; color: var(--text2); }
+.chk label { display:flex; gap:.35rem; align-items:center; cursor: pointer; }
+.chk input { accent-color: var(--accent); }
+.btnrow { display:flex; flex-wrap:wrap; gap:.4rem; margin: .4rem 0 .8rem; }
+.btn { font-family: inherit; font-size: .82rem; padding: .35rem .8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.on { background: var(--accent-bg); color: var(--accent-text); border-color: var(--accent); }
+canvas { width: 100%; display: block; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); touch-action: none; }
+.cap { font-size: .8rem; color: var(--text3); margin: .3rem 0 .9rem; }
+.readout { font-family: var(--mono); font-size: .8rem; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: .6rem .8rem; margin: .5rem 0; white-space: pre-wrap; color: var(--text); }
+.ok { color: var(--green); } .bad { color: var(--red); } .warn { color: var(--amber); }
+.mat { display: inline-grid; grid-template-columns: repeat(4, auto); gap: 2px; font-family: var(--mono); font-size: .76rem; margin: .2rem .6rem .4rem 0; vertical-align: top; }
+.mat.c3 { grid-template-columns: repeat(3, auto); }
+.mat div { padding: 2px 6px; background: var(--surface2); border-radius: 3px; text-align: right; min-width: 5.5em; color: var(--text); }
+.mat div.t { background: var(--amber-bg); color: var(--amber); }
+.mat div.lin { background: var(--accent-bg); color: var(--accent-text); }
+.mat div.w { background: var(--purple-bg); color: var(--purple); }
+.mat div.dim { opacity: .35; }
+.matwrap { overflow-x: auto; }
+.matlbl { font-size: .75rem; color: var(--text3); display: block; margin-top: .3rem; }
+/* écarts */
+.ecart { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: .7rem 0; }
+.ecart > summary { cursor: pointer; padding: .7rem 1rem; list-style: none; display: flex; gap: .6rem; align-items: baseline; flex-wrap: wrap; }
+.ecart > summary::-webkit-details-marker { display: none; }
+.ecart > summary .id { font-family: var(--mono); font-size: .82rem; color: var(--accent); min-width: 3.4em; }
+.ecart > summary .tt { font-weight: 500; flex: 1 1 320px; }
+.ecart .body { padding: 0 1rem .9rem; }
+.ecart dl { display: grid; grid-template-columns: 11em 1fr; gap: .35rem .9rem; font-size: .88rem; }
+.ecart dt { color: var(--text3); }
+.ecart dd { color: var(--text2); }
+@media (max-width: 640px) { .ecart dl { grid-template-columns: 1fr; } .ecart dt { margin-top: .4rem; } .tab-panel { padding: 1.2rem 1rem; } .hero { padding: 1.4rem 1rem 1rem; } .tabs { padding: 0 .5rem; } }
+/* étapes */
+.step { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); margin: 1rem 0 1.4rem; overflow: hidden; }
+.step > header { display:flex; gap:.7rem; align-items:baseline; padding:.7rem 1rem; background: var(--surface2); border-bottom: 1px solid var(--border); }
+.step > header .n { font-family: var(--mono); color: var(--accent); font-weight: 600; }
+.step > header .t { font-weight: 500; }
+.step .sb { padding: .8rem 1rem .4rem; }
+.lab { font-size: .74rem; color: var(--text3); letter-spacing: .02em; margin: .7rem 0 .25rem; display:block; font-weight: 500; }
+.lab:first-child { margin-top: 0; }
+.io { display:grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+@media (max-width: 720px) { .io { grid-template-columns: 1fr; } }
+.io > div { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .7rem; font-family: var(--mono); font-size: .78rem; white-space: pre-wrap; overflow-x: auto; color: var(--text); }
+.io > div b { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; font-weight: 500; font-size: .74rem; color: var(--text3); display:block; margin-bottom: .2rem; }
+.code2 { display:grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+@media (max-width: 900px) { .code2 { grid-template-columns: 1fr; } }
+.code2 pre { margin: 0; font-size: .74rem; }
+.lanes { display:grid; gap: 2px; font-family: var(--mono); font-size: .72rem; margin: .3rem 0 .6rem; overflow-x:auto; }
+.lanes .row { display:grid; grid-template-columns: 12.5em repeat(var(--n,4), minmax(6.6em,1fr)); gap: 2px; }
+.lanes .row > div { padding: 2px 5px; background: var(--surface2); border-radius: 3px; text-align: right; color: var(--text); white-space: nowrap; }
+.lanes .row > div:first-child { text-align: left; background: transparent; color: var(--text3); }
+.lanes .row.h > div { background: transparent; color: var(--text3); text-align: center; }
+.lanes .row.res > div:not(:first-child) { background: var(--green-bg); color: var(--green); }
+.lanes .row.mask > div:not(:first-child) { opacity: .45; }
+.presets { display:flex; flex-wrap:wrap; gap:.4rem; }
+.stickyin { position: sticky; top: calc(env(safe-area-inset-top,0px) + 46px); z-index: 4; }
+.qa { border-top: 1px solid var(--border); padding: 1rem 0 .4rem; }
+.qa h3 { margin-top: 0; }
+.qa .q { color: var(--text); font-weight: 500; }
+.dl-btn { font-family: inherit; font-size: .88rem; padding: .55rem 1.1rem; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent-bg); color: var(--accent-text); cursor: pointer; margin: 1.5rem 0 0; }
+.toc { display:grid; grid-template-columns: repeat(auto-fill,minmax(230px,1fr)); gap:.4rem; margin:.4rem 0 1rem; }
+.toc a { font-size:.85rem; color: var(--accent); text-decoration:none; padding:.4rem .6rem; border:1px solid var(--border); border-radius:6px; background: var(--surface); }
+.toc a:hover { border-color: var(--accent); }
+.three { display:grid; grid-template-columns: repeat(3,1fr); gap:.6rem; }
+@media (max-width: 760px) { .three { grid-template-columns: 1fr; } }
+.three > div { border:1px solid var(--border); border-radius: var(--radius); padding:.7rem .8rem; background: var(--surface); font-size:.85rem; color: var(--text2); }
+.three > div h4 { font-size:.85rem; font-weight:500; color: var(--text); margin-bottom:.3rem; }
+.dlwrap { max-width:940px; margin:0 auto; padding:0 2rem 2.5rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <h1>Lot L02 — La bibliothèque mathématique <span class="badge badge-blue">Leçon 02</span><span class="badge badge-amber">Reconstruction</span></h1>
+  <p class="sub">Vecteurs, matrices 4×4, quaternions et la fiche de convention qui les lie. Reconstruction du 07/11/2026 : la leçon telle qu’elle a été faite, confrontée au dépôt LIB d’aujourd’hui. Tous les nombres de cette page sont calculés en float32, opération par opération, dans l’ordre où le C++ les écrit.</p>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="ouv" role="tab">Ouverture</button>
+  <button class="tab-btn" data-tab="sch" role="tab">Schéma</button>
+  <button class="tab-btn" data-tab="alg" role="tab">Algorithme</button>
+  <button class="tab-btn" data-tab="fct" role="tab">Fonctionnement</button>
+  <button class="tab-btn" data-tab="eta" role="tab">Étapes pas à pas</button>
+  <button class="tab-btn" data-tab="ctr" role="tab">Contre-exemples</button>
+  <button class="tab-btn" data-tab="ver" role="tab">Vérifier</button>
+  <button class="tab-btn" data-tab="qst" role="tab">Questions de fond</button>
+  <button class="tab-btn" data-tab="rdm" role="tab">Roadmap</button>
+</nav>
+
+<!-- ═══════════════════════════ OUVERTURE ═══════════════════════════ -->
+<section class="tab-panel active" id="tab-ouv">
+
+<div class="toc">
+  <a href="#o1">1. Rappel — d’où l’on part</a>
+  <a href="#o2">2. Contexte — l’état du dossier Maths</a>
+  <a href="#o3">3. Objectif fonctionnel et intérêt</a>
+  <a href="#o4">4. Décisions à prendre et leur pourquoi</a>
+  <a href="#o5">5. Écarts entre la leçon et le code d’aujourd’hui</a>
+</div>
+
+<h2 id="o1">1. Rappel — d’où l’on part</h2>
+<p>Le lot L01 a posé le socle de compilation : <code>config.h</code> (les constantes du moteur en <code>constexpr</code> dans <code>namespace LV3</code>, la séparation entre tolérances <code>EPSILON_FLOAT</code> et gardes anti-division <code>NEAR_ZERO</code>), <code>Compiler.h</code> (les macros qui n’ont pas d’équivalent dans le standard), le PCH et les enums. À la fin de L01, le moteur sait <strong>compiler proprement</strong>. Il ne sait encore <strong>rien calculer de géométrique</strong> de façon fiable.</p>
+<p>Ce lot reprend là. Il a aussi soldé une dette de L01 en cours de route : <code>Compiler.h</code> exposait encore <code>LV2_FORCEINLINE</code> et <code>LV2_ALIGN_*</code>. Le préfixe est passé à <code>LV3_</code> dans toute la solution, et le « pont de transition » ajouté temporairement en tête de <code>Vectorlib.h</code> a été supprimé (voir l’onglet Questions de fond, Q1).</p>
+
+<h2 id="o2">2. Contexte — l’état du dossier <code>Maths/</code> au début de la leçon</h2>
+<p>Le dossier contenait deux familles de types qui faisaient la même chose de deux façons opposées, et <code>Ressources/MathTypes.h</code> les incluait <strong>toutes les deux</strong> :</p>
+<div class="twrap"><table>
+<tr><th></th><th>Famille « héritée » (scratchapixel)</th><th>Famille « moderne » (fichiers communiqués)</th></tr>
+<tr><td>Fichiers</td><td><code>Vectorlib.h</code>, <code>MatrixLib.h</code>, <code>QuaternionLib.h</code></td><td><code>Vec2f/3f/4f.h</code>, <code>Matrix44f.h/.cpp</code>, <code>Quat.h</code>, <code>AABB3d</code>, <code>Plane</code>, <code>Frustum</code>, <code>Transform</code></td></tr>
+<tr><td>Forme</td><td>templates <code>Vec3&lt;T&gt;</code>, <code>Matrix44&lt;T&gt;</code></td><td><code>struct</code> float concrètes</td></tr>
+<tr><td>Namespace</td><td>global (aucun)</td><td><code>LibV3</code> pour les vecteurs, <code>LibV2</code> pour tout le reste</td></tr>
+<tr><td>Matrices</td><td><strong>row-major</strong>, vecteur-ligne <code>v·M</code>, builders en post-multiplication (S·R·T)</td><td>colonne-majeur, vecteur-colonne <code>M·v</code>, T·R·S</td></tr>
+<tr><td>Défauts relevés</td><td>fabriques <code>Vec3::Zero()</code> qui ne compilaient pas, <code>getAngle()</code> qui renvoyait <code>max(dot,0)</code>, <code>Vec3f</code> codé en dur dans <code>Quat&lt;T&gt;</code>, <code>Matrix44</code> utilisé sans être inclus, SIMD et OpenMP entièrement commentés</td><td>pas de <code>Mat3</code>, <code>Vec4f</code> sans <code>dot</code>, deux quaternions concurrents qui n’écrivent pas la matrice dans le même sens</td></tr>
+</table></div>
+<p>Conséquence concrète, observée en cours de leçon : <code>Vec3f</code> désignait <strong>deux types différents</strong> selon le namespace d’où on l’écrivait. Dans un test placé dans <code>namespace LibV3</code>, <code>Vec3f</code> se résolvait vers l’ancienne struct moderne et <code>Vec2f</code> n’était pas trouvé du tout (Q5). Et le document de leçon déjà présent dans le projet (<code>Lecon_02_Mathematiques.md</code>) avait tranché une troisième convention encore : main gauche, colonne-majeur, NDC <code>[0,1]</code>. Trois sources, trois conventions.</p>
+
+<h2 id="o3">3. Objectif fonctionnel du lot et son intérêt</h2>
+<p><strong>Objectif :</strong> donner au moteur <strong>un seul contrat géométrique</strong>. Un jeu de types, un namespace, une convention de rangement et de multiplication, un repère, tous vérifiés par un test qui tourne, pas seulement sur le papier.</p>
+<p><strong>Intérêt :</strong> tout ce qui suit consomme ces trois fichiers. L’étage sommets (L04) multiplie chaque sommet par une matrice ; la caméra (L05) inverse une matrice monde et oriente un quaternion ; le scenegraph (L06) compose des matrices parent et enfant. Une convention mal tranchée ici ne fait pas planter : elle produit des objets en miroir, un backface culling inversé, des normales qui penchent sous un scale non uniforme, une hiérarchie fausse seulement quand un objet a un parent. Ce sont des bugs qui se voient tard et se diagnostiquent mal. <strong>En 3D, une convention non décidée est un bug qui dort.</strong></p>
+<div class="three">
+  <div><h4>Ce que le lot livre</h4><code>Vectorlib.h</code>, <code>MatrixLib.h</code>, <code>QuaternionLib.h</code> standardisés, en <code>namespace LV3</code>, et <code>Transform</code> passé en S·R·T.</div>
+  <div><h4>Ce que le lot ne fait pas</h4>La couche géométrie (<code>AABB</code>, <code>Plane</code>, <code>Frustum</code>) : elle relève d’une leçon dédiée. La vectorisation : montrée ici comme équivalent de référence, implémentée plus tard.</div>
+  <div><h4>Comment on sait que c’est fini</h4>Compilation sans avertissement, puis trois sorties attendues : <code>[0 0 1]</code>, <code>0</code>, <code>[-4.37114e-08 1 0]</code>. Elles ont été obtenues (onglet Vérifier).</div>
+</div>
+
+<h2 id="o4">4. Décisions à prendre et leur pourquoi</h2>
+<p>La numérotation poursuit celle du lot L01 (D1 à D9). Le statut dit ce qui a été tranché par Onky dans l’échange et ce qui reste une proposition.</p>
+<div class="twrap"><table>
+<tr><th>#</th><th>Décision</th><th>Pourquoi</th><th>Statut</th></tr>
+<tr><td>D10</td><td>Une seule famille canonique : la famille templatée (<code>Vectorlib</code>, <code>MatrixLib</code>, <code>QuaternionLib</code>). Les fichiers modernes redondants sortent du build.</td><td>Deux types qui portent le même nom ne peuvent pas cohabiter sans ambiguïté ni risque d’ODR. La famille templatée était déjà dans la convention qu’Onky utilise.</td><td><span class="badge badge-green">tranchée</span></td></tr>
+<tr><td>D11</td><td>Namespace unique <code>LV3</code>.</td><td>C’est celui que <code>config.h</code> utilisait déjà, et il a la même racine que le préfixe de macro <code>LV3_</code>. Le nom importe moins que son unicité (Q4).</td><td><span class="badge badge-green">tranchée</span></td></tr>
+<tr><td>D12</td><td>Row-major <code>m[row][col]</code>, vecteur-ligne <code>v' = v·M</code>, composition <strong>S·R·T</strong> lue de gauche à droite, translation en ligne 3, monde = local · parent.</td><td>Précision donnée par Onky : c’est la convention qu’il utilise. <code>MatrixLib</code> y était déjà nativement (<code>translate/scale/rotate</code> en post-multiplication, <code>multVecMatrix</code> en vecteur-ligne).</td><td><span class="badge badge-green">tranchée</span></td></tr>
+<tr><td>D13</td><td>Repère main droite, Y en haut, la vue regarde vers −Z.</td><td>Vérifié sur le code : <code>rotateX(+90°)</code> envoie +Y vers +Z, et <code>crossProduct</code> donne X × Y = +Z. Rotations et produit vectoriel sont cohérents.</td><td><span class="badge badge-green">tranchée</span></td></tr>
+<tr><td>D14</td><td>Profondeur NDC.</td><td>Proposée <code>[-1, 1]</code> dans l’échange, sans discussion. Remise en question en L05 : <code>[0, 1]</code> reverse-Z (écart L2-3).</td><td><span class="badge badge-amber">remplacée</span></td></tr>
+<tr><td>D15</td><td>Tout en 4×4. Un point passe par <code>multVecMatrix</code> (w = 1, translation, division par w), une direction par <code>multDirMatrix</code> (w = 0, bloc 3×3 seul). Sous scale non uniforme, les normales passent par <code>inverse().transposed()</code>. Pas de type <code>Mat3</code>.</td><td>La 3×3 n’est pas une autre matrice : c’est le coin supérieur gauche de la 4×4 (Q3). Un type <code>Mat3</code> n’est qu’une optimisation de stockage.</td><td><span class="badge badge-green">acceptée</span></td></tr>
+<tr><td>D16</td><td>Les fabriques de matrices (vue, projection) sont des fonctions pures, hors de la classe <code>Camera</code>.</td><td>Elles servent aussi aux ombres, aux billboards, aux sondes ; la caméra possède l’état, pas l’algèbre (Q2). Affinée en L05 : fonctions libres dans <code>Projection.h</code>, pas méthodes de <code>Matrix44</code> (écart L2-4).</td><td><span class="badge badge-green">acceptée, affinée</span></td></tr>
+<tr><td>D17</td><td>Les noms hérités <code>dotProduct</code>, <code>crossProduct</code>, <code>norm</code>, <code>Normalized</code> sont conservés.</td><td><code>MatrixLib</code> et <code>QuaternionLib</code> les appellent ; les renommer cassait les deux autres fichiers. Le nom <code>norm()</code> pour une longueur au carré reste un piège (écart L2-14).</td><td><span class="badge badge-blue">proposée</span></td></tr>
+<tr><td>D18</td><td>Les <code>operator[]</code> prennent un <code>int</code>.</td><td>Un index plus étroit que le type qui l’alimente force une conversion restrictive à chaque appel (avertissement C4244, Q7).</td><td><span class="badge badge-green">appliquée</span></td></tr>
+</table></div>
+
+<h2 id="o5">5. Écarts entre la leçon et le code d’aujourd’hui</h2>
+<p>Relevé du dépôt LIB, dossier <code>Maths/</code>, le 07/11/2026. Trois états sont comparés quand c’est utile : le document <code>Lecon_02_Mathematiques.md</code> du projet (le premier jet de la leçon), ce qui a été décidé et livré dans l’échange, et le dépôt actuel. Chaque écart donne sa raison, ce qu’il apporte et un verdict <em>proposé</em>.</p>
+<div class="callout amber"><strong>Rien n’est acté.</strong> Les quatorze écarts L2-1 à L2-14 sont rédigés dans l’onglet Roadmap sous la forme d’une sous-section « Décisions en attente — socle L02 », à ajouter à <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard », à la suite du socle L01.</div>
+
+<details class="ecart" open><summary><span class="id">L2-1</span><span class="tt">Le repère : main gauche dans le document, main droite dans le code</span><span class="badge badge-green">évolution</span><span class="badge badge-red">à corriger</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>Main gauche, Y haut, <strong>+Z entre dans l’écran</strong> « comme Unity ».</dd>
+<dt>Échange</dt><dd>Main droite, vérifiée sur <code>rotateX</code> et <code>crossProduct</code>. Mais le <code>Vectorlib.h</code> livré écrivait <code>Forward() = (0,0,+1)</code> avec le commentaire « axe monde +Z », alors que la vue regarde vers −Z : c’était une erreur de la livraison.</dd>
+<dt>Dépôt actuel</dt><dd><code>Forward() = (0,0,−1)</code>, <code>Back() = (0,0,+1)</code>, et trois <code>static_assert</code> en fin de <code>Vec3</code> : Forward.z &lt; 0, Right × Forward = Up, Forward × Up = Right.</dd>
+<dt>Raison</dt><dd>La main droite était déjà celle de <code>MatrixLib</code>. L’erreur sur <code>Forward()</code> a été corrigée dans le dépôt, puis verrouillée à la compilation.</dd>
+<dt>Ce qu’il apporte</dt><dd>Le repère ne peut plus dériver en silence : si quelqu’un touche à <code>Forward()</code> ou à <code>crossProduct</code>, le projet refuse de compiler. Le schéma « Repère » de l’onglet Schéma montre ce que les assertions auraient attrapé.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir</strong> (le verrou est la bonne forme). <strong>À corriger</strong> : <code>Lecon_02_Mathematiques.md</code> dit encore main gauche (item déjà ouvert dans la roadmap).</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-2</span><span class="tt">Rangement et ordre de multiplication</span><span class="badge badge-green">évolution actée</span><span class="badge badge-red">à corriger</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>Colonne-majeur <code>m[col][row]</code>, vecteur-colonne <code>v' = M·v</code>, <code>P·V·M</code>, Transform T·R·S, « continuité totale avec LibV2 ».</dd>
+<dt>Échange</dt><dd>Row-major, vecteur-ligne, S·R·T, translation en ligne 3 : précision donnée par Onky.</dd>
+<dt>Dépôt actuel</dt><dd>Conforme. <code>Transform.h</code> porte le commentaire « S · R · T — LA seule définition de l’ordre de composition du moteur ».</dd>
+<dt>Raison</dt><dd>C’est la convention d’Onky, et celle dans laquelle <code>MatrixLib</code> était déjà écrite.</dd>
+<dt>Ce qu’il apporte</dt><dd>Les deux conventions décrivent la même géométrie. Mais le vecteur-ligne a un avantage pratique pour le SIMD : <code>v·M</code> est une combinaison des <strong>lignes</strong> de M, contiguës en mémoire (onglet Fonctionnement).</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir</strong> (déjà acté dans l’échange). <strong>À corriger</strong> : les sections 3 et 8 de <code>Lecon_02_Mathematiques.md</code>.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-3</span><span class="tt">La profondeur : [-1, 1] proposé ici, [0, 1] reverse-Z dans le dépôt</span><span class="badge badge-green">évolution</span><span class="badge badge-purple">remise en question par L05</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>NDC <code>[0, 1]</code> style Direct3D, reverse-Z « plus tard ».</dd>
+<dt>Échange</dt><dd><code>Perspective</code> livrée dans <code>MatrixLib</code> avec <code>m[2][2] = −(f+n)/(f−n)</code> : NDC <code>[-1, 1]</code>, à la OpenGL. C’était une proposition non discutée.</dd>
+<dt>Dépôt actuel</dt><dd><code>[0, 1]</code> <strong>reverse-Z</strong> : near → 1, far → 0, test <code>GREATER</code>, clear à 0 (<code>Projection.cpp</code>). L’en-tête de <code>MatrixLib.h</code> dit maintenant « NDC z ∈ [0,1], reverse-Z ».</dd>
+<dt>Raison</dt><dd>Décidé en L05. En <code>[-1, 1]</code>, le reverse-Z est impossible : inverser la plage ne déplace pas la zone où le flottant est précis. En <code>[0, 1]</code> reverse-Z, la zone la plus fine du flottant (près de 0) tombe au far, là où la projection en 1/z écrase le plus les distances : les deux non-linéarités se compensent.</dd>
+<dt>Ce qu’il apporte</dt><dd>Résolution théorique (pas d’un float32 sur z, ramené en mètres), near 0,1, far 1000 :
+<div class="twrap"><table id="tbl-depth"><tr><th>Distance</th><th>[-1, 1] (échange)</th><th>[0, 1] reverse-Z (dépôt)</th><th>Rapport</th></tr></table></div>
+Le calcul de z ajoute sa propre erreur d’arrondi, du même ordre : ces chiffres sont des ordres de grandeur.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir.</strong> La fiche de convention de L02 doit dire <code>[0, 1]</code> reverse-Z. La décision D14 de l’échange est caduque.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-4</span><span class="tt">Où vivent les fabriques de projection</span><span class="badge badge-green">évolution</span><span class="badge badge-amber">dette</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd><code>LookAt</code>, <code>Perspective</code>, <code>Orthographic</code> ajoutées comme méthodes statiques de <code>Matrix44</code>, avec l’argument : fonctions pures, réutilisables (ombres, UI), hors de <code>Camera</code>.</dd>
+<dt>Dépôt actuel</dt><dd>Les trois sont <strong>commentées</strong> dans <code>MatrixLib.h</code> (environ 45 lignes). Les projections vivent dans <code>namespace LV3::Projection</code> en fonctions libres : <code>PerspectiveOffCenter</code> (la primitive), <code>Perspective</code>, <code>PerspectiveInfinite</code>, <code>PerspectiveFilmback</code>, <code>Orthographic</code>, <code>OrthographicCentered</code>.</dd>
+<dt>Raison</dt><dd>Règle posée en L05 : <code>Matrix44</code> ne connaît que l’algèbre pure. Toute fonction qui dépend d’une convention de rendu (near/far, plage NDC, main, reverse-Z) en sort vers un fichier dédié.</dd>
+<dt>Ce qu’il apporte</dt><dd>Le principe de l’échange tient (pur, hors Camera) et il est affiné : on sépare ce qui est vrai pour toute matrice (produit, inverse) de ce qui encode un choix du moteur.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir. Dette :</strong> le code commenté dans <code>MatrixLib.h</code> est du code mort qui contredit la convention actuelle (<code>[-1, 1]</code>). À supprimer.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-5</span><span class="tt">LookAt devient une orientation (quaternion), et une garde trop large</span><span class="badge badge-green">évolution</span><span class="badge badge-amber">dette</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd><code>Matrix44::LookAt(eye, target, up)</code> renvoie directement une matrice de vue.</dd>
+<dt>Dépôt actuel</dt><dd><code>Quat::LookRotation(dir, worldUp)</code> : base orthonormée main droite, cas « regard vertical » traité par une verticale de secours, puis matrice → quaternion par la méthode de Shepperd (quatre branches, on divise par la plus grande composante). <code>Quat::LookAt(eye, target)</code> en est le confort.</dd>
+<dt>Raison</dt><dd>La caméra est une entité ECS avec un <code>Transform</code> comme les autres : on oriente son quaternion, et la vue s’obtient en inversant sa matrice monde (L05). Une seule source de vérité.</dd>
+<dt>Ce qu’il apporte</dt><dd>Le cas dégénéré (direction colinéaire à <code>worldUp</code>), cause du bug de l’ancien <code>lookAT()</code>, est traité dans la fonction et plus contourné ailleurs.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir. Dette :</strong> la garde <code>dir.norm() &lt;= EPSILON_FLOAT</code> utilise une <em>tolérance</em> comme <em>garde anti-division</em>, exactement ce que l’écart E2 de L01 interdit. <code>norm()</code> étant un carré, toute direction de moins de 3,16 cm est rejetée et la caméra garde l’orientation identité (contre-exemple C9, chiffré). Proposition : <code>NEAR_ZERO_SQ</code>.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-6</span><span class="tt">inverseRigid ajouté à Matrix44</span><span class="badge badge-green">évolution</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd>Seul <code>inverse()</code> (Gauss-Jordan à pivot partiel) existait.</dd>
+<dt>Dépôt actuel</dt><dd><code>inverseRigid()</code> : pour une rotation + translation sans scale, M⁻¹ = [Rᵀ | 0 ; −t·Rᵀ | 1]. Neuf copies et neuf produits au lieu d’un pivot complet.</dd>
+<dt>Raison</dt><dd>Inverser la matrice monde d’une caméra à chaque frame n’a pas besoin du cas général.</dd>
+<dt>Ce qu’il apporte</dt><dd>Moins d’opérations, et un résultat plus exact : pas de division. Sur l’exemple de l’onglet Étapes, l’écart avec <code>inverse()</code> est mesuré.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir.</strong> Sa précondition (pas de scale) n’est vérifiée nulle part : filet Debug proposé dans l’onglet Vérifier.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-7</span><span class="tt">Transform devient purement local</span><span class="badge badge-green">évolution</span><span class="badge badge-amber">dette mineure</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd><code>Transform.h/.cpp</code> migrés en S·R·T avec <code>ToWorldMatrix(parent)</code> récursif (local · parent).</dd>
+<dt>Dépôt actuel</dt><dd><code>Transform</code> ne contient plus que <code>ToLocalMatrix()</code> (inline dans le header) et <code>Forward/Right/Up</code>. La composition parent/enfant appartient à <code>WorldTransformSystem</code> (L06), dans le même sens : monde = local · monde(parent). <code>Transform.cpp</code> ne contient plus que <code>#include "pch.h"</code> et du code commenté.</dd>
+<dt>Raison</dt><dd>Règle S4 : un composant ne contient que ce que son système lit ou écrit. Une récursion par pointeur parent dans le composant contredisait l’ECS.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir. Dette mineure :</strong> retirer <code>Transform.cpp</code> du projet.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-8</span><span class="tt">Les normales : Mat3 prévu, 4×4 retenue, application non vérifiée</span><span class="badge badge-blue">à vérifier</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>Un type <code>Mat3</code> pour la transposée de l’inverse.</dd>
+<dt>Échange</dt><dd>Pas de <code>Mat3</code> : <code>model.inverse().transposed()</code> puis <code>multDirMatrix</code>, qui n’utilise que le bloc 3×3.</dd>
+<dt>Dépôt actuel</dt><dd>Pas de <code>Mat3</code>, et aucune fonction nommée dans <code>Maths/</code> pour la matrice des normales. L’endroit où le moteur transforme les normales (étage sommets, éclairage) n’a pas été relu dans ce lot.</dd>
+<dt>Verdict proposé</dt><dd><strong>À vérifier</strong> par une lecture de l’étage sommets. Si les normales passent par la matrice monde elle-même, tout scale non uniforme fausse l’éclairage : le contre-exemple C3 donne l’angle d’erreur.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-9</span><span class="tt">L’alignement : alignas(16) sur Vec4 prévu, SoA dans les faits</span><span class="badge badge-purple">remise en question</span><span class="badge badge-blue">à décider</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>« Concevoir <code>Vec4</code> et <code>Mat4</code> <code>alignas(16)</code> dès maintenant, même sans SIMD ».</dd>
+<dt>Échange</dt><dd>Non traité (le SIMD de <code>MatrixLib</code> était du code mort, retiré).</dd>
+<dt>Dépôt actuel</dt><dd><code>Vec4</code> et <code>Matrix44</code> sans <code>alignas</code>. La vectorisation réelle du moteur (étage sommets, <code>ProjectPositions8</code> en AVX2) travaille en <strong>SoA</strong> : un registre contient la même composante de huit sommets, pas les quatre composantes d’un seul <code>Vec4</code>.</dd>
+<dt>Raison</dt><dd>En DOD, l’alignement qui compte est celui des tableaux SoA (32 octets pour AVX2, 64 pour la ligne de cache), pas celui d’un vecteur isolé. Les étapes 1 et 5 montrent les deux formes côte à côte.</dd>
+<dt>Verdict proposé</dt><dd><strong>À décider</strong> : remplacer la règle « alignas(16) sur Vec4 » par « tableaux SoA alignés <code>LV3_ALIGN_SIMD</code> », ou l’appliquer à <code>Matrix44</code> seule (produits matriciels en SSE AoS).</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-10</span><span class="tt">Hygiène des includes de Vectorlib.h</span><span class="badge badge-amber">dette mineure</span></summary><div class="body"><dl>
+<dt>Dépôt actuel</dt><dd><code>#include &lt;cmath&gt;</code> deux fois ; <code>&lt;iostream&gt;</code> inclus pour les <code>operator&lt;&lt;</code> dans un header qui entre dans le PCH via <code>MathTypes.h</code> ; <code>&lt;cstdint&gt;</code> annoncé « uint8_t &amp; co » alors que les <code>operator[]</code> prennent maintenant un <code>int</code>.</dd>
+<dt>Ce que ça coûte</dt><dd><code>&lt;iostream&gt;</code> est l’un des headers les plus lourds de la STL, et il arrive dans chaque unité de compilation.</dd>
+<dt>Verdict proposé</dt><dd><strong>Dette mineure :</strong> retirer le doublon ; déplacer les <code>operator&lt;&lt;</code> dans un header de debug (ou passer à <code>&lt;iosfwd&gt;</code>) ; retirer <code>&lt;cstdint&gt;</code> s’il ne sert plus.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-11</span><span class="tt">MathUtils.h : un début de couche scalaire</span><span class="badge badge-green">évolution</span><span class="badge badge-amber">dette mineure</span></summary><div class="body"><dl>
+<dt>Document de leçon</dt><dd>Un <code>Scalar.hpp</code> : <code>lerp</code>, <code>clamp</code>, <code>saturate</code>, <code>radians</code>, <code>approxEqual</code>, <code>smoothstep</code>.</dd>
+<dt>Dépôt actuel</dt><dd><code>MathUtils.h</code> avec <code>Saturate</code> et <code>Lerp</code>. Il utilise <code>LV3_FORCEINLINE</code> sans inclure <code>Compiler.h</code> : il ne compile que parce que le PCH est passé avant.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir</strong> le fichier. <strong>Dette :</strong> ajouter <code>#include "../Core/Compiler.h"</code> ; ajouter un <code>ApproxEqual(a, b, tol)</code> — la leçon interdit <code>==</code> sur les flottants mais ne fournit pas l’outil, chaque comparaison est réécrite à la main.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-12</span><span class="tt">MathTypes.h ne porte plus que le cœur</span><span class="badge badge-green">évolution</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd>Retirer l’une des deux familles de <code>MathTypes.h</code> pour éteindre la collision.</dd>
+<dt>Dépôt actuel</dt><dd><code>MathTypes.h</code> inclut seulement <code>Vectorlib.h</code>, <code>MatrixLib.h</code>, <code>QuaternionLib.h</code> ; <code>AABB3d.h</code> est commenté ; <code>Maths/Geometry/</code> est vide. La localisation actuelle de la couche géométrie n’a pas été relue dans ce lot.</dd>
+<dt>Verdict proposé</dt><dd><strong>À retenir.</strong> La place de la géométrie se décide dans sa leçon dédiée.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-13</span><span class="tt">getEulerAngles : une heuristique sans test</span><span class="badge badge-amber">dette</span></summary><div class="body"><dl>
+<dt>Échange</dt><dd><code>getAngle&lt;S&gt;()</code> renommé <code>getEulerAngles()</code> et généralisé en <code>Vec3&lt;T&gt;</code>, avec l’avertissement « heuristique sensible à la convention — à valider ».</dd>
+<dt>Dépôt actuel</dt><dd>Inchangé, aucune TNR. Ses branches (<code>180 − a.y</code>, <code>360 + a.y</code>) ont été écrites pour une autre convention que l’ordre Y-X-Z du constructeur de <code>Quat</code>.</dd>
+<dt>Verdict proposé</dt><dd><strong>Dette :</strong> écrire la TNR aller-retour (Euler → Quat → Matrix44 → Euler) sur une grille d’angles, ou retirer la fonction si personne ne l’appelle.</dd>
+</dl></div></details>
+
+<details class="ecart"><summary><span class="id">L2-14</span><span class="tt">norm() renvoie une longueur au carré</span><span class="badge badge-blue">à décider</span></summary><div class="body"><dl>
+<dt>Dépôt actuel</dt><dd><code>Vec3::norm()</code> = x² + y² + z². En mathématiques, la norme est la longueur, pas son carré. Le même fichier mélange <code>normalize()</code> (modifie) et <code>Normalized()</code> (renvoie une copie).</dd>
+<dt>Ce que ça coûte</dt><dd>Le piège a déjà servi : la garde <code>dir.norm() &lt;= EPSILON_FLOAT</code> de L2-5 se lit comme « longueur ≤ 1 mm » et signifie « longueur ≤ 3,16 cm ».</dd>
+<dt>Verdict proposé</dt><dd><strong>À décider</strong> avec D17 : renommer <code>norm()</code> en <code>lengthSq()</code> (et passer les trois fichiers aux noms courts <code>dot</code>/<code>cross</code>), ou garder les noms hérités et documenter.</dd>
+</dl></div></details>
+
+</section>
+
+<!-- ═══════════════════════════ SCHÉMA ═══════════════════════════ -->
+<section class="tab-panel" id="tab-sch">
+<p>Trois schémas avant le code. Le premier fait voir l’ordre S·R·T et le piège des normales ; le deuxième, le repère main droite et ce que les <code>static_assert</code> du dépôt verrouillent ; le troisième, ce qu’une 4×4 contient et quelles cases chaque opération lit.</p>
+
+<h2>A. Composer S·R·T — et voir ce qu’un mauvais ordre produit</h2>
+<div class="panel">
+<p>Vue de dessus (plan XY). La forme grise est l’objet en espace local. Les fantômes montrent la forme après S, puis après S·R ; la forme pleine est le résultat S·R·T. Le point lu ici en vecteur-ligne est transformé par <code>p·S</code>, puis <code>·R</code>, puis <code>·T</code> : on lit la chaîne de gauche à droite.</p>
+<div class="ctrls">
+  <label>Scale X <span class="v" id="a-sx-v"></span><input type="range" id="a-sx" min="-2" max="2.5" step="0.05" value="1.5"></label>
+  <label>Scale Y <span class="v" id="a-sy-v"></span><input type="range" id="a-sy" min="-2" max="2.5" step="0.05" value="0.6"></label>
+  <label>Rotation θ (degrés) <span class="v" id="a-th-v"></span><input type="range" id="a-th" min="-180" max="180" step="1" value="35"></label>
+  <label>Translation X <span class="v" id="a-tx-v"></span><input type="range" id="a-tx" min="-4" max="4" step="0.1" value="1.8"></label>
+  <label>Translation Y <span class="v" id="a-ty-v"></span><input type="range" id="a-ty" min="-4" max="4" step="0.1" value="0.8"></label>
+</div>
+<div class="chk">
+  <label><input type="checkbox" id="a-ghost" checked> Étapes intermédiaires</label>
+  <label><input type="checkbox" id="a-wrong"> Contre-exemple : écrire T·R·S en vecteur-ligne</label>
+  <label><input type="checkbox" id="a-norm" checked> Normale de l’arête oblique</label>
+</div>
+<div class="presets">
+  <button class="btn" data-apre="0">Uniforme</button>
+  <button class="btn" data-apre="1">Non uniforme (2,5 ; 0,6)</button>
+  <button class="btn" data-apre="2">Miroir (scale X négatif)</button>
+  <button class="btn" data-apre="3">Scale X nul (dégénéré)</button>
+</div>
+<canvas id="a-cv" height="380" aria-label="Composition S R T dans le plan XY"></canvas>
+<div class="matwrap" id="a-mat"></div>
+<div class="readout" id="a-out"></div>
+</div>
+
+<h2>B. Le repère main droite et le verrou du dépôt</h2>
+<div class="panel">
+<p>Faites tourner le trièdre (glisser dans le cadre, ou les curseurs). Rouge = Right (+X), vert = Up (+Y), bleu = <code>Forward()</code>. En main droite, la vue regarde vers −Z. La case « livraison de l’échange » remet le <code>Forward() = +Z</code> du <code>Vectorlib.h</code> livré pendant la leçon : les trois <code>static_assert</code> du dépôt sont évalués en direct.</p>
+<div class="ctrls">
+  <label>Lacet <span class="v" id="b-yaw-v"></span><input type="range" id="b-yaw" min="-180" max="180" step="1" value="-35"></label>
+  <label>Tangage <span class="v" id="b-pitch-v"></span><input type="range" id="b-pitch" min="-80" max="80" step="1" value="22"></label>
+</div>
+<div class="chk"><label><input type="checkbox" id="b-wrong"> Forward() = (0, 0, +1) — livraison de l’échange</label></div>
+<canvas id="b-cv" height="320" aria-label="Trièdre main droite"></canvas>
+<div class="readout" id="b-out"></div>
+</div>
+
+<h2>C. Anatomie d’une 4×4 row-major</h2>
+<div class="panel">
+<p>Une 4×4 affine, c’est un bloc 3×3 linéaire (rotation, scale) plus une ligne de translation. Choisissez l’opération : les cases lues s’allument, les autres s’éteignent. La matrice est M = S·R·T avec S = (2, 1, 1), R = 90° autour de Z, T = (10, 0, 0).</p>
+<div class="btnrow">
+  <button class="btn on" data-cmode="pt">Point (w = 1) — multVecMatrix</button>
+  <button class="btn" data-cmode="dir">Direction (w = 0) — multDirMatrix</button>
+  <button class="btn" data-cmode="proj">Projection — la colonne 3 n’est plus (0,0,0,1)</button>
+</div>
+<div class="matwrap" id="c-grid"></div>
+<div class="readout" id="c-out"></div>
+</div>
+</section>
+
+<!-- ═══════════════════════════ ALGORITHME ═══════════════════════════ -->
+<section class="tab-panel" id="tab-alg">
+<h2>L’algorithme que la lib maths sert : le chemin d’un sommet</h2>
+<p>La leçon n’invente pas de nouvel algorithme : elle fixe la forme exacte de celui que tout le moteur exécute, la transformation d’un sommet de l’espace local jusqu’au clip. Les lignes surlignées sont celles que ce lot a changées.</p>
+<div class="code2">
+<pre><span class="c">// AVANT — famille moderne LibV2 (colonne-majeur)</span>
+<span class="c">// v' = M · v : on lit de DROITE à GAUCHE</span>
+<span class="del">Model = T · R · S</span>
+<span class="del">World = Parent · Model</span>
+View  = LookAt(eye, target, up)   <span class="c">// matrice directe</span>
+<span class="del">Clip  = Proj · View · World · v</span>
+<span class="del">Proj  : z_ndc ∈ [-1, 1]</span>
+<span class="c">// normale : rien de prévu dans le code</span>
+<span class="c">// Vec3f désigne deux types (LibV3 / global)</span></pre>
+<pre><span class="c">// APRÈS — LV3 (row-major, vecteur-ligne)</span>
+<span class="c">// v' = v · M : on lit de GAUCHE à DROITE</span>
+<span class="add">Model = S · R · T</span>
+<span class="add">World = Model · World(parent)</span>
+View  = inverseRigid(World(caméra))   <span class="c">// L05</span>
+<span class="add">Clip  = v · World · View · Proj</span>
+<span class="add">Proj  : z_ndc ∈ [0, 1] reverse-Z     // L05</span>
+<span class="add">n'    = n · (World⁻¹)ᵀ  (bloc 3×3)</span>
+<span class="add">un seul LV3::Vec3f</span></pre>
+</div>
+<p>Les deux colonnes décrivent la même géométrie : <code>(P·V·W·v)ᵀ = vᵀ·Wᵀ·Vᵀ·Pᵀ</code>. Passer de l’une à l’autre, c’est <strong>transposer chaque matrice et retourner l’ordre d’écriture</strong>. Le danger n’est jamais l’une ou l’autre : c’est le mélange.</p>
+
+<h3>Algorithme pas à pas (forme retenue)</h3>
+<ol>
+<li>Construire <code>S</code> (diagonale), <code>R</code> (depuis le quaternion, <code>ToMatrix44()</code> forme vecteur-ligne), <code>T</code> (ligne 3).</li>
+<li>Composer <code>Model = S · R · T</code> — <code>Transform::ToLocalMatrix()</code>.</li>
+<li>Composer <code>World = Model · World(parent)</code> — <code>WorldTransformSystem</code>, parents avant enfants.</li>
+<li>Point : <code>p' = p · World</code> avec w = 1 — <code>multVecMatrix</code>, translation incluse, division par w gardée.</li>
+<li>Direction : <code>d' = d · World</code> avec w = 0 — <code>multDirMatrix</code>, bloc 3×3 seul.</li>
+<li>Normale : <code>n' = n · (World⁻¹)ᵀ</code> puis renormaliser — indispensable dès qu’un scale n’est pas uniforme.</li>
+<li>Vue et projection : <code>clip = p · World · View · Proj</code>, puis division par w (L04/L05).</li>
+</ol>
+
+<h2>Avant / après, fichier par fichier</h2>
+
+<h3>Transform — l’ordre de composition</h3>
+<div class="code2">
+<pre><span class="c">// AVANT — Transform.cpp (LibV2)</span>
+Matrix44f Transform::ToLocalMatrix() const noexcept {
+<span class="del">  return Matrix44f::Translation(position)</span>
+<span class="del">       * rotation.ToMatrix()</span>
+<span class="del">       * Matrix44f::Scale(scale);</span>
+}
+Matrix44f Transform::ToWorldMatrix(const Transform* parent) const noexcept {
+  Matrix44f local = ToLocalMatrix();
+  if (!parent) return local;
+<span class="del">  return parent->ToWorldMatrix() * local;</span>
+}</pre>
+<pre><span class="c">// APRÈS — Transform.h (dépôt) : S · R · T</span>
+[[nodiscard]] LV3_FORCEINLINE Matrix44f ToLocalMatrix() const noexcept {
+<span class="add">  return Matrix44f::Scale(scale)</span>
+<span class="add">       * rotation.ToMatrix44()      // forme vecteur-ligne</span>
+<span class="add">       * Matrix44f::Translation(position);</span>
+}
+<span class="c">// La hiérarchie n'est plus dans le composant :</span>
+<span class="c">// WorldTransformSystem fait monde = local · monde(parent)</span></pre>
+</div>
+
+<h3>QuaternionLib — les trois corrections qui changent un résultat</h3>
+<div class="code2">
+<pre><span class="c">// AVANT</span>
+<span class="del">#include "Vectorlib.h"          // Matrix44 jamais inclus</span>
+constexpr Quat(const Vec3&lt;T&gt;&amp; Angles, bool eulerAngles = false) {
+<span class="del">  Vec3f _angles = Angles;       // float en dur dans un template</span>
+  ...
+}
+<span class="del">constexpr Matrix44&lt;T&gt; ToMatrix44_OLD() const { // colonne : transposée</span>
+<span class="del">  ... 2*(x*y - w*z) en [0][1] ...</span>
+<span class="del">}</span></pre>
+<pre><span class="c">// APRÈS</span>
+<span class="add">#include "MatrixLib.h"          // dépendance déclarée</span>
+<span class="add">explicit Quat(const Vec3&lt;T&gt;&amp; Angles, bool eulerAngles = false) noexcept {</span>
+<span class="add">  Vec3&lt;T&gt; a = Angles;           // Quat&lt;double&gt; compile</span>
+  ...
+}
+<span class="add">// ToMatrix44_OLD supprimée : une seule conversion, 2(xy + zw) en [0][1]</span>
+<span class="add">// ajoutés : conjugate(), inverse(), rotate(p), Identity()</span></pre>
+</div>
+
+<h3>Vectorlib — fabriques, index, repère</h3>
+<div class="code2">
+<pre><span class="c">// AVANT</span>
+<span class="del">static constexpr Vec3 Zero() noexcept { Vec3&lt;T&gt;return { 0,0,0 }; }</span>
+<span class="del">T getAngle(const Vec3&amp; v) const { return max(dotProduct(v), 0); }</span>
+<span class="del">const T&amp; operator[](uint8_t i) const;           // C4244</span>
+<span class="c">// livraison de l'échange :</span>
+<span class="del">static constexpr Vec3 Forward() { return { 0, 0, 1 }; } // "axe monde +Z"</span></pre>
+<pre><span class="c">// APRÈS (dépôt)</span>
+<span class="add">static constexpr Vec3 Zero() noexcept { return { T(0), T(0), T(0) }; }</span>
+<span class="add">T angleTo(const Vec3&amp; v) const noexcept;        // acos(clamp(cos))</span>
+<span class="add">constexpr const T&amp; operator[](int i) const noexcept;</span>
+<span class="add">static constexpr Vec3 Forward() noexcept { return { 0, 0, -1 }; }</span>
+<span class="add">static_assert(Vec3f::Forward().z &lt; 0.0f, "LV3 : main DROITE ...");</span></pre>
+</div>
+
+<h3>MatrixLib — ce qui est retiré, ce qui est gardé</h3>
+<div class="code2">
+<pre><span class="c">// AVANT</span>
+<span class="del">#include &lt;immintrin.h&gt;           // SIMD entièrement commenté</span>
+<span class="del">// #pragma omp ... / inverseV2 commentée / main() de test</span>
+T&amp; operator[](uint8_t i);
+void multVecMatrix(...) {
+  ...
+<span class="del">  dst.x = a / w;                 // w == 0 : division par zéro</span>
+}</pre>
+<pre><span class="c">// APRÈS (dépôt)</span>
+<span class="add">// code mort retiré ; produit __restrict conservé</span>
+<span class="add">T* operator[](int i) noexcept;</span>
+void multVecMatrix(...) const noexcept {
+  ...
+<span class="add">  S invW = (w != S(0)) ? S(1) / w : S(1);</span>
+<span class="add">  dst.x = a * invW;</span>
+}
+<span class="add">static Matrix44 Translation(v), Scale(v);  Matrix44 inverseRigid() const;</span></pre>
+</div>
+</section>
+
+<!-- ═══════════════════════════ FONCTIONNEMENT ═══════════════════════════ -->
+<section class="tab-panel" id="tab-fct">
+<h2>Ce que calcule réellement v · M</h2>
+<p>En vecteur-ligne, <code>p' = p · M</code> s’écrit composante par composante <code>p'ⱼ = x·m₀ⱼ + y·m₁ⱼ + z·m₂ⱼ + w·m₃ⱼ</code>. Lu autrement : le résultat est <strong>une combinaison linéaire des lignes</strong> de M, pondérées par x, y, z, w.</p>
+<pre>p' = x · ligne0  +  y · ligne1  +  z · ligne2  +  w · ligne3
+       (image de X)   (image de Y)   (image de Z)   (translation)</pre>
+<p>D’où trois lectures immédiates. Les trois premières lignes sont les images des axes locaux : la ligne 0 de <code>R</code> dit où part +X. La ligne 3 est la translation, multipliée par w : avec w = 1 (un point) elle s’ajoute, avec w = 0 (une direction) elle disparaît d’elle-même — c’est toute la différence entre <code>multVecMatrix</code> et <code>multDirMatrix</code>. Enfin, en row-major les lignes sont contiguës en mémoire : un registre SIMD charge une ligne d’un coup, on diffuse x dans quatre couloirs et on multiplie. Aucune transposition, aucune addition horizontale.</p>
+
+<h2>Pourquoi l’ordre s’inverse entre les deux conventions</h2>
+<p>En vecteur-colonne, <code>M·v</code> : la matrice la plus à droite touche le vecteur en premier, on lit de droite à gauche, donc « scale puis rotation puis translation » s’écrit <code>T·R·S</code>. En vecteur-ligne, <code>v·M</code> : la plus à gauche touche le vecteur en premier, la même suite s’écrit <code>S·R·T</code>. Les matrices individuelles sont transposées l’une de l’autre ; c’est pour cela que les formules de <code>LookAt</code> ou de <code>Perspective</code> trouvées dans un livre OpenGL se recopient <strong>transposées</strong>.</p>
+
+<h2>La division par w et la projection</h2>
+<p><code>multVecMatrix</code> calcule aussi la quatrième composante w et divise. Pour une matrice affine, la colonne 3 vaut (0, 0, 0, 1) : w = 1, la division ne change rien. Pour une projection perspective, la colonne 3 vaut (0, 0, −1, 0) : w = −z (la distance devant la caméra en main droite), et la division produit la perspective. Le constructeur par défaut étant l’identité, une projection doit partir d’une matrice <strong>nulle</strong>, sinon <code>m[3][3] = 1</code> reste en place et w = distance + 1 (contre-exemple C4).</p>
+
+<h2>L’inverse : Gauss-Jordan à pivot partiel, et le cas rigide</h2>
+<p><code>inverse()</code> réduit une copie de M à l’identité en appliquant les mêmes opérations de lignes à une identité, qui devient M⁻¹. À chaque colonne, il échange la ligne courante avec celle dont le coefficient est le plus grand en valeur absolue (pivot partiel) : on divise toujours par le plus grand nombre disponible, ce qui limite l’amplification des erreurs d’arrondi. Si une colonne n’a que des zéros, la matrice est singulière et la fonction renvoie l’identité, en silence (filet Debug proposé dans Vérifier).</p>
+<p>Pour une transformation rigide (rotation + translation, aucun scale), l’inverse est connu d’avance : la rotation inverse est la transposée, la translation inverse est −t·Rᵀ. C’est <code>inverseRigid()</code>.</p>
+
+<h2>Les normales : pourquoi la transposée de l’inverse</h2>
+<p>Une normale n’est pas une direction comme les autres : elle est définie par une propriété, être perpendiculaire à la surface, <code>n · t = 0</code> pour toute tangente t. Si les tangentes se transforment par <code>t' = t·M</code>, on cherche N telle que <code>n' = n·N</code> garde <code>n'·t' = 0</code>. Écrit avec des vecteurs-lignes : <code>n'·t'ᵀ = n·N·Mᵀ·tᵀ</code>, qui vaut <code>n·tᵀ = 0</code> dès que <code>N·Mᵀ = I</code>, c’est-à-dire <code>N = (Mᵀ)⁻¹ = (M⁻¹)ᵀ</code>. Seul le bloc 3×3 compte, d’où <code>multDirMatrix</code>. Si M est une rotation pure, <code>(M⁻¹)ᵀ = M</code> et la question ne se pose pas ; avec un scale uniforme, la normale garde sa direction et seule la longueur change (renormaliser suffit). Avec un scale non uniforme, utiliser M directement fait pencher la normale.</p>
+
+<h2>Quaternions</h2>
+<p>Un quaternion unitaire <code>q = (cos θ/2, sin θ/2 · axe)</code> représente une rotation de θ autour de l’axe. Quatre nombres au lieu de neuf, pas de blocage de cardan (le gimbal lock des angles d’Euler, où deux axes se confondent), une interpolation propre (Slerp) et une renormalisation triviale. <code>q</code> et <code>−q</code> représentent la <strong>même</strong> rotation : c’est pour cela que Slerp inverse q2 quand le produit scalaire est négatif, sinon il prend le chemin long.</p>
+<p><code>rotate(p)</code> applique la rotation sans construire de matrice : <code>t = 2·(v × p)</code>, <code>p' = p + r·t + v × t</code>. C’est le développement de <code>q·p·q*</code>, simplifié pour un quaternion unitaire : 2 produits vectoriels, 18 multiplications. <code>ToMatrix44()</code> donne la même rotation sous forme de matrice ; la forme retenue est la forme vecteur-ligne, avec <code>2(xy + zw)</code> en <code>[0][1]</code>. Sa transposée (l’ancienne <code>_OLD</code>) tourne dans l’autre sens.</p>
+
+<h2>Le float32 : ce que « égal » veut dire</h2>
+<p>Un <code>float</code> a 24 bits de mantisse : l’écart entre 1 et le flottant suivant (l’ulp de 1) vaut 2⁻²³ ≈ 1,19·10⁻⁷. π/2 n’est pas représentable : le float le plus proche vaut 1,57079637…, un peu plus que π/2, et son cosinus vaut −4,37·10⁻⁸ au lieu de 0. C’est l’origine du <code>[-4.37114e-08 1 0]</code> obtenu au test. Deux conséquences : ne jamais comparer des flottants avec <code>==</code>, et choisir la bonne constante pour la bonne question — une tolérance (« ces deux valeurs sont-elles égales à l’échelle de la scène ? ») n’est pas une garde anti-division (« ce dénominateur est-il nul ? »), règle E2 de L01.</p>
+</section>
+
+<!-- ═══════════════════════════ ÉTAPES ═══════════════════════════ -->
+<section class="tab-panel" id="tab-eta">
+<p>Les neuf étapes suivent le chemin d’un point : normaliser l’axe, fabriquer le quaternion, en tirer R, composer S·R·T, transformer un point, une direction et une normale, vérifier la rotation directe, interpoler, puis mesurer la précision. Chaque étape affiche ce qu’elle reçoit de la précédente et ce qu’elle produit, calculés en float32 dans l’ordre des opérations du C++.</p>
+<p>Pour chaque étape : le code scalaire du dépôt, et son équivalent vectorisé de référence. Ce dernier <strong>n’est pas dans <code>Maths/</code></strong> : la lib maths reste scalaire (règle « n’optimise pas trop tôt ») et la vectorisation réelle du moteur vit dans l’étage sommets, en SoA. Il sert à voir ce que la convention retenue rend facile ou difficile.</p>
+
+<div class="panel" id="inputs">
+<h3>Entrées</h3>
+<div class="presets">
+  <button class="btn on" data-epre="0">Test de la leçon (rotation Z 90°)</button>
+  <button class="btn" data-epre="1">Transform → (12, 0, 0)</button>
+  <button class="btn" data-epre="2">Cas général</button>
+  <button class="btn" data-epre="3">Axe non normalisé</button>
+  <button class="btn" data-epre="4">Axe nul (dégénéré)</button>
+  <button class="btn" data-epre="5">Scale nul (singulier)</button>
+</div>
+<div class="ctrls">
+  <div class="grp" role="group" aria-label="Point p (x, y, z)"><span>Point p (x, y, z)</span><input type="number" step="0.1" id="in-px"><input type="number" step="0.1" id="in-py"><input type="number" step="0.1" id="in-pz"></div>
+  <div class="grp" role="group" aria-label="Scale s (x, y, z)"><span>Scale s (x, y, z)</span><input type="number" step="0.1" id="in-sx"><input type="number" step="0.1" id="in-sy"><input type="number" step="0.1" id="in-sz"></div>
+  <div class="grp" role="group" aria-label="Axe de rotation (x, y, z)"><span>Axe de rotation (x, y, z)</span><input type="number" step="0.1" id="in-ax"><input type="number" step="0.1" id="in-ay"><input type="number" step="0.1" id="in-az"></div>
+  <div class="grp" role="group" aria-label="Translation t (x, y, z)"><span>Translation t (x, y, z)</span><input type="number" step="0.1" id="in-tx"><input type="number" step="0.1" id="in-ty"><input type="number" step="0.1" id="in-tz"></div>
+</div>
+<p class="cap">L’angle et le paramètre de Slerp sont dans la barre ci-dessous, qui reste visible pendant que vous descendez dans les étapes : chaque étape recalculée s’allume brièvement. L’angle est converti comme dans <code>Quat</code> : <code>degrés × TO_RADIAN</code> (produit en double), arrondi en float. Les sinus et cosinus sont la valeur double arrondie en float : la <code>sinf</code> du CRT peut différer d’1 ulp.</p>
+</div>
+
+<div class="livebar" id="livebar">
+  <label class="lb"><span>Angle de rotation <span class="v" id="in-ang-v"></span></span><input type="range" min="-180" max="180" step="1" id="in-ang"></label>
+  <label class="lb"><span>Slerp t <span class="v" id="in-st-v"></span></span><input type="range" min="0" max="1" step="0.01" id="in-st"></label>
+  <div class="lbsum" id="lb-sum" aria-live="polite"></div>
+</div>
+
+<!-- E1 -->
+<article class="step"><header><span class="n">E1</span><span class="t">Normaliser l’axe — Vec3::Normalized()</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Un quaternion ne représente une rotation que s’il est unitaire ; <code>SetAxisAngle</code> exige donc un axe de longueur 1. On ne fait pas confiance à l’appelant : la fonction normalise elle-même, avec une garde pour l’axe nul.</p>
+<div class="io" id="e1-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — Vectorlib.h</span>
+Vec3 Normalized() const noexcept {
+  T n = norm();              <span class="c">// x*x + y*y + z*z (carré !)</span>
+  if (n &lt;= T(0)) return Vec3(T(0));   <span class="c">// garde</span>
+  T f = T(1) / std::sqrt(n); <span class="c">// une seule division</span>
+  return { x * f, y * f, z * f };
+}</pre>
+<pre><span class="c">// Vectorisé AoS SSE4.1 — un vecteur par registre</span>
+<span class="c">// xmm = [x, y, z, 0] (w forcé à 0 pour le produit)</span>
+__m128 v  = _mm_set_ps(0.f, z, y, x);
+<span class="c">// DPPS masque 0x7F : multiplie les couloirs 0..2,</span>
+<span class="c">// somme ((x²+y²)+(z²+0)) -> même ordre que le scalaire,</span>
+<span class="c">// et diffuse le résultat dans les 4 couloirs</span>
+__m128 n  = _mm_dp_ps(v, v, 0x7F);
+__m128 s  = _mm_sqrt_ps(n);          <span class="c">// sqrt exacte (IEEE)</span>
+<span class="c">// division, pas _mm_rsqrt_ps : rsqrt n'a que ~12 bits</span>
+<span class="c">// (erreur relative ≤ 1,5·2⁻¹² ≈ 3,7·10⁻⁴)</span>
+__m128 u  = _mm_div_ps(v, s);
+<span class="c">// la garde n &lt;= 0 doit être refaite avec un masque :</span>
+__m128 ok = _mm_cmpgt_ps(n, _mm_setzero_ps());
+u = _mm_and_ps(u, ok);               <span class="c">// 0 si axe nul</span></pre>
+</div>
+<span class="lab">Registres, couloir par couloir</span>
+<div class="lanes" id="e1-lanes"></div>
+<div id="e1-note"></div>
+</div></article>
+
+<!-- E2 -->
+<article class="step"><header><span class="n">E2</span><span class="t">Fabriquer le quaternion — Quat::SetAxisAngle()</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Encoder la rotation en quatre nombres : <code>r = cos(θ/2)</code>, <code>v = axe · sin(θ/2)</code>. Le demi-angle vient de la double application <code>q·p·q*</code> : chaque facteur tourne de θ/2.</p>
+<div class="io" id="e2-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — QuaternionLib.h</span>
+Quat&amp; SetAxisAngle(const Vec3&lt;T&gt;&amp; axis, T radians) noexcept {
+  v = axis.Normalized() * std::sin(radians * T(0.5));  <span class="c">// E1 réutilisée</span>
+  r = std::cos(radians * T(0.5));
+  return *this;
+}</pre>
+<pre><span class="c">// Vectorisé : pas d'intérêt pour UN quaternion</span>
+<span class="c">// (sin/cos n'ont pas d'instruction SIMD ; il faudrait</span>
+<span class="c">//  une approximation polynomiale). L'équivalent utile</span>
+<span class="c">//  est SoA : 8 quaternions d'os à la fois en AVX2,</span>
+<span class="c">//  un registre par composante :</span>
+<span class="c">//  R = cos8(h), VX = AX * sin8(h), VY = AY * sin8(h) ...</span>
+__m256 s8 = sin8_ps(h8);   <span class="c">// polynôme maison, hors L02</span>
+__m256 vx = _mm256_mul_ps(ax8, s8);</pre>
+</div>
+<div id="e2-note"></div>
+</div></article>
+
+<!-- E3 -->
+<article class="step"><header><span class="n">E3</span><span class="t">Quaternion → matrice — Quat::ToMatrix44()</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Le pipeline multiplie des matrices, pas des quaternions : il faut le bloc 3×3 de rotation, écrit dans la convention vecteur-ligne pour que <code>p·R</code> tourne dans le bon sens. On vérifie au passage que R est bien une rotation : lignes unitaires, déterminant +1.</p>
+<div class="io" id="e3-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — QuaternionLib.h (forme vecteur-ligne)</span>
+return Matrix44&lt;T&gt;(
+  1 - 2*(v.y*v.y + v.z*v.z), 2*(v.x*v.y + v.z*r), 2*(v.z*v.x - v.y*r), 0,
+  2*(v.x*v.y - v.z*r), 1 - 2*(v.z*v.z + v.x*v.x), 2*(v.y*v.z + v.x*r), 0,
+  2*(v.z*v.x + v.y*r), 2*(v.y*v.z - v.x*r), 1 - 2*(v.y*v.y + v.x*v.x), 0,
+  0, 0, 0, 1);</pre>
+<pre><span class="c">// Vectorisé : neuf termes tous différents, c'est du</span>
+<span class="c">// shuffle plus que du calcul. Gain négligeable pour</span>
+<span class="c">// une matrice ; en SoA (8 objets) chaque terme devient</span>
+<span class="c">// une ligne AVX2 identique au scalaire :</span>
+<span class="c">//   M00 = 1 - 2*(VY*VY + VZ*VZ)   sur 8 couloirs</span>
+__m256 m00 = _mm256_sub_ps(one8,
+  _mm256_mul_ps(two8, _mm256_add_ps(
+    _mm256_mul_ps(vy8, vy8), _mm256_mul_ps(vz8, vz8))));</pre>
+</div>
+<span class="lab">Matrice produite</span>
+<div class="matwrap" id="e3-mat"></div>
+<div id="e3-note"></div>
+</div></article>
+
+<!-- E4 -->
+<article class="step"><header><span class="n">E4</span><span class="t">Composer M = S · R · T — Matrix44::multiply()</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Fusionner les trois transformations en une seule matrice, pour qu’un sommet ne coûte qu’un produit. L’ordre est celui de <code>Transform::ToLocalMatrix()</code> : on lit de gauche à droite ce que subit le point.</p>
+<div class="io" id="e4-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — MatrixLib.h (16 sorties, ordre fixe)</span>
+a0=ap[0]; a1=ap[1]; a2=ap[2]; a3=ap[3];   <span class="c">// ligne 0 de A</span>
+cp[0] = a0*bp[0] + a1*bp[4] + a2*bp[8]  + a3*bp[12];
+cp[1] = a0*bp[1] + a1*bp[5] + a2*bp[9]  + a3*bp[13];
+cp[2] = a0*bp[2] + a1*bp[6] + a2*bp[10] + a3*bp[14];
+cp[3] = a0*bp[3] + a1*bp[7] + a2*bp[11] + a3*bp[15];
+<span class="c">// ... idem pour les lignes 1, 2, 3</span></pre>
+<pre><span class="c">// Vectorisé AoS SSE : ligne i de C =</span>
+<span class="c">//   a_i0·B.ligne0 + a_i1·B.ligne1 + a_i2·B.ligne2 + a_i3·B.ligne3</span>
+<span class="c">// Les lignes de B sont contiguës (row-major) : 4 chargements.</span>
+__m128 b0 = _mm_loadu_ps(&amp;B[0][0]), b1 = _mm_loadu_ps(&amp;B[1][0]),
+       b2 = _mm_loadu_ps(&amp;B[2][0]), b3 = _mm_loadu_ps(&amp;B[3][0]);
+for (int i = 0; i &lt; 4; ++i) {
+  __m128 r = _mm_mul_ps(_mm_set1_ps(A[i][0]), b0);  <span class="c">// diffusion</span>
+  r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(A[i][1]), b1));
+  r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(A[i][2]), b2));
+  r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(A[i][3]), b3));
+  _mm_storeu_ps(&amp;C[i][0], r);   <span class="c">// même ordre d'additions : bit à bit</span>
+}</pre>
+</div>
+<span class="lab">Registres — ligne 0 de (S·R)·T, couloir par couloir</span>
+<div class="lanes" id="e4-lanes"></div>
+<div class="matwrap" id="e4-mat"></div>
+<div id="e4-note"></div>
+</div></article>
+
+<!-- E5 -->
+<article class="step"><header><span class="n">E5</span><span class="t">Transformer un point — multVecMatrix (w = 1)</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Amener le point dans l’espace parent : combinaison des lignes de M pondérées par (x, y, z, 1), puis division par w. Pour une matrice affine w vaut 1 ; la garde évite la division par zéro quand ce n’est pas le cas.</p>
+<div class="io" id="e5-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — MatrixLib.h</span>
+S a = src[0]*x[0][0] + src[1]*x[1][0] + src[2]*x[2][0] + x[3][0];
+S b = src[0]*x[0][1] + src[1]*x[1][1] + src[2]*x[2][1] + x[3][1];
+S c = src[0]*x[0][2] + src[1]*x[1][2] + src[2]*x[2][2] + x[3][2];
+S w = src[0]*x[0][3] + src[1]*x[1][3] + src[2]*x[2][3] + x[3][3];
+S invW = (w != S(0)) ? S(1) / w : S(1);
+dst.x = a * invW;  dst.y = b * invW;  dst.z = c * invW;</pre>
+<pre><span class="c">// Vectorisé SoA AVX2 — 8 SOMMETS par registre (forme du moteur)</span>
+<span class="c">// X, Y, Z = tableaux SoA alignés 32 octets ; chaque couloir = un sommet</span>
+__m256 X = _mm256_load_ps(xs + i), Y = _mm256_load_ps(ys + i),
+       Z = _mm256_load_ps(zs + i);
+<span class="c">// x' = ((X·m00 + Y·m10) + Z·m20) + m30 : même ordre que le scalaire</span>
+__m256 xr = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(
+              _mm256_mul_ps(X, _mm256_set1_ps(m[0][0])),
+              _mm256_mul_ps(Y, _mm256_set1_ps(m[1][0]))),
+              _mm256_mul_ps(Z, _mm256_set1_ps(m[2][0]))),
+              _mm256_set1_ps(m[3][0]));
+<span class="c">// idem y', z' (colonnes 1 et 2) ; w' si projection</span>
+<span class="c">// _mm256_fmadd_ps irait plus vite mais arrondit une fois</span>
+<span class="c">// au lieu de deux : voir la ligne FMA ci-dessous</span></pre>
+</div>
+<span class="lab">Registres AoS SSE — un point, x·ligne0 + y·ligne1 + z·ligne2 + ligne3</span>
+<div class="lanes" id="e5-lanes"></div>
+<span class="lab">Registres SoA AVX2 — huit sommets pₖ = p + (k, 0, 0), composante x'</span>
+<div class="lanes" id="e5-soa" style="--n:8"></div>
+<div id="e5-note"></div>
+</div></article>
+
+<!-- E6 -->
+<article class="step"><header><span class="n">E6</span><span class="t">Direction et normale — multDirMatrix et (M⁻¹)ᵀ</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Une direction (tangente) ne se translate pas : bloc 3×3 seul. Une normale doit rester perpendiculaire à la tangente transformée ; on le vérifie en calculant <code>n'·t'</code> avec M (faux sous scale non uniforme) et avec <code>(M⁻¹)ᵀ</code>. Surface d’essai : le plan de normale n = (1, 1, 0)/√2 et de tangente t = (1, −1, 0)/√2.</p>
+<div class="io" id="e6-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — usage dans le moteur</span>
+Vec3f tW;  M.multDirMatrix(t, tW);                 <span class="c">// tangente</span>
+Matrix44f N = M.inverse().transposed();            <span class="c">// une fois par objet</span>
+Vec3f nW;  N.multDirMatrix(n, nW);  nW.normalize();
+<span class="c">// multDirMatrix : bloc 3x3, pas de ligne 3</span>
+dst.x = src[0]*x[0][0] + src[1]*x[1][0] + src[2]*x[2][0];</pre>
+<pre><span class="c">// Vectorisé : identique à E5 sans la ligne 3,</span>
+<span class="c">// et SANS division par w. En SoA :</span>
+__m256 nx = _mm256_add_ps(_mm256_add_ps(
+              _mm256_mul_ps(NX, _mm256_set1_ps(N[0][0])),
+              _mm256_mul_ps(NY, _mm256_set1_ps(N[1][0]))),
+              _mm256_mul_ps(NZ, _mm256_set1_ps(N[2][0])));
+<span class="c">// renormalisation SoA : 1 sqrt + 1 div pour 8 normales</span>
+__m256 l2 = dot3_8(nx, ny, nz);   <span class="c">// (nx²+ny²)+nz²</span>
+__m256 il = _mm256_div_ps(one8, _mm256_sqrt_ps(l2));</pre>
+</div>
+<span class="lab">Matrice des normales (M⁻¹)ᵀ</span>
+<div class="matwrap" id="e6-mat"></div>
+<div id="e6-note"></div>
+</div></article>
+
+<!-- E7 -->
+<article class="step"><header><span class="n">E7</span><span class="t">Rotation directe — Quat::rotate(p) comparé à p · R</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Tourner un seul vecteur sans construire de matrice (une visée, un offset de caméra), et vérifier que les deux chemins donnent la même rotation : si <code>rotate</code> et <code>ToMatrix44</code> n’étaient pas dans la même convention, l’un tournerait dans l’autre sens.</p>
+<div class="io" id="e7-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — QuaternionLib.h</span>
+constexpr Vec3&lt;T&gt; rotate(const Vec3&lt;T&gt;&amp; p) const noexcept {
+  Vec3&lt;T&gt; t = v.crossProduct(p) * T(2);
+  return p + t * r + v.crossProduct(t);
+}</pre>
+<pre><span class="c">// Vectorisé AoS SSE : le produit vectoriel par permutations</span>
+<span class="c">// a × b = a.yzx * b.zxy - a.zxy * b.yzx</span>
+<span class="c">// _MM_SHUFFLE(w,z,y,x) choisit, de droite à gauche, le couloir source</span>
+#define YZX _MM_SHUFFLE(3,0,2,1)   <span class="c">// [y, z, x, w]</span>
+#define ZXY _MM_SHUFFLE(3,1,0,2)   <span class="c">// [z, x, y, w]</span>
+__m128 cross_ps(__m128 a, __m128 b) {
+  return _mm_sub_ps(
+    _mm_mul_ps(_mm_shuffle_ps(a,a,YZX), _mm_shuffle_ps(b,b,ZXY)),
+    _mm_mul_ps(_mm_shuffle_ps(a,a,ZXY), _mm_shuffle_ps(b,b,YZX)));
+}
+__m128 t  = _mm_mul_ps(cross_ps(qv, p), _mm_set1_ps(2.f));
+__m128 pr = _mm_add_ps(_mm_add_ps(p, _mm_mul_ps(t, _mm_set1_ps(r))),
+                       cross_ps(qv, t));</pre>
+</div>
+<span class="lab">Registres — premier produit vectoriel v × p</span>
+<div class="lanes" id="e7-lanes"></div>
+<div id="e7-note"></div>
+</div></article>
+
+<!-- E8 -->
+<article class="step"><header><span class="n">E8</span><span class="t">Interpoler — Slerp(identité, q, t)</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Passer d’une orientation à une autre à vitesse angulaire constante (animation, caméra qui se tourne). L’angle obtenu doit valoir t·θ exactement ; la branche LERP prend le relais quand les deux orientations sont si proches que <code>sin Ω</code> devient instable.</p>
+<div class="io" id="e8-io"></div>
+<span class="lab">Code</span>
+<div class="code2">
+<pre><span class="c">// Scalaire — QuaternionLib.h (extrait)</span>
+T cosOmega = Dot(q1, q2);
+if (cosOmega &lt; T(0)) { q2b = -q2; cosOmega = -cosOmega; } <span class="c">// chemin court</span>
+if (cosOmega &gt; T(0.9995)) { s1 = 1 - t; s2 = t; }        <span class="c">// LERP</span>
+else { T om = std::acos(cosOmega), so = std::sin(om);
+       s1 = std::sin((1 - t) * om) / so;  s2 = std::sin(t * om) / so; }
+result = s1 * q1 + s2 * q2b;  if (LERP) result.normalize();</pre>
+<pre><span class="c">// Vectorisé : un Slerp isolé n'a pas d'équivalent utile</span>
+<span class="c">// (acos, sin et une branche). En animation on interpole</span>
+<span class="c">// des dizaines d'os : SoA 8 os par registre, la branche</span>
+<span class="c">// devient un masque et les deux chemins sont calculés :</span>
+__m256 lerp = _mm256_cmp_ps(cos8, _mm256_set1_ps(0.9995f), _CMP_GT_OQ);
+__m256 s1 = _mm256_blendv_ps(s1_slerp, s1_lerp, lerp);</pre>
+</div>
+<div id="e8-note"></div>
+</div></article>
+
+<!-- E9 -->
+<article class="step"><header><span class="n">E9</span><span class="t">Mesurer la précision — ce que « zéro » veut dire en float32</span></header><div class="sb">
+<span class="lab">Objectif</span>
+<p>Relier les résultats précédents aux constantes de <code>config.h</code> : quelle est la taille de l’erreur, à quelle tolérance la comparer, et pourquoi une tolérance ne sert pas de garde.</p>
+<div class="io" id="e9-io"></div>
+<div id="e9-note"></div>
+</div></article>
+</section>
+
+<!-- ═══════════════════════════ CONTRE-EXEMPLES ═══════════════════════════ -->
+<section class="tab-panel" id="tab-ctr">
+<p>Chaque contre-exemple est chiffré : la valeur juste et la valeur fausse sont calculées en float32, avec le même code que l’onglet Étapes. Ils utilisent les entrées de cet onglet-là quand c’est indiqué ; les autres ont des entrées fixes, choisies pour rendre l’erreur visible.</p>
+<div id="ctr-list"></div>
+</section>
+
+<!-- ═══════════════════════════ VÉRIFIER ═══════════════════════════ -->
+<section class="tab-panel" id="tab-ver">
+<h2>Ce qui a été vérifié pendant la leçon</h2>
+<div class="twrap"><table>
+<tr><th>Vérification</th><th>Attendu</th><th>Obtenu</th></tr>
+<tr><td>Compilation de la solution après le renommage <code>LibV3</code> → <code>LV3</code></td><td>0 erreur</td><td class="ok">0 erreur</td></tr>
+<tr><td><code>X.crossProduct(Y)</code></td><td><code>[0 0 1]</code> (main droite)</td><td class="ok"><code>[0 0 1]</code></td></tr>
+<tr><td><code>X.dotProduct(Y)</code></td><td><code>0</code></td><td class="ok"><code>0</code></td></tr>
+<tr><td><code>rotateZ(90°)</code> appliquée à X</td><td>≈ <code>[0 1 0]</code></td><td class="ok"><code>[-4.37114e-08 1 0]</code> — l’écart est l’arrondi de π/2 (E9)</td></tr>
+<tr><td>Avertissement C4244 sur <code>t[i][i]</code></td><td>disparu après <code>operator[](int)</code></td><td class="ok">0 avertissement</td></tr>
+</table></div>
+<div class="callout amber"><strong>Correction d’un chiffre de l’échange.</strong> Pour le test « translation (10, 0, 0) + scale 2 », l’échange annonçait (12, 0, 0) si l’ordre est bon et (21, 0, 0) sinon. Le second est faux : le mauvais ordre translate d’abord (1 → 11) puis multiplie par 2, soit <strong>(22, 0, 0)</strong>. Le contre-exemple C1 le recalcule.</div>
+
+<h2>Tests hors moteur</h2>
+<p>Un exécutable console de quelques dizaines de lignes, qui n’inclut que les trois headers du cœur. Les valeurs attendues ci-dessous sont celles que cette page calcule ; les tolérances sont exprimées en ulp ou en multiples de <code>EPSILON_FLOAT</code>, jamais par <code>==</code> (sauf là où le résultat est exact par construction).</p>
+<pre id="tests-code"></pre>
+<div class="readout" id="tests-pred"></div>
+
+<h2>Filets Debug (proposés, non actés)</h2>
+<div class="twrap"><table>
+<tr><th>Où</th><th>Filet</th><th>Ce qu’il attrape</th></tr>
+<tr><td><code>Vectorlib.h</code></td><td><code>static_assert</code> du repère — <strong>déjà dans le dépôt</strong></td><td>Un <code>Forward()</code> ou un <code>crossProduct</code> modifié (schéma B).</td></tr>
+<tr><td><code>Quat::ToMatrix44()</code></td><td><code>LV3_ASSERT(std::abs(r*r + v.norm() - 1) &lt; 1e-3f)</code></td><td>Un quaternion non unitaire produit une matrice qui scale en plus de tourner (préréglage « Axe nul » : rotation perdue en silence).</td></tr>
+<tr><td><code>Matrix44::inverse()</code></td><td>Assert avant <code>return Matrix44()</code> sur le chemin singulier</td><td>Un scale nul rend la matrice non inversible ; aujourd’hui l’identité est renvoyée sans bruit (préréglage « Scale nul »).</td></tr>
+<tr><td><code>Matrix44::inverseRigid()</code></td><td>Assert : les trois lignes du bloc 3×3 sont unitaires à 10⁻³ près</td><td>Un appel sur une matrice qui porte un scale (résultat faux, écart L2-6).</td></tr>
+<tr><td><code>Quat::LookRotation()</code></td><td>Garde en <code>NEAR_ZERO_SQ</code> au lieu de <code>EPSILON_FLOAT</code></td><td>Une direction courte mais valide rejetée (C9).</td></tr>
+</table></div>
+
+<h2>Prédictions pour le lot appairé</h2>
+<p>Le lot qui consomme directement cette leçon est L05 (caméra et frustum) : il oriente la caméra par <code>LookRotation</code>, inverse sa matrice monde par <code>inverseRigid</code> et projette par <code>Projection::Perspective</code>. Ce que cette leçon prédit pour lui, calculé ici :</p>
+<div class="readout" id="pred-l05"></div>
+</section>
+
+<!-- ═══════════════════════════ QUESTIONS DE FOND ═══════════════════════════ -->
+<section class="tab-panel" id="tab-qst">
+<p>Les questions posées pendant la leçon, avec la réponse complète. Quand un lot ultérieur a modifié la réponse, c’est indiqué.</p>
+
+<div class="qa"><h3>Q1 — Le « pont de transition » en tête de Vectorlib.h</h3>
+<p class="q">« Je ne comprends pas ce code : <code>#ifndef LV3_FORCEINLINE / #ifdef LV2_FORCEINLINE / #define LV3_FORCEINLINE LV2_FORCEINLINE / #else / #define LV3_FORCEINLINE inline</code>. » Puis : « c’est du code inutile si Compiler.h est adapté ? »</p>
+<p>Le bloc garantissait que <code>LV3_FORCEINLINE</code> existe quel que soit l’état de <code>Compiler.h</code>. <code>#ifndef</code> : n’agir que si la macro n’existe pas encore. <code>#ifdef LV2_FORCEINLINE</code> : si l’ancienne existe, créer un alias (le préprocesseur remplace <code>LV3_FORCEINLINE</code> par <code>LV2_FORCEINLINE</code>, puis par <code>__forceinline</code>). Sinon, se replier sur <code>inline</code>.</p>
+<div class="twrap"><table><tr><th>État de Compiler.h</th><th>Effet du bloc</th></tr>
+<tr><td>Définit <code>LV3_FORCEINLINE</code></td><td><code>#ifndef</code> faux : bloc sauté, sans effet</td></tr>
+<tr><td>Définit <code>LV2_FORCEINLINE</code> (état d’alors)</td><td>Alias LV3 → LV2 → <code>__forceinline</code></td></tr>
+<tr><td>Ne définit rien</td><td>Repli sur <code>inline</code></td></tr></table></div>
+<p>Oui : une fois <code>Compiler.h</code> renommé, la première condition est toujours fausse et le bloc est du code mort. Il a été supprimé. <code>Compiler.h</code> a gagné au passage un <code>#elif defined(__GNUC__) || defined(__clang__)</code> explicite, suivi d’un <code>#else inline</code> pour un compilateur inconnu.</p></div>
+
+<div class="qa"><h3>Q2 — Pourquoi les matrices caméra dans MatrixLib et pas dans Camera ?</h3>
+<p class="q">« Pour moi cela relève davantage de la classe Camera, non ? »</p>
+<p>Il faut séparer <strong>fabriquer</strong> une matrice (fonction pure : <code>(eye, target, up) → 4×4</code>) et <strong>posséder l’état</strong> (position, FOV, quand recalculer, cache). La caméra possède l’état et appelle la fabrique. Quatre raisons : ces matrices servent hors caméra (vue d’une lumière pour les ombres, billboard, sonde, UI orthographique) ; le bas niveau ne doit pas dépendre du haut niveau ; une fonction pure se teste avec des valeurs d’or sans instancier de scène ; c’est la forme de GLM, DirectXMath, Unity et Unreal.</p>
+<div class="callout"><strong>Ce que L05 a changé.</strong> Le principe est resté (pur, hors Camera), le lieu a bougé : <code>Matrix44</code> ne garde que l’algèbre pure, et ce qui dépend d’une convention de rendu part dans <code>LV3::Projection</code> (fonctions libres) et <code>Quat::LookRotation</code>. C’était la variante « fonctions libres » proposée en fin de réponse.</div></div>
+
+<div class="qa"><h3>Q3 — Le mélange des 3×3 et des 4×4</h3>
+<p class="q">« J’ai peur du mélange des matrices 3×3 et 4×4, j’étais habitué seulement aux 4×4. Je me sens perdu. »</p>
+<p>On reste en 4×4 partout. Une 4×4 affine contient déjà un bloc 3×3 (rotation, scale) et une ligne de translation. « Faire du 3×3 », c’est appeler <code>multDirMatrix</code>, qui ignore la translation — ce qui était déjà fait pour les directions. Le seul vrai sujet est la normale sous scale non uniforme, et sa correction reste une 4×4 : <code>model.inverse().transposed()</code> passée à <code>multDirMatrix</code>. Un type <code>Mat3</code> n’est qu’une optimisation de stockage (9 floats au lieu de 16), non nécessaire. Schéma C et étape E6.</p></div>
+
+<div class="qa"><h3>Q4 — Pourquoi le nom LV3 ?</h3>
+<p>Parce que le code d’Onky l’utilisait déjà : <code>config.h</code> déclare ses constantes dans <code>namespace LV3</code>, <code>Compiler.h</code> préfixe en <code>LV3_</code>, <code>MatrixLib</code> appelait <code>LV3::TO_DEGRE</code>. <code>LibV3</code> et <code>LibV2</code> ne venaient que des fichiers communiqués. Court ou explicite (<code>LibraryV3</code>), aucun n’est faux ; ce qui compte est qu’il n’y en ait qu’un. Onky a gardé <code>LV3</code>.</p></div>
+
+<div class="qa"><h3>Q5 — « Pourquoi ne vois-je pas Vec2f dans la fonction test ? »</h3>
+<p>Le test était dans <code>namespace LibV3</code>, les vecteurs dans <code>namespace LV3</code>. Depuis <code>LibV3</code>, un nom non qualifié est cherché dans <code>LibV3</code>, puis dans le global, jamais dans <code>LV3</code>. <code>Vec3f</code> passait quand même, parce qu’un ancien <code>LibV3::Vec3f</code> (la struct moderne) arrivait par un include transitif ; aucun <code>LibV3::Vec2f</code> n’arrivait par ce chemin. L’asymétrie était la signature de la coexistence des deux familles. Vérification : F12 sur <code>Vec3f</code> ouvrait l’ancien fichier. Correction : un seul namespace dans les <code>.h</code> et les <code>.cpp</code> gardés, et retrait du build (pas renommage) des fichiers redondants, sinon la collision renaît sous le nom <code>LV3::Vec3f</code>.</p></div>
+
+<div class="qa"><h3>Q6 — « Je n’ai pas la valeur de LV3::HALF_PI »</h3>
+<p>Le nom avait été cité de mémoire. <code>config.h</code> expose <code>M_PI_2</code> (écart E1 du lot L01 : ces noms sont ceux des macros de <code>&lt;cmath&gt;</code>). Pour le test, <code>LV3::M_PI * 0.5f</code> ou <code>90.0f * LV3::TO_RADIAN</code> suffisent.</p></div>
+
+<div class="qa"><h3>Q7 — Avertissement C4244 sur <code>T pivotsize = t[i][i];</code></h3>
+<p><code>i</code> est un <code>int</code> ; l’<code>operator[]</code> attendait un <code>uint8_t</code>. Chaque appel convertissait 32 bits en 8 bits. L’avertissement tombait sur la première indexation de <code>inverse()</code>, mais la cause était la signature de l’opérateur. Règle retenue : le type d’un index est au moins aussi large que ce qui l’alimente. Corrigé dans <code>Matrix44</code>, <code>Vec3</code> et <code>Vec4</code>. C4244 est un avertissement à ne jamais ignorer en calcul numérique : c’est le même qui signale un <code>double</code> rangé dans un <code>float</code> au milieu d’une boucle chaude.</p></div>
+
+<div class="qa"><h3>Q8 — « J’ai [-4.37114e-08 1 0] »</h3>
+<p>C’est le résultat attendu. <code>cos(π/2)</code> devrait valoir 0, mais π/2 n’est pas représentable en float : on passe 1,57079637, dont le cosinus vaut −4,37·10⁻⁸, de l’ordre de la précision d’un float autour de 1. Inoffensif tant que l’erreur ne s’accumule pas ; après des milliers de produits enchaînés, une matrice de rotation dérive (axes plus tout à fait unitaires ni orthogonaux), d’où les renormalisations de quaternions. Étape E9.</p></div>
+
+<div class="qa"><h3>Q9 — AABB et Plane, c’est une prochaine leçon ?</h3>
+<p>Oui. <code>AABB</code>, <code>Plane</code>, <code>Frustum</code>, <code>Ray</code> sont de la géométrie de requête (culling, picking, collisions) ; le rasterizer est de la géométrie de rendu. L’échange proposait le rasterizer d’abord (sans lui, rien à regarder), avec juste ce qu’il faut de <code>Plane</code> pour le clipping near, puis une leçon dédiée à la géométrie.</p>
+<div class="callout"><strong>Numérotation réelle.</strong> L’échange appelait « leçon 3 » le rasterizer. Dans le projet, L03 a été l’ECS (SparseSet, ResourceManager), L04 le rasterizer, L05 la caméra et le frustum (Gribb-Hartmann). La séquence d’idées a été respectée, pas les numéros.</div></div>
+</section>
+
+<!-- ═══════════════════════════ ROADMAP ═══════════════════════════ -->
+<section class="tab-panel" id="tab-rdm">
+<p>Bloc à ajouter à <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard », juste après « Décisions en attente — socle L01 ». Même forme que le socle L01 : la colonne « Nature relevée » décrit ce qu’est l’écart, ce n’est pas un verdict.</p>
+<div class="btnrow"><button class="btn" id="copy-rdm" type="button">Copier le bloc markdown</button><span class="cap" id="copy-st"></span></div>
+<pre id="rdm-md"></pre>
+</section>
+
+<div class="dlwrap">
+<button class="dl-btn" id="dl-btn" type="button">↓ Télécharger cet artefact (HTML)</button>
+</div>
+
+<script>
+// ============================================================
+//  Calcul float32 — réplique pas à pas des formules C++ de LV3
+//  Chaque opération est arrondie en float32 (Math.fround), dans
+//  l'ordre exact où le C++ l'écrit (MSVC /fp:precise : pas de FMA
+//  implicite). Les trigos sont la valeur double arrondie en float :
+//  elle peut différer d'1 ulp de la sinf/cosf du CRT.
+// ============================================================
+var LV3M = (function () {
+  'use strict';
+  var F = Math.fround;
+  var EPSILON_FLOAT = F(0.001), NEAR_ZERO_SQ = 1e-30;
+  function add(a, b) { return F(a + b); }
+  function sub(a, b) { return F(a - b); }
+  function mul(a, b) { return F(a * b); }
+  function div(a, b) { return F(a / b); }
+  function sqrt(a) { return F(Math.sqrt(a)); }
+  function fsin(a) { return F(Math.sin(a)); }
+  function fcos(a) { return F(Math.cos(a)); }
+  // FMA émulée : produit exact en double (24+24 bits < 53), un seul arrondi final
+  function fma(a, b, c) { return F(a * b + c); }
+
+  // ---------- ulp float32 ----------
+  var fb = new Float32Array(1), ib = new Uint32Array(fb.buffer);
+  function ulp(x) {
+    x = Math.abs(F(x));
+    if (!isFinite(x)) return NaN;
+    fb[0] = x; ib[0] = ib[0] + 1; return fb[0] - x;
+  }
+  function ulpDiff(a, b) { // distance en ulp entre deux float32 de même signe
+    fb[0] = F(a); var ia = ib[0]; fb[0] = F(b); var ibb = ib[0];
+    return Math.abs(ia - ibb);
+  }
+  function hex(x) { fb[0] = F(x); return '0x' + ib[0].toString(16).toUpperCase().padStart(8, '0'); }
+
+  // ---------- Vec3<float> ----------
+  function v3(x, y, z) { return [F(x), F(y), F(z)]; }
+  function vadd(a, b) { return [add(a[0], b[0]), add(a[1], b[1]), add(a[2], b[2])]; }
+  function vsub(a, b) { return [sub(a[0], b[0]), sub(a[1], b[1]), sub(a[2], b[2])]; }
+  function vscale(a, s) { return [mul(a[0], s), mul(a[1], s), mul(a[2], s)]; }
+  // dotProduct : x*v.x + y*v.y + z*v.z  -> ((x*vx + y*vy) + z*vz)
+  function dot(a, b) { return add(add(mul(a[0], b[0]), mul(a[1], b[1])), mul(a[2], b[2])); }
+  // crossProduct right-handed : { y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x }
+  function cross(a, b) {
+    return [sub(mul(a[1], b[2]), mul(a[2], b[1])),
+            sub(mul(a[2], b[0]), mul(a[0], b[2])),
+            sub(mul(a[0], b[1]), mul(a[1], b[0]))];
+  }
+  function norm(a) { return dot(a, a); }            // longueur AU CARRÉ (nom hérité)
+  // Normalized() : n = norm(); if (n <= 0) return 0; f = 1/sqrt(n); {x*f, y*f, z*f}
+  function normalized(a) {
+    var n = norm(a);
+    if (!(n > 0)) return { v: [0, 0, 0], n: n, inv: NaN, guarded: true };
+    var s = sqrt(n), f = div(1, s);
+    return { v: vscale(a, f), n: n, s: s, inv: f, guarded: false };
+  }
+  // Variante SANS garde (contre-exemple) : 0 * (1/sqrt(0)) = 0 * inf = NaN
+  function normalizedNoGuard(a) {
+    var n = norm(a), f = div(1, sqrt(n));
+    return vscale(a, f);
+  }
+  function length(a) { return sqrt(norm(a)); }
+
+  // ---------- Matrix44<float> row-major : m[row][col] ----------
+  function ident() { return [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]]; }
+  function zero() { return [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]; }
+  function clone(m) { return m.map(function (r) { return r.slice(); }); }
+  // multiply(a,b,c) : c[i][j] = a[i][0]*b[0][j] + a[i][1]*b[1][j] + a[i][2]*b[2][j] + a[i][3]*b[3][j]
+  function mmul(a, b) {
+    var c = zero();
+    for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++)
+      c[i][j] = add(add(add(mul(a[i][0], b[0][j]), mul(a[i][1], b[1][j])), mul(a[i][2], b[2][j])), mul(a[i][3], b[3][j]));
+    return c;
+  }
+  function transposed(m) { var t = zero(); for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++) t[i][j] = m[j][i]; return t; }
+  function translation(t) { var m = ident(); m[3][0] = F(t[0]); m[3][1] = F(t[1]); m[3][2] = F(t[2]); return m; }
+  function scaleM(s) { var m = ident(); m[0][0] = F(s[0]); m[1][1] = F(s[1]); m[2][2] = F(s[2]); return m; }
+  function rotZ(rad) { // MatrixLib::rotateZ appliqué à l'identité
+    var c = fcos(rad), s = fsin(rad), m = ident();
+    m[0][0] = c; m[0][1] = s; m[1][0] = F(-s); m[1][1] = c; return m;
+  }
+  // multVecMatrix : a = x*m00 + y*m10 + z*m20 + m30 ... w idem ; garde w != 0
+  function multVec(m, p) {
+    var r = [0, 1, 2, 3].map(function (j) {
+      return add(add(add(mul(p[0], m[0][j]), mul(p[1], m[1][j])), mul(p[2], m[2][j])), m[3][j]);
+    });
+    var invW = (r[3] !== 0) ? div(1, r[3]) : 1;
+    return { h: r, v: [mul(r[0], invW), mul(r[1], invW), mul(r[2], invW)], invW: invW };
+  }
+  // Même chose avec FMA (une seule erreur d'arrondi par étape) — pour le contre-exemple
+  function multVecFma(m, p) {
+    return [0, 1, 2].map(function (j) {
+      return fma(p[2], m[2][j], fma(p[1], m[1][j], fma(p[0], m[0][j], m[3][j])));
+    });
+  }
+  // multDirMatrix : bloc 3x3 seul
+  function multDir(m, d) {
+    return [0, 1, 2].map(function (j) {
+      return add(add(mul(d[0], m[0][j]), mul(d[1], m[1][j])), mul(d[2], m[2][j]));
+    });
+  }
+  // inverse() : Gauss-Jordan à pivot partiel, réplique ligne à ligne de MatrixLib.h
+  function inverse(src) {
+    var s = ident(), t = clone(src), i, j, k;
+    for (i = 0; i < 3; i++) {
+      var pivot = i, pivotsize = t[i][i];
+      if (pivotsize < 0) pivotsize = -pivotsize;
+      for (j = i + 1; j < 4; j++) {
+        var tmp = t[j][i]; if (tmp < 0) tmp = -tmp;
+        if (tmp > pivotsize) { pivot = j; pivotsize = tmp; }
+      }
+      if (pivotsize === 0) return { m: ident(), singular: true };
+      if (pivot !== i) {
+        for (j = 0; j < 4; j++) {
+          var a = t[i][j]; t[i][j] = t[pivot][j]; t[pivot][j] = a;
+          a = s[i][j]; s[i][j] = s[pivot][j]; s[pivot][j] = a;
+        }
+      }
+      for (j = i + 1; j < 4; j++) {
+        var factor = div(t[j][i], t[i][i]);
+        for (k = 0; k < 4; k++) { t[j][k] = sub(t[j][k], mul(factor, t[i][k])); s[j][k] = sub(s[j][k], mul(factor, s[i][k])); }
+      }
+    }
+    for (i = 3; i >= 0; --i) {
+      var f = t[i][i];
+      if (f === 0) return { m: ident(), singular: true };
+      for (j = 0; j < 4; j++) { t[i][j] = div(t[i][j], f); s[i][j] = div(s[i][j], f); }
+      for (j = 0; j < i; j++) {
+        var g = t[j][i];
+        for (k = 0; k < 4; k++) { t[j][k] = sub(t[j][k], mul(g, t[i][k])); s[j][k] = sub(s[j][k], mul(g, s[i][k])); }
+      }
+    }
+    return { m: s, singular: false };
+  }
+  // inverseRigid() : transposée 3x3 + translation -t·Rᵀ
+  function inverseRigid(x) {
+    var r = ident();
+    for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) r[i][j] = x[j][i];
+    for (var c = 0; c < 3; c++)
+      r[3][c] = F(-add(add(mul(x[3][0], r[0][c]), mul(x[3][1], r[1][c])), mul(x[3][2], r[2][c])));
+    return r;
+  }
+  function det3(m) {
+    var a = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1])
+          - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0])
+          + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    return a; // en double : c'est une MESURE, pas un calcul moteur
+  }
+  function maxAbsDiff(a, b) { var d = 0; for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++) d = Math.max(d, Math.abs(a[i][j] - b[i][j])); return d; }
+
+  // ---------- Quat<float> : r (scalaire) + v (Vec3) ----------
+  // SetAxisAngle : v = axis.Normalized() * sin(rad*0.5) ; r = cos(rad*0.5)
+  function quatAxisAngle(axis, rad) {
+    var h = mul(rad, 0.5), n = normalized(axis);
+    var s = fsin(h);
+    return { r: fcos(h), v: vscale(n.v, s), half: h, sinH: s };
+  }
+  // ToMatrix44 (forme vecteur-ligne, celle du dépôt)
+  function quatToMatrix(q) {
+    var r = q.r, x = q.v[0], y = q.v[1], z = q.v[2];
+    var m = ident();
+    m[0][0] = sub(1, mul(2, add(mul(y, y), mul(z, z))));
+    m[0][1] = mul(2, add(mul(x, y), mul(z, r)));
+    m[0][2] = mul(2, sub(mul(z, x), mul(y, r)));
+    m[1][0] = mul(2, sub(mul(x, y), mul(z, r)));
+    m[1][1] = sub(1, mul(2, add(mul(z, z), mul(x, x))));
+    m[1][2] = mul(2, add(mul(y, z), mul(x, r)));
+    m[2][0] = mul(2, add(mul(z, x), mul(y, r)));
+    m[2][1] = mul(2, sub(mul(y, z), mul(x, r)));
+    m[2][2] = sub(1, mul(2, add(mul(y, y), mul(x, x))));
+    return m;
+  }
+  // ToMatrix44_OLD (forme vecteur-colonne, supprimée) : la transposée
+  function quatToMatrixOld(q) { return transposed(quatToMatrix(q)); }
+  // rotate : t = (v x p)*2 ; p + t*r + v x t
+  function quatRotate(q, p) {
+    var t = vscale(cross(q.v, p), 2);
+    return { t: t, out: vadd(vadd(p, vscale(t, q.r)), cross(q.v, t)) };
+  }
+  function qdot(a, b) { return add(mul(a.r, b.r), dot(a.v, b.v)); }
+  function qnormalize(q) {
+    var mag = sqrt(add(add(add(mul(q.r, q.r), mul(q.v[0], q.v[0])), mul(q.v[1], q.v[1])), mul(q.v[2], q.v[2])));
+    if (mag > 0) return { r: div(q.r, mag), v: [div(q.v[0], mag), div(q.v[1], mag), div(q.v[2], mag)] };
+    return q;
+  }
+  // Slerp (réplique) ; noAntipodal = contre-exemple sans inversion de q2
+  function slerp(q1, q2, t, noAntipodal) {
+    t = F(t);
+    var cosO = qdot(q1, q2), q2b = { r: q2.r, v: q2.v.slice() }, flipped = false;
+    if (!noAntipodal && cosO < 0) { q2b = { r: F(-q2.r), v: vscale(q2.v, -1) }; cosO = F(-cosO); flipped = true; }
+    var s1, s2, branch;
+    if (cosO > F(0.9995)) { s1 = sub(1, t); s2 = t; branch = 'LERP'; }
+    else {
+      var om = F(Math.acos(cosO)), so = fsin(om);
+      s1 = div(fsin(mul(sub(1, t), om)), so); s2 = div(fsin(mul(t, om)), so); branch = 'SLERP';
+    }
+    var res = { r: add(mul(s1, q1.r), mul(s2, q2b.r)), v: vadd(vscale(q1.v, s1), vscale(q2b.v, s2)) };
+    if (branch === 'LERP') res = qnormalize(res);
+    return { q: res, cosO: cosO, flipped: flipped, branch: branch, s1: s1, s2: s2 };
+  }
+  function quatAngleDeg(q) { // angle de rotation représenté (double, mesure)
+    var c = Math.max(-1, Math.min(1, q.r));
+    return 2 * Math.acos(c) * 180 / Math.PI;
+  }
+
+  // ---------- Projections (dépôt : reverse-Z [0,1] ; échange : [-1,1]) ----------
+  function perspRevZ(fovY, aspect, n, f) {
+    var t = F(Math.tan(F(fovY * 0.5)) * n), r = mul(t, aspect);
+    var m = zero(), l = F(-r), b = F(-t);
+    m[0][0] = div(mul(2, n), sub(r, l)); m[1][1] = div(mul(2, n), sub(t, b));
+    m[2][0] = div(add(r, l), sub(r, l)); m[2][1] = div(add(t, b), sub(t, b));
+    m[2][2] = div(n, sub(f, n)); m[2][3] = -1; m[3][2] = div(mul(n, f), sub(f, n)); m[3][3] = 0;
+    return m;
+  }
+  function perspGL(fovY, aspect, n, f, keepIdentity) {
+    var th = F(Math.tan(F(fovY * 0.5)));
+    var m = keepIdentity ? ident() : zero();
+    m[0][0] = div(1, mul(aspect, th)); m[1][1] = div(1, th);
+    m[2][2] = F(-div(add(f, n), sub(f, n))); m[2][3] = -1;
+    m[3][2] = F(-div(mul(mul(2, f), n), sub(f, n)));
+    return m;
+  }
+  // résolution de profondeur théorique à la distance d : ulp(z_ndc) / |dz/dd|
+  function depthResolution(d, n, f) {
+    var zGL = (f + n) / (f - n) - 2 * f * n / ((f - n) * d);
+    var sGL = 2 * f * n / ((f - n) * d * d);
+    var zRev = n * f / ((f - n) * d) - n / (f - n);
+    var sRev = n * f / ((f - n) * d * d);
+    return { zGL: F(zGL), resGL: ulp(zGL) / sGL, zRev: F(zRev), resRev: ulp(zRev) / sRev };
+  }
+
+  // ---------- LookRotation : garde du dépôt (contre-exemple C9) ----------
+  function lookGuardRejects(dir) { return norm(dir) <= EPSILON_FLOAT; }
+
+
+  // ---------- Quat::LookRotation (réplique, Shepperd) ----------
+  function lookRotation(dir, worldUp) {
+    worldUp = worldUp || [0, 1, 0];
+    if (norm(dir) <= EPSILON_FLOAT) return { q: { r: 1, v: [0, 0, 0] }, rejected: true };
+    var f = normalized(dir).v, up = worldUp, r = cross(f, up), fallback = false;
+    if (norm(r) <= EPSILON_FLOAT) { up = (Math.abs(f[2]) < F(0.9)) ? [0, 0, 1] : [0, 1, 0]; r = cross(f, up); fallback = true; }
+    r = normalized(r).v;
+    var u = cross(r, f);
+    var m00 = r[0], m01 = r[1], m02 = r[2], m10 = u[0], m11 = u[1], m12 = u[2], m20 = F(-f[0]), m21 = F(-f[1]), m22 = F(-f[2]);
+    var q = { r: 0, v: [0, 0, 0] }, tr = add(add(m00, m11), m22), s;
+    if (tr > 0) { s = mul(sqrt(add(tr, 1)), 2); q.r = mul(0.25, s); q.v = [div(sub(m12, m21), s), div(sub(m20, m02), s), div(sub(m01, m10), s)]; }
+    else if (m00 > m11 && m00 > m22) { s = mul(sqrt(sub(sub(add(1, m00), m11), m22)), 2); q.r = div(sub(m12, m21), s); q.v = [mul(0.25, s), div(add(m01, m10), s), div(add(m20, m02), s)]; }
+    else if (m11 > m22) { s = mul(sqrt(sub(sub(add(1, m11), m00), m22)), 2); q.r = div(sub(m20, m02), s); q.v = [div(add(m01, m10), s), mul(0.25, s), div(add(m12, m21), s)]; }
+    else { s = mul(sqrt(sub(sub(add(1, m22), m00), m11)), 2); q.r = div(sub(m01, m10), s); q.v = [div(add(m20, m02), s), div(add(m12, m21), s), mul(0.25, s)]; }
+    return { q: qnormalize(q), rejected: false, fallback: fallback };
+  }
+
+  return {
+    lookRotation: lookRotation, F: F, add: add, sub: sub, mul: mul, div: div, sqrt: sqrt, fsin: fsin, fcos: fcos, fma: fma,
+    ulp: ulp, ulpDiff: ulpDiff, hex: hex, EPSILON_FLOAT: EPSILON_FLOAT, NEAR_ZERO_SQ: NEAR_ZERO_SQ,
+    v3: v3, vadd: vadd, vsub: vsub, vscale: vscale, dot: dot, cross: cross, norm: norm,
+    normalized: normalized, normalizedNoGuard: normalizedNoGuard, length: length,
+    ident: ident, zero: zero, mmul: mmul, transposed: transposed, translation: translation,
+    scaleM: scaleM, rotZ: rotZ, multVec: multVec, multVecFma: multVecFma, multDir: multDir,
+    inverse: inverse, inverseRigid: inverseRigid, det3: det3, maxAbsDiff: maxAbsDiff,
+    quatAxisAngle: quatAxisAngle, quatToMatrix: quatToMatrix, quatToMatrixOld: quatToMatrixOld,
+    quatRotate: quatRotate, qdot: qdot, qnormalize: qnormalize, slerp: slerp, quatAngleDeg: quatAngleDeg,
+    perspRevZ: perspRevZ, perspGL: perspGL, depthResolution: depthResolution, lookGuardRejects: lookGuardRejects
+  };
+})();
+
+
+</script>
+<script>
+(function () {
+'use strict';
+var M = LV3M, F = Math.fround;
+// Copie vierge de la page AVANT toute modification du DOM : c'est elle qu'on télécharge
+var PRISTINE = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+// ─── Formatage ──────────────────────────────────────────────
+// g6 : comme std::cout (6 chiffres significatifs, %g) ; g9 : float32 complet
+function gfmt(x, p) {
+  if (typeof x !== 'number') return String(x);
+  if (Object.is(x, -0)) return '-0';
+  if (x === 0) return '0';
+  if (isNaN(x)) return 'nan';
+  if (!isFinite(x)) return x > 0 ? 'inf' : '-inf';
+  var e = Number(x.toExponential(p - 1).split('e')[1]);
+  if (e < -4 || e >= p) {
+    var parts = x.toExponential(p - 1).split('e');
+    var mant = parts[0].indexOf('.') >= 0 ? parts[0].replace(/0+$/, '').replace(/\.$/, '') : parts[0];
+    var ex = Number(parts[1]), sg = ex < 0 ? '-' : '+', ab = Math.abs(ex);
+    return mant + 'e' + sg + (ab < 10 ? '0' + ab : ab);
+  }
+  var s = x.toPrecision(p);
+  if (s.indexOf('.') >= 0) s = s.replace(/0+$/, '').replace(/\.$/, '');
+  return s;
+}
+function g6(x) { return gfmt(x, 6); }
+function g9(x) { return gfmt(x, 9); }
+function V6(v) { return '[' + v.map(g6).join(' ') + ']'; }
+function V9(v) { return '(' + v.map(g9).join(', ') + ')'; }
+function Q9(q) { return 'r = ' + g9(q.r) + ', v = ' + V9(q.v); }
+function deg(rad) { return rad * 180 / Math.PI; }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function $(id) { return document.getElementById(id); }
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function angBetween(a, b) { // mesure en double
+  var d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2], la = Math.hypot(a[0], a[1], a[2]), lb = Math.hypot(b[0], b[1], b[2]);
+  if (la === 0 || lb === 0) return NaN;
+  return deg(Math.acos(Math.max(-1, Math.min(1, d / (la * lb)))));
+}
+function maxDiffV(a, b) { return Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]), Math.abs(a[2] - b[2])); }
+function ulpsV(a, b) { return Math.max(M.ulpDiff(a[0], b[0]), M.ulpDiff(a[1], b[1]), M.ulpDiff(a[2], b[2])); }
+
+// Rendu d'une matrice 4x4 ; cls(i,j) renvoie une classe css
+function matHTML(m, label, cls) {
+  var h = '<div class="mat">';
+  for (var i = 0; i < 4; i++) for (var j = 0; j < 4; j++) {
+    var c = cls ? cls(i, j) : (i === 3 && j < 3 ? 't' : (i < 3 && j < 3 ? 'lin' : ''));
+    h += '<div class="' + c + '" title="m[' + i + '][' + j + ']">' + g6(m[i][j]) + '</div>';
+  }
+  return '<span style="display:inline-block">' + h + '</div>' + (label ? '<span class="matlbl">' + label + '</span>' : '') + '</span>';
+}
+// Rendu de registres : rows = [[nom, [valeurs], classe?], ...]
+function lanes(rows, n, head) {
+  n = n || 4;
+  var h = '<div class="row h"><div></div>';
+  for (var i = 0; i < n; i++) h += '<div>' + (head ? head[i] : 'couloir ' + i) + '</div>';
+  h += '</div>';
+  rows.forEach(function (r) {
+    h += '<div class="row ' + (r[2] || '') + '"><div>' + r[0] + '</div>';
+    for (var i = 0; i < n; i++) h += '<div>' + (typeof r[1][i] === 'number' ? g9(r[1][i]) : esc(r[1][i])) + '</div>';
+    h += '</div>';
+  });
+  return h;
+}
+function io(inp, out) { return '<div><b>Reçoit</b>' + inp + '</div><div><b>Produit</b>' + out + '</div>'; }
+function callout(kind, html) { return '<div class="callout ' + (kind || '') + '">' + html + '</div>'; }
+
+// ─── Onglets ─────────────────────────────────────────────────
+var tabBar = document.querySelector('.tabs');
+var curTab = 'ouv';
+function activateTab(tab, scrollTop) {
+  var b = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+  if (!b || tab === curTab) return;
+  curTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(function (x) { x.classList.toggle('active', x === b); });
+  document.querySelectorAll('.tab-panel').forEach(function (p) { p.classList.toggle('active', p.id === 'tab-' + tab); });
+  if (tab === 'sch') { drawA(); drawB(); }
+  if (scrollTop) window.scrollTo(0, 0);
+}
+tabBar.addEventListener('click', function (e) {
+  var b = e.target.closest('.tab-btn'); if (!b) return;
+  activateTab(b.dataset.tab, true);
+  try { history.replaceState(null, '', '#' + b.dataset.tab); } catch (err) {}
+});
+// Une ancre reçue de l'extérieur change d'onglet sans faire remonter la page
+function showTabFromHash() { activateTab((location.hash || '').replace('#', ''), false); }
+// Hauteur réelle de la barre d'onglets : sert à coller la barre des curseurs juste dessous
+function measureTabs() { document.documentElement.style.setProperty('--tabsH', tabBar.offsetHeight + 'px'); }
+window.addEventListener('hashchange', showTabFromHash);
+
+// ─── Canvas utilitaire ───────────────────────────────────────
+function fitCanvas(cv) {
+  // La hauteur CSS voulue est lue UNE fois et mémorisée : cv.height (surface de dessin)
+  // réécrit l'attribut height, le relire ensuite le doublerait à chaque dessin (écrans dpr > 1).
+  if (!cv.dataset.h) cv.dataset.h = cv.getAttribute('height');
+  var dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = Number(cv.dataset.h);
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + 'px'; }
+  var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx: ctx, w: w, h: h };
+}
+function arrow(ctx, x0, y0, x1, y1, col, wdt, dash) {
+  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = wdt || 2; if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke(); ctx.setLineDash([]);
+  var a = Math.atan2(y1 - y0, x1 - x0), L = 9;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x1 - L * Math.cos(a - 0.4), y1 - L * Math.sin(a - 0.4)); ctx.lineTo(x1 - L * Math.cos(a + 0.4), y1 - L * Math.sin(a + 0.4)); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// ═══════════════ Schéma A : S·R·T dans le plan ═══════════════
+var A = { sx: $('a-sx'), sy: $('a-sy'), th: $('a-th'), tx: $('a-tx'), ty: $('a-ty') };
+var SHAPE = [[0, 0], [1.2, 0], [1.2, 0.5], [0.5, 1.2], [0, 1.2]];      // arête oblique : [2] -> [3]
+function m3mul(a, b) { var c = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) for (var k = 0; k < 3; k++) c[i][j] += a[i][k] * b[k][j]; return c; }
+function p3(p, m) { return [p[0] * m[0][0] + p[1] * m[1][0] + m[2][0], p[0] * m[0][1] + p[1] * m[1][1] + m[2][1]]; }
+function d3(d, m) { return [d[0] * m[0][0] + d[1] * m[1][0], d[0] * m[0][1] + d[1] * m[1][1]]; }
+function signedArea(pts) { var a = 0; for (var i = 0; i < pts.length; i++) { var p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
+function drawA() {
+  var cv = $('a-cv'); if (!cv.clientWidth) return;
+  var g = fitCanvas(cv), ctx = g.ctx, W = g.w, H = g.h;
+  var sx = +A.sx.value, sy = +A.sy.value, th = +A.th.value * Math.PI / 180, tx = +A.tx.value, ty = +A.ty.value;
+  $('a-sx-v').textContent = sx.toFixed(2); $('a-sy-v').textContent = sy.toFixed(2); $('a-th-v').textContent = (+A.th.value) + '°';
+  $('a-tx-v').textContent = tx.toFixed(1); $('a-ty-v').textContent = ty.toFixed(1);
+  var c = Math.cos(th), s = Math.sin(th);
+  var S = [[sx, 0, 0], [0, sy, 0], [0, 0, 1]], R = [[c, s, 0], [-s, c, 0], [0, 0, 1]], T = [[1, 0, 0], [0, 1, 0], [tx, ty, 1]];
+  var SR = m3mul(S, R), Mm = m3mul(SR, T), Wr = m3mul(m3mul(T, R), S);
+  var scale = Math.min(W / 14, H / 9), ox = W / 2, oy = H / 2;
+  function X(p) { return [ox + p[0] * scale, oy - p[1] * scale]; }
+  ctx.clearRect(0, 0, W, H);
+  // grille
+  ctx.strokeStyle = css('--border'); ctx.lineWidth = 1;
+  for (var gx = -8; gx <= 8; gx++) { var a1 = X([gx, -6]), a2 = X([gx, 6]); ctx.globalAlpha = gx === 0 ? 1 : 0.4; ctx.beginPath(); ctx.moveTo(a1[0], a1[1]); ctx.lineTo(a2[0], a2[1]); ctx.stroke(); }
+  for (var gy = -6; gy <= 6; gy++) { var b1 = X([-8, gy]), b2 = X([8, gy]); ctx.globalAlpha = gy === 0 ? 1 : 0.4; ctx.beginPath(); ctx.moveTo(b1[0], b1[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  arrow(ctx, ox, oy, ox + scale * 1, oy, css('--axis-x'), 2); arrow(ctx, ox, oy, ox, oy - scale * 1, css('--axis-y'), 2);
+  function poly(pts, stroke, fill, dash, lw) {
+    ctx.save(); ctx.beginPath(); pts.forEach(function (p, i) { var q = X(p); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); } ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1.5; if (dash) ctx.setLineDash(dash); ctx.stroke(); ctx.restore();
+  }
+  function tint(col, a) { ctx.globalAlpha = a; return col; }
+  var local = SHAPE, afterS = SHAPE.map(function (p) { return p3(p, S); }), afterSR = SHAPE.map(function (p) { return p3(p, SR); }), fin = SHAPE.map(function (p) { return p3(p, Mm); });
+  poly(local, css('--text3'), null, [4, 3]);
+  if ($('a-ghost').checked) { poly(afterS, css('--purple'), null, [2, 3]); poly(afterSR, css('--teal'), null, [2, 3]); }
+  ctx.globalAlpha = 0.18; poly(fin, css('--accent'), css('--accent')); ctx.globalAlpha = 1; poly(fin, css('--accent'), null, null, 2.2);
+  // sommet repère [1] (le coin (1.2,0))
+  var mk = X(fin[1]); ctx.fillStyle = css('--accent'); ctx.beginPath(); ctx.arc(mk[0], mk[1], 4, 0, 7); ctx.fill();
+  var wrongPts = SHAPE.map(function (p) { return p3(p, Wr); });
+  if ($('a-wrong').checked) { poly(wrongPts, css('--red'), null, [6, 4], 2); var wk = X(wrongPts[1]); ctx.fillStyle = css('--red'); ctx.beginPath(); ctx.arc(wk[0], wk[1], 4, 0, 7); ctx.fill(); }
+  // normale de l'arête oblique
+  var Aa = [[Mm[0][0], Mm[0][1]], [Mm[1][0], Mm[1][1]]], det = Aa[0][0] * Aa[1][1] - Aa[0][1] * Aa[1][0];
+  var tLoc = [SHAPE[3][0] - SHAPE[2][0], SHAPE[3][1] - SHAPE[2][1]], nLoc = [-tLoc[1], tLoc[0]];
+  var nl = Math.hypot(nLoc[0], nLoc[1]); nLoc = [-nLoc[0] / nl, -nLoc[1] / nl]; // vers l'extérieur
+  var mid = p3([(SHAPE[2][0] + SHAPE[3][0]) / 2, (SHAPE[2][1] + SHAPE[3][1]) / 2], Mm);
+  var tW = d3(tLoc, Mm), nBad = d3(nLoc, Mm), nGood = null, angBad = NaN, angGood = NaN;
+  if (Math.abs(det) > 1e-9) { var inv = [[Aa[1][1] / det, -Aa[0][1] / det], [-Aa[1][0] / det, Aa[0][0] / det]]; var it = [[inv[0][0], inv[1][0]], [inv[0][1], inv[1][1]]]; nGood = [nLoc[0] * it[0][0] + nLoc[1] * it[1][0], nLoc[0] * it[0][1] + nLoc[1] * it[1][1]]; }
+  function ang2(a, b) { var la = Math.hypot(a[0], a[1]), lb = Math.hypot(b[0], b[1]); if (!la || !lb) return NaN; return deg(Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / (la * lb))))); }
+  angBad = ang2(nBad, tW); if (nGood) angGood = ang2(nGood, tW);
+  if ($('a-norm').checked) {
+    var pm = X(mid);
+    function drawN(n, col, dash) { var l = Math.hypot(n[0], n[1]); if (!l) return; var e = X([mid[0] + n[0] / l * 1.3, mid[1] + n[1] / l * 1.3]); arrow(ctx, pm[0], pm[1], e[0], e[1], col, 2.2, dash); }
+    drawN(nBad, css('--red'), [5, 3]); if (nGood) drawN(nGood, css('--green'));
+  }
+  // légende
+  ctx.font = '12px system-ui, sans-serif'; ctx.fillStyle = css('--text2'); var ly = 18;
+  [['local', '--text3'], ['après S', '--purple'], ['après S·R', '--teal'], ['S·R·T', '--accent']].concat($('a-wrong').checked ? [['T·R·S (faux)', '--red']] : []).forEach(function (l) { ctx.fillStyle = css(l[1]); ctx.fillRect(10, ly - 9, 14, 3); ctx.fillStyle = css('--text2'); ctx.fillText(l[0], 30, ly - 4); ly += 17; });
+  // matrice et lecture
+  var m4 = [[Mm[0][0], Mm[0][1], 0], [Mm[1][0], Mm[1][1], 0], [Mm[2][0], Mm[2][1], 1]];
+  var mh = '<div class="mat c3">'; for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) mh += '<div class="' + (i === 2 && j < 2 ? 't' : (i < 2 && j < 2 ? 'lin' : '')) + '">' + (Math.abs(m4[i][j]) < 5e-13 ? '0' : m4[i][j].toFixed(3)) + '</div>';
+  $('a-mat').innerHTML = mh + '</div><span class="matlbl">M = S·R·T en 2D homogène (row-major) : bleu = bloc linéaire 2×2, ambre = ligne de translation</span>';
+  var out = 'Sommet (1,2 ; 0) : S·R·T → (' + fin[1][0].toFixed(3) + ' ; ' + fin[1][1].toFixed(3) + ')';
+  if ($('a-wrong').checked) out += '    T·R·S → (' + wrongPts[1][0].toFixed(3) + ' ; ' + wrongPts[1][1].toFixed(3) + ')  : la translation a été tournée et mise à l’échelle';
+  out += '\nDéterminant du bloc linéaire : ' + det.toFixed(3);
+  var aLoc = signedArea(SHAPE), aFin = signedArea(fin);
+  if (Math.abs(det) < 1e-9) out += '  → singulier : la forme est écrasée, (M⁻¹)ᵀ n’existe pas ; inverse() du dépôt renverrait l’identité sans prévenir';
+  else if (det < 0) out += '  → négatif : miroir, l’ordre des sommets s’inverse (' + (aLoc > 0 ? 'antihoraire' : 'horaire') + ' → ' + (aFin > 0 ? 'antihoraire' : 'horaire') + ') : le backface culling verrait la face de dos';
+  if ($('a-norm').checked) out += '\nAngle normale / arête : avec M ' + (isNaN(angBad) ? '—' : angBad.toFixed(2) + '°') + (Math.abs(angBad - 90) > 0.05 ? '  (faux)' : '') + ' ; avec (M⁻¹)ᵀ ' + (isNaN(angGood) ? '—' : angGood.toFixed(2) + '°');
+  $('a-out').innerHTML = esc(out).replace('(faux)', '<span class="bad">(faux)</span>');
+}
+['a-sx', 'a-sy', 'a-th', 'a-tx', 'a-ty', 'a-ghost', 'a-wrong', 'a-norm'].forEach(function (id) { $(id).addEventListener('input', drawA); });
+var APRE = [[1.5, 1.5, 35, 1.8, 0.8], [2.5, 0.6, 35, 1.8, 0.8], [-1.5, 1.2, 20, 1.5, 0.5], [0, 1.4, 25, 1.5, 0.5]];
+document.querySelectorAll('[data-apre]').forEach(function (b) { b.addEventListener('click', function () { var p = APRE[+b.dataset.apre]; A.sx.value = p[0]; A.sy.value = p[1]; A.th.value = p[2]; A.tx.value = p[3]; A.ty.value = p[4]; drawA(); }); });
+
+// ═══════════════ Schéma B : repère main droite ═══════════════
+var B = { yaw: $('b-yaw'), pitch: $('b-pitch'), wrong: $('b-wrong') };
+function drawB() {
+  var cv = $('b-cv'); if (!cv.clientWidth) return;
+  var g = fitCanvas(cv), ctx = g.ctx, W = g.w, H = g.h;
+  var yw = +B.yaw.value * Math.PI / 180, pt = +B.pitch.value * Math.PI / 180;
+  $('b-yaw-v').textContent = B.yaw.value + '°'; $('b-pitch-v').textContent = B.pitch.value + '°';
+  function proj(v) { // rotation de vue (lacet autour de Y, tangage autour de X) puis projection orthographique
+    var x = v[0] * Math.cos(yw) + v[2] * Math.sin(yw), z = -v[0] * Math.sin(yw) + v[2] * Math.cos(yw), y = v[1];
+    var y2 = y * Math.cos(pt) - z * Math.sin(pt), z2 = y * Math.sin(pt) + z * Math.cos(pt);
+    return [W / 2 + x * H * 0.32, H / 2 - y2 * H * 0.32, z2];
+  }
+  ctx.clearRect(0, 0, W, H);
+  var fwd = B.wrong.checked ? [0, 0, 1] : [0, 0, -1];
+  var axes = [[[1, 0, 0], '--axis-x', 'Right +X'], [[0, 1, 0], '--axis-y', 'Up +Y'], [fwd, '--axis-z', 'Forward ' + (fwd[2] < 0 ? '−Z' : '+Z')]];
+  // ombre du plan XZ
+  ctx.strokeStyle = css('--border'); ctx.lineWidth = 1;
+  for (var k = -2; k <= 2; k++) { var a = proj([k * 0.5, 0, -1]), b = proj([k * 0.5, 0, 1]), c = proj([-1, 0, k * 0.5]), d = proj([1, 0, k * 0.5]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.moveTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.stroke(); }
+  var o = proj([0, 0, 0]);
+  // la caméra : un petit cône de vue le long de Forward
+  var tip = proj([fwd[0] * 1.15, fwd[1] * 1.15, fwd[2] * 1.15]);
+  var c1 = proj([0.18, 0.12, fwd[2] * 0.75]), c2 = proj([-0.18, 0.12, fwd[2] * 0.75]), c3 = proj([-0.18, -0.12, fwd[2] * 0.75]), c4 = proj([0.18, -0.12, fwd[2] * 0.75]);
+  ctx.strokeStyle = css('--text3'); ctx.setLineDash([3, 3]); ctx.beginPath(); [c1, c2, c3, c4].forEach(function (c) { ctx.moveTo(o[0], o[1]); ctx.lineTo(c[0], c[1]); }); ctx.moveTo(c1[0], c1[1]); ctx.lineTo(c2[0], c2[1]); ctx.lineTo(c3[0], c3[1]); ctx.lineTo(c4[0], c4[1]); ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  axes.sort(function (p, q) { return proj(q[0])[2] - proj(p[0])[2]; }).forEach(function (ax) { var e = proj(ax[0]); arrow(ctx, o[0], o[1], e[0], e[1], css(ax[1]), 3); ctx.font = '13px system-ui, sans-serif'; ctx.fillStyle = css(ax[1]); ctx.fillText(ax[2], e[0] + 6, e[1] - 6); });
+  var back = proj([0, 0, -fwd[2]]); arrow(ctx, o[0], o[1], back[0], back[1], css('--axis-z'), 1.2, [4, 4]);
+  ctx.fillStyle = css('--text3'); ctx.font = '12px system-ui, sans-serif'; ctx.fillText('Back', back[0] + 6, back[1] + 4);
+  // assertions
+  var R = [1, 0, 0], U = [0, 1, 0];
+  var a1 = fwd[2] < 0, rf = M.cross(R, fwd), fu = M.cross(fwd, U), a2 = rf[0] === 0 && rf[1] === 1 && rf[2] === 0, a3 = fu[0] === 1 && fu[1] === 0 && fu[2] === 0;
+  var xy = M.cross(R, U);
+  function okb(b) { return b ? '<span class="ok">✓ compile</span>' : '<span class="bad">✗ static_assert échoue</span>'; }
+  var h = 'Right × Up      = ' + V6(xy) + '   (main droite : +Z)\n';
+  h += 'static_assert(Forward().z &lt; 0)                 ' + okb(a1) + '\n';
+  h += 'static_assert(Right × Forward == Up)    = ' + V6(rf) + '  ' + okb(a2) + '\n';
+  h += 'static_assert(Forward × Up == Right)    = ' + V6(fu) + '  ' + okb(a3);
+  if (B.wrong.checked) {
+    var P = M.perspRevZ(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000)), pFront = [0, 0, 5]; // « devant » selon Forward = +Z
+    var r = M.multVec(P, pFront);
+    h += '\n\nConséquence : un objet placé « devant » à Forward·5 = (0, 0, 5) est en réalité derrière la caméra.\n  clip.w = −z = ' + g6(r.h[3]) + ' &lt; 0 → rejeté par le clipping (ou, sans clipping, projeté à l’envers).';
+  }
+  $('b-out').innerHTML = h;
+}
+['b-yaw', 'b-pitch', 'b-wrong'].forEach(function (id) { $(id).addEventListener('input', drawB); });
+(function () { // glisser pour orbiter
+  var cv = $('b-cv'), drag = null;
+  cv.addEventListener('pointerdown', function (e) { drag = [e.clientX, e.clientY, +B.yaw.value, +B.pitch.value]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', function (e) { if (!drag) return; B.yaw.value = Math.max(-180, Math.min(180, drag[2] + (e.clientX - drag[0]) * 0.6)); B.pitch.value = Math.max(-80, Math.min(80, drag[3] + (e.clientY - drag[1]) * 0.6)); drawB(); });
+  cv.addEventListener('pointerup', function () { drag = null; });
+})();
+
+// ═══════════════ Schéma C : anatomie d'une 4x4 ═══════════════
+var CM = M.mmul(M.mmul(M.scaleM([2, 1, 1]), M.quatToMatrix(M.quatAxisAngle([0, 0, 1], F(Math.PI / 2)))), M.translation([10, 0, 0]));
+var CP = M.perspRevZ(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000));
+var cmode = 'pt';
+function drawC() {
+  var h, out, m = cmode === 'proj' ? CP : CM;
+  if (cmode === 'pt') {
+    h = matHTML(m, 'bleu : bloc linéaire lu ; ambre : translation lue (× w = 1) ; violet : colonne w', function (i, j) { return j === 3 ? 'w' : (i === 3 ? 't' : 'lin'); });
+    var r = M.multVec(m, [1, 2, 3]);
+    out = 'p = (1, 2, 3), w = 1\np·M = 1·ligne0 + 2·ligne1 + 3·ligne2 + 1·ligne3 = ' + V6(r.h) + '\nw = ' + g6(r.h[3]) + ' → p\' = ' + V6(r.v) + '\nLes 1.19209e-07 et 5.96046e-08 à la place de 0 sont l’arrondi du demi-angle π/4 en float32 (étape E9).\nLecture : ligne0 = image de +X = ' + V6(m[0].slice(0, 3)) + ' (le scale 2 puis la rotation de 90° envoient X sur 2·Y), ligne3 = translation (10, 0, 0).';
+  } else if (cmode === 'dir') {
+    h = matHTML(m, 'seul le bloc 3×3 est lu ; la ligne 3 (translation) et la colonne w sont ignorées', function (i, j) { return (i < 3 && j < 3) ? 'lin' : 'dim'; });
+    var d = M.multDir(m, [1, 0, 0]);
+    out = 'd = (1, 0, 0), w = 0\nd·M (bloc 3×3) = ' + V6(d) + '\nLa translation n’apparaît pas : une direction ne se déplace pas. Si on avait appelé multVecMatrix, on aurait obtenu ' + V6(M.multVec(m, [1, 0, 0]).v) + '.';
+  } else {
+    h = matHTML(m, 'Projection reverse-Z du dépôt (fov 60°, 16/9, near 0,1, far 1000) : la colonne 3 vaut (0, 0, −1, 0)', function (i, j) { return j === 3 ? 'w' : (i === 3 ? 't' : 'lin'); });
+    var a = M.multVec(m, [0, 0, -0.1]), b = M.multVec(m, [0, 0, -10]), c = M.multVec(m, [0, 0, -1000]);
+    out = 'w = −z : la distance devant la caméra (main droite, la vue regarde vers −Z)\nz_vue = −0,1  → clip ' + V6(a.h) + ' → z_ndc = ' + g6(a.v[2]) + '  (near → 1)\nz_vue = −10   → clip ' + V6(b.h) + ' → z_ndc = ' + g6(b.v[2]) + '\nz_vue = −1000 → clip ' + V6(c.h) + ' → z_ndc = ' + g6(c.v[2]) + '  (far → 0)\nm[3][3] = 0 : une projection ne part pas de l’identité.';
+  }
+  $('c-grid').innerHTML = h; $('c-out').textContent = out;
+}
+document.querySelectorAll('[data-cmode]').forEach(function (b) { b.addEventListener('click', function () { cmode = b.dataset.cmode; document.querySelectorAll('[data-cmode]').forEach(function (x) { x.classList.toggle('on', x === b); }); drawC(); }); });
+
+// ═══════════════ Étapes ═══════════════
+var EPRE = [
+  { p: [1, 0, 0], s: [1, 1, 1], a: [0, 0, 1], ang: 90, t: [0, 0, 0] },
+  { p: [1, 0, 0], s: [2, 2, 2], a: [0, 0, 1], ang: 0, t: [10, 0, 0] },
+  { p: [0.3, 0.7, -1.1], s: [1, 3, 0.5], a: [1, 2, 3], ang: 40, t: [4, -2, 7] },
+  { p: [1, 0, 0], s: [1, 1, 1], a: [0, 0, 5], ang: 90, t: [0, 0, 0] },
+  { p: [1, 0, 0], s: [1, 1, 1], a: [0, 0, 0], ang: 90, t: [0, 0, 0] },
+  { p: [0.3, 0.7, -1.1], s: [0, 1, 1], a: [1, 2, 3], ang: 40, t: [4, -2, 7] }
+];
+var IN = ['px', 'py', 'pz', 'sx', 'sy', 'sz', 'ax', 'ay', 'az', 'tx', 'ty', 'tz'];
+function setPreset(k) {
+  var P = EPRE[k], vals = P.p.concat(P.s, P.a, P.t);
+  IN.forEach(function (id, i) { $('in-' + id).value = vals[i]; });
+  $('in-ang').value = P.ang; if (!$('in-st').value || k === 0) $('in-st').value = 0.5;
+  document.querySelectorAll('[data-epre]').forEach(function (b) { b.classList.toggle('on', +b.dataset.epre === k); });
+  runSteps();
+}
+document.querySelectorAll('[data-epre]').forEach(function (b) { b.addEventListener('click', function () { setPreset(+b.dataset.epre); }); });
+// 'input' pendant le glissement, 'change' au relâchement ou au clavier (certains navigateurs n'émettent que l'un des deux)
+function onEdit(clearPreset) { return function () { if (clearPreset) document.querySelectorAll('[data-epre]').forEach(function (b) { b.classList.remove('on'); }); runSteps(true); }; }
+IN.forEach(function (id) { ['input', 'change'].forEach(function (ev) { $('in-' + id).addEventListener(ev, onEdit(true)); }); });
+['ang', 'st'].forEach(function (id) { ['input', 'change'].forEach(function (ev) { $('in-' + id).addEventListener(ev, onEdit(false)); }); });
+function rd(id) { var v = parseFloat($('in-' + id).value); return isFinite(v) ? F(v) : 0; }
+
+var prevOut = {};
+function runSteps(flash) {
+  var p = [rd('px'), rd('py'), rd('pz')], s = [rd('sx'), rd('sy'), rd('sz')], axis = [rd('ax'), rd('ay'), rd('az')], tt = [rd('tx'), rd('ty'), rd('tz')];
+  var angDeg = +$('in-ang').value, st = F(+$('in-st').value);
+  $('in-ang-v').textContent = angDeg + '°'; $('in-st-v').textContent = st.toFixed(2);
+  var rad = F(angDeg * Math.PI / 180);
+
+  // E1
+  var nz = M.normalized(axis), u = nz.v, lenU = M.length(u);
+  var vv = axis.map(function (x) { return M.mul(x, x); });
+  $('e1-io').innerHTML = io('axe (Entrées) = ' + V9(axis), 'norm() = ' + g9(nz.n) + '  (longueur au carré)\n' + (nz.guarded ? 'garde : norm() ≤ 0 → axe nul renvoyé' : 'sqrt = ' + g9(nz.s) + '\nf = 1/sqrt = ' + g9(nz.inv)) + '\nu = ' + V9(u) + '\n|u| = ' + g9(lenU) + (nz.guarded ? '' : '  (' + M.ulpDiff(lenU, 1) + ' ulp de 1)'));
+  var nn = nz.n, sq = M.sqrt(nn), dv = nz.guarded ? [0, 0, 0, 0] : [M.div(axis[0], sq), M.div(axis[1], sq), M.div(axis[2], sq), 0];
+  $('e1-lanes').innerHTML = lanes([
+    ['v', [axis[0], axis[1], axis[2], 0]],
+    ['v·v (masque 0x7)', [vv[0], vv[1], vv[2], 0]],
+    ['dp_ps → diffusé', [nn, nn, nn, nn]],
+    ['sqrt_ps', [sq, sq, sq, sq]],
+    ['div_ps v / s', nz.guarded ? ['nan', 'nan', 'nan', 'nan'] : dv],
+    ['masque n > 0', nz.guarded ? ['0', '0', '0', '0'] : ['~0', '~0', '~0', '~0']],
+    ['résultat u', [nz.guarded ? 0 : dv[0], nz.guarded ? 0 : dv[1], nz.guarded ? 0 : dv[2], 0], 'res']]);
+  var e1n = '';
+  if (!nz.guarded) {
+    var same = ulpsV(u, [dv[0], dv[1], dv[2]]);
+    e1n = callout(same === 0 ? 'green' : 'amber', 'Scalaire et SIMD : ' + (same === 0 ? 'identiques au bit près' : same + ' ulp d’écart') + '. Le scalaire fait <code>x · (1/√n)</code> (une division, trois produits), la version SIMD <code>x / √n</code> : les deux arrondis ne tombent pas forcément au même endroit. Une TNR scalaire/SIMD doit donc comparer à tolérance, ou les deux chemins doivent écrire la même formule.');
+  } else e1n = callout('red', 'Axe nul : la garde renvoie (0, 0, 0). Sans elle, <code>0 · (1/√0) = 0 · inf = NaN</code> (contre-exemple C6). E2 va montrer que l’axe nul ne plante pas, mais perd la rotation en silence.');
+  $('e1-note').innerHTML = e1n;
+
+  // E2
+  var q = M.quatAxisAngle(axis, rad), q2 = M.add(M.mul(q.r, q.r), M.dot(q.v, q.v));
+  $('e2-io').innerHTML = io('u (E1) = ' + V9(u) + '\nradians = ' + g9(rad) + '  (' + angDeg + '° × TO_RADIAN)', 'θ/2 = ' + g9(q.half) + '\nsin(θ/2) = ' + g9(q.sinH) + '\nq = ' + Q9(q) + '\n|q|² = r² + v·v = ' + g9(q2) + '  (' + M.ulpDiff(q2, 1) + ' ulp de 1)');
+  $('e2-note').innerHTML = nz.guarded ? callout('red', 'Axe nul : q = (cos θ/2, 0, 0, 0), de norme ' + g6(Math.sqrt(q2)) + ' ≠ 1. E3 va en tirer l’identité : la rotation demandée disparaît sans erreur ni assert. C’est le cas que le filet Debug proposé dans Vérifier attrape.') : (Math.abs(q2 - 1) < 1e-6 ? callout('green', 'q est unitaire à ' + g6(Math.abs(q2 - 1)) + ' près : c’est bien une rotation.') : '');
+
+  // E3
+  var R = M.quatToMatrix(q), det = M.det3(R), rowL = [0, 1, 2].map(function (i) { return Math.hypot(R[i][0], R[i][1], R[i][2]); });
+  var d01 = R[0][0] * R[1][0] + R[0][1] * R[1][1] + R[0][2] * R[1][2];
+  $('e3-io').innerHTML = io('q (E2) = ' + Q9(q), 'R (bloc 3×3 ci-dessous)\nlongueurs des lignes : ' + rowL.map(function (x) { return x.toFixed(9); }).join(' ; ') + '\nligne0 · ligne1 = ' + g6(d01) + '\ndet(R) = ' + det.toFixed(9));
+  $('e3-mat').innerHTML = matHTML(R, 'R = q.ToMatrix44() — ligne i = image de l’axe local i');
+  var img = M.multDir(R, [1, 0, 0]);
+  $('e3-note').innerHTML = callout('', 'Lecture directe : la ligne 0 est l’image de +X, ' + V6(img) + '. Avec la forme vecteur-colonne (l’ancienne <code>ToMatrix44_OLD</code>, la transposée), la ligne 0 serait ' + V6(M.quatToMatrixOld(q)[0].slice(0, 3)) + ' : la rotation inverse (C2).');
+
+  // E4
+  var S = M.scaleM(s), T = M.translation(tt), SR = M.mmul(S, R), MM = M.mmul(SR, T);
+  $('e4-io').innerHTML = io('R (E3)\ns (Entrées) = ' + V9(s) + '\nt (Entrées) = ' + V9(tt), 'S·R puis (S·R)·T = M\nM ligne 3 = ' + V6(MM[3]) + '  (= t : la translation n’est ni tournée ni mise à l’échelle)');
+  var a0 = SR[0], r0 = [0, 1, 2, 3].map(function (j) { return M.mul(a0[0], T[0][j]); }), r1 = [0, 1, 2, 3].map(function (j) { return M.mul(a0[1], T[1][j]); });
+  var r2 = [0, 1, 2, 3].map(function (j) { return M.mul(a0[2], T[2][j]); }), r3 = [0, 1, 2, 3].map(function (j) { return M.mul(a0[3], T[3][j]); });
+  var s01 = [0, 1, 2, 3].map(function (j) { return M.add(r0[j], r1[j]); }), s012 = s01.map(function (x, j) { return M.add(x, r2[j]); }), sAll = s012.map(function (x, j) { return M.add(x, r3[j]); });
+  $('e4-lanes').innerHTML = lanes([
+    ['set1(a00)·T.l0', r0], ['set1(a01)·T.l1', r1], ['set1(a02)·T.l2', r2], ['set1(a03)·T.l3', r3],
+    ['(l0 + l1)', s01], ['+ l2', s012], ['+ l3 = M.ligne0', sAll, 'res']]);
+  $('e4-mat').innerHTML = matHTML(SR, 'S·R') + matHTML(MM, 'M = S·R·T');
+  var bitok = sAll.every(function (x, j) { return x === MM[0][j]; });
+  $('e4-note').innerHTML = callout(bitok ? 'green' : 'red', 'Ligne 0 SIMD ' + (bitok ? '= ligne 0 scalaire au bit près' : '≠ scalaire') + ' : même ordre d’additions, mêmes arrondis. Le row-major rend ce noyau naturel — chaque ligne de B est un chargement contigu, chaque coefficient de A une diffusion.');
+
+  // E5
+  var r5 = M.multVec(MM, p);
+  var lx = MM[0].map(function (v) { return M.mul(p[0], v); }), ly = MM[1].map(function (v) { return M.mul(p[1], v); }), lz = MM[2].map(function (v) { return M.mul(p[2], v); });
+  var pa = lx.map(function (x, j) { return M.add(x, ly[j]); }), pb = pa.map(function (x, j) { return M.add(x, lz[j]); }), pc = pb.map(function (x, j) { return M.add(x, MM[3][j]); });
+  $('e5-io').innerHTML = io('M (E4)\np (Entrées) = ' + V9(p), '(a, b, c, w) = ' + V9(r5.h) + '\ninvW = ' + g9(r5.invW) + '\np\' = ' + V9(r5.v));
+  $('e5-lanes').innerHTML = lanes([
+    ['set1(x)·ligne0', lx], ['set1(y)·ligne1', ly], ['set1(z)·ligne2', lz], ['somme x+y', pa], ['+ z', pb], ['+ ligne3', pc, 'res']], 4, ['a', 'b', 'c', 'w']);
+  var X8 = [], Y8 = [], Z8 = [], x1 = [], x2 = [], x3 = [], xs = [], xo = [];
+  for (var k = 0; k < 8; k++) { var pk = [M.add(p[0], k), p[1], p[2]]; X8.push(pk[0]); Y8.push(pk[1]); Z8.push(pk[2]);
+    x1.push(M.mul(pk[0], MM[0][0])); x2.push(M.mul(pk[1], MM[1][0])); x3.push(M.mul(pk[2], MM[2][0])); xs.push(M.add(M.add(x1[k], x2[k]), x3[k])); xo.push(M.add(xs[k], MM[3][0])); }
+  var hd = []; for (k = 0; k < 8; k++) hd.push('sommet ' + k);
+  $('e5-soa').innerHTML = lanes([['X (ymm)', X8], ['Y (ymm)', Y8], ['Z (ymm)', Z8], ['X·m00', x1], ['Y·m10', x2], ['Z·m20', x3], ['somme', xs], ['+ m30 = x\'', xo, 'res']], 8, hd);
+  var fm = M.multVecFma(MM, p), fd = ulpsV(fm, r5.h.slice(0, 3));
+  $('e5-note').innerHTML = callout('', 'AoS : un point par registre, 4 diffusions + 4 produits + 3 additions pour 4 composantes. SoA : 8 points par registre, 3 produits + 3 additions <em>par composante pour 8 points</em>, sans aucun mélange de couloirs. C’est la forme de <code>ProjectPositions8</code> (écart L2-9).') +
+    callout(fd ? 'amber' : 'green', 'Variante <code>_mm256_fmadd_ps</code> : (a, b, c) = ' + V9(fm) + ' — ' + (fd ? fd + ' ulp d’écart avec le scalaire sur ces entrées. Une TNR bit à bit entre scalaire et SIMD FMA échouerait alors que les deux sont justes (C11).' : 'identique au scalaire sur ces entrées ; ce n’est pas garanti en général (C11).'));
+
+  var uz = nz.v, isZ = !nz.guarded && uz[0] === 0 && uz[1] === 0 && uz[2] === 1 && s.every(function (x) { return x === 1; }) && tt.every(function (x) { return x === 0; });
+  if (isZ) {
+    var rz = M.multVec(M.rotZ(rad), p).v;
+    $('e5-note').innerHTML += callout('amber', 'Deux chemins, deux arrondis. Le test de la leçon passait par <code>rotateZ</code> (cos et sin de l’angle entier) : p\' = ' + V9(rz) + ', affiché <code>' + V6(rz) + '</code>. Le chemin quaternion (cos et sin du demi-angle, puis les produits de <code>ToMatrix44</code>) donne ' + V9(r5.v) + '. Même rotation, écarts de quelques ulp ailleurs : aucun des deux n’est « le » zéro.');
+  }
+  // E6
+  var tn = M.normalized([1, -1, 0]).v, nn6 = M.normalized([1, 1, 0]).v;
+  var tW = M.multDir(MM, tn), nBad = M.multDir(MM, nn6), inv = M.inverse(MM), N = M.transposed(inv.m), nGood = M.multDir(N, nn6);
+  var nBadU = M.normalized(nBad).v, nGoodU = M.normalized(nGood).v;
+  var dB = M.dot(nBad, tW), dG = M.dot(nGood, tW), aB = angBetween(nBad, tW), aG = angBetween(nGood, tW);
+  var resI = M.maxAbsDiff(M.mmul(MM, inv.m), M.ident());
+  $('e6-io').innerHTML = io('M (E4)\nt = ' + V9(tn) + '\nn = ' + V9(nn6), 'inverse(M) ' + (inv.singular ? '<span class="bad">singulière → identité renvoyée</span>' : 'ok, max |M·M⁻¹ − I| = ' + g6(resI)) + '\nt\' = t·M = ' + V9(tW) + '\nn·M          = ' + V9(nBadU) + '  n·t\' = ' + g6(M.dot(nBadU, tW)) + ', angle ' + (isNaN(aB) ? '—' : aB.toFixed(4) + '°') + '\nn·(M⁻¹)ᵀ    = ' + V9(nGoodU) + '  n·t\' = ' + g6(M.dot(nGoodU, tW)) + ', angle ' + (isNaN(aG) ? '—' : aG.toFixed(4) + '°'));
+  $('e6-mat').innerHTML = matHTML(N, '(M⁻¹)ᵀ — seul le bloc 3×3 (bleu) sert', function (i, j) { return i < 3 && j < 3 ? 'lin' : 'dim'; });
+  var uni = Math.abs(s[0] - s[1]) < 1e-6 && Math.abs(s[1] - s[2]) < 1e-6;
+  $('e6-note').innerHTML = inv.singular ? callout('red', 'Scale nul : M n’a pas d’inverse. <code>inverse()</code> renvoie l’identité sans signaler : la « matrice des normales » vaut I et les normales ne sont plus transformées du tout. Filet proposé dans Vérifier.') :
+    (uni ? callout('green', 'Scale uniforme : n·M garde la bonne direction (angle 90°), seule sa longueur change. L’inverse-transposée n’est indispensable qu’avec un scale non uniforme — essayez le préréglage « Cas général ».') :
+      callout(Math.abs(aB - 90) > 0.01 ? 'red' : 'green', 'Scale non uniforme ' + V9(s) + ' : avec M la normale fait ' + aB.toFixed(3) + '° avec la surface au lieu de 90° (erreur ' + Math.abs(90 - aB).toFixed(3) + '°) ; avec (M⁻¹)ᵀ, ' + aG.toFixed(4) + '°.'));
+
+  // E7
+  var rq = M.quatRotate(q, p), viaM = M.multVec(R, p).v, dd = maxDiffV(rq.out, viaM);
+  $('e7-io').innerHTML = io('q (E2), R (E3)\np (Entrées) = ' + V9(p), 't = 2(v × p) = ' + V9(rq.t) + '\nrotate(p) = ' + V9(rq.out) + '\np·R       = ' + V9(viaM) + '\nmax |écart| = ' + g6(dd));
+  var a = q.v, b = p, ayzx = [a[1], a[2], a[0], 0], bzxy = [b[2], b[0], b[1], 0], azxy = [a[2], a[0], a[1], 0], byzx = [b[1], b[2], b[0], 0];
+  var m1 = ayzx.map(function (x, i) { return M.mul(x, bzxy[i]); }), m2 = azxy.map(function (x, i) { return M.mul(x, byzx[i]); }), cr = m1.map(function (x, i) { return M.sub(x, m2[i]); });
+  $('e7-lanes').innerHTML = lanes([['v.yzx', ayzx], ['p.zxy', bzxy], ['produit 1', m1], ['v.zxy', azxy], ['p.yzx', byzx], ['produit 2', m2], ['v × p', cr, 'res']]);
+  $('e7-note').innerHTML = callout(dd < 1e-5 ? 'green' : 'red', 'Les deux chemins concordent à ' + g6(dd) + ' près : <code>rotate</code> et <code>ToMatrix44</code> sont dans la même convention. L’écart restant vient de l’ordre des opérations, pas d’une erreur de formule. Le couloir 3 vaut 0 : il ne porte rien (w).');
+
+  // E8
+  var qi = { r: 1, v: [0, 0, 0] }, sl = M.slerp(qi, q, st), got = M.quatAngleDeg(sl.q), want = st * M.quatAngleDeg(q);
+  $('e8-io').innerHTML = io('q1 = identité, q2 = q (E2)\nt = ' + g9(st), 'cos Ω = ' + g9(sl.cosO) + (sl.flipped ? '  (q2 inversé : chemin court)' : '') + '\nbranche : ' + sl.branch + '\ns1 = ' + g9(sl.s1) + ', s2 = ' + g9(sl.s2) + '\nrésultat ' + Q9(sl.q) + '\nangle obtenu ' + got.toFixed(5) + '°, attendu t·θ = ' + want.toFixed(5) + '°');
+  $('e8-note').innerHTML = sl.branch === 'LERP' ? callout('amber', 'cos Ω > 0,9995 (orientations à moins de ' + (2 * Math.acos(0.9995) * 180 / Math.PI).toFixed(2) + '° l’une de l’autre) : branche LERP puis normalisation. L’angle n’est plus exactement proportionnel à t, l’écart est invisible à cette échelle.') : callout('green', 'SLERP : l’angle suit t à ' + Math.abs(got - want).toExponential(2) + '° près. Faites glisser t : l’angle varie linéairement.');
+
+  // E9
+  var cz = M.fcos(F(Math.PI / 2)), u1 = M.ulp(1);
+  var rows = [['cos(float(π/2))', cz], ['ulp(1) = 2⁻²³', u1], ['EPSILON_FLOAT (tolérance)', M.EPSILON_FLOAT], ['NEAR_ZERO_SQ (garde, carré)', M.NEAR_ZERO_SQ],
+    ['E1 : |u| − 1', nz.guarded ? NaN : lenU - 1], ['E2 : |q|² − 1', q2 - 1], ['E6 : max |M·M⁻¹ − I|', inv.singular ? NaN : resI], ['E7 : rotate vs p·R', dd]];
+  var t9 = rows.map(function (r) { var v = r[1]; return (r[0] + '                                ').slice(0, 30) + (isNaN(v) ? '—' : g9(v)) + (isNaN(v) || v === 0 || r[0].indexOf('ulp') === 0 || r[0].indexOf('EPS') === 0 || r[0].indexOf('NEAR') === 0 ? '' : '   ≈ ' + (Math.abs(v) / u1).toFixed(1) + ' ulp(1)'); }).join('\n');
+  $('e9-io').innerHTML = io('les résultats de E1, E2, E6, E7', t9);
+  $('e9-note').innerHTML = callout('', 'Toutes les erreurs de ce calcul sont de quelques ulp : 10⁻⁷ à 10⁻⁶, quatre ordres de grandeur sous <code>EPSILON_FLOAT</code> (10⁻³). <code>cos(π/2)</code> vaut −4,37·10⁻⁸ parce que float(π/2) dépasse π/2 de 4,37·10⁻⁸ : le cosinus vaut l’opposé de cet excès. <code>cz == 0</code> est faux, <code>std::abs(cz) &lt; EPSILON_FLOAT</code> est vrai.') +
+    callout('amber', 'Une tolérance mesure « égal à l’échelle de la scène » ; une garde, « dénominateur nul ». Comparer <code>norm()</code> (un carré) à <code>EPSILON_FLOAT</code> pour éviter une division, c’est mélanger les deux : voir C9.');
+
+  // Résumé en direct dans la barre collante : l'effet d'un curseur se voit sans descendre
+  $('lb-sum').innerHTML = '<span><b>θ</b>' + g9(rad) + ' rad</span><span><b>q (E2)</b>' + g6(q.r) + ' ; ' + V6(q.v) + '</span><span><b>p\' (E5)</b>' + V6(r5.v) + '</span><span><b>Slerp (E8)</b>' + got.toFixed(3) + '° sur ' + M.quatAngleDeg(q).toFixed(3) + '°, ' + sl.branch + '</span>';
+
+  // Surbrillance des blocs dont le contenu a changé
+  document.querySelectorAll('#tab-eta .io > div, #tab-eta .lanes').forEach(function (el, i) {
+    var h = el.innerHTML;
+    if (flash && prevOut[i] !== undefined && prevOut[i] !== h) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+    prevOut[i] = h;
+  });
+}
+
+// ═══════════════ Contre-exemples ═══════════════
+function renderCtr() {
+  var L = [];
+  function card(id, title, wrongHtml, rightHtml, why) {
+    L.push('<div class="panel"><h3>' + id + ' — ' + title + '</h3><div class="io"><div><b>Faux</b>' + wrongHtml + '</div><div><b>Juste</b>' + rightHtml + '</div></div><p style="margin-top:.6rem">' + why + '</p></div>');
+  }
+  var one = [1, 0, 0];
+  var S2 = M.scaleM([2, 2, 2]), T10 = M.translation([10, 0, 0]), I = M.ident();
+  card('C1', 'L’ordre T·R·S écrit en vecteur-ligne', 'p·T·R·S = ' + V6(M.multVec(M.mmul(M.mmul(T10, I), S2), one).v) + '\n(translate 1 → 11, puis × 2)', 'p·S·R·T = ' + V6(M.multVec(M.mmul(M.mmul(S2, I), T10), one).v) + '\n(× 2 → 2, puis + 10)', 'Recopier l’ordre d’un livre OpenGL (vecteur-colonne) dans un moteur vecteur-ligne : la translation est mise à l’échelle et tournée. Le symptôme grandit avec la distance à l’origine : invisible sur un objet au centre, énorme sur une planète lointaine. L’échange annonçait 21 pour ce cas : c’est 22.');
+  var q90 = M.quatAxisAngle([0, 0, 1], F(Math.PI / 2));
+  card('C2', 'La conversion quaternion → matrice transposée (ToMatrix44_OLD)', 'p·Rᵀ = ' + V6(M.multVec(M.quatToMatrixOld(q90), one).v) + '\n+X part vers −Y : rotation de −90°', 'p·R = ' + V6(M.multVec(M.quatToMatrix(q90), one).v) + '\n+X part vers +Y : +90°', 'La transposée d’une rotation est la rotation inverse. Le commentaire de l’ancienne version disait « formule standard pour row-major » : c’était la forme vecteur-colonne. Les angles semblent justes à 0° et 180°, faux partout ailleurs.');
+  var Ms = M.scaleM([1, 3, 1]), tn = M.normalized([1, -1, 0]).v, nn = M.normalized([1, 1, 0]).v, tW = M.multDir(Ms, tn), nb = M.multDir(Ms, nn), ng = M.multDir(M.transposed(M.inverse(Ms).m), nn);
+  card('C3', 'La normale transformée par la matrice du modèle', 'scale (1, 3, 1)\nn·M = ' + V6(M.normalized(nb).v) + '\nangle avec la tangente : ' + angBetween(nb, tW).toFixed(3) + '° (attendu 90°)', 'n·(M⁻¹)ᵀ = ' + V6(M.normalized(ng).v) + '\nangle avec la tangente : ' + angBetween(ng, tW).toFixed(3) + '°', 'Étirer un objet en Y fait pencher ses normales vers Y au lieu de les en éloigner. L’éclairage diffus suit la normale : la face paraît éclairée comme si elle était orientée ' + Math.abs(90 - angBetween(nb, tW)).toFixed(1) + '° plus loin.');
+  var G = M.perspGL(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000)), Gi = M.perspGL(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000), true), pv = [1, 1, -5];
+  var rg = M.multVec(G, pv), ri = M.multVec(Gi, pv);
+  card('C4', 'Une projection construite sur l’identité', 'm[3][3] = 1 resté en place\nclip.w = ' + g6(ri.h[3]) + '\nNDC = ' + V6(ri.v), 'matrice remise à zéro\nclip.w = ' + g6(rg.h[3]) + '\nNDC = ' + V6(rg.v), 'Point (1, 1, −5) en espace vue, projection [-1, 1] de l’échange. Le 1 parasite ajoute 1 à w : tout rétrécit d’un facteur d/(d+1), fort près de la caméra, invisible au loin — et la profondeur est fausse partout. C’est pour cela que <code>Projection.cpp</code> commence par <code>Zeroed()</code>.');
+  var cz = M.fcos(F(Math.PI / 2));
+  card('C5', 'Comparer des flottants avec ==', 'cos(π/2) == 0.0f  →  ' + (cz === 0) + '\n(cz = ' + g9(cz) + ')', 'std::abs(cz) &lt; EPSILON_FLOAT  →  ' + (Math.abs(cz) < M.EPSILON_FLOAT), 'Un test d’égalité stricte sur un résultat de calcul échoue presque toujours. Seuls les résultats exacts par construction (produits par 0 ou 1, entiers petits) se comparent avec <code>==</code> : c’est le cas des tests T1 et T3 de l’onglet Vérifier.');
+  var nanV = M.normalizedNoGuard([0, 0, 0]);
+  card('C6', 'Normaliser sans garde', 'f = 1/sqrt(0) = inf\n0 · inf = ' + V6(nanV) + '\npuis ·M : ' + V6(M.multVec(M.translation([1, 2, 3]), nanV).v), 'garde n ≤ 0 → ' + V6(M.normalized([0, 0, 0]).v), 'NaN se propage à tout ce qu’il touche : une normale NaN rend NaN l’éclairage du triangle, une position NaN fait échouer tous les tests de couverture. Et NaN ne déclenche aucune comparaison (<code>NaN &lt; x</code> et <code>NaN &gt; x</code> sont faux), donc aucune garde en aval ne l’arrête.');
+  var q120 = M.quatAxisAngle([0, 0, 1], F(120 * Math.PI / 180)), qneg = { r: -q120.r, v: M.vscale(q120.v, -1) }, qi = { r: 1, v: [0, 0, 0] };
+  var good = M.slerp(qi, qneg, 0.5), bad = M.slerp(qi, qneg, 0.5, true);
+  card('C7', 'Slerp sans correction anti-podale', 'q2 = −q(120°) : cos Ω = ' + g6(bad.cosO) + '\nmilieu ' + Q9(bad.q) + '\n= rotation de ' + (bad.q.v[2] < 0 ? '−' : '') + M.quatAngleDeg(bad.q).toFixed(2) + '°', 'q2 inversé : cos Ω = ' + g6(good.cosO) + '\nmilieu ' + Q9(good.q) + '\n= rotation de ' + M.quatAngleDeg(good.q).toFixed(2) + '°', 'q et −q sont la même rotation de 120°. Sans inversion, le milieu de l’interpolation est une rotation de −120° : l’objet fait le tour par l’autre côté, 240° au lieu de 120°. Le cas arrive dès que deux clés d’animation sont stockées avec des signes opposés.');
+  card('C8', 'Remplacer sqrt + div par _mm_rsqrt_ps', '_mm_rsqrt_ps : erreur relative ≤ 1,5 × 2⁻¹² ≈ 3,7·10⁻⁴ (spécification Intel)\n|u| ∈ [1 − 3,7·10⁻⁴ ; 1 + 3,7·10⁻⁴] ≈ ±3 100 ulp(1)', '_mm_sqrt_ps + _mm_div_ps : arrondi IEEE, |u| à 1 ulp près (E1)', 'rsqrt est tentant (plus rapide) mais ses 12 bits sont visibles : un vecteur « unitaire » faux de 3,7·10⁻⁴ consomme déjà plus du tiers de <code>EPSILON_FLOAT</code>, et l’erreur se compose à chaque renormalisation. Si on l’utilise, c’est avec une itération de Newton-Raphson. La valeur exacte dépend du processeur : seule la borne est donnée ici.');
+  var dir = [0.02, 0, 0], rej = M.lookRotation(dir), okq = M.lookRotation([1, 0, 0]);
+  card('C9', 'Une tolérance utilisée comme garde (LookRotation)', 'dir = (0,02 ; 0 ; 0) : norm() = ' + g6(M.norm(dir)) + ' ≤ EPSILON_FLOAT\n→ ' + (rej.rejected ? 'rejet, identité' : 'accepté') + ' : la caméra regarde ' + V6(M.quatRotate(rej.q, [0, 0, -1]).out), 'garde en NEAR_ZERO_SQ : la direction est acceptée\n→ regard ' + V6(M.quatRotate(okq.q, [0, 0, -1]).out) + '  (90° d’écart avec le faux)', '<code>norm()</code> est un carré : <code>norm() ≤ 10⁻³</code> rejette toute direction de moins de √10⁻³ = 3,16 cm. Une caméra qui suit une cible à 2 cm, ou un <code>LookAt</code> calculé entre deux points proches, garde l’orientation identité. Même famille que le bug n°3 de L05 (écart E2 de L01). Dette L2-5.');
+  var dr = [1, 10, 100, 500].map(function (d) { return [d, M.depthResolution(d, 0.1, 1000)]; });
+  card('C10', 'Garder la profondeur [-1, 1] proposée dans l’échange', dr.map(function (x) { return 'd = ' + x[0] + ' m : pas ≈ ' + fmtLen(x[1].resGL); }).join('\n'), dr.map(function (x) { return 'd = ' + x[0] + ' m : pas ≈ ' + fmtLen(x[1].resRev); }).join('\n'), 'Near 0,1, far 1000. Le pas est l’écart de distance entre deux valeurs de profondeur float32 consécutives. À 500 m, deux surfaces à moins de ' + fmtLen(dr[3][1].resGL) + ' l’une de l’autre ont la même profondeur en [-1, 1] : z-fighting. Le reverse-Z de L05 descend à ' + fmtLen(dr[3][1].resRev) + '. Écart L2-3.');
+  var Mg = M.mmul(M.mmul(M.scaleM([1, 3, 0.5]), M.quatToMatrix(M.quatAxisAngle([1, 2, 3], F(40 * Math.PI / 180)))), M.translation([4, -2, 7])), pg = [F(0.3), F(0.7), F(-1.1)];
+  var sc = M.multVec(Mg, pg).h.slice(0, 3), fm = M.multVecFma(Mg, pg);
+  card('C11', 'Comparer au bit près un chemin SIMD avec FMA et le scalaire', 'scalaire : ' + V9(sc) + '\nFMA      : ' + V9(fm) + '\nécart : ' + ulpsV(sc, fm) + ' ulp → TNR bit à bit rouge', 'même ordre d’opérations des deux côtés (mul puis add), ou comparaison à tolérance de quelques ulp', 'Le FMA calcule <code>a·b + c</code> avec un seul arrondi au lieu de deux : il est plus exact, donc différent. Les deux résultats sont justes ; c’est le test qui est faux s’il exige l’égalité. Entrées : le préréglage « Cas général ».');
+  var Pr = M.perspRevZ(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000)), front = M.multVec(Pr, [0, 0, 5]);
+  card('C12', 'Forward() = +Z dans un moteur main droite', 'objet « devant » à Forward·5 = (0, 0, 5)\nclip.w = ' + g6(front.h[3]) + ' &lt; 0 : derrière la caméra', 'Forward() = (0, 0, −1) : objet à (0, 0, −5)\nclip.w = ' + g6(M.multVec(Pr, [0, 0, -5]).h[3]) + ' : visible', 'C’était la livraison de <code>Vectorlib.h</code> pendant la leçon. Tout code qui place un objet « devant » la caméra avec <code>Forward()</code> le met derrière. Les <code>static_assert</code> du dépôt rendent cette erreur impossible à recompiler (schéma B).');
+  $('ctr-list').innerHTML = L.join('');
+}
+function fmtLen(m) { if (m >= 0.01) return (m * 100).toFixed(2).replace('.', ',') + ' cm'; if (m >= 1e-5) return (m * 1000).toFixed(3).replace('.', ',') + ' mm'; return (m * 1e6).toFixed(3).replace('.', ',') + ' µm'; }
+
+// ═══════════════ Table profondeur (écart L2-3) ═══════════════
+function renderDepth() {
+  var t = $('tbl-depth');
+  [1, 10, 100, 500].forEach(function (d) { var r = M.depthResolution(d, 0.1, 1000); var tr = document.createElement('tr'); tr.innerHTML = '<td>' + d + ' m</td><td class="num">' + fmtLen(r.resGL) + '</td><td class="num">' + fmtLen(r.resRev) + '</td><td class="num">× ' + Math.round(r.resGL / r.resRev) + '</td>'; t.appendChild(tr); });
+}
+
+// ═══════════════ Tests hors moteur + prédictions ═══════════════
+function renderTests() {
+  var rad40 = F(40 * Math.PI / 180), q = M.quatAxisAngle([1, 2, 3], rad40), R = M.quatToMatrix(q), pg = [F(0.3), F(0.7), F(-1.1)];
+  var Mg = M.mmul(M.mmul(M.scaleM([1, 3, 0.5]), R), M.translation([4, -2, 7]));
+  var rot = M.quatRotate(q, pg).out, viaM = M.multVec(R, pg).v, inv = M.inverse(Mg).m, rig = M.mmul(R, M.translation([4, -2, 7]));
+  var tn = M.normalized([1, -1, 0]).v, nn = M.normalized([1, 1, 0]).v, ndt = M.dot(M.multDir(M.transposed(inv), nn), M.multDir(Mg, tn));
+  var half = M.slerp({ r: 1, v: [0, 0, 0] }, q, 0.5);
+  var code = [
+    '// test_maths.cpp — console, hors moteur : n\'inclut que le cœur Maths/',
+    '#include "Maths/Vectorlib.h"',
+    '#include "Maths/MatrixLib.h"',
+    '#include "Maths/QuaternionLib.h"',
+    '#include "Maths/Transform.h"',
+    '#include <cstdio>',
+    '#include <cmath>',
+    'using namespace LV3;',
+    '',
+    'static int g_fail = 0;',
+    'static void Check(bool ok, const char* what) { std::printf("%s %s\\n", ok ? "[OK]  " : "[FAIL]", what); g_fail += !ok; }',
+    'static bool Near(float a, float b, float tol) { return std::fabs(a - b) <= tol; }',
+    'static bool NearV(const Vec3f& a, const Vec3f& b, float tol) { return Near(a.x,b.x,tol) && Near(a.y,b.y,tol) && Near(a.z,b.z,tol); }',
+    'static float MaxDiff(const Matrix44f& a, const Matrix44f& b) {',
+    '    float d = 0.f; for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) d = std::fmax(d, std::fabs(a[i][j] - b[i][j])); return d; }',
+    '',
+    'int main() {',
+    '    const Vec3f X(1,0,0), Y(0,1,0), Z(0,0,1);',
+    '    const Vec3f p(0.3f, 0.7f, -1.1f);',
+    '',
+    '    // T1 — main droite (exact par construction : == autorisé)',
+    '    Check(X.crossProduct(Y) == Z, "T1 X x Y == +Z");',
+    '',
+    '    // T2 — rotateZ(90°) envoie +X sur +Y (tolérance : quelques ulp)',
+    '    Matrix44f rz; rz.rotateZ(float(LV3::M_PI_2)); Vec3f r; rz.multVecMatrix(X, r);',
+    '    Check(NearV(r, Y, 1e-6f), "T2 rotateZ(90) : X -> Y");',
+    '',
+    '    // T3 — S·R·T (exact : produits par 1 et 2, somme entière)',
+    '    Transform tr(Vec3f(10,0,0), Quatf::Identity(), Vec3f(2,2,2)); Vec3f t3;',
+    '    tr.ToLocalMatrix().multVecMatrix(X, t3);',
+    '    Check(t3 == Vec3f(12,0,0), "T3 S.R.T : (1,0,0) -> (12,0,0), pas (22,0,0)");',
+    '',
+    '    // T4 — rotate(p) et p·ToMatrix44() : même rotation',
+    '    Quatf q; q.SetAxisAngle(Vec3f(1,2,3), 40.f * float(LV3::TO_RADIAN));',
+    '    const Matrix44f R = q.ToMatrix44(); Vec3f pm; R.multVecMatrix(p, pm);',
+    '    Check(NearV(q.rotate(p), pm, 1e-6f), "T4 rotate == ToMatrix44");',
+    '',
+    '    // T5 — R est une rotation : lignes unitaires',
+    '    bool unit = true; for (int i = 0; i < 3; ++i) unit &= Near(Vec3f(R[i][0],R[i][1],R[i][2]).length(), 1.f, 1e-6f);',
+    '    Check(unit, "T5 lignes de R unitaires");',
+    '',
+    '    // T6 — inverse(M) : M·M⁻¹ = I',
+    '    const Matrix44f M = Matrix44f::Scale(Vec3f(1,3,0.5f)) * R * Matrix44f::Translation(Vec3f(4,-2,7));',
+    '    Check(MaxDiff(M * M.inverse(), Matrix44f()) < 1e-5f, "T6 M * inverse(M) == I");',
+    '',
+    '    // T7 — inverseRigid == inverse sur une transformation rigide',
+    '    const Matrix44f Rig = R * Matrix44f::Translation(Vec3f(4,-2,7));',
+    '    Check(MaxDiff(Rig.inverseRigid(), Rig.inverse()) < 1e-5f, "T7 inverseRigid == inverse");',
+    '',
+    '    // T8 — matrice des normales : n\' reste perpendiculaire à t\' sous scale non uniforme',
+    '    const Vec3f n = Vec3f(1,1,0).Normalized(), t = Vec3f(1,-1,0).Normalized(); Vec3f nW, tW;',
+    '    M.inverse().transposed().multDirMatrix(n, nW); M.multDirMatrix(t, tW);',
+    '    Check(Near(nW.dotProduct(tW), 0.f, 1e-5f), "T8 (M^-1)^T garde n . t = 0");',
+    '',
+    '    // T9 — Slerp : extrémités et milieu',
+    '    const Quatf I = Quatf::Identity(), h = Slerp(I, q, 0.5f);',
+    '    Check(Near(Slerp(I, q, 0.f).r, 1.f, 1e-6f) && Near(Slerp(I, q, 1.f).r, q.r, 1e-6f), "T9a Slerp(0) = I, Slerp(1) = q");',
+    '    Check(Near(2.f * std::acos(h.r), 20.f * float(LV3::TO_RADIAN), 1e-5f), "T9b Slerp(0.5) = 20 deg");',
+    '',
+    '    // T10 — garde de Normalized : pas de NaN',
+    '    const Vec3f z0 = Vec3f(0,0,0).Normalized();',
+    '    Check(z0 == Vec3f(0,0,0), "T10 Normalized(0) == 0, pas NaN");',
+    '',
+    '    std::printf(g_fail ? "\\n%d echec(s)\\n" : "\\nTout est vert\\n", g_fail);',
+    '    return g_fail;',
+    '}'];
+  $('tests-code').textContent = code.join('\n');
+  var pred = [
+    'Valeurs que la page prédit pour ces entrées (float32, ordre du C++) :',
+    'T2  r = ' + V6(M.multVec(M.rotZ(F(Math.PI / 2)), [1, 0, 0]).v) + '   ← la sortie observée pendant la leçon',
+    'T3  ' + V6(M.multVec(M.mmul(M.mmul(M.scaleM([2, 2, 2]), M.ident()), M.translation([10, 0, 0])), [1, 0, 0]).v),
+    'T4  max |rotate − p·R| = ' + g6(maxDiffV(rot, viaM)) + '   (tolérance 1e-6)',
+    'T5  longueurs des lignes − 1 : ' + [0, 1, 2].map(function (i) { return g6(Math.hypot(R[i][0], R[i][1], R[i][2]) - 1); }).join(' ; '),
+    'T6  max |M·M⁻¹ − I| = ' + g6(M.maxAbsDiff(M.mmul(Mg, inv), M.ident())) + '   (tolérance 1e-5)',
+    'T7  max |inverseRigid − inverse| = ' + g6(M.maxAbsDiff(M.inverseRigid(rig), M.inverse(rig).m)),
+    'T8  n\'·t\' = ' + g6(ndt),
+    'T9b angle du milieu = ' + M.quatAngleDeg(half.q).toFixed(5) + '°',
+    'Les trigos de la page sont des valeurs double arrondies : à 1 ulp près de celles du CRT, d’où des tolérances et pas des ==.'];
+  $('tests-pred').textContent = pred.join('\n');
+
+  // prédictions L05
+  var P = M.perspRevZ(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000));
+  var lz = M.lookRotation([0, 0, -1]), lx = M.lookRotation([1, 0, 0]), eye = [0, 2, 5], le = M.lookRotation(M.vsub([0, 0, 0], eye));
+  var W = M.mmul(M.quatToMatrix(le.q), M.translation(eye)), vR = M.inverseRigid(W), vI = M.inverse(W).m, o = M.multVec(vR, [0, 0, 0]).v;
+  var dist = Math.hypot(0, 2, 5);
+  var pl = [
+    'Projection::Perspective(60°, 16/9, 0,1, 1000), reverse-Z :',
+    '  z_vue = −0,1   → z_ndc = ' + g6(M.multVec(P, [0, 0, -0.1]).v[2]) + '   (near → 1)',
+    '  z_vue = −1     → z_ndc = ' + g6(M.multVec(P, [0, 0, -1]).v[2]),
+    '  z_vue = −1000  → z_ndc = ' + g6(M.multVec(P, [0, 0, -1000]).v[2]) + '   (far → 0) ; test GREATER, clear à 0',
+    'Quat::LookRotation(dir) :',
+    '  dir = (0, 0, −1) → q = ' + Q9(lz.q) + '   (identité : la caméra regarde déjà vers −Z)',
+    '  dir = (1, 0, 0)  → q = ' + Q9(lx.q) + '   (−90° autour de Y)',
+    'Caméra en (0, 2, 5) regardant l’origine :',
+    '  q = ' + Q9(le.q),
+    '  rotate(Forward) = ' + V9(M.quatRotate(le.q, [0, 0, -1]).out) + '   = direction vers l’origine',
+    '  view = inverseRigid(World) ; max |inverseRigid − inverse| = ' + g6(M.maxAbsDiff(vR, vI)),
+    '  origine du monde en espace vue = ' + V9(o) + '   (attendu (0, 0, −' + dist.toFixed(6) + '))'];
+  $('pred-l05').textContent = pl.join('\n');
+}
+
+// ═══════════════ Roadmap ═══════════════
+var RDM = [
+'### Décisions en attente — socle L02 (relevé du 07/11/2026)',
+'',
+'**Aucune décision à ce stade : tout ce qui suit reste à acter.**',
+'Origine : artefact « Lot L02 pas à pas — La bibliothèque mathématique », section 5 « Écarts entre la leçon et le code d\'aujourd\'hui » (document `Lecon_02_Mathematiques.md`, décisions et livraisons de l\'échange de la leçon 02, comparés au dossier `Maths/` du dépôt LIB lu le 07/11/2026).',
+'La colonne « Nature relevée » décrit ce que l\'écart *est* ; ce n\'est pas un verdict. La colonne « À décider » dit ce que l\'acter ou le refuser engage.',
+'',
+'| # | Sujet | Nature relevée | À décider |',
+'|---|-------|----------------|-----------|',
+'| L2-1 | Repère : le document de leçon dit main gauche, +Z dans l\'écran ; le code est main droite, `Forward() = −Z`, verrouillé par trois `static_assert` dans `Vectorlib.h` (la livraison de l\'échange portait `Forward() = +Z`, corrigé depuis) | Évolution + incohérence documentaire | Entériner le verrou `static_assert`. Corriger `Lecon_02_Mathematiques.md` (item déjà ouvert). |',
+'| L2-2 | Convention : document en colonne-majeur `M·v`, T·R·S ; échange et code en row-major, vecteur-ligne, S·R·T, monde = local · parent | Évolution actée dans l\'échange + incohérence documentaire | Corriger les sections 3 et 8 de `Lecon_02_Mathematiques.md`. |',
+'| L2-3 | Profondeur : `[-1, 1]` livré dans l\'échange (`Perspective` de `MatrixLib`), `[0, 1]` reverse-Z dans le code (L05) | Remise en question par L05 | Entériner `[0, 1]` reverse-Z dans la fiche de convention de L02 ; déclarer caduque la décision D14 de l\'échange. |',
+'| L2-4 | `LookAt`/`Perspective`/`Orthographic` commentés dans `MatrixLib.h` (≈ 45 lignes, convention `[-1, 1]`) ; projections en fonctions libres `LV3::Projection` | Évolution (règle L05 : `Matrix44` = algèbre pure) + dette « code commenté » | Supprimer le code commenté de `MatrixLib.h`. |',
+'| L2-5 | `Quat::LookRotation` (Shepperd, cas vertical traité) remplace `Matrix44::LookAt` ; garde `dir.norm() <= EPSILON_FLOAT` | Évolution + dette (tolérance utilisée comme garde ; rejette toute direction < 3,16 cm) | Passer la garde de `dir` à `NEAR_ZERO_SQ`. Juger si la garde de `r` (seuil de colinéarité ≈ 1,8°) est voulue. |',
+'| L2-6 | `Matrix44::inverseRigid()` ajouté | Évolution | Entériner ; ajouter un assert de précondition (lignes du bloc 3×3 unitaires). |',
+'| L2-7 | `Transform` purement local (hiérarchie dans `WorldTransformSystem`) ; `Transform.cpp` ne contient plus que `#include "pch.h"` et du code commenté | Évolution (règle S4) + dette mineure | Retirer `Transform.cpp` du projet. |',
+'| L2-8 | Matrice des normales : pas de `Mat3` (décision de l\'échange) ; l\'application de `(M⁻¹)ᵀ` aux normales n\'a pas été vérifiée dans l\'étage sommets | À vérifier d\'abord | Lire l\'étage sommets / l\'éclairage : si les normales passent par la matrice monde, corriger (un scale non uniforme fausse l\'éclairage). |',
+'| L2-9 | Alignement : le document prévoit `alignas(16)` sur `Vec4`/`Mat4` ; aucun dans le code ; la vectorisation réelle (`ProjectPositions8`) est en SoA | Remise en question | Remplacer la règle par « tableaux SoA alignés `LV3_ALIGN_SIMD` », ou l\'appliquer à `Matrix44` seule. |',
+'| L2-10 | `Vectorlib.h` : `<cmath>` inclus deux fois, `<iostream>` pour les `operator<<` (header dans le PCH), `<cstdint>` peut-être inutile | Dette mineure | Nettoyage ; déplacer les `operator<<` dans un header de debug ou passer à `<iosfwd>`. |',
+'| L2-11 | `MathUtils.h` (`Saturate`, `Lerp`) : utilise `LV3_FORCEINLINE` sans inclure `Compiler.h` ; pas d\'`ApproxEqual` | Évolution + dette mineure | Ajouter l\'include ; ajouter `ApproxEqual(a, b, tol)`. |',
+'| L2-12 | `MathTypes.h` ne contient plus que le cœur ; `AABB3d.h` commenté, `Maths/Geometry/` vide | Évolution | Entériner ; la place de la géométrie se décide dans sa leçon dédiée. |',
+'| L2-13 | `getEulerAngles()` : heuristique héritée, sans TNR | Dette | Écrire la TNR aller-retour Euler → Quat → Matrix44 → Euler, ou retirer la fonction si elle n\'est pas appelée. |',
+'| L2-14 | `norm()` renvoie la longueur au carré ; `normalize()` / `Normalized()` mélangent deux casses | À acter | Renommer `norm()` en `lengthSq()` (et passer aux noms courts `dot`/`cross`), ou garder les noms hérités (D17) et documenter. |',
+'',
+'**Décisions de lot (artefact L02, section 4) :** D10 (famille templatée canonique), D11 (`LV3`), D12 (row-major, vecteur-ligne, S·R·T), D13 (main droite) : tranchées dans l\'échange. D15 (tout en 4×4, pas de `Mat3`) et D16 (fabriques pures hors `Camera`, affinée en L05) : acceptées. D14 (profondeur `[-1, 1]`) : remplacée par L05. **D17** (noms hérités conservés) : proposée, se tranche avec **L2-14**. D18 (`operator[](int)`) : appliquée.',
+'',
+'**Ordre de lecture suggéré (sans engagement)** : L2-8 (vérification, impact visuel possible), puis L2-5 (bug latent), L2-1 / L2-2 / L2-3 (documentation, sans coût), L2-4 / L2-7 / L2-10 / L2-11 (nettoyage), L2-9 et L2-14 (conventions à trancher), le reste étant des évolutions en place à entériner.'
+];
+function renderRdm() {
+  $('rdm-md').textContent = RDM.join('\n');
+  $('copy-rdm').addEventListener('click', function () {
+    var txt = RDM.join('\n');
+    function done(ok) { $('copy-st').textContent = ok ? 'Copié.' : 'Copie refusée par le navigateur : sélectionnez le bloc à la main.'; }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { done(false); });
+    else done(false);
+  });
+}
+
+// ═══════════════ Téléchargement ═══════════════
+var dl = $('dl-btn'), dlApi = null;
+if (window.claude && typeof window.claude.use === 'function') {
+  window.claude.use('downloads').then(function (api) { dlApi = api; }).catch(function () { dlApi = null; });
+}
+dl.addEventListener('click', function () {
+  var name = 'Lot_L02_Maths_pas_a_pas.html';
+  if (dlApi) {
+    dlApi.save({ filename: name, data: new Blob([PRISTINE], { type: 'text/html' }) })
+      .catch(function (err) { if (err && err.code !== 'declined') dl.textContent = 'Téléchargement indisponible ici'; });
+    return;
+  }
+  try {
+    var url = URL.createObjectURL(new Blob([PRISTINE], { type: 'text/html' }));
+    var a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  } catch (err) { dl.textContent = 'Téléchargement indisponible ici'; }
+});
+
+// ─── Démarrage ───
+measureTabs(); renderDepth(); drawC(); setPreset(0); renderCtr(); renderTests(); renderRdm();
+window.addEventListener('resize', function () { measureTabs(); drawA(); drawB(); });
+showTabFromHash();
+})();
+
+</script>
+</body>
+</html>

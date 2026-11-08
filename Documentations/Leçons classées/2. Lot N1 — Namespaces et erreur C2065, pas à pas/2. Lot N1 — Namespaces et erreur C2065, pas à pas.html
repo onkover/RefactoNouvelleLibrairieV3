@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot N1 — Namespaces et erreur C2065, pas à pas</title>
+<style>
+:root{--bg:#fbfaf7;--fg:#1d1d1b;--mut:#66655e;--card:#ffffff;--bd:#dedbd0;--ac:#4b3fb8;--acbg:#eeecfb;--ok:#1b7a43;--okbg:#e2f3e8;--ko:#b3261e;--kobg:#fcebea;--wa:#8a5a00;--wabg:#fff3d6;--cb:#f1efe8;--cf:#2b2a27;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#ecebe6;--mut:#a3a29a;--card:#212125;--bd:#3a3a40;--ac:#a79cff;--acbg:#2a2848;--ok:#5fd08c;--okbg:#17301f;--ko:#ff8b82;--kobg:#3a1c1a;--wa:#f0c060;--wabg:#3a2e12;--cb:#2a2a2f;--cf:#e6e4dc;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#ecebe6;--mut:#a3a29a;--card:#212125;--bd:#3a3a40;--ac:#a79cff;--acbg:#2a2848;--ok:#5fd08c;--okbg:#17301f;--ko:#ff8b82;--kobg:#3a1c1a;--wa:#f0c060;--wabg:#3a2e12;--cb:#2a2a2f;--cf:#e6e4dc;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:auto}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:11;background:var(--bg);border-bottom:1px solid var(--bd)}
+.bar{max-width:940px;margin:0 auto;padding:6px 14px;display:flex;gap:10px;align-items:center}
+.bar b{font-size:.95rem;white-space:nowrap}
+nav{display:flex;gap:6px;overflow-x:auto;flex:1;scrollbar-width:none}
+nav a{white-space:nowrap;font-size:.82rem;color:var(--ac);text-decoration:none;border:1px solid var(--bd);border-radius:999px;padding:3px 10px;background:var(--card)}
+button,select{font:inherit;color:var(--fg)}
+.btn{border:1px solid var(--ac);background:var(--acbg);color:var(--ac);border-radius:8px;padding:4px 10px;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.btn[hidden]{display:none}
+.wrap{max-width:940px;margin:0 auto;padding:0 14px 90px}
+h1{font-size:1.4rem;line-height:1.25;margin:1rem 0 .3rem}
+h2{font-size:1.2rem;margin:2.2rem 0 .5rem;border-bottom:2px solid var(--ac);padding-bottom:.2rem;scroll-margin-top:64px}
+h3{font-size:1.02rem;margin:1.2rem 0 .4rem}
+p{margin:.5rem 0}
+.mut{color:var(--mut);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin:10px 0}
+.note{border-left:4px solid var(--ac);background:var(--acbg);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.warn{border-left:4px solid var(--wa);background:var(--wabg);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.bad{border-left:4px solid var(--ko);background:var(--kobg);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+.good{border-left:4px solid var(--ok);background:var(--okbg);padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0}
+pre{background:var(--cb);color:var(--cf);padding:10px 12px;border-radius:8px;overflow-x:auto;font:13px/1.45 ui-monospace,Consolas,monospace;margin:8px 0;max-width:100%}
+code{font-family:ui-monospace,Consolas,monospace;font-size:.9em;background:var(--cb);padding:0 .25em;border-radius:4px}
+pre code{background:none;padding:0;font-size:inherit}
+.del{background:var(--kobg);color:var(--ko);display:block}
+.add{background:var(--okbg);color:var(--ok);display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chip{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:4px 11px;font-size:.84rem;cursor:pointer}
+.chip.on{border-color:var(--ac);background:var(--acbg);color:var(--ac);font-weight:600}
+.ctl{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:6px 0;font-size:.92rem}
+.ctl label{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.ctl .t{font-weight:600;min-width:130px}
+select{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:3px 6px;max-width:100%}
+.grid3{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:760px){.grid3{grid-template-columns:1.35fr 1fr 1fr}}
+.box{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;background:var(--card);min-width:0}
+.box h4{margin:0 0 6px;font-size:.88rem;color:var(--mut);font-weight:600}
+.ln{display:grid;grid-template-columns:2.2em 1fr 1.2em;gap:2px 6px;align-items:start;padding:3px 4px;border-radius:6px;font-size:.84rem}
+.ln code{overflow-wrap:anywhere;background:none;padding:0}
+.ln .n{color:var(--mut);text-align:right}
+.ln .nt{grid-column:2/4;color:var(--mut);font-size:.78rem}
+.ln.ok .ic{color:var(--ok)}.ln.ko{background:var(--kobg)}.ln.ko .ic{color:var(--ko);font-weight:700}
+.ln.skip code{color:var(--mut)}
+.scope{border:1.5px solid var(--ac);border-radius:8px;padding:6px 8px;margin:6px 0;font-size:.84rem}
+.scope.unk{border-style:dashed;border-color:var(--ko);color:var(--ko)}
+.scope b{display:block;margin-bottom:2px}
+.scope .it{font-family:ui-monospace,Consolas,monospace;font-size:.8rem;color:var(--fg)}
+.scope .gh{font-family:ui-monospace,Consolas,monospace;font-size:.8rem;color:var(--mut);text-decoration:line-through}
+.sym{font-family:ui-monospace,Consolas,monospace;font-size:.78rem;overflow-wrap:anywhere;padding:4px 6px;border-radius:6px;background:var(--cb);margin:3px 0}
+.verdict{border-radius:10px;padding:10px 12px;margin:10px 0;font-weight:600}
+.verdict.ok{background:var(--okbg);color:var(--ok)}.verdict.ko{background:var(--kobg);color:var(--ko)}
+.step{border:1px solid var(--bd);border-radius:10px;background:var(--card);margin:10px 0;overflow:hidden}
+.step>.hd{display:flex;gap:10px;align-items:center;padding:8px 12px;background:var(--acbg);font-weight:600}
+.step>.hd .no{background:var(--ac);color:var(--bg);border-radius:50%;width:1.7em;height:1.7em;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;flex:none}
+.step>.bd{padding:6px 12px 10px}
+.step .k{font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-top:8px}
+.io{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:700px){.io{grid-template-columns:1fr 1fr}}
+.io>div{border-radius:8px;padding:6px 10px;font-size:.88rem}
+.io .in{background:var(--cb)}.io .out{background:var(--okbg)}.io .out.ko{background:var(--kobg)}
+table{border-collapse:collapse;width:100%;font-size:.84rem;display:block;overflow-x:auto}
+th,td{border:1px solid var(--bd);padding:4px 7px;text-align:left;vertical-align:top}
+th{background:var(--cb)}
+td.num{font-family:ui-monospace,Consolas,monospace;text-align:right;white-space:nowrap}
+td.hi{background:var(--kobg);color:var(--ko);font-weight:700}
+td.gd{background:var(--okbg);color:var(--ok);font-weight:700}
+.cards{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:760px){.cards{grid-template-columns:1fr 1fr}}
+input[type=range]{width:100%;max-width:320px}
+.rrow{display:flex;gap:8px;align-items:flex-start;font-size:.86rem;padding:4px 6px;border-radius:6px}
+.rrow.hit{background:var(--okbg)}.rrow.miss{color:var(--mut)}.rrow.after{opacity:.45}
+@media print{header.top{position:static}}
+</style>
+</head>
+<body>
+<header class="top"><div class="bar"><b>Lot N1</b><nav>
+<a href="#verdict">Verdict</a><a href="#regles">Règles</a><a href="#sim">Simulateur</a><a href="#etapes">Étapes</a><a href="#ce">Contre-exemples</a><a href="#imbr">Imbriqués</a><a href="#simd">SIMD</a><a href="#verif">Vérifier</a><a href="#corr">Correction</a></nav>
+<button class="btn" id="exportBtn" hidden>Exporter HTML</button></div></header>
+
+<div class="wrap">
+<h1>Lot N1 — Les namespaces et l’erreur C2065, pas à pas</h1>
+<p class="mut">LibraryV3 (LIB) · RefactoNouvelleLibrairieV3 (EXE) · Visual Studio 2026 · MSVC</p>
+
+<div class="card"><b>Objectif.</b> Comprendre pourquoi le compilateur ne connaît pas <code>LibV3</code> dans <code>main.cpp</code>, maîtriser la mécanique des namespaces (existence, recherche de noms, déclaration/définition, imbrication) et corriger sans deviner.<br>
+<b>Introduction.</b> Chaque <code>.cpp</code> est compilé <em>seul</em>. Un namespace n’existe, pour ce <code>.cpp</code>, qu’à partir du moment où une ligne <code>namespace LibV3 { … }</code> a été <em>lue</em> — directement ou via un <code>#include</code>. Ce que voit <code>ConfigManager.cpp</code> est invisible pour <code>main.cpp</code>.</div>
+
+<h2 id="verdict">1. Verdict corrigé</h2>
+<div class="bad"><b>Je corrige mes conseils précédents.</b> (a) Encadrer <code>ConfigManager.h</code> dans <code>namespace LibV3</code> était faux : la déclaration devient <code>LibV3::SetConsoleMode</code> mais le <code>.cpp</code> définit <code>::SetConsoleMode</code> → la compilation passe, l’édition de liens échoue (LNK2019). Preset « Mon ancien conseil » ci-dessous. (b) Ajouter <code>Logger.h</code> au <code>pch.h</code> fonctionne mais contamine toute l’unité pour rien. (c) Les chevrons de <code>&lt;pch.h&gt;</code> n’étaient pas la cause.</div>
+<div class="card"><b>Cause réelle.</b> Ligne 24 de <code>main.cpp</code> : <code>using namespace LibV3;</code>. Aucun des headers inclus avant (<code>pch.h</code>, <code>Core/Platform.h</code>, <code>helper/ConfigManager.h</code>) ne déclare <code>namespace LibV3</code>. Le seul qui le fait ici, <code>Core/Logger.h</code>, est inclus par <code>ConfigManager.cpp</code> (qui s’en sert pour <code>Logger::error</code>) mais pas par <code>main.cpp</code>. Or <code>main</code> n’utilise rien de <code>LibV3</code> : <code>SetConsoleMode()</code> est globale dans le <code>.h</code> <em>et</em> dans le <code>.cpp</code> (cohérent).<br>
+<span class="mut">À confirmer chez toi avec <code>/showIncludes</code> (section Vérifier) : le <code>pch.h</code> de l’EXE n’a pas été relu ici.</span></div>
+<div class="good"><b>Correction :</b> supprimer la ligne 24 de <code>main.cpp</code>. Détail avant/après en section 9.</div>
+
+<h2 id="regles">2. Leçon — les 6 règles des namespaces</h2>
+<div class="card">
+<p><b>R1 — Un namespace est « ouvert ».</b> On peut le rouvrir dans autant de fichiers qu’on veut : chaque <code>namespace LibV3 { … }</code> <em>ajoute</em> des noms au même ensemble.</p>
+<p><b>R2 — Il n’existe qu’après lecture.</b> Dans une unité de traduction (le <code>.cpp</code> + tous ses <code>#include</code> développés), un nom de namespace est inconnu tant qu’aucune déclaration n’a été lue. Seuls les headers propagent.</p>
+<p><b>R3 — Trois façons d’y accéder, du plus précis au plus large.</b></p>
+<pre><code>LibV3::Logger::error("x");     // qualifié : explicite, jamais ambigu
+using LibV3::Logger;           // using-declaration : UN nom
+using namespace LibV3;         // using-directive : TOUS les noms (le plus large)</code></pre>
+<p><b>R4 — La using-directive ne va jamais dans un header</b> (elle s’imposerait à tous les <code>.cpp</code> qui l’incluent). Dans un <code>.cpp</code>, après les <code>#include</code>, et seulement si on utilise vraiment le namespace. Idéal : portée de fonction.</p>
+<p><b>R5 — Déclaration et définition désignent la même entité.</b> Trois écritures de définition, une seule piège :</p>
+<pre><code>namespace LibV3 { void f() {} }          // OK  -> ?f@LibV3@@YAXXZ
+void LibV3::f() {}                        // OK  -> ?f@LibV3@@YAXXZ
+using namespace LibV3; void f() {}        // PIÈGE : définit ::f -> ?f@@YAXXZ</code></pre>
+<p><b>R6 — Recherche non qualifiée : de l’intérieur vers l’extérieur, on s’arrête à la première portée qui contient le nom</b> (même si la signature ne convient pas : c’est le masquage, section 7).</p>
+</div>
+<div class="note"><b>Algorithme de la recherche d’un nom <code>n</code> depuis une portée <code>S</code> :</b><br>
+1. Pour chaque portée <code>P</code> de <code>S</code> jusqu’au global (intérieur → extérieur) :<br>
+&nbsp;&nbsp;a. noms propres de <code>P</code> + noms des namespaces importés par un <code>using namespace</code> dont la « portée effective » est <code>P</code> ;<br>
+&nbsp;&nbsp;b. si au moins un trouvé : <b>STOP</b> (si plusieurs entités distinctes : ambiguïté, C2668) ;<br>
+2. Si rien : erreur « identificateur non déclaré » (C2065).<br>
+<span class="mut">Portée effective d’un <code>using namespace N</code> écrit dans <code>S</code> : le plus proche namespace englobant à la fois <code>S</code> et <code>N</code>. Pas de version vectorisée : résolu à la compilation.</span></div>
+
+<h2 id="sim">3. Schéma dynamique — l’unité de traduction de <code>main.cpp</code></h2>
+<p class="mut">Règle les trois fichiers, ou charge un cas. Le simulateur applique R1 à R6 et la règle de décoration MSVC.</p>
+<div class="chips" id="presets"></div>
+<div class="card">
+<div class="ctl"><span class="t">main.cpp</span>
+<label><input type="checkbox" id="cL"> <code>#include &lt;Core/Logger.h&gt;</code></label>
+<label><input type="checkbox" id="cU"> <code>using namespace LibV3;</code></label>
+<label><input type="checkbox" id="cQ"> appel qualifié <code>LibV3::SetConsoleMode()</code></label></div>
+<div class="ctl"><span class="t">ConfigManager.h</span>
+<label><input type="radio" name="H" value="global"> déclarations globales</label>
+<label><input type="radio" name="H" value="LibV3"> dans <code>namespace LibV3 { }</code></label></div>
+<div class="ctl"><span class="t">ConfigManager.cpp</span>
+<label><input type="radio" name="D" value="global"> définitions globales</label>
+<label><input type="radio" name="D" value="LibV3"> dans <code>namespace LibV3 { }</code></label></div>
+</div>
+<div class="grid3" id="diagram"></div>
+<div id="verdictBox"></div>
+
+<h2 id="etapes">4. Les étapes de l’algorithme (calculées pour le réglage ci-dessus)</h2>
+<div id="steps"></div>
+
+<h2 id="ce">5. Contre-exemples chiffrés</h2>
+<div class="bad"><b>CE1 — « Ça compile donc c’est bon ».</b> Preset « Mon ancien conseil » : 0 erreur de compilation, puis <code>LNK2019</code> + <code>LNK1120</code> à l’édition de liens. Le décalage est entre deux noms décorés (<code>?SetConsoleMode@LibV3@@YAXXZ</code> contre <code>?SetConsoleMode@@YAXXZ</code>) : le compilateur de <code>main.cpp</code> n’a aucun moyen de savoir ce que définit l’autre <code>.cpp</code>.</div>
+<div class="bad"><b>CE2 — Le masquage silencieux</b> (section 7) : <code>0,7</code> devient <code>0</code> sans erreur.</div>
+<div class="bad"><b>CE3 — Le test <code>==</code> entre scalaire et AVX2</b> (section 8) : <code>5</code> contre <code>4</code>, alors que la valeur exacte est <code>6</code>.</div>
+<p class="mut">Chargement rapide : <button class="chip" id="ce1">Charger CE1 dans le simulateur</button></p>
+
+<h2 id="imbr">6. Pourquoi un namespace dans un namespace ?</h2>
+<p>Syntaxe : <code>namespace LibV3 { namespace Math { … } }</code>, ou depuis C++17 : <code>namespace LibV3::Math { … }</code>.</p>
+<div class="cards">
+<div class="card"><b>① Découper par sous-système.</b> <code>LibV3::Math</code>, <code>::Render</code>, <code>::Scene</code>. Le nom dit d’où il vient et évite les collisions (<code>Point</code> de <code>windows.h</code>, <code>clamp</code>…).</div>
+<div class="card"><b>② Cacher l’implémentation.</b> <code>LibV3::detail</code> : « ne pas appeler de l’extérieur ». Convention, pas protection du compilateur. Ton <code>json.hpp</code> fait pareil avec <code>nlohmann::detail</code>.</div>
+<div class="card"><b>③ Choisir l’implémentation SIMD.</b> <code>Math::scalar</code> (référence) et <code>Math::avx2</code> (rapide) coexistent ; le moteur n’en expose qu’une. Section 8.</div>
+<div class="card"><b>④ Versionner (<code>inline namespace</code>).</b> <code>namespace LibV3::inline v2 { … }</code> : les noms restent utilisables comme <code>LibV3::f</code>, mais le nom décoré contient <code>v2</code> : une vieille <code>.lib</code> ne se lie pas silencieusement avec un nouveau header. <code>nlohmann</code> utilise un inline namespace versionné.</div>
+<div class="card"><b>⑤ Namespace anonyme.</b> <code>namespace { int cache; }</code> : visible dans ce seul <code>.cpp</code> (liaison interne, successeur de <code>static</code>). Jamais dans un header.</div>
+<div class="card"><b>⑥ Alias local.</b> <code>namespace fs = std::filesystem;</code> (ce que fait ton <code>ProgrammeConfig</code>) : raccourcit un nom long sans rien importer.</div>
+</div>
+<div class="warn"><b>Le prix :</b> chaque niveau ajoute une portée dans la recherche (R6), donc un risque de masquage. Règle pratique : 2 niveaux maximum (<code>LibV3::Math</code>), un nom unique par concept.</div>
+
+<h3>Résolveur de noms interactif</h3>
+<p class="mut">Choisis où le code est écrit, quel nom tu cherches, et quels <code>using</code> sont actifs. Observe où la recherche s’arrête.</p>
+<div class="card">
+<div class="ctl"><span class="t">Code écrit dans</span><select id="rSite"></select></div>
+<div class="ctl"><span class="t">Nom cherché</span><select id="rName"></select></div>
+<div class="ctl"><span class="t">using actifs</span>
+<label><input type="checkbox" id="rU1"> <code>using namespace LibV3;</code></label>
+<label><input type="checkbox" id="rU2"> <code>using namespace LibV3::Math;</code></label></div>
+<div id="rOut"></div>
+</div>
+
+<h2 id="shadow">7. Contre-exemple CE2 — le masquage, calculé</h2>
+<p><code>LibV3::clamp(float,float,float)</code> existe. Quelqu’un ajoute dans <code>LibV3::Render</code> un <code>clamp(int,int,int)</code>. Dans <code>Rasterizer::draw()</code>, l’appel <code>clamp(x, 0.0f, 1.0f)</code> s’arrête à <code>Render</code> (R6) : la version <code>float</code> n’est <em>jamais considérée</em>.</p>
+<div class="card">
+<div class="ctl"><span class="t">x (float32)</span><input type="range" id="shX" min="0" max="1" step="0.05" value="0.7"> <code id="shXv"></code></div>
+<div class="ctl"><span class="t">Appel écrit dans</span><select id="shSite"><option value="Render">LibV3::Render (Rasterizer::draw)</option><option value="LibV3">LibV3 (Logger::log)</option></select></div>
+<div id="shOut"></div></div>
+<div class="note"><b>Remèdes :</b> qualifier <code>LibV3::clamp(…)</code> ; ou nommer l’autre <code>clampi</code> ; ou ne pas redéfinir un nom déjà présent dans un namespace parent. Lis les avertissements : la perte <code>float → int</code> déclenche C4244.</div>
+
+<h2 id="simd">8. Les namespaces au service du scalaire / vectorisé (et CE3)</h2>
+<p>Seul endroit de ce lot où un équivalent vectorisé existe. Même interface, deux implémentations rangées dans deux namespaces imbriqués :</p>
+<div class="cards"><div><b>Scalaire</b><pre><code>namespace LibV3::Math::scalar {
+  inline float dot8(const float* a, const float* b) {
+    float s = 0.0f;
+    for (int i = 0; i &lt; 8; ++i) s += a[i] * b[i];
+    return s;
+  }
+}</code></pre></div>
+<div><b>AVX2 (8 couloirs)</b><pre><code>namespace LibV3::Math::avx2 {
+  inline float dot8(const float* a, const float* b) {
+    __m256 p  = _mm256_mul_ps(_mm256_loadu_ps(a),
+                              _mm256_loadu_ps(b));
+    __m128 s4 = _mm_add_ps(_mm256_castps256_ps128(p),
+                           _mm256_extractf128_ps(p, 1));
+    __m128 s2 = _mm_add_ps(s4, _mm_movehl_ps(s4, s4));
+    __m128 s1 = _mm_add_ss(s2, _mm_shuffle_ps(s2, s2, 1));
+    return _mm_cvtss_f32(s1);
+  }
+}</code></pre></div></div>
+<pre><code>namespace LibV3::Math {
+#if defined(__AVX2__)
+    using avx2::dot8;      // Math::dot8 -> version rapide
+#else
+    using scalar::dot8;    // Math::dot8 -> version de référence
+#endif
+}   // Math::scalar::dot8 reste toujours appelable : c'est le témoin des tests</code></pre>
+<div class="chips" id="simdChips"></div>
+<div id="simdOut"></div>
+<div class="bad"><b>CE3 :</b> sur le cas piégeux, un test <code>assert(scalar::dot8(a,b) == avx2::dot8(a,b))</code> échoue (5 contre 4) alors que la valeur exacte vaut 6. Les deux ordres de sommation sont « corrects » en float32. Le test doit comparer à une référence en <code>double</code> avec une tolérance relative, jamais deux float32 avec <code>==</code>.</div>
+
+<h2 id="verif">9. Vérifier</h2>
+<h3>Tests hors moteur</h3>
+<p><b>a) Quels fichiers entrent dans <code>main.cpp</code> ?</b> Propriétés du projet EXE → C/C++ → Avancé → « Afficher les inclusions » (<code>/showIncludes</code>), recompiler <code>main.cpp</code> seul. Cherche <code>Logger.h</code> dans la sortie : absent = cause confirmée.</p>
+<p><b>b) Quel nom décoré est produit ?</b> Invite « Developer Command Prompt » :</p>
+<pre><code>dumpbin /symbols x64\Debug\ConfigManager.obj | findstr SetConsoleMode
+:: attendu (définition globale) : ?SetConsoleMode@@YAXXZ</code></pre>
+<p><b>c) Sonde de portée</b>, à compiler seule (<code>ns_probe.cpp</code>, hors <code>main</code>) :</p>
+<pre><code>#include "pch.h"
+#include &lt;type_traits&gt;
+#include "helper/ConfigManager.h"
+#include &lt;Core/Logger.h&gt;
+
+static_assert(std::is_same_v&lt;decltype(&amp;::SetConsoleMode), void(*)()&gt;,
+              "SetConsoleMode doit etre globale");
+static_assert(std::is_class_v&lt;LibV3::Logger&gt;, "LibV3::Logger attendu");</code></pre>
+<h3>Filets Debug</h3>
+<p>Activer <code>/W4</code> et traiter C4244 (perte de données) en erreur pour la bibliothèque : c’est le filet qui attrape CE2. Les <code>static_assert</code> ci-dessus sont des filets à coût nul à l’exécution.</p>
+<h3>Prédictions de ce lot (à comparer à Visual Studio)</h3>
+<div id="preds"></div>
+
+<h2 id="corr">10. Correction, bug par bug</h2>
+<div class="card"><b>Bug 1 — <code>main.cpp</code>, ligne 24 : C2065 <code>'LibV3'</code></b><br>
+<b>Contexte.</b> <code>main</code> n’appelle que <code>SetConsoleMode()</code>, fonction globale déclarée dans <code>ConfigManager.h</code>.<br>
+<b>Raison.</b> La directive importe un namespace que cette unité n’a jamais lu ; et elle n’importe rien d’utile.<br>
+<b>Avant :</b>
+<pre><code>#include "helper/ConfigManager.h"
+
+
+<span class="del">using namespace LibV3;</span>
+
+int main()
+{
+	SetConsoleMode();	// mode cosole en UTF-8</code></pre>
+<b>Après :</b>
+<pre><code>#include "helper/ConfigManager.h"
+
+
+int main()
+{
+	SetConsoleMode();	// mode cosole en UTF-8</code></pre>
+<b>Fichiers à ne PAS modifier :</b> <code>ConfigManager.h</code> et <code>ConfigManager.cpp</code> sont cohérents (global/global). Dans le <code>.cpp</code>, <code>using namespace LibV3;</code> est légitime : <code>Logger::error</code> en a besoin et <code>Logger.h</code> est bien inclus avant.</div>
+<div class="card"><b>Variante si <code>main</code> doit un jour utiliser <code>Logger</code></b> :
+<pre><code>#include &lt;Core/Logger.h&gt;      // le header qui DÉCLARE le namespace
+
+int main()
+{
+	LibV3::Logger::warn("demarrage");   // qualifié : pas de using nécessaire</code></pre></div>
+<p class="mut">Le PDF et le Markdown de cette leçon peuvent être produits à la demande.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var SRC='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')};
+
+/* ============ 1. Simulateur d'unité de traduction ============ */
+var MG='?SetConsoleMode@@YAXXZ', MN='?SetConsoleMode@LibV3@@YAXXZ';
+var RG='void __cdecl SetConsoleMode(void)', RN='void __cdecl LibV3::SetConsoleMode(void)';
+var S={L:false,H:'global',D:'global',U:true,Q:false};
+var PRESETS=[
+ {n:'Ton erreur (état actuel)',s:{L:false,H:'global',D:'global',U:true,Q:false}},
+ {n:'Correctif : supprimer le using',s:{L:false,H:'global',D:'global',U:false,Q:false}},
+ {n:'Variante : inclure Logger.h',s:{L:true,H:'global',D:'global',U:true,Q:false}},
+ {n:'Mon ancien conseil (header encadré)',s:{L:false,H:'LibV3',D:'global',U:true,Q:false}},
+ {n:'Ancienne version GitHub',s:{L:false,H:'global',D:'LibV3',U:false,Q:false}},
+ {n:'Tout dans LibV3 (cohérent)',s:{L:false,H:'LibV3',D:'LibV3',U:true,Q:false}},
+ {n:'Appel qualifié',s:{L:false,H:'LibV3',D:'LibV3',U:false,Q:true}}
+];
+function sim(s){
+ var known=s.L||s.H==='LibV3', r={known:known,errors:[],lines:[],inc:['pch.h','Core/Platform.h']};
+ r.lines.push({n:18,t:'#include <pch.h>',st:'ok',nt:'STL et Core stables : aucun namespace LibV3'});
+ r.lines.push({n:19,t:'#include "Core/Platform.h"',st:'ok',nt:'windows.h, alias globaux : aucun namespace LibV3'});
+ if(s.L){r.lines.push({n:20,t:'#include <Core/Logger.h>',st:'ok',nt:'déclare namespace LibV3 { Logger, LogLevel }'});r.inc.push('Core/Logger.h');}
+ r.lines.push({n:21,t:'#include "helper/ConfigManager.h"',st:'ok',nt:s.H==='global'?'déclare ::SetConsoleMode et ::LoadGameDirectory':'déclare LibV3::SetConsoleMode : le namespace LibV3 naît ici'});
+ r.inc.push('helper/ConfigManager.h');
+ if(s.U){
+  if(known){r.using={ok:true,msg:'LibV3 est connu : ses noms deviennent visibles'};r.lines.push({n:24,t:'using namespace LibV3;',st:'ok',nt:r.using.msg});}
+  else{r.using={ok:false,msg:'C2065 (ou C2871 selon la version) : LibV3 est inconnu à cette ligne'};r.lines.push({n:24,t:'using namespace LibV3;',st:'ko',nt:r.using.msg});r.errors.push(r.using.msg);}
+ }else{r.using={ok:true,absent:true,msg:'aucune directive : rien n’est importé'};r.lines.push({n:24,t:'// using namespace LibV3;   (absent)',st:'skip',nt:r.using.msg});}
+ var ct=s.Q?'LibV3::SetConsoleMode();':'SetConsoleMode();', c;
+ if(s.Q){
+  if(!known)c={ok:false,msg:'C2653 : LibV3 n’est pas un nom de classe ou d’espace de noms'};
+  else if(s.H!=='LibV3')c={ok:false,msg:'C2039 : SetConsoleMode n’est pas membre de LibV3'};
+  else c={ok:true,msg:'trouvé par qualification dans LibV3'};
+ }else{
+  if(s.H==='global')c={ok:true,msg:'trouvé dans la portée globale'};
+  else if(s.U&&known)c={ok:true,msg:'trouvé dans LibV3, via using namespace'};
+  else c={ok:false,msg:'C3861 : SetConsoleMode : identificateur introuvable'};
+ }
+ r.call=c;r.lines.push({n:29,t:ct,st:c.ok?'ok':'ko',nt:c.msg});
+ if(!c.ok&&r.errors.indexOf(c.msg)<0)r.errors.push(c.msg);
+ r.compileOK=r.errors.length===0;
+ r.declM=s.H==='global'?MG:MN; r.declR=s.H==='global'?RG:RN;
+ r.defM=s.D==='global'?MG:MN; r.defR=s.D==='global'?RG:RN;
+ r.linkRan=r.compileOK; r.linkOK=r.compileOK&&r.declM===r.defM;
+ r.out=!r.compileOK?'✗ compilation : '+r.errors[0]:(!r.linkOK?'✗ édition de liens : LNK2019 (symbole externe non résolu)':'✓ construit');
+ return r;
+}
+function renderSim(){
+ var r=sim(S);
+ var h='<div class="box"><h4>main.cpp — lignes évaluées</h4>'+r.lines.map(function(l){return '<div class="ln '+l.st+'"><span class="n">'+l.n+'</span><code>'+esc(l.t)+'</code><span class="ic">'+(l.st==='ok'?'✓':l.st==='ko'?'✗':'·')+'</span><div class="nt">'+esc(l.nt)+'</div></div>'}).join('')+'</div>';
+ var g=['main()'];if(S.H==='global')g.unshift('SetConsoleMode()','LoadGameDirectory()');
+ var gl='<div class="scope"><b>:: (global)</b>'+g.map(function(x){return '<div class="it">'+x+'</div>'}).join('')+(r.known?'<div class="it">namespace LibV3</div>':'')+'</div>';
+ var lv;
+ if(r.known){var it=[];if(S.L)it.push('<div class="it">class Logger</div><div class="it">enum class LogLevel</div>');else it.push('<div class="gh">class Logger (non déclaré ici)</div>');
+  if(S.H==='LibV3')it.push('<div class="it">SetConsoleMode()</div><div class="it">LoadGameDirectory()</div>');
+  lv='<div class="scope"><b>LibV3</b>'+it.join('')+'</div>';}
+ else lv='<div class="scope unk"><b>LibV3</b>inconnu dans cette unité : aucune ligne lue ne le déclare</div>';
+ var ar=(S.U&&r.known)?'<div class="mut" style="font-size:.78rem">using namespace LibV3 : les noms de LibV3 sont cherchés aussi depuis ::</div>':'';
+ h+='<div class="box"><h4>Table des portées connues</h4>'+gl+lv+ar+'</div>';
+ var lk='<div class="box"><h4>Édition de liens (noms décorés)</h4>';
+ lk+='<div class="mut" style="font-size:.78rem">déclaré par le header (ce que main réclame)</div><div class="sym">'+esc(r.declM)+'<br>'+esc(r.declR)+'</div>';
+ lk+='<div class="mut" style="font-size:.78rem">défini par ConfigManager.obj</div><div class="sym">'+esc(r.defM)+'<br>'+esc(r.defR)+'</div>';
+ lk+=r.linkRan?(r.linkOK?'<div class="verdict ok" style="margin:6px 0 0">identiques ✓</div>':'<div class="verdict ko" style="margin:6px 0 0">différents ✗ LNK2019 + LNK1120</div>'):'<div class="mut" style="font-size:.8rem">non exécutée : la compilation a échoué</div>';
+ $('#diagram').innerHTML=h+lk+'</div>';
+ $('#verdictBox').innerHTML='<div class="verdict '+(r.out[0]==='✓'?'ok':'ko')+'">'+esc(r.out)+'</div>';
+ renderSteps(r);
+ $('#cL').checked=S.L;$('#cU').checked=S.U;$('#cQ').checked=S.Q;
+ document.querySelectorAll('input[name=H]').forEach(function(e){e.checked=e.value===S.H});
+ document.querySelectorAll('input[name=D]').forEach(function(e){e.checked=e.value===S.D});
+ document.querySelectorAll('#presets .chip').forEach(function(c,i){var p=PRESETS[i].s;c.classList.toggle('on',p.L===S.L&&p.H===S.H&&p.D===S.D&&p.U===S.U&&p.Q===S.Q)});
+}
+function stepCard(n,t,obj,code,inp,out,ko){
+ return '<div class="step"><div class="hd"><span class="no">'+n+'</span>'+t+'</div><div class="bd"><div class="k">Objectif — pourquoi ce calcul</div>'+obj+'<div class="k">Code concerné</div><pre><code>'+esc(code)+'</code></pre><div class="io"><div class="in"><div class="k" style="margin:0">Résultat de l’étape précédente</div>'+inp+'</div><div class="out'+(ko?' ko':'')+'"><div class="k" style="margin:0">Résultat de cette étape</div>'+out+'</div></div><div class="k">Scalaire / vectorisé</div><span class="mut">Pas d’équivalent vectorisé : étape résolue à la compilation, aucune donnée à traiter par SIMD (voir section 8 pour le cas où un namespace choisit l’implémentation).</span></div></div>';
+}
+function renderSteps(r){
+ var h='', up=r.inc.join(' → ');
+ h+=stepCard(1,'Développer les #include','Savoir exactement quelles lignes le compilateur lira : c’est tout ce qu’il saura.','#include <pch.h>\n#include "Core/Platform.h"\n#include "helper/ConfigManager.h"','main.cpp brut : 3 directives #include.','Unité de traduction = main.cpp + '+esc(up)+(r.inc.indexOf('Core/Logger.h')<0?'. <b>Logger.h n’y est pas.</b>':'. Logger.h est présent.'),false);
+ h+=stepCard(2,'Enregistrer les portées','Construire la table des namespaces existants (R2) : on ne peut chercher que dans ce qui a été lu.', S.H==='global'?'// ConfigManager.h\nvoid SetConsoleMode();':'// ConfigManager.h\nnamespace LibV3 { void SetConsoleMode(); }','Fichiers lus : '+esc(up)+'.','Portées connues : <code>::</code>'+(r.known?' et <code>LibV3</code>':' seulement — <b>LibV3 absent</b>')+'.',false);
+ var c3=r.using.absent?'(ligne absente)':'using namespace LibV3;';
+ h+=stepCard(3,'Résoudre la directive using','Rendre visibles les noms d’un namespace : la directive exige que ce namespace existe déjà.',c3,'Portées connues : :: '+(r.known?'+ LibV3':'seulement')+'.',esc(r.using.msg)+'.',!r.using.ok);
+ h+=stepCard(4,'Chercher le nom <code>SetConsoleMode</code>','Relier l’appel à une déclaration (R6 : de l’intérieur vers l’extérieur).',S.Q?'LibV3::SetConsoleMode();':'SetConsoleMode();',r.using.ok?'Directive : '+esc(r.using.msg)+'.':'Directive en erreur.',esc(r.call.msg)+'.',!r.call.ok);
+ h+=stepCard(5,'Éditer les liens','Faire correspondre le nom décoré réclamé par main.obj à celui défini par ConfigManager.obj.','// ConfigManager.cpp\n'+(S.D==='global'?'void SetConsoleMode() { ... }':'namespace LibV3 { void SetConsoleMode() { ... } }'),r.compileOK?'Appel lié à '+esc(r.declM)+'.':'Compilation en échec : pas d’édition de liens.',r.linkRan?('Défini : '+esc(r.defM)+' → '+(r.linkOK?'<b>identiques</b>, exécutable produit.':'<b>différents</b> : LNK2019 symbole externe non résolu.')):'Non exécutée.',r.linkRan&&!r.linkOK);
+ $('#steps').innerHTML=h;
+}
+function boot(){
+ $('#presets').innerHTML=PRESETS.map(function(p,i){return '<button class="chip" data-i="'+i+'">'+esc(p.n)+'</button>'}).join('');
+ $('#presets').addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;S=Object.assign({},PRESETS[+b.dataset.i].s);renderSim()});
+ $('#cL').onchange=function(){S.L=this.checked;renderSim()};
+ $('#cU').onchange=function(){S.U=this.checked;renderSim()};
+ $('#cQ').onchange=function(){S.Q=this.checked;renderSim()};
+ document.querySelectorAll('input[name=H]').forEach(function(e){e.onchange=function(){S.H=this.value;renderSim()}});
+ document.querySelectorAll('input[name=D]').forEach(function(e){e.onchange=function(){S.D=this.value;renderSim()}});
+ $('#ce1').onclick=function(){S=Object.assign({},PRESETS[3].s);renderSim();$('#sim').scrollIntoView()};
+ renderSim();
+}
+
+/* ============ 2. Prédictions du lot ============ */
+function renderPreds(){
+ var ok={};try{ok=JSON.parse(localStorage.getItem('lotN1')||'{}')}catch(e){}
+ var h='<table><tr><th>Cas</th><th>Réglage</th><th>Prédiction</th><th>Observé conforme ?</th></tr>';
+ PRESETS.forEach(function(p,i){var r=sim(p.s);
+  var reg='Logger.h:'+(p.s.L?'oui':'non')+' · using:'+(p.s.U?'oui':'non')+' · appel:'+(p.s.Q?'qualifié':'direct')+' · .h:'+p.s.H+' · .cpp:'+p.s.D;
+  h+='<tr><td>'+esc(p.n)+'</td><td>'+esc(reg)+'</td><td>'+esc(r.out)+'</td><td><label><input type="checkbox" data-k="'+i+'"'+(ok[i]?' checked':'')+'> vu dans VS</label></td></tr>';});
+ $('#preds').innerHTML=h+'</table>';
+ $('#preds').onchange=function(e){var k=e.target.dataset.k;if(k==null)return;ok[k]=e.target.checked;try{localStorage.setItem('lotN1',JSON.stringify(ok))}catch(x){}};
+}
+
+/* ============ 3. Résolveur de noms imbriqués ============ */
+var SC={
+ '::':{SetConsoleMode:{k:'fn',sig:'void SetConsoleMode()'},LibV3:{k:'ns',to:'LibV3'}},
+ 'LibV3':{Logger:{k:'type',sig:'class Logger'},clamp:{k:'fn',sig:'float clamp(float,float,float)'},Math:{k:'ns',to:'LibV3::Math'},Render:{k:'ns',to:'LibV3::Render'},detail:{k:'ns',to:'LibV3::detail'}},
+ 'LibV3::Math':{Vec3:{k:'type',sig:'struct Vec3'},dot8:{k:'fn',sig:'float dot8(const float*,const float*)'}},
+ 'LibV3::Render':{clamp:{k:'fn',sig:'int clamp(int,int,int)'},Rasterizer:{k:'type',sig:'class Rasterizer'}},
+ 'LibV3::detail':{pack8:{k:'fn',sig:'__m256 pack8(const float*)'}}
+};
+var SITES=[['::','main()  (portée ::)'],['LibV3','Logger::log()  (LibV3)'],['LibV3::Render','Rasterizer::draw()  (LibV3::Render)']];
+var NAMES=['Logger','clamp','Vec3','dot8','pack8','SetConsoleMode','Math::dot8','detail::pack8'];
+function parts(p){return p==='::'?[]:p.split('::')}
+function chain(site){var a=parts(site),o=[];for(var i=a.length;i>=0;i--)o.push(i?a.slice(0,i).join('::'):'::');return o}
+function common(a,b){var pa=parts(a),pb=parts(b),i=0;while(i<pa.length&&i<pb.length&&pa[i]===pb[i])i++;return i?pa.slice(0,i).join('::'):'::'}
+function visible(sc,name,site,us,nsOnly){var m=[];if(SC[sc][name])m.push({from:sc,e:SC[sc][name]});
+ us.forEach(function(u){if(common(site,u)===sc&&SC[u][name])m.push({from:u,via:u,e:SC[u][name]})});
+ return nsOnly?m.filter(function(x){return x.e.k==='ns'}):m}
+function renderResolver(){
+ var site=$('#rSite').value,name=$('#rName').value,us=[];
+ if($('#rU1').checked)us.push('LibV3');if($('#rU2').checked)us.push('LibV3::Math');
+ var first=name,rest=null;if(name.indexOf('::')>0){var sp=name.split('::');first=sp[0];rest=sp[1]}
+ var rows=[],found=null,ch=chain(site);
+ for(var i=0;i<ch.length;i++){var m=visible(ch[i],first,site,us,rest!==null);rows.push({sc:ch[i],m:m});if(m.length){found={sc:ch[i],m:m,i:i};break}}
+ var h='<div style="margin-top:8px">';
+ h+=us.map(function(u){return '<div class="mut" style="font-size:.82rem">using namespace '+u+' écrit dans '+site+' → portée effective : <code>'+common(site,u)+'</code></div>'}).join('');
+ rows.forEach(function(x){h+='<div class="rrow '+(x.m.length?'hit':'miss')+'"><span>'+(x.m.length?'✓':'✗')+'</span><span>portée <code>'+x.sc+'</code> : '+(x.m.length?x.m.map(function(y){return esc(y.e.sig||('namespace '+y.e.to))+(y.via?' (via using '+y.via+')':'')}).join(' ; '):'rien')+'</span></div>'});
+ var res,cls='good';
+ if(!found){res='<b>Introuvable</b> : C2065 « identificateur non déclaré »'+(rest!==null?' (ou C2653 pour un qualificateur)':'')+'. La recherche a parcouru toutes les portées sans succès.';cls='bad';}
+ else if(found.m.length>1){res='<b>Ambigu</b> (C2668) : plusieurs entités distinctes dans la même portée.';cls='bad';}
+ else if(rest!==null){var t=found.m[0].e.to,en=SC[t][rest];if(en)res='<b>Trouvé</b> par qualification : <code>'+esc(en.sig||'')+'</code> dans <code>'+t+'</code>.';else{res='<b>Introuvable</b> : C2039 « '+rest+' n’est pas membre de '+t+' ».';cls='bad';}}
+ else{res='<b>Trouvé</b> dans <code>'+found.sc+'</code> : <code>'+esc(found.m[0].e.sig||'')+'</code>.';
+  var masked=[];for(var j=found.i+1;j<ch.length;j++)if(SC[ch[j]][first])masked.push(ch[j]+' : '+(SC[ch[j]][first].sig||''));
+  if(masked.length){res+='<br><b>Masque</b> (jamais considéré) : '+masked.map(esc).join(' ; ');cls='warn';}}
+ h+='<div class="'+cls+'">'+res+'</div></div>';
+ $('#rOut').innerHTML=h;
+}
+function bootResolver(){
+ $('#rSite').innerHTML=SITES.map(function(s){return '<option value="'+s[0]+'">'+esc(s[1])+'</option>'}).join('');
+ $('#rName').innerHTML=NAMES.map(function(n){return '<option>'+n+'</option>'}).join('');
+ ['#rSite','#rName','#rU1','#rU2'].forEach(function(s){$(s).onchange=renderResolver});
+ $('#rSite').value='LibV3::Render';$('#rName').value='clamp';renderResolver();
+}
+
+/* ============ 4. Masquage chiffré ============ */
+function renderShadow(){
+ var x=Math.fround(parseFloat($('#shX').value)),site=$('#shSite').value;
+ $('#shXv').textContent=String(x);
+ var outer=Math.fround(Math.min(Math.max(x,0),1));
+ var xi=Math.trunc(x),inner=Math.min(Math.max(xi,0),1);
+ var ok=(site==='LibV3'),got=ok?outer:inner;
+ var h='<table><tr><th>Étape</th><th>Valeur</th></tr>'
+  +'<tr><td>Recherche de <code>clamp</code> depuis '+(ok?'LibV3':'LibV3::Render')+'</td><td>s’arrête dans <code>'+(ok?'LibV3':'LibV3::Render')+'</code> : <code>'+(ok?'float':'int')+' clamp('+(ok?'float,float,float':'int,int,int')+')</code></td></tr>'
+  +'<tr><td>Arguments reçus</td><td class="num">x = '+(ok?String(x):String(xi)+' (converti depuis '+String(x)+')')+', lo = 0, hi = 1</td></tr>'
+  +'<tr><td>Résultat</td><td class="num '+(got===outer?'gd':'hi')+'">'+String(got)+'</td></tr>'
+  +'<tr><td>Résultat attendu (float)</td><td class="num">'+String(outer)+'</td></tr></table>';
+ if(got!==outer)h+='<div class="bad">Écart silencieux de '+String(Math.fround(outer-got))+' : aucune erreur, seulement un avertissement C4244 si tu l’as laissé actif.</div>';
+ $('#shOut').innerHTML=h;
+}
+
+/* ============ 5. SIMD couloir par couloir ============ */
+var SIMD_CASES=[
+ {n:'Cas piégeux (1e8)',a:[1e8,1,-1e8,1,1,1,1,1],b:[1,1,1,1,1,1,1,1]},
+ {n:'Cas ordinaire (1 à 8)',a:[1,2,3,4,5,6,7,8],b:[.5,.5,.5,.5,.5,.5,.5,.5]}
+];
+var simdSel=0;
+function f32(x){return Math.fround(x)}
+function renderSimd(){
+ var c=SIMD_CASES[simdSel],a=c.a,b=c.b;
+ var p=a.map(function(v,i){return f32(v*b[i])});
+ var s=0,seq=[];for(var i=0;i<8;i++){s=f32(s+p[i]);seq.push(s)}
+ var s4=[0,1,2,3].map(function(i){return f32(p[i]+p[i+4])});
+ var s2=[f32(s4[0]+s4[2]),f32(s4[1]+s4[3])];
+ var s1=f32(s2[0]+s2[1]);var d=0;for(var j=0;j<8;j++)d+=a[j]*b[j];
+ function row(l,arr,cls){return '<tr><td>'+l+'</td>'+arr.map(function(v){return '<td class="num">'+String(v)+'</td>'}).join('')+'</tr>'}
+ var h='<table><tr><th>Registre</th>'+[0,1,2,3,4,5,6,7].map(function(i){return '<th>couloir '+i+'</th>'}).join('')+'</tr>'
+  +row('a (ymm0)',a)+row('b (ymm1)',b)+row('p = a×b (vmulps)',p)
+  +row('scalaire : somme cumulée',seq)
+  +'<tr><td>AVX2 étape 1 : lo+hi (vaddps)</td>'+s4.map(function(v,i){return '<td class="num">'+String(v)+'</td>'}).join('')+'<td colspan="4" class="mut">p[i] + p[i+4]</td></tr>'
+  +'<tr><td>AVX2 étape 2 : movehl</td>'+s2.map(function(v){return '<td class="num">'+String(v)+'</td>'}).join('')+'<td colspan="6" class="mut">s4[0]+s4[2] ; s4[1]+s4[3]</td></tr></table>';
+ var same=(s===s1);
+ h+='<table><tr><th>scalar::dot8</th><th>avx2::dot8</th><th>référence double</th></tr><tr><td class="num '+(same?'gd':'hi')+'">'+String(s)+'</td><td class="num '+(same?'gd':'hi')+'">'+String(s1)+'</td><td class="num">'+String(d)+'</td></tr></table>';
+ h+=same?'<div class="good">Les deux ordres de sommation donnent le même résultat sur ce cas : <code>==</code> passerait ici, mais pas en général.</div>':'<div class="bad">Les deux résultats diffèrent entre eux et de la valeur exacte : l’ordre des additions change l’arrondi float32 (1e8 + 1 s’arrondit à 1e8 car l’écart entre deux float32 vaut 8 à cette magnitude).</div>';
+ $('#simdOut').innerHTML=h;
+ document.querySelectorAll('#simdChips .chip').forEach(function(e,i){e.classList.toggle('on',i===simdSel)});
+}
+function bootSimd(){
+ $('#simdChips').innerHTML=SIMD_CASES.map(function(c,i){return '<button class="chip" data-i="'+i+'">'+esc(c.n)+'</button>'}).join('');
+ $('#simdChips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;simdSel=+b.dataset.i;renderSimd()};
+ renderSimd();
+}
+
+/* ============ 6. Export HTML ============ */
+function bootExport(){
+ if(typeof claude==='undefined'||!claude.use)return;
+ claude.use('downloads').then(function(d){
+  if(!d)return;var b=$('#exportBtn');b.hidden=false;
+  b.onclick=function(){d.save({filename:'Lot_N1_Namespaces_C2065_pas_a_pas.html',data:SRC}).catch(function(){})};
+ }).catch(function(){});
+}
+
+boot();renderPreds();bootResolver();
+$('#shX').oninput=renderShadow;$('#shSite').onchange=renderShadow;renderShadow();
+bootSimd();bootExport();
+})();
+</script>
+</body>
+</html>

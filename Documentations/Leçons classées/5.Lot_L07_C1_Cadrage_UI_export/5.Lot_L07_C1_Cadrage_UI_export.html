@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L07·C1 — Cadrage de l’interface utilisateur, pas à pas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F7; --paper:#FFFFFF; --ink:#16202A; --ink2:#4A5866; --ink3:#7B8794;
+  --line:#D5DCE3; --accent:#1F5FBF; --accent-soft:#E3ECFA; --add:#E4F4E8; --add-ink:#1C6B34;
+  --del:#FBE7E5; --del-ink:#9B2C22; --warn:#FFF3D6; --warn-ink:#7A5300; --code:#F0F3F6;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F151B; --paper:#17202A; --ink:#E6EBF0; --ink2:#AAB6C2; --ink3:#7C8896; --line:#2C3946;
+  --accent:#7FB0FF; --accent-soft:#1B2C46; --add:#123321; --add-ink:#8FDCA6; --del:#3A1A17; --del-ink:#F2A49B;
+  --warn:#3A2D0E; --warn-ink:#F1CF7C; --code:#111A22; color-scheme: dark; }}
+:root[data-theme="dark"]{
+  --bg:#0F151B; --paper:#17202A; --ink:#E6EBF0; --ink2:#AAB6C2; --ink3:#7C8896; --line:#2C3946;
+  --accent:#7FB0FF; --accent-soft:#1B2C46; --add:#123321; --add-ink:#8FDCA6; --del:#3A1A17; --del-ink:#F2A49B;
+  --warn:#3A2D0E; --warn-ink:#F1CF7C; --code:#111A22; color-scheme: dark; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans",system-ui,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:2rem 1.25rem 4rem}
+header.hero{border-left:6px solid var(--accent);padding:.25rem 0 .25rem 1.25rem;margin-bottom:2rem}
+header.hero h1{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.15;margin:.2rem 0 .6rem;font-weight:600;letter-spacing:-.01em}
+header.hero p{color:var(--ink2);max-width:70ch;margin:.3rem 0}
+.tag{display:inline-block;font:500 .8rem "IBM Plex Mono",monospace;background:var(--accent-soft);color:var(--accent);padding:.15rem .5rem;border-radius:4px;margin-right:.35rem}
+nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem}
+nav.toc ol{margin:.2rem 0;padding-left:1.4rem;columns:2;column-gap:2rem}
+nav.toc a{color:var(--accent);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1.4rem 1.5rem;margin:1.25rem 0}
+section h2{font-size:1.35rem;font-weight:600;margin:0 0 .8rem}
+section h3{font-size:1.05rem;font-weight:600;margin:1.3rem 0 .5rem}
+p,li{max-width:78ch}
+.muted{color:var(--ink2)}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:.88em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font:13px/1.55 "IBM Plex Mono",ui-monospace,Consolas,monospace;margin:.5rem 0}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;margin:.6rem 0}
+th,td{border-bottom:1px solid var(--line);padding:.45rem .55rem;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--ink2);background:var(--bg)}
+.add{background:var(--add);color:var(--add-ink)}
+.del{background:var(--del);color:var(--del-ink);text-decoration:line-through}
+.note{background:var(--warn);color:var(--warn-ink);border-radius:8px;padding:.7rem .9rem;margin:.8rem 0}
+.rule{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:.6rem .9rem;margin:.6rem 0}
+.rule b{color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:720px){.grid2{grid-template-columns:1fr} nav.toc ol{columns:1}}
+.ctrl{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin:.6rem 0;font-size:.92rem}
+.ctrl label{display:inline-flex;align-items:center;gap:.35rem}
+button{font:500 .9rem "IBM Plex Sans",sans-serif;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:.35rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input[type=range]{accent-color:var(--accent)}
+select{font:inherit;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.2rem .4rem}
+canvas{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.out{font:13px/1.5 "IBM Plex Mono",monospace;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem;white-space:pre-wrap;margin:.5rem 0}
+.pipe{display:flex;flex-direction:column;gap:4px;font:13px "IBM Plex Mono",monospace}
+.pipe div{padding:.35rem .6rem;border-radius:5px;border:1px solid var(--line);background:var(--bg)}
+.pipe div.new{background:var(--add);color:var(--add-ink);border-color:var(--add-ink)}
+.pipe div.off{opacity:.35}
+.steps-nav{display:flex;flex-wrap:wrap;gap:.35rem;margin:.6rem 0 1rem}
+.steps-nav button{min-width:2.6rem}
+.step-card .lbl{font-weight:600;color:var(--ink2);font-size:.85rem;margin:.9rem 0 .2rem}
+.box-in{border-left:4px solid var(--ink3);padding:.4rem .8rem;background:var(--bg);border-radius:0}
+.box-out{border-left:4px solid var(--accent);padding:.4rem .8rem;background:var(--accent-soft);border-radius:0}
+.lanes{display:grid;grid-template-columns:7.5rem repeat(8,1fr);gap:2px;font:12px "IBM Plex Mono",monospace;margin:.5rem 0;min-width:640px}
+.lanes div{padding:.25rem .3rem;background:var(--bg);text-align:right}
+.lanes div.h{background:transparent;text-align:left;color:var(--ink2)}
+.lanes div.hl{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.menu-demo{display:flex;flex-direction:column;gap:6px;width:220px;margin:.4rem 0}
+.menu-demo div{padding:.4rem .7rem;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.menu-demo div.f{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:500}
+.log{font:12px/1.45 "IBM Plex Mono",monospace;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.5rem .7rem;height:150px;overflow-y:auto}
+.log .bad{color:var(--del-ink)} .log .ok{color:var(--add-ink)}
+footer{color:var(--ink3);font-size:.85rem;text-align:center;margin-top:2rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <span class="tag">Leçon 07</span><span class="tag">Lot C1 — cadrage</span><span class="tag">aucun code moteur</span>
+  <h1>Interface utilisateur : cadrer avant de coder</h1>
+  <p>Premier lot de la Leçon 07. On n’écrit encore rien dans le moteur : on décide <em>quoi</em> construire, <em>avec quoi</em>, et <em>dans quel ordre</em>, pour que l’implémentation (lots P1, P2, P3) n’ait plus de question d’architecture à trancher en route.</p>
+  <p class="muted">Ce document doit rester lisible dans un an : chaque décision est accompagnée de son pourquoi, d’un contre-exemple chiffré et de la façon dont on vérifiera qu’elle tient.</p>
+</header>
+
+<nav class="toc" aria-label="Sommaire">
+  <ol>
+    <li><a href="#pourquoi">Pourquoi ce lot</a></li>
+    <li><a href="#rappel">Ce qu’on a déjà fait</a></li>
+    <li><a href="#contexte">Contexte et objectif fonctionnel</a></li>
+    <li><a href="#decisions">Les décisions à prendre</a></li>
+    <li><a href="#boucle">Boucle de frame : avant / après</a></li>
+    <li><a href="#composition">Schéma : composition des couches</a></li>
+    <li><a href="#familles">Le critère qui trie les bibliothèques</a></li>
+    <li><a href="#technique">Fonctionnement technique</a></li>
+    <li><a href="#etapes">Les étapes, pas à pas</a></li>
+    <li><a href="#contre">Contre-exemples chiffrés</a></li>
+    <li><a href="#verifier">Vérifier</a></li>
+    <li><a href="#ecarts">Écarts avec la roadmap, dettes</a></li>
+  </ol>
+</nav>
+
+<!-- 1 -->
+<section id="pourquoi">
+  <h2>1. Pourquoi ce lot</h2>
+  <p>Aujourd’hui, le moteur n’a aucun moyen d’afficher une information à l’écran autrement qu’en dessinant de la 3D. Le temps de frame, le FPS, la caméra active, la focale d’une caméra ortho : tout part dans le <code>Logger</code> ou n’existe pas. Et un jeu, même minimal, a besoin d’un écran titre, d’un menu pause et d’un HUD.</p>
+  <p>Ajouter de l’UI semble anodin. C’est en réalité une des décisions les plus structurantes d’un moteur : elle introduit une <strong>seconde chaîne de rendu</strong> (2D, sans profondeur), un <strong>second consommateur d’entrées</strong> (qui entre en conflit avec le contrôleur FPS), un <strong>nouveau format de données</strong> (la description des écrans) et une <strong>notion de temps</strong> (les transitions). Se tromper ici, c’est réécrire l’UI deux fois — exactement ce que la Leçon 06 fait subir au scenegraph.</p>
+  <p>D’où un lot de cadrage dédié, sans code, avant toute implémentation.</p>
+</section>
+
+<!-- 2 -->
+<section id="rappel">
+  <h2>2. Ce qu’on a déjà fait</h2>
+  <div class="tblwrap"><table>
+    <tr><th>Étape</th><th>Ce qu’elle apporte à l’UI</th></tr>
+    <tr><td>L01 — configuration, enums</td><td>Les flags de build (<code>_DEBUG</code>, <code>RelWithAsserts</code>) qui permettront de compiler l’overlay de debug hors de la release.</td></tr>
+    <tr><td>L02 — mathématiques</td><td>Les types <code>Vec2f</code>/<code>Vec4f</code> ; l’UI vivra en 2D, sans matrice de projection.</td></tr>
+    <tr><td>L03 — ECS, SparseSet, ResourceManager</td><td>La culture DOD : tableaux plats parcourus linéairement. Le futur <code>MenuSystem</code> et ses tweens suivront le même modèle.</td></tr>
+    <tr><td>L04 — rasterizer</td><td><code>FrameBuffer</code> en <code>ARGB8888</code> (règle 7), <code>EdgeFunction</code>, interpolation de couleurs par sommet. Le rasterizer 2D de l’UI en est un cas dégénéré.</td></tr>
+    <tr><td>L05 — caméra, frustum</td><td><code>ViewData</code>, <code>Layout</code>, split-screen. L’UI devra se placer par rapport aux viewports sans passer par <code>ViewData</code>.</td></tr>
+    <tr><td>A6 — <code>JsonReader</code>, <code>EngineConfig</code></td><td><code>Child()</code> et <code>WarnUnread()</code> : la mécanique qui chargera la description des menus sans recompilation.</td></tr>
+    <tr><td>A9 §9 — gizmo ortho</td><td>Une dette explicite : le scalaire <code>orthoHeight</code>/<code>fov</code>/<code>aspect</code> perdu par le gizmo doit aller dans un <em>overlay de debug par viewport</em>. Le carnet de route l’inscrit comme ce qui « bloque L07 ».</td></tr>
+    <tr><td>L06 — scenegraph (en cours)</td><td><code>SimulationClock</code> (<code>realDt</code> / <code>simDt</code>) : les transitions d’UI devront tourner sur le temps réel, pas sur le temps simulé — un menu pause qui se fige quand on met le jeu en pause serait absurde.</td></tr>
+  </table></div>
+  <p class="muted">Dans le carnet de route, la Leçon 07 correspond à la discussion H, qui suit la campagne de mesure G et la consolidation C2.</p>
+</section>
+
+<!-- 3 -->
+<section id="contexte">
+  <h2>3. Contexte et objectif fonctionnel</h2>
+  <p>Deux besoins, exprimés au départ, de natures différentes :</p>
+  <div class="grid2">
+    <div class="rule"><b>Besoin 1 — debug.</b> Afficher la caméra active, le temps de frame en ms, le FPS, permettre de choisir la caméra. Destiné au développeur, jamais au joueur. Doit suivre le redimensionnement de la fenêtre sans position codée en dur.</div>
+    <div class="rule"><b>Besoin 2 — UI joueur.</b> Menus (titre, options, pause) et HUD simple (texte, barres, icônes). Modifiable sans recompilation, simple à créer et à adapter, clavier et souris d’abord, manette ensuite, transitions animées souhaitées mais non obligatoires.</div>
+  </div>
+  <p>Objectif fonctionnel du lot : sortir avec <strong>un choix de technologies</strong>, <strong>des règles numérotées</strong> qui contraignent l’implémentation, <strong>un plan découpé</strong> et <strong>des dettes datées</strong>. Le critère de réussite est qu’aucune question d’architecture ne reste ouverte au moment d’écrire la première ligne de P1.</p>
+</section>
+
+<!-- 4 -->
+<section id="decisions">
+  <h2>4. Les décisions à prendre, et leur pourquoi</h2>
+  <div class="tblwrap"><table>
+    <tr><th>Question</th><th>Pourquoi elle compte</th><th>Décision</th></tr>
+    <tr><td>Un système ou deux ?</td><td>Un outil de debug et un produit joueur n’ont ni le même public, ni le même cycle de vie, ni le même budget.</td><td>Deux : Dear ImGui (debug) + <code>MenuSystem</code> maison (joueur).</td></tr>
+    <tr><td>Quelle bibliothèque ?</td><td>Sans GPU, c’est nous qui écrivons le backend de rendu. Le coût d’une lib dépend de ce qu’elle demande de dessiner.</td><td>Famille « listes de triangles » uniquement (§7).</td></tr>
+    <tr><td>Qui décrit les écrans ?</td><td>Recompiler pour déplacer un bouton tue l’itération.</td><td>JSON pour le contenu, C++ pour le comportement (R7.2).</td></tr>
+    <tr><td>Comment placer les éléments ?</td><td>La fenêtre est redimensionnable.</td><td>Ancre + offset, jamais de pixel absolu (R7.4).</td></tr>
+    <tr><td>Qui lit le clavier ?</td><td>Clavier, souris puis manette : sans couche d’abstraction, chaque widget triple.</td><td>Des actions, jamais des périphériques (R7.1).</td></tr>
+    <tr><td>Où dessiner ?</td><td>Ordre des couches, split-screen, résolution.</td><td>Ordre fixe (R7.5), <code>FrameBuffer</code> à la taille fenêtre (R7.6, piste A).</td></tr>
+  </table></div>
+</section>
+
+<!-- 5 -->
+<section id="boucle">
+  <h2>5. La boucle de frame : avant / après</h2>
+  <p>L’ordre canonique des systèmes (règle S13, L06) se termine aujourd’hui par le rendu 3D. Le lot y ajoute trois passes 2D — en vert ci-dessous — et un consommateur d’entrées. Cochez pour voir l’effet d’un écran titre (la 3D peut être sautée) ou d’une build release (l’overlay disparaît).</p>
+  <div class="ctrl">
+    <label><input type="radio" name="bmode" value="avant"> Avant (L06)</label>
+    <label><input type="radio" name="bmode" value="jeu" checked> Après — en jeu</label>
+    <label><input type="radio" name="bmode" value="pause"> Après — menu pause</label>
+    <label><input type="radio" name="bmode" value="titre"> Après — écran titre</label>
+    <label><input type="checkbox" id="brel"> Build release</label>
+  </div>
+  <div class="pipe" id="pipe"></div>
+  <p class="muted" id="pipeNote"></p>
+</section>
+
+<!-- 6 -->
+<section id="composition">
+  <h2>6. Schéma : composition des couches dans le FrameBuffer</h2>
+  <p>Chaque couche écrit par-dessus la précédente, dans le même <code>FrameBuffer</code>. Activez les couches une par une, passez en split-screen, puis choisissez l’ordre fautif pour voir le contre-exemple : l’overlay de debug dessiné avant le menu se fait assombrir et devient illisible.</p>
+  <div class="ctrl">
+    <label><input type="checkbox" id="c3d" checked> 3D</label>
+    <label><input type="checkbox" id="chud" checked> HUD</label>
+    <label><input type="checkbox" id="cmenu"> Menu pause</label>
+    <label><input type="checkbox" id="cdbg" checked> Overlay debug</label>
+    <label><input type="checkbox" id="csplit"> Split-screen</label>
+    <label>Ordre <select id="corder"><option value="ok">R7.5 : 3D → HUD → menu → debug</option><option value="bad">Fautif : 3D → debug → HUD → menu</option></select></label>
+  </div>
+  <canvas id="comp" width="640" height="360" aria-label="Composition des couches d’UI"></canvas>
+  <div class="out" id="compOut"></div>
+</section>
+
+<!-- 7 -->
+<section id="familles">
+  <h2>7. Le critère qui trie les bibliothèques</h2>
+  <p>Dans un moteur GPU, intégrer une lib d’UI coûte quelques centaines de lignes : un shader, un vertex buffer, un scissor. Chez nous, le backend est un rasterizer 2D que nous devons écrire. Le premier critère n’est donc ni l’ergonomie ni l’esthétique, mais la nature de ce que la lib demande de dessiner.</p>
+  <div class="ctrl" id="famBtns"></div>
+  <div class="out" id="famOut"></div>
+  <div class="tblwrap"><table>
+    <tr><th>Bibliothèque</th><th>Paradigme</th><th>Famille</th><th>Verdict</th></tr>
+    <tr><td>Dear ImGui</td><td>Immediate, C++, MIT</td><td>A</td><td class="add">Retenu — debug</td></tr>
+    <tr><td>Nuklear</td><td>Immediate, C, MIT</td><td>A</td><td>Redondant avec ImGui</td></tr>
+    <tr><td>RmlUi</td><td>Retained, HTML/CSS, MIT</td><td>A</td><td>Écarté, porte de sortie (D7.Rml)</td></tr>
+    <tr><td>NoesisGUI</td><td>Retained, XAML, commercial</td><td>B</td><td>Écarté</td></tr>
+    <tr><td>Coherent Gameface</td><td>Retained, HTML/JS, commercial</td><td>B/C</td><td>Écarté</td></tr>
+    <tr><td>Ultralight</td><td>HTML/JS, rendu interne</td><td>C</td><td>Écarté, disproportionné</td></tr>
+    <tr><td>Clay</td><td>Layout seul, header-only</td><td>—</td><td>Référence d’étude</td></tr>
+    <tr><td>Maison</td><td>Retained minimal, DOD</td><td>A</td><td class="add">Retenu — menus, HUD</td></tr>
+  </table></div>
+  <h3>Ce que font les professionnels</h3>
+  <p>Pour l’outillage, Dear ImGui est quasi universel, toujours derrière un flag et absent de la release. Pour le joueur : système retained propriétaire (Slate/UMG chez Unreal, UGUI/UI Toolkit chez Unity) ou middleware (NoesisGUI pour Baldur’s Gate 3, Gameface sur de gros titres multijoueurs). Scaleform (Flash), standard de 2005 à 2018, est mort. L’invariant : deux systèmes, et personne ne met ImGui devant le joueur.</p>
+  <h3>Et HTML/CSS ?</h3>
+  <p>L’idée est séduisante : modifier sans recompiler, prototyper dans un navigateur. Mais ce qu’elle apporte réellement, c’est un moteur de layout général. Un menu est une liste verticale centrée, un écran d’options une grille label/valeur, un HUD simple un jeu d’ancres. Trois schémas de layout, quelques centaines de lignes, contre ~40 000 pour RmlUi. On garde le vocabulaire de CSS (<code>anchor</code>, <code>padding</code>, <code>gap</code>, <code>direction</code>) dans notre JSON, sans son parser ni sa cascade.</p>
+</section>
+
+<!-- 8 -->
+<section id="technique">
+  <h2>8. Fonctionnement technique</h2>
+
+  <h3>8.1 Un seul primitif pour tout dessiner (R7.3)</h3>
+  <p>Tout ce que l’UI affiche se réduit à des triangles texturés, à couleur par sommet, coupés par un rectangle de scissor et mélangés par alpha blend. Un glyphe est un quad (2 triangles) qui échantillonne l’atlas de police ; un dégradé est un quad dont les sommets ont des couleurs différentes ; un coin arrondi est un arc découpé en segments. Réglez le nombre de segments par coin.</p>
+  <div class="ctrl">
+    <label>Segments par coin <input type="range" id="tseg" min="1" max="16" value="6"></label>
+    <label><input type="checkbox" id="twire" checked> Afficher les triangles</label>
+    <label><input type="checkbox" id="tgrad" checked> Dégradé par sommet</label>
+  </div>
+  <canvas id="tess" width="640" height="220" aria-label="Tessellation d’un rectangle arrondi et d’un 9-slice"></canvas>
+  <div class="out" id="tessOut"></div>
+
+  <h3>8.2 Les ancres (R7.4)</h3>
+  <p>Un élément ne connaît pas sa position en pixels. Il connaît un point d’ancrage sur l’écran (un des 9 : coins, milieux, centre), un pivot sur lui-même, un offset et une taille en unités de référence (une résolution de conception, ici 1920×1080). La position finale se recalcule quand la fenêtre change. Le bouton rouge, lui, est placé en pixels fixes : redimensionnez et regardez-le partir.</p>
+  <div class="ctrl">
+    <label>Largeur <input type="range" id="aw" min="320" max="1920" value="1280" step="16"></label>
+    <label>Hauteur <input type="range" id="ah" min="240" max="1080" value="720" step="8"></label>
+    <label>Ancre <select id="aa"></select></label>
+  </div>
+  <canvas id="anch" width="640" height="360" aria-label="Positionnement par ancre lors du redimensionnement"></canvas>
+  <div class="out" id="anchOut"></div>
+
+  <h3>8.3 Des actions, pas des touches (R7.1) et le cycle de vie des écrans</h3>
+  <p>Le menu ne sait pas qu’un clavier existe. Une couche de mapping traduit <kbd>↑</kbd>, <kbd>Z</kbd> (AZERTY), la croix de la manette ou le survol de la souris en une même action <code>Up</code>. Chaque écran passe par <code>Hidden → Entering → Active → Exiting</code> ; seul <code>Active</code> accepte les actions. Ouvrez le menu puis validez pendant l’animation, avec et sans le filtre.</p>
+  <div class="ctrl">
+    <button id="mOpen">Ouvrir le menu</button>
+    <button id="mUp">Up</button><button id="mDown">Down</button><button id="mOk">Confirm</button><button id="mBack">Back</button>
+    <label><input type="checkbox" id="mGuard" checked> Refuser les actions hors <code>Active</code></label>
+    <label>Durée <select id="mDur"><option value="0">0 ms</option><option value="300">300 ms</option><option value="900" selected>900 ms (ralenti)</option></select></label>
+  </div>
+  <div class="grid2">
+    <div>
+      <div class="mono" id="mState">État : Hidden</div>
+      <div class="menu-demo" id="mList" style="opacity:0;transform:translateX(60px)"></div>
+    </div>
+    <div class="log" id="mLog" aria-live="polite"></div>
+  </div>
+  <p class="muted">Clavier aussi : flèches ou <kbd>Z</kbd>/<kbd>S</kbd>, <kbd>Entrée</kbd>, <kbd>Échap</kbd> quand la page a le focus.</p>
+
+  <h3>8.4 Résolution : piste A retenue, piste B en dette</h3>
+  <p>La texture SDL n’est pas obligée d’avoir la taille de la fenêtre : <code>SDL_RenderCopy</code> l’étire sur le GPU, sans coût CPU. En piste A tout suit la fenêtre ; en piste B la 3D tourne à une résolution interne fixe. Le texte de 12 px ci-dessous est rasterisé à la résolution interne puis étiré : c’est pourquoi, en piste B, l’UI doit avoir sa propre surface.</p>
+  <div class="ctrl">
+    <label>Facteur d’agrandissement <select id="upf"><option>1</option><option>2</option><option selected>3</option><option>4</option></select></label>
+    <label>Filtre <select id="upflt"><option value="nearest">nearest</option><option value="linear">linear</option></select></label>
+  </div>
+  <canvas id="ups" width="640" height="150" aria-label="Texte rasterisé en basse résolution puis agrandi"></canvas>
+  <div class="out" id="upsOut"></div>
+</section>
+
+<!-- 9 -->
+<section id="etapes">
+  <h2>9. Les étapes, pas à pas</h2>
+  <p>Le cadrage se lit comme un algorithme de décision : chaque étape part du résultat de la précédente. Les calculs sont faits réellement en float32 (<code>Math.fround</code>, comme le CPU). Le code est une <strong>esquisse de cadrage</strong> — il fixe les formes et les signatures, il sera écrit pour de vrai en P1/P2, avec ton accord.</p>
+  <div class="steps-nav" id="sNav"></div>
+  <div class="step-card" id="sCard"></div>
+  <div class="ctrl"><button id="sPrev">Étape précédente</button><button id="sNext">Étape suivante</button></div>
+</section>
+
+<!-- 10 -->
+<section id="contre">
+  <h2>10. Contre-exemples chiffrés</h2>
+  <h3>10.1 Le bouton en pixels fixes</h3>
+  <p><code>DrawButton(1600, 980, "Quitter")</code> écrit pour une fenêtre de 1920×1080. Taille du bouton : 240×60.</p>
+  <div class="out" id="ce1"></div>
+  <h3>10.2 Le texte dessiné dans un FrameBuffer basse résolution</h3>
+  <div class="out" id="ce2"></div>
+  <h3>10.3 Un widget qui lit les périphériques</h3>
+  <div class="out" id="ce3"></div>
+  <h3>10.4 L’arrondi du blend en entiers</h3>
+  <p>Diviser par 256 (<code>&gt;&gt; 8</code>) au lieu de 255 est le raccourci classique. Il est faux, et l’erreur se voit sur les blancs. Ce point sera tranché en P1 ; il est consigné ici parce que le coût du blend plein écran est une donnée du cadrage.</p>
+  <div class="out" id="ce4"></div>
+  <h3>10.5 Les contre-exemples non chiffrables</h3>
+  <ul>
+    <li>Gameface « parce que les artistes connaissent le HTML » : des semaines de backend pour cinq boutons.</li>
+    <li>Un arbre de widgets retained maison pour trois lignes de FPS : le debug ne mérite pas une architecture.</li>
+    <li>Un layout JSON pour l’overlay ImGui : ImGui persiste déjà ses fenêtres dans <code>imgui.ini</code> et se place relativement à <code>GetMainViewport()->WorkSize</code>.</li>
+    <li>ImGui pour le menu joueur « parce qu’il gère la manette » : re-layout complet chaque frame, style d’outil.</li>
+  </ul>
+</section>
+
+<!-- 11 -->
+<section id="verifier">
+  <h2>11. Vérifier</h2>
+  <p>Un lot de cadrage ne se compile pas ; il se vérifie par ce qu’il permettra de tester. Voici les filets prévus, qui seront écrits avec P1/P2/P3.</p>
+  <h3>Tests hors moteur (TNR)</h3>
+  <div class="tblwrap"><table>
+    <tr><th>Test</th><th>Prédiction chiffrée</th><th>Lot</th></tr>
+    <tr><td>Résolution d’ancre</td><td>Ancre <code>BottomRight</code>, pivot (1,1), offset (−40,−40) ref, fenêtre 1280×720 → coin bas-droit de l’élément en (1253.33, 693.33)</td><td>P2</td></tr>
+    <tr><td>Blend scalaire = blend AVX2</td><td>Les 8 couloirs identiques bit à bit à la version scalaire sur 2 073 600 pixels</td><td>P1</td></tr>
+    <tr><td>Blend des extrêmes</td><td><code>blend(255, 255, a)</code> = 255 pour tout a ; <code>blend(src, dst, 0)</code> = dst ; <code>blend(src, dst, 255)</code> = src</td><td>P1</td></tr>
+    <tr><td>Scissor</td><td>Aucun pixel écrit hors du rectangle de coupe (comptage sur un FrameBuffer sentinelle)</td><td>P1</td></tr>
+    <tr><td>Cycle de vie</td><td>N actions envoyées pendant <code>Entering</code> → 0 action reçue par le menu</td><td>P2</td></tr>
+    <tr><td>Tweens</td><td>Ease-out cubique à t = 150 ms sur 300 ms → progression 0.875</td><td>P3</td></tr>
+  </table></div>
+  <h3>Filets Debug</h3>
+  <ul>
+    <li><code>WarnUnread()</code> sur chaque nœud JSON d’écran : une clé mal orthographiée (<code>"ancor"</code>) est signalée, pas ignorée.</li>
+    <li>Assert si un identifiant référencé par le C++ (<code>"btn_new_game"</code>) n’existe dans aucun écran chargé.</li>
+    <li>Assert si un élément d’UI joueur n’a pas d’ancre : aucun pixel absolu ne passe.</li>
+    <li>Assert si <code>Rasterizer2D</code> reçoit une surface dont le pitch est inférieur à la largeur.</li>
+    <li>Compteur par frame : nombre de triangles UI et de pixels blendés, affiché dans l’overlay lui-même.</li>
+  </ul>
+  <h3>Prédictions pour le lot appairé (P1)</h3>
+  <ul>
+    <li>Un overlay de 4 lignes de texte (~120 glyphes) = 240 triangles : coût négligeable devant la 3D.</li>
+    <li>Le quad d’assombrissement plein écran du menu pause est le pire cas : 2 073 600 pixels blendés en 1080p. C’est lui qu’on mesurera en premier, scalaire puis AVX2 (attendu : ~8× moins d’instructions sur la boucle de blend).</li>
+    <li>L’écran titre qui saute la 3D doit faire chuter le temps de frame mesuré à presque rien : si ce n’est pas le cas, la 3D n’est pas réellement sautée.</li>
+  </ul>
+</section>
+
+<!-- 12 -->
+<section id="ecarts">
+  <h2>12. Écarts avec la roadmap, dettes</h2>
+  <p>En relisant le carnet de route et les annexes, quatre points ne collent pas exactement au cadrage. Rien n’est acté : ce sont des décisions à prendre plus tard, ajoutées à la roadmap.</p>
+  <div class="tblwrap"><table>
+    <tr><th>Source</th><th>Ce qu’elle dit</th><th>Ce que dit le cadrage</th><th>Statut</th></tr>
+    <tr><td>A9 §9</td><td>Overlay de debug <em>par viewport</em> portant <code>orthoHeight</code>/<code>fov</code>/<code>aspect</code></td><td>Overlay <em>global</em>, au-dessus de tout</td><td class="note">Compatible : l’overlay global peut placer un panneau ancré dans le coin de chaque viewport en lisant le <code>Layout</code>. Évolution <b>E7.1</b> à confirmer, sans quoi la dette A9 §9 ne serait pas soldée par L07.</td></tr>
+    <tr><td>Roadmap L07</td><td>« Police bitmap embarquée, coût nul en release »</td><td><code>stb_truetype</code> + atlas</td><td class="note">Compatible : ImGui embarque sa police par défaut (ProggyClean, compilée dans le binaire, rasterisée à l’init par <code>stb_truetype</code>). Aucun fichier à livrer. Le coût nul en release vient du flag de compilation. Décision <b>E7.2</b> : police par défaut pour le debug, TTF chargée pour le menu.</td></tr>
+    <tr><td>Roadmap L07</td><td>« Overlay de debug + profiler »</td><td>Profiler non abordé</td><td class="note">Écart réel. Un profiler (temps par système de l’ordre S13) est la suite naturelle de la campagne de mesure G. Dette <b>D7.Prof</b> : périmètre à décider avant P1.</td></tr>
+    <tr><td>Carnet — différés</td><td><code>EBlendMode</code> inutilisé</td><td>L’UI a besoin d’alpha blend</td><td class="note">L’UI sera le premier client de <code>EBlendMode</code>. À réexaminer en P1 : réutiliser l’enum ou le laisser à la 3D.</td></tr>
+  </table></div>
+  <h3>Dettes ouvertes par ce lot</h3>
+  <div class="tblwrap"><table>
+    <tr><th>Dette</th><th>Description</th></tr>
+    <tr><td>D7.B</td><td>Résolution interne découplée (piste B). R7.6 rend le passage indolore pour <code>Rasterizer2D</code>.</td></tr>
+    <tr><td>D7.AVX</td><td>Vectorisation AVX2 du blend plein écran, après la version scalaire.</td></tr>
+    <tr><td>D7.Rml</td><td>RmlUi comme porte de sortie si le HUD devient riche. Même famille A : le backend resterait valable.</td></tr>
+    <tr><td>D7.Pad</td><td>Navigation manette, source d’actions ajoutée après P2 sans toucher aux widgets.</td></tr>
+    <tr><td>D7.Prof</td><td>Profiler intégré à l’overlay (nouveau, issu de la relecture de la roadmap).</td></tr>
+  </table></div>
+  <h3>Règles posées</h3>
+  <div class="rule"><b>R7.0</b> UI = couche 2D composée après <code>RenderView×N</code>, sans depth, sans projection, hors <code>ViewData</code>.</div>
+  <div class="rule"><b>R7.1</b> Le menu consomme des actions, jamais un périphérique.</div>
+  <div class="rule"><b>R7.2</b> Contenu en JSON via <code>JsonReader</code> + <code>WarnUnread()</code> ; C++ = comportement, par identifiant.</div>
+  <div class="rule"><b>R7.3</b> Primitif unique : triangle texturé, couleur par sommet, scissor, alpha blend.</div>
+  <div class="rule"><b>R7.4</b> Ancre + offset en unités de référence, jamais de pixel absolu.</div>
+  <div class="rule"><b>R7.5</b> Ordre : 3D → HUD → menu (avec assombrissement) → overlay debug.</div>
+  <div class="rule"><b>R7.6</b> <code>Rasterizer2D</code> écrit dans une surface passée en paramètre, aujourd’hui le <code>FrameBuffer</code> à la taille fenêtre.</div>
+</section>
+
+<footer>LibraryV3 — Leçon 07, lot C1 (cadrage). Aucun code moteur produit ; implémentation après clôture de la Leçon 06, sur go explicite.</footer>
+</div>
+
+<script>
+const F = Math.fround;
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v, d=2) => Number(v).toFixed(d);
+
+/* ---------- 5. boucle ---------- */
+function drawPipe(){
+  const mode = document.querySelector('input[name=bmode]:checked').value;
+  const rel = $('brel').checked;
+  const base = ['PollEvents','FPSController / Follow','BuildCameraBindings','CameraGizmoSystem','LocalTransformSystem','WorldTransformSystem','TriggerSystem','BuildViewData×N','Tests (_DEBUG)'];
+  let rows = [];
+  if (mode === 'avant'){
+    rows = base.map(t=>({t})).concat([{t:'SDL_LockTexture / RenderView×N'},{t:'SDL_UnlockTexture / RenderCopy / Present'}]);
+    $('pipeNote').textContent = 'Aujourd’hui : la frame se termine par la 3D. Aucune couche 2D, aucun consommateur d’actions.';
+  } else {
+    rows = [{t:'PollEvents'},{t:'InputMapping → actions (Up, Down, Confirm, Back, Pointer)',n:1},{t:'UIScreenStack::Update(realDt) — cycle de vie, focus',n:1}];
+    rows.push({t:'FPSController / Follow' + (mode!=='jeu' ? ' — ne reçoit plus les actions (menu actif)' : ''), off: mode!=='jeu'});
+    base.slice(2).forEach(t=>rows.push({t}));
+    rows.push({t:'SDL_LockTexture / RenderView×N' + (mode==='titre' ? ' — sautée derrière l’écran titre' : ''), off: mode==='titre'});
+    rows.push({t:'HUD → Rasterizer2D', n:1, off: mode!=='jeu'});
+    rows.push({t:'Écran de menu (quad d’assombrissement + items) → Rasterizer2D', n:1, off: mode==='jeu'});
+    rows.push({t:'Overlay debug ImGui → Rasterizer2D', n:1, off: rel});
+    rows.push({t:'SDL_UnlockTexture / RenderCopy / Present'});
+    const notes = {jeu:'En jeu : le contrôleur FPS reçoit les actions, le HUD est dessiné, aucun menu.',
+      pause:'Menu pause : la 3D est encore rendue (elle se voit assombrie derrière le menu) mais la caméra ne bouge plus : les actions vont au menu.',
+      titre:'Écran titre : rien derrière le menu ne mérite d’être rendu ; sauter RenderView×N rend tout ce temps au CPU.'};
+    $('pipeNote').textContent = notes[mode] + (rel ? ' En release, l’overlay ImGui n’est même pas compilé.' : '');
+  }
+  $('pipe').innerHTML = rows.map(r=>`<div class="${r.n?'new':''} ${r.off?'off':''}">${r.n?'+ ':''}${r.t}</div>`).join('');
+}
+document.querySelectorAll('input[name=bmode]').forEach(e=>e.addEventListener('change',drawPipe));
+$('brel').addEventListener('change',drawPipe);
+
+/* ---------- 6. composition ---------- */
+function drawComp(){
+  const c = $('comp'), g = c.getContext('2d'), W=c.width, H=c.height;
+  g.clearRect(0,0,W,H);
+  const split = $('csplit').checked;
+  const views = split ? [[0,0,W/2,H],[W/2,0,W/2,H]] : [[0,0,W,H]];
+  const layers = $('corder').value==='ok' ? ['3d','hud','menu','dbg'] : ['3d','dbg','hud','menu'];
+  let px = 0, blended = 0;
+  const draw = {
+    '3d':()=>{ if(!$('c3d').checked) return;
+      views.forEach(([x,y,w,h],i)=>{
+        g.fillStyle = i? '#24405F':'#1E3A2F'; g.fillRect(x,y,w,h);
+        g.fillStyle = i? '#6FA3D8':'#6CC08B';
+        g.beginPath(); g.moveTo(x+w*.2,y+h*.8); g.lineTo(x+w*.5,y+h*.2); g.lineTo(x+w*.8,y+h*.75); g.fill();
+        g.fillStyle='#E6C36A'; g.beginPath(); g.arc(x+w*.7,y+h*.3,h*.08,0,7); g.fill();
+        if(split){ g.strokeStyle='#000'; g.lineWidth=2; g.strokeRect(x+1,y+1,w-2,h-2); }
+      }); px += W*H; },
+    hud:()=>{ if(!$('chud').checked) return;
+      g.fillStyle='rgba(0,0,0,.45)'; g.fillRect(20,H-44,200,22); blended += 200*22;
+      g.fillStyle='#E25A4E'; g.fillRect(22,H-42,140,18);
+      g.fillStyle='#fff'; g.font='13px IBM Plex Sans, sans-serif'; g.fillText('PV 70 %',28,H-28);
+      g.fillStyle='rgba(255,255,255,.85)'; g.fillRect(W-70,H-50,40,40); blended += 1600; },
+    menu:()=>{ if(!$('cmenu').checked) return;
+      g.fillStyle='rgba(0,0,0,.6)'; g.fillRect(0,0,W,H); blended += W*H;
+      const items=['Reprendre','Options','Quitter']; g.font='16px IBM Plex Sans, sans-serif';
+      items.forEach((t,i)=>{ const y=H/2-50+i*40; g.fillStyle= i===0?'#1F5FBF':'rgba(255,255,255,.12)'; g.fillRect(W/2-90,y,180,32); g.fillStyle='#fff'; g.fillText(t,W/2-g.measureText(t).width/2,y+21); }); },
+    dbg:()=>{ if(!$('cdbg').checked) return;
+      g.fillStyle='rgba(20,24,30,.82)'; g.fillRect(8,8,190,58); blended+=190*58;
+      g.fillStyle='#9FE870'; g.font='12px IBM Plex Mono, monospace';
+      g.fillText('frame  7.42 ms',16,26); g.fillText('FPS    134.8',16,42); g.fillText('caméra Main (persp)',16,58);
+      if(split){ g.fillStyle='rgba(20,24,30,.82)'; g.fillRect(W/2+8,H-34,170,24); g.fillStyle='#9FE870'; g.fillText('Overview ortho h=40',W/2+14,H-18); blended+=170*24; } }
+  };
+  layers.forEach(l=>draw[l]());
+  const scale = (1920*1080)/(W*H);
+  $('compOut').textContent =
+`Ordre appliqué : ${layers.join(' → ')}
+Pixels blendés (canvas ${W}×${H}) : ${blended.toLocaleString('fr-FR')}
+Extrapolé en 1920×1080 : ${Math.round(blended*scale).toLocaleString('fr-FR')} pixels blendés
+${$('cmenu').checked ? 'Le quad d’assombrissement plein écran domine : c’est le pire cas à mesurer en P1.' : 'Sans menu, le blend reste marginal : quelques milliers de pixels.'}
+${$('corder').value==='bad' && $('cmenu').checked && $('cdbg').checked ? 'CONTRE-EXEMPLE : l’overlay de debug a été assombri par le menu. Il doit toujours être dessiné en dernier (R7.5).' : ''}
+${split && $('cdbg').checked ? 'Split-screen : l’overlay reste global, mais place un panneau dans le coin du 2e viewport en lisant le Layout (évolution E7.1, dette A9 §9).' : ''}`;
+}
+['c3d','chud','cmenu','cdbg','csplit','corder'].forEach(id=>$(id).addEventListener('change',drawComp));
+
+/* ---------- 7. familles ---------- */
+const fams = {
+  A:{n:'A — listes de triangles', t:`Exemples : Dear ImGui, Nuklear, RmlUi.
+La lib produit : un tableau de sommets { pos(x,y), uv(u,v), couleur RGBA },
+                 un tableau d’indices, et des commandes { scissor, texture, nbIndices }.
+Ce que nous écrivons : un rasterizer de triangles 2D — un cas dégénéré du L04
+(pas de projection, pas de depth, alpha blend, scissor).
+Bonus : un seul backend sert toutes les libs de la famille (ImGui ET notre menu).
+Verdict : compatible CPU.`},
+  B:{n:'B — batches avec shaders', t:`Exemples : NoesisGUI, Coherent Gameface.
+La lib produit : de la géométrie qui suppose des dizaines de variantes de shaders
+                 (texte SDF, dégradés, anti-aliasing de chemins vectoriels, flous...).
+Ce que nous écrivons : chaque shader, à la main, en C++, sur CPU.
+Autrement dit : réimplémenter leur pipeline de rendu.
+Verdict : rédhibitoire.`},
+  C:{n:'C — bitmap rendue en interne', t:`Exemples : Ultralight (mode CPU), CEF en offscreen.
+La lib produit : une image finale RGBA.
+Ce que nous écrivons : un blit. Coût d’intégration minimal...
+...mais on embarque un moteur web, un interpréteur JavaScript, des threads,
+et des dizaines de Mo de binaires pour afficher cinq boutons.
+Verdict : un canon pour tuer un menu.`}
+};
+$('famBtns').innerHTML = Object.keys(fams).map(k=>`<button data-f="${k}">${fams[k].n}</button>`).join('');
+$('famBtns').addEventListener('click',e=>{ const k=e.target.dataset.f; if(!k) return;
+  [...$('famBtns').children].forEach(b=>b.classList.toggle('on',b.dataset.f===k)); $('famOut').textContent=fams[k].t; });
+
+/* ---------- 8.1 tessellation ---------- */
+function roundRectVerts(x,y,w,h,r,n){
+  const v=[], cs=[[x+w-r,y+r,-Math.PI/2],[x+w-r,y+h-r,0],[x+r,y+h-r,Math.PI/2],[x+r,y+r,Math.PI]];
+  cs.forEach(([cx,cy,a0])=>{ for(let i=0;i<=n;i++){ const a=a0+(Math.PI/2)*i/n; v.push([F(cx+r*Math.cos(a)),F(cy+r*Math.sin(a))]); } });
+  return v;
+}
+function drawTess(){
+  const c=$('tess'), g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
+  const n=+$('tseg').value, wire=$('twire').checked, grad=$('tgrad').checked;
+  const v = roundRectVerts(30,30,300,160,40,n);
+  const tri = v.length-2;
+  for(let i=1;i<v.length-1;i++){
+    const t=[v[0],v[i],v[i+1]];
+    if(grad){ const yy=(t[0][1]+t[1][1]+t[2][1])/3; const k=(yy-30)/160; g.fillStyle=`rgb(${Math.round(31+60*k)},${Math.round(95+40*k)},${Math.round(191-60*k)})`; }
+    else g.fillStyle='#1F5FBF';
+    g.beginPath(); g.moveTo(...t[0]); g.lineTo(...t[1]); g.lineTo(...t[2]); g.closePath(); g.fill();
+    if(wire){ g.strokeStyle='rgba(255,255,255,.7)'; g.lineWidth=.7; g.stroke(); }
+  }
+  /* 9-slice */
+  const X=380,Y=30,Wd=230,Hd=160,b=28; const xs=[X,X+b,X+Wd-b,X+Wd], ys=[Y,Y+b,Y+Hd-b,Y+Hd];
+  for(let j=0;j<3;j++) for(let i=0;i<3;i++){
+    const corner=(i!==1&&j!==1), center=(i===1&&j===1);
+    g.fillStyle= center?'#C9D8EE': corner?'#1F5FBF':'#6F93C9';
+    g.fillRect(xs[i],ys[j],xs[i+1]-xs[i],ys[j+1]-ys[j]);
+    if(wire){ g.strokeStyle='rgba(255,255,255,.8)'; g.lineWidth=.7; g.strokeRect(xs[i],ys[j],xs[i+1]-xs[i],ys[j+1]-ys[j]);
+      g.beginPath(); g.moveTo(xs[i],ys[j]); g.lineTo(xs[i+1],ys[j+1]); g.stroke(); }
+  }
+  g.fillStyle=css('--ink2'); g.font='12px IBM Plex Sans, sans-serif';
+  g.fillText('Rectangle arrondi (éventail)',30,212); g.fillText('9-slice : 9 quads',380,212);
+  const btn5 = 5*tri, glyphs = 40*2;
+  $('tessOut').textContent =
+`Rectangle arrondi : 4 coins × (${n}+1) = ${v.length} sommets → éventail convexe = ${v.length} − 2 = ${tri} triangles
+9-slice : 9 quads × 2 = 18 triangles, coins non déformés, bords étirés sur un seul axe
+Glyphe : 1 quad = 2 triangles
+
+Menu de 5 boutons arrondis + 40 glyphes de texte :
+  5 × ${tri} + 40 × 2 = ${btn5} + ${glyphs} = ${btn5+glyphs} triangles par frame
+Exemple de sommet (coin haut-droit, i = 0) en float32 : (${v[0][0]}, ${v[0][1]})
+Tout passe par le même primitif : rien d’autre à écrire dans Rasterizer2D (R7.3).`;
+}
+['tseg','twire','tgrad'].forEach(id=>$(id).addEventListener('input',drawTess));
+
+/* ---------- 8.2 ancres ---------- */
+const anchors = {TopLeft:[0,0],Top:[.5,0],TopRight:[1,0],Left:[0,.5],Center:[.5,.5],Right:[1,.5],BottomLeft:[0,1],Bottom:[.5,1],BottomRight:[1,1]};
+$('aa').innerHTML = Object.keys(anchors).map(k=>`<option ${k==='BottomRight'?'selected':''}>${k}</option>`).join('');
+function resolveAnchor(Wp,Hp,a,pivot,off,size){
+  const s = F(Math.min(F(Wp/1920),F(Hp/1080)));
+  const w=F(size[0]*s), h=F(size[1]*s);
+  const x=F(F(a[0]*Wp) + F(off[0]*s) - F(pivot[0]*w));
+  const y=F(F(a[1]*Hp) + F(off[1]*s) - F(pivot[1]*h));
+  return {s,x,y,w,h};
+}
+function anchorOffset(a){ return [a[0]===0?40:a[0]===1?-40:0, a[1]===0?40:a[1]===1?-40:0]; }
+function drawAnch(){
+  const c=$('anch'), g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
+  const Wp=+$('aw').value, Hp=+$('ah').value, name=$('aa').value, a=anchors[name];
+  const k=Math.min(600/1920,320/1080), ox=20, oy=20;
+  g.strokeStyle=css('--line'); g.setLineDash([4,4]); g.strokeRect(ox,oy,1920*k,1080*k); g.setLineDash([]);
+  g.fillStyle=css('--paper'); g.fillRect(ox,oy,Wp*k,Hp*k); g.strokeStyle=css('--ink3'); g.strokeRect(ox,oy,Wp*k,Hp*k);
+  Object.values(anchors).forEach(p=>{ g.fillStyle=css('--ink3'); g.fillRect(ox+p[0]*Wp*k-2,oy+p[1]*Hp*k-2,4,4); });
+  const r = resolveAnchor(Wp,Hp,a,a,anchorOffset(a),[240,60]);
+  g.fillStyle='#1F5FBF'; g.fillRect(ox+r.x*k,oy+r.y*k,r.w*k,r.h*k);
+  const fx=1600, fy=980; g.fillStyle='rgba(200,60,50,.8)'; g.fillRect(ox+fx*k,oy+fy*k,240*k,60*k);
+  const visible = (fx+240<=Wp && fy+60<=Hp) ? 'entièrement visible' : (fx>=Wp||fy>=Hp ? 'HORS ÉCRAN' : 'coupé par le bord');
+  $('anchOut').textContent =
+`Fenêtre ${Wp}×${Hp}, référence 1920×1080
+s = min(${Wp}/1920, ${Hp}/1080) = ${r.s}
+Ancre ${name} = (${a[0]}, ${a[1]}), pivot identique, offset (${anchorOffset(a)}) ref, taille 240×60 ref
+x = ${a[0]}·${Wp} + ${anchorOffset(a)[0]}·s − ${a[0]}·${r.w} = ${r.x}
+y = ${a[1]}·${Hp} + ${anchorOffset(a)[1]}·s − ${a[1]}·${r.h} = ${r.y}
+Bouton bleu (ancré) : (${fmt(r.x)}, ${fmt(r.y)}) taille ${fmt(r.w)}×${fmt(r.h)} — toujours visible
+Bouton rouge (pixels fixes 1600, 980) : ${visible}`;
+}
+['aw','ah','aa'].forEach(id=>$(id).addEventListener('input',drawAnch));
+
+/* ---------- 8.3 actions + cycle de vie ---------- */
+const items=['Nouvelle partie','Options','Quitter']; let focus=0, state='Hidden', t0=0, dur=900, raf=0;
+function renderMenu(){ $('mList').innerHTML = items.map((t,i)=>`<div class="${i===focus?'f':''}">${t}</div>`).join(''); $('mState').textContent='État : '+state; }
+function log(msg,cls){ const d=document.createElement('div'); d.className=cls||''; d.textContent=msg; $('mLog').prepend(d); }
+const ease = t => F(1 - F(Math.pow(F(1-t),3)));
+function tick(now){
+  const t = dur ? Math.min(1,(now-t0)/dur) : 1, e=ease(t);
+  const el=$('mList');
+  if(state==='Entering'){ el.style.opacity=e; el.style.transform=`translateX(${(1-e)*60}px)`; if(t>=1){ state='Active'; log('→ Active : les actions sont maintenant acceptées','ok'); renderMenu(); return; } }
+  if(state==='Exiting'){ el.style.opacity=1-e; el.style.transform=`translateX(${e*60}px)`; if(t>=1){ state='Hidden'; renderMenu(); log('→ Hidden'); return; } }
+  raf=requestAnimationFrame(tick);
+}
+function setState(s){ state=s; t0=performance.now(); dur=+$('mDur').value; renderMenu(); log('→ '+s+(dur?` (${dur} ms)`:'')); cancelAnimationFrame(raf); raf=requestAnimationFrame(tick); }
+function action(a, src){
+  if(state==='Hidden'){ log(`${src} → ${a} : aucun écran, l’action part au contrôleur FPS`); return; }
+  if(state!=='Active' && $('mGuard').checked){ log(`${src} → ${a} : refusée (écran en ${state})`,'ok'); return; }
+  if(state!=='Active') log(`${src} → ${a} : ACCEPTÉE pendant ${state} — contre-exemple, le menu n’est pas affiché`,'bad');
+  if(a==='Up') focus=(focus+items.length-1)%items.length;
+  if(a==='Down') focus=(focus+1)%items.length;
+  if(a==='Confirm'){ log(`Confirm sur « ${items[focus]} » → le C++ reçoit l’identifiant btn_${['new_game','options','quit'][focus]}`, state==='Active'?'':'bad'); }
+  if(a==='Back' && state==='Active'){ setState('Exiting'); return; }
+  if(a!=='Confirm') log(`${src} → ${a} : focus = « ${items[focus]} »`);
+  renderMenu();
+}
+$('mOpen').onclick=()=>{ if(state==='Hidden') setState('Entering'); };
+$('mUp').onclick=()=>action('Up','bouton'); $('mDown').onclick=()=>action('Down','bouton');
+$('mOk').onclick=()=>action('Confirm','bouton'); $('mBack').onclick=()=>action('Back','bouton');
+$('mList').addEventListener('mousemove',e=>{ const i=[...$('mList').children].indexOf(e.target); if(i>=0 && i!==focus && state==='Active'){ focus=i; renderMenu(); log(`souris (survol) → Pointer : focus = « ${items[i]} »`);} });
+document.addEventListener('keydown',e=>{
+  const m={ArrowUp:'Up',KeyW:'Up',ArrowDown:'Down',KeyS:'Down',Enter:'Confirm',Escape:'Back'}[e.code];
+  if(m && !['INPUT','SELECT'].includes(document.activeElement.tagName)){ e.preventDefault(); if(m==='Back'&&state==='Hidden'){ setState('Entering'); return;} action(m,`clavier ${e.key}`); }
+});
+
+/* ---------- 8.4 upscale ---------- */
+function drawUps(){
+  const c=$('ups'), g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
+  const f=+$('upf').value, lin=$('upflt').value==='linear';
+  const sw=Math.floor(200/f)*1, sh=Math.ceil(40/f);
+  const off=document.createElement('canvas'); off.width=Math.ceil(600/f); off.height=Math.ceil(40/f);
+  const o=off.getContext('2d'); o.fillStyle='#1E3A2F'; o.fillRect(0,0,off.width,off.height);
+  o.fillStyle='#fff'; o.font=`${Math.max(4,12/f*1)}px IBM Plex Sans, sans-serif`; o.textBaseline='middle';
+  o.fillText('Reprendre la partie — 12 px',4,off.height/2);
+  g.imageSmoothingEnabled=lin; g.drawImage(off,0,0,off.width*f,off.height*f);
+  g.fillStyle='#1E3A2F'; g.fillRect(0,80,600,40); g.fillStyle='#fff'; g.font='12px IBM Plex Sans, sans-serif'; g.textBaseline='middle';
+  g.fillText('Reprendre la partie — 12 px',4,100);
+  g.fillStyle=css('--ink2'); g.fillText('↑ piste B : dessiné à la résolution interne puis étiré      ↓ piste A / surface UI native',4,68);
+  const Wn=1920,Hn=1080,wi=Math.round(Wn/f),hi=Math.round(Hn/f);
+  $('upsOut').textContent =
+`Fenêtre 1920×1080, résolution interne ${wi}×${hi} (×${f})
+Pixels rasterisés par la 3D : ${(wi*hi).toLocaleString('fr-FR')} au lieu de ${(Wn*Hn).toLocaleString('fr-FR')} → ${fmt((Wn*Hn)/(wi*hi),1)}× moins
+Un glyphe de 12 px de haut dans la fenêtre ne dispose que de ${fmt(12/f,1)} lignes de pixels à la résolution interne.
+Agrandissement par SDL_RenderCopy : coût CPU nul, filtre ${lin?'linear (flou)':'nearest (blocs)'}.
+Piste A retenue : pas de second buffer, l’UI écrit directement dans le FrameBuffer. Piste B = dette D7.B.`;
+}
+['upf','upflt'].forEach(id=>$(id).addEventListener('change',drawUps));
+
+/* ---------- 9. étapes ---------- */
+function blendLanes(){
+  const dst=[12,48,96,140,180,212,240,255], a=F(0.6), src=0;
+  const rows = dst.map(d=>{ const df=F(d), diff=F(src-df), out=F(df + F(a*diff)); return {df,diff,out,r:Math.round(out)}; });
+  const lane=(lbl,arr,hl)=>`<div class="h">${lbl}</div>`+arr.map(v=>`<div class="${hl?'hl':''}">${v}</div>`).join('');
+  return `<div class="tblwrap"><div class="lanes">
+${lane('couloir',[0,1,2,3,4,5,6,7])}
+${lane('dst (float)',rows.map(r=>r.df))}
+${lane('a (set1)',rows.map(()=>a))}
+${lane('src − dst',rows.map(r=>r.diff))}
+${lane('fmadd',rows.map(r=>r.out),true)}
+${lane('arrondi u8',rows.map(r=>r.r),true)}
+</div></div>`;
+}
+const steps = [
+ { t:'E1 — Séparer les deux besoins',
+   obj:'Avant de choisir une technologie, établir s’il faut un système ou deux. Un mauvais regroupement oblige soit à livrer un outil au joueur, soit à construire une architecture de produit pour afficher trois nombres.',
+   inp:'Les besoins exprimés : (1) debug : caméra, ms, FPS ; (2) joueur : menus + HUD, modifiable sans recompiler.',
+   body:()=>`<div class="tblwrap"><table><tr><th>Critère</th><th>Debug</th><th>Joueur</th></tr>
+<tr><td>Public</td><td>Développeur</td><td>Joueur</td></tr><tr><td>Livré en release</td><td>Non</td><td>Oui</td></tr>
+<tr><td>Style</td><td>Peu importe</td><td>Identité du jeu</td></tr><tr><td>Modifié par</td><td>Code, à la volée</td><td>Fichier JSON</td></tr>
+<tr><td>Animations</td><td>Aucune</td><td>Transitions</td></tr><tr><td>Paradigme naturel</td><td>Immediate mode</td><td>Retained mode</td></tr></table></div>`,
+   code:`// Esquisse : deux systèmes, compilés différemment
+#if LV3_DEBUG_OVERLAY          // défini en Debug / RelWithAsserts, jamais en Release
+    DebugOverlay::Draw(frameStats, cameras, layout);   // Dear ImGui
+#endif
+    UIScreenStack::Draw(surface);                      // menus + HUD maison, toujours présent`,
+   out:'Deux systèmes : Dear ImGui derrière un flag pour le debug, un MenuSystem retained maison pour le joueur.' },
+ { t:'E2 — Trier les bibliothèques par ce qu’elles demandent de dessiner',
+   obj:'Sans GPU, le coût d’intégration d’une lib n’est pas son API mais le backend de rendu qu’elle exige. Ce critère élimine d’emblée la moitié du marché.',
+   inp:'Deux systèmes (E1). Le moteur sait rasteriser des triangles à couleur interpolée (L04).',
+   body:()=>`<p>Famille A : triangles + atlas + scissor. Famille B : shaders à réimplémenter. Famille C : moteur web embarqué. Voir la section 7 pour le détail interactif.</p>`,
+   code:`// Ce que la famille A livre — et rien d'autre (forme ImGui)
+struct ImDrawVert { float pos[2]; float uv[2]; uint32_t col; };   // 20 octets
+struct DrawCmd    { Rect clip; TextureId tex; uint32_t idxCount; uint32_t idxOffset; };
+// Notre backend : pour chaque DrawCmd, rasteriser idxCount/3 triangles
+// dans le rectangle clip, en échantillonnant tex, en blendant sur la surface.`,
+   out:'Famille A uniquement : Dear ImGui (debug) et un système maison qui émet le même format. RmlUi possible mais écarté (E3/E4), B et C écartés.' },
+ { t:'E3 — Un seul primitif de rendu (R7.3)',
+   obj:'Si le menu, le HUD et ImGui parlent la même langue, on n’écrit et on n’optimise qu’un seul rasterizer 2D. Chaque forme supplémentaire (cercle, rectangle arrondi natif) serait un rasterizer de plus à tester et à vectoriser.',
+   inp:'Famille A (E2) : la géométrie arrive en triangles. Besoins de rendu : coins arrondis, dégradés, 9-slice, icônes, texte.',
+   body:()=>{ const n=6, v=4*(n+1), tri=v-2; return `<div class="box-in">Résultat de E2 : un format unique <code>{pos, uv, col}</code> + <code>{clip, tex}</code>.</div>
+<p class="lbl">Calcul (segments par coin = ${n})</p><div class="out">rectangle arrondi : 4×(${n}+1) = ${v} sommets → ${tri} triangles (éventail)
+9-slice : 9 quads → 18 triangles
+glyphe : 2 triangles
+menu 5 boutons + 40 glyphes : 5×${tri} + 80 = ${5*tri+80} triangles</div>`; },
+   code:`// Scalaire — le cœur de Rasterizer2D, par pixel couvert par le triangle et dans le clip
+const float a   = texel.a * vtxColor.a;           // couverture du glyphe × opacité du sommet
+dst.r = dst.r + a * (src.r - dst.r);              // blend "over", 1 soustraction + 1 FMA
+dst.g = dst.g + a * (src.g - dst.g);
+dst.b = dst.b + a * (src.b - dst.b);`,
+   simd:`// AVX2 — 8 pixels consécutifs d'une ligne, un canal à la fois (esquisse, P1)
+__m256 vDst = _mm256_cvtepi32_ps(dstR_i32);       // 8 valeurs R du FrameBuffer -> float32
+__m256 vSrc = _mm256_cvtepi32_ps(srcR_i32);       // 8 valeurs R de la source (couleur interpolée)
+__m256 vA   = _mm256_mul_ps(vTexA, vVtxA);        // 8 couvertures × opacités
+// dst + a*(src - dst) : une soustraction puis un FMA, dans les 8 couloirs à la fois
+__m256 vOut = _mm256_fmadd_ps(vA, _mm256_sub_ps(vSrc, vDst), vDst);`,
+   out:'Rasterizer2D n’expose qu’un primitif : triangle texturé, couleur par sommet, scissor, alpha blend. Tout le reste est de la tessellation.' },
+ { t:'E4 — Décrire les écrans en données (R7.2)',
+   obj:'Pouvoir déplacer un bouton, changer un texte ou une couleur sans recompiler, tout en gardant la logique en C++ typé et testable.',
+   inp:'Primitif unique (E3). Existant : JsonReader avec Child() et WarnUnread() (A6).',
+   body:()=>`<div class="box-in">Résultat de E3 : le contenu devient des triangles ; reste à décrire <em>quoi</em> tesseller.</div>
+<p class="lbl">Exemple de fichier (forme indicative, schéma à figer en P2)</p>
+<pre>{
+  "screen": "pause",
+  "dim": 0.6,
+  "layout": { "direction": "column", "gap": 16, "anchor": "Center" },
+  "items": [
+    { "id": "btn_resume",  "type": "button", "text": "Reprendre" },
+    { "id": "btn_options", "type": "button", "text": "Options" },
+    { "id": "btn_quit",    "type": "button", "text": "Quitter" }
+  ]
+}</pre>`,
+   code:`// Le C++ ne connaît que les identifiants, jamais les positions
+menu.OnConfirm("btn_resume",  [&]{ screens.Pop(); clock.Resume(); });
+menu.OnConfirm("btn_quit",    [&]{ app.RequestQuit(); });
+// Chargement : même discipline que EngineConfig
+JsonReader r = root.Child("items");
+// ... lecture de chaque item ...
+r.WarnUnread();   // "ancor" au lieu de "anchor" -> avertissement, pas un silence`,
+   out:'Contenu en JSON, comportement en C++, liaison par identifiant. HTML/CSS écarté, mais leur vocabulaire (anchor, gap, direction) est repris.' },
+ { t:'E5 — Placer par ancres (R7.4)',
+   obj:'La fenêtre est redimensionnable : une position doit être une règle (« à 40 unités du coin bas-droit »), pas un nombre de pixels.',
+   inp:'Le JSON de E4 porte anchor, offset et taille en unités de référence 1920×1080.',
+   body:()=>{ const r1=resolveAnchor(1280,720,[1,1],[1,1],[-40,-40],[240,60]), r2=resolveAnchor(2560,1080,[1,1],[1,1],[-40,-40],[240,60]);
+     return `<div class="box-in">Résultat de E4 : <code>{"anchor":"BottomRight","offset":[-40,-40],"size":[240,60]}</code></div>
+<p class="lbl">Calcul float32</p><div class="out">fenêtre 1280×720 : s = ${r1.s}  →  x = 1280 − 40·s − 240·s = ${r1.x}   y = ${r1.y}   taille ${r1.w}×${r1.h}
+fenêtre 2560×1080 : s = ${r2.s}  →  x = ${r2.x}   y = ${r2.y}   taille ${r2.w}×${r2.h}
+Coin bas-droit de l’élément à 1280×720 : (${F(r1.x+r1.w)}, ${F(r1.y+r1.h)}) = fenêtre − 40·s, comme demandé.</div>`; },
+   code:`// Scalaire — exécuté une fois par élément quand la fenêtre change (pas par frame)
+const float s = std::min(W / 1920.0f, H / 1080.0f);   // échelle uniforme : pas de déformation
+const float w = size.x * s, h = size.y * s;
+const float x = anchor.x * W + offset.x * s - pivot.x * w;
+const float y = anchor.y * H + offset.y * s - pivot.y * h;`,
+   simd:`// Vectorisation : sans intérêt ici. Quelques dizaines d'éléments, recalculés
+// au redimensionnement seulement. Rester scalaire est la bonne décision :
+// on ne vectorise que ce que le profiler désigne.`,
+   out:'Chaque élément a une position calculée, jamais stockée en dur. Le contre-exemple 10.1 chiffre ce que coûte l’inverse.' },
+ { t:'E6 — Actions et cycle de vie (R7.1)',
+   obj:'Brancher clavier, souris puis manette sans écrire trois versions de chaque widget, et empêcher qu’une action atteigne un écran qui n’est pas encore affiché.',
+   inp:'Écrans décrits (E4) et placés (E5). Contrôleur FPS existant qui lit déjà les touches.',
+   body:()=>{ const pts=[0,50,100,150,200,250,300].map(ms=>{ const t=F(ms/300); return `${String(ms).padStart(3)} ms  t=${fmt(t,4)}  ease=${ease(t)}  ${ms<300?'Entering — actions refusées':'Active — actions acceptées'}`; }).join('\n');
+     return `<div class="box-in">Résultat de E5 : les items ont une position ; reste à savoir qui a le focus et quand ils acceptent des ordres.</div>
+<p class="lbl">Transition de 300 ms, ease-out cubique 1 − (1 − t)³, float32</p><div class="out">${pts}</div>
+<p class="lbl">Combien de chemins de code ?</p><div class="out">sans actions : 3 périphériques × 4 types de widget = 12 chemins
+avec actions : 3 mappings + 4 widgets = 7 chemins, et la manette s’ajoute pour +1</div>`; },
+   code:`enum class EUIAction : uint8_t { Up, Down, Left, Right, Confirm, Back, Pointer };
+enum class EScreenState : uint8_t { Hidden, Entering, Active, Exiting };
+
+void UIScreen::Consume(EUIAction a) {
+    if (m_state != EScreenState::Active) return;   // le filet du contre-exemple 8.3
+    m_focus = m_nav.Next(m_focus, a);              // table de navigation, pas de if par widget
+}`,
+   out:'Le menu ne lit que des actions. Le cycle de vie existe dès P2, même avec des durées de 0 ms. Les transitions tournent sur realDt.' },
+ { t:'E7 — Composer les couches et mesurer le pire cas (R7.5)',
+   obj:'Fixer l’ordre de dessin pour que chaque couche reste lisible, et identifier dès maintenant l’opération la plus chère pour savoir quoi mesurer et vectoriser en premier.',
+   inp:'Primitif unique (E3), écrans avec état (E6). Le FrameBuffer est en ARGB8888 (L04, règle 7).',
+   body:()=>{ const px=1920*1080; return `<div class="box-in">Résultat de E6 : à chaque frame, on sait quels écrans sont visibles et dans quel état.</div>
+<p class="lbl">Pire cas : quad d’assombrissement du menu pause, 1920×1080, src = noir, a = 0.6</p>
+<div class="out">pixels : 1920 × 1080 = ${px.toLocaleString('fr-FR')}
+scalaire : 3 canaux × (1 sub + 1 fma) = 6 opérations/pixel → ${(px*6).toLocaleString('fr-FR')} opérations
+AVX2 : 8 pixels par instruction → ${(px*6/8).toLocaleString('fr-FR')} instructions de calcul (hors chargement/conversion)</div>
+<p class="lbl">Registres YMM, couloir par couloir (canal R de 8 pixels voisins)</p>${blendLanes()}
+<p class="muted">Valeur de contrôle : couloir 7, dst = 255 → 255 + 0.6×(0 − 255) = ${F(255+F(F(0.6)*-255))}, arrondi ${Math.round(F(255+F(F(0.6)*-255)))}.</p>`; },
+   code:`// Scalaire — une ligne du FrameBuffer ARGB8888 (Color = {b,g,r,a} en mémoire)
+for (int x = x0; x < x1; ++x) {
+    Color& d = row[x];
+    d.r = uint8_t(d.r + a * (src.r - d.r) + 0.5f);   // +0.5f : arrondi, pas troncature
+    d.g = uint8_t(d.g + a * (src.g - d.g) + 0.5f);
+    d.b = uint8_t(d.b + a * (src.b - d.b) + 0.5f);
+}`,
+   simd:`// AVX2 — 8 pixels par itération (esquisse, D7.AVX)
+const __m256 vA   = _mm256_set1_ps(a);        // même alpha dans les 8 couloirs (quad uni)
+const __m256 vSrc = _mm256_set1_ps(src.r);    // même couleur source : le quad est uni
+for (int x = x0; x + 8 <= x1; x += 8) {
+    // 1. charger 8 pixels ARGB (256 bits) et isoler le canal R : (p >> 16) & 0xFF
+    __m256i p  = _mm256_loadu_si256((const __m256i*)&row[x]);
+    __m256i ri = _mm256_and_si256(_mm256_srli_epi32(p, 16), _mm256_set1_epi32(0xFF));
+    // 2. entier -> float32, puis dst + a*(src - dst) dans les 8 couloirs
+    __m256  rf = _mm256_cvtepi32_ps(ri);
+    __m256  ro = _mm256_fmadd_ps(vA, _mm256_sub_ps(vSrc, rf), rf);
+    // 3. float -> entier arrondi au plus proche, puis réinsérer dans les bits 16..23
+    __m256i rn = _mm256_cvtps_epi32(ro);
+    // ... idem G (bits 8..15) et B (bits 0..7), recombiner, _mm256_storeu_si256 ...
+}
+// queue de boucle (x1 - x) < 8 : version scalaire`,
+   out:'Ordre fixe 3D → HUD → menu → debug. Le quad plein écran est le premier client d’AVX2 : on le mesurera scalaire, puis vectorisé.' },
+ { t:'E8 — Choisir la surface cible (R7.6)',
+   obj:'Décider où l’UI écrit sans fermer la porte à une résolution interne découplée plus tard.',
+   inp:'Ordre de composition (E7). La texture SDL est à la taille de la fenêtre aujourd’hui.',
+   body:()=>`<div class="box-in">Résultat de E7 : l’UI s’écrit après la 3D, dans la même mémoire.</div>
+<div class="out">piste A (retenue) : 1920×1080 → 2 073 600 pixels 3D, une seule surface
+piste B (dette D7.B) : 640×360 → 230 400 pixels 3D (9× moins), mais l’UI exige sa propre surface 1920×1080
+coût de l’agrandissement par SDL_RenderCopy : 0 côté CPU (GPU)</div>`,
+   code:`// La seule concession à l'avenir : la cible est un paramètre, pas un nom
+struct Surface2D {
+    uint32_t* pixels;   // ARGB8888
+    int       width;
+    int       height;
+    int       pitch;    // en pixels ; >= width (assert)
+};
+void Rasterizer2D::Draw(const Surface2D& target, const DrawList& list);
+// Piste A : target = FrameBuffer.  Piste B : target = surface UI native. Rien d'autre ne change.`,
+   out:'FrameBuffer à la taille fenêtre, passé en Surface2D. Le jour de D7.B, on change l’argument, pas le rasterizer.' }
+];
+let cur=0;
+function renderStep(){
+  const s=steps[cur];
+  $('sNav').innerHTML = steps.map((x,i)=>`<button class="${i===cur?'on':''}" data-i="${i}" aria-label="${x.t}">E${i+1}</button>`).join('') + `<button class="${cur===steps.length?'on':''}" data-i="${steps.length}">Vérifier</button>`;
+  if(cur===steps.length){ $('sCard').innerHTML=`<h3>Vérifier</h3><p>Les tests hors moteur, les filets Debug et les prédictions du lot P1 sont détaillés dans la <a href="#verifier">section 11</a>. Récapitulatif des résultats des étapes :</p><div class="out">${steps.map((x,i)=>`E${i+1} : ${x.out}`).join('\n')}</div>`; return; }
+  $('sCard').innerHTML = `<h3>${s.t}</h3>
+<p class="lbl">Objectif — pourquoi cette étape</p><p>${s.obj}</p>
+<p class="lbl">Ce qu’elle utilise (résultat de l’étape précédente)</p><div class="box-in">${s.inp}</div>
+${s.body()}
+<p class="lbl">Code — scalaire (esquisse de cadrage)</p><pre>${s.code.replace(/</g,'&lt;')}</pre>
+${s.simd?`<p class="lbl">Pendant vectorisé</p><pre>${s.simd.replace(/</g,'&lt;')}</pre>`:'<p class="lbl">Pendant vectorisé</p><p class="muted">Aucun : cette étape est une décision, pas un calcul répété par pixel.</p>'}
+<p class="lbl">Résultat de l’étape</p><div class="box-out">${s.out}</div>`;
+}
+$('sNav').addEventListener('click',e=>{ const i=e.target.dataset.i; if(i!==undefined){ cur=+i; renderStep(); }});
+$('sPrev').onclick=()=>{ cur=Math.max(0,cur-1); renderStep(); };
+$('sNext').onclick=()=>{ cur=Math.min(steps.length,cur+1); renderStep(); };
+
+/* ---------- 10. contre-exemples ---------- */
+function ce(){
+  const sizes=[[1920,1080],[1600,900],[1280,720],[1024,768]];
+  $('ce1').textContent = sizes.map(([w,h])=>{
+    const vx=Math.max(0,Math.min(w,1840)-1600), vy=Math.max(0,Math.min(h,1040)-980), pct=fmt(100*vx*vy/(240*60),0);
+    const r=resolveAnchor(w,h,[1,1],[1,1],[-80,-40],[240,60]);
+    return `${w}×${h} : bouton fixe visible à ${pct} %   |   ancré BottomRight : (${fmt(r.x)}, ${fmt(r.y)}) visible à 100 %`; }).join('\n');
+  const f=3; $('ce2').textContent =
+`Fenêtre 1920×1080, FrameBuffer 640×360 (piste B), texte voulu de 12 px.
+Hauteur disponible dans le FrameBuffer : 12 / ${f} = 4 pixels pour un glyphe.
+Un « e » minuscule y occupe ~2 à 3 lignes : les contre-formes disparaissent, ×${f} ne recrée rien.
+Correct : surface UI à la résolution native (D7.B), ou rester en piste A.`;
+  $('ce3').textContent =
+`Widget qui lit SDL_SCANCODE_UP, SDL_SCANCODE_W, SDL_CONTROLLER_BUTTON_DPAD_UP et la souris :
+  4 types de widget × 3 périphériques = 12 chemins de code à tester
+  ajout de la manette = modifier les 4 widgets
+  clavier AZERTY : W n'est pas Z → bug de mapping dispersé dans 4 fichiers
+Avec des actions : 4 + 3 = 7 chemins ; la manette = 1 fichier de mapping JSON de plus.`;
+  const r8=(s,d,a)=>((s*a + d*(255-a))>>8), rr=(s,d,a)=>Math.round((s*a + d*(255-a))/255);
+  const cases=[[255,255,255],[255,255,128],[255,0,255],[0,255,0],[200,100,77]];
+  $('ce4').textContent = 'src  dst   a   |  >>8 (faux)  |  /255 arrondi (juste)\n' + cases.map(([s,d,a])=>`${String(s).padStart(3)}  ${String(d).padStart(3)}  ${String(a).padStart(3)}  |     ${String(r8(s,d,a)).padStart(3)}      |     ${String(rr(s,d,a)).padStart(3)}`).join('\n') +
+`\nBlanc sur blanc, opaque : 255 devient 254 — le blanc pur n’existe plus.\n4 couches de blanc à a = 128 empilées sur du blanc : ${(()=>{let v=255,o=[];for(let i=0;i<4;i++){v=r8(255,v,128);o.push(v);}return o.join(' → ');})()} (attendu : 255 partout).`;
+}
+
+/* init */
+drawPipe(); drawComp(); drawTess(); drawAnch(); renderMenu(); drawUps(); renderStep(); ce();
+$('famBtns').children[0].click();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ drawTess(); drawAnch(); drawUps(); });
+</script>
+</body>
+</html>
