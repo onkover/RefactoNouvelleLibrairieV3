@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Leçon 04 P2 — Perspective & Clipping</title>
+<style>
+  body {
+    background: #12141a; color: #e8e8ea;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0; padding: 22px;
+  }
+  h2 { margin: 0 0 4px; font-weight: 600; }
+  .sub { color: #8a8f9c; font-size: 13px; margin-bottom: 16px; max-width: 720px; line-height: 1.5; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .tab {
+    background: #2e323d; color: #e8e8ea; border: 1px solid #3a3f4b;
+    border-radius: 6px; padding: 9px 16px; font-size: 13px; cursor: pointer;
+    font-family: inherit;
+  }
+  .tab.active { background: #2563eb; border-color: #2563eb; }
+  .page { display: none; }
+  .page.active { display: block; }
+  .layout { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+  canvas { background: #0d0f13; border: 1px solid #2e323d; border-radius: 6px; }
+  .panel {
+    background: #1a1d24; border: 1px solid #2e323d; border-radius: 6px;
+    padding: 16px; min-width: 290px; font-size: 13px;
+  }
+  .panel h3 { margin: 0 0 10px; font-size: 12px; color: #8a8f9c; text-transform: uppercase; letter-spacing: .05em; }
+  .modebar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .modebar button { flex: 1; background: #2e323d; color:#e8e8ea; border:1px solid #3a3f4b;
+    border-radius:6px; padding:8px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .modebar button.active { background:#2563eb; border-color:#2563eb; }
+  label { display:block; font-size:12px; color:#8a8f9c; margin:12px 0 4px; }
+  input[type=range] { width:100%; }
+  .row { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid #262a33; font-size:12px; }
+  .row:last-child { border-bottom:none; }
+  .lbl { color:#8a8f9c; }
+  .v { font-family:Consolas,monospace; font-weight:600; }
+  .note { margin-top:12px; font-size:12px; color:#8a8f9c; line-height:1.6; }
+  .warn { color:#facc15; }
+  .ok { color:#4ade80; }
+  .bad { color:#f87171; }
+  code { color:#a5b4fc; font-family:Consolas,monospace; }
+</style>
+</head>
+<body>
+
+<h2>Leçon 04 Partie 2 — démonstrations</h2>
+<div class="sub">Deux phénomènes qu'il faut avoir vus une fois pour ne plus jamais les confondre avec un bug de géométrie.</div>
+
+<div class="tabs">
+  <button class="tab active" data-page="p1">1 — Interpolation affine vs perspective-correcte</button>
+  <button class="tab" data-page="p2">2 — Clipping near en espace de clip</button>
+</div>
+
+<!-- ══════════ PAGE 1 ══════════ -->
+<div class="page active" id="p1">
+<div class="layout">
+  <canvas id="cvPersp" width="560" height="420"></canvas>
+  <div class="panel">
+    <h3>Mode d'interpolation</h3>
+    <div class="modebar">
+      <button id="bAff" class="active">Affine (Partie 1)</button>
+      <button id="bPer">Perspective-correcte</button>
+    </div>
+
+    <label>Inclinaison du sol : <span id="lTilt">70</span>°</label>
+    <input type="range" id="sTilt" min="5" max="88" value="70">
+
+    <label>Distance caméra : <span id="lDist">3.0</span></label>
+    <input type="range" id="sDist" min="15" max="80" value="30">
+
+    <h3 style="margin-top:16px">Diagnostic</h3>
+    <div class="row"><span class="lbl">w du sommet proche</span><span class="v" id="vWn">-</span></div>
+    <div class="row"><span class="lbl">w du sommet lointain</span><span class="v" id="vWf">-</span></div>
+    <div class="row"><span class="lbl">rapport w_loin / w_proche</span><span class="v" id="vRatio">-</span></div>
+    <div class="row"><span class="lbl">erreur d'interpolation</span><span class="v" id="vErr">-</span></div>
+
+    <div class="note" id="noteP"></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════ PAGE 2 ══════════ -->
+<div class="page" id="p2">
+<div class="layout">
+  <canvas id="cvClip" width="560" height="420"></canvas>
+  <div class="panel">
+    <h3>Vue de dessus — espace vue</h3>
+    <div class="note" style="margin-top:0">
+      Caméra à l'origine, regardant vers le haut de l'écran (−Z en main droite).
+      Glisse les 3 sommets à travers le plan near.
+    </div>
+
+    <label>Plan near (n) : <span id="lNear">0.8</span></label>
+    <input type="range" id="sNear" min="3" max="25" value="8">
+
+    <h3 style="margin-top:16px">Classification des sommets</h3>
+    <div class="row"><span class="lbl">V0 &nbsp; w − z</span><span class="v" id="d0">-</span></div>
+    <div class="row"><span class="lbl">V1 &nbsp; w − z</span><span class="v" id="d1">-</span></div>
+    <div class="row"><span class="lbl">V2 &nbsp; w − z</span><span class="v" id="d2">-</span></div>
+
+    <h3 style="margin-top:16px">Résultat Sutherland-Hodgman</h3>
+    <div class="row"><span class="lbl">sommets gardés</span><span class="v" id="cKept">-</span></div>
+    <div class="row"><span class="lbl">polygone produit</span><span class="v" id="cPoly">-</span></div>
+    <div class="row"><span class="lbl">triangles émis</span><span class="v" id="cTris">-</span></div>
+
+    <div class="note" id="noteC"></div>
+  </div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   PAGE 1 — Interpolation affine vs perspective-correcte
+   ══════════════════════════════════════════════════════════ */
+const cvP = document.getElementById('cvPersp');
+const ctxP = cvP.getContext('2d');
+let perspectiveCorrect = false;
+let tilt = 70, camDist = 3.0;
+
+const NEAR = 0.1, FOVY = 60 * Math.PI/180;
+
+function project(p) {
+  // main droite, caméra en (0,0,0) regardant -Z ; renvoie x,y écran + w
+  const th = Math.tan(FOVY*0.5);
+  const aspect = cvP.width / cvP.height;
+  const w = -p.z;                       // w = distance devant la caméra
+  const xn = (p.x / (aspect*th)) / w;
+  const yn = (p.y / th) / w;
+  return {
+    x: (xn*0.5 + 0.5) * cvP.width,
+    y: (1 - (yn*0.5 + 0.5)) * cvP.height,  // flip Y
+    w: w
+  };
+}
+
+function buildQuad() {
+  // Sol carré incliné : rotation autour de X
+  const a = tilt * Math.PI/180;
+  const S = 2.2;
+  const raw = [
+    {x:-S, y:0, z:-S, u:0, v:0},
+    {x: S, y:0, z:-S, u:1, v:0},
+    {x: S, y:0, z: S, u:1, v:1},
+    {x:-S, y:0, z: S, u:0, v:1}
+  ];
+  return raw.map(p => {
+    const y =  p.y*Math.cos(a) - p.z*Math.sin(a);
+    const z =  p.y*Math.sin(a) + p.z*Math.cos(a);
+    return { x:p.x, y:y - 0.6, z:z - camDist, u:p.u, v:p.v };
+  });
+}
+
+function edgeF(a,b,p){ return (b.x-a.x)*(p.y-a.y) - (b.y-a.y)*(p.x-a.x); }
+
+function checker(u,v){
+  const N = 8;
+  const c = (Math.floor(u*N) + Math.floor(v*N)) & 1;
+  return c ? [235,235,240] : [40,80,190];
+}
+
+function rasterTri(img, A,B,C, uvA,uvB,uvC) {
+  const area = edgeF(A,B,C);
+  if (Math.abs(area) < 1e-6) return;
+  const minX = Math.max(0, Math.floor(Math.min(A.x,B.x,C.x)));
+  const maxX = Math.min(cvP.width-1,  Math.ceil(Math.max(A.x,B.x,C.x)));
+  const minY = Math.max(0, Math.floor(Math.min(A.y,B.y,C.y)));
+  const maxY = Math.min(cvP.height-1, Math.ceil(Math.max(A.y,B.y,C.y)));
+
+  const iwA = 1/A.w, iwB = 1/B.w, iwC = 1/C.w;
+
+  for (let y=minY; y<=maxY; y++){
+    for (let x=minX; x<=maxX; x++){
+      const p = {x:x+0.5, y:y+0.5};
+      const w0 = edgeF(B,C,p), w1 = edgeF(C,A,p), w2 = edgeF(A,B,p);
+      const inside = area>0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+      if(!inside) continue;
+      const b0=w0/area, b1=w1/area, b2=w2/area;
+
+      let u,v;
+      if (perspectiveCorrect){
+        const den = b0*iwA + b1*iwB + b2*iwC;
+        u = (b0*uvA.u*iwA + b1*uvB.u*iwB + b2*uvC.u*iwC) / den;
+        v = (b0*uvA.v*iwA + b1*uvB.v*iwB + b2*uvC.v*iwC) / den;
+      } else {
+        u = b0*uvA.u + b1*uvB.u + b2*uvC.u;
+        v = b0*uvA.v + b1*uvB.v + b2*uvC.v;
+      }
+      const col = checker(u,v);
+      const o = (y*cvP.width + x)*4;
+      img.data[o]=col[0]; img.data[o+1]=col[1]; img.data[o+2]=col[2]; img.data[o+3]=255;
+    }
+  }
+}
+
+function drawPersp(){
+  ctxP.fillStyle = '#0d0f13';
+  ctxP.fillRect(0,0,cvP.width,cvP.height);
+  const img = ctxP.getImageData(0,0,cvP.width,cvP.height);
+
+  const q = buildQuad();
+  const scr = q.map(project);
+
+  // deux triangles : 0,1,2  et  0,2,3
+  rasterTri(img, scr[0],scr[1],scr[2], q[0],q[1],q[2]);
+  rasterTri(img, scr[0],scr[2],scr[3], q[0],q[2],q[3]);
+
+  ctxP.putImageData(img,0,0);
+
+  // diagonale partagée (là où le pli apparaît en affine)
+  ctxP.beginPath();
+  ctxP.moveTo(scr[0].x, scr[0].y); ctxP.lineTo(scr[2].x, scr[2].y);
+  ctxP.strokeStyle = 'rgba(250,204,21,0.75)';
+  ctxP.setLineDash([5,5]); ctxP.lineWidth=1.5; ctxP.stroke(); ctxP.setLineDash([]);
+
+  ctxP.fillStyle='#facc15'; ctxP.font='11px sans-serif';
+  ctxP.fillText('diagonale partagée', 8, 16);
+
+  // diagnostic
+  const ws = scr.map(s=>s.w);
+  const wn = Math.min(...ws), wf = Math.max(...ws);
+  document.getElementById('vWn').textContent = wn.toFixed(2);
+  document.getElementById('vWf').textContent = wf.toFixed(2);
+  const ratio = wf/wn;
+  document.getElementById('vRatio').textContent = ratio.toFixed(2) + '×';
+  const errEl = document.getElementById('vErr');
+  if (perspectiveCorrect){ errEl.textContent='0 (exacte)'; errEl.className='v ok'; }
+  else {
+    const err = ((ratio-1)/(ratio+1)*100);
+    errEl.textContent = '≈ ' + err.toFixed(0) + ' %';
+    errEl.className = 'v ' + (err>15?'bad':'warn');
+  }
+
+  document.getElementById('noteP').innerHTML = perspectiveCorrect
+    ? "<span class='ok'>Correcte.</span> Les carreaux rétrécissent avec la distance, la diagonale est invisible. Coût : une division flottante par pixel."
+    : "<span class='bad'>Fausse.</span> Le damier se plie sur la diagonale jaune : chaque triangle interpole indépendamment, en ignorant que <code>w</code> varie. Plus le rapport w_loin/w_proche est grand, plus l'erreur explose.";
+}
+
+document.getElementById('bAff').onclick = ()=>{
+  perspectiveCorrect=false;
+  document.getElementById('bAff').classList.add('active');
+  document.getElementById('bPer').classList.remove('active');
+  drawPersp();
+};
+document.getElementById('bPer').onclick = ()=>{
+  perspectiveCorrect=true;
+  document.getElementById('bPer').classList.add('active');
+  document.getElementById('bAff').classList.remove('active');
+  drawPersp();
+};
+document.getElementById('sTilt').oninput = e=>{
+  tilt = +e.target.value;
+  document.getElementById('lTilt').textContent = tilt;
+  drawPersp();
+};
+document.getElementById('sDist').oninput = e=>{
+  camDist = +e.target.value/10;
+  document.getElementById('lDist').textContent = camDist.toFixed(1);
+  drawPersp();
+};
+
+/* ══════════════════════════════════════════════════════════
+   PAGE 2 — Clipping near
+   ══════════════════════════════════════════════════════════ */
+const cvC = document.getElementById('cvClip');
+const ctxC = cvC.getContext('2d');
+
+// Vue de dessus. Écran : x = axe X vue, y = profondeur (haut = loin)
+// Caméra à l'origine, en bas au centre.
+const ORIGIN = {x: 280, y: 380};
+const SCALE = 55;         // pixels par unité
+let nearN = 0.8;
+
+let TV = [ {x:-1.4, z:2.6}, {x:1.6, z:2.2}, {x:0.2, z:0.3} ];
+let dragC = null;
+
+function toScreen(p){ return { x: ORIGIN.x + p.x*SCALE, y: ORIGIN.y - p.z*SCALE }; }
+function toWorld(s){ return { x: (s.x-ORIGIN.x)/SCALE, z: (ORIGIN.y-s.y)/SCALE }; }
+
+// distance de clip : w - z  ==  f(d-n)/(f-n)  ∝  (d - n)
+function clipDist(p){ return p.z - nearN; }
+
+function lerpV(a,b,t){ return { x: a.x + (b.x-a.x)*t, z: a.z + (b.z-a.z)*t }; }
+
+function clipNear(tri){
+  const inside=[], outside=[];
+  tri.forEach((v,i)=>{ (clipDist(v) >= 0 ? inside : outside).push(i); });
+  if (inside.length===0) return {poly:[], kept:0};
+  if (inside.length===3) return {poly:[...tri], kept:3};
+
+  const poly=[];
+  for(let i=0;i<3;i++){
+    const A=tri[i], B=tri[(i+1)%3];
+    const dA=clipDist(A), dB=clipDist(B);
+    if(dA>=0) poly.push(A);
+    if((dA>=0) !== (dB>=0)){
+      const t = dA/(dA-dB);
+      poly.push(lerpV(A,B,t));
+    }
+  }
+  return {poly, kept: inside.length};
+}
+
+function drawClip(){
+  ctxC.fillStyle='#0d0f13'; ctxC.fillRect(0,0,cvC.width,cvC.height);
+
+  // frustum latéral (indicatif, non clippé en LV3)
+  const half = Math.tan(FOVY*0.5)*(cvC.height/SCALE);
+  ctxC.beginPath();
+  ctxC.moveTo(ORIGIN.x, ORIGIN.y);
+  ctxC.lineTo(ORIGIN.x - half*SCALE, ORIGIN.y - cvC.height);
+  ctxC.moveTo(ORIGIN.x, ORIGIN.y);
+  ctxC.lineTo(ORIGIN.x + half*SCALE, ORIGIN.y - cvC.height);
+  ctxC.strokeStyle='rgba(255,255,255,0.14)'; ctxC.lineWidth=1; ctxC.stroke();
+
+  // zone rejetée (devant le plan near)
+  const yN = ORIGIN.y - nearN*SCALE;
+  ctxC.fillStyle='rgba(248,113,113,0.07)';
+  ctxC.fillRect(0, yN, cvC.width, cvC.height - yN);
+
+  // plan near
+  ctxC.beginPath(); ctxC.moveTo(0,yN); ctxC.lineTo(cvC.width,yN);
+  ctxC.strokeStyle='#f87171'; ctxC.lineWidth=2; ctxC.stroke();
+  ctxC.fillStyle='#f87171'; ctxC.font='11px sans-serif';
+  ctxC.fillText('plan NEAR   (w − z = 0)', 8, yN-7);
+
+  // triangle original
+  const s = TV.map(toScreen);
+  ctxC.beginPath();
+  ctxC.moveTo(s[0].x,s[0].y); ctxC.lineTo(s[1].x,s[1].y); ctxC.lineTo(s[2].x,s[2].y); ctxC.closePath();
+  ctxC.strokeStyle='rgba(255,255,255,0.35)'; ctxC.setLineDash([4,4]); ctxC.lineWidth=1.5;
+  ctxC.stroke(); ctxC.setLineDash([]);
+
+  // polygone clippé
+  const res = clipNear(TV);
+  if(res.poly.length>=3){
+    const ps = res.poly.map(toScreen);
+    ctxC.beginPath(); ctxC.moveTo(ps[0].x,ps[0].y);
+    for(let i=1;i<ps.length;i++) ctxC.lineTo(ps[i].x,ps[i].y);
+    ctxC.closePath();
+    ctxC.fillStyle='rgba(74,222,128,0.22)'; ctxC.fill();
+    ctxC.strokeStyle='#4ade80'; ctxC.lineWidth=2; ctxC.stroke();
+
+    // éventail de triangulation
+    if(ps.length===4){
+      ctxC.beginPath(); ctxC.moveTo(ps[0].x,ps[0].y); ctxC.lineTo(ps[2].x,ps[2].y);
+      ctxC.strokeStyle='rgba(250,204,21,0.8)'; ctxC.setLineDash([4,3]); ctxC.lineWidth=1.5;
+      ctxC.stroke(); ctxC.setLineDash([]);
+    }
+    // points d'intersection
+    ps.forEach(p=>{
+      ctxC.beginPath(); ctxC.arc(p.x,p.y,3.5,0,7); ctxC.fillStyle='#4ade80'; ctxC.fill();
+    });
+  }
+
+  // caméra
+  ctxC.beginPath(); ctxC.arc(ORIGIN.x,ORIGIN.y,6,0,7);
+  ctxC.fillStyle='#60a5fa'; ctxC.fill();
+  ctxC.fillStyle='#8a8f9c'; ctxC.fillText('caméra', ORIGIN.x+10, ORIGIN.y+4);
+
+  // sommets
+  s.forEach((p,i)=>{
+    const d = clipDist(TV[i]);
+    ctxC.beginPath(); ctxC.arc(p.x,p.y,7,0,7);
+    ctxC.fillStyle = d>=0 ? '#4ade80' : '#f87171'; ctxC.fill();
+    ctxC.strokeStyle='#0d0f13'; ctxC.lineWidth=2; ctxC.stroke();
+    ctxC.fillStyle='#e8e8ea'; ctxC.font='12px sans-serif';
+    ctxC.fillText('V'+i, p.x+11, p.y-9);
+  });
+
+  // panneau
+  for(let i=0;i<3;i++){
+    const d = clipDist(TV[i]);
+    const el = document.getElementById('d'+i);
+    el.textContent = d.toFixed(2) + (d>=0 ? '  gardé' : '  rejeté');
+    el.className = 'v ' + (d>=0?'ok':'bad');
+  }
+  document.getElementById('cKept').textContent = res.kept;
+  const nPoly = res.poly.length;
+  document.getElementById('cPoly').textContent =
+    nPoly===0 ? '—' : (nPoly===3 ? 'triangle' : nPoly===4 ? 'quadrilatère' : nPoly+' sommets');
+  const nTris = nPoly>=3 ? nPoly-2 : 0;
+  document.getElementById('cTris').textContent = nTris;
+
+  const notes = {
+    0: "<span class='bad'>Rejet total.</span> Aucun sommet devant le plan near — le triangle n'entre jamais dans le rasterizer.",
+    1: "<span class='warn'>1 sommet gardé →</span> un petit triangle (le sommet + 2 intersections). <b>1 triangle émis.</b>",
+    2: "<span class='warn'>2 sommets gardés →</span> un <b>quadrilatère</b>, retriangulé en éventail (diagonale jaune). <b>2 triangles émis</b> — c'est le cas qui impose que la fonction retourne jusqu'à 2 triangles.",
+    3: "<span class='ok'>Aucun clipping.</span> Le triangle passe intact. C'est le chemin rapide : ne rien allouer, ne rien copier."
+  };
+  document.getElementById('noteC').innerHTML = notes[res.kept];
+}
+
+function posC(e){ const r=cvC.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+cvC.addEventListener('mousedown', e=>{
+  const p=posC(e); let best=null, bd=20;
+  TV.map(toScreen).forEach((s,i)=>{ const d=Math.hypot(s.x-p.x,s.y-p.y); if(d<bd){bd=d;best=i;} });
+  dragC=best;
+});
+cvC.addEventListener('mousemove', e=>{
+  if(dragC===null) return;
+  TV[dragC] = toWorld(posC(e));
+  drawClip();
+});
+window.addEventListener('mouseup', ()=>dragC=null);
+document.getElementById('sNear').oninput = e=>{
+  nearN = +e.target.value/10;
+  document.getElementById('lNear').textContent = nearN.toFixed(1);
+  drawClip();
+};
+
+/* onglets */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.page).classList.add('active');
+  };
+});
+
+drawPersp();
+drawClip();
+</script>
+</body>
+</html>

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Aparté — Pointeur de fonction</title>
+<style>
+  body {
+    background: #12141a;
+    color: #e8e8ea;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 24px;
+  }
+  h2 { margin-top: 0; font-weight: 600; }
+  .sub { color: #8a8f9c; font-size: 13px; margin-bottom: 20px; }
+  .layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+
+  .mem {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 8px;
+    padding: 18px;
+    width: 300px;
+  }
+  .mem h3 { margin: 0 0 12px; font-size: 13px; color: #8a8f9c; text-transform: uppercase; letter-spacing: 0.05em; }
+  .cell {
+    background: #21252f;
+    border: 1px solid #2e323d;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    position: relative;
+    transition: box-shadow 0.3s;
+  }
+  .cell .addr { color: #6b7280; font-size: 11px; }
+  .cell .code { color: #e8e8ea; margin-top: 4px; }
+  .cell.active { box-shadow: 0 0 0 2px #facc15; }
+
+  .ptrbox {
+    background: #21252f;
+    border: 2px dashed #60a5fa;
+    border-radius: 6px;
+    padding: 14px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    text-align: center;
+  }
+  .ptrbox .name { color: #60a5fa; font-size: 12px; margin-bottom: 6px; }
+  .ptrbox .value { font-size: 15px; font-weight: 600; }
+
+  .controls { margin: 16px 0; display: flex; gap: 10px; }
+  button {
+    background: #2e323d;
+    color: #e8e8ea;
+    border: 1px solid #3a3f4b;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button:hover { background: #3a3f4b; }
+  button.primary { background: #2563eb; border-color: #2563eb; }
+  button.primary:hover { background: #1d4ed8; }
+
+  .callLine {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .callLine .line { opacity: 0; transition: opacity 0.25s; }
+  .callLine .line.show { opacity: 1; }
+  .result { color: #4ade80; font-weight: 600; }
+  .arrow-svg { width: 300px; height: 40px; }
+  .panel-title { font-weight: 600; margin-bottom: 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h2>Aparté — Le pointeur de fonction, mécaniquement</h2>
+<div class="sub">Deux fonctions existent en mémoire, à des adresses fixes. Une seule variable pointeur va "viser" l'une ou l'autre.</div>
+
+<div class="layout">
+  <div class="mem">
+    <h3>Code compilé (mémoire programme)</h3>
+    <div class="cell" id="cellAdd">
+      <div class="addr">adresse 0x1000</div>
+      <div class="code">int Add(int a, int b) { return a + b; }</div>
+    </div>
+    <div class="cell" id="cellSub">
+      <div class="addr">adresse 0x2000</div>
+      <div class="code">int Sub(int a, int b) { return a - b; }</div>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:16px; min-width:220px;">
+    <div class="ptrbox">
+      <div class="name">int (*ptr)(int,int)</div>
+      <div class="value" id="ptrValue">0x0000 (non initialisé)</div>
+    </div>
+    <div class="controls">
+      <button id="btnAdd">ptr = Add;</button>
+      <button id="btnSub">ptr = Sub;</button>
+    </div>
+    <button class="primary" id="btnCall">Exécuter : ptr(3, 4)</button>
+  </div>
+
+  <div style="flex:1; min-width:280px;">
+    <div class="panel-title">Ce que fait le CPU, étape par étape</div>
+    <div class="callLine" id="trace">
+      <div class="line" data-step="0">En attente...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const cellAdd = document.getElementById('cellAdd');
+const cellSub = document.getElementById('cellSub');
+const ptrValue = document.getElementById('ptrValue');
+const trace = document.getElementById('trace');
+
+let current = null; // 'Add' ou 'Sub'
+
+function setPtr(fn) {
+  current = fn;
+  cellAdd.classList.toggle('active', fn === 'Add');
+  cellSub.classList.toggle('active', fn === 'Sub');
+  ptrValue.textContent = fn === 'Add' ? '0x1000  (adresse de Add)' : '0x2000  (adresse de Sub)';
+  trace.innerHTML = '<div class="line show">ptr contient maintenant l\'adresse de ' + fn + '.</div>';
+}
+
+document.getElementById('btnAdd').onclick = () => setPtr('Add');
+document.getElementById('btnSub').onclick = () => setPtr('Sub');
+
+document.getElementById('btnCall').onclick = () => {
+  if (!current) {
+    trace.innerHTML = '<div class="line show" style="color:#f87171">Erreur : ptr n\'a pas été assigné. Comportement indéfini.</div>';
+    return;
+  }
+  const addr = current === 'Add' ? '0x1000' : '0x2000';
+  const result = current === 'Add' ? 3 + 4 : 3 - 4;
+  const steps = [
+    `1. Le CPU lit la valeur de ptr : ${addr}`,
+    `2. Il saute exécuter le code à cette adresse (celui de ${current})`,
+    `3. Ce code reçoit les arguments (3, 4)`,
+    `4. Résultat retourné : <span class="result">${result}</span>`
+  ];
+  trace.innerHTML = '';
+  steps.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'line';
+    div.innerHTML = s;
+    trace.appendChild(div);
+    setTimeout(() => div.classList.add('show'), i * 350);
+  });
+};
+</script>
+</body>
+</html>

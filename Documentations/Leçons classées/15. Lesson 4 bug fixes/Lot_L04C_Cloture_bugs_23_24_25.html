@@ -1,0 +1,1414 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Lot L04-C — Clôture des bugs 23, 24, 25</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Série « Lot … pas à pas » : même système visuel que le Lot L04, pour que les deux lots appairés se lisent comme un seul cours.
+     Mise en page : colonne de lecture 1180px, cartes par rôle, simulateurs interactifs, barre d'étapes. */
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --panel2:#f0f2f6; --line:#dfe3ea;
+    --ink:#1b1f27; --dim:#5e6778; --faint:#8d96a8;
+    --accent:#2563eb; --accent-soft:rgba(37,99,235,.10);
+    --ok:#15803d; --okbg:rgba(21,128,61,.10);
+    --bad:#b91c1c; --badbg:rgba(185,28,28,.09);
+    --warn:#a16207; --warnbg:rgba(161,98,7,.10);
+    --vio:#7c3aed; --viobg:rgba(124,58,237,.10);
+    --code:#0f1117; --codeink:#e6e8ee;
+    --mono:'Cascadia Mono',Consolas,'SF Mono',Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+    --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+    --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+    --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+    --bad:#f87171; --badbg:rgba(248,113,113,.12);
+    --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+    --vio:#a78bfa; --viobg:rgba(167,139,250,.14);
+    --code:#0b0d12; --codeink:#e6e8ee;
+  }}
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+    --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+    --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+    --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+    --bad:#f87171; --badbg:rgba(248,113,113,.12);
+    --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+    --vio:#a78bfa; --viobg:rgba(167,139,250,.14);
+    --code:#0b0d12; --codeink:#e6e8ee;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 var(--sans)}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--panel);z-index:40}
+
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--panel);
+    border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+    padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  header .tt{font-weight:650;font-size:15px}
+  header .st{color:var(--dim);font-size:12.5px}
+  header .sp{flex:1}
+  .btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:7px;
+    padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn:focus-visible,.stepbar button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.danger.on{background:var(--bad);border-color:var(--bad)}
+
+  .wrap{max-width:1180px;margin:0 auto;padding-block:22px 80px;
+    padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+  nav.toc{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 26px}
+  nav.toc a{text-decoration:none;color:var(--dim);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;font-size:12.5px}
+  nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+  section{margin:0 0 46px;scroll-margin-top:72px}
+  h1{font-size:26px;letter-spacing:-.015em;margin:0 0 6px;text-wrap:balance}
+  h2{font-size:21px;font-weight:650;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+  h2 .num{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:9px}
+  h3{font-size:15.5px;font-weight:650;margin:26px 0 8px;text-wrap:balance}
+  h4{font-size:12px;font-weight:650;margin:18px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em}
+  p{margin:9px 0}
+  .lead{color:var(--dim);font-size:14px;margin:0 0 18px;max-width:76ch}
+  .prose{max-width:80ch}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:17px 19px;margin:14px 0;min-width:0}
+  .card.tight{padding:13px 15px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .grid2>*,.grid3>*{min-width:0}
+
+  .tag{display:inline-block;font-size:11px;font-weight:650;padding:2px 8px;border-radius:5px;letter-spacing:.03em;vertical-align:middle;white-space:nowrap}
+  .tag.ok{background:var(--okbg);color:var(--ok)}
+  .tag.bad{background:var(--badbg);color:var(--bad)}
+  .tag.warn{background:var(--warnbg);color:var(--warn)}
+  .tag.acc{background:var(--accent-soft);color:var(--accent)}
+  .tag.vio{background:var(--viobg);color:var(--vio)}
+
+  pre{background:var(--code);color:var(--codeink);border-radius:9px;padding:13px 15px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.3px;line-height:1.6;margin:10px 0}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  pre code{background:none;padding:0;font-size:inherit}
+  .c-com{color:#7f8795}.c-key{color:#c084fc}.c-num{color:#fbbf24}.c-str{color:#86efac}.c-fn{color:#60a5fa}
+  .l-del{background:rgba(248,113,113,.18);display:block;margin:0 -15px;padding:0 15px}
+  .l-add{background:rgba(74,222,128,.16);display:block;margin:0 -15px;padding:0 15px}
+  .l-hl{background:rgba(250,204,21,.16);display:block;margin:0 -15px;padding:0 15px}
+
+  .diff{border-radius:9px;overflow:hidden;border:1px solid var(--line);margin:10px 0}
+  .diff .dh{background:var(--panel2);padding:7px 13px;font-size:12px;color:var(--dim);font-family:var(--mono);border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+  .diff pre{margin:0;border-radius:0}
+  .ba{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px}
+  .ba>*{min-width:0}
+  .ba .lbl{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin:4px 0 -4px}
+  .ba .lbl.b{color:var(--bad)} .ba .lbl.a{color:var(--ok)}
+
+  .tbl{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:11px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+  td.n,.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.hit td{background:var(--accent-soft)}
+  tr.badrow td{background:var(--badbg)}
+  tr.okrow td{background:var(--okbg)}
+
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:11px 15px;border-radius:0 8px 8px 0;margin:13px 0;font-size:13.5px}
+  .note.bad{border-color:var(--bad);background:var(--badbg)}
+  .note.ok{border-color:var(--ok);background:var(--okbg)}
+  .note.warn{border-color:var(--warn);background:var(--warnbg)}
+  .note.vio{border-color:var(--vio);background:var(--viobg)}
+  .note b{font-weight:650}
+
+  canvas{background:var(--panel2);border:1px solid var(--line);border-radius:9px;display:block;max-width:100%;height:auto;touch-action:none}
+  .cv-row{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-start}
+  .cv-row>*{min-width:0}
+  .ctrl{flex:1;min-width:250px}
+  label.sl{display:block;font-size:12px;color:var(--dim);margin:11px 0 3px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  input[type=number]{width:64px;font:inherit;font-size:12.5px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+  input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px;vertical-align:-3px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
+  .seg .btn{flex:1 1 auto;min-width:96px;text-align:center}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--dim)}
+  .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;text-align:right;overflow-wrap:anywhere}
+
+  .lamp{display:inline-flex;align-items:center;gap:8px;font-weight:650;font-size:13px;padding:6px 11px;border-radius:8px}
+  .lamp::before{content:"";width:10px;height:10px;border-radius:50%;background:currentColor}
+  .lamp.ok{background:var(--okbg);color:var(--ok)}
+  .lamp.bad{background:var(--badbg);color:var(--bad)}
+
+  /* frontières (schéma §3) */
+  .flow{overflow-x:auto}
+  .flow svg{display:block;min-width:760px;width:100%;height:auto}
+  .fbadge{cursor:pointer}
+  .fbadge:focus-visible{outline:none}
+  .fbadge:focus-visible circle{stroke:var(--ink);stroke-width:3}
+
+  /* carte mémoire (§4.2) */
+  .mem{overflow-x:auto}
+  .mem table{min-width:640px;font-family:var(--mono);font-size:11.5px}
+  .mem td{padding:5px 4px;text-align:center;border:1px solid var(--line)}
+  .mem td.off{color:var(--faint);text-align:right;padding-right:8px;border:none;width:56px}
+  .mem td.f-magic{background:var(--viobg);color:var(--vio)}
+  .mem td.f-ptr{background:var(--accent-soft)}
+  .mem td.f-num{background:var(--okbg)}
+  .mem td.f-pad{color:var(--faint)}
+  .mem td.f-out{background:var(--badbg);color:var(--bad)}
+  .mem td.f-col{background:var(--warnbg)}
+  .mem .leg{display:flex;gap:12px;flex-wrap:wrap;font-family:var(--sans);font-size:12px;color:var(--dim);margin-top:6px}
+  .mem .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px;border:1px solid var(--line)}
+
+  /* étapes */
+  .stepbar{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 16px}
+  .stepbar button{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:7px;
+    padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;font-variant-numeric:tabular-nums}
+  .stepbar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .stepbar button .bt{font-size:10px;opacity:.8;margin-left:3px}
+  .step .obj{font-size:13.5px}
+  .io{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:12px;margin:12px 0}
+  .io>*{min-width:0}
+  .io .box{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+  .io .box h5{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  .io .box.in{border-left:3px solid var(--faint)}
+  .io .box.out{border-left:3px solid var(--accent)}
+  .lanes{overflow-x:auto;margin:10px 0}
+  .lanes table{min-width:640px;font-size:12px}
+
+  .timeline{position:relative;margin:12px 0 4px;padding-left:22px}
+  .timeline::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--line)}
+  .tl{position:relative;margin:0 0 14px}
+  .tl::before{content:"";position:absolute;left:-20px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--faint)}
+  .tl.bad::before{border-color:var(--bad);background:var(--badbg)}
+  .tl.ok::before{border-color:var(--ok);background:var(--okbg)}
+  .tl.vio::before{border-color:var(--vio);background:var(--viobg)}
+  .tl .d{font-family:var(--mono);font-size:12px;color:var(--dim)}
+
+  details{border:1px solid var(--line);border-radius:9px;padding:11px 14px;margin:11px 0;background:var(--panel)}
+  summary{cursor:pointer;font-weight:600;font-size:13.5px}
+  details[open] summary{margin-bottom:9px}
+  ul,ol{padding-left:21px;margin:8px 0}
+  li{margin:4px 0}
+  .small{font-size:12.5px;color:var(--dim)}
+  .foot{color:var(--faint);font-size:12px;border-top:1px solid var(--line);padding-top:16px;margin-top:40px}
+  .log{font-family:var(--mono);font-size:11.5px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;max-height:210px;overflow:auto;white-space:pre-wrap;margin-top:10px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<header>
+  <div>
+    <div class="tt">Lot L04-C — Clôture des bugs 23, 24, 25</div>
+    <div class="st">LibraryV3 · fin de la Leçon 04 partie 2 · appairé au Lot L04 (§9.2)</div>
+  </div>
+  <div class="sp"></div>
+  <button class="btn" id="themeBtn" type="button">Thème auto</button>
+</header>
+
+<div class="wrap">
+
+<nav class="toc" aria-label="Sommaire">
+  <a href="#pourquoi">1 · Pourquoi ce lot</a>
+  <a href="#rappel">2 · Ce qu'on a fait</a>
+  <a href="#contexte">3 · Contexte fonctionnel</a>
+  <a href="#schemas">4 · Schémas dynamiques</a>
+  <a href="#algo">5 · Avant / après</a>
+  <a href="#technique">6 · Fonctionnement technique</a>
+  <a href="#etapes">7 · Les étapes</a>
+  <a href="#contre">8 · Contre-exemples chiffrés</a>
+  <a href="#verifier">9 · Vérifier</a>
+  <a href="#questions">10 · Questions de fond</a>
+  <a href="#suite">11 · Suite &amp; roadmap</a>
+</nav>
+
+<!-- ═══════════════ 1 ═══════════════ -->
+<section id="pourquoi">
+  <h2><span class="num">1</span>Pourquoi ce lot</h2>
+  <p class="lead">Aucun de ces trois bugs ne fausse un pixel. Ils vivent tous les trois dans la plomberie : là où une donnée passe d'un module à un autre. C'est précisément ce qui les rend dangereux.</p>
+
+  <div class="prose">
+    <p>La Leçon 04 partie 2 s'est terminée le 22/08 sur un rasterizer validé : dix tests verts, clipping near, interpolation perspective-correcte, early-Z. Mais son journal laissait trois lignes ouvertes, et la règle du cours est de ne pas ouvrir une leçon avec des dettes silencieuses derrière soi.</p>
+    <p>Ces trois lignes ont un point commun : elles <b>compilent, se lient, s'exécutent et affichent une image correcte</b>. Aucune ne déclenche quoi que ce soit aujourd'hui. Chacune attend le jour où une leçon future touchera la même frontière.</p>
+  </div>
+
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:44px">Bug</th><th style="width:200px">Où</th><th>Ce que le moteur promettait</th><th style="width:210px">Ce qui le menace demain</th></tr>
+      <tr><td class="n">23</td><td><code>SceneSerializer::ParseCamera</code></td><td>La scène désigne <b>une</b> caméra active, la plus prioritaire.</td><td>Le rendu multi-vues, qui consommera ce choix.</td></tr>
+      <tr><td class="n">24</td><td><code>ShadeFragment_Barycentric</code></td><td>Un shader ne peut lire qu'un <code>FragmentContext</code> derrière le <code>void*</code> (règle 21).</td><td>Le texturing, qui ajoutera des champs et des shaders.</td></tr>
+      <tr><td class="n">25</td><td><code>FPSControllerSystem</code> / <code>CameraFollowSystem</code></td><td>Une caméra n'est jamais pilotée par deux contrôleurs à la fois.</td><td>Chaque nouveau contrôleur caméra (zoom, cinématique).</td></tr>
+    </table>
+  </div>
+
+  <h3>L'objectif fonctionnel, avant toute technique</h3>
+  <div class="grid3">
+    <div class="card tight"><span class="tag acc">23</span><p style="margin-bottom:0">À la fin du chargement, le moteur sait <b>sans ambiguïté</b> quelle caméra la scène élit, et c'est la même que celle qu'il trouverait par lui-même.</p></div>
+    <div class="card tight"><span class="tag acc">24</span><p style="margin-bottom:0">Si un shader reçoit autre chose qu'un <code>FragmentContext</code>, le build Debug <b>s'arrête net</b> avant la première écriture mémoire.</p></div>
+    <div class="card tight"><span class="tag acc">25</span><p style="margin-bottom:0">Si une entité porte deux contrôleurs actifs, le build Debug <b>le dit dès la frame où ça arrive</b>, avant que l'un écrase l'autre.</p></div>
+  </div>
+
+  <div class="note warn">
+    <b>Pourquoi on ne peut pas « attendre que ça casse ».</b> Les trois défauts sont des bugs de <i>contrat</i> : la règle existait, écrite dans un commentaire ou dans le cours, mais rien ne la faisait respecter. Le jour où elle sera violée, le symptôme apparaîtra loin de la cause : une caméra qui saute, une écriture dans le Z-buffer d'un autre objet, une mauvaise vue à l'écran. Principe n° 10 de la leçon : <b>une information répétée sans vérification automatique se dérive ou s'asserte</b>.
+  </div>
+</section>
+
+<!-- ═══════════════ 2 ═══════════════ -->
+<section id="rappel">
+  <h2><span class="num">2</span>Ce qu'on a fait jusqu'ici</h2>
+  <p class="lead">Le Lot L04 a posé le rasterizer. Sa section 9.2 recensait les trois bugs traités ici sous les références L4-7, L4-8 et L4-10.</p>
+
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Acquis de la Leçon 04 partie 2</h4>
+      <ul style="margin:0">
+        <li>Clipping near Sutherland-Hodgman en espace de clip, avant la division</li>
+        <li>Interpolation perspective par <code>invW</code>, sauf <code>z_ndc</code> (affine)</li>
+        <li>Early-Z en reverse-Z (clear 0, test GREATER)</li>
+        <li>Bugs 19 à 22 corrigés : champ oublié, culling inversé, 124 trous, <code>EdgeFunction</code> dédoublée</li>
+        <li>Sentinelle <code>magic</code> en premier membre de <code>FragmentContext</code>, vérifiée par <code>AsFragmentContext</code></li>
+      </ul>
+    </div>
+    <div class="card tight">
+      <h4>Règles et principes mobilisés ici</h4>
+      <ul style="margin:0">
+        <li><b>Règle 21</b> : un seul type derrière le <code>void*</code>, <code>magic</code> en premier, vérifié en Debug</li>
+        <li><b>Règle 25</b> : le <code>#ifdef</code> conditionne le corps, jamais la signature</li>
+        <li><b>Principe 6</b> : une assertion jamais vue échouer n'est pas prouvée</li>
+        <li><b>Principe 10</b> : répéter une information sans contrôle, c'est la laisser diverger</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Le journal à la clôture de la leçon (22/08/2026)</h3>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:44px">#</th><th>Bug</th><th style="width:150px">Statut au 22/08</th></tr>
+      <tr><td class="n">19–22</td><td>Champ oublié, culling inversé, trous de couture, noyau dédoublé</td><td><span class="tag ok">corrigés</span></td></tr>
+      <tr class="hit"><td class="n">23</td><td><code>ParseCamera</code> : <code>out_activeCamera != NULL_ENTITY;</code> (C4553)</td><td><span class="tag bad">ouvert</span></td></tr>
+      <tr class="hit"><td class="n">24</td><td><code>ShadeFragment_Barycentric</code> contourne <code>AsFragmentContext</code></td><td><span class="tag bad">ouvert</span></td></tr>
+      <tr class="hit"><td class="n">25</td><td>FPS + Follow actifs simultanément sur la même caméra</td><td><span class="tag bad">ouvert</span></td></tr>
+      <tr><td class="n">26–27</td><td>Clés JSON jamais lues ; <code>SDL_LockTexture</code> au resize</td><td><span class="tag warn">reportés</span></td></tr>
+    </table>
+  </div>
+  <div class="note">
+    <b>Ce que l'audit du dépôt a révélé en ouvrant le lot.</b> Le journal ne disait plus exactement la vérité sur deux lignes sur trois. Le bug 24 était <b>déjà corrigé</b> depuis le 15/08 (commit <code>3b5299f</code>). Le bug 23, lui, avait <b>changé de forme</b> ce même jour : le warning C4553 avait disparu, mais le comportement fautif restait identique. Le détail est en §5.1 et §8.1 ; c'est la leçon principale du lot.
+  </div>
+</section>
+
+<!-- ═══════════════ 3 ═══════════════ -->
+<section id="contexte">
+  <h2><span class="num">3</span>Le contexte fonctionnel : trois frontières</h2>
+  <p class="lead">Chaque bug se loge sur une frontière différente du moteur. Clique sur une pastille pour voir laquelle, et ce qui la traverse.</p>
+
+  <div class="card">
+    <div class="flow">
+      <svg id="flowSvg" viewBox="0 0 980 300" role="img" aria-label="Chemin d'une donnée de la scène JSON jusqu'au pixel, avec les trois frontières">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" style="fill:var(--faint)"/>
+          </marker>
+        </defs>
+        <g id="flowBoxes"></g>
+      </svg>
+    </div>
+    <div id="flowInfo" class="note" style="margin-bottom:0"></div>
+  </div>
+
+  <div class="grid3">
+    <div class="card tight"><h4>Frontière 23 · données → moteur</h4><p class="small" style="margin:0">Le JSON est lu une fois. Ce que le parseur décide au chargement doit être <b>la même vérité</b> que ce que le moteur calculerait seul.</p></div>
+    <div class="card tight"><h4>Frontière 24 · moteur → fragment</h4><p class="small" style="margin:0">Le rasterizer ignore le type de son contexte : il transmet un <code>void*</code>. Le type est <b>effacé</b>, donc plus personne ne le vérifie, sauf si on le fait exprès.</p></div>
+    <div class="card tight"><h4>Frontière 25 · système → système</h4><p class="small" style="margin:0">Deux systèmes ECS écrivent le <b>même champ</b> du même composant. Le dernier appelé gagne, quelles que soient les données.</p></div>
+  </div>
+</section>
+
+<!-- ═══════════════ 4 ═══════════════ -->
+<section id="schemas">
+  <h2><span class="num">4</span>Schémas dynamiques : comprendre avant de coder</h2>
+  <p class="lead">Un simulateur par bug, alimenté par la vraie scène de la leçon (<code>assets/SceneBasicTest.json</code>, EXE commit <code>78643c2</code>). Tous les calculs sont faits en direct.</p>
+
+  <!-- 4.1 -->
+  <h3>4.1 — L'élection de la caméra active <span class="tag acc">bug 23</span></h3>
+  <p class="prose">Le parseur lit les nœuds dans l'ordre du fichier. Chaque <code>Camera</code> lue peut remplacer l'élue courante. Change l'ordre, les priorités, l'activité, et la version du code : la table rejoue le chargement nœud par nœud.</p>
+  <div class="card">
+    <div class="cv-row">
+      <div style="flex:1.3;min-width:300px">
+        <h4>Version du code dans <code>ParseCamera</code></h4>
+        <div class="seg" id="elVer"></div>
+        <div id="elVerCode"></div>
+        <h4>Caméras de la scène, dans l'ordre du fichier</h4>
+        <div class="tbl"><table id="elCams"></table></div>
+      </div>
+      <div class="ctrl">
+        <h4>Résultat du chargement</h4>
+        <div class="kv"><span class="k">out_activeCamera rendu à main.cpp</span><span class="v" id="elOut">—</span></div>
+        <div class="kv"><span class="k">soit</span><span class="v" id="elOutName">—</span></div>
+        <div class="kv"><span class="k">FindActiveCamera (référence)</span><span class="v" id="elRef">—</span></div>
+        <div class="kv"><span class="k">les deux vérités concordent</span><span class="v" id="elAgree">—</span></div>
+        <div id="elVerdict" class="note" style="margin-bottom:0"></div>
+      </div>
+    </div>
+    <h4>Trace du chargement</h4>
+    <div class="tbl"><table id="elTrace"></table></div>
+    <p class="small">Codage d'une <code>Entity</code> à l'époque : 24 bits d'index, 8 bits de génération, génération initiale 0. <code>FPS_Camera</code> est le 4ᵉ nœud créé (index 3) donc <code>0x00000003</code>. <code>NULL_ENTITY = 0xFFFFFFFF</code>.</p>
+  </div>
+
+  <!-- 4.2 -->
+  <h3>4.2 — Ce que lit un shader derrière le <code>void*</code> <span class="tag acc">bug 24</span></h3>
+  <p class="prose">Le rasterizer appelle <code>cb(x, y, bary, userData)</code>. Le shader réinterprète <code>userData</code> comme un <code>FragmentContext*</code> et lit ses champs à des <b>décalages fixes</b>. Choisis l'objet réellement passé, la manière de le convertir, et la configuration de build.</p>
+  <div class="card">
+    <div class="grid3" style="margin-bottom:8px">
+      <div><h4>Objet réellement passé</h4><div class="seg" id="vpObj"></div></div>
+      <div><h4>Conversion dans le shader</h4><div class="seg" id="vpCast"></div></div>
+      <div><h4>Configuration</h4><div class="seg" id="vpCfg"></div></div>
+    </div>
+    <div class="mem" id="vpMem"></div>
+    <h4>Ce que le shader croit lire</h4>
+    <div class="tbl"><table id="vpRead"></table></div>
+    <div id="vpVerdict" class="note" style="margin-bottom:0"></div>
+  </div>
+
+  <!-- 4.3 -->
+  <h3>4.3 — Deux écrivains, un seul Transform <span class="tag acc">bug 25</span></h3>
+  <p class="prose">Vue de dessus (plan XZ). Le cube est <code>Cube1</code>, cible du suivi. Choisis la configuration : les deux caméras séparées de <code>SceneBasicTest.json</code>, ou une seule entité qui porte les deux contrôleurs (le nœud saboteur <code>Camera_Cassee</code>). Avance frame par frame.</p>
+  <div class="card">
+    <div class="cv-row">
+      <canvas id="cvCtl" width="540" height="420" aria-label="Simulation vue de dessus des contrôleurs de caméra"></canvas>
+      <div class="ctrl">
+        <h4>Configuration de la scène</h4>
+        <div class="seg" id="ctMode"></div>
+        <h4>État des contrôleurs</h4>
+        <div class="seg">
+          <button class="btn" id="ctFps" type="button">FPS m_isEnabled</button>
+          <button class="btn" id="ctFol" type="button">Follow m_isEnabled</button>
+        </div>
+        <h4>Ordre d'appel dans la frame</h4>
+        <div class="seg" id="ctOrder"></div>
+        <h4>Entrées</h4>
+        <div class="seg"><button class="btn" id="ctFwd" type="button">Avancer (Z) maintenu</button></div>
+        <label class="sl" for="ctDx">Souris : <span id="lDx">12</span> px par frame</label>
+        <input type="range" id="ctDx" min="-40" max="40" value="12">
+        <div class="seg" id="ctDt"></div>
+        <div class="seg">
+          <button class="btn" id="ctStep" type="button">Frame suivante</button>
+          <button class="btn" id="ctPlay" type="button">Lecture</button>
+          <button class="btn" id="ctReset" type="button">Réinitialiser</button>
+        </div>
+        <div class="seg">
+          <button class="btn" id="ctSwFps" type="button">SwitchCameraMode(…, false)</button>
+          <button class="btn" id="ctSwFol" type="button">SwitchCameraMode(…, true)</button>
+        </div>
+        <h4>CheckControllerExclusivity</h4>
+        <div id="ctLamp"></div>
+        <div class="kv"><span class="k">frame</span><span class="v" id="ctFrame">0</span></div>
+        <div class="kv"><span class="k">TryGet&lt;CameraFollowComponent&gt;(entité FPS)</span><span class="v" id="ctTry">—</span></div>
+        <div class="kv"><span class="k">déplacement FPS perdu (cumul)</span><span class="v" id="ctLost">—</span></div>
+        <div class="kv"><span class="k">yaw interne FPS / yaw affiché</span><span class="v" id="ctYaw">—</span></div>
+      </div>
+    </div>
+    <div class="log" id="ctLog" aria-live="polite"></div>
+    <p class="small">Simplification assumée : <code>Cube1</code> est tenu immobile et à rotation identité, pour que l'offset de suivi soit lisible. La vraie scène le fait tourner (<code>rotationSpeed 0.05</code>), ce qui fait pivoter l'offset avec lui ; le conflit d'écriture est identique. Les vitesses viennent du JSON (<code>moveSpeed 15</code>, <code>smoothSpeed 5</code>, sensibilité 0.15°/px) ; <code>Camera_Cassee</code> n'en déclare pas et prend les défauts (<code>moveSpeed 5</code>, offset <code>(0, 2, −6)</code>).</p>
+  </div>
+</section>
+
+<!-- ═══════════════ 5 ═══════════════ -->
+<section id="algo">
+  <h2><span class="num">5</span>L'algorithme initial et ce que le lot modifie</h2>
+  <p class="lead">Pour chaque bug : le contexte, la raison de la correction, puis le code avant / après, fonction par fonction et fichier par fichier. Les lignes modifiées sont surlignées.</p>
+
+  <!-- 5.1 -->
+  <h3>5.1 — Bug 23 · <code>Scene/Serializer.cpp</code> · <code>SceneSerializer::ParseCamera</code></h3>
+  <div class="prose">
+    <p><b>Contexte.</b> <code>LoadSceneGraph</code> reçoit de <code>main.cpp</code> une référence <code>Entity&amp; out_activeCamera</code>, stockée dans <code>ParseContext</code>. Chaque appel à <code>ParseCamera</code> peut la mettre à jour. L'algorithme voulu est un <b>maximum courant</b> sur la priorité des caméras actives.</p>
+    <p><b>Raison de la correction.</b> La ligne qui devait <i>écrire l'élue</i> n'écrivait plus l'élue. La sortie restait à <code>NULL_ENTITY</code> pour toute scène.</p>
+  </div>
+
+  <h4>L'histoire réelle de cette ligne, d'après Git</h4>
+  <div class="timeline">
+    <div class="tl"><div class="d">27/06 · ef76678 · « Ajoutez des fichiers projet »</div><pre><code>out_activeCamera = entity;   <span class="c-com">// inconditionnel : la DERNIÈRE caméra lue gagne, active ou non</span></code></pre></div>
+    <div class="tl ok"><div class="d">03/08 · bef8fad · « en cours »</div><p class="small">Introduction de l'élection par priorité. Algorithme correct.</p><pre><code><span class="c-key">if</span> (!current || c.m_priority &gt;= current-&gt;m_priority)
+    out_activeCamera = entity;</code></pre></div>
+    <div class="tl bad"><div class="d">03/08 · af35438 · « Adaptations en cours non testées »</div><p class="small">Régression : l'affectation devient une comparaison. L'expression est évaluée puis jetée. MSVC émet C4553.</p><pre><code><span class="l-del">    out_activeCamera != NULL_ENTITY;   <span class="c-com">// aucun effet : la sortie n'est JAMAIS écrite</span></span></code></pre></div>
+    <div class="tl bad"><div class="d">15/08 · 3b5299f · « debug ajouté dans la sérialisation »</div><p class="small">Le warning est traité en remplaçant l'opérateur, sans relire l'intention. C4553 disparaît. Le comportement ne change pas.</p><pre><code><span class="l-del">    out_activeCamera = NULL_ENTITY;    <span class="c-com">// compile sans warning, écrit… la valeur qu'elle avait déjà</span></span></code></pre></div>
+    <div class="tl ok"><div class="d">22/08 · fed81e6 · « correction bug 23, 24 et 25 »</div><pre><code><span class="l-add">    out_activeCamera = entity;</span></code></pre></div>
+  </div>
+
+  <div class="ba">
+    <div><div class="lbl b">Avant (état du 22/08, e9c6bad)</div>
+<pre><code>        ctx.registry.addComponent(entity, c);
+        r.WarnUnread();
+
+        <span class="c-com">// Sélection : la plus haute priorité gagne, pas "la dernière lue".</span>
+        <span class="c-key">if</span> (c.m_isActive)
+        {
+            <span class="c-key">const</span> CameraComponent* current = (out_activeCamera != NULL_ENTITY)
+                ? ctx.registry.TryGet&lt;CameraComponent&gt;(out_activeCamera)
+                : <span class="c-key">nullptr</span>;
+            <span class="c-key">if</span> (!current || c.m_priority &gt;= current-&gt;m_priority)
+<span class="l-del">                out_activeCamera = NULL_ENTITY;</span>
+        }</code></pre></div>
+    <div><div class="lbl a">Après (fed81e6)</div>
+<pre><code>        ctx.registry.addComponent(entity, c);
+        r.WarnUnread();
+
+        <span class="c-com">// Sélection : la plus haute priorité gagne, pas "la dernière lue".</span>
+        <span class="c-key">if</span> (c.m_isActive)
+        {
+            <span class="c-key">const</span> CameraComponent* current = (out_activeCamera != NULL_ENTITY)
+                ? ctx.registry.TryGet&lt;CameraComponent&gt;(out_activeCamera)
+                : <span class="c-key">nullptr</span>;
+            <span class="c-key">if</span> (!current || c.m_priority &gt;= current-&gt;m_priority)
+<span class="l-add">                out_activeCamera = entity;</span>
+        }</code></pre></div>
+  </div>
+  <div class="note warn"><b>Pourquoi personne ne l'a vu.</b> À l'époque, <code>main.cpp</code> ne consommait pas cette sortie : il appelait <code>FindCameraByName(registry, "FPS_Camera")</code> en dur (EXE <code>78643c2</code>, ligne 264), et le seul usage de <code>activeCamera</code> était un <code>RenderSystem</code> commenté. Le bug était <b>latent</b> : correct ou faux, l'écran ne changeait pas. C'est aussi pourquoi aucun test visuel ne pouvait le trouver.</div>
+
+  <!-- 5.2 -->
+  <h3>5.2 — Bug 24 · <code>Rendering/Fragment.cpp</code> · <code>ShadeFragment_Barycentric</code></h3>
+  <div class="prose">
+    <p><b>Contexte.</b> Depuis le bug n° 17 (L05), tous les shaders passent par <code>AsFragmentContext</code>, qui vérifie la sentinelle <code>magic</code>. Un seul shader avait gardé l'ancien <code>static_cast</code> direct.</p>
+    <p><b>Raison de la correction.</b> Un seul contournement suffit à annuler le filet pour tout le chemin qui passe par ce shader : le mode <code>BarycentricColors</code>, justement celui qu'on utilise pour diagnostiquer le triangle setup.</p>
+  </div>
+  <div class="ba">
+    <div><div class="lbl b">Avant (f2dec70, 13/08)</div>
+<pre><code><span class="c-key">void</span> ShadeFragment_Barycentric(int32_t x, int32_t y,
+        <span class="c-key">const</span> BarycentricWeights&amp; bary, <span class="c-key">void</span>* userData)
+{
+    <span class="c-com">// w0 est le poids de v0, pas de l'arête v0v1</span>
+<span class="l-del">    <span class="c-key">auto</span>* ctx = <span class="c-key">static_cast</span>&lt;FragmentContext*&gt;(userData);</span>
+    <span class="c-key">const float</span> z = bary.w0 * ctx-&gt;z0 + bary.w1 * ctx-&gt;z1
+                  + bary.w2 * ctx-&gt;z2;
+    <span class="c-key">if</span> (!ctx-&gt;db-&gt;TestAndSet(x, y, z)) <span class="c-key">return</span>;
+    <span class="c-com">// … couleur depuis les barycentriques</span>
+}</code></pre></div>
+    <div><div class="lbl a">Après (3b5299f, 15/08 · constaté au 22/08)</div>
+<pre><code><span class="c-key">void</span> ShadeFragment_Barycentric(int32_t x, int32_t y,
+        <span class="c-key">const</span> BarycentricWeights&amp; bary, <span class="c-key">void</span>* userData)
+{
+    <span class="c-com">// w0 est le poids de v0, pas de l'arête v0v1</span>
+<span class="l-add">    <span class="c-key">auto</span>* ctx = AsFragmentContext(userData);</span>
+    <span class="c-key">const float</span> z = bary.w0 * ctx-&gt;z0 + bary.w1 * ctx-&gt;z1
+                  + bary.w2 * ctx-&gt;z2;
+    <span class="c-key">if</span> (!ctx-&gt;db-&gt;TestAndSet(x, y, z)) <span class="c-key">return</span>;
+    <span class="c-com">// … couleur depuis les barycentriques</span>
+}</code></pre></div>
+  </div>
+  <div class="diff">
+    <div class="dh">Rendering/Fragment.h — le seul point d'entrée autorisé (inchangé par ce lot)</div>
+<pre><code>[[nodiscard]] LV3_FORCEINLINE FragmentContext* AsFragmentContext(<span class="c-key">void</span>* userData) noexcept
+{
+<span class="l-hl">    <span class="c-key">auto</span>* ctx = <span class="c-key">static_cast</span>&lt;FragmentContext*&gt;(userData);   <span class="c-com">// la SEULE occurrence admise du projet</span></span>
+    LV3_ASSERT(ctx != <span class="c-key">nullptr</span> &amp;&amp; <span class="c-str">"FragmentContext : userData nul"</span>);
+    LV3_ASSERT(ctx-&gt;magic == kFragmentContextMagic &amp;&amp;
+               <span class="c-str">"FragmentContext : contexte incompatible derriere le void*"</span>);
+    <span class="c-key">return</span> ctx;
+}</code></pre>
+  </div>
+  <div class="note"><b>Aucun changement de code dans ce lot pour le bug 24.</b> Le travail du lot est la <b>vérification</b> : relire le dépôt plutôt que le journal, constater la correction, dater le commit qui l'a faite, et poser la règle grepable qui empêchera le retour du défaut (§9).</div>
+
+  <!-- 5.3 -->
+  <h3>5.3 — Bug 25 · <code>Scene/System.hpp</code>, <code>Scene/System.cpp</code>, <code>main.cpp</code> (EXE)</h3>
+  <div class="prose">
+    <p><b>Contexte.</b> <code>FPSControllerSystem</code> et <code>CameraFollowSystem</code> écrivent tous deux <code>tr.m_local.position</code> et <code>tr.m_local.rotation</code>. Le drapeau <code>m_isEnabled</code> sert d'arbitre, et <code>SwitchCameraMode</code> le maintient cohérent. Mais rien n'oblige à passer par <code>SwitchCameraMode</code>.</p>
+    <p><b>Raison de la correction.</b> L'exclusion n'existait que dans un commentaire (<code>Component.hpp</code>, <code>CameraFollowComponent::m_isEnabled</code> : « si FPSControllerComponent.m_isEnabled = True, celui-ci sera mis à False »). Personne ne le mettait à <code>false</code>.</p>
+  </div>
+  <div class="ba">
+    <div><div class="lbl b">Avant · System.hpp</div>
+<pre><code><span class="c-com">// --- Diagnostics (actifs en Debug uniquement) ---</span>
+<span class="c-key">void</span> CheckAnimationBaseline(Registry&amp; registry);  <span class="c-com">// UNE fois</span>
+<span class="c-key">void</span> CheckSceneInvariants(Registry&amp; registry);    <span class="c-com">// CHAQUE frame</span>
+<span class="c-key">void</span> DebugTraceEntity(Registry&amp; registry, <span class="c-key">const</span> std::string&amp; name);</code></pre></div>
+    <div><div class="lbl a">Après · System.hpp</div>
+<pre><code><span class="c-com">// --- Diagnostics (actifs en Debug uniquement) ---</span>
+<span class="c-key">void</span> CheckAnimationBaseline(Registry&amp; registry);  <span class="c-com">// UNE fois</span>
+<span class="c-key">void</span> CheckSceneInvariants(Registry&amp; registry);    <span class="c-com">// CHAQUE frame</span>
+<span class="l-add"><span class="c-key">void</span> CheckControllerExclusivity(Registry&amp; registry); <span class="c-com">// CHAQUE frame — invariant FPS/Follow</span></span>
+<span class="c-key">void</span> DebugTraceEntity(Registry&amp; registry, <span class="c-key">const</span> std::string&amp; name);</code></pre></div>
+  </div>
+  <div class="diff">
+    <div class="dh">Scene/System.cpp — fonction ajoutée après CheckSceneInvariants (avant : rien)</div>
+<pre><code><span class="l-add"><span class="c-key">void</span> CheckControllerExclusivity(Registry&amp; registry)</span>
+<span class="l-add">{</span>
+<span class="l-add">    <span class="c-key">for</span> (<span class="c-key">auto</span>&amp;&amp; [entity, fps] : registry.ViewGroup&lt;FPSControllerComponent&gt;())</span>
+<span class="l-add">    {</span>
+<span class="l-add">        <span class="c-key">if</span> (!fps.m_isEnabled) <span class="c-key">continue</span>;</span>
+<span class="l-add"></span>
+<span class="l-add">        <span class="c-com">// LA MÊME entité que celle qui porte fps — pas « une caméra Follow quelque part »</span></span>
+<span class="l-add">        <span class="c-key">const</span> CameraFollowComponent* follow = registry.TryGet&lt;CameraFollowComponent&gt;(entity);</span>
+<span class="l-add">        <span class="c-key">if</span> (!follow || !follow-&gt;m_isEnabled) <span class="c-key">continue</span>;</span>
+<span class="l-add"></span>
+<span class="l-add">        <span class="c-key">const</span> std::string name = registry.hasComponent&lt;NameComponent&gt;(entity)</span>
+<span class="l-add">            ? registry.getComponent&lt;NameComponent&gt;(entity).m_id : std::string(<span class="c-str">"&lt;sans nom&gt;"</span>);</span>
+<span class="l-add"></span>
+<span class="l-add">        Logger::error(<span class="c-str">"[INVARIANT] "</span> + name + <span class="c-str">" : FPSControllerComponent ET CameraFollowComponent"</span></span>
+<span class="l-add">                      <span class="c-str">" actifs simultanement — le systeme execute en second ecrasera le Transform"</span>);</span>
+<span class="l-add">        LV3_ASSERT(<span class="c-key">false</span>);</span>
+<span class="l-add">    }</span>
+<span class="l-add">}</span></code></pre>
+  </div>
+  <div class="ba">
+    <div><div class="lbl b">Avant · main.cpp (EXE), boucle de jeu</div>
+<pre><code>CheckControllerExclusivity… <span class="c-com">// n'existe pas</span>
+
+AnimationSystem(registry, deltaTime);
+FPSControllerSystem(registry, input, deltaTime);
+CameraFollowSystem(registry, deltaTime);</code></pre></div>
+    <div><div class="lbl a">Après · main.cpp (EXE 78643c2, ligne 293)</div>
+<pre><code><span class="l-add">CheckControllerExclusivity(registry);  <span class="c-com">// CHAQUE frame — AVANT les écrivains</span></span>
+
+AnimationSystem(registry, deltaTime);
+FPSControllerSystem(registry, input, deltaTime);
+CameraFollowSystem(registry, deltaTime);</code></pre></div>
+  </div>
+</section>
+
+<!-- ═══════════════ 6 ═══════════════ -->
+<section id="technique">
+  <h2><span class="num">6</span>Fonctionnement technique</h2>
+  <p class="lead">Les trois mécanismes du langage et de l'architecture qui expliquent ces bugs, et pourquoi le compilateur n'en attrape qu'un seul, mal.</p>
+
+  <h3>6.1 — Comparaison jetée, affectation de mauvaise valeur</h3>
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Ce que voit le compilateur</h4>
+      <p class="small"><code>a != b;</code> est une <i>instruction-expression</i> : légale, évaluée, résultat ignoré. MSVC émet <b>C4553</b> (« l'opérateur n'a pas d'effet ; vouliez-vous '=' ? »). Le projet compile la LIB en <code>/W4</code> en Debug x64 : le warning <b>était affiché</b>.</p>
+      <p class="small"><code>a = NULL_ENTITY;</code> est une affectation parfaite. Aucun outil ne peut savoir que l'intention était <code>entity</code>.</p>
+    </div>
+    <div class="card tight">
+      <h4>Ce que voit le programme</h4>
+      <p class="small">Dans les deux versions, la sortie part à <code>0xFFFFFFFF</code> et y reste : dans l'une on ne l'écrit jamais, dans l'autre on la réécrit avec la valeur qu'elle a déjà. <b>Le warning décrivait le symptôme, pas la cause.</b> Le faire taire en changeant l'opérateur a rendu le bug invisible au seul outil qui le voyait.</p>
+    </div>
+  </div>
+  <div class="note warn"><b>Règle dictatoriale proposée par ce lot (numéro à attribuer : la série R a dépassé 25 depuis, cf. Carnet de route, « autorité unique »).</b> Un warning se corrige en <b>relisant l'intention</b> de la ligne, pas en modifiant le token signalé. Avant de toucher, écrire en une phrase ce que la ligne doit faire ; si la correction ne réalise pas cette phrase, ce n'est pas une correction.</div>
+
+  <h3>6.2 — L'effacement de type derrière <code>void*</code></h3>
+  <div class="prose">
+    <p><code>RasterizeTriangle(v0, v1, v2, vp, FragmentCallback cb, void* userData)</code> ne connaît ni les shaders ni leurs contextes : c'est ce qui le rend réutilisable. Le prix est que <code>static_cast&lt;T*&gt;(void*)</code> <b>réussit toujours</b>. Il ne vérifie rien : il change l'étiquette d'une adresse.</p>
+    <p>Un shader lit ensuite <code>ctx-&gt;db</code> à l'offset 16 (Debug) parce que c'est là que <code>FragmentContext</code> le place. Si l'objet réel est un <code>CountContext</code> de 16 octets, l'offset 16 est <b>déjà hors de l'objet</b>.</p>
+  </div>
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Pourquoi <code>magic</code> à l'offset 0</h4>
+      <p class="small">L'offset 0 existe dans <b>tout</b> objet, quelle que soit sa taille. C'est le seul champ qu'on peut lire sans risque avant de savoir ce qu'on tient. Une sentinelle en fin de structure ne serait lisible que si l'objet était déjà du bon type, donc précisément quand on n'en a pas besoin.</p>
+    </div>
+    <div class="card tight">
+      <h4>Le coût, et sa limite</h4>
+      <p class="small">Une comparaison 32 bits par fragment, en Debug seulement. En Release, <code>LV3_ASSERT</code> vaut <code>((void)0)</code> et le champ <code>magic</code> n'existe pas : <b>le filet n'existe qu'en Debug</b>. C'est un outil de développement, pas une protection en production.</p>
+    </div>
+  </div>
+  <div class="note"><b>Conséquence de la règle 25.</b> <code>magic</code> est sous <code>#ifdef</code>, donc <code>sizeof(FragmentContext)</code> vaut 56 en Debug et 48 en Release. <code>FragmentContext</code> est un membre de <code>Renderer</code>, déclaré dans un en-tête de la LIB et instancié par l'EXE : <b>LIB et EXE doivent être compilés dans la même configuration</b>, sinon les deux voient deux structures différentes sous le même nom (violation de l'ODR). Le Carnet de route a depuis rencontré exactement cette famille de défaut (Phase 0, point 0.3).</div>
+
+  <h3>6.3 — Deux systèmes, un champ : le dernier qui parle a raison</h3>
+  <div class="prose">
+    <p>En ECS, un système ne sait pas qui d'autre écrit le composant qu'il écrit. Quand deux systèmes écrivent le même champ dans la même frame, le résultat ne dépend plus des données mais de <b>l'ordre d'appel dans <code>main.cpp</code></b>. Le premier calcule pour rien ; pire, son état interne (le yaw accumulé de <code>FPSControllerComponent</code>) continue de dériver sans jamais être affiché, puis surgit d'un coup à la bascule.</p>
+  </div>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:220px">Option</th><th>Principe</th><th style="width:250px">Verdict pour ce lot</th></tr>
+      <tr><td><b>Invariant asserté</b> <span class="tag acc">RETENU</span></td><td>Garder les deux drapeaux, vérifier chaque frame qu'ils ne sont pas vrais ensemble sur la même entité.</td><td>Une boucle sur ≤ 8 caméras, zéro changement de données. Cohérent avec la leçon.</td></tr>
+      <tr><td>Retirer / ajouter le composant</td><td>Le mode actif est le composant présent.</td><td>Change la structure des <code>SparseSet</code> à chaque bascule et perd l'état du contrôleur inactif.</td></tr>
+      <tr><td>Contrôleur unique à mode exclusif</td><td>Un seul composant <code>CameraControllerComponent { EMode mode; … }</code> : l'état « deux actifs » devient <b>impossible à représenter</b>.</td><td>La meilleure réponse structurelle. Change le format de scène : <b>dette D-L04C-1</b>, à décider (§11).</td></tr>
+    </table>
+  </div>
+  <div class="note"><b>Le périmètre de l'invariant est l'entité, pas la scène.</b> Deux caméras distinctes, l'une FPS, l'autre Follow, c'est le cas normal d'une scène multi-caméras : chacune écrit son propre Transform. Le conflit n'existe que si les deux contrôleurs sont sur <b>la même</b> entité. C'est pourquoi <code>TryGet&lt;CameraFollowComponent&gt;(entity)</code> renvoie <code>nullptr</code> sur <code>FPS_Camera</code> : la réponse est juste (§10, Q2).</div>
+</section>
+
+<!-- ═══════════════ 7 ═══════════════ -->
+<section id="etapes">
+  <h2><span class="num">7</span>Les étapes, pas à pas</h2>
+  <p class="lead">Les trois bugs suivis sur un cas concret. Chaque étape donne son objectif, le résultat de l'étape précédente qu'elle consomme, son propre résultat calculé en <code>float32</code>, et son pendant vectorisé quand il a un sens.</p>
+  <div class="card tight">
+    <h4>Version étudiée</h4>
+    <div class="seg" id="stVer"></div>
+    <div id="stVerDesc" class="small"></div>
+  </div>
+  <div class="stepbar" id="stepbar" role="tablist" aria-label="Étapes"></div>
+  <div id="steps"></div>
+</section>
+
+<!-- ═══════════════ 8 ═══════════════ -->
+<section id="contre">
+  <h2><span class="num">8</span>Contre-exemples chiffrés</h2>
+  <p class="lead">Ce qu'il ne faut pas faire, avec les nombres qui le démasquent. Les quatre premiers ont réellement eu lieu dans le dépôt ou dans la discussion du lot.</p>
+
+  <h3>8.1 — Faire taire un warning sans relire l'intention</h3>
+  <p class="prose">Les deux versions buggées de la ligne, rejouées sur <code>SceneBasicTest.json</code>. La colonne qui compte est la dernière.</p>
+  <div class="card tight tbl">
+    <table>
+      <tr><th>Version</th><th>Ligne</th><th>Warning</th><th>out après FPS_Camera</th><th>après Follow_Camera</th><th>rendu à main.cpp</th></tr>
+      <tr class="badrow"><td class="n">af35438 · 03/08</td><td><code>out_activeCamera != NULL_ENTITY;</code></td><td class="n">C4553</td><td class="n">0xFFFFFFFF</td><td class="n">0xFFFFFFFF</td><td class="n"><b>0xFFFFFFFF</b></td></tr>
+      <tr class="badrow"><td class="n">3b5299f · 15/08</td><td><code>out_activeCamera = NULL_ENTITY;</code></td><td class="n">aucun</td><td class="n">0xFFFFFFFF</td><td class="n">0xFFFFFFFF</td><td class="n"><b>0xFFFFFFFF</b></td></tr>
+      <tr class="okrow"><td class="n">fed81e6 · 22/08</td><td><code>out_activeCamera = entity;</code></td><td class="n">aucun</td><td class="n">0x00000003</td><td class="n">0x00000003</td><td class="n"><b>0x00000003</b></td></tr>
+    </table>
+  </div>
+  <div class="note bad"><b>Même sortie, un outil de moins.</b> Entre le 03/08 et le 15/08, le comportement n'a pas bougé d'un bit. Seul a changé le fait qu'un outil le signalait. Une correction qui rend le défaut <b>plus difficile à trouver</b> sans le supprimer est pire que pas de correction du tout.</div>
+
+  <h3>8.2 — Deux vérités qui divergent sur une égalité</h3>
+  <p class="prose">Même avec la ligne corrigée, <code>ParseCamera</code> et <code>FindActiveCamera</code> ne départagent pas les ex æquo de la même façon. Passe la priorité de <code>Follow_Camera</code> à 10 dans le simulateur 4.1 :</p>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:250px">Calcul</th><th>Comparaison</th><th>Parcours</th><th>Élue</th></tr>
+      <tr><td><code>ParseCamera</code> (au chargement)</td><td class="n">c.m_priority &gt;= current-&gt;m_priority</td><td>ordre du fichier</td><td class="n"><b>0x00000004</b> Follow_Camera (la dernière lue)</td></tr>
+      <tr><td><code>FindActiveCamera</code> (à la demande)</td><td class="n">cam.m_priority &gt; bestPriority</td><td>ordre dense du <code>SparseSet</code></td><td class="n"><b>0x00000003</b> FPS_Camera (la première vue)</td></tr>
+    </table>
+  </div>
+  <div class="note warn"><b>Le vrai défaut était là.</b> Deux fonctions calculaient la même grandeur avec deux règles. Corriger l'opérateur rendait le parseur juste dans le cas courant, sans supprimer la seconde vérité. C'est exactement ce que la séance 2a de l'audit pré-L06 a tranché plus tard (bug 46, règle R30 « élection ≠ sélection ») en retirant l'élection du parseur. Voir §11.</div>
+
+  <h3>8.3 — Un <code>static_cast</code> sur le mauvais contexte</h3>
+  <p class="prose">Un test de couverture passe un <code>CountContext</code> (16 octets) mais branche par erreur <code>ShadeFragment_Barycentric</code> comme callback. Valeurs réelles relues octet par octet, build Debug (pile remplie à <code>0xCC</code> par <code>/RTC</code>) :</p>
+  <div class="card tight tbl">
+    <table>
+      <tr><th>Champ lu</th><th>Offset</th><th>Octets trouvés</th><th>Interprété comme</th><th>Conséquence</th></tr>
+      <tr><td><code>magic</code></td><td class="n">0</td><td class="n" id="ce3m">—</td><td class="n" id="ce3mv">—</td><td>≠ <code>0xF2A9C0DE</code> : <b>seul AsFragmentContext le voit</b></td></tr>
+      <tr><td><code>db</code></td><td class="n">16</td><td class="n">CC CC CC CC CC CC CC CC</td><td class="n">0xCCCCCCCCCCCCCCCC</td><td>hors de l'objet ; <code>TestAndSet</code> déréférence une adresse non canonique : violation d'accès</td></tr>
+      <tr><td><code>z0</code></td><td class="n">28</td><td class="n">CC CC CC CC</td><td class="n" id="ce3z">—</td><td>profondeur absurde, test GREATER toujours faux</td></tr>
+    </table>
+  </div>
+  <div class="note bad"><b>Avec <code>static_cast</code> direct</b>, le premier symptôme est un crash dans <code>DepthBuffer::TestAndSet</code>, deux appels plus loin, sur une adresse sans rapport. <b>Avec <code>AsFragmentContext</code></b>, l'arrêt a lieu sur la ligne qui nomme le problème : « contexte incompatible derrière le void* ». En Release, sans <code>magic</code> ni assertion, <code>db</code> est lu à l'offset 8 : il vaut <code>width = 800</code> suivi de 4 octets indéterminés. Ça peut planter, ou écrire en silence n'importe où.</div>
+
+  <h3>8.4 — Un invariant au mauvais périmètre</h3>
+  <p class="prose">La lecture intuitive de l'exclusivité, « pas de FPS actif <i>et</i> de Follow actif dans la scène », produit ceci :</p>
+  <div class="ba">
+    <div><div class="lbl b">Faux : périmètre scène</div>
+<pre><code><span class="c-key">bool</span> anyFps = <span class="c-key">false</span>, anyFollow = <span class="c-key">false</span>;
+<span class="c-key">for</span> (<span class="c-key">auto</span>&amp;&amp; [e, f] : registry.ViewGroup&lt;FPSControllerComponent&gt;())
+    anyFps |= f.m_isEnabled;
+<span class="c-key">for</span> (<span class="c-key">auto</span>&amp;&amp; [e, f] : registry.ViewGroup&lt;CameraFollowComponent&gt;())
+    anyFollow |= f.m_isEnabled;
+<span class="l-del">LV3_ASSERT(!(anyFps &amp;&amp; anyFollow));   <span class="c-com">// saute sur SceneBasicTest.json</span></span></code></pre></div>
+    <div><div class="lbl a">Juste : périmètre entité</div>
+<pre><code><span class="c-key">for</span> (<span class="c-key">auto</span>&amp;&amp; [entity, fps] : registry.ViewGroup&lt;FPSControllerComponent&gt;())
+{
+    <span class="c-key">if</span> (!fps.m_isEnabled) <span class="c-key">continue</span>;
+<span class="l-add">    <span class="c-key">auto</span>* follow = registry.TryGet&lt;CameraFollowComponent&gt;(entity);</span>
+    <span class="c-key">if</span> (!follow || !follow-&gt;m_isEnabled) <span class="c-key">continue</span>;
+    LV3_ASSERT(<span class="c-key">false</span>);                  <span class="c-com">// muet sur SceneBasicTest.json</span>
+}</code></pre></div>
+  </div>
+  <div class="card tight tbl">
+    <table>
+      <tr><th>Scène</th><th>anyFps</th><th>anyFollow</th><th>Version scène</th><th>Version entité</th><th>Vérité</th></tr>
+      <tr><td><code>SceneBasicTest.json</code> (FPS_Camera, Follow_Camera)</td><td class="n">true</td><td class="n">true</td><td><span class="tag bad">assert</span></td><td><span class="tag ok">muet</span></td><td>scène valide</td></tr>
+      <tr><td>+ nœud <code>Camera_Cassee</code></td><td class="n">true</td><td class="n">true</td><td><span class="tag bad">assert</span></td><td><span class="tag bad">assert</span></td><td>conflit réel</td></tr>
+    </table>
+  </div>
+  <div class="note"><b>Un faux positif tue un filet.</b> Un assert qui saute sur une scène valide sera commenté dans la semaine, et ne protégera plus rien le jour du vrai conflit. Le périmètre d'un invariant se déduit de <b>ce qui est réellement partagé</b> : ici, un <code>TransformComponent</code>, donc une entité.</div>
+
+  <h3>8.5 — Ce que coûte le conflit, frame par frame</h3>
+  <p class="prose">Le nœud <code>Camera_Cassee</code> sans l'invariant, <code>dt = 0.5</code> (le pas fixe de l'époque, bug 44), touche Z maintenue, souris à 12 px par frame, ordre FPS puis Follow, pendant 4 frames, puis <code>SwitchCameraMode(cam, false)</code> :</p>
+  <div class="card tight tbl"><table id="ce5"></table></div>
+  <div class="note bad" id="ce5note"></div>
+</section>
+
+<!-- ═══════════════ 9 ═══════════════ -->
+<section id="verifier">
+  <h2><span class="num">9</span>Vérifier</h2>
+  <p class="lead">Tests hors moteur, filets Debug, et prédictions que les lots suivants devront observer. Chaque filet doit avoir été vu échouer une fois (principe 6).</p>
+
+  <h3>9.1 — Les tests du lot</h3>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:36px">#</th><th style="width:260px">Test</th><th>Critère</th><th style="width:96px">Attendu</th></tr>
+      <tr><td class="n">T1</td><td>Élection sur 4 scènes (tableau ci-dessous)</td><td><code>elected == FindActiveCamera(registry)</code> après chargement</td><td><span class="tag ok">3 / 4</span> <span class="tag warn">1 diverge</span></td></tr>
+      <tr><td class="n">T2</td><td>Saboteur <code>Camera_Cassee</code></td><td><code>CheckControllerExclusivity</code> doit s'arrêter sur <code>LV3_ASSERT</code> à la frame 1</td><td><span class="tag bad">assert vu</span></td></tr>
+      <tr><td class="n">T3</td><td>Saboteur <code>void*</code></td><td><code>ShadeFragment_Barycentric(0, 0, b, &amp;countCtx)</code> en Debug doit s'arrêter dans <code>AsFragmentContext</code></td><td><span class="tag bad">assert vu</span></td></tr>
+      <tr><td class="n">T4</td><td>Règle grepable</td><td><code>static_cast&lt;FragmentContext*&gt;</code> : <b>une seule occurrence</b> dans la solution, dans <code>Fragment.h</code></td><td><span class="tag ok">1</span></td></tr>
+      <tr><td class="n">T5</td><td>Compilation <code>/W4</code></td><td>Zéro C4553 dans la LIB et l'EXE</td><td><span class="tag ok">0</span></td></tr>
+    </table>
+  </div>
+
+  <h4>T1 — le tableau des scènes</h4>
+  <div class="card tight tbl">
+    <table>
+      <tr><th>Scène</th><th>ParseCamera (corrigé)</th><th>FindActiveCamera</th><th>Verdict</th></tr>
+      <tr><td><code>SceneBasicTest.json</code> tel quel</td><td class="n">0x00000003</td><td class="n">0x00000003</td><td><span class="tag ok">concordent</span></td></tr>
+      <tr><td>FPS et Follow inversés dans le fichier</td><td class="n">0x00000004</td><td class="n">0x00000004</td><td><span class="tag ok">concordent</span> (FPS_Camera, créée en second, donc index 4)</td></tr>
+      <tr><td>Aucune caméra <code>active</code></td><td class="n">0xFFFFFFFF</td><td class="n">0xFFFFFFFF</td><td><span class="tag ok">concordent</span></td></tr>
+      <tr><td>Follow_Camera à priorité 10</td><td class="n">0x00000004</td><td class="n">0x00000003</td><td><span class="tag warn">divergent</span> (§8.2)</td></tr>
+    </table>
+  </div>
+<pre><code><span class="c-com">// Test hors moteur — même patron que CheckAnimationBaseline : charger, puis comparer deux vérités.</span>
+<span class="c-key">bool</span> Test_CameraElection(<span class="c-key">const</span> std::string&amp; dir, <span class="c-key">const</span> std::string&amp; scene)
+{
+    Registry        registry;
+    ResourceManager rm;
+    Entity          elected = NULL_ENTITY;
+
+    <span class="c-key">if</span> (!SceneSerializer::LoadSceneGraph(dir, scene, registry, elected, rm)) <span class="c-key">return false</span>;
+
+    <span class="c-key">const</span> Entity reference = FindActiveCamera(registry);
+    <span class="c-key">if</span> (elected != reference)
+        Logger::error(<span class="c-str">"[TEST] election divergente : "</span> + EntityLabel(registry, elected)
+                      + <span class="c-str">" contre "</span> + EntityLabel(registry, reference));
+    <span class="c-key">return</span> elected == reference;
+}</code></pre>
+  <p class="small">Ce test est le « dériver ou asserter » du principe 10 appliqué à la caméra : il ne connaît pas la bonne réponse, il exige que les deux calculs soient d'accord. Le cas divergent n'est pas un échec du test, c'est sa raison d'être.</p>
+
+  <h4>T2 — le nœud saboteur, à ajouter temporairement à la scène</h4>
+<pre><code>{
+  <span class="c-str">"id"</span>: <span class="c-str">"Camera_Cassee"</span>,
+  <span class="c-str">"components"</span>: {
+    <span class="c-str">"Transform"</span>:    { <span class="c-str">"translation"</span>: [0, 5, 10], <span class="c-str">"rotation"</span>: [0, 0, 0], <span class="c-str">"scale"</span>: [1, 1, 1] },
+    <span class="c-str">"Camera"</span>:       { <span class="c-str">"projection"</span>: <span class="c-str">"perspective"</span>, <span class="c-str">"fov"</span>: 45.0, <span class="c-str">"active"</span>: true, <span class="c-str">"priority"</span>: 1 },
+    <span class="c-str">"CameraFPS"</span>:    { <span class="c-str">"enabled"</span>: true },
+    <span class="c-str">"CameraFollow"</span>: { <span class="c-str">"enabled"</span>: true, <span class="c-str">"target"</span>: <span class="c-str">"Cube1"</span> }
+  }
+}</code></pre>
+
+  <h4>T3 — le saboteur void*, à exécuter une fois puis retirer</h4>
+<pre><code><span class="c-com">#if LV3_DEBUG</span>
+{
+    std::vector&lt;uint8_t&gt; counts(800 * 600, 0);
+    CountContext countCtx{ &amp;counts, 800 };
+    BarycentricWeights b{ 0.2f, 0.3f, 0.5f };
+    ShadeFragment_Barycentric(0, 0, b, &amp;countCtx);   <span class="c-com">// DOIT s'arrêter dans AsFragmentContext</span>
+}
+<span class="c-com">#endif</span></code></pre>
+
+  <h3>9.2 — Les filets Debug en place après le lot</h3>
+<pre><code><span class="c-com">// Fragment.h — sentinelle du void*, premier membre, vérifiée par le seul point d'entrée</span>
+LV3_ASSERT(ctx-&gt;magic == kFragmentContextMagic);
+
+<span class="c-com">// System.cpp — exclusivité des écrivains d'un même Transform, CHAQUE frame</span>
+CheckControllerExclusivity(registry);
+
+<span class="c-com">// Proposé (dette D-L04C-2) : verrouiller l'offset 0 à la compilation, pas seulement à l'exécution</span>
+<span class="c-com">#if LV3_DEBUG</span>
+static_assert(offsetof(FragmentContext, magic) == 0, <span class="c-str">"magic doit rester le premier membre"</span>);
+<span class="c-com">#endif</span></code></pre>
+
+  <h3>9.3 — Prédictions pour les lots suivants</h3>
+  <ul class="prose">
+    <li>Le jour où <code>main.cpp</code> consommera la caméra élue, <code>SceneBasicTest.json</code> doit afficher <code>FPS_Camera</code> dans la vue principale. S'il affiche autre chose, la seconde vérité de §8.2 a frappé.</li>
+    <li>Le texturing ajoutera <code>uv</code> au contexte de fragment : <code>magic</code> doit rester à l'offset 0. Le <code>static_assert</code> proposé le garantit sans exécution.</li>
+    <li>Un contrôleur qui écrit <b>autre chose</b> que le <code>Transform</code> ne relève pas de cet invariant. Prédiction vérifiée depuis : <code>CameraZoomSystem</code> écrit <code>m_fovYDeg</code> / <code>m_orthoHeight</code> du <code>CameraComponent</code>, jamais <code>m_local</code>.</li>
+    <li>Tout nouveau système qui écrit <code>m_local</code> d'une caméra doit être ajouté à l'invariant, ou rendre la dette D-L04C-1 urgente.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ 10 ═══════════════ -->
+<section id="questions">
+  <h2><span class="num">10</span>Questions de fond posées pendant le lot</h2>
+  <p class="lead">Les deux questions d'Onky, avec la réponse complète et une correction de ma part sur la première.</p>
+
+  <h3>Q1 — Où doit être appelée <code>CheckControllerExclusivity</code> ?</h3>
+  <div class="prose">
+    <p>Dans l'EXE, pas dans la LIB : la LIB ne possède pas la boucle de jeu. <b>Chaque frame, avant le premier système qui écrit le Transform d'une caméra.</b> Elle ne lit que des drapeaux, elle n'a besoin d'aucune matrice : rien ne l'oblige à attendre <code>WorldTransformSystem</code>, contrairement à <code>CheckSceneInvariants</code>.</p>
+    <p>L'intérêt de la placer <i>avant</i> les écrivains : si l'invariant est violé, l'arrêt a lieu à la frame fautive, <b>avant</b> que le second contrôleur n'écrase le premier. Placée après, elle constaterait un dégât déjà fait.</p>
+  </div>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:44px">Ordre</th><th>Boucle EXE au 22/08 (78643c2)</th><th>Boucle EXE actuelle (S13)</th></tr>
+      <tr><td class="n">1</td><td><code>PlayerInputSystem</code>, <code>BuildInputState</code></td><td><code>BuildInputState</code>, <code>PlayerInputSystem</code></td></tr>
+      <tr class="hit"><td class="n">2</td><td><b><code>CheckControllerExclusivity</code></b> (ligne 293)</td><td><b><code>CheckControllerExclusivity</code></b> (ligne 631, zone de profilage <code>Cameras</code>)</td></tr>
+      <tr><td class="n">3</td><td><code>AnimationSystem</code></td><td><code>AnimationSystem</code>, puis cuisson n° 1</td></tr>
+      <tr><td class="n">4</td><td><code>FPSControllerSystem</code>, <code>CameraFollowSystem</code></td><td><code>CameraFPSControllerSystem</code>, <code>CameraFollowSystem</code>, <code>CameraZoomSystem</code></td></tr>
+      <tr><td class="n">5</td><td>Cuisson, triggers, <code>CheckSceneInvariants</code></td><td>Cuisson n° 2 ciblée, rendu, <code>CheckSceneInvariants</code></td></tr>
+    </table>
+  </div>
+  <div class="note vio"><b>Correction de ma réponse d'origine.</b> J'avais conseillé un second appel unique juste après <code>LoadSceneGraph</code>, par analogie avec <code>CheckAnimationBaseline</code>. Il est <b>redondant</b> : l'appel par frame s'exécute à la frame 1 avant toute écriture, donc il attrape une scène mal écrite au même moment, sans rien perdre. L'EXE a d'ailleurs gardé le seul appel par frame, et c'est le bon choix.</div>
+
+  <h3>Q2 — « FPS et Follow sont activées toutes les deux, pourtant <code>follow</code> est nul »</h3>
+  <div class="prose">
+    <p>Dans <code>SceneBasicTest.json</code>, les deux contrôleurs sont sur <b>deux entités différentes</b>. La boucle ne parcourt que les entités qui portent un <code>FPSControllerComponent</code> : une seule, <code>FPS_Camera</code> (index 3). Elle demande ensuite un <code>CameraFollowComponent</code> <b>à cette même entité</b>. Il est sur l'index 4. <code>TryGet</code> renvoie donc <code>nullptr</code>, et c'est la bonne réponse : aucune entité n'a deux écrivains, la scène est saine.</p>
+  </div>
+  <div class="card tight tbl">
+    <table>
+      <tr><th>Entité</th><th>Index</th><th>FPSControllerComponent</th><th>CameraFollowComponent</th><th>Visitée par la boucle</th><th>TryGet&lt;Follow&gt;</th></tr>
+      <tr><td><code>FPS_Camera</code></td><td class="n">3</td><td>oui, enabled</td><td>non</td><td>oui</td><td class="n">nullptr → continue</td></tr>
+      <tr><td><code>Follow_Camera</code></td><td class="n">4</td><td>non</td><td>oui, enabled</td><td>non</td><td class="n">—</td></tr>
+      <tr><td><code>Overview_Camera</code></td><td class="n">5</td><td>non</td><td>non</td><td>non</td><td class="n">—</td></tr>
+      <tr class="badrow"><td><code>Camera_Cassee</code> (saboteur)</td><td class="n">6</td><td>oui, enabled</td><td>oui, enabled</td><td>oui</td><td class="n">non nul → assert</td></tr>
+    </table>
+  </div>
+  <p class="small">Rejoue-le dans le simulateur 4.3 : en configuration « deux caméras séparées », la lampe reste verte et <code>TryGet</code> affiche <code>nullptr</code> ; en « une seule entité », elle passe au rouge.</p>
+</section>
+
+<!-- ═══════════════ 11 ═══════════════ -->
+<section id="suite">
+  <h2><span class="num">11</span>Ce que les lots suivants en ont fait, et la roadmap</h2>
+  <p class="lead">L'exception autorisée par le cadre du lot : des décisions ultérieures ont remis en question la correction du bug 23. Elles sont signalées ici, sans être réouvertes.</p>
+
+  <h3>11.1 — Le devenir des trois corrections</h3>
+  <div class="timeline">
+    <div class="tl ok"><div class="d">22/08 · LIB fed81e6 · EXE 78643c2</div><p class="small" style="margin:2px 0 0">Les trois corrections sont appliquées par Onky, une par une. L'invariant est appelé chaque frame, avant les contrôleurs.</p></div>
+    <div class="tl vio"><div class="d">Séance 2a · audit pré-Leçon 06 · bug 46</div><p class="small" style="margin:2px 0 0"><code>main.cpp</code> code en dur <code>FindCameraByName("FPS_Camera")</code> et ignore l'élection du parseur : deux vérités pour la caméra active. Décision <b>R30 « élection ≠ sélection »</b> : la scène déclare qui candidate (<code>active</code>, <code>priority</code>, <code>category</code>), l'EXE sélectionne à l'exécution (<code>Panel</code>, cycle F2–F9). Le bug 43 (lecture après <code>std::move</code>) meurt en effet de bord.</p></div>
+    <div class="tl vio"><div class="d">30/09 · LIB abb71c7 · chantier LOD</div><p class="small" style="margin:2px 0 0">L'élection quitte <code>ParseCamera</code> : le paramètre <code>out_activeCamera</code> est commenté, la ligne corrigée par ce lot disparaît. <code>active</code> passe à <code>false</code> par défaut (« l'activité se déclare »).</p></div>
+    <div class="tl ok"><div class="d">Phase G · Fragment.cpp</div><p class="small" style="margin:2px 0 0">Les shaders passent par un gabarit unique <code>ShadeAt&lt;Shader&gt;</code> qui appelle <code>AsFragmentContext</code> <b>une seule fois</b> pour tous. La règle du bug 24 devient structurelle : il n'existe plus d'endroit où un shader pourrait la contourner.</p></div>
+    <div class="tl ok"><div class="d">Aujourd'hui · EXE main.cpp:631</div><p class="small" style="margin:2px 0 0"><code>CheckControllerExclusivity</code> est toujours appelée chaque frame, avant la cuisson n° 1 et les systèmes caméra (S13). La fonction n'a pas changé.</p></div>
+  </div>
+  <div class="note warn"><b>La leçon que l'histoire confirme.</b> La correction du bug 23 était juste et n'a vécu que cinq semaines, parce qu'elle soignait l'opérateur et pas la cause : deux fonctions pour une même vérité (§8.2). Le bug 24, lui, a fini en contrainte structurelle. Une correction locale tient jusqu'au prochain changement ; une correction de structure tient tant que la structure existe.</div>
+
+  <h3>11.2 — Décisions et dettes à reporter dans le Carnet de route</h3>
+  <div class="card tight tbl">
+    <table>
+      <tr><th style="width:92px">Réf</th><th style="width:250px">Objet</th><th>Raison, apport</th><th style="width:110px">Statut</th></tr>
+      <tr><td class="n">D-L04C-1</td><td>Contrôleur caméra unique à mode exclusif</td><td>Remplacer <code>CameraFPS</code> + <code>CameraFollow</code> par un composant à <code>enum</code> de mode rend l'état « deux actifs » impossible à représenter et l'invariant inutile. Coût : format JSON des caméras, <code>SwitchCameraMode</code>, état des contrôleurs inactifs à conserver.</td><td><span class="tag warn">à décider</span></td></tr>
+      <tr><td class="n">D-L04C-2</td><td><code>static_assert(offsetof(FragmentContext, magic) == 0)</code></td><td>Verrouille à la compilation ce que l'assert vérifie à l'exécution. Une ligne, sous <code>LV3_ASSERTS_ENABLED</code> (et non <code>LV3_DEBUG</code>, cf. Carnet 0.3).</td><td><span class="tag warn">à décider</span></td></tr>
+      <tr><td class="n">D-L04C-3</td><td>Promouvoir C4553 en erreur (<code>/we4553</code>)</td><td>Le seul outil qui voyait le bug 23 n'était qu'un avertissement. À vérifier dans la liste des catégories promues de <code>LV3.Common.props</code> (Annexe A10).</td><td><span class="tag warn">à vérifier</span></td></tr>
+      <tr><td class="n">D-L04C-4</td><td>Règle : « un warning se corrige en relisant l'intention »</td><td>Née du bug 23 (§6.1, §8.1). Numéro à attribuer avec le journal à autorité unique.</td><td><span class="tag warn">à numéroter</span></td></tr>
+      <tr><td class="n">J-23/24</td><td>Correction du journal L04 P2</td><td>Bug 24 corrigé le <b>15/08</b> (<code>3b5299f</code>), pas le 22/08. Bug 23 : forme C4553 le 03/08, forme silencieuse le 15/08, corrigé le 22/08, code retiré le 30/09.</td><td><span class="tag ok">consigné au Carnet</span></td></tr>
+    </table>
+  </div>
+
+  <h3>11.3 — Principes dégagés par ce lot</h3>
+  <ol class="prose">
+    <li><b>Relire le dépôt, pas le journal.</b> Sur trois lignes ouvertes, une était déjà fermée et une avait changé de forme.</li>
+    <li><b>Un warning décrit un symptôme.</b> Le faire taire sans réaliser l'intention de la ligne retire un détecteur sans retirer le défaut.</li>
+    <li><b>Le périmètre d'un invariant est celui de la ressource partagée.</b> Ici un <code>TransformComponent</code>, donc une entité, jamais la scène.</li>
+    <li><b>Un bug latent se teste en comparant deux calculs</b>, pas en regardant l'écran : quand personne ne consomme une valeur, aucune image ne peut la trahir.</li>
+  </ol>
+</section>
+
+<div class="foot">
+  Lot L04-C — Clôture des bugs 23, 24, 25 · LibraryV3 · C++23 / Visual Studio 2026 · appairé au Lot L04 — Le Rasterizer<br>
+  Historique reconstitué depuis les dépôts <code>onkover/LibraryV3</code> et <code>onkover/RefactoNouvelleLibrairieV3</code>. Les nombres flottants sont calculés en direct en <code>float32</code> (<code>Math.fround</code>). La copie HTML autonome, rejouable hors ligne, est jointe dans la conversation.
+</div>
+
+</div>
+
+<script>
+/* ════════════════ utilitaires ════════════════ */
+const f32 = Math.fround;
+const $ = id => document.getElementById(id);
+const NULL_E = 0xFFFFFFFF;
+const hex32 = v => '0x' + (v >>> 0).toString(16).toUpperCase().padStart(8, '0');
+const fmt = (v, n = 3) => (Number.isFinite(v) ? v.toFixed(n) : String(v));
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const KW = /\b(const|auto|if|else|return|for|void|float|bool|int32_t|uint32_t|nullptr|true|false|static_cast|continue|struct)\b/g;
+function hl(code) {
+  return code.split('\n').map(line => {
+    const i = line.indexOf('//');
+    let a = i >= 0 ? line.slice(0, i) : line, c = i >= 0 ? line.slice(i) : '';
+    a = esc(a).replace(/"([^"]*)"/g, '<span class="c-str">"$1"</span>').replace(KW, '<span class="c-key">$1</span>');
+    return a + (c ? '<span class="c-com">' + esc(c) + '</span>' : '');
+  }).join('\n');
+}
+function seg(el, items, cur, pick) {
+  el.innerHTML = '';
+  items.forEach(([k, label]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'btn' + (k === cur ? ' on' : ''); b.textContent = label;
+    b.setAttribute('aria-pressed', k === cur ? 'true' : 'false');
+    b.onclick = () => pick(k);
+    el.appendChild(b);
+  });
+}
+const redrawHooks = [];
+
+/* thème */
+(() => {
+  const btn = $('themeBtn'); let mode = 0;
+  btn.onclick = () => {
+    mode = (mode + 1) % 3; const r = document.documentElement;
+    if (mode === 0) { r.removeAttribute('data-theme'); btn.textContent = 'Thème auto'; }
+    if (mode === 1) { r.setAttribute('data-theme', 'light'); btn.textContent = 'Thème clair'; }
+    if (mode === 2) { r.setAttribute('data-theme', 'dark'); btn.textContent = 'Thème sombre'; }
+    redrawHooks.forEach(f => f());
+  };
+  try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => redrawHooks.forEach(f => f())); } catch (e) {}
+})();
+
+/* ════════════════ §3 — schéma des frontières ════════════════ */
+(() => {
+  const g = $('flowBoxes'); const NS = 'http://www.w3.org/2000/svg';
+  const W = 170, H = 74, xs = [15, 210, 405, 600, 795], yT = 34, yB = 196;
+  const top = [
+    ['json', 'Scène JSON', 'SceneBasicTest.json'],
+    ['ser', 'SceneSerializer', 'ParseNode · ParseCamera'],
+    ['reg', 'Registry', 'Camera · FPS · Follow'],
+    ['sys', 'Systèmes caméra', 'FPS → Transform ← Follow'],
+    ['view', 'BuildViewData', 'V · P · frustum'],
+  ];
+  const bot = [ // de droite à gauche
+    ['rv', 'RenderView', 'clip · ÷w · ToRaster'],
+    ['dt', 'Renderer::DrawTriangle', 'remplit m_ctx'],
+    ['rt', 'RasterizeTriangle', 'reçoit un void*'],
+    ['sh', 'ShadeFragment_*', 'relit le void*'],
+    ['buf', 'FrameBuffer · DepthBuffer', 'écritures'],
+  ];
+  const boxEls = {};
+  function box(id, x, y, t, s) {
+    const r = document.createElementNS(NS, 'rect');
+    r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', W); r.setAttribute('height', H); r.setAttribute('rx', 9);
+    r.setAttribute('style', 'fill:var(--panel);stroke:var(--line);stroke-width:1.5');
+    g.appendChild(r); boxEls[id] = r;
+    const t1 = document.createElementNS(NS, 'text');
+    t1.setAttribute('x', x + W / 2); t1.setAttribute('y', y + 31); t1.setAttribute('text-anchor', 'middle');
+    t1.setAttribute('style', 'fill:var(--ink);font:600 13px var(--sans)'); t1.textContent = t; g.appendChild(t1);
+    const t2 = document.createElementNS(NS, 'text');
+    t2.setAttribute('x', x + W / 2); t2.setAttribute('y', y + 52); t2.setAttribute('text-anchor', 'middle');
+    t2.setAttribute('style', 'fill:var(--dim);font:11.5px var(--mono)'); t2.textContent = s; g.appendChild(t2);
+  }
+  function arrow(x1, y1, x2, y2) {
+    const l = document.createElementNS(NS, 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1); l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('style', 'stroke:var(--faint);stroke-width:1.5'); l.setAttribute('marker-end', 'url(#arr)');
+    g.appendChild(l);
+  }
+  top.forEach((b, i) => box(b[0], xs[i], yT, b[1], b[2]));
+  bot.forEach((b, i) => box(b[0], xs[4 - i], yB, b[1], b[2]));
+  for (let i = 0; i < 4; i++) arrow(xs[i] + W + 2, yT + H / 2, xs[i + 1] - 3, yT + H / 2);
+  for (let i = 4; i > 0; i--) arrow(xs[i] - 2, yB + H / 2, xs[i - 1] + W + 3, yB + H / 2);
+  arrow(xs[4] + W / 2, yT + H + 2, xs[4] + W / 2, yB - 3);
+  const lab = (x, y, s) => { const t = document.createElementNS(NS, 'text'); t.setAttribute('x', x); t.setAttribute('y', y); t.setAttribute('text-anchor', 'middle'); t.setAttribute('style', 'fill:var(--dim);font:11px var(--mono)'); t.textContent = s; g.appendChild(t); };
+  lab(xs[1] + W + 12, yT - 8, 'out_activeCamera');
+  lab(xs[1] + W + 12, yB + H + 18, 'void* userData');
+  lab(xs[3] + 70, yT - 10, 'deux écrivains, un champ');
+
+  const info = {
+    23: { boxes: ['ser', 'reg'], html: '<b>Frontière 23 · données → moteur.</b> <code>ParseCamera</code> élit la caméra active pendant la lecture du JSON et la rend à <code>main.cpp</code> par la référence <code>out_activeCamera</code>. Le moteur sait aussi la retrouver seul (<code>FindActiveCamera</code>). Deux chemins, donc deux vérités possibles : la ligne qui écrivait l\'élue n\'écrivait plus rien d\'utile.' },
+    24: { boxes: ['rt', 'sh', 'dt'], html: '<b>Frontière 24 · moteur → fragment.</b> <code>RasterizeTriangle</code> ne connaît pas le type du contexte : il transmet <code>&amp;m_ctx</code> sous forme de <code>void*</code>. Le shader le reconvertit. <code>static_cast</code> réussit toujours ; seul <code>AsFragmentContext</code> vérifie la sentinelle <code>magic</code>.' },
+    25: { boxes: ['sys'], html: '<b>Frontière 25 · système → système.</b> <code>FPSControllerSystem</code> et <code>CameraFollowSystem</code> écrivent tous deux <code>tr.m_local.position</code> et <code>tr.m_local.rotation</code>. Sur une même entité, le second appelé efface le travail du premier, quelles que soient les données.' },
+  };
+  const badges = [[23, xs[1] + W + 12, yT + H / 2], [24, xs[1] + W + 12, yB + H / 2], [25, xs[3] + W - 6, yT + 4]];
+  const bEls = {};
+  function pick(n) {
+    Object.values(boxEls).forEach(r => r.setAttribute('style', 'fill:var(--panel);stroke:var(--line);stroke-width:1.5'));
+    info[n].boxes.forEach(id => boxEls[id].setAttribute('style', 'fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5'));
+    Object.entries(bEls).forEach(([k, c]) => c.setAttribute('style', 'fill:' + (+k === n ? 'var(--accent)' : 'var(--bad)')));
+    $('flowInfo').innerHTML = info[n].html;
+  }
+  badges.forEach(([n, x, y]) => {
+    const a = document.createElementNS(NS, 'g'); a.setAttribute('class', 'fbadge'); a.setAttribute('tabindex', '0'); a.setAttribute('role', 'button');
+    a.setAttribute('aria-label', 'Frontière du bug ' + n);
+    const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 15);
+    c.setAttribute('style', 'fill:var(--bad)'); a.appendChild(c); bEls[n] = c;
+    const t = document.createElementNS(NS, 'text'); t.setAttribute('x', x); t.setAttribute('y', y + 4.5); t.setAttribute('text-anchor', 'middle');
+    t.setAttribute('style', 'fill:#fff;font:700 12.5px var(--sans);pointer-events:none'); t.textContent = n; a.appendChild(t);
+    a.addEventListener('click', () => pick(n));
+    a.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(n); } });
+    g.appendChild(a);
+  });
+  pick(23);
+})();
+
+/* ════════════════ §4.1 — élection de la caméra ════════════════ */
+const ELV = {
+  A: { label: '27/06 · dernière lue', commit: 'ef76678', line: 'out_activeCamera = entity;           // inconditionnel' },
+  B: { label: '03/08 · priorité', commit: 'bef8fad', line: 'if (!current || c.m_priority >= current->m_priority)\n    out_activeCamera = entity;' },
+  C: { label: '03/08 · != (C4553)', commit: 'af35438', line: 'if (!current || c.m_priority >= current->m_priority)\n    out_activeCamera != NULL_ENTITY;   // évaluée puis jetée' },
+  D: { label: '15/08 · = NULL_ENTITY', commit: '3b5299f', line: 'if (!current || c.m_priority >= current->m_priority)\n    out_activeCamera = NULL_ENTITY;    // le warning a disparu' },
+  E: { label: '22/08 · corrigé', commit: 'fed81e6', line: 'if (!current || c.m_priority >= current->m_priority)\n    out_activeCamera = entity;' },
+};
+const SCENE_CAMS = () => [
+  { name: 'FPS_Camera', active: true, prio: 10 },
+  { name: 'Follow_Camera', active: true, prio: 5 },
+  { name: 'Overview_Camera', active: false, prio: 0 },
+];
+function runElection(cams, ver) {
+  let out = NULL_E; const rows = [];
+  cams.forEach((c, i) => {
+    const entity = 3 + i; // Pivot, Cube1, Cube2 sont créés avant (index 0, 1, 2), génération 0
+    let curTxt = '—', condTxt = '—', cond = false;
+    if (ver === 'A') { out = entity; condTxt = 'aucune (inconditionnel)'; }
+    else if (!c.active) { condTxt = 'm_isActive faux : bloc sauté'; }
+    else {
+      const cur = out !== NULL_E ? cams[out - 3] : null;
+      curTxt = cur ? cur.name + ' (prio ' + cur.prio + ')' : 'nullptr';
+      cond = !cur || c.prio >= cur.prio;
+      condTxt = !cur ? '!current → vrai' : (c.prio + ' >= ' + cur.prio + ' → ' + (cond ? 'vrai' : 'faux'));
+      if (cond) { if (ver === 'B' || ver === 'E') out = entity; else if (ver === 'D') out = NULL_E; }
+    }
+    rows.push({ name: c.name, entity, active: c.active, prio: c.prio, curTxt, condTxt, out });
+  });
+  return { out, rows };
+}
+function findActiveCamera(cams) {
+  let best = NULL_E, bp = -Infinity;
+  cams.forEach((c, i) => { if (c.active && c.prio > bp) { bp = c.prio; best = 3 + i; } });
+  return best;
+}
+const camName = (cams, e) => e === NULL_E ? 'NULL_ENTITY (aucune)' : cams[e - 3].name;
+(() => {
+  let ver = 'D'; let cams = SCENE_CAMS();
+  function draw() {
+    seg($('elVer'), Object.keys(ELV).map(k => [k, ELV[k].label]), ver, k => { ver = k; draw(); });
+    $('elVerCode').innerHTML = '<div class="diff"><div class="dh">Serializer.cpp · ' + ELV[ver].commit + '</div><pre><code>' + hl(ELV[ver].line) + '</code></pre></div>';
+    let h = '<tr><th>#</th><th>Nœud</th><th>active</th><th>priority</th><th>Ordre</th></tr>';
+    cams.forEach((c, i) => {
+      h += '<tr><td class="n">' + (3 + i) + '</td><td><code>' + c.name + '</code></td>' +
+        '<td><input type="checkbox" id="el_a' + i + '" ' + (c.active ? 'checked' : '') + ' aria-label="active ' + c.name + '"></td>' +
+        '<td><input type="number" id="el_p' + i + '" value="' + c.prio + '" min="-99" max="99" aria-label="priorité ' + c.name + '"></td>' +
+        '<td><button class="btn" type="button" data-up="' + i + '" ' + (i === 0 ? 'disabled' : '') + ' aria-label="monter">↑</button> ' +
+        '<button class="btn" type="button" data-dn="' + i + '" ' + (i === cams.length - 1 ? 'disabled' : '') + ' aria-label="descendre">↓</button></td></tr>';
+    });
+    $('elCams').innerHTML = h;
+    cams.forEach((c, i) => {
+      $('el_a' + i).onchange = e => { cams[i].active = e.target.checked; draw(); };
+      $('el_p' + i).onchange = e => { cams[i].prio = parseInt(e.target.value || '0', 10); draw(); };
+    });
+    $('elCams').querySelectorAll('[data-up]').forEach(b => b.onclick = () => { const i = +b.dataset.up; [cams[i - 1], cams[i]] = [cams[i], cams[i - 1]]; draw(); });
+    $('elCams').querySelectorAll('[data-dn]').forEach(b => b.onclick = () => { const i = +b.dataset.dn; [cams[i + 1], cams[i]] = [cams[i], cams[i + 1]]; draw(); });
+
+    const r = runElection(cams, ver), ref = findActiveCamera(cams);
+    let t = '<tr><th>Nœud lu</th><th>Entity</th><th>active</th><th>prio</th><th>current (élue avant)</th><th>condition</th><th>out après</th></tr>';
+    r.rows.forEach(w => { t += '<tr><td><code>' + w.name + '</code></td><td class="n">' + hex32(w.entity) + '</td><td class="n">' + w.active + '</td><td class="n">' + w.prio + '</td><td class="n">' + w.curTxt + '</td><td class="n">' + w.condTxt + '</td><td class="n"><b>' + hex32(w.out) + '</b></td></tr>'; });
+    $('elTrace').innerHTML = t;
+    $('elOut').textContent = hex32(r.out);
+    $('elOutName').textContent = camName(cams, r.out);
+    $('elRef').textContent = hex32(ref) + ' · ' + camName(cams, ref);
+    const agree = r.out === ref;
+    $('elAgree').textContent = agree ? 'oui' : 'NON';
+    $('elAgree').style.color = agree ? 'var(--ok)' : 'var(--bad)';
+    const v = $('elVerdict'); let msg = '';
+    const anyActive = cams.some(c => c.active);
+    if (ver === 'A') msg = 'La dernière caméra lue gagne, <b>même inactive</b>. Ici : <code>' + camName(cams, r.out) + '</code>. La priorité n\'existe pas encore.';
+    else if (ver === 'C') msg = 'La condition est évaluée, son résultat jeté. <b>La sortie n\'est jamais écrite</b> : elle garde sa valeur initiale <code>NULL_ENTITY</code>, quelle que soit la scène. MSVC le signale par C4553.';
+    else if (ver === 'D') msg = 'Plus de warning, et pourtant <b>exactement la même sortie</b> que la version C : chaque élection réussie écrit <code>NULL_ENTITY</code>. Comparer avec C : seul l\'outil qui voyait le défaut a disparu.';
+    else if (!anyActive) msg = 'Aucune caméra active : <code>NULL_ENTITY</code> est la réponse juste, et les deux calculs l\'obtiennent.';
+    else if (agree) msg = 'Élection correcte : <code>' + camName(cams, r.out) + '</code>, et <code>FindActiveCamera</code> trouve la même. Les deux vérités concordent sur ce cas.';
+    else msg = '<b>Divergence.</b> Le parseur (<code>&gt;=</code>, ordre du fichier) garde la <b>dernière</b> ex æquo, <code>FindActiveCamera</code> (<code>&gt;</code>, ordre dense) la <b>première</b>. Deux fonctions, deux règles : c\'est le défaut de fond que révèle §8.2.';
+    v.className = 'note ' + ((ver === 'C' || ver === 'D' || (!agree && anyActive)) ? 'bad' : (ver === 'A' ? 'warn' : 'ok'));
+    v.innerHTML = msg + '<br><span class="small">À l\'époque, <code>main.cpp</code> ignorait cette sortie (<code>FindCameraByName("FPS_Camera")</code> en dur) : aucune de ces versions ne changeait l\'image.</span>';
+  }
+  draw();
+})();
+
+/* ════════════════ §4.2 — le void* ════════════════ */
+const MAGIC = 0xF2A9C0DE;
+const ZN = f32(0.1), DS = [3, 5, 8];
+const Z3 = DS.map(d => f32(ZN / d)), IW3 = DS.map(d => f32(1 / d));
+function layoutFrag(cfg) {
+  const L = []; let o = 0;
+  if (cfg === 'debug') { L.push(['magic', 0, 4, 'u32', 'f-magic']); L.push(['(remplissage)', 4, 4, 'pad', 'f-pad']); o = 8; }
+  L.push(['fb', o, 8, 'ptr', 'f-ptr']); L.push(['db', o + 8, 8, 'ptr', 'f-ptr']); L.push(['color', o + 16, 4, 'col', 'f-col']);
+  ['z0', 'z1', 'z2', 'invW0', 'invW1', 'invW2', 'depthDisplayRange'].forEach((n, i) => L.push([n, o + 20 + 4 * i, 4, 'f32', 'f-num']));
+  return { fields: L, size: o + 48 };
+}
+function layoutCount() { return { fields: [['counts', 0, 8, 'ptr', 'f-ptr'], ['width', 8, 4, 'i32', 'f-num'], ['(remplissage)', 12, 4, 'pad', 'f-pad']], size: 16 }; }
+function buildMem(obj, cfg) {
+  const N = 64, bytes = new Array(N).fill(null), cls = new Array(N).fill('f-out');
+  const buf = new ArrayBuffer(8), dv = new DataView(buf);
+  const put = (off, n, writer, c) => { writer(dv); for (let i = 0; i < n; i++) { bytes[off + i] = dv.getUint8(i); cls[off + i] = c; } };
+  let L;
+  if (obj === 'frag') {
+    L = layoutFrag(cfg);
+    const val = { magic: MAGIC, fb: 0x000000C58F3FF6A0n, db: 0x000001D27A4C0040n, z0: Z3[0], z1: Z3[1], z2: Z3[2], invW0: IW3[0], invW1: IW3[1], invW2: IW3[2], depthDisplayRange: 100 };
+    L.fields.forEach(([n, off, sz, ty, c]) => {
+      if (ty === 'u32') put(off, 4, d => d.setUint32(0, val[n], true), c);
+      else if (ty === 'ptr') put(off, 8, d => d.setBigUint64(0, val[n], true), c);
+      else if (ty === 'col') put(off, 4, d => { d.setUint8(0, 64); d.setUint8(1, 128); d.setUint8(2, 255); d.setUint8(3, 255); }, c);
+      else if (ty === 'f32') put(off, 4, d => d.setFloat32(0, val[n], true), c);
+      else { for (let i = 0; i < sz; i++) { bytes[off + i] = null; cls[off + i] = c; } }
+    });
+  } else {
+    L = layoutCount();
+    put(0, 8, d => d.setBigUint64(0, 0x000001D2B2C3D4E0n, true), 'f-ptr');
+    put(8, 4, d => d.setInt32(0, 800, true), 'f-num');
+    for (let i = 12; i < 16; i++) { bytes[i] = null; cls[i] = 'f-pad'; }
+  }
+  for (let i = L.size; i < N; i++) bytes[i] = (cfg === 'debug') ? 0xCC : null; // au-delà de l'objet
+  return { bytes, cls, size: L.size, layout: L };
+}
+function readAs(mem, off, sz, ty) {
+  const bs = mem.bytes.slice(off, off + sz);
+  const out = off + sz > mem.size;
+  const unknown = bs.some(b => b === null);
+  const hexb = bs.map(b => b === null ? '??' : b.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+  let val = '';
+  if (ty === 'pad') val = '—';
+  else if (unknown) val = ty === 'ptr' ? '0x' + bs.slice().reverse().map(b => b === null ? '??' : b.toString(16).toUpperCase().padStart(2, '0')).join('') : 'indéterminé';
+  else {
+    const dv = new DataView(new Uint8Array(bs).buffer);
+    if (ty === 'u32') val = hex32(dv.getUint32(0, true));
+    else if (ty === 'ptr') val = '0x' + dv.getBigUint64(0, true).toString(16).toUpperCase().padStart(16, '0');
+    else if (ty === 'f32') { const f = dv.getFloat32(0, true); val = Math.abs(f) > 1e6 ? f.toExponential(7) : fmt(f, 6); }
+    else if (ty === 'col') val = 'b=' + bs[0] + ' g=' + bs[1] + ' r=' + bs[2] + ' a=' + bs[3];
+    else if (ty === 'i32') val = String(dv.getInt32(0, true));
+  }
+  return { hexb, val, out };
+}
+(() => {
+  let obj = 'count', cast = 'asfc', cfg = 'debug';
+  function draw() {
+    seg($('vpObj'), [['frag', 'FragmentContext'], ['count', 'CountContext']], obj, k => { obj = k; draw(); });
+    seg($('vpCast'), [['static', 'static_cast direct'], ['asfc', 'AsFragmentContext']], cast, k => { cast = k; draw(); });
+    seg($('vpCfg'), [['debug', 'Debug'], ['release', 'Release']], cfg, k => { cfg = k; draw(); });
+    const mem = buildMem(obj, cfg);
+    let h = '<table><tr><td class="off"></td>' + [0, 1, 2, 3, 4, 5, 6, 7].map(i => '<td class="off" style="text-align:center">+' + i + '</td>').join('') + '</tr>';
+    for (let r = 0; r < 8; r++) {
+      h += '<tr><td class="off">' + (r * 8) + '</td>';
+      for (let c = 0; c < 8; c++) { const i = r * 8 + c, b = mem.bytes[i]; h += '<td class="' + mem.cls[i] + '">' + (b === null ? '··' : b.toString(16).toUpperCase().padStart(2, '0')) + '</td>'; }
+      h += '</tr>';
+    }
+    h += '</table><div class="leg"><span><span class="sw" style="background:var(--viobg)"></span>magic</span><span><span class="sw" style="background:var(--accent-soft)"></span>pointeurs</span><span><span class="sw" style="background:var(--okbg)"></span>nombres</span><span><span class="sw" style="background:var(--warnbg)"></span>couleur</span><span><span class="sw" style="background:var(--badbg)"></span>hors de l\'objet (' + (cfg === 'debug' ? 'pile Debug remplie à 0xCC' : 'contenu indéterminé') + ')</span><span>objet réel : <b>' + (obj === 'frag' ? 'FragmentContext' : 'CountContext') + '</b>, ' + mem.size + ' octets · vue du shader : FragmentContext, ' + layoutFrag(cfg).size + ' octets</span></div>';
+    $('vpMem').innerHTML = h;
+
+    const view = layoutFrag(cfg).fields.filter(f => f[3] !== 'pad');
+    let t = '<tr><th>Champ (vue FragmentContext)</th><th>Offset</th><th>Octets</th><th>Valeur lue</th><th>Statut</th></tr>';
+    view.forEach(([n, off, sz, ty]) => {
+      const r = readAs(mem, off, sz, ty);
+      t += '<tr class="' + (r.out ? 'badrow' : '') + '"><td><code>' + n + '</code></td><td class="n">' + off + '</td><td class="n">' + r.hexb + '</td><td class="n">' + r.val + '</td><td>' + (r.out ? '<span class="tag bad">hors objet</span>' : (obj === 'frag' ? '<span class="tag ok">correct</span>' : '<span class="tag warn">mauvais champ</span>')) + '</td></tr>';
+    });
+    $('vpRead').innerHTML = t;
+
+    const v = $('vpVerdict');
+    if (obj === 'frag') { v.className = 'note ok'; v.innerHTML = '<b>Le bon type.</b> Les deux conversions lisent exactement les mêmes octets. <code>AsFragmentContext</code> ajoute une comparaison 32 bits' + (cfg === 'debug' ? ' : <code>magic == 0xF2A9C0DE</code>, vraie.' : ' en Debug ; en Release elle n\'existe pas et ne coûte rien.'); }
+    else if (cfg === 'release') { v.className = 'note bad'; v.innerHTML = '<b>Release : aucun filet, quelle que soit la conversion.</b> Le champ <code>magic</code> n\'existe pas et <code>LV3_ASSERT</code> vaut <code>((void)0)</code>. Le shader lit <code>fb</code> = le pointeur <code>counts</code> (un vrai pointeur, vers le mauvais objet), puis <code>db</code> = <code>width</code> suivi de 4 octets indéterminés. <code>TestAndSet</code> plante, ou écrit en silence ailleurs.'; }
+    else if (cast === 'asfc') { const m = readAs(mem, 0, 4, 'u32'); v.className = 'note ok'; v.innerHTML = '<b>Arrêt immédiat, au bon endroit.</b> <code>AsFragmentContext</code> lit l\'offset 0 (valide dans tout objet) : <code>' + m.val + '</code> ≠ <code>0xF2A9C0DE</code>. <code>LV3_ASSERT</code> saute avec le message « contexte incompatible derrière le void* », <b>avant toute lecture hors de l\'objet</b>.'; }
+    else { v.className = 'note bad'; v.innerHTML = '<b>Aucun contrôle.</b> <code>static_cast</code> change l\'étiquette de l\'adresse, rien de plus. Le shader lit <code>db</code> à l\'offset 16, <b>au-delà des 16 octets du CountContext</b> : <code>0xCCCCCCCCCCCCCCCC</code>. Le premier symptôme sera une violation d\'accès dans <code>DepthBuffer::TestAndSet</code>, loin de la cause. C\'est l\'état d\'avant le 15/08.'; }
+  }
+  draw();
+})();
+
+/* ════════════════ §4.3 — contrôleurs (moteur pur + vue) ════════════════ */
+const TARGET = [-30, 0, 0];
+const angDiff = d => { d = ((d + 180) % 360 + 360) % 360 - 180; return d; };
+const yawToward = (from, to) => Math.atan2(-(to[0] - from[0]), -(to[2] - from[2])) * 180 / Math.PI;
+function makeScene(mode) {
+  if (mode === 'sep') return [
+    { name: 'FPS_Camera', idx: 3, pos: [0, 5, 40], yaw: 0, fps: { en: true, speed: 15, yaw: 0 }, fol: null, trail: [] },
+    { name: 'Follow_Camera', idx: 4, pos: [0, 5, 0], yaw: 0, fps: null, fol: { en: true, off: [0, 5, -35], k: 5, init: false, sp: [0, 0, 0], sy: 0 }, trail: [] },
+  ];
+  return [{ name: 'Camera_Cassee', idx: 6, pos: [0, 5, 10], yaw: 0, fps: { en: true, speed: 5, yaw: 0 }, fol: { en: true, off: [0, 2, -6], k: 5, init: false, sp: [0, 0, 0], sy: 0 }, trail: [] }];
+}
+function checkExclusivity(scene) { return scene.filter(e => e.fps && e.fps.en && e.fol && e.fol.en).map(e => e.name); }
+function stepFrame(scene, p) {
+  // p : { order, fwd, dx, dt }  → renvoie un journal de la frame
+  const rec = { writes: [], lost: 0, jump: null };
+  const before = scene.map(e => ({ yaw: e.yaw }));
+  const runFps = () => scene.forEach(e => {
+    if (!e.fps || !e.fps.en) return;
+    e.fps.yaw = f32(e.fps.yaw - f32(p.dx * 0.15)); e.fps.yaw = f32(e.fps.yaw % 360);
+    const r = e.fps.yaw * Math.PI / 180, fx = f32(-Math.sin(r)), fz = f32(-Math.cos(r));
+    const from = e.pos.slice();
+    if (p.fwd) { const s = f32(e.fps.speed * p.dt); e.pos = [f32(e.pos[0] + fx * s), e.pos[1], f32(e.pos[2] + fz * s)]; }
+    e.yaw = e.fps.yaw; e._fpsFrom = from; e._fpsTo = e.pos.slice();
+    rec.writes.push({ sys: 'FPS', name: e.name, pos: e.pos.slice(), yaw: e.yaw });
+  });
+  const runFol = () => scene.forEach(e => {
+    if (!e.fol || !e.fol.en) return;
+    const f = e.fol, wanted = [TARGET[0] + f.off[0], TARGET[1] + f.off[1], TARGET[2] + f.off[2]], wy = yawToward(wanted, TARGET);
+    if (!f.init) { f.sp = wanted.slice(); f.sy = wy; f.init = true; }
+    else { const t = f32(1 - Math.exp(-f.k * p.dt)); f.sp = f.sp.map((v, i) => f32(v + (wanted[i] - v) * t)); f.sy = f32(f.sy + angDiff(wy - f.sy) * t); }
+    e.pos = f.sp.slice(); e.yaw = f.sy;
+    rec.writes.push({ sys: 'Follow', name: e.name, pos: e.pos.slice(), yaw: e.yaw });
+  });
+  if (p.order === 'fps') { runFps(); runFol(); } else { runFol(); runFps(); }
+  scene.forEach((e, i) => {
+    const both = e.fps && e.fps.en && e.fol && e.fol.en;
+    if (both && p.order === 'fps' && e._fpsFrom && p.fwd) { const d = Math.hypot(e._fpsTo[0] - e._fpsFrom[0], e._fpsTo[2] - e._fpsFrom[2]); rec.lost += d; }
+    if (e._pendingJump && e.fps && e.fps.en) { rec.jump = { name: e.name, deg: angDiff(e.yaw - before[i].yaw) }; e._pendingJump = false; }
+    e._fpsFrom = null;
+    e.trail.push([e.pos[0], e.pos[2]]); if (e.trail.length > 40) e.trail.shift();
+  });
+  return rec;
+}
+function switchMode(e, useFollow) {
+  const folWasOn = !!(e.fol && e.fol.en);
+  if (e.fps) { if (!useFollow && folWasOn) e._pendingJump = true; e.fps.en = !useFollow; }
+  if (e.fol) { e.fol.en = useFollow; e.fol.init = false; }
+}
+(() => {
+  const cv = $('cvCtl'), ctx = cv.getContext('2d');
+  let mode = 'sep', order = 'fps', fwd = true, dt = 0.5, frame = 0, lost = 0, playing = null;
+  let scene = makeScene(mode); const logs = [];
+  const S = 4.6, X = x => 56 + (x + 60) * S, Z = z => 14 + (z + 40) * S;
+  function log(s) { logs.push(s); if (logs.length > 80) logs.shift(); $('ctLog').textContent = logs.join('\n'); $('ctLog').scrollTop = 1e9; }
+  function ui() {
+    seg($('ctMode'), [['sep', 'Deux caméras séparées'], ['same', 'Une seule entité (Camera_Cassee)']], mode, k => { mode = k; reset(); });
+    seg($('ctOrder'), [['fps', 'FPS puis Follow'], ['fol', 'Follow puis FPS']], order, k => { order = k; ui(); });
+    seg($('ctDt'), [['0.5', 'dt = 0.5 (pas fixe de l\'époque)'], ['0.0166667', 'dt = 1/60']], String(dt), k => { dt = parseFloat(k); ui(); });
+    const anyF = scene.some(e => e.fps && e.fps.en), anyL = scene.some(e => e.fol && e.fol.en);
+    $('ctFps').classList.toggle('on', anyF); $('ctFol').classList.toggle('on', anyL);
+    $('ctFwd').classList.toggle('on', fwd);
+    $('ctSwFps').disabled = $('ctSwFol').disabled = (mode === 'sep');
+    $('ctSwFps').title = $('ctSwFol').title = mode === 'sep' ? 'N\'a de sens que pour une entité qui porte les deux contrôleurs' : '';
+    const v = checkExclusivity(scene);
+    $('ctLamp').innerHTML = v.length ? '<span class="lamp bad">Violation : ' + v.join(', ') + ' — LV3_ASSERT</span>' : '<span class="lamp ok">Aucune entité à deux écrivains</span>';
+    const fe = scene.find(e => e.fps);
+    $('ctTry').textContent = !fe ? '—' : (fe.fol ? 'non nul (' + (fe.fol.en ? 'enabled' : 'disabled') + ')' : 'nullptr');
+    $('ctFrame').textContent = frame;
+    $('ctLost').textContent = fmt(lost, 2) + ' u';
+    const c = scene.find(e => e.fps) || scene[0];
+    $('ctYaw').textContent = c.fps ? fmt(c.fps.yaw, 1) + '° / ' + fmt(c.yaw, 1) + '°' : '—';
+    draw();
+  }
+  function reset() { scene = makeScene(mode); frame = 0; lost = 0; logs.length = 0; log('— scène réinitialisée : ' + scene.map(e => e.name).join(', ')); ui(); }
+  function step() {
+    const viol = checkExclusivity(scene);
+    if (viol.length) log('frame ' + (frame + 1) + ' · CheckControllerExclusivity : [INVARIANT] ' + viol.join(', ') + ' — l\'EXE s\'arrêterait ici en Debug');
+    const r = stepFrame(scene, { order, fwd, dx: +$('ctDx').value, dt });
+    frame++; lost += r.lost;
+    r.writes.forEach(w => log('frame ' + frame + ' · ' + w.sys.padEnd(6) + ' écrit ' + w.name + ' pos=(' + fmt(w.pos[0], 2) + ', ' + fmt(w.pos[1], 2) + ', ' + fmt(w.pos[2], 2) + ') yaw=' + fmt(w.yaw, 1) + '°'));
+    if (r.lost > 0) log('          → déplacement FPS effacé : ' + fmt(r.lost, 2) + ' u');
+    if (r.jump) log('          → SAUT DE ROTATION à la bascule : ' + fmt(r.jump.deg, 1) + '° (yaw interne FPS accumulé pendant qu\'il était écrasé)');
+    ui();
+  }
+  function draw() {
+    const W = cv.width, H = cv.height; ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.font = '11px ' + css('--mono'); ctx.fillStyle = css('--faint');
+    for (let x = -60; x <= 30; x += 10) { ctx.beginPath(); ctx.moveTo(X(x), Z(-40)); ctx.lineTo(X(x), Z(45)); ctx.stroke(); ctx.fillText('x ' + x, X(x) + 2, Z(45) - 3); }
+    for (let z = -40; z <= 40; z += 10) { ctx.beginPath(); ctx.moveTo(X(-60), Z(z)); ctx.lineTo(X(30), Z(z)); ctx.stroke(); ctx.fillText('z ' + z, X(-60) - 44, Z(z) + 4); }
+    ctx.fillStyle = css('--warn'); ctx.fillRect(X(TARGET[0]) - 8, Z(TARGET[2]) - 8, 16, 16);
+    ctx.fillStyle = css('--ink'); ctx.font = '600 12px ' + css('--sans'); ctx.fillText('Cube1 (cible)', X(TARGET[0]) - 38, Z(TARGET[2]) + 24);
+    const viol = new Set(checkExclusivity(scene));
+    scene.forEach(e => {
+      const col = viol.has(e.name) ? css('--bad') : (e.fps ? css('--accent') : css('--vio'));
+      ctx.strokeStyle = col; ctx.globalAlpha = .45; ctx.beginPath();
+      e.trail.forEach((p, i) => i ? ctx.lineTo(X(p[0]), Z(p[1])) : ctx.moveTo(X(p[0]), Z(p[1]))); ctx.stroke(); ctx.globalAlpha = 1;
+      const r = e.yaw * Math.PI / 180, dx = -Math.sin(r), dz = -Math.cos(r), cx = X(e.pos[0]), cy = Z(e.pos[2]);
+      ctx.fillStyle = col; ctx.beginPath();
+      ctx.moveTo(cx + dx * 15, cy + dz * 15); ctx.lineTo(cx - dz * 8 - dx * 7, cy + dx * 8 - dz * 7); ctx.lineTo(cx + dz * 8 - dx * 7, cy - dx * 8 - dz * 7); ctx.closePath(); ctx.fill();
+      if (e.fps) { const ri = e.fps.yaw * Math.PI / 180; ctx.setLineDash([4, 3]); ctx.strokeStyle = css('--accent'); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx - Math.sin(ri) * 34, cy - Math.cos(ri) * 34); ctx.stroke(); ctx.setLineDash([]); }
+      ctx.fillStyle = css('--ink'); ctx.font = '12px ' + css('--sans'); ctx.fillText(e.name, cx + 12, cy - 10);
+    });
+    ctx.font = '11px ' + css('--sans'); ctx.fillStyle = css('--dim');
+    ctx.fillText('trait plein : orientation écrite dans le Transform · pointillé : yaw interne du FPS', 12, H - 8);
+  }
+  $('ctFps').onclick = () => { const on = !scene.some(e => e.fps && e.fps.en); scene.forEach(e => { if (e.fps) { if (on && !e.fps.en && e.fol && e.fol.en && order === 'fol') e._pendingJump = true; e.fps.en = on; } }); log('— FPS m_isEnabled = ' + on + ' (écriture directe, sans SwitchCameraMode)'); ui(); };
+  $('ctFol').onclick = () => { const on = !scene.some(e => e.fol && e.fol.en); scene.forEach(e => { if (e.fol) { e.fol.en = on; } }); log('— Follow m_isEnabled = ' + on + ' (écriture directe, sans SwitchCameraMode)'); ui(); };
+  $('ctFwd').onclick = () => { fwd = !fwd; ui(); };
+  $('ctDx').oninput = () => { $('lDx').textContent = $('ctDx').value; };
+  $('ctStep').onclick = step;
+  $('ctReset').onclick = () => { if (playing) { clearInterval(playing); playing = null; $('ctPlay').textContent = 'Lecture'; } reset(); };
+  $('ctPlay').onclick = () => { if (playing) { clearInterval(playing); playing = null; $('ctPlay').textContent = 'Lecture'; } else { playing = setInterval(step, 450); $('ctPlay').textContent = 'Pause'; } };
+  $('ctSwFps').onclick = () => { scene.forEach(e => switchMode(e, false)); log('— SwitchCameraMode(' + scene[0].name + ', false) : FPS actif, Follow coupé'); ui(); };
+  $('ctSwFol').onclick = () => { scene.forEach(e => switchMode(e, true)); log('— SwitchCameraMode(' + scene[0].name + ', true) : Follow actif, FPS coupé, snap à la reprise'); ui(); };
+  redrawHooks.push(draw);
+  reset();
+})();
+
+/* ════════════════ §8 — nombres des contre-exemples ════════════════ */
+(() => {
+  const m = readAs(buildMem('count', 'debug'), 0, 4, 'u32');
+  $('ce3m').textContent = readAs(buildMem('count', 'debug'), 0, 4, 'u32').hexb; $('ce3mv').textContent = m.val;
+  const dv = new DataView(new ArrayBuffer(4)); dv.setUint32(0, 0xCCCCCCCC, true);
+  $('ce3z').textContent = dv.getFloat32(0, true).toExponential(7) + ' (float)';
+
+  const sc = makeScene('same'); const p = { order: 'fps', fwd: true, dx: 12, dt: 0.5 };
+  let rows = '<tr><th>Frame</th><th>FPS écrit</th><th>Follow écrit</th><th>Transform final</th><th>yaw interne FPS</th><th>yaw affiché</th></tr>';
+  let lost = 0, jump = null;
+  const P = v => '(' + fmt(v[0], 2) + ', ' + fmt(v[2], 2) + ')';
+  for (let f = 1; f <= 5; f++) {
+    if (f === 5) switchMode(sc[0], false);
+    const r = stepFrame(sc, p); lost += r.lost; if (r.jump) jump = r.jump;
+    const wf = r.writes.find(w => w.sys === 'FPS'), wl = r.writes.find(w => w.sys === 'Follow');
+    rows += '<tr' + (f === 5 ? ' class="badrow"' : '') + '><td class="n">' + f + (f === 5 ? ' · après Switch' : '') + '</td><td class="n">' + (wf ? P(wf.pos) : '—') + '</td><td class="n">' + (wl ? P(wl.pos) : '—') + '</td><td class="n"><b>' + P(sc[0].pos) + '</b></td><td class="n">' + fmt(sc[0].fps.yaw, 1) + '°</td><td class="n">' + fmt(sc[0].yaw, 1) + '°</td></tr>';
+  }
+  $('ce5').innerHTML = rows;
+  $('ce5note').innerHTML = '<b>Bilan.</b> En 4 frames, le FPS a calculé <b>' + fmt(lost, 2) + ' unités</b> de déplacement, toutes effacées par le suivi (positions en (x, z)). Son yaw interne a dérivé jusqu\'à <b>' + fmt(-4 * 12 * 0.15, 1) + '°</b> sans jamais être affiché. À la bascule, la caméra pivote d\'un coup de <b>' + (jump ? fmt(jump.deg, 1) : '—') + '°</b> en une frame. Aucune erreur, aucun log : c\'est exactement ce que <code>CheckControllerExclusivity</code> transforme en arrêt à la frame 1.';
+})();
+
+/* ════════════════ §7 — les étapes ════════════════ */
+(() => {
+  let ver = 'bug', cur = 0;
+  const desc = {
+    bug: 'État fautif : ligne <code>= NULL_ENTITY</code> (3b5299f), shader en <code>static_cast</code> direct (f2dec70), boucle sans invariant.',
+    fix: 'État corrigé : <code>= entity</code> (fed81e6), <code>AsFragmentContext</code> (3b5299f), <code>CheckControllerExclusivity</code> appelée chaque frame (78643c2).'
+  };
+  const el = v => runElection(SCENE_CAMS(), v === 'bug' ? 'D' : 'E');
+  const kv = (k, v) => '<div class="kv"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
+  const noSimd = why => '<div class="note"><b>Pas de pendant vectorisé.</b> ' + why + '</div>';
+  // profondeur et poids
+  const B = [f32(0.2), f32(0.3), f32(0.5)];
+  const zScalar = (w0, w1, w2) => f32(f32(f32(w0 * Z3[0]) + f32(w1 * Z3[1])) + f32(w2 * Z3[2]));
+  const zFma = (w0, w1, w2) => { let z = f32(w0 * Z3[0]); z = f32(w1 * Z3[1] + z); z = f32(w2 * Z3[2] + z); return z; };
+  const ulp = (a, b) => { const d = new DataView(new ArrayBuffer(8)); d.setFloat32(0, a); d.setFloat32(4, b); return Math.abs(d.getInt32(0) - d.getInt32(4)); };
+
+  const steps = [
+    { bug: 23, t: 'Lecture de FPS_Camera', obj: 'Premier nœud caméra du fichier. <b>Pourquoi ce calcul :</b> c\'est ici que l\'élection s\'amorce ; l\'élue courante est encore vide, donc cette caméra doit gagner.',
+      code: v => 'if (c.m_isActive)                                   // true\n{\n    const CameraComponent* current = (out_activeCamera != NULL_ENTITY) ? ... : nullptr;\n    if (!current || c.m_priority >= current->m_priority)   // !nullptr → vrai\n        ' + (v === 'bug' ? 'out_activeCamera = NULL_ENTITY;' : 'out_activeCamera = entity;') + '\n}',
+      inp: v => kv('out_activeCamera (initialisé par main.cpp)', hex32(NULL_E)) + kv('entity', hex32(3)) + kv('active / priority', 'true / 10'),
+      out: v => { const r = el(v).rows[0]; return kv('current', r.curTxt) + kv('condition', r.condTxt) + kv('out_activeCamera', '<b>' + hex32(r.out) + '</b>'); },
+      simd: () => noSimd('Code de chargement, exécuté une fois par caméra, avec un branchement par nœud. Trois itérations ne remplissent pas un registre de 8 couloirs.') },
+    { bug: 23, t: 'Lecture de Follow_Camera', obj: 'Deuxième candidate. <b>Pourquoi ce calcul :</b> c\'est le premier vrai duel ; il faut relire l\'élue courante pour comparer les priorités.',
+      code: v => 'const CameraComponent* current = (out_activeCamera != NULL_ENTITY)\n    ? ctx.registry.TryGet<CameraComponent>(out_activeCamera)\n    : nullptr;\nif (!current || c.m_priority >= current->m_priority)   // 5 >= 10 ?\n    ' + (v === 'bug' ? 'out_activeCamera = NULL_ENTITY;' : 'out_activeCamera = entity;'),
+      inp: v => kv('out_activeCamera (étape 1)', hex32(el(v).rows[0].out)) + kv('entity', hex32(4)) + kv('active / priority', 'true / 5'),
+      out: v => { const r = el(v).rows[1]; return kv('current', r.curTxt) + kv('condition', r.condTxt) + kv('out_activeCamera', '<b>' + hex32(r.out) + '</b>') + (v === 'bug' ? '<p class="small" style="margin:6px 0 0">L\'élue de l\'étape 1 n\'ayant jamais été écrite, <code>current</code> est encore nul : Follow « gagne » à son tour, et écrit encore <code>NULL_ENTITY</code>.</p>' : '<p class="small" style="margin:6px 0 0">FPS_Camera reste élue : 5 &lt; 10.</p>'); },
+      simd: () => noSimd('Même raison qu\'à l\'étape 1.') },
+    { bug: 23, t: 'Lecture de Overview_Camera', obj: 'Dernière caméra. <b>Pourquoi ce calcul :</b> vérifier qu\'une caméra inactive ne participe pas, contrairement à la toute première version (ef76678).',
+      code: () => 'if (c.m_isActive)          // false : tout le bloc est sauté\n{ ... }',
+      inp: v => kv('out_activeCamera (étape 2)', hex32(el(v).rows[1].out)) + kv('entity', hex32(5)) + kv('active / priority', 'false / 0'),
+      out: v => { const r = el(v).rows[2]; return kv('condition', r.condTxt) + kv('out_activeCamera', '<b>' + hex32(r.out) + '</b>'); },
+      simd: () => noSimd('Idem.') },
+    { bug: 23, t: 'Retour à main.cpp et comparaison', obj: 'Fin de <code>LoadSceneGraph</code>. <b>Pourquoi ce calcul :</b> un bug latent ne se voit pas à l\'écran ; on le démasque en comparant la sortie à un second calcul indépendant.',
+      code: () => 'Entity activeCamera = NULL_ENTITY;\nSceneSerializer::LoadSceneGraph(dir, "assets/SceneBasicTest.json", registry, activeCamera, rm);\n\nconst Entity reference = FindActiveCamera(registry);   // > strict, ordre dense\nLV3_ASSERT(activeCamera == reference);                  // test T1 (§9)',
+      inp: v => kv('activeCamera (étape 3)', hex32(el(v).out)),
+      out: v => { const a = el(v).out, ref = findActiveCamera(SCENE_CAMS()); return kv('FindActiveCamera', hex32(ref) + ' (FPS_Camera)') + kv('égalité', a === ref ? '<span style="color:var(--ok)">vraie</span>' : '<span style="color:var(--bad)">FAUSSE</span>') + kv('consommé par main.cpp à l\'époque', 'non (FindCameraByName en dur)'); },
+      simd: () => noSimd('Une comparaison d\'entiers par chargement de scène.') },
+
+    { bug: 24, t: 'DrawTriangle remplit m_ctx', obj: 'Le <code>Renderer</code> met à jour son contexte unique pour le triangle courant. <b>Pourquoi ce calcul :</b> c\'est l\'objet qui va traverser le <code>void*</code> ; sa disposition mémoire est ce que le shader relira.',
+      code: () => 'm_ctx.color = color;\nm_ctx.z0 = tri.z0;        m_ctx.z1 = tri.z1;        m_ctx.z2 = tri.z2;\nm_ctx.invW0 = tri.invW0;  m_ctx.invW1 = tri.invW1;  m_ctx.invW2 = tri.invW2;',
+      inp: () => kv('near', '0.1 (far infini : z_ndc = n / d)') + kv('distances d₀, d₁, d₂', '3, 5, 8'),
+      out: () => kv('z0, z1, z2', Z3.map(z => fmt(z, 7)).join(' · ')) + kv('invW0, invW1, invW2', IW3.map(z => fmt(z, 7)).join(' · ')) + kv('sizeof(FragmentContext)', '56 o (Debug) · 48 o (Release)'),
+      simd: () => noSimd('Trois écritures par triangle, hors de la boucle pixel. La vectorisation concerne ce qui suit.') },
+    { bug: 24, t: 'Effacement de type : &m_ctx devient void*', obj: 'Le rasterizer est générique. <b>Pourquoi ce calcul :</b> c\'est l\'instant précis où le compilateur perd le type ; tout contrôle ultérieur devra être fait à l\'exécution.',
+      code: () => 'RasterizeTriangle(tri.v0, tri.v1, tri.v2, m_vp, m_fragment, &m_ctx);\n//                                          ^ FragmentCallback  ^ void* userData',
+      inp: () => kv('&m_ctx', 'FragmentContext*'),
+      out: () => kv('userData', 'void* — aucun type') + kv('m_fragment', 'ShadeFragment_Barycentric'),
+      simd: () => noSimd('Un passage d\'adresse.') },
+    { bug: 24, t: 'Conversion dans le shader', obj: 'Le shader reconvertit l\'adresse. <b>Pourquoi ce calcul :</b> c\'est le seul endroit où l\'on peut encore vérifier qu\'on tient bien un <code>FragmentContext</code>.',
+      code: v => v === 'bug' ? 'auto* ctx = static_cast<FragmentContext*>(userData);   // aucune vérification' : 'auto* ctx = AsFragmentContext(userData);\n// → LV3_ASSERT(ctx != nullptr);\n// → LV3_ASSERT(ctx->magic == kFragmentContextMagic);',
+      inp: () => kv('userData', 'void* (étape 6)'),
+      out: v => v === 'bug' ? kv('vérification', '<span style="color:var(--bad)">aucune</span>') + kv('si le mauvais objet arrive', 'lecture hors objet (§4.2, §8.3)') : kv('ctx->magic lu à l\'offset 0', hex32(MAGIC)) + kv('kFragmentContextMagic', hex32(MAGIC)) + kv('assert', '<span style="color:var(--ok)">passe</span>'),
+      simd: () => '<div class="note"><b>En vectorisé :</b> ne pas vérifier par couloir. La sentinelle se contrôle <b>une fois par triangle</b>, avant la boucle de blocs de 8 pixels : un seul <code>AsFragmentContext</code>, puis un pointeur typé passé au noyau AVX2. C\'est exactement la forme qu\'a prise plus tard le gabarit <code>ShadeAt&lt;Shader&gt;</code>.</div>' },
+    { bug: 24, t: 'Profondeur interpolée et early-Z', obj: 'Premier usage du contexte. <b>Pourquoi ce calcul :</b> c\'est la première lecture qui dépend des bons offsets ; sur un mauvais objet, c\'est ici que la mémoire étrangère serait lue puis écrite.',
+      code: () => 'const float z = bary.w0 * ctx->z0 + bary.w1 * ctx->z1 + bary.w2 * ctx->z2;\nif (!ctx->db->TestAndSet(x, y, z)) return;     // reverse-Z : GREATER, clear à 0\n// couleur : r = w0·255, g = w1·255, b = w2·255',
+      inp: () => kv('barycentriques', B.map(b => fmt(b, 7)).join(' · ')) + kv('z0, z1, z2 (étape 5)', Z3.map(z => fmt(z, 7)).join(' · ')) + kv('profondeur stockée', '0 (clear)'),
+      out: () => { const z = zScalar(...B); return kv('z (float32)', fmt(z, 9)) + kv('z > stockée ?', 'oui → écrit') + kv('couleur (r, g, b)', [B[0], B[1], B[2]].map(w => Math.trunc(f32(w * 255))).join(', ')); },
+      simd: () => {
+        const stored = [0, 0, 0, 0, 0, f32(0.03), 0, 0];
+        let t = '<div class="lanes"><table><tr><th>Couloir</th><th>w0</th><th>w1</th><th>w2</th><th>z scalaire</th><th>z FMA</th><th>écart</th><th>stockée</th><th>masque GT</th></tr>';
+        let mask = 0;
+        for (let k = 0; k < 8; k++) {
+          const w0 = f32(0.45 - 0.05 * k), w1 = f32(0.25), w2 = f32(1 - w0 - w1);
+          const zs = zScalar(w0, w1, w2), zf = zFma(w0, w1, w2), gt = zf > stored[k];
+          if (gt) mask |= 1 << k;
+          t += '<tr><td class="n">' + k + '</td><td class="n">' + fmt(w0, 4) + '</td><td class="n">' + fmt(w1, 4) + '</td><td class="n">' + fmt(w2, 4) + '</td><td class="n">' + fmt(zs, 9) + '</td><td class="n">' + fmt(zf, 9) + '</td><td class="n">' + ulp(zs, zf) + ' ulp</td><td class="n">' + fmt(stored[k], 4) + '</td><td class="n ' + (gt ? 'lane-in' : 'lane-out') + '" style="color:var(' + (gt ? '--ok' : '--bad') + ')">' + (gt ? '1' : '0') + '</td></tr>';
+        }
+        t += '</table></div>';
+        return '<h4>Pendant vectorisé AVX2 · 8 pixels consécutifs d\'une ligne</h4><pre><code>' + hl('// une fois par triangle\nconst __m256 Z0 = _mm256_set1_ps(ctx->z0), Z1 = _mm256_set1_ps(ctx->z1), Z2 = _mm256_set1_ps(ctx->z2);\n// par bloc de 8 pixels\n__m256 z = _mm256_mul_ps(w0, Z0);\nz = _mm256_fmadd_ps(w1, Z1, z);              // un seul arrondi par FMA\nz = _mm256_fmadd_ps(w2, Z2, z);\nconst __m256 old  = _mm256_loadu_ps(&depth[y * width + x]);\nconst __m256 pass = _mm256_and_ps(_mm256_cmp_ps(z, old, _CMP_GT_OQ), cover);  // cover : masque des 3 fonctions de bord\n_mm256_storeu_ps(&depth[y * width + x], _mm256_blendv_ps(old, z, pass));\nconst int mask = _mm256_movemask_ps(pass);   // bits des pixels à colorier') + '</code></pre>' + t + '<p class="small">Masque obtenu : <code>0b' + mask.toString(2).padStart(8, '0').split('').reverse().join('') + '</code> (couloir 0 à gauche) — le couloir 5 est rejeté par une profondeur déjà plus proche. La colonne « écart » montre que la FMA (un arrondi) et la forme scalaire (deux arrondis) peuvent différer d\'1 ulp : c\'est sans effet sur le test, mais une TNR qui compare bit à bit scalaire et AVX2 doit le savoir. Émulation JS : produit exact en double, puis arrondi float32.</p>';
+      } },
+
+    { bug: 25, t: 'CheckControllerExclusivity sur SceneBasicTest', obj: 'Appel de début de frame. <b>Pourquoi ce calcul :</b> prouver que la scène réelle est saine avant que les contrôleurs n\'écrivent.',
+      code: () => 'for (auto&& [entity, fps] : registry.ViewGroup<FPSControllerComponent>())   // une seule entité : FPS_Camera\n{\n    if (!fps.m_isEnabled) continue;                                           // enabled\n    const CameraFollowComponent* follow = registry.TryGet<CameraFollowComponent>(entity);\n    if (!follow || !follow->m_isEnabled) continue;                            // follow == nullptr\n    ...\n}',
+      inp: () => kv('entités avec FPSControllerComponent', 'FPS_Camera (index 3)') + kv('entités avec CameraFollowComponent', 'Follow_Camera (index 4)'),
+      out: v => v === 'bug' ? kv('appel', '<span style="color:var(--bad)">absent de la boucle</span>') + kv('effet', 'aucun — la scène est saine de toute façon') : kv('TryGet<CameraFollowComponent>(3)', 'nullptr') + kv('violations', '0') + kv('verdict', '<span style="color:var(--ok)">muet, à raison</span>'),
+      simd: () => noSimd('Au plus 8 caméras, une recherche dans un SparseSet par entité, une fois par frame : coût négligeable, et le branchement est la nature même du test.') },
+    { bug: 25, t: 'Saboteur Camera_Cassee', obj: 'Le nœud de test T2 ajouté à la scène. <b>Pourquoi ce calcul :</b> principe 6, un filet doit avoir été vu échouer.',
+      code: () => '// entité 6 : CameraFPS { enabled: true } + CameraFollow { enabled: true }\nconst CameraFollowComponent* follow = registry.TryGet<CameraFollowComponent>(entity);   // non nul\nif (!follow || !follow->m_isEnabled) continue;   // ne continue pas\nLogger::error("[INVARIANT] Camera_Cassee : FPSControllerComponent ET CameraFollowComponent ...");\nLV3_ASSERT(false);',
+      inp: () => kv('entités FPS visitées', 'FPS_Camera (3), Camera_Cassee (6)'),
+      out: v => v === 'bug' ? kv('détection', '<span style="color:var(--bad)">aucune</span>') + kv('symptôme', 'caméra figée sur la position de suivi, souris sans effet') : kv('TryGet<CameraFollowComponent>(6)', 'non nul, enabled') + kv('violations', '1 : Camera_Cassee') + kv('verdict', '<span style="color:var(--bad)">LV3_ASSERT saute</span> — attendu'),
+      simd: () => noSimd('Idem étape 9.') },
+    { bug: 25, t: 'La frame sans filet', obj: 'Ce qui se passe dans la frame si personne n\'arrête l\'exécution. <b>Pourquoi ce calcul :</b> chiffrer le dégât que l\'invariant empêche.',
+      code: () => 'FPSControllerSystem(registry, input, dt);   // écrit tr.m_local.position / rotation\nCameraFollowSystem(registry, dt);           // ÉCRASE les deux, même frame',
+      inp: () => kv('Camera_Cassee', 'pos (0, 5, 10) · moveSpeed 5 · offset (0, 2, −6)') + kv('entrée', 'Z maintenue · souris 12 px · dt 0.5'),
+      out: v => {
+        if (v === 'fix') return kv('frame', 'n\'a pas lieu : arrêt à l\'étape 10');
+        const sc = makeScene('same'); const r = stepFrame(sc, { order: 'fps', fwd: true, dx: 12, dt: 0.5 });
+        const wf = r.writes.find(w => w.sys === 'FPS'), wl = r.writes.find(w => w.sys === 'Follow');
+        const P = q => '(' + fmt(q[0], 2) + ', ' + fmt(q[1], 2) + ', ' + fmt(q[2], 2) + ')';
+        return kv('FPS écrit', P(wf.pos) + ' · yaw ' + fmt(wf.yaw, 1) + '°') + kv('Follow écrit (snap 1re frame)', P(wl.pos) + ' · yaw ' + fmt(wl.yaw, 1) + '°') + kv('Transform final', '<b>' + P(sc[0].pos) + '</b>') + kv('travail FPS perdu', fmt(r.lost, 2) + ' u');
+      },
+      simd: () => noSimd('Le sujet est l\'ordre d\'écriture entre systèmes, pas un calcul de masse.') },
+  ];
+
+  function render() {
+    seg($('stVer'), [['bug', 'Avant le lot'], ['fix', 'Après le lot']], ver, k => { ver = k; render(); });
+    $('stVerDesc').innerHTML = desc[ver];
+    const bar = $('stepbar'); bar.innerHTML = '';
+    steps.forEach((s, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab');
+      b.className = i === cur ? 'on' : ''; b.setAttribute('aria-selected', i === cur ? 'true' : 'false');
+      b.innerHTML = (i + 1) + '<span class="bt">· ' + s.bug + '</span>';
+      b.onclick = () => { cur = i; render(); };
+      bar.appendChild(b);
+    });
+    const s = steps[cur];
+    $('steps').innerHTML = '<div class="card step"><h3 style="margin-top:0">Étape ' + (cur + 1) + ' — ' + s.t + ' <span class="tag acc">bug ' + s.bug + '</span></h3>' +
+      '<p class="obj"><b>Objectif.</b> ' + s.obj + '</p>' +
+      '<pre><code>' + hl(s.code(ver)) + '</code></pre>' +
+      '<div class="io"><div class="box in"><h5>Entrée (résultat de l\'étape précédente)</h5>' + s.inp(ver) + '</div><div class="box out"><h5>Résultat de cette étape</h5>' + s.out(ver) + '</div></div>' +
+      s.simd() +
+      '<div class="seg" style="margin-top:12px"><button class="btn" type="button" id="stPrev" ' + (cur === 0 ? 'disabled' : '') + '>Étape précédente</button><button class="btn" type="button" id="stNext" ' + (cur === steps.length - 1 ? 'disabled' : '') + '>Étape suivante</button></div></div>';
+    if ($('stPrev')) $('stPrev').onclick = () => { cur--; render(); };
+    if ($('stNext')) $('stNext').onclick = () => { cur++; render(); };
+  }
+  render();
+})();
+</script>
+</body></html>

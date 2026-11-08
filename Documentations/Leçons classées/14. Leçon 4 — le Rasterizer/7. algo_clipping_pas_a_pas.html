@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>ClipTriangleNear — déroulé pas à pas</title>
+<style>
+  body { background:#12141a; color:#e8e8ea; font-family:'Segoe UI',system-ui,sans-serif; margin:0; padding:22px; }
+  h2 { margin:0 0 4px; font-weight:600; }
+  .sub { color:#8a8f9c; font-size:13px; margin-bottom:16px; max-width:720px; line-height:1.5; }
+  .layout { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  canvas { background:#0d0f13; border:1px solid #2e323d; border-radius:6px; display:block; }
+  .panel { background:#1a1d24; border:1px solid #2e323d; border-radius:6px; padding:16px; width:340px; font-size:13px; }
+  .panel h3 { margin:0 0 10px; font-size:11px; color:#8a8f9c; text-transform:uppercase; letter-spacing:.06em; }
+  .cases { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .cases button { flex:1 1 45%; background:#2e323d; color:#e8e8ea; border:1px solid #3a3f4b;
+    border-radius:6px; padding:7px 6px; font-size:11px; cursor:pointer; font-family:inherit; }
+  .cases button.active { background:#2563eb; border-color:#2563eb; }
+  .nav { display:flex; gap:8px; margin:12px 0; }
+  .nav button { flex:1; background:#2e323d; color:#e8e8ea; border:1px solid #3a3f4b;
+    border-radius:6px; padding:9px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .nav button.primary { background:#2563eb; border-color:#2563eb; }
+  .nav button:disabled { opacity:.35; cursor:default; }
+  .code { background:#0d0f13; border:1px solid #262a33; border-radius:6px; padding:11px;
+    font-family:Consolas,monospace; font-size:11.5px; line-height:1.65; white-space:pre; }
+  .code .hi { background:rgba(37,99,235,0.32); display:inline-block; width:100%; }
+  .code .dim { color:#4b5563; }
+  .out { margin-top:12px; }
+  .chip { display:inline-block; background:#21252f; border:1px solid #3a3f4b; border-radius:4px;
+    padding:3px 8px; margin:3px 4px 3px 0; font-family:Consolas,monospace; font-size:11px; }
+  .chip.vtx { border-color:#4ade80; color:#4ade80; }
+  .chip.itx { border-color:#facc15; color:#facc15; }
+  .expl { margin-top:12px; font-size:12px; color:#8a8f9c; line-height:1.6; min-height:56px; }
+  .ok{color:#4ade80}.bad{color:#f87171}.warn{color:#facc15}
+  code{color:#a5b4fc;font-family:Consolas,monospace}
+</style>
+</head>
+<body>
+
+<h2>ClipTriangleNear — déroulé arête par arête</h2>
+<div class="sub">Choisis une configuration, puis avance pas à pas. La ligne exécutée est surlignée, et le tableau <code>dst[]</code> se remplit dans l'ordre réel d'émission.</div>
+
+<div class="layout">
+  <canvas id="cv" width="420" height="380"></canvas>
+
+  <div class="panel">
+    <h3>Configuration</h3>
+    <div class="cases">
+      <button data-c="3" class="active">3 gardés (accept)</button>
+      <button data-c="0">0 gardé (rejet)</button>
+      <button data-c="1">1 gardé → triangle</button>
+      <button data-c="2">2 gardés → quad</button>
+    </div>
+
+    <h3>Exécution</h3>
+    <div class="code" id="code"></div>
+
+    <div class="nav">
+      <button id="bPrev">◀ Précédent</button>
+      <button id="bNext" class="primary">Suivant ▶</button>
+    </div>
+
+    <h3>dst[ ] — sortie</h3>
+    <div class="out" id="out"><span class="chip dim">vide</span></div>
+
+    <div class="expl" id="expl"></div>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const PLANE_Y = 190;                 // le plan near, horizontal
+let caseId = 3, step = 0;
+
+// dedans = au-dessus de la ligne  →  d = PLANE_Y - y
+const CONFIGS = {
+  3: [ {x:110,y:70},  {x:300,y:95},  {x:200,y:165} ],
+  0: [ {x:110,y:260}, {x:300,y:290}, {x:200,y:350} ],
+  1: [ {x:200,y:80},  {x:320,y:300}, {x: 90,y:290} ],
+  2: [ {x:100,y:90},  {x:320,y:110}, {x:210,y:320} ]
+};
+
+function d(p){ return PLANE_Y - p.y; }
+function lerpP(a,b,t){ return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t}; }
+
+// Construit la trace complète : liste d'étapes
+function buildTrace(){
+  const T = CONFIGS[caseId];
+  const dd = T.map(d);
+  const steps = [];
+
+  steps.push({ kind:'dist', line:'dist',
+    expl:`Calcul des 3 distances : <b>d0=${dd[0].toFixed(0)}</b>, <b>d1=${dd[1].toFixed(0)}</b>, <b>d2=${dd[2].toFixed(0)}</b>. Un <code>w − z</code> par sommet, trois soustractions.`,
+    out:[] });
+
+  if(dd.every(v=>v<0)){
+    steps.push({ kind:'reject', line:'reject',
+      expl:`<span class='bad'>Rejet trivial.</span> Les 3 distances sont négatives : le triangle est entièrement derrière le plan near. <b>return 0</b> — aucun autre calcul.`,
+      out:[] });
+    return {T,dd,steps};
+  }
+
+  steps.push({ kind:'noreject', line:'reject',
+    expl:`Test de rejet trivial : au moins une distance est positive → on continue.`, out:[] });
+
+  if(dd.every(v=>v>=0)){
+    steps.push({ kind:'accept', line:'accept',
+      expl:`<span class='ok'>Acceptation triviale.</span> Les 3 distances sont positives : rien à couper. Copie directe, <b>return 3</b>. <b>C'est le chemin emprunté par ≈95 % des triangles.</b>`,
+      out:[{t:'v',i:0},{t:'v',i:1},{t:'v',i:2}] });
+    return {T,dd,steps};
+  }
+
+  steps.push({ kind:'noaccept', line:'accept',
+    expl:`Test d'acceptation triviale : au moins une distance est négative → le triangle <b>traverse</b> le plan. On passe au parcours des arêtes.`, out:[] });
+
+  // parcours
+  const out=[];
+  for(let i=0;i<3;i++){
+    const j=(i+1)%3;
+    steps.push({ kind:'edge', line:'loop', i, j,
+      expl:`<b>Arête ${i} → ${j}</b> &nbsp; d${i} = ${dd[i].toFixed(0)} (${dd[i]>=0?'<span class="ok">dedans</span>':'<span class="bad">dehors</span>'}), d${j} = ${dd[j].toFixed(0)} (${dd[j]>=0?'<span class="ok">dedans</span>':'<span class="bad">dehors</span>'}).`,
+      out:[...out] });
+
+    if(dd[i]>=0){
+      out.push({t:'v',i});
+      steps.push({ kind:'emitV', line:'emitV', i, j,
+        expl:`<code>d${i} ≥ 0</code> → on <b>émet le sommet V${i}</b>. Il est conservé tel quel.`,
+        out:[...out] });
+    } else {
+      steps.push({ kind:'skipV', line:'emitV', i, j,
+        expl:`<code>d${i} < 0</code> → V${i} est <b>rejeté</b>, on n'émet rien pour ce sommet.`,
+        out:[...out] });
+    }
+
+    if((dd[i]>=0)!==(dd[j]>=0)){
+      const t = dd[i]/(dd[i]-dd[j]);
+      out.push({t:'i',i,j,tv:t});
+      steps.push({ kind:'emitI', line:'emitI', i, j, tv:t,
+        expl:`Changement de signe → l'arête <b>traverse le plan</b>. <code>t = d${i}/(d${i}−d${j}) = ${t.toFixed(3)}</code>, on émet l'<b>intersection I${i}${j}</b> (clip <i>et</i> tous les attributs interpolés).`,
+        out:[...out] });
+    } else {
+      steps.push({ kind:'skipI', line:'emitI', i, j,
+        expl:`Pas de changement de signe : l'arête ne traverse pas le plan. Aucune intersection, <b>aucune division</b>.`,
+        out:[...out] });
+    }
+  }
+
+  steps.push({ kind:'done', line:'return',
+    expl:`<span class='ok'>Terminé.</span> <b>count = ${out.length}</b> → polygone à ${out.length} sommets → <b>${out.length-2} triangle(s)</b> émis par l'éventail chez l'appelant.`,
+    out:[...out] });
+
+  return {T,dd,steps};
+}
+
+const CODE = [
+  {id:'dist',   txt:'d[i] ← src[i].w − src[i].z'},
+  {id:'reject', txt:'SI d0<0 ET d1<0 ET d2<0 → return 0'},
+  {id:'accept', txt:'SI d0≥0 ET d1≥0 ET d2≥0 → return 3'},
+  {id:'loop',   txt:'POUR i DE 0 À 2 :   j ← (i+1) mod 3'},
+  {id:'emitV',  txt:'   SI d[i] ≥ 0 :  émettre src[i]'},
+  {id:'emitI',  txt:'   SI signe(d[i]) ≠ signe(d[j]) :'},
+  {id:'emitI2', txt:'      t ← d[i]/(d[i]−d[j])'},
+  {id:'emitI3', txt:'      émettre Lerp(src[i],src[j],t)'},
+  {id:'return', txt:'RETOURNER count   (0, 3 ou 4)'}
+];
+
+let trace = buildTrace();
+
+function renderCode(active){
+  const el=document.getElementById('code');
+  el.innerHTML = CODE.map(l=>{
+    const hi = (l.id===active) || (active==='emitI' && (l.id==='emitI2'||l.id==='emitI3'));
+    return hi ? `<span class="hi">${l.txt}</span>` : `<span class="dim">${l.txt}</span>`;
+  }).join('\n');
+}
+
+function renderOut(out){
+  const el=document.getElementById('out');
+  if(!out.length){ el.innerHTML='<span class="chip dim">vide</span>'; return; }
+  el.innerHTML = out.map((o,k)=>
+    o.t==='v' ? `<span class="chip vtx">dst[${k}] = V${o.i}</span>`
+              : `<span class="chip itx">dst[${k}] = I${o.i}${o.j}</span>`
+  ).join('');
+}
+
+function drawScene(s){
+  ctx.fillStyle='#0d0f13'; ctx.fillRect(0,0,cv.width,cv.height);
+
+  // zone rejetée
+  ctx.fillStyle='rgba(248,113,113,0.06)';
+  ctx.fillRect(0,PLANE_Y,cv.width,cv.height-PLANE_Y);
+  ctx.beginPath(); ctx.moveTo(0,PLANE_Y); ctx.lineTo(cv.width,PLANE_Y);
+  ctx.strokeStyle='#f87171'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#f87171'; ctx.font='11px sans-serif';
+  ctx.fillText('plan NEAR   ( w − z = 0 )', 8, PLANE_Y-7);
+  ctx.fillStyle='rgba(248,113,113,0.5)';
+  ctx.fillText('DEHORS  (d < 0)', 8, PLANE_Y+18);
+  ctx.fillStyle='rgba(74,222,128,0.5)';
+  ctx.fillText('DEDANS  (d ≥ 0)', 8, PLANE_Y-24);
+
+  const T=trace.T, dd=trace.dd;
+
+  // triangle source
+  ctx.beginPath(); ctx.moveTo(T[0].x,T[0].y); ctx.lineTo(T[1].x,T[1].y); ctx.lineTo(T[2].x,T[2].y); ctx.closePath();
+  ctx.strokeStyle='rgba(255,255,255,0.2)'; ctx.setLineDash([4,4]); ctx.lineWidth=1.2; ctx.stroke(); ctx.setLineDash([]);
+
+  // arête courante
+  if(s.i!==undefined){
+    const A=T[s.i], B=T[s.j];
+    ctx.beginPath(); ctx.moveTo(A.x,A.y); ctx.lineTo(B.x,B.y);
+    ctx.strokeStyle='#60a5fa'; ctx.lineWidth=3.5; ctx.stroke();
+  }
+
+  // polygone partiel
+  const pts = s.out.map(o=> o.t==='v' ? T[o.i] : lerpP(T[o.i],T[o.j],o.tv));
+  if(pts.length>=2){
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(let k=1;k<pts.length;k++) ctx.lineTo(pts[k].x,pts[k].y);
+    if(s.kind==='done'||s.kind==='accept'){ ctx.closePath(); ctx.fillStyle='rgba(74,222,128,0.2)'; ctx.fill(); }
+    ctx.strokeStyle='#4ade80'; ctx.lineWidth=2.5; ctx.stroke();
+  }
+  pts.forEach((p,k)=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,5,0,7);
+    ctx.fillStyle = s.out[k].t==='v' ? '#4ade80' : '#facc15'; ctx.fill();
+    ctx.strokeStyle='#0d0f13'; ctx.lineWidth=2; ctx.stroke();
+  });
+
+  // sommets sources
+  T.forEach((p,k)=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,7,0,7);
+    ctx.fillStyle = dd[k]>=0 ? 'rgba(74,222,128,0.9)' : 'rgba(248,113,113,0.9)'; ctx.fill();
+    ctx.strokeStyle='#0d0f13'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#e8e8ea'; ctx.font='12px sans-serif';
+    ctx.fillText('V'+k, p.x+11, p.y-9);
+    ctx.fillStyle='#6b7280'; ctx.font='10px Consolas,monospace';
+    ctx.fillText('d='+dd[k].toFixed(0), p.x+11, p.y+4);
+  });
+}
+
+function render(){
+  const s = trace.steps[step];
+  renderCode(s.line);
+  renderOut(s.out);
+  document.getElementById('expl').innerHTML = s.expl;
+  drawScene(s);
+  document.getElementById('bPrev').disabled = step===0;
+  document.getElementById('bNext').disabled = step===trace.steps.length-1;
+}
+
+document.getElementById('bNext').onclick=()=>{ if(step<trace.steps.length-1){step++;render();} };
+document.getElementById('bPrev').onclick=()=>{ if(step>0){step--;render();} };
+document.querySelectorAll('.cases button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.cases button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    caseId=+b.dataset.c; step=0; trace=buildTrace(); render();
+  };
+});
+
+render();
+</script>
+</body>
+</html>

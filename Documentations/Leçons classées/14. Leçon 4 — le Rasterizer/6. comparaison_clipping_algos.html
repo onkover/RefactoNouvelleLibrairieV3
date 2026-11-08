@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Clipping segment vs polygone</title>
+<style>
+  body { background:#12141a; color:#e8e8ea; font-family:'Segoe UI',system-ui,sans-serif; margin:0; padding:22px; }
+  h2 { margin:0 0 4px; font-weight:600; }
+  .sub { color:#8a8f9c; font-size:13px; margin-bottom:18px; max-width:760px; line-height:1.5; }
+  .layout { display:flex; gap:18px; flex-wrap:wrap; }
+  .col { }
+  .col h3 { margin:0 0 8px; font-size:13px; font-weight:600; }
+  .col .tag { font-size:11px; color:#8a8f9c; margin-bottom:8px; }
+  canvas { background:#0d0f13; border:1px solid #2e323d; border-radius:6px; display:block; }
+  .verdict { margin-top:10px; font-size:12px; line-height:1.6; width:340px; }
+  .bad { color:#f87171; } .ok { color:#4ade80; } .warn { color:#facc15; }
+  .ctrl { background:#1a1d24; border:1px solid #2e323d; border-radius:6px; padding:14px; min-width:260px; font-size:13px; }
+  label { display:block; font-size:12px; color:#8a8f9c; margin:10px 0 4px; }
+  input[type=range] { width:100%; }
+  .hint { margin-top:12px; font-size:12px; color:#8a8f9c; line-height:1.6; }
+  code { color:#a5b4fc; font-family:Consolas,monospace; }
+</style>
+</head>
+<body>
+
+<h2>Pourquoi un clipper de segment ne peut pas clipper un triangle</h2>
+<div class="sub">Même triangle, même plan de coupe. À gauche : les 3 arêtes clippées <b>indépendamment</b> (Cyrus-Beck / Liang-Barsky). À droite : le polygone clippé comme un tout (Sutherland-Hodgman). Glisse le plan.</div>
+
+<div class="layout">
+  <div class="col">
+    <h3 class="bad">Cyrus-Beck — 3 segments indépendants</h3>
+    <div class="tag">sortie : 3 segments · surface indéfinie</div>
+    <canvas id="cvA" width="340" height="320"></canvas>
+    <div class="verdict" id="vA"></div>
+  </div>
+
+  <div class="col">
+    <h3 class="ok">Sutherland-Hodgman — polygone fermé</h3>
+    <div class="tag">sortie : polygone convexe · surface remplissable</div>
+    <canvas id="cvB" width="340" height="320"></canvas>
+    <div class="verdict" id="vB"></div>
+  </div>
+
+  <div class="ctrl">
+    <label>Position du plan de coupe : <span id="lY">160</span></label>
+    <input type="range" id="sY" min="40" max="290" value="160">
+
+    <label>Faire pivoter le triangle : <span id="lR">0</span>°</label>
+    <input type="range" id="sR" min="0" max="360" value="0">
+
+    <div class="hint">
+      La ligne <span class="warn">jaune</span> est l'arête <b>créée par le plan</b>.<br><br>
+      Elle n'appartient à <b>aucune arête d'entrée</b> — donc aucun algorithme de clipping de segment ne peut la produire, quelle que soit son efficacité.<br><br>
+      C'est une limite de <b>topologie</b>, pas de performance.
+    </div>
+  </div>
+</div>
+
+<script>
+const cvA=document.getElementById('cvA'), ctxA=cvA.getContext('2d');
+const cvB=document.getElementById('cvB'), ctxB=cvB.getContext('2d');
+let planeY=160, rot=0;
+
+function tri(){
+  const cx=170, cy=160, R=100;
+  const a=rot*Math.PI/180;
+  return [0,1,2].map(i=>{
+    const th = a + i*2*Math.PI/3 - Math.PI/2;
+    return { x: cx + R*Math.cos(th), y: cy + R*Math.sin(th) };
+  });
+}
+// "dedans" = au-dessus de la ligne (y < planeY)
+function dist(p){ return planeY - p.y; }
+function lerpP(a,b,t){ return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t}; }
+
+function drawPlane(ctx){
+  ctx.fillStyle='rgba(248,113,113,0.07)';
+  ctx.fillRect(0,planeY,cvA.width,cvA.height-planeY);
+  ctx.beginPath(); ctx.moveTo(0,planeY); ctx.lineTo(cvA.width,planeY);
+  ctx.strokeStyle='#f87171'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#f87171'; ctx.font='11px sans-serif';
+  ctx.fillText('plan de coupe', 6, planeY-6);
+}
+
+function drawGhost(ctx,T){
+  ctx.beginPath(); ctx.moveTo(T[0].x,T[0].y); ctx.lineTo(T[1].x,T[1].y); ctx.lineTo(T[2].x,T[2].y); ctx.closePath();
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.setLineDash([4,4]); ctx.lineWidth=1; ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* ── A : chaque arête clippée séparément (Cyrus-Beck) ── */
+function drawA(){
+  ctxA.fillStyle='#0d0f13'; ctxA.fillRect(0,0,cvA.width,cvA.height);
+  drawPlane(ctxA);
+  const T=tri(); drawGhost(ctxA,T);
+
+  let segs=0, cuts=[];
+  for(let i=0;i<3;i++){
+    let A=T[i], B=T[(i+1)%3];
+    let dA=dist(A), dB=dist(B);
+    if(dA<0 && dB<0) continue;          // segment rejeté
+    if(dA<0){ const t=dA/(dA-dB); A=lerpP(A,B,t); cuts.push(A); }
+    else if(dB<0){ const t=dA/(dA-dB); B=lerpP(A,B,t); cuts.push(B); }
+    ctxA.beginPath(); ctxA.moveTo(A.x,A.y); ctxA.lineTo(B.x,B.y);
+    ctxA.strokeStyle='#60a5fa'; ctxA.lineWidth=2.5; ctxA.stroke();
+    segs++;
+  }
+  cuts.forEach(p=>{ ctxA.beginPath(); ctxA.arc(p.x,p.y,4,0,7); ctxA.fillStyle='#facc15'; ctxA.fill(); });
+
+  // l'arête manquante
+  if(cuts.length===2){
+    ctxA.beginPath(); ctxA.moveTo(cuts[0].x,cuts[0].y); ctxA.lineTo(cuts[1].x,cuts[1].y);
+    ctxA.strokeStyle='#facc15'; ctxA.setLineDash([6,5]); ctxA.lineWidth=2; ctxA.stroke(); ctxA.setLineDash([]);
+    const mx=(cuts[0].x+cuts[1].x)/2, my=(cuts[0].y+cuts[1].y)/2;
+    ctxA.fillStyle='#facc15'; ctxA.font='11px sans-serif';
+    ctxA.fillText('arête MANQUANTE', mx-48, my-8);
+  }
+
+  document.getElementById('vA').innerHTML = cuts.length===2
+    ? "<span class='bad'>Contour ouvert.</span> "+segs+" segments produits, mais l'arête de coupe (pointillé jaune) est absente. Impossible de remplir : il faudrait une passe de reconstruction — trier les intersections, refermer, retrianguler."
+    : (segs===0 ? "<span class='bad'>Tout rejeté.</span>" : "<span class='warn'>Aucune coupe ici — le cas facile ne prouve rien.</span> Déplace le plan pour couper le triangle.");
+}
+
+/* ── B : Sutherland-Hodgman ── */
+function drawB(){
+  ctxB.fillStyle='#0d0f13'; ctxB.fillRect(0,0,cvB.width,cvB.height);
+  drawPlane(ctxB);
+  const T=tri(); drawGhost(ctxB,T);
+
+  const poly=[];
+  for(let i=0;i<3;i++){
+    const A=T[i], B=T[(i+1)%3];
+    const dA=dist(A), dB=dist(B);
+    if(dA>=0) poly.push(A);
+    if((dA>=0)!==(dB>=0)){ const t=dA/(dA-dB); poly.push(lerpP(A,B,t)); }
+  }
+
+  if(poly.length>=3){
+    ctxB.beginPath(); ctxB.moveTo(poly[0].x,poly[0].y);
+    for(let i=1;i<poly.length;i++) ctxB.lineTo(poly[i].x,poly[i].y);
+    ctxB.closePath();
+    ctxB.fillStyle='rgba(74,222,128,0.22)'; ctxB.fill();
+    ctxB.strokeStyle='#4ade80'; ctxB.lineWidth=2.5; ctxB.stroke();
+
+    if(poly.length===4){
+      ctxB.beginPath(); ctxB.moveTo(poly[0].x,poly[0].y); ctxB.lineTo(poly[2].x,poly[2].y);
+      ctxB.strokeStyle='rgba(250,204,21,0.85)'; ctxB.setLineDash([5,4]); ctxB.lineWidth=1.5;
+      ctxB.stroke(); ctxB.setLineDash([]);
+    }
+    poly.forEach(p=>{ ctxB.beginPath(); ctxB.arc(p.x,p.y,4,0,7); ctxB.fillStyle='#4ade80'; ctxB.fill(); });
+  }
+
+  const n=poly.length;
+  document.getElementById('vB').innerHTML = n>=3
+    ? "<span class='ok'>Contour fermé.</span> Polygone à <b>"+n+" sommets</b> → <b>"+(n-2)+" triangle(s)</b> émis (éventail, diagonale jaune). Surface remplissable immédiatement, en un seul parcours des arêtes."
+    : "<span class='bad'>Rejet total.</span> 0 triangle émis — le chemin le plus rapide.";
+}
+
+function draw(){ drawA(); drawB(); }
+document.getElementById('sY').oninput=e=>{ planeY=+e.target.value; document.getElementById('lY').textContent=planeY; draw(); };
+document.getElementById('sR').oninput=e=>{ rot=+e.target.value; document.getElementById('lR').textContent=rot; draw(); };
+draw();
+</script>
+</body>
+</html>

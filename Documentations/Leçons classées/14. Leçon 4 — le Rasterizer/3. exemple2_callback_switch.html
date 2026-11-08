@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Même rasterizer, deux callbacks</title>
+<style>
+  body {
+    background: #12141a;
+    color: #e8e8ea;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 24px;
+  }
+  h2 { margin-top: 0; font-weight: 600; }
+  .sub { color: #8a8f9c; font-size: 13px; margin-bottom: 20px; max-width: 640px; }
+  .layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+  canvas {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 6px;
+  }
+  .panel {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 6px;
+    padding: 16px;
+    min-width: 300px;
+    font-size: 13px;
+  }
+  .modebar { display: flex; gap: 8px; margin-bottom: 14px; }
+  button {
+    background: #2e323d;
+    color: #e8e8ea;
+    border: 1px solid #3a3f4b;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    flex: 1;
+  }
+  button.active { background: #2563eb; border-color: #2563eb; }
+  .codebox {
+    background: #0d0f13;
+    border: 1px solid #262a33;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre;
+    color: #a5b4fc;
+  }
+  .codebox .fixed { color: #6b7280; }
+  .codebox .swap { color: #facc15; font-weight: 600; }
+  .caption { color: #8a8f9c; font-size: 12px; margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h2>Même <code>RasterizeTriangle</code>, deux fonctions branchées</h2>
+<div class="sub">Le triangle, la boucle, l'edge function : identiques dans les deux cas. Seule la variable <code>onFragment</code> change d'adresse.</div>
+
+<div class="layout">
+  <canvas id="cv" width="420" height="380"></canvas>
+
+  <div class="panel">
+    <div class="modebar">
+      <button id="btnUnlit" class="active">ERenderMode::Solid</button>
+      <button id="btnDepth">ERenderMode::Depth</button>
+    </div>
+    <div class="codebox" id="codeDisplay"></div>
+    <div class="caption" id="caption"></div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const codeDisplay = document.getElementById('codeDisplay');
+const caption = document.getElementById('caption');
+const btnUnlit = document.getElementById('btnUnlit');
+const btnDepth = document.getElementById('btnDepth');
+
+const V = [
+  {x: 90,  y: 300, z: 0.9},
+  {x: 340, y: 280, z: 0.2},
+  {x: 210, y: 60,  z: 0.6}
+];
+
+function edgeFn(a, b, p) {
+  return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+}
+
+// ── Ceci simule les DEUX vraies fonctions C++ ShadeFragment_Unlit / ShadeFragment_Depth
+function ShadeFragment_Unlit(x, y, bary) {
+  return 'rgb(255,60,60)';
+}
+function ShadeFragment_Depth(x, y, bary) {
+  const depth = bary.w0*V[0].z + bary.w1*V[1].z + bary.w2*V[2].z;
+  const g = Math.floor(depth * 255);
+  return `rgb(${g},${g},${g})`;
+}
+
+let currentShader = ShadeFragment_Unlit; // ← EXACTEMENT la variable "onFragment"
+
+function rasterize() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  const area = edgeFn(V[0], V[1], V[2]);
+  const minX = Math.floor(Math.min(V[0].x, V[1].x, V[2].x));
+  const maxX = Math.ceil (Math.max(V[0].x, V[1].x, V[2].x));
+  const minY = Math.floor(Math.min(V[0].y, V[1].y, V[2].y));
+  const maxY = Math.ceil (Math.max(V[0].y, V[1].y, V[2].y));
+
+  const step = 3;
+  for (let y = minY; y < maxY; y += step) {
+    for (let x = minX; x < maxX; x += step) {
+      const p = {x: x+step/2, y: y+step/2};
+      const w0 = edgeFn(V[1], V[2], p);
+      const w1 = edgeFn(V[2], V[0], p);
+      const w2 = edgeFn(V[0], V[1], p);
+      const inside = area > 0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+      if (!inside) continue;
+
+      const bary = { w0: w0/area, w1: w1/area, w2: w2/area };
+
+      // ── C'EST ICI l'unique ligne qui "appelle onFragment(...)"
+      //     currentShader contient soit l'adresse de ShadeFragment_Unlit,
+      //     soit celle de ShadeFragment_Depth. La boucle ne change jamais.
+      ctx.fillStyle = currentShader(x, y, bary);
+      ctx.fillRect(x, y, step, step);
+    }
+  }
+
+  ctx.beginPath();
+  ctx.moveTo(V[0].x, V[0].y); ctx.lineTo(V[1].x, V[1].y); ctx.lineTo(V[2].x, V[2].y); ctx.closePath();
+  ctx.strokeStyle = '#e8e8ea';
+  ctx.stroke();
+}
+
+function setMode(mode) {
+  if (mode === 'unlit') {
+    currentShader = ShadeFragment_Unlit;
+    btnUnlit.classList.add('active');
+    btnDepth.classList.remove('active');
+    codeDisplay.innerHTML =
+`<span class="fixed">RasterizeTriangle(v0, v1, v2, w, h,</span>
+<span class="swap">  ShadeFragment_Unlit,</span>
+<span class="fixed">  &framebuffer);</span>`;
+    caption.textContent = "onFragment pointe vers ShadeFragment_Unlit — chaque pixel reçoit la même couleur, peu importe bary.";
+  } else {
+    currentShader = ShadeFragment_Depth;
+    btnDepth.classList.add('active');
+    btnUnlit.classList.remove('active');
+    codeDisplay.innerHTML =
+`<span class="fixed">RasterizeTriangle(v0, v1, v2, w, h,</span>
+<span class="swap">  ShadeFragment_Depth,</span>
+<span class="fixed">  &depthCtx);</span>`;
+    caption.textContent = "onFragment pointe maintenant vers ShadeFragment_Depth — même boucle, même edge function, résultat totalement différent.";
+  }
+  rasterize();
+}
+
+btnUnlit.onclick = () => setMode('unlit');
+btnDepth.onclick = () => setMode('depth');
+
+setMode('unlit');
+</script>
+</body>
+</html>

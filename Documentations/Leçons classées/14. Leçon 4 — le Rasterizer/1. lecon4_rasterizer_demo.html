@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Leçon 4 — Edge Functions & Barycentriques</title>
+<style>
+  body {
+    background: #12141a;
+    color: #e8e8ea;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+  h2 { margin-top: 0; font-weight: 600; color: #f0f0f2; }
+  .sub { color: #8a8f9c; font-size: 13px; margin-bottom: 16px; }
+  .container {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  canvas {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 6px;
+    cursor: crosshair;
+  }
+  .panel {
+    background: #1a1d24;
+    border: 1px solid #2e323d;
+    border-radius: 6px;
+    padding: 16px;
+    min-width: 260px;
+    font-size: 13px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #262a33;
+  }
+  .row:last-child { border-bottom: none; }
+  .label { color: #8a8f9c; }
+  .val { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .inside { color: #4ade80; }
+  .outside { color: #f87171; }
+  .swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .legend { margin-top: 12px; font-size: 12px; color: #8a8f9c; line-height: 1.6; }
+  .hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+<h2>Leçon 4 — Edge Functions & Coordonnées Barycentriques</h2>
+<div class="sub">Glisse les 3 sommets (V0 rouge, V1 vert, V2 bleu) et le point de test P (blanc). Les valeurs se recalculent en direct.</div>
+
+<div class="container">
+  <canvas id="cv" width="560" height="480"></canvas>
+  <div class="panel">
+    <div style="font-weight:600; margin-bottom:8px;">Edge Functions</div>
+    <div class="row"><span class="label">w0 = E(V1,V2,P)</span><span class="val" id="w0">0</span></div>
+    <div class="row"><span class="label">w1 = E(V2,V0,P)</span><span class="val" id="w1">0</span></div>
+    <div class="row"><span class="label">w2 = E(V0,V1,P)</span><span class="val" id="w2">0</span></div>
+    <div class="row"><span class="label">Aire signée (2×)</span><span class="val" id="area">0</span></div>
+    <div class="row"><span class="label">Winding</span><span class="val" id="winding">-</span></div>
+    <div class="row"><span class="label">P est</span><span class="val" id="status">-</span></div>
+
+    <div style="font-weight:600; margin:14px 0 8px;">Barycentriques (normalisés)</div>
+    <div class="row"><span><span class="swatch" style="background:#f87171"></span>b0 (poids V0)</span><span class="val" id="b0">0</span></div>
+    <div class="row"><span><span class="swatch" style="background:#4ade80"></span>b1 (poids V1)</span><span class="val" id="b1">0</span></div>
+    <div class="row"><span><span class="swatch" style="background:#60a5fa"></span>b2 (poids V2)</span><span class="val" id="b2">0</span></div>
+
+    <div class="legend">
+      Le triangle est colorié par interpolation barycentrique : chaque pixel = w0·rouge + w1·vert + w2·bleu.<br>
+      La grille en surimpression montre le sous-échantillonnage pixel (centre-pixel testé, pas le coin).
+    </div>
+    <div class="hint">
+      Rappel : en espace écran (Y vers le bas), un triangle CCW en NDC apparaît CW à l'affichage — normal, pas un bug.
+    </div>
+  </div>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+
+let V = [
+  {x: 120, y: 380, color: [248, 113, 113]}, // V0 rouge
+  {x: 420, y: 360, color: [74, 222, 128]},  // V1 vert
+  {x: 280, y: 90,  color: [96, 165, 250]}   // V2 bleu
+];
+let P = {x: 280, y: 260};
+
+let dragging = null;
+
+function edgeFn(a, b, p) {
+  return (b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x);
+}
+
+function pixelStep(y) {
+  const step = 14;
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  for (let x = 0; x < cv.width; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x, cv.height);
+    ctx.stroke();
+  }
+  for (let yy = 0; yy < cv.height; yy += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, yy); ctx.lineTo(cv.width, yy);
+    ctx.stroke();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  const area = edgeFn(V[0], V[1], V[2]);
+
+  // Rasterisation réelle par bounding box + edge function (pédagogique, pas optimisée)
+  const minX = Math.max(0, Math.floor(Math.min(V[0].x, V[1].x, V[2].x)));
+  const maxX = Math.min(cv.width, Math.ceil(Math.max(V[0].x, V[1].x, V[2].x)));
+  const minY = Math.max(0, Math.floor(Math.min(V[0].y, V[1].y, V[2].y)));
+  const maxY = Math.min(cv.height, Math.ceil(Math.max(V[0].y, V[1].y, V[2].y)));
+
+  const step = 4;
+  for (let y = minY; y < maxY; y += step) {
+    for (let x = minX; x < maxX; x += step) {
+      const p = {x: x + step/2, y: y + step/2};
+      let w0 = edgeFn(V[1], V[2], p);
+      let w1 = edgeFn(V[2], V[0], p);
+      let w2 = edgeFn(V[0], V[1], p);
+
+      const inside = area > 0
+        ? (w0 >= 0 && w1 >= 0 && w2 >= 0)
+        : (w0 <= 0 && w1 <= 0 && w2 <= 0);
+
+      if (inside) {
+        const b0 = w0 / area, b1 = w1 / area, b2 = w2 / area;
+        const r = b0*V[0].color[0] + b1*V[1].color[0] + b2*V[2].color[0];
+        const g = b0*V[0].color[1] + b1*V[1].color[1] + b2*V[2].color[1];
+        const bl = b0*V[0].color[2] + b1*V[1].color[2] + b2*V[2].color[2];
+        ctx.fillStyle = `rgb(${r|0},${g|0},${bl|0})`;
+        ctx.fillRect(x, y, step, step);
+      }
+    }
+  }
+
+  pixelStep();
+
+  // Contours triangle
+  ctx.beginPath();
+  ctx.moveTo(V[0].x, V[0].y);
+  ctx.lineTo(V[1].x, V[1].y);
+  ctx.lineTo(V[2].x, V[2].y);
+  ctx.closePath();
+  ctx.strokeStyle = '#e8e8ea';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Sommets
+  V.forEach((v, i) => {
+    ctx.beginPath();
+    ctx.arc(v.x, v.y, 8, 0, Math.PI*2);
+    ctx.fillStyle = `rgb(${v.color[0]},${v.color[1]},${v.color[2]})`;
+    ctx.fill();
+    ctx.strokeStyle = '#12141a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#e8e8ea';
+    ctx.font = '12px sans-serif';
+    ctx.fillText('V'+i, v.x + 12, v.y - 10);
+  });
+
+  // Point de test P
+  ctx.beginPath();
+  ctx.arc(P.x, P.y, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = '#12141a';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#e8e8ea';
+  ctx.fillText('P', P.x + 10, P.y - 8);
+
+  // Panneau de valeurs
+  const w0 = edgeFn(V[1], V[2], P);
+  const w1 = edgeFn(V[2], V[0], P);
+  const w2 = edgeFn(V[0], V[1], P);
+  const inside = area > 0
+    ? (w0 >= 0 && w1 >= 0 && w2 >= 0)
+    : (w0 <= 0 && w1 <= 0 && w2 <= 0);
+
+  document.getElementById('w0').textContent = w0.toFixed(1);
+  document.getElementById('w1').textContent = w1.toFixed(1);
+  document.getElementById('w2').textContent = w2.toFixed(1);
+  document.getElementById('area').textContent = area.toFixed(1);
+  document.getElementById('winding').textContent = area > 0 ? 'CCW (positif)' : 'CW (négatif)';
+
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = inside ? 'À L\'INTÉRIEUR' : 'à l\'extérieur';
+  statusEl.className = 'val ' + (inside ? 'inside' : 'outside');
+
+  if (Math.abs(area) > 0.001) {
+    document.getElementById('b0').textContent = (w0/area).toFixed(3);
+    document.getElementById('b1').textContent = (w1/area).toFixed(3);
+    document.getElementById('b2').textContent = (w2/area).toFixed(3);
+  }
+}
+
+function getPos(e) {
+  const rect = cv.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+cv.addEventListener('mousedown', (e) => {
+  const pos = getPos(e);
+  const targets = [...V, P];
+  let closest = null, closestDist = 20;
+  targets.forEach((t, i) => {
+    const d = Math.hypot(t.x - pos.x, t.y - pos.y);
+    if (d < closestDist) { closestDist = d; closest = i; }
+  });
+  dragging = closest;
+});
+
+cv.addEventListener('mousemove', (e) => {
+  if (dragging === null) return;
+  const pos = getPos(e);
+  if (dragging < 3) { V[dragging].x = pos.x; V[dragging].y = pos.y; }
+  else { P.x = pos.x; P.y = pos.y; }
+  draw();
+});
+
+window.addEventListener('mouseup', () => dragging = null);
+
+draw();
+</script>
+</body>
+</html>

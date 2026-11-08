@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L02-C — Reverse-Z, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#faf9f7; --card:#ffffff; --card2:#f4f2ed;
+  --tx:#141413; --tx2:#55534e; --tx3:#8a877f;
+  --bd:#e3e0d8; --bd2:#c9c5ba;
+  --ok:#1b7f5c; --okbg:#e3f3ec;
+  --no:#b03030; --nobg:#fbe9e9;
+  --wa:#8a5a05; --wabg:#fbf0d9;
+  --ac:#2f5fa8; --acbg:#e7f0fb;
+  --vi:#5a4fb0; --vibg:#eeedfb;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#191918; --card:#232321; --card2:#2b2b28;
+    --tx:#eceae4; --tx2:#b3b0a7; --tx3:#86837b;
+    --bd:#383834; --bd2:#4c4c46;
+    --ok:#5fcba2; --okbg:#153029;
+    --no:#ef8a8a; --nobg:#331c1c;
+    --wa:#e0ab4b; --wabg:#332714;
+    --ac:#7fb0ef; --acbg:#16263b;
+    --vi:#a9a2ea; --vibg:#232046;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(54px + env(safe-area-inset-top, 0px));}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px 90px}
+h1{font-size:28px;line-height:1.25;font-weight:650;margin:0 0 6px}
+h2{font-size:21px;font-weight:620;margin:46px 0 10px;padding-top:6px}
+h3{font-size:17px;font-weight:620;margin:26px 0 8px}
+h4{font-size:15px;font-weight:620;margin:18px 0 6px}
+p{margin:0 0 12px}
+ul,ol{margin:0 0 12px;padding-left:22px}
+li{margin:4px 0}
+a{color:var(--ac)}
+code{font-family:var(--mono);font-size:.88em;background:var(--card2);padding:1px 5px;border-radius:4px}
+pre{font-family:var(--mono);font-size:13px;line-height:1.55;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px 16px;overflow-x:auto;margin:0 0 14px}
+pre code{background:none;padding:0;font-size:inherit}
+.kw{color:var(--vi)}.cm{color:var(--tx3);font-style:italic}.nb{color:var(--ac)}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--bd);margin:0 -18px 0;padding:0 18px}
+nav .inner{max-width:1000px;margin:0 auto;display:flex;gap:4px;overflow-x:auto;padding:9px 0;scrollbar-width:none}
+nav .inner::-webkit-scrollbar{display:none}
+nav a{white-space:nowrap;font-size:13px;color:var(--tx2);text-decoration:none;padding:5px 10px;border-radius:999px;border:1px solid transparent}
+nav a:hover{background:var(--card2);border-color:var(--bd)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px 18px;margin:0 0 16px}
+.flat{background:var(--card2);border-radius:10px;padding:14px 16px;margin:0 0 14px}
+.tag{display:inline-block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;padding:3px 9px;border-radius:999px}
+.t-ok{background:var(--okbg);color:var(--ok)}.t-no{background:var(--nobg);color:var(--no)}
+.t-wa{background:var(--wabg);color:var(--wa)}.t-ac{background:var(--acbg);color:var(--ac)}
+.t-vi{background:var(--vibg);color:var(--vi)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);vertical-align:top}
+th{font-weight:620;color:var(--tx2);font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+td.num,th.num{text-align:right;font-family:var(--mono);font-size:13px}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.ctrl{display:flex;align-items:center;gap:10px;margin:0 0 10px;flex-wrap:wrap}
+.ctrl label{font-size:13px;color:var(--tx2);min-width:62px}
+input[type=range]{flex:1;min-width:150px;accent-color:var(--ac);height:22px}
+.val{font-family:var(--mono);font-size:13px;font-weight:600;min-width:84px;text-align:right}
+button.seg{font:inherit;font-size:13px;padding:5px 12px;border:1px solid var(--bd2);background:var(--card);color:var(--tx2);border-radius:999px;cursor:pointer}
+button.seg[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.stat{background:var(--card2);border-radius:10px;padding:12px 14px}
+.stat .l{font-size:12px;color:var(--tx3);margin:0 0 3px}
+.stat .v{font-size:21px;font-weight:620;font-family:var(--mono);margin:0}
+.stat .s{font-size:12px;color:var(--tx2);margin:3px 0 0;font-family:var(--mono)}
+.diff{border:1px solid var(--bd);border-radius:10px;overflow:hidden;margin:0 0 14px}
+.diff .hd{font-size:12.5px;font-weight:650;padding:7px 14px;border-bottom:1px solid var(--bd)}
+.diff .hd.av{background:var(--nobg);color:var(--no)}
+.diff .hd.ap{background:var(--okbg);color:var(--ok)}
+.diff pre{border:0;border-radius:0;margin:0;background:var(--card)}
+mark.hl{background:var(--wabg);color:inherit;border-radius:3px;padding:1px 3px;box-shadow:inset 2px 0 0 var(--wa)}
+mark.hlg{background:var(--okbg);color:inherit;border-radius:3px;padding:1px 3px;box-shadow:inset 2px 0 0 var(--ok)}
+mark.hlr{background:var(--nobg);color:inherit;border-radius:3px;padding:1px 3px;box-shadow:inset 2px 0 0 var(--no)}
+.step{border:1px solid var(--bd);border-radius:12px;margin:0 0 18px;background:var(--card);overflow:hidden}
+.step>.sh{display:flex;gap:12px;align-items:baseline;padding:14px 18px;border-bottom:1px solid var(--bd);background:var(--card2)}
+.step>.sh .n{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--ac);white-space:nowrap}
+.step>.sh .t{font-size:16px;font-weight:620}
+.step .sb{padding:16px 18px}
+.io{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:0 0 14px}
+.io .b{border-radius:9px;padding:11px 13px;font-size:13px}
+.io .b.in{background:var(--acbg)}
+.io .b.out{background:var(--okbg)}
+.io .b .k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:650;opacity:.8;margin:0 0 5px}
+.io .b.in .k{color:var(--ac)}.io .b.out .k{color:var(--ok)}
+.io .b code{background:transparent;padding:0;font-size:12.5px;color:inherit}
+.obj{border-left:3px solid var(--vi);background:var(--vibg);border-radius:0;padding:10px 14px;margin:0 0 14px;font-size:14px}
+.lanes{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;font-family:var(--mono);font-size:11px;margin:0 0 6px;min-width:620px}
+.lanes div{background:var(--card2);border-radius:5px;padding:5px 3px;text-align:center}
+.lanes .hdl{background:transparent;color:var(--tx3);font-size:10px;padding-bottom:1px}
+.lanes .act{background:var(--okbg);color:var(--ok);font-weight:600}
+.lanes .dead{background:var(--nobg);color:var(--no)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--tx2);margin:8px 0 0}
+.legend span{display:flex;align-items:center;gap:5px}
+.sw{width:11px;height:11px;border-radius:3px;display:inline-block}
+svg{display:block;max-width:100%;height:auto}
+.note{font-size:13px;color:var(--tx2)}
+.kbd{font-family:var(--mono);font-size:12px;background:var(--card2);border:1px solid var(--bd);border-radius:4px;padding:1px 5px}
+hr{border:0;border-top:1px solid var(--bd);margin:34px 0}
+.chk{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin:7px 0}
+.chk .bx{flex:0 0 auto;width:17px;height:17px;border:1.5px solid var(--bd2);border-radius:4px;margin-top:3px}
+.chk.done .bx{background:var(--ok);border-color:var(--ok);position:relative}
+.chk.done .bx::after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
+.fr{font-size:12px;color:var(--tx3);margin:4px 0 0}
+</style>
+</head>
+<body>
+<nav><div class="inner">
+  <a href="#pourquoi">Pourquoi</a>
+  <a href="#ou">Où on en est</a>
+  <a href="#objectif">Objectif</a>
+  <a href="#schema">Schéma</a>
+  <a href="#algo">Avant / après</a>
+  <a href="#tech">Comment ça marche</a>
+  <a href="#etapes">Étapes</a>
+  <a href="#contre">Contre-exemples</a>
+  <a href="#verif">Vérifier</a>
+  <a href="#roadmap">Roadmap</a>
+</div></nav>
+
+<div class="wrap">
+
+<header style="padding:30px 0 4px">
+  <span class="tag t-vi">Lot L02-C</span>
+  <h1>Reverse-Z, pas à pas</h1>
+  <p style="color:var(--tx2);font-size:17px;margin:4px 0 0">Décision C de la Leçon 02 — la profondeur en <code>[0,1]</code> inversée.<br>
+  Mise en œuvre : <code>Maths/Projection.cpp</code> (L05), <code>Rendering/DepthBuffer.h</code> et <code>ClipVertex.h</code> (L04 P2).</p>
+</header>
+
+<!-- ============================================================ -->
+<h2 id="pourquoi">1. Pourquoi ce lot</h2>
+
+<p>Tu construis une scène : un sol, des rochers, un système solaire. Tu recules la caméra. Et au-delà d’une certaine distance, les surfaces commencent à <strong>clignoter</strong> : deux triangles qui devraient être nettement l’un derrière l’autre se disputent le même pixel, et le gagnant change d’une frame à l’autre. Les toits scintillent, le terrain fait des taches, les faces arrière traversent les faces avant.</p>
+
+<p>Ce symptôme a un nom — le <em>z-fighting</em> — et une cause unique : <strong>le tampon de profondeur n’a plus assez de valeurs distinctes pour séparer deux surfaces proches l’une de l’autre, à cette distance-là.</strong></p>
+
+<p>Le réflexe du débutant est de rapprocher le plan <code>far</code>, ou d’éloigner le plan <code>near</code>. Ça marche, et ça coûte la scène : soit les objets lointains disparaissent, soit la caméra ne peut plus s’approcher de rien. On déplace le problème.</p>
+
+<div class="flat">
+  <p style="margin:0"><strong>Ce lot résout le problème sans rien sacrifier.</strong> Pas un octet de mémoire en plus, pas un cycle CPU en plus. Juste deux coefficients écrits autrement dans la matrice de projection, et deux comparaisons retournées. Le gain va de <strong>×8 à 1 mètre</strong> à <strong>×8000 à 1 kilomètre</strong>.</p>
+</div>
+
+<p>Et comme c’est une décision qui touche la matrice de projection, le clipping, le Z-buffer et le test de profondeur <em>en même temps</em>, elle doit être prise <strong>une fois, au début</strong>. La changer plus tard, c’est toucher quatre fichiers et casser tous les tests de rendu d’un coup. D’où sa place en Leçon 02 et son statut de décision dictatoriale.</p>
+
+<!-- ============================================================ -->
+<h2 id="ou">2. Où on en est — ce que les lots précédents ont posé</h2>
+
+<div class="scroll">
+<table style="min-width:560px">
+<thead><tr><th>Lot</th><th>Ce qui a été construit</th><th>Ce dont ce lot a besoin</th></tr></thead>
+<tbody>
+<tr><td><span class="tag t-ac">L01</span></td><td>Configuration du projet, PCH, enums du pipeline (<code>RenderTypes.h</code>)</td><td><code>EDepthTest</code> — l’enum qui dit comment comparer</td></tr>
+<tr><td><span class="tag t-ac">L02</span></td><td><code>Vec3f</code>, <code>Vec4f</code>, <code>Matrix44f</code>, stockage et convention matricielle</td><td>Vecteur-ligne <code>v′ = v·M</code>, main droite, avant = −Z, <code>float</code> partout</td></tr>
+<tr><td><span class="tag t-ac">L03</span></td><td>ECS, SparseSet, ResourceManager</td><td>Rien directement — la profondeur ne vit pas dans un composant</td></tr>
+<tr><td><span class="tag t-ac">L04 P1</span></td><td>Rasterizer <em>edge function</em>, top-left rule, test au centre du pixel</td><td>Le point où un fragment demande « suis-je devant ? »</td></tr>
+<tr><td><span class="tag t-ac">L04 P2</span></td><td>Clipping near en espace de clip, interpolation perspective-correcte, <strong>Z-buffer</strong></td><td>C’est ici que le reverse-Z devient du code exécuté</td></tr>
+<tr><td><span class="tag t-ac">L05</span></td><td>Caméra, lentille, frustum, <code>Projection.cpp</code></td><td>C’est ici que les coefficients <code>m22</code>/<code>m32</code> sont écrits</td></tr>
+</tbody></table>
+</div>
+
+<p>Deux acquis de la Leçon 02 sont des <strong>préconditions</strong> du reverse-Z, pas des détails de style :</p>
+<ul>
+<li><strong>NDC de profondeur dans <code>[0,1]</code></strong> (style Direct3D / Vulkan / Metal) et non <code>[-1,1]</code> (OpenGL historique). On verra en §6.3 que le reverse-Z est <em>mathématiquement impossible</em> en <code>[-1,1]</code>.</li>
+<li><strong><code>float</code> partout.</strong> On verra en §6.4 que le reverse-Z est <em>contre-productif</em> sur un buffer de profondeur en entier.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="objectif">3. Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que la fonction doit garantir</h3>
+<div class="flat">
+<p style="margin:0 0 8px"><strong>Contrat :</strong> « pour deux surfaces distantes d’un écart réaliste (quelques millimètres sur un mur, quelques centimètres sur un terrain), le moteur doit toujours savoir laquelle est devant — à 10 cm de la caméra comme à 1 km. »</p>
+<p style="margin:0" class="note">Exprimé en chiffres : l’incertitude de profondeur doit rester <strong>inférieure au millimètre sur toute la profondeur du frustum</strong>, avec <code>near = 0,1 m</code> et <code>far = 1000 m</code>.</p>
+</div>
+
+<h3>Les trois décisions prises dans ce lot</h3>
+<div class="grid" style="margin-bottom:14px">
+  <div class="stat"><p class="l">Décision 1</p><p class="v" style="font-size:16px">NDC z ∈ [0,1]</p><p class="s">pas [-1,1]</p></div>
+  <div class="stat"><p class="l">Décision 2</p><p class="v" style="font-size:16px">near → 1, far → 0</p><p class="s">test GREATER</p></div>
+  <div class="stat"><p class="l">Décision 3</p><p class="v" style="font-size:16px">far infini possible</p><p class="s">z = n / distance</p></div>
+</div>
+
+<h3>Ce que ce lot ne fait pas</h3>
+<ul>
+<li>Il ne change <strong>rien</strong> à X et Y, qui restent dans <code>[-1,+1]</code> — le frustum est symétrique, et la précision du <code>float</code> est maximale au centre de l’écran, là où l’œil regarde.</li>
+<li>Il ne traite <strong>pas</strong> le <em>depth bias</em> / <em>polygon offset</em> (décals, ombres). C’est un autre sujet, qui héritera simplement du signe inversé.</li>
+<li>Il ne traite <strong>pas</strong> le <em>depth prepass</em> ni l’early-Z hiérarchique. Ce sont des optimisations ultérieures qui s’appuieront sur ce lot.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="schema">4. Le schéma avant le code</h2>
+
+<p>Avant toute formule : regarde <strong>où part la précision</strong>. Chaque bande ci-dessous est une tranche de distance ; sa couleur donne l’incertitude de profondeur à cet endroit — c’est-à-dire le plus petit écart entre deux surfaces que le Z-buffer sait encore distinguer. Vert = fin, rouge = grossier.</p>
+
+<div class="card">
+  <div class="ctrl">
+    <label for="n">near</label><input type="range" id="n" min="0" max="4" step="1" value="2"><span class="val" id="nv">0,1 m</span>
+  </div>
+  <div class="ctrl">
+    <label for="f">far</label><input type="range" id="f" min="0" max="3" step="1" value="1"><span class="val" id="fv">1000 m</span>
+  </div>
+  <div class="ctrl">
+    <label for="d">objet à</label><input type="range" id="d" min="0" max="1000" step="1" value="660"><span class="val" id="dv">100 m</span>
+  </div>
+  <div class="ctrl" style="gap:6px;margin-top:4px">
+    <label style="min-width:auto">cas&nbsp;:</label>
+    <button class="seg" id="b-int" aria-pressed="false">buffer entier 24 bits</button>
+    <button class="seg" id="b-ndc" aria-pressed="false">NDC [-1,1]</button>
+  </div>
+  <div id="schema"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#1b9e75"></i>&lt; 0,01 mm</span>
+    <span><i class="sw" style="background:#8fb43a"></i>0,1 mm</span>
+    <span><i class="sw" style="background:#eda100"></i>1 mm</span>
+    <span><i class="sw" style="background:#e07628"></i>1 cm</span>
+    <span><i class="sw" style="background:#d8402f"></i>&gt; 10 cm</span>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="stat"><p class="l">Z standard (near→0)</p><p class="v" id="s-std">—</p><p class="s" id="s-stdz">—</p></div>
+  <div class="stat"><p class="l">Reverse-Z (near→1)</p><p class="v" id="s-rev">—</p><p class="s" id="s-revz">—</p></div>
+  <div class="stat"><p class="l">Gain</p><p class="v" id="s-gain">—</p><p class="s">rapport des ulp</p></div>
+</div>
+
+<p style="margin-top:16px">Et la même information en courbe, sur toute la profondeur du frustum (échelles logarithmiques sur les deux axes) :</p>
+<div class="card"><div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#d8402f"></i>Z standard</span>
+    <span><i class="sw" style="background:#1b9e75"></i>Reverse-Z</span>
+    <span><i class="sw" style="background:var(--tx3)"></i>seuil 1 mm</span>
+  </div>
+</div>
+
+<p id="read-note" class="note"></p>
+
+<!-- ============================================================ -->
+<h2 id="algo">5. L’algorithme initial, et ce que ce lot y change</h2>
+
+<p>L’algorithme de profondeur est le même avant et après — c’est une chaîne en cinq maillons. Ce lot ne change <strong>aucun maillon</strong> : il change <strong>quatre constantes et deux signes de comparaison</strong> à l’intérieur des maillons existants.</p>
+
+<div class="card" style="padding:18px">
+<div id="chain"></div>
+</div>
+
+<h3>5.1 — Construction de la matrice de projection</h3>
+<div class="diff">
+  <div class="hd av">AVANT — OpenGL historique, NDC z ∈ [-1,+1] (le legacy LibV2)</div>
+<pre><code>Matrix44f m = Zeroed();
+m[0][0] = (2.0f * n) / (r - l);
+m[1][1] = (2.0f * n) / (t - b);
+m[2][0] = (r + l) / (r - l);
+m[2][1] = (t + b) / (t - b);
+<mark class="hlr">m[2][2] = -(f + n) / (f - n);</mark>   <span class="cm">// near -> -1, far -> +1</span>
+m[2][3] = -1.0f;
+<mark class="hlr">m[3][2] = -(2.0f * f * n) / (f - n);</mark>
+m[3][3] =  0.0f;</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — LV3, NDC z ∈ [0,1] reverse-Z (<code>Maths/Projection.cpp</code>)</div>
+<pre><code>Matrix44f m = Zeroed();
+m[0][0] = (2.0f * n) / (r - l);
+m[1][1] = (2.0f * n) / (t - b);
+m[2][0] = (r + l) / (r - l);
+m[2][1] = (t + b) / (t - b);
+<mark class="hlg">m[2][2] = n / (f - n);</mark>           <span class="cm">// REVERSE-Z : near -> 1, far -> 0</span>
+m[2][3] = -1.0f;                 <span class="cm">// inchangé — recopie -z dans w (main droite)</span>
+<mark class="hlg">m[3][2] = (n * f) / (f - n);</mark>
+m[3][3] =  0.0f;</code></pre>
+</div>
+<p class="note"><strong>Deux coefficients. C’est tout.</strong> <code>m[0][0]</code>, <code>m[1][1]</code>, <code>m[2][0]</code>, <code>m[2][1]</code>, <code>m[2][3]</code> et <code>m[3][3]</code> sont identiques : X et Y ne sont pas concernés, et la recopie de <code>-z</code> dans <code>w</code> est une propriété de la main droite, pas du mapping de profondeur.</p>
+
+<h3>5.2 — Distance au plan near, en espace de clip</h3>
+<div class="diff">
+  <div class="hd av">AVANT — la forme canonique Direct3D standard</div>
+<pre><code>float NearDistance(const ClipVertex&amp; v) noexcept
+{
+    <mark class="hlr">return v.clip.z;</mark>        <span class="cm">// near : z &gt;= 0   (far : z &lt;= w)</span>
+}</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — <code>Rendering/ClipVertex.h</code></div>
+<pre><code>float NearDistance(const ClipVertex&amp; v) noexcept
+{
+    <mark class="hlg">return v.clip.w - v.clip.z;</mark>   <span class="cm">// reverse-Z : w - z est le plan NEAR</span>
+}</code></pre>
+</div>
+<p class="note">Le volume de clip reste <code>0 ≤ z ≤ w</code> dans les deux cas. Ce qui change, c’est <em>lequel des deux bords</em> est le near. En reverse-Z, <code>z = w</code> est le near, donc la distance signée au near est <code>w − z</code>.</p>
+
+<h3>5.3 — Effacement et test du Z-buffer</h3>
+<div class="diff">
+  <div class="hd av">AVANT — Z standard</div>
+<pre><code>void Clear() noexcept
+{
+    <mark class="hlr">std::fill(m_Data.begin(), m_Data.end(), 1.0f);</mark>   <span class="cm">// 1 = far</span>
+}
+
+bool DepthTestAndSet(float&amp; dst, float z) noexcept
+{
+    <mark class="hlr">if (z &gt;= dst) return false;</mark>    <span class="cm">// on garde le PLUS PETIT</span>
+    dst = z;
+    return true;
+}</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — <code>Rendering/DepthBuffer.h</code></div>
+<pre><code>void Clear() noexcept
+{
+    <mark class="hlg">ClearKernel::StreamFill(m_Data.data(), m_Data.size(), 0.0f);</mark>  <span class="cm">// 0 = far</span>
+    ClearKernel::Fence();
+}
+
+bool DepthTestAndSet(float&amp; dst, float z) noexcept
+{
+    <mark class="hlg">if (z &lt;= dst) return false;</mark>    <span class="cm">// REVERSE-Z : on garde le PLUS GRAND</span>
+    dst = z;
+    return true;
+}</code></pre>
+</div>
+<p class="note"><code>StreamFill</code> (stores non temporels) est un gain du chantier Clear de la phase G, indépendant du reverse-Z. Ce qui appartient à ce lot, c’est uniquement la valeur <code>0.0f</code> au lieu de <code>1.0f</code>, et <code>&lt;=</code> au lieu de <code>&gt;=</code>.</p>
+
+<h3>5.4 — L’enum du pipeline</h3>
+<div class="diff">
+  <div class="hd av">AVANT — <code>Rendering/RenderTypes.h</code></div>
+<pre><code>enum class EDepthTest : uint8_t
+{
+    Always,
+    <mark class="hlr">Less,</mark>        <span class="cm">// passe si plus proche — standard 3D</span>
+    <mark class="hlr">LessEqual,</mark>   <span class="cm">// terrain, décals</span>
+    Never
+};</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — état actuel du dépôt</div>
+<pre><code>enum class EDepthTest : uint8_t
+{
+    Always,         <span class="cm">// skybox, UI</span>
+    <mark class="hlg">Greater,</mark>        <span class="cm">// standard 3D — plus proche = z plus GRAND (reverse-Z)</span>
+    <mark class="hlg">GreaterEqual,</mark>   <span class="cm">// terrain, décals coplanaires</span>
+    Never           <span class="cm">// masque d’occlusion</span>
+};</code></pre>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="tech">6. Comment ça marche</h2>
+
+<h3>6.1 — Deux non-linéarités, et le choix de les faire se compenser</h3>
+
+<p><strong>Non-linéarité n°1 : la projection stocke <code>1/z</code>, pas <code>z</code>.</strong><br>
+La matrice de projection ne range pas la distance dans le buffer : elle range son inverse, parce que la division par <code>w</code> intervient après. Conséquence directe : avec <code>n = 0,1</code> et <code>f = 1000</code>, la moitié de la plage <code>[0,1]</code> est consommée par les <strong>20 premiers centimètres</strong>. Tout le reste de la scène se partage l’autre moitié.</p>
+
+<p><strong>Non-linéarité n°2 : le <code>float</code> est un logarithme déguisé.</strong><br>
+Un <code>float</code> IEEE-754 s’écrit <code>signe × 1,mantisse × 2^exposant</code>. Entre deux puissances de 2 consécutives, il y a toujours exactement 2²³ = 8 388 608 valeurs — que l’intervalle mesure 0,5 ou 2⁻³⁰. La densité explose donc en s’approchant de zéro.</p>
+
+<div class="scroll"><table style="min-width:480px">
+<thead><tr><th>Intervalle</th><th class="num">Pas du flottant</th><th class="num">Valeurs distinctes</th></tr></thead>
+<tbody>
+<tr><td><code>[0 ; 0,001]</code></td><td class="num">jusqu’à 1,4e-45</td><td class="num">≈ 1 000 000 000</td></tr>
+<tr><td><code>[0,999 ; 1,0]</code></td><td class="num">5,96e-8</td><td class="num">≈ 16 800</td></tr>
+<tr><td><code>[-1,0 ; -0,999]</code></td><td class="num">5,96e-8</td><td class="num">≈ 16 800</td></tr>
+</tbody></table></div>
+
+<p>Facteur <strong>60 000</strong> entre les deux bouts de la plage <code>[0,1]</code>.</p>
+
+<div class="flat">
+<p style="margin:0"><strong>Le raisonnement tient en une phrase.</strong> La projection écrase le lointain : c’est là qu’il faut le plus de valeurs disponibles. Le <code>float</code> a le plus de valeurs près de zéro. Donc on place le <strong>far</strong> à zéro. Les deux courbes, chacune en 1/x à sa manière, se compensent.</p>
+</div>
+
+<h3>6.2 — Le point que tout le monde rate : la dérivée est identique</h3>
+
+<p>Posons <code>d</code> la distance à l’œil (positive), <code>n</code> le near, <code>f</code> le far.</p>
+
+<div class="scroll"><table style="min-width:560px">
+<thead><tr><th></th><th>z en fonction de d</th><th>dérivée |dz/dd|</th></tr></thead>
+<tbody>
+<tr><td><strong>Standard</strong></td><td><code>z = f/(f−n) · (1 − n/d)</code></td><td><code>n·f / ((f−n)·d²)</code></td></tr>
+<tr><td><strong>Reverse</strong></td><td><code>z = n/(f−n) · (f/d − 1)</code></td><td><code>n·f / ((f−n)·d²)</code></td></tr>
+</tbody></table></div>
+
+<p><strong>Elles sont égales.</strong> Démonstration en deux lignes : poser <code>A = f/(f−n)</code> et <code>B = n/(f−n)</code>. Alors <code>z_std = A − A·n/d</code>, donc <code>dz_std/dd = A·n/d² = n·f/((f−n)d²)</code>. Et <code>z_rev = B·f/d − B</code>, donc <code>dz_rev/dd = −B·f/d² = −n·f/((f−n)d²)</code>. Même module.</p>
+
+<p>Autrement dit : <strong>la sensibilité géométrique est rigoureusement la même.</strong> Le reverse-Z ne « redistribue » pas la profondeur. Il ne change pas d’un iota la façon dont la projection écrase le lointain.</p>
+
+<p>L’incertitude en distance monde d’un pas de flottant vaut :</p>
+<pre><code>Δd = ulp(z) / |dz/dd|</code></pre>
+<p>Le dénominateur est identique dans les deux schémas. <strong>Toute la différence vient donc de <code>ulp(z)</code> seul</strong> — c’est-à-dire de l’endroit où la valeur atterrit dans l’espace des flottants. Le reverse-Z est une décision de <em>placement</em>, pas de calcul. C’est précisément pour ça qu’il est gratuit.</p>
+
+<h3>6.3 — Pourquoi le <code>[0,1]</code> est une précondition, pas une préférence</h3>
+
+<p>En NDC <code>[-1,+1]</code>, les deux extrémités de la plage ont une magnitude voisine de 1. Donc <code>ulp(-1) = ulp(+1) = 1,19e-7</code>. Inverser le mapping échange deux emplacements <strong>de densité identique</strong> : le gain est exactement ×1.</p>
+
+<p>Essaie le bouton <span class="kbd">NDC [-1,1]</span> dans le schéma §4 : les deux rangées deviennent jumelles.</p>
+
+<p>C’est la raison historique pour laquelle le reverse-Z n’existait pas sous OpenGL. OpenGL a rétropédalé en 2014 avec <code>glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE)</code> — une extension dont l’unique raison d’être est de rendre le reverse-Z possible. Vulkan, lui, ne propose même plus le <code>[-1,1]</code>.</p>
+
+<h3>6.4 — Pourquoi le buffer <code>float</code> est l’autre précondition</h3>
+
+<p>Un Z-buffer en entier 24 bits (le <code>D24</code> des GPU) est <strong>uniforme</strong> : le pas vaut 2⁻²⁴ partout, de 0 à 1. Aucune zone n’est plus dense qu’une autre.</p>
+
+<p>Dans ce cas, le raisonnement s’effondre : il n’y a plus de non-linéarité n°2 à faire compenser. Pire, le reverse-Z devient <strong>légèrement défavorable</strong>, parce qu’on perd le seul avantage du schéma standard (la zone proche de la caméra bénéficie naturellement de la compression en 1/z).</p>
+
+<div class="flat">
+<p style="margin:0"><strong>Règle :</strong> reverse-Z <strong>et</strong> buffer flottant, ou ni l’un ni l’autre. LV3 stocke sa profondeur en <code>std::vector&lt;float&gt;</code> (<code>DepthBuffer.h</code>) — la condition est remplie. Essaie le bouton <span class="kbd">buffer entier 24 bits</span> dans le schéma §4 pour voir le gain tomber à zéro.</p>
+</div>
+
+<h3>6.5 — Le bonus : le plan far disparaît</h3>
+
+<p>Fais tendre <code>f → +∞</code> dans les coefficients reverse-Z :</p>
+<pre><code>m[2][2] = n / (f - n)      ⟶  0
+m[3][2] = n * f / (f - n)  ⟶  n</code></pre>
+<p>Les deux limites sont finies et parfaitement conditionnées. Il en résulte la formule la plus simple de tout le pipeline :</p>
+<pre><code>z_ndc = n / distance</code></pre>
+<p><strong>Plus de plan far du tout.</strong> Plus de clipping far, plus de réglage du ratio <code>n/f</code>, plus d’objets lointains qui s’évanouissent quand on monte sur une colline. C’est <code>PerspectiveInfinite()</code> dans <code>Projection.cpp</code>.</p>
+<p>En Z standard, la même limite donne <code>m[2][2] → -1</code> et <code>m[3][2] → -2n</code> : ça compile, mais toute la scène lointaine s’agglutine sur les quelques milliers de flottants disponibles près de 1. Le far infini n’est utilisable <strong>que</strong> grâce au reverse-Z.</p>
+
+<!-- ============================================================ -->
+<h2 id="etapes">7. Les étapes, une par une</h2>
+
+<p class="note">Tous les chiffres ci-dessous sont recalculés en <strong>float32</strong> (<code>Math.fround</code>), comme le CPU — pas en double. Ils suivent les curseurs du §4. Valeurs courantes : <span id="cur-nfd" class="kbd">—</span></p>
+
+<!-- ÉTAPE 1 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 1</span><span class="t">Choisir l’intervalle NDC de profondeur</span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> déterminer si le mapping inversé peut apporter quoi que ce soit. Tant que cette réponse n’est pas chiffrée, écrire la matrice est prématuré.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée</p>Rien — décision de conception. Paramètres : format du buffer de profondeur (<code>float32</code>), intervalle candidat.</div>
+      <div class="b out"><p class="k">Sortie</p><code>z ∈ [0,1]</code> retenu.<br>Rapport de densité entre les deux bords : <strong>≈ 60 000</strong>.<br>En <code>[-1,1]</code> : <strong>1,0</strong> — aucun gain possible.</div>
+    </div>
+    <p>Le calcul qui tranche — nombre de flottants distincts dans une tranche de 0,001 :</p>
+<pre><code><span class="cm">// Comptage exact par manipulation de bits : deux float positifs rangés
+// en int32 forment une suite STRICTEMENT croissante. La différence des
+// motifs binaires EST le nombre de valeurs représentables entre eux.</span>
+<span class="kw">static_assert</span>(<span class="kw">sizeof</span>(<span class="kw">float</span>) == <span class="kw">sizeof</span>(int32_t));
+
+int32_t FloatsBetween(<span class="kw">float</span> a, <span class="kw">float</span> b) <span class="kw">noexcept</span>   <span class="cm">// 0 &lt;= a &lt;= b</span>
+{
+    <span class="kw">return</span> std::bit_cast&lt;int32_t&gt;(b) - std::bit_cast&lt;int32_t&gt;(a);
+}
+
+FloatsBetween(0.0f,   0.001f);  <span class="cm">// ≈ 1 004 535 808</span>
+FloatsBetween(0.999f, 1.0f);    <span class="cm">// ≈      16 777</span>
+FloatsBetween(-1.0f, -0.999f);  <span class="cm">// ≈      16 777  (symétrique)</span></code></pre>
+    <p class="note"><strong>Équivalent vectorisé :</strong> aucun. C’est une étape de conception, exécutée zéro fois par frame. Vectoriser un calcul qui n’a lieu qu’une fois dans la vie du projet est le contre-sens n°1 de l’optimisation.</p>
+  </div>
+</div>
+
+<!-- ÉTAPE 2 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 2</span><span class="t">Dériver les coefficients <code>m22</code> et <code>m32</code></span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> trouver les deux nombres qui envoient <code>near → 1</code> et <code>far → 0</code>. On ne les recopie pas d’un tutoriel : on les <em>résout</em>, pour pouvoir les reconstruire sans Internet.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 1</p>Intervalle cible <code>[0,1]</code>, orientation inversée.<br>Convention L02 : vecteur-ligne, main droite, <code>w = −z</code>.</div>
+      <div class="b out"><p class="k">Sortie</p><code>m22 = <span id="o2a">—</span></code><br><code>m32 = <span id="o2b">—</span></code></div>
+    </div>
+    <p>Un sommet en espace de vue a <code>z &lt; 0</code> (main droite, on regarde vers −Z). Avec le vecteur-ligne, seules deux cases entrent dans <code>clip.z</code> :</p>
+<pre><code>clip.z = z · m22 + 1 · m32
+clip.w = z · m23 = -z            <span class="cm">// m23 = -1, propriété de la main droite</span>
+
+z_ndc  = clip.z / clip.w = (z·m22 + m32) / (-z)</code></pre>
+    <p>Deux contraintes, deux inconnues :</p>
+<pre><code>z = -n  →  z_ndc = 1   →  (-n·m22 + m32) /  n  = 1   →  m32 - n·m22 = n
+z = -f  →  z_ndc = 0   →  (-f·m22 + m32) /  f  = 0   →  m32 = f·m22</code></pre>
+    <p>Substitution : <code>f·m22 − n·m22 = n</code>, donc :</p>
+<pre><code>m22 = n / (f - n)
+m32 = f · m22 = n·f / (f - n)</code></pre>
+    <div class="flat" style="margin-bottom:0"><p style="margin:0" class="note"><strong>Vérification de signe — le piège.</strong> <code>f &gt; n &gt; 0</code>, donc <code>m22</code> et <code>m32</code> sont tous deux <strong>positifs</strong>. Un signe <code>−</code> qui traîne (par mimétisme avec la formule OpenGL, où les deux sont négatifs) retourne la profondeur : la scène s’affiche à l’envers, le plus loin devant. Écrire <code>-n/(f-n)</code> est l’erreur la plus fréquente de ce lot.</p></div>
+  </div>
+</div>
+
+<!-- ÉTAPE 3 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 3</span><span class="t">Transformer le sommet — obtenir <code>clip.z</code> et <code>clip.w</code></span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> produire les deux composantes homogènes dont dépendent le clipping et le Z-buffer. C’est le seul calcul de ce lot qui s’exécute à chaque sommet, à chaque frame — donc le seul qui mérite une version SIMD.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 2</p><code>m22 = <span class="i-m22">—</span></code>, <code>m32 = <span class="i-m32">—</span></code>, <code>m23 = -1</code><br>Sommet en espace de vue : <code>z_view = <span class="i-zv">—</span></code></div>
+      <div class="b out"><p class="k">Sortie</p><code>clip.z = <span id="o3a">—</span></code><br><code>clip.w = <span id="o3b">—</span></code></div>
+    </div>
+    <h4>Scalaire</h4>
+<pre><code><span class="cm">// Matrix44f est stockée en ligne : MulRow(v, M) fait v' = v·M.
+// Seules les colonnes 2 et 3 nous intéressent ici.</span>
+<span class="kw">const</span> <span class="kw">float</span> clipZ = zView * m[2][2] + m[3][2];   <span class="cm">// x,y ne contribuent pas : m[0][2]=m[1][2]=0</span>
+<span class="kw">const</span> <span class="kw">float</span> clipW = zView * m[2][3];              <span class="cm">// m[2][3] = -1  ->  clipW = -zView</span></code></pre>
+    <h4>Vectorisé — AVX2, 8 sommets d’un coup</h4>
+<pre><code><span class="cm">// Les 8 z de vue sont déjà en SoA (un tableau de float contigu) : c'est
+// toute la raison d'être du layout DOD. En AoS il faudrait 8 gather.</span>
+<span class="kw">const</span> __m256 vZ   = _mm256_load_ps(zViewSoA + i);   <span class="cm">// 8 z_view, alignés 32 o</span>
+<span class="kw">const</span> __m256 vM22 = _mm256_set1_ps(m[2][2]);        <span class="cm">// broadcast : même scalaire x8</span>
+<span class="kw">const</span> __m256 vM32 = _mm256_set1_ps(m[3][2]);
+
+<span class="cm">// FMA : une seule instruction pour a*b+c, UN seul arrondi au lieu de deux.
+// Plus rapide ET plus précis que mul puis add séparés.</span>
+<span class="kw">const</span> __m256 vClipZ = _mm256_fmadd_ps(vZ, vM22, vM32);
+
+<span class="cm">// clipW = -z : on inverse le bit de signe par XOR avec 0x80000000.
+// Moins cher qu'une soustraction à zéro, et correct sur -0.0f.</span>
+<span class="kw">const</span> __m256 kSign  = _mm256_castsi256_ps(_mm256_set1_epi32(<span class="nb">0x80000000</span>));
+<span class="kw">const</span> __m256 vClipW = _mm256_xor_ps(vZ, kSign);
+
+_mm256_store_ps(clipZOut + i, vClipZ);
+_mm256_store_ps(clipWOut + i, vClipW);</code></pre>
+    <p class="note" style="margin-bottom:6px">Registres, couloir par couloir (8 sommets répartis entre <code>near</code> et <code>far</code>) :</p>
+    <div class="scroll"><div id="lanes3"></div></div>
+    <p class="fr">AVX-512 : même code avec <code>__m512</code>, <code>_mm512_fmadd_ps</code>, 16 couloirs. La sélection se fait au <em>runtime</em> (le portable n’a pas l’AVX-512), jamais par <code>#ifdef</code> global.</p>
+  </div>
+</div>
+
+<!-- ÉTAPE 4 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 4</span><span class="t">Clipper le plan near sous sa forme canonique</span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> rejeter ce qui est derrière l’œil <strong>avant</strong> la division par <code>w</code>. Un sommet avec <code>w ≤ 0</code> divisé par <code>w</code> produit des coordonnées aberrantes et un triangle retourné à l’écran. Le clipping doit donc vivre en 4D homogène.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 3</p><code>clip.z = <span class="i-cz">—</span></code>, <code>clip.w = <span class="i-cw">—</span></code></div>
+      <div class="b out"><p class="k">Sortie</p><code>NearDistance = w − z = <span id="o4a">—</span></code><br><span id="o4b">—</span></div>
+    </div>
+    <p>Le volume de clip canonique reste <code>0 ≤ z ≤ w</code> dans les deux schémas. Mais le bord qui représente le near change de côté :</p>
+    <div class="scroll"><table style="min-width:520px">
+      <thead><tr><th></th><th>plan near</th><th>plan far</th><th>distance signée au near</th></tr></thead>
+      <tbody>
+      <tr><td>Standard</td><td><code>z = 0</code></td><td><code>z = w</code></td><td><code>z</code></td></tr>
+      <tr><td><strong>Reverse-Z</strong></td><td><code>z = w</code></td><td><code>z = 0</code></td><td><code>w − z</code></td></tr>
+      </tbody></table></div>
+    <h4>Scalaire — <code>Rendering/ClipVertex.h</code></h4>
+<pre><code><span class="cm">// Ne connaît ni near, ni far, ni le type de projection (perspective / ortho).
+// C'est la matrice qui a encodé n et f. Cette fonction est universelle.
+// &gt;= 0  ->  conservé.</span>
+<span class="kw">float</span> NearDistance(<span class="kw">const</span> ClipVertex&amp; v) <span class="kw">noexcept</span>
+{
+    <span class="kw">return</span> v.clip.w - v.clip.z;      <span class="cm">// reverse-Z : w - z est le plan NEAR</span>
+}</code></pre>
+    <h4>Vectorisé — AVX2, masque de 8 triangles</h4>
+<pre><code><span class="cm">// Étage FACES : pour 8 triangles, répondre SANS BRANCHE "qui traverse le near ?"
+// On veut un masque de bits, pas un if par triangle.</span>
+<span class="kw">const</span> __m256 d0 = _mm256_sub_ps(w0, z0);   <span class="cm">// NearDistance du sommet 0 des 8 triangles</span>
+<span class="kw">const</span> __m256 d1 = _mm256_sub_ps(w1, z1);
+<span class="kw">const</span> __m256 d2 = _mm256_sub_ps(w2, z2);
+
+<span class="kw">const</span> __m256 zero = _mm256_setzero_ps();
+<span class="cm">// _CMP_LT_OQ : "&lt; , ordonné, non signalant". Un NaN répond false partout,
+// donc un triangle dégénéré n'est jamais rejeté par accident ici.</span>
+<span class="kw">const</span> int32_t out0 = _mm256_movemask_ps(_mm256_cmp_ps(d0, zero, _CMP_LT_OQ));
+<span class="kw">const</span> int32_t out1 = _mm256_movemask_ps(_mm256_cmp_ps(d1, zero, _CMP_LT_OQ));
+<span class="kw">const</span> int32_t out2 = _mm256_movemask_ps(_mm256_cmp_ps(d2, zero, _CMP_LT_OQ));
+
+<span class="kw">const</span> int32_t rejectAll = out0 &amp; out1 &amp; out2;   <span class="cm">// 3 sommets dehors -> rejet trivial</span>
+<span class="kw">const</span> int32_t acceptAll = ~(out0 | out1 | out2) &amp; <span class="nb">0xFF</span>;  <span class="cm">// 0 dehors -> accept trivial</span>
+<span class="kw">const</span> int32_t needClip  = ~(rejectAll | acceptAll) &amp; <span class="nb">0xFF</span>;  <span class="cm">// le reste : chemin lent</span></code></pre>
+    <p class="note">Le découpage lui-même (Sutherland-Hodgman) reste scalaire : il produit un nombre variable de sommets par triangle, ce que le SIMD ne sait pas faire sans compactage. On vectorise le <strong>tri</strong>, pas le <strong>découpage</strong> — et on compte sur le fait que <code>needClip</code> est presque toujours nul.</p>
+  </div>
+</div>
+
+<!-- ÉTAPE 5 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 5</span><span class="t">Diviser par <code>w</code> — et mesurer l’ulp obtenu</span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> produire la valeur réellement rangée dans le Z-buffer, puis vérifier <em>à quel endroit de l’espace des flottants</em> elle atterrit. C’est l’étape où le gain du lot devient mesurable.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 3</p><code>clip.z = <span class="i-cz">—</span></code><br><code>clip.w = <span class="i-cw">—</span></code></div>
+      <div class="b out"><p class="k">Sortie</p><code>z_ndc = <span id="o5a">—</span></code><br><code>ulp(z_ndc) = <span id="o5b">—</span></code><br>incertitude monde : <strong><span id="o5c">—</span></strong></div>
+    </div>
+    <h4>Scalaire</h4>
+<pre><code><span class="kw">const</span> <span class="kw">float</span> invW  = 1.0f / clipW;      <span class="cm">// calculé UNE fois : sert aussi à x, y, uv</span>
+<span class="kw">const</span> <span class="kw">float</span> zNdc  = clipZ * invW;</code></pre>
+    <h4>Vectorisé — AVX2, 8 sommets</h4>
+<pre><code><span class="cm">// Deux options. _mm256_div_ps est exact (0,5 ulp) mais coûte ~14 cycles de
+// latence et n'est PAS pipeliné (débit ~1 tous les 8 cycles sur Skylake).</span>
+<span class="kw">const</span> __m256 vInvW_exact = _mm256_div_ps(_mm256_set1_ps(1.0f), vClipW);
+
+<span class="cm">// Option rapide : rcp (12 bits de mantisse, ~4 cycles, pipeliné) + UNE
+// itération de Newton-Raphson -> ~23 bits, soit la précision du float.
+//   x1 = x0 * (2 - w*x0)
+// Obligatoire : sans Newton, 12 bits de profondeur, le z-fighting revient
+// par la porte de derrière après l'avoir chassé par la fenêtre.</span>
+      __m256 r  = _mm256_rcp_ps(vClipW);
+<span class="kw">const</span> __m256 two = _mm256_set1_ps(2.0f);
+r = _mm256_mul_ps(r, _mm256_fnmadd_ps(vClipW, r, two));   <span class="cm">// fnmadd = -(a*b)+c</span>
+
+<span class="kw">const</span> __m256 vZNdc = _mm256_mul_ps(vClipZ, r);</code></pre>
+    <p class="note" style="margin-bottom:6px">Registres, couloir par couloir — <code>z_ndc</code> et l’ulp correspondant :</p>
+    <div class="scroll"><div id="lanes5"></div></div>
+    <p class="fr">À vérifier au profiler avant d’adopter la variante rcp+Newton : sur les scènes testées, l’étage sommets n’est pas le goulot. <code>_mm256_div_ps</code> reste le choix par défaut tant que la mesure ne dit pas le contraire.</p>
+  </div>
+</div>
+
+<!-- ÉTAPE 6 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 6</span><span class="t">Effacer à <code>0.0f</code>, tester avec <code>GREATER</code></span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> rendre le Z-buffer cohérent avec le nouveau mapping. Ces deux lignes sont indissociables de l’étape 2 : changer l’une sans l’autre produit un écran noir ou une scène retournée, pas une dégradation progressive.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 5</p><code>z_ndc = <span class="i-zndc">—</span></code> (fragment candidat)<br>Valeur déjà au buffer : <code>dst</code></div>
+      <div class="b out"><p class="k">Sortie</p>Buffer effacé à <code>0.0f</code> (= far).<br>Le fragment passe si <code>z_ndc &gt; dst</code>.</div>
+    </div>
+    <h4>Scalaire — <code>Rendering/DepthBuffer.h</code></h4>
+<pre><code><span class="cm">// SOURCE UNIQUE du test de profondeur. Utilisée par TestAndSet (chemin
+// générique) ET par les shaders de Fragment.h. Une seule définition du
+// sens de comparaison dans tout le moteur : impossible d'en oublier une.</span>
+<span class="kw">bool</span> DepthTestAndSet(<span class="kw">float</span>&amp; dst, <span class="kw">float</span> z) <span class="kw">noexcept</span>
+{
+    <span class="kw">if</span> (z &lt;= dst) <span class="kw">return</span> <span class="kw">false</span>;      <span class="cm">// REVERSE-Z : on garde le PLUS GRAND</span>
+    dst = z;
+    <span class="kw">return</span> <span class="kw">true</span>;
+}
+
+<span class="cm">// Effacement : 0 = far. StreamFill = stores non temporels (chantier Clear).</span>
+<span class="kw">void</span> Clear() <span class="kw">noexcept</span>
+{
+    ClearKernel::StreamFill(m_Data.data(), m_Data.size(), 0.0f);
+    ClearKernel::Fence();
+}</code></pre>
+    <h4>Vectorisé — AVX2, 8 pixels d’une ligne</h4>
+<pre><code><span class="cm">// Le Z-buffer est contigu par ligne : Row(y) donne le float* de départ,
+// donc 8 pixels voisins = UN load aligné. C'est la cacheline qui commande.</span>
+<span class="kw">const</span> __m256 vDst = _mm256_load_ps(depthRow + x);        <span class="cm">// profondeurs déjà écrites</span>
+
+<span class="cm">// _CMP_GT_OQ : "&gt; , ordonné". Un NaN (triangle dégénéré) échoue le test
+// au lieu de corrompre le buffer. C'est voulu : jamais _CMP_GT_UQ ici.</span>
+<span class="kw">const</span> __m256 vPass = _mm256_cmp_ps(vZ, vDst, _CMP_GT_OQ);
+
+<span class="cm">// On combine avec le masque de couverture du triangle (edge functions) :
+// un pixel n'écrit que s'il est DANS le triangle ET devant.</span>
+<span class="kw">const</span> __m256 vWrite = _mm256_and_ps(vPass, vCoverage);
+
+<span class="cm">// blend + store : écrit les couloirs gagnants, laisse les autres intacts.
+// Préféré à maskstore, nettement plus lent sur plusieurs micro-architectures.</span>
+_mm256_store_ps(depthRow + x, _mm256_blendv_ps(vDst, vZ, vWrite));
+
+<span class="kw">const</span> int32_t writeMask = _mm256_movemask_ps(vWrite);   <span class="cm">// -> shading des 8 pixels</span></code></pre>
+    <p class="note" style="margin-bottom:6px">Couloir par couloir, un cas réel (le triangle couvre 6 pixels sur 8, 2 sont cachés) :</p>
+    <div class="scroll"><div id="lanes6"></div></div>
+  </div>
+</div>
+
+<!-- ÉTAPE 7 -->
+<div class="step">
+  <div class="sh"><span class="n">Étape 7</span><span class="t">Passer le far à l’infini (optionnel, mais gratuit)</span></div>
+  <div class="sb">
+    <div class="obj"><strong>Objectif :</strong> supprimer définitivement un paramètre de réglage de la caméra. Un paramètre qui n’existe pas ne peut pas être mal réglé.</div>
+    <div class="io">
+      <div class="b in"><p class="k">Entrée — de l’étape 2</p><code>m22 = n/(f−n)</code>, <code>m32 = n·f/(f−n)</code></div>
+      <div class="b out"><p class="k">Sortie</p><code>m22 = 0</code>, <code>m32 = n</code><br><code>z_ndc = n / distance = <span id="o7a">—</span></code></div>
+    </div>
+<pre><code>Matrix44f PerspectiveInfinite(<span class="kw">float</span> fovYRad, <span class="kw">float</span> aspect, <span class="kw">float</span> n) <span class="kw">noexcept</span>
+{
+    <span class="kw">const</span> <span class="kw">float</span> th = std::tan(fovYRad * 0.5f);
+
+    Matrix44f m = Zeroed();
+    m[0][0] = 1.0f / (aspect * th);
+    m[1][1] = 1.0f / th;
+    m[2][2] = 0.0f;      <span class="cm">// limite de n/(f-n) quand f -> +inf</span>
+    m[2][3] = -1.0f;
+    m[3][2] = n;         <span class="cm">// z_ndc = n / distance</span>
+    m[3][3] = 0.0f;
+    <span class="kw">return</span> m;
+}</code></pre>
+    <p class="note">Conséquence à ne pas oublier : <code>ViewData::hasFarPlane</code> doit valoir <code>false</code> pour cette lentille, et le frustum culling ne doit alors tester que 5 plans. Un sixième plan calculé depuis une matrice sans far produit des coefficients nuls et rejette tout, ou rien, selon la convention de normalisation.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="contre">8. Contre-exemples chiffrés — ce qu’il ne faut pas faire</h2>
+
+<h3>Contre-exemple 1 — Inverser le Z en gardant le NDC <code>[-1,+1]</code></h3>
+<p>« J’inverse le mapping, mais je garde l’intervalle OpenGL, ça marchera quand même. » Non : le gain est <strong>exactement ×1</strong>.</p>
+<div class="scroll"><table style="min-width:560px" id="t-ce1">
+<thead><tr><th>Schéma</th><th class="num">z stocké</th><th class="num">ulp(z)</th><th class="num">incertitude</th></tr></thead>
+<tbody></tbody></table></div>
+<p class="note">Les deux bords de <code>[-1,+1]</code> ont la même magnitude, donc le même ulp. On a payé une réécriture complète du clipping et du test de profondeur pour zéro gain. <strong>Le <code>[0,1]</code> n’est pas une préférence de style : c’est la condition d’existence du reverse-Z.</strong></p>
+
+<h3>Contre-exemple 2 — Reverse-Z sur un buffer entier 24 bits</h3>
+<p>« Je passe mon Z-buffer en <code>uint32</code> pour gagner de la bande passante, et je garde le reverse-Z. » Le reverse-Z devient inutile, et même très légèrement nuisible.</p>
+<div class="scroll"><table style="min-width:560px" id="t-ce2">
+<thead><tr><th>Buffer</th><th class="num">pas de quantification</th><th class="num">incertitude std</th><th class="num">incertitude reverse</th></tr></thead>
+<tbody></tbody></table></div>
+<p class="note">Un entier est uniforme : il n’y a plus de non-linéarité n°2 à compenser. La règle est binaire — <strong>reverse-Z et <code>float</code>, ou ni l’un ni l’autre.</strong></p>
+
+<h3>Contre-exemple 3 — Changer la matrice sans changer le <code>Clear()</code></h3>
+<p>Le bug le plus coûteux de ce lot, parce qu’il ne ressemble pas à un bug de profondeur.</p>
+<div class="scroll"><table style="min-width:620px">
+<thead><tr><th>Oubli</th><th>Symptôme observé</th><th>Diagnostic erroné probable</th></tr></thead>
+<tbody>
+<tr><td><code>Clear()</code> reste à <code>1.0f</code></td><td>Écran entièrement vide. Aucun triangle n’apparaît.</td><td>« Mon rasterizer ne couvre aucun pixel » → on passe trois heures dans les edge functions.</td></tr>
+<tr><td>Test reste <code>z &lt; dst</code></td><td>La scène s’affiche, mais <strong>à l’envers en profondeur</strong> : on voit à travers les murs, les objets lointains passent devant.</td><td>« Mon culling est inversé » → on retourne le signe de l’aire signée, et on casse le culling qui était juste.</td></tr>
+<tr><td><code>NearDistance</code> reste <code>clip.z</code></td><td>Tout va bien… jusqu’au jour où la caméra frôle un objet : le triangle se retourne violemment et balaie l’écran.</td><td>« Bug d’interpolation » → on cherche dans les barycentriques.</td></tr>
+<tr><td><code>m22 = -n/(f-n)</code></td><td>Profondeur inversée <em>et</em> clipping near qui rejette tout.</td><td>« La matrice est fausse » — seule bonne nouvelle : ce diagnostic-là est le bon.</td></tr>
+</tbody></table></div>
+<div class="flat"><p style="margin:0"><strong>Leçon de méthode :</strong> ces quatre lignes vivent dans quatre fichiers différents (<code>Projection.cpp</code>, <code>ClipVertex.h</code>, <code>DepthBuffer.h</code>, <code>RenderTypes.h</code>). C’est précisément pour ça que le reverse-Z est une <strong>décision dictatoriale prise une fois</strong> et jamais rediscutée : il n’existe pas d’état intermédiaire fonctionnel entre les deux schémas.</p></div>
+
+<!-- ============================================================ -->
+<h2 id="verif">9. Vérifier</h2>
+
+<h3>9.1 — Tests hors moteur (aucun rendu, aucune fenêtre)</h3>
+<pre><code><span class="cm">// Test 1 — les bornes. Si celui-ci échoue, rien d'autre ne sert à rien.</span>
+<span class="kw">const</span> Matrix44f P = Projection::Perspective(ToRad(60.0f), 16.0f/9.0f, 0.1f, 1000.0f);
+
+<span class="kw">auto</span> NdcZ = [&amp;](<span class="kw">float</span> dist) {
+    <span class="kw">const</span> Vec4f v = MulRow(Vec4f{0,0,-dist,1}, P);
+    <span class="kw">return</span> v.z / v.w;
+};
+
+LV3_ASSERT(ApproxEqual(NdcZ(0.1f),    1.0f, 1e-5f));   <span class="cm">// near -> 1</span>
+LV3_ASSERT(ApproxEqual(NdcZ(1000.0f), 0.0f, 1e-5f));   <span class="cm">// far  -> 0</span>
+
+<span class="cm">// Test 2 — la MONOTONIE. Plus loin = z strictement plus petit.
+// C'est le test qui attrape un signe inversé, que les bornes laissent passer
+// quand on a inversé DEUX fois par erreur.</span>
+<span class="kw">float</span> prev = NdcZ(0.1f);
+<span class="kw">for</span> (<span class="kw">float</span> d = 0.2f; d &lt; 1000.0f; d *= 1.2f) {
+    <span class="kw">const</span> <span class="kw">float</span> z = NdcZ(d);
+    LV3_ASSERT(z &lt; prev &amp;&amp; <span class="cm">"reverse-Z : z doit DÉCROÎTRE avec la distance"</span>);
+    prev = z;
+}
+
+<span class="cm">// Test 3 — le gain de précision, mesuré et pas supposé.
+// Deux surfaces à 1 mm l'une de l'autre, à 100 m : elles DOIVENT
+// produire deux flottants distincts.</span>
+LV3_ASSERT(NdcZ(100.0f) != NdcZ(100.001f));
+
+<span class="cm">// Test 4 — le far infini reste cohérent.</span>
+<span class="kw">const</span> Matrix44f Pi = Projection::PerspectiveInfinite(ToRad(60.0f), 16.0f/9.0f, 0.1f);
+<span class="kw">auto</span> NdcZi = [&amp;](<span class="kw">float</span> d) { <span class="kw">const</span> Vec4f v = MulRow(Vec4f{0,0,-d,1}, Pi); <span class="kw">return</span> v.z/v.w; };
+LV3_ASSERT(ApproxEqual(NdcZi(0.1f), 1.0f, 1e-5f));
+LV3_ASSERT(NdcZi(1e6f) &gt; 0.0f &amp;&amp; NdcZi(1e6f) &lt; 1e-6f);   <span class="cm">// tend vers 0, jamais négatif</span>
+
+<span class="cm">// Test 5 — le clipping near, forme canonique.</span>
+LV3_ASSERT(NearDistance(ClipVertex{MulRow(Vec4f{0,0,-0.05f,1}, P)}) &lt; 0.0f);  <span class="cm">// devant le near -> rejeté</span>
+LV3_ASSERT(NearDistance(ClipVertex{MulRow(Vec4f{0,0,-500.f,1}, P)}) &gt; 0.0f);  <span class="cm">// dans le frustum -> gardé</span></code></pre>
+
+<h3>9.2 — Filets en Debug</h3>
+<pre><code><span class="cm">// Dans le chemin rasterizer, sous _DEBUG uniquement : le Z-buffer ne doit
+// JAMAIS contenir autre chose que [0,1]. Une valeur hors bornes signale
+// un clipping near manquant ou un w négatif qui a traversé.</span>
+LV3_ASSERT(z &gt;= 0.0f &amp;&amp; z &lt;= 1.0f &amp;&amp; <span class="cm">"z_ndc hors [0,1] : clipping near défaillant"</span>);
+
+<span class="cm">// Au moment du Clear, vérifier la valeur de remplissage elle-même.
+// static_assert impossible (valeur runtime), mais l'assert attrape la
+// régression le jour où quelqu'un "corrige" le 0.0f en 1.0f.</span>
+LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reverse-Z : Clear doit remplir à 0"</span>);</code></pre>
+
+<h3>9.3 — Vérification visuelle</h3>
+<ul>
+<li><code>ERenderMode::Depth</code> — en reverse-Z, le proche est <strong>clair</strong> et le lointain <strong>sombre</strong>. Si c’est l’inverse, un signe a sauté. (En Z standard c’était le contraire : voilà pourquoi ce mode de debug doit être relu après ce lot.)</li>
+<li><code>ERenderMode::LinearDepth</code> — reconstruit la distance réelle depuis <code>z_ndc</code> : <code>d = n·f / (z·(f−n) + ... )</code>. Il doit donner un dégradé <em>visuellement linéaire</em> entre near et far. Un dégradé qui s’écrase près de la caméra signale que la formule de reconstruction est restée celle du Z standard.</li>
+<li>Deux quads coplanaires séparés de 1 mm, placés à 500 m : en Z standard ils clignotent, en reverse-Z ils sont nets et stables. C’est le test de non-régression le plus parlant à garder dans la scène de debug.</li>
+</ul>
+
+<h3>9.4 — Prédictions du lot appairé (L04 P2 — Z-buffer / L05 — caméra)</h3>
+<div class="scroll"><table style="min-width:560px">
+<thead><tr><th>Si ce lot est correct…</th><th>Alors le lot appairé doit observer…</th></tr></thead>
+<tbody>
+<tr><td>Les coefficients <code>m22</code>, <code>m32</code> sont positifs</td><td><code>Orthographic()</code> aussi : <code>m22 = 1/(f−n)</code>, <code>m32 = f/(f−n)</code> — cohérents, et le gizmo de caméra ortho s’affiche du bon côté</td></tr>
+<tr><td><code>NearDistance = w − z</code></td><td>Le clipper rejette les sommets derrière l’œil sans jamais produire de <code>w = 0</code> en division</td></tr>
+<tr><td><code>Clear()</code> remplit à <code>0.0f</code></td><td>Le chantier Clear mesure bien des <code>float</code> à zéro — <code>StreamFill</code> avec <code>0.0f</code> se réduit d’ailleurs à un <code>memset</code> de zéros, le cas le plus rapide</td></tr>
+<tr><td>Le test est <code>GREATER</code></td><td>Les shaders de <code>Fragment.h</code> et le chemin générique <code>TestAndSet</code> appellent <strong>tous deux</strong> <code>DepthTestAndSet</code> — source unique, vérifiée par <code>grep</code></td></tr>
+</tbody></table></div>
+
+<h3>9.5 — État constaté dans le dépôt</h3>
+<div class="card" style="padding:14px 18px">
+<div class="chk done"><span class="bx"></span><span><code>Maths/Projection.cpp</code> — <code>m[2][2] = n/(f-n)</code>, <code>m[3][2] = (n*f)/(f-n)</code>, commentaires « REVERSE-Z »</span></div>
+<div class="chk done"><span class="bx"></span><span><code>Projection::Orthographic</code> — <code>m[2][2] = 1/(f-n)</code>, <code>m[3][2] = f/(f-n)</code>, cohérent</span></div>
+<div class="chk done"><span class="bx"></span><span><code>Projection::PerspectiveInfinite</code> — <code>m[2][2] = 0</code>, <code>m[3][2] = n</code></span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/ClipVertex.h</code> — <code>NearDistance()</code> renvoie <code>v.clip.w - v.clip.z</code></span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/DepthBuffer.h</code> — <code>Clear()</code> à <code>0.0f</code>, <code>DepthTestAndSet</code> en <code>if (z &lt;= dst) return false</code></span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/RenderTypes.h</code> — <code>EDepthTest { Always, Greater, GreaterEqual, Never }</code></span></div>
+<p class="note" style="margin:10px 0 0">Le lot est <strong>intégralement en place et cohérent de bout en bout</strong>. Aucune correction à appliquer.</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="roadmap">10. Pour la roadmap — points soulevés, rien d’acté</h2>
+
+<p>Conformément au périmètre : ces points touchent des lots supérieurs mais remettent en cause ou prolongent une décision de <em>ce</em> lot. Ils vont en roadmap comme décisions à prendre, pas comme corrections.</p>
+
+<div class="scroll"><table style="min-width:700px">
+<thead><tr><th>Réf</th><th>Point</th><th>Pourquoi il appartient à ce lot</th><th>Nature</th></tr></thead>
+<tbody>
+<tr>
+  <td><span class="tag t-wa">Z-1</span></td>
+  <td>La copie de <code>RenderTypes.h</code> dans les fichiers du projet (hors dépôt) contient encore l’ancien <code>EDepthTest { Less, LessEqual }</code>.</td>
+  <td>Un document de référence périmé fait rejouer un faux diagnostic. Ce n’est pas du code, mais ça coûte du temps.</td>
+  <td>Dette documentaire</td>
+</tr>
+<tr>
+  <td><span class="tag t-wa">Z-2</span></td>
+  <td><code>ERenderMode::ShadeFragment_LinearDepth_WRONG</code> existe dans l’enum. Décider : le garder comme contre-exemple pédagogique explicite, ou le retirer.</td>
+  <td>Un mode nommé <code>_WRONG</code> dans un enum de production est soit un outil de leçon assumé, soit un oubli. Lié à la reconstruction de la profondeur linéaire depuis le reverse-Z.</td>
+  <td>Décision</td>
+</tr>
+<tr>
+  <td><span class="tag t-ac">Z-3</span></td>
+  <td>Le <em>depth bias</em> (décals, futures ombres) n’est pas défini. En reverse-Z le biais change de signe, et un biais constant est inadapté à une profondeur non linéaire.</td>
+  <td>Toute implémentation naïve recopiée d’un tutoriel GPU sera fausse de signe. À cadrer avant L12 (ombres).</td>
+  <td>Évolution</td>
+</tr>
+<tr>
+  <td><span class="tag t-ac">Z-4</span></td>
+  <td><code>PerspectiveInfinite()</code> est écrite mais son chemin complet (<code>hasFarPlane = false</code>, frustum à 5 plans, gizmo de caméra sans face arrière) n’est pas validé par un test.</td>
+  <td>C’est le bénéfice n°2 de ce lot et il n’est pas exploité. À valider avec la scène du système solaire, où le far pose justement problème.</td>
+  <td>Évolution</td>
+</tr>
+<tr>
+  <td><span class="tag t-ac">Z-5</span></td>
+  <td>Variante <code>rcp + Newton</code> pour la division par <code>w</code> (étape 5) : à mesurer sur l’i7 avant adoption, ou à écarter explicitement.</td>
+  <td>Sans itération de Newton, la profondeur retombe à 12 bits de mantisse — on annulerait le gain du lot par une optimisation.</td>
+  <td>Mesure à faire</td>
+</tr>
+<tr>
+  <td><span class="tag t-ac">Z-6</span></td>
+  <td>Interdire en dur un Z-buffer entier : un <code>static_assert</code> sur le type de <code>DepthBuffer::m_Data</code>, ou une note de contrat en tête de fichier.</td>
+  <td>Le jour où quelqu’un passera en <code>uint16</code> pour la bande passante, tout le raisonnement du lot s’effondre silencieusement (contre-exemple 2).</td>
+  <td>Garde-fou</td>
+</tr>
+</tbody></table></div>
+
+<hr>
+<p class="note">Lot L02-C — Reverse-Z. Dépôts : <code>onkover/LibraryV3</code> (LIB), <code>onkover/RefactoNouvelleLibrairieV3</code> (EXE). Tous les chiffres sont calculés en float32 dans la page ; aucun n’est pré-écrit.</p>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+var f32 = Math.fround;
+var NS = [0.01, 0.05, 0.1, 0.5, 1];
+var FS = [100, 1000, 10000, 100000];
+var state = { n:0.1, f:1000, d:100, intBuf:false, ndcSym:false };
+
+function ulp(v){
+  v = Math.abs(v);
+  if (v < 1.1754944e-38) return 1.4012985e-45;
+  return Math.pow(2, Math.floor(Math.log2(v)) - 23);
+}
+function zStd(d,n,f){ return f32(f/(f-n) * (1 - n/d)); }
+function zRev(d,n,f){ return f32(n/(f-n) * (f/d - 1)); }
+function zStdSym(d,n,f){ return f32(2*zStd(d,n,f) - 1); }
+function zRevSym(d,n,f){ return f32(2*zRev(d,n,f) - 1); }
+function slope(d,n,f){ return n*f/((f-n)*d*d); }
+
+function step(z){
+  if (state.intBuf) return Math.pow(2,-24);
+  if (state.ndcSym) return ulp(z) ;
+  return ulp(z);
+}
+function errStd(d){
+  var n=state.n, f=state.f;
+  var z = state.ndcSym ? zStdSym(d,n,f) : zStd(d,n,f);
+  var s = state.ndcSym ? slope(d,n,f)*2 : slope(d,n,f);
+  return step(z)/s*1000;
+}
+function errRev(d){
+  var n=state.n, f=state.f;
+  var z = state.ndcSym ? zRevSym(d,n,f) : zRev(d,n,f);
+  var s = state.ndcSym ? slope(d,n,f)*2 : slope(d,n,f);
+  return step(z)/s*1000;
+}
+function fmtMM(v){
+  if (!isFinite(v)) return "∞";
+  if (v >= 1000) return (v/1000).toFixed(v>=10000?0:2).replace(".",",") + " m";
+  if (v >= 10)   return v.toFixed(1).replace(".",",") + " mm";
+  if (v >= 0.01) return v.toFixed(3).replace(".",",") + " mm";
+  if (v >= 1e-4) return (v*1000).toFixed(2).replace(".",",") + " µm";
+  return v.toExponential(2).replace(".",",") + " mm";
+}
+function trimNum(x){
+  var s = (Math.abs(x) >= 1 || x === 0) ? String(Math.round(x*1000)/1000) : String(Number(x.toPrecision(3)));
+  return s.replace(".", ",");
+}
+function fmtTick(mm){
+  if (mm >= 1000)  return trimNum(mm/1000) + " m";
+  if (mm >= 10)    return trimNum(mm/10) + " cm";
+  if (mm >= 0.001) return trimNum(mm) + " mm";
+  return trimNum(mm*1000) + " µm";
+}
+function fmtD(d){
+  if (d < 1) return d.toFixed(2).replace(".",",") + " m";
+  if (d < 10) return d.toFixed(1).replace(".",",") + " m";
+  return Math.round(d).toLocaleString("fr-FR") + " m";
+}
+function sci(v){
+  if (v === 0) return "0";
+  var e = v.toExponential(4).split("e");
+  return e[0].replace(".",",") + "e" + e[1];
+}
+function colorFor(mm){
+  var t = (Math.log10(Math.max(mm,1e-6)) + 4) / 7;
+  t = Math.max(0, Math.min(1, t));
+  var stops = [[27,158,117],[143,180,58],[237,161,0],[224,118,40],[216,64,47]];
+  var p = t*(stops.length-1), i = Math.min(stops.length-2, Math.floor(p)), k = p - i;
+  var a = stops[i], b = stops[i+1];
+  return "rgb(" + Math.round(a[0]+(b[0]-a[0])*k) + "," + Math.round(a[1]+(b[1]-a[1])*k) + "," + Math.round(a[2]+(b[2]-a[2])*k) + ")";
+}
+
+/* ---------- schéma frustum ---------- */
+function drawSchema(){
+  var n=state.n, f=state.f, W=680, H=250, L=78, R=664, N=56;
+  var rows=[{y:46,h:52,lab:"Z standard",fn:errStd},{y:132,h:52,lab:"Reverse-Z",fn:errRev}];
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Bandes de précision de profondeur entre le plan near et le plan far, pour le Z standard et le reverse-Z">';
+  s+='<title>Précision du Z-buffer du near au far</title>';
+  var xOf=function(d){ return L + (R-L)*(Math.log(d/n)/Math.log(f/n)); };
+  for (var r=0;r<rows.length;r++){
+    var row=rows[r];
+    s+='<text x="8" y="'+(row.y-7)+'" font-size="12" font-weight="600" fill="currentColor">'+row.lab+'</text>';
+    for (var i=0;i<N;i++){
+      var d0=n*Math.pow(f/n, i/N), d1=n*Math.pow(f/n,(i+1)/N);
+      var dm=Math.sqrt(d0*d1);
+      var x0=xOf(d0), x1=xOf(d1);
+      s+='<rect x="'+x0.toFixed(2)+'" y="'+row.y+'" width="'+(x1-x0+0.6).toFixed(2)+'" height="'+row.h+'" fill="'+colorFor(row.fn(dm))+'"/>';
+    }
+    s+='<rect x="'+L+'" y="'+row.y+'" width="'+(R-L)+'" height="'+row.h+'" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.35"/>';
+  }
+  /* axes */
+  var ticks=[], dec=Math.floor(Math.log10(n));
+  for (var p=dec;p<=Math.ceil(Math.log10(f));p++){ var v=Math.pow(10,p); if (v>=n&&v<=f) ticks.push(v); }
+  if (ticks[0]!==n) ticks.unshift(n);
+  if (ticks[ticks.length-1]!==f) ticks.push(f);
+  for (var t=0;t<ticks.length;t++){
+    var x=xOf(ticks[t]);
+    s+='<line x1="'+x.toFixed(1)+'" y1="196" x2="'+x.toFixed(1)+'" y2="202" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>';
+    s+='<text x="'+x.toFixed(1)+'" y="216" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.65">'+fmtD(ticks[t])+'</text>';
+  }
+  s+='<text x="'+L+'" y="38" font-size="11" fill="currentColor" opacity="0.65">near</text>';
+  s+='<text x="'+R+'" y="38" font-size="11" text-anchor="end" fill="currentColor" opacity="0.65">far</text>';
+  /* caméra */
+  s+='<path d="M 10 118 L 46 96 L 46 140 Z" fill="currentColor" opacity="0.25"/>';
+  s+='<text x="10" y="156" font-size="11" fill="currentColor" opacity="0.6">œil</text>';
+  /* curseur objet */
+  var xc=xOf(Math.min(Math.max(state.d,n),f));
+  s+='<line x1="'+xc.toFixed(1)+'" y1="40" x2="'+xc.toFixed(1)+'" y2="192" stroke="currentColor" stroke-width="1.5"/>';
+  s+='<circle cx="'+xc.toFixed(1)+'" cy="40" r="4" fill="currentColor"/>';
+  s+='<text x="'+xc.toFixed(1)+'" y="236" font-size="11" text-anchor="middle" font-weight="600" fill="currentColor">'+fmtD(state.d)+'</text>';
+  s+='</svg>';
+  document.getElementById("schema").innerHTML = s;
+}
+
+/* ---------- courbe ---------- */
+function drawChart(){
+  var n=state.n, f=state.f, W=680, H=300, L=86, R=652, T=34, B=244;
+  /* On échantillonne À L'INTÉRIEUR du frustum, jamais sur les bornes :
+     à d = near exactement, z_std vaut 0 et ulp(0) est un dénormal (1,4e-45),
+     ce qui ferait couvrir 35 décades à l'axe et écraserait toute la courbe. */
+  var dMin = n*1.02, dMax = f*0.98;
+  var xs=[], a=[], b=[];
+  for (var i=0;i<=120;i++){
+    var d = dMin*Math.pow(dMax/dMin, i/120);
+    xs.push(d); a.push(errStd(d)); b.push(errRev(d));
+  }
+  var all=a.concat(b).filter(function(v){return isFinite(v)&&v>0;});
+  var hi=Math.ceil(Math.log10(Math.max.apply(null,all))+0.15);
+  var lo=Math.floor(Math.log10(Math.min.apply(null,all))-0.15);
+  if (hi-lo > 8) lo = hi-8;            /* fenêtre bornée : 8 décades maximum */
+  if (hi-lo < 3) lo = hi-3;            /* et au moins 3, pour ne pas zoomer sur du bruit */
+  var stepP = (hi-lo) > 6 ? 2 : 1;     /* une étiquette sur deux si la plage est large */
+  var xOf=function(d){ return L+(R-L)*(Math.log(d/dMin)/Math.log(dMax/dMin)); };
+  var yOf=function(v){
+    var t=(Math.log10(Math.max(v,1e-30))-lo)/(hi-lo);
+    return B-(B-T)*Math.max(0,Math.min(1,t));
+  };
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbe logarithmique de l\'incertitude de profondeur en fonction de la distance">';
+  s+='<title>Incertitude de profondeur selon la distance</title>';
+  for (var p=lo;p<=hi;p+=stepP){
+    var y=yOf(Math.pow(10,p));
+    s+='<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+R+'" y2="'+y.toFixed(1)+'" stroke="currentColor" stroke-width="0.5" opacity="0.14"/>';
+    s+='<text x="'+(L-8)+'" y="'+(y+3.8).toFixed(1)+'" font-size="10.5" text-anchor="end" fill="currentColor" opacity="0.6">'+fmtTick(Math.pow(10,p))+'</text>';
+  }
+  var ticks=[];
+  for (var q=Math.ceil(Math.log10(dMin));q<=Math.floor(Math.log10(dMax));q++) ticks.push(Math.pow(10,q));
+  for (var t2=0;t2<ticks.length;t2++){
+    var x=xOf(ticks[t2]);
+    s+='<line x1="'+x.toFixed(1)+'" y1="'+T+'" x2="'+x.toFixed(1)+'" y2="'+B+'" stroke="currentColor" stroke-width="0.5" opacity="0.14"/>';
+    var anc = (x > R-26) ? "end" : (x < L+26 ? "start" : "middle");
+    s+='<text x="'+x.toFixed(1)+'" y="'+(B+17)+'" font-size="10.5" text-anchor="'+anc+'" fill="currentColor" opacity="0.6">'+fmtD(ticks[t2])+'</text>';
+  }
+  /* cadre */
+  s+='<rect x="'+L+'" y="'+T+'" width="'+(R-L)+'" height="'+(B-T)+'" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.3"/>';
+  /* seuil 1 mm */
+  if (0>=lo && 0<=hi){
+    s+='<line x1="'+L+'" y1="'+yOf(1).toFixed(1)+'" x2="'+R+'" y2="'+yOf(1).toFixed(1)+'" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 4" opacity="0.5"/>';
+  }
+  var path=function(arr,col,dash){
+    var p2="";
+    for (var i=0;i<xs.length;i++){ p2 += (i?"L":"M") + xOf(xs[i]).toFixed(2) + " " + yOf(arr[i]).toFixed(2) + " "; }
+    return '<path d="'+p2+'" fill="none" stroke="'+col+'" stroke-width="2" stroke-linejoin="round"'+(dash?' stroke-dasharray="6 4"':'')+'/>';
+  };
+  s+=path(a,"#d8402f",false);
+  s+=path(b,"#1b9e75",true);
+  /* curseur synchronisé avec le §4 */
+  var dc=Math.min(Math.max(state.d,dMin),dMax), xc=xOf(dc);
+  s+='<line x1="'+xc.toFixed(1)+'" y1="'+T+'" x2="'+xc.toFixed(1)+'" y2="'+B+'" stroke="currentColor" stroke-width="1" opacity="0.45"/>';
+  s+='<circle cx="'+xc.toFixed(1)+'" cy="'+yOf(errStd(dc)).toFixed(1)+'" r="3.5" fill="#d8402f"/>';
+  s+='<circle cx="'+xc.toFixed(1)+'" cy="'+yOf(errRev(dc)).toFixed(1)+'" r="3.5" fill="#1b9e75"/>';
+  s+='<text x="'+L+'" y="'+(T-11)+'" font-size="10.5" fill="currentColor" opacity="0.55">incertitude de profondeur</text>';
+  s+='<text x="'+R+'" y="'+(B+34)+'" font-size="10.5" text-anchor="end" fill="currentColor" opacity="0.55">distance à l’œil</text>';
+  s+='</svg>';
+  document.getElementById("chart").innerHTML=s;
+}
+
+/* ---------- chaîne de l'algorithme ---------- */
+function drawChain(){
+  var items=[
+    ["1. Matrice P","m22, m32","chg"],
+    ["2. v · P","clip.z, clip.w","same"],
+    ["3. Clip near","w − z ≥ 0","chg"],
+    ["4. ÷ w","z_ndc","same"],
+    ["5. Test Z","Clear 0, GREATER","chg"]
+  ];
+  /* Largeur calculée, pas devinée : 5 boîtes + 4 gaps doivent tenir dans
+     la zone utile (680 moins 2 x 18 de marge), sinon la dernière déborde. */
+  var W=680,H=96,x0=18,gap=16;
+  var bw=(W - 2*x0 - (items.length-1)*gap)/items.length;
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Chaîne de la profondeur en cinq maillons, trois sont modifiés par ce lot">';
+  s+='<title>Chaîne de la profondeur</title>';
+  for (var i=0;i<items.length;i++){
+    var x=x0+i*(bw+gap), chg=items[i][2]==="chg";
+    s+='<rect x="'+x+'" y="20" width="'+bw+'" height="50" rx="8" fill="'+(chg?"var(--wabg)":"var(--card2)")+'" stroke="'+(chg?"var(--wa)":"var(--bd)")+'" stroke-width="'+(chg?1.2:0.6)+'"/>';
+    s+='<text x="'+(x+bw/2)+'" y="40" font-size="12.5" font-weight="600" text-anchor="middle" fill="'+(chg?"var(--wa)":"var(--tx)")+'">'+items[i][0]+'</text>';
+    s+='<text x="'+(x+bw/2)+'" y="57" font-size="11" text-anchor="middle" fill="'+(chg?"var(--wa)":"var(--tx2)")+'">'+items[i][1]+'</text>';
+    if (i<items.length-1){
+      var ax=x+bw+4, bx=x+bw+gap-4;
+      s+='<line x1="'+ax+'" y1="45" x2="'+bx+'" y2="45" stroke="var(--tx3)" stroke-width="1.2"/>';
+      s+='<path d="M '+(bx-4)+' 41 L '+bx+' 45 L '+(bx-4)+' 49" fill="none" stroke="var(--tx3)" stroke-width="1.2"/>';
+    }
+  }
+  s+='<text x="18" y="88" font-size="11" fill="var(--wa)">■ modifié par ce lot</text>';
+  s+='<text x="160" y="88" font-size="11" fill="var(--tx3)">■ inchangé</text>';
+  s+='</svg>';
+  document.getElementById("chain").innerHTML=s;
+}
+
+/* ---------- couloirs SIMD ---------- */
+function lanes(rows){
+  var s='<div class="lanes">';
+  for (var i=0;i<8;i++) s+='<div class="hdl">['+i+']</div>';
+  s+='</div>';
+  for (var r=0;r<rows.length;r++){
+    s+='<div style="font-size:11px;color:var(--tx3);font-family:var(--mono);margin:7px 0 2px">'+rows[r].lab+'</div><div class="lanes">';
+    for (var k=0;k<8;k++){
+      var c = rows[r].cls ? rows[r].cls[k] : "";
+      s+='<div class="'+c+'">'+rows[r].v[k]+'</div>';
+    }
+    s+='</div>';
+  }
+  return s;
+}
+
+function render(){
+  var n=state.n, f=state.f, d=Math.min(Math.max(state.d,n),f*0.999);
+  document.getElementById("nv").textContent = fmtD(n);
+  document.getElementById("fv").textContent = fmtD(f);
+  document.getElementById("dv").textContent = fmtD(d);
+  document.getElementById("cur-nfd").textContent = "near = "+fmtD(n)+"   far = "+fmtD(f)+"   objet à "+fmtD(d);
+
+  drawSchema(); drawChart(); drawChain();
+
+  var zs = state.ndcSym ? zStdSym(d,n,f) : zStd(d,n,f);
+  var zr = state.ndcSym ? zRevSym(d,n,f) : zRev(d,n,f);
+  var es = errStd(d), er = errRev(d);
+  document.getElementById("s-std").textContent = fmtMM(es);
+  document.getElementById("s-rev").textContent = fmtMM(er);
+  document.getElementById("s-stdz").textContent = "z = " + zs.toFixed(7).replace(".",",");
+  document.getElementById("s-revz").textContent = "z = " + zr.toFixed(7).replace(".",",");
+  var g = es/er;
+  document.getElementById("s-gain").textContent = g>=10 ? "×"+Math.round(g).toLocaleString("fr-FR") : "×"+g.toFixed(2).replace(".",",");
+  var note = "";
+  if (state.intBuf) note = "Buffer entier 24 bits : le pas est uniforme (2⁻²⁴ partout), les deux rangées sont identiques — le gain tombe à ×1.";
+  else if (state.ndcSym) note = "NDC [-1,+1] : les deux bords ont la même magnitude, donc le même ulp. Inverser n’échange que deux emplacements équivalents.";
+  else note = "NDC [0,1] et buffer float32 : les deux préconditions sont réunies, le gain est réel et croît avec la distance.";
+  document.getElementById("read-note").textContent = note;
+
+  /* étape 2 */
+  var m22 = f32(n/(f-n)), m32 = f32(n*f/(f-n));
+  document.getElementById("o2a").textContent = sci(m22);
+  document.getElementById("o2b").textContent = sci(m32);
+  var el;
+  el=document.querySelectorAll(".i-m22"); for(var i=0;i<el.length;i++) el[i].textContent=sci(m22);
+  el=document.querySelectorAll(".i-m32"); for(i=0;i<el.length;i++) el[i].textContent=sci(m32);
+  el=document.querySelectorAll(".i-zv");  for(i=0;i<el.length;i++) el[i].textContent="-"+fmtD(d);
+
+  /* étape 3 */
+  var clipZ = f32(f32(d*-1*m22) + m32), clipW = f32(d);
+  document.getElementById("o3a").textContent = sci(clipZ);
+  document.getElementById("o3b").textContent = sci(clipW);
+  el=document.querySelectorAll(".i-cz"); for(i=0;i<el.length;i++) el[i].textContent=sci(clipZ);
+  el=document.querySelectorAll(".i-cw"); for(i=0;i<el.length;i++) el[i].textContent=sci(clipW);
+
+  var ds=[], vz=[], cz=[], cw=[];
+  for (i=0;i<8;i++){
+    var dd = n*Math.pow(f/n, i/7);
+    ds.push(dd);
+    vz.push("-"+(dd<1?dd.toFixed(2):Math.round(dd)));
+    cz.push(sci(f32(f32(-dd*m22)+m32)).slice(0,8));
+    cw.push((dd<1?dd.toFixed(2):Math.round(dd)).toString());
+  }
+  document.getElementById("lanes3").innerHTML = lanes([
+    {lab:"vZ   = _mm256_load_ps(zViewSoA)", v:vz},
+    {lab:"vM22 = _mm256_set1_ps(m22)", v:new Array(8).fill(sci(m22).slice(0,8))},
+    {lab:"vClipZ = _mm256_fmadd_ps(vZ, vM22, vM32)", v:cz},
+    {lab:"vClipW = _mm256_xor_ps(vZ, signbit)", v:cw}
+  ]);
+
+  /* étape 4 */
+  var nd = f32(clipW - clipZ);
+  document.getElementById("o4a").textContent = sci(nd);
+  document.getElementById("o4b").textContent = nd >= 0
+    ? '<span class="tag t-ok">conservé</span> — le sommet est au-delà du near'
+    : '<span class="tag t-no">rejeté</span> — le sommet est devant le near';
+
+  /* étape 5 */
+  var zndc = f32(clipZ/clipW);
+  document.getElementById("o5a").textContent = sci(zndc);
+  document.getElementById("o5b").textContent = sci(ulp(zndc));
+  document.getElementById("o5c").textContent = fmtMM(ulp(zndc)/slope(d,n,f)*1000);
+  el=document.querySelectorAll(".i-zndc"); for(i=0;i<el.length;i++) el[i].textContent=sci(zndc);
+
+  var zn=[], up=[];
+  for (i=0;i<8;i++){
+    var z2=f32(zRev(ds[i],n,f));
+    zn.push(sci(z2).slice(0,8));
+    up.push(sci(ulp(z2)).slice(0,8));
+  }
+  document.getElementById("lanes5").innerHTML = lanes([
+    {lab:"distance (m)", v:ds.map(function(x){return x<1?x.toFixed(2):Math.round(x).toString();})},
+    {lab:"vZNdc = _mm256_mul_ps(vClipZ, rcp(vClipW))", v:zn},
+    {lab:"ulp(z) — densité du float à cet endroit", v:up}
+  ]);
+
+  /* étape 6 */
+  var zcand=[], zdst=[], pass=[], cov=[], cls=[], out=[];
+  var base=f32(zRev(d,n,f));
+  for (i=0;i<8;i++){
+    var zc = f32(base*(1+(i-3.5)*0.004));
+    var zd = f32(base*(1+(i-5)*0.006));
+    zcand.push(zc.toFixed(6).slice(0,8));
+    zdst.push(zd.toFixed(6).slice(0,8));
+    var cvr = (i!==2 && i!==7);
+    cov.push(cvr?"1":"0");
+    var p = zc>zd;
+    pass.push(p?"1":"0");
+    var w = p && cvr;
+    out.push(w?"écrit":"garde");
+    cls.push(w?"act":"dead");
+  }
+  document.getElementById("lanes6").innerHTML = lanes([
+    {lab:"vZ      — z_ndc des 8 fragments candidats", v:zcand},
+    {lab:"vDst    — _mm256_load_ps(depthRow + x)", v:zdst},
+    {lab:"vPass   — _mm256_cmp_ps(vZ, vDst, _CMP_GT_OQ)", v:pass},
+    {lab:"vCov    — masque de couverture (edge functions)", v:cov},
+    {lab:"vWrite  — _mm256_and_ps(vPass, vCov)", v:out, cls:cls}
+  ]);
+
+  /* étape 7 */
+  document.getElementById("o7a").textContent = sci(f32(n/d));
+
+  /* contre-exemple 1 */
+  var sl = slope(d,n,f);
+  var rows1 = [
+    ["[0,1] standard",  zStd(d,n,f),    ulp(zStd(d,n,f))/sl*1000],
+    ["[0,1] reverse-Z", zRev(d,n,f),    ulp(zRev(d,n,f))/sl*1000],
+    ["[-1,+1] standard",zStdSym(d,n,f), ulp(zStdSym(d,n,f))/(2*sl)*1000],
+    ["[-1,+1] reverse", zRevSym(d,n,f), ulp(zRevSym(d,n,f))/(2*sl)*1000]
+  ];
+  var h1="";
+  for (i=0;i<rows1.length;i++){
+    var bold = (i===1);
+    h1 += '<tr'+(bold?' style="background:var(--okbg)"':'')+'><td>'+rows1[i][0]+'</td><td class="num">'+rows1[i][1].toFixed(7).replace(".",",")+'</td><td class="num">'+sci(ulp(rows1[i][1]))+'</td><td class="num">'+fmtMM(rows1[i][2])+'</td></tr>';
+  }
+  document.querySelector("#t-ce1 tbody").innerHTML = h1;
+
+  /* contre-exemple 2 */
+  var stepInt = Math.pow(2,-24);
+  var h2 = '<tr><td>float32</td><td class="num">variable (1,4e-45 → 6,0e-8)</td><td class="num">'+fmtMM(ulp(zStd(d,n,f))/sl*1000)+'</td><td class="num" style="color:var(--ok);font-weight:600">'+fmtMM(ulp(zRev(d,n,f))/sl*1000)+'</td></tr>';
+  h2 += '<tr><td>entier 24 bits</td><td class="num">5,96e-8 partout</td><td class="num">'+fmtMM(stepInt/sl*1000)+'</td><td class="num" style="color:var(--no)">'+fmtMM(stepInt/sl*1000)+'</td></tr>';
+  document.querySelector("#t-ce2 tbody").innerHTML = h2;
+}
+
+function bind(id, arr, key){
+  var el = document.getElementById(id);
+  el.addEventListener("input", function(){
+    if (arr) state[key] = arr[+el.value];
+    render();
+  });
+}
+bind("n", NS, "n");
+bind("f", FS, "f");
+document.getElementById("d").addEventListener("input", function(){
+  var t = +this.value/1000;
+  state.d = state.n * Math.pow(state.f/state.n, t);
+  render();
+});
+document.getElementById("n").addEventListener("input", function(){
+  var t = +document.getElementById("d").value/1000;
+  state.d = state.n * Math.pow(state.f/state.n, t);
+});
+document.getElementById("f").addEventListener("input", function(){
+  var t = +document.getElementById("d").value/1000;
+  state.d = state.n * Math.pow(state.f/state.n, t);
+});
+function seg(id, key, other){
+  var b = document.getElementById(id);
+  b.addEventListener("click", function(){
+    state[key] = !state[key];
+    if (state[key]) state[other] = false;
+    document.getElementById("b-int").setAttribute("aria-pressed", state.intBuf);
+    document.getElementById("b-ndc").setAttribute("aria-pressed", state.ndcSym);
+    render();
+  });
+}
+seg("b-int","intBuf","ndcSym");
+seg("b-ndc","ndcSym","intBuf");
+
+state.d = state.n * Math.pow(state.f/state.n, 0.66);
+render();
+})();
+</script>
+</body>
+</html>

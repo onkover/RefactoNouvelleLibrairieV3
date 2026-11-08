@@ -1,0 +1,2956 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lot 05 — Caméra &amp; Frustum, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f8fa; --panel:#ffffff; --ink:#15181d; --ink2:#4a5260; --ink3:#767f8d;
+  --line:#e2e6ec; --line2:#cfd5de;
+  --accent:#1f5fd0; --accent-bg:#eaf1fd;
+  --ok:#0f7a4a; --ok-bg:#e7f6ee;
+  --warn:#9a6400; --warn-bg:#fdf3e0;
+  --bad:#b32020; --bad-bg:#fdecec;
+  --mono:"Cascadia Mono","Consolas","SFMono-Regular",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{display:grid;grid-template-columns:232px minmax(0,1fr);gap:0;max-width:1480px;margin:0 auto}
+
+/* ── nav ───────────────────────────────────────────── */
+nav{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:20px 14px;border-right:1px solid var(--line);background:var(--panel)}
+nav h1{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin:0 0 4px}
+nav .sub{font-size:19px;font-weight:650;line-height:1.25;margin:0 0 18px}
+nav a{display:block;padding:5px 9px;margin:1px 0;border-radius:6px;text-decoration:none;
+  color:var(--ink2);font-size:13.5px}
+nav a:hover{background:var(--bg);color:var(--ink)}
+nav a.on{background:var(--accent-bg);color:var(--accent);font-weight:600}
+nav .grp{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);
+  margin:16px 0 4px;padding:0 9px}
+nav button{width:100%;margin-top:18px;padding:8px;border:1px solid var(--line2);
+  background:var(--panel);border-radius:7px;font-size:13px;color:var(--ink2);cursor:pointer}
+nav button:hover{background:var(--bg);color:var(--ink)}
+
+/* ── layout ────────────────────────────────────────── */
+main{padding:28px 34px 120px;min-width:0}
+section{margin:0 0 46px;scroll-margin-top:20px}
+h2{font-size:25px;font-weight:660;letter-spacing:-.015em;margin:0 0 6px}
+h2 .n{display:inline-block;min-width:1.9em;color:var(--ink3);font-weight:500}
+h3{font-size:17px;font-weight:620;margin:26px 0 8px}
+h4{font-size:14px;font-weight:650;margin:18px 0 6px;color:var(--ink2)}
+p{margin:0 0 12px;max-width:74ch}
+.lede{font-size:16.5px;color:var(--ink2);max-width:72ch;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:20px 22px;margin:14px 0}
+.flat{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;margin:14px 0}
+ul,ol{margin:0 0 12px;padding-left:22px;max-width:74ch}
+li{margin:4px 0}
+code{font-family:var(--mono);font-size:.9em;background:#eef1f5;padding:1.5px 5px;border-radius:4px}
+pre{font-family:var(--mono);font-size:12.6px;line-height:1.55;background:#fbfcfd;
+  border:1px solid var(--line);border-radius:9px;padding:13px 15px;overflow-x:auto;margin:10px 0}
+pre code{background:none;padding:0;font-size:inherit}
+.mono{font-family:var(--mono)}
+.dim{color:var(--ink3)}
+em.k{font-style:normal;font-weight:650;color:var(--ink)}
+
+/* ── callouts ──────────────────────────────────────── */
+.note{border-left:3px solid var(--accent);background:var(--accent-bg);
+  padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;max-width:80ch}
+.note.w{border-color:#d79a1e;background:var(--warn-bg)}
+.note.b{border-color:#d44;background:var(--bad-bg)}
+.note.g{border-color:#2a9d6a;background:var(--ok-bg)}
+.note p:last-child{margin-bottom:0}
+.note .t{font-weight:650;font-size:13px;letter-spacing:.02em;text-transform:uppercase;
+  display:block;margin-bottom:5px;opacity:.75}
+
+/* ── tables ────────────────────────────────────────── */
+table{border-collapse:collapse;width:100%;font-size:13.6px;margin:12px 0}
+th,td{text-align:left;padding:7px 11px;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3);
+  font-weight:600;background:#fafbfc}
+tbody tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-family:var(--mono);font-size:12.6px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.tw table{margin:0}
+
+/* ── badges ────────────────────────────────────────── */
+.b{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11.5px;font-weight:650;
+  letter-spacing:.02em;vertical-align:1px}
+.b.ok{background:var(--ok-bg);color:var(--ok)}
+.b.wa{background:var(--warn-bg);color:var(--warn)}
+.b.no{background:var(--bad-bg);color:var(--bad)}
+.b.ac{background:var(--accent-bg);color:var(--accent)}
+.b.nt{background:#eef1f5;color:var(--ink2)}
+
+/* ── timeline ──────────────────────────────────────── */
+.tl{list-style:none;padding:0;margin:16px 0;max-width:none}
+.tl li{display:grid;grid-template-columns:92px 1fr;gap:16px;padding:12px 0;
+  border-bottom:1px solid var(--line);margin:0}
+.tl li:last-child{border-bottom:none}
+.tl .lab{font-family:var(--mono);font-size:12.5px;color:var(--ink3);padding-top:2px}
+.tl .cur .lab{color:var(--accent);font-weight:650}
+.tl b{font-weight:640}
+.tl .d{font-size:13.6px;color:var(--ink2);margin-top:2px}
+
+/* ── before / after diff ───────────────────────────── */
+.diff{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:14px 0}
+@media(max-width:1080px){.diff{grid-template-columns:1fr}}
+.diff .col{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.diff .hd{padding:9px 14px;font-size:12px;font-weight:650;letter-spacing:.05em;
+  text-transform:uppercase;border-bottom:1px solid var(--line)}
+.diff .old .hd{background:var(--bad-bg);color:var(--bad)}
+.diff .new .hd{background:var(--ok-bg);color:var(--ok)}
+.diff ol{margin:0;padding:10px 10px 12px 34px;font-family:var(--mono);font-size:12.4px;line-height:1.5}
+.diff li{margin:5px 0;padding:2px 6px;border-radius:4px}
+.diff li.chg{background:#fff6d9;box-shadow:inset 2px 0 0 #e0a92a}
+.diff li.add{background:var(--ok-bg);box-shadow:inset 2px 0 0 #2a9d6a}
+.diff li.del{background:var(--bad-bg);box-shadow:inset 2px 0 0 #d44;text-decoration:line-through;opacity:.72}
+.diff .cm{color:var(--ink3);font-style:italic}
+
+/* ── pipeline chips ────────────────────────────────── */
+.pipe{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0;font-size:13px}
+.pipe .s{background:var(--panel);border:1px solid var(--line2);border-radius:7px;padding:6px 11px;
+  font-family:var(--mono);font-size:12.4px}
+.pipe .s.hi{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:650}
+.pipe .ar{color:var(--ink3)}
+
+/* ── layers ────────────────────────────────────────── */
+.layers{margin:14px 0}
+.layers .L{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:baseline;
+  background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:0 9px 9px 0;padding:11px 15px;margin:7px 0}
+.layers .L .nm{font-family:var(--mono);font-size:13px;font-weight:650}
+.layers .L .ds{font-size:13.4px;color:var(--ink2)}
+.layers .L.l2{border-left-color:#5b8def}
+.layers .L.l3{border-left-color:#8fb3f5}
+.layers .L.l4{border-left-color:#c3d6fb}
+
+/* ── laboratoire interactif ────────────────────────── */
+.lab{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0}
+.lab .ctl{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:12px 20px;
+  padding:16px 20px;background:#fafbfc;border-bottom:1px solid var(--line)}
+.lab .f{display:flex;flex-direction:column;gap:3px}
+.lab .f label{font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink3);
+  font-weight:600;display:flex;justify-content:space-between;align-items:baseline}
+.lab .f label .v{font-family:var(--mono);font-size:12.4px;color:var(--accent);
+  text-transform:none;letter-spacing:0}
+.lab input[type=range]{width:100%;accent-color:var(--accent);height:18px}
+.lab .toggles{display:flex;flex-wrap:wrap;gap:7px;padding:12px 20px;
+  background:#fafbfc;border-bottom:1px solid var(--line)}
+.lab .tg{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line2);
+  border-radius:20px;font-size:12.6px;cursor:pointer;background:var(--panel);user-select:none}
+.lab .tg:hover{border-color:var(--ink3)}
+.lab .tg input{margin:0;accent-color:var(--accent)}
+.lab .tg.act{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);font-weight:620}
+.lab .views{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+@media(max-width:980px){.lab .views{grid-template-columns:1fr}}
+.lab .vp{background:var(--panel);padding:0}
+.lab .vph{display:flex;justify-content:space-between;align-items:baseline;
+  padding:9px 16px;border-bottom:1px solid var(--line)}
+.lab .vph .ti{font-size:12.5px;font-weight:650;letter-spacing:.03em;text-transform:uppercase}
+.lab .vph .hint{font-size:11.5px;color:var(--ink3)}
+.lab canvas{display:block;width:100%;height:auto;cursor:grab}
+.lab canvas.drag{cursor:grabbing}
+.lab .out{padding:14px 20px;border-top:1px solid var(--line);background:#fafbfc}
+.lab .out table{margin:0;font-size:13px}
+.lab .out th,.lab .out td{padding:5px 10px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;padding:10px 20px;font-size:12.4px;
+  color:var(--ink2);border-top:1px solid var(--line)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* ── panneau d'étape ───────────────────────────────── */
+.step{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;margin:16px 0}
+.step .sh{display:flex;align-items:center;gap:11px;padding:13px 20px;
+  border-bottom:1px solid var(--line);background:#fafbfc}
+.step .sh .ix{width:25px;height:25px;border-radius:50%;background:var(--accent);color:#fff;
+  display:grid;place-items:center;font-size:12.4px;font-weight:700;flex:none}
+.step .sh .ti{font-size:15.5px;font-weight:650}
+.step .bd{padding:16px 20px}
+.step .bd>*:first-child{margin-top:0}
+.goal{background:var(--accent-bg);border-radius:8px;padding:11px 15px;margin:0 0 14px;
+  font-size:14px;color:#153f8c}
+.goal b{display:block;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+  opacity:.72;margin-bottom:3px}
+.io{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:900px){.io{grid-template-columns:1fr}}
+.io .bx{border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.io .bx .h{padding:7px 13px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+  font-weight:650;background:#fafbfc;border-bottom:1px solid var(--line);color:var(--ink3)}
+.io .bx .c{padding:11px 13px;font-family:var(--mono);font-size:12.4px;line-height:1.65}
+.io .bx.in .h{background:#f2f5f9}
+.io .bx.res .h{background:var(--ok-bg);color:var(--ok)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-family:var(--mono);font-size:12.4px}
+.kv .k{color:var(--ink3)}
+.kv .v{text-align:right}
+.tabs{display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--line);background:#fafbfc}
+.tabs .t{padding:8px 13px;font-size:12.6px;cursor:pointer;border:none;background:none;
+  color:var(--ink3);border-bottom:2px solid transparent;font-weight:600}
+.tabs .t.on{color:var(--accent);border-bottom-color:var(--accent)}
+.tabs .t:hover{color:var(--ink)}
+.tp{display:none;padding:14px 20px}
+.tp.on{display:block}
+.simd{font-family:var(--mono);font-size:12px;margin:10px 0}
+.simd table{margin:0}
+.simd th,.simd td{padding:4px 9px;text-align:right;border-bottom:1px solid var(--line)}
+.simd th:first-child,.simd td:first-child{text-align:left;color:var(--ink3)}
+.simd thead th{background:#f2f5f9;font-family:-apple-system,"Segoe UI",sans-serif;font-size:11px}
+.simd .lane{background:var(--accent-bg);color:var(--accent);font-weight:650}
+.ce{border:1px solid #f0c9c9;background:var(--bad-bg);border-radius:9px;padding:13px 16px;margin:14px 0}
+.ce .h{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;
+  color:var(--bad);margin-bottom:7px}
+.ce pre{background:#fff;border-color:#f0c9c9;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <h1>LibraryV3</h1>
+  <div class="sub">Lot 05<br>Caméra &amp; Frustum</div>
+
+  <div class="grp">Avant la technique</div>
+  <a href="#s0" class="on">Pourquoi ce lot</a>
+  <a href="#s1">Où on en est</a>
+  <a href="#s2">Objectif fonctionnel</a>
+  <a href="#s3">Schéma dynamique</a>
+  <a href="#s4">Algorithme : avant / après</a>
+
+  <div class="grp">Technique</div>
+  <a href="#s5">Les règles</a>
+  <a href="#s6">NDC et reverse-Z</a>
+
+  <div class="grp">Pas à pas</div>
+  <a href="#e1">1 · View</a>
+  <a href="#e2">2 · Projection</a>
+  <a href="#e3">3 · V·P</a>
+  <a href="#e4">4 · Extraction des plans</a>
+  <a href="#e5">5 · Normalisation</a>
+  <a href="#e6">6 · Classify AABB</a>
+  <a href="#e7">7 · MVP par mesh</a>
+  <a href="#e8">8 · Local → Clip</a>
+  <a href="#e9">9 · Rejet du near</a>
+  <a href="#e10">10 · /w → NDC</a>
+  <a href="#e11">11 · NDC → Raster</a>
+  <a href="#e12">12 · Backface</a>
+  <a href="#e13">13 · Vérifier</a>
+
+  <div class="grp">Suite</div>
+  <a href="#s9">Dette &amp; roadmap</a>
+
+  <button id="exportBtn">Exporter en HTML</button>
+</nav>
+
+<main>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s0">
+  <h2><span class="n">0</span>Pourquoi ce lot</h2>
+
+  <p class="lede">On vient de faire tourner un rasterizer : il sait remplir un triangle
+  dont on lui donne les trois sommets <em class="k">en pixels</em>. Mais personne, dans le
+  moteur, ne sait encore produire ces pixels à partir d'une scène 3D.</p>
+
+  <p>La question n'est pas « comment dessiner un triangle » — c'est réglé. La question est :
+  <em class="k">quel</em> triangle, vu <em class="k">d'où</em>, et <em class="k">lequel ne pas
+  dessiner du tout</em>.</p>
+
+  <div class="card">
+    <h4 style="margin-top:0">Le constat qui déclenche ce lot</h4>
+    <p style="margin-bottom:8px">Un triangle de la scène ne devient des pixels que s'il franchit
+    trois épreuves successives :</p>
+    <ol style="margin-bottom:0">
+      <li>il existe un <b>point de vue</b> — une position, une orientation, un objectif ;</li>
+      <li>il tombe dans le <b>cône de vision</b> de ce point de vue ;</li>
+      <li>il se trouve <b>devant</b> ce qui a déjà été dessiné.</li>
+    </ol>
+  </div>
+
+  <p>Ces trois épreuves sont le sujet du lot. Elles n'ont rien d'esthétique : ce sont elles qui
+  déterminent si l'écran affiche quelque chose, et surtout — pour un moteur CPU — ce qu'on
+  s'épargne de calculer.</p>
+
+  <div class="note">
+    <span class="t">La vraie motivation</span>
+    <p>Sur une scène normale, <b>90 % de la géométrie est invisible</b> : derrière la caméra,
+    hors du champ, trop loin, ou masquée. Un moteur CPU qui transforme tout avant de s'en
+    apercevoir travaille dix fois trop. Le frustum n'est pas un raffinement graphique,
+    c'est le filtre qui rend le rendu logiciel réaliste.</p>
+  </div>
+
+  <p>Et il y a une raison de l'aborder <em class="k">maintenant</em>, avant d'aller plus loin
+  dans le rasterizer : deux décisions de ce lot — le sens du repère et la façon de coder la
+  profondeur — déterminent le sens de parcours des triangles et le fonctionnement du Z-buffer.
+  Les trancher après, c'est réécrire le rasterizer.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s1">
+  <h2><span class="n">1</span>Où on en est</h2>
+
+  <p class="lede">Rappel du chemin parcouru, et de ce que chaque lot a laissé derrière lui
+  dont celui-ci va se servir.</p>
+
+  <ul class="tl">
+    <li>
+      <div class="lab">Lot 01</div>
+      <div>
+        <b>Configuration &amp; énumérations</b>
+        <div class="d">PCH, <code>EngineSettings.h</code> compile-time, <code>engine.json</code>
+        au démarrage, <code>Config.h</code> immuable. Séquence de démarrage en 9 étapes.
+        <br><span class="dim">→ ce lot y puise : la règle « les valeurs réglables vivent dans
+        le JSON, pas dans un header ».</span></div>
+      </div>
+    </li>
+    <li>
+      <div class="lab">Lot 02</div>
+      <div>
+        <b>Librairie mathématique</b>
+        <div class="d"><code>Vec2/3/4</code>, <code>Matrix44</code>, <code>Quat</code>,
+        <code>Transform</code> unifiés en namespace <code>LV3</code>. Trois décisions
+        dictatoriales posées : repère, convention matricielle, profondeur.
+        <br><span class="dim">→ ce lot y puise : tout. Et il va découvrir que deux des trois
+        décisions n'avaient jamais été appliquées dans le code.</span></div>
+      </div>
+    </li>
+    <li>
+      <div class="lab">Lot 03</div>
+      <div>
+        <b>ECS, SparseSet, ResourceManager</b>
+        <div class="d">Entités versionnées (24/8 bits), <code>PagedSparseArray</code>,
+        <code>ComponentView</code>, chargement de ressources avec
+        <code>std::expected</code>.
+        <br><span class="dim">→ ce lot y puise : la caméra deviendra une
+        <b>entité</b> comme les autres, pas une classe à part.</span></div>
+      </div>
+    </li>
+    <li>
+      <div class="lab">Lot 04 · P1</div>
+      <div>
+        <b>Rasterizer — fondamentaux</b>
+        <div class="d">Fonction d'arête de Pineda, coordonnées barycentriques, règle top-left,
+        écriture de pixels SDL2 (<code>SDL_LockTexture</code> une fois par frame, toujours le
+        <code>pitch</code>, format figé en <code>ARGB8888</code>).
+        <br><span class="dim">→ ce lot y puise : le rasterizer, tel quel, avec son patron
+        callback de fragment. Il ne le réécrit pas, il l'alimente.</span></div>
+      </div>
+    </li>
+    <li class="cur">
+      <div class="lab">Lot 05</div>
+      <div>
+        <b>Caméra &amp; Frustum</b> <span class="b ac">ce lot</span>
+        <div class="d">Produire le point de vue, filtrer la géométrie, l'amener jusqu'aux
+        coordonnées écran, et la soumettre au rasterizer.</div>
+      </div>
+    </li>
+    <li>
+      <div class="lab">Lot 04 · P2</div>
+      <div>
+        <b>Clipping &amp; interpolation</b> <span class="b nt">à venir</span>
+        <div class="d">Clipping near en espace de clip, interpolation perspective-correcte,
+        Z-buffer reverse-Z exploité à fond.</div>
+      </div>
+    </li>
+  </ul>
+
+  <div class="note w">
+    <span class="t">Le point de départ réel</span>
+    <p>Le code dont part ce lot n'est pas vierge : c'est une classe <code>Camera</code> de
+    400 lignes et une classe <code>Frustum</code> de 700, héritées de LibV2. Elles
+    <b>fonctionnaient</b>. Elles n'étaient pas récupérables — on verra pourquoi en §4,
+    et le relevé complet des 18 bugs trouvés en §13.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s2">
+  <h2><span class="n">2</span>Contexte et objectif fonctionnel</h2>
+
+  <p class="lede">Avant toute matrice : qu'est-ce que l'utilisateur du moteur doit pouvoir
+  faire à la fin de ce lot qu'il ne pouvait pas faire avant ?</p>
+
+  <h3>Les trois capacités visées</h3>
+
+  <div class="card">
+    <p><b>1. Poser une caméra dans la scène, et la déplacer librement.</b><br>
+    Une caméra est une entité de la scène, décrite dans le JSON comme n'importe quelle autre.
+    On lui attache un objectif (champ de vision, plans de coupe) et un comportement
+    — <span class="b nt">FPS</span> au clavier/souris, ou <span class="b nt">suivi</span>
+    d'une cible avec lissage. <b>Changer de comportement = activer un composant</b>, sans
+    toucher une ligne du rendu.</p>
+
+    <p><b>2. Ne dessiner que ce qui est visible.</b><br>
+    Le moteur doit répondre, par objet et pour un coût négligeable : <em>dedans</em>,
+    <em>dehors</em>, ou <em>à cheval</em>. Les trois réponses, pas deux — la troisième est
+    ce qui permettra plus tard d'éviter le clipping sur les objets entièrement visibles.</p>
+
+    <p style="margin-bottom:0"><b>3. Afficher plusieurs points de vue simultanément.</b><br>
+    Écran splitté, minimap, incrustation : plusieurs caméras, plusieurs régions d'écran,
+    un seul buffer de pixels. Si l'architecture est juste, ça doit coûter
+    <b>un appel de plus</b>, pas une refonte.</p>
+  </div>
+
+  <h3>Le scénario de validation</h3>
+
+  <p>Le lot est terminé quand ceci fonctionne, sans code spécifique au cas :</p>
+
+  <pre><code>Fenêtre 1600 × 900, UNE texture, UN Z-buffer.
+
+  Moitié gauche  → caméra qui suit la Terre      (fov 45°, rendu plein)
+  Moitié droite  → caméra fixe du système entier (fov 60°, fil de fer)
+
+Les deux moitiés ont leur propre matrice de vue, leur propre
+projection, leur propre frustum — et ne cullent donc pas les
+mêmes objets.</code></pre>
+
+  <h3>Ce qui n'est explicitement <em class="k">pas</em> dans ce lot</h3>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Hors périmètre</th><th>Pourquoi</th><th>Quand</th></tr></thead>
+    <tbody>
+      <tr><td>Clipping géométrique near</td>
+          <td>un rejet du triangle entier suffit pour afficher ; le découpage exact est un sujet à part</td>
+          <td>Lot 04 P2</td></tr>
+      <tr><td>Interpolation perspective-correcte</td>
+          <td>la profondeur s'interpole linéairement ; UV et couleurs non — autre sujet</td>
+          <td>Lot 04 P2</td></tr>
+      <tr><td>Matériaux, textures, éclairage</td>
+          <td>une couleur par face suffit à valider la géométrie</td>
+          <td>plus tard</td></tr>
+      <tr><td>Guard band, BVH, occlusion culling</td>
+          <td>optimisations ; la boucle linéaire suffit à cette échelle</td>
+          <td>après profilage</td></tr>
+      <tr><td>Culling en espace objet</td>
+          <td>gain réel, mais demande que le culling monde marche d'abord</td>
+          <td>dette, §9</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note g">
+    <span class="t">Critère d'arrêt</span>
+    <p>Un cube qui apparaît et disparaît correctement quand on tourne la caméra, et deux vues
+    côte à côte qui cullent différemment. Pas de triangle en miroir quand on recule dedans.
+    Les TNR au vert, les invariants silencieux.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s3">
+  <h2><span class="n">3</span>Schéma dynamique d'introduction</h2>
+
+  <p class="lede">Comprendre la méthode <em class="k">en la voyant</em>, avant d'ouvrir une
+  seule ligne de code. Tout ce qui suit dans ce document est recalculé en direct depuis ces
+  réglages — y compris les nombres des 13 étapes.</p>
+
+  <p><b>À gauche :</b> la scène vue de dessus (plan XZ). La caméra regarde vers
+  <code>-Z</code>, conformément au repère main droite. <b>Glisse la caméra à la souris.</b>
+  <br><b>À droite :</b> la <em class="k">même</em> scène après <code>V·P</code> puis division
+  par <code>w</code>. La pyramide de vision y devient une boîte — c'est tout l'intérêt de
+  l'espace de clip.</p>
+
+  <div class="lab" id="lab">
+    <div class="ctl">
+      <div class="f">
+        <label>FOV vertical <span class="v" id="vFov">45.0°</span></label>
+        <input type="range" id="sFov" min="15" max="120" step="0.5" value="45">
+      </div>
+      <div class="f">
+        <label>Plan near <span class="v" id="vNear">1.00</span></label>
+        <input type="range" id="sNear" min="0.1" max="12" step="0.1" value="1">
+      </div>
+      <div class="f">
+        <label>Plan far <span class="v" id="vFar">60.0</span></label>
+        <input type="range" id="sFar" min="20" max="140" step="1" value="60">
+      </div>
+      <div class="f">
+        <label>Aspect <span class="v" id="vAsp">1.778</span></label>
+        <input type="range" id="sAsp" min="0.6" max="2.6" step="0.001" value="1.7778">
+      </div>
+      <div class="f">
+        <label>Lacet caméra <span class="v" id="vYaw">0.0°</span></label>
+        <input type="range" id="sYaw" min="-180" max="180" step="1" value="0">
+      </div>
+    </div>
+
+    <div class="toggles">
+      <label class="tg act"><input type="checkbox" id="tRev" checked> Reverse-Z</label>
+      <label class="tg"><input type="checkbox" id="tInf"> Far infini</label>
+      <label class="tg act"><input type="checkbox" id="tPlanes" checked> Normales des plans</label>
+      <label class="tg act"><input type="checkbox" id="tPN" checked> p-vertex / n-vertex</label>
+      <label class="tg"><input type="checkbox" id="tBehind"> Cas : objet derrière l'œil</label>
+      <label class="tg"><input type="checkbox" id="tNoDiv"> Contre-ex. : /w avant le test</label>
+    </div>
+
+    <div class="views">
+      <div class="vp">
+        <div class="vph">
+          <span class="ti">1 · Espace monde — vue de dessus (XZ)</span>
+          <span class="hint">glisser pour déplacer la caméra</span>
+        </div>
+        <canvas id="cvWorld" width="760" height="560"></canvas>
+      </div>
+      <div class="vp">
+        <div class="vph">
+          <span class="ti">2 · Espace NDC — après V·P puis /w</span>
+          <span class="hint" id="ndcHint">x ∈ [-1,+1] · z ∈ [0,1]</span>
+        </div>
+        <canvas id="cvNdc" width="760" height="560"></canvas>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span><i style="background:#2a9d6a"></i> Inside — aucun triangle à clipper</span>
+      <span><i style="background:#e0a92a"></i> Intersect — clipping à prévoir</span>
+      <span><i style="background:#d44"></i> Outside — rejeté, zéro calcul</span>
+      <span><i style="background:#1f5fd0"></i> caméra &amp; frustum</span>
+    </div>
+
+    <div class="out">
+      <div class="tw"><table id="tbObj">
+        <thead><tr>
+          <th>Objet</th><th class="num">centre monde</th><th class="num">dist. œil</th>
+          <th class="num">p-vertex · plan critique</th><th class="num">n-vertex</th><th>état</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <h3>Ce que le schéma rend évident</h3>
+
+  <div class="card">
+    <p><b>Pousse <code>near</code> vers 12</b> → les objets proches basculent en
+    <span class="b no">Outside</span>. Le plan near n'est pas un détail numérique : c'est une
+    paroi qui coupe vraiment.</p>
+
+    <p><b>Décoche <em>Reverse-Z</em></b> → regarde la colonne verticale du panneau NDC
+    s'inverser. Les objets lointains se tassent vers le haut au lieu du bas. La géométrie
+    monde, elle, n'a pas bougé d'un pixel : <em class="k">seule la façon de coder la
+    profondeur change</em>.</p>
+
+    <p><b>Coche <em>Far infini</em></b> → le frustum n'a plus que 5 plans, et plus aucun objet
+    ne sort par l'arrière.</p>
+
+    <p style="margin-bottom:0"><b>Coche <em>objet derrière l'œil</em> puis
+    <em>/w avant le test</em></b> → l'objet réapparaît <em class="k">en miroir</em> du bon
+    côté de l'écran. C'est le bug du « triangle qui explose quand on recule dedans »,
+    reproduit en direct. Il justifie à lui seul l'étape 9.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s4">
+  <h2><span class="n">4</span>L'algorithme : avant / après</h2>
+
+  <p class="lede">L'ancien pipeline fonctionnait. Comparons-le au nouveau avant d'entrer dans
+  le détail : les différences ne sont pas cosmétiques, chacune corrige un défaut nommé.</p>
+
+  <div class="diff">
+    <div class="col old">
+      <div class="hd">Avant — LibV2</div>
+      <ol>
+        <li class="chg">viewMatrix = Camera::SetViewMatrix()
+          <div class="cm">lookAt <b>ET</b> quaternion → double orientation</div></li>
+        <li class="chg">&nbsp;&nbsp;↳ (rotation * viewMatrix).inverse()
+          <div class="cm">Gauss-Jordan 4×4 par frame</div></li>
+        <li class="chg">projMatrix = Frustum::setProjectionMatrixV2()
+          <div class="cm">OpenGL [-1,1], sans argument, mute un membre</div></li>
+        <li>vp = viewMatrix * projMatrix</li>
+        <li class="chg">Frustum_ExtractPlan(vp)
+          <div class="cm">plan near en forme D3D sur une matrice GL → faux</div></li>
+        <li class="chg">par mesh : calculateWorldAABB(...)
+          <div class="cm">8 points transformés puis ré-englobés</div></li>
+        <li class="chg">&nbsp;&nbsp;isAABBVisible(...) → <b>bool</b>
+          <div class="cm">2 états : l'information « entièrement dedans » est perdue</div></li>
+        <li class="del">invModelMatrix = modelMatrix.inverse()</li>
+        <li class="del">camPos → espace objet</li>
+        <li class="chg">par face : backface en espace objet
+          <div class="cm">normale + produit scalaire par face</div></li>
+        <li class="del">TransformLocalMesh(poly, model)
+          <div class="cm">écrit xtransf/ytransf <b>dans le mesh partagé</b></div></li>
+        <li class="chg">Clip3DAndProject(poly, …, vp)
+          <div class="cm">clippe 6 plans en espace <b>monde</b></div></li>
+      </ol>
+    </div>
+
+    <div class="col new">
+      <div class="hd">Après — LV3</div>
+      <ol>
+        <li class="chg">view = world.inverseRigid()
+          <div class="cm">une seule orientation, inverse <b>analytique</b></div></li>
+        <li class="chg">proj = Projection::Perspective(fovY, aspect, n, f)
+          <div class="cm">fonction <b>pure</b>, [0,1] reverse-Z</div></li>
+        <li>vp = view * proj</li>
+        <li class="chg">frustum.Build(vp, reverseZ, infiniteFar)
+          <div class="cm">étiquettes near/far échangées en reverse-Z</div></li>
+        <li class="chg">par mesh : AABB.Transformed(model)
+          <div class="cm">méthode centre/extent : 9 multiplications</div></li>
+        <li class="chg">&nbsp;&nbsp;frustum.Classify(...) → <b>3 états</b>
+          <div class="cm">Inside / Intersect / Outside</div></li>
+        <li class="add">mvp = model * view * proj
+          <div class="cm"><b>une seule</b> matrice, une seule passe sur les sommets</div></li>
+        <li>par face : clip[k] = MulRow(mvp, v[k])</li>
+        <li class="add">si un w ≤ near → rejet
+          <div class="cm">avant toute division : plus de miroir</div></li>
+        <li>ndc = clip / w &nbsp;·&nbsp; raster = viewport.ToRaster(ndc)</li>
+        <li class="chg">backface = signe de EdgeFunction
+          <div class="cm"><b>gratuit</b> : l'aire sert déjà aux barycentriques</div></li>
+        <li class="add">renderer.DrawTriangle(Triangle2D, color)
+          <div class="cm">soumission ; le rendu décide du reste</div></li>
+      </ol>
+    </div>
+  </div>
+
+  <h3>Les sept changements, et ce qu'ils règlent</h3>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>#</th><th>Changement</th><th>Défaut corrigé</th><th>Gain</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><code>inverseRigid()</code> au lieu de <code>inverse()</code></td>
+          <td>Gauss-Jordan 4×4 par frame sur une isométrie</td>
+          <td>9 mult + 9 add, exact</td></tr>
+      <tr><td>2</td><td>Une seule source d'orientation</td>
+          <td>base lookAt <b>et</b> quaternion composés — ne marchait que par hasard</td>
+          <td>déterminisme</td></tr>
+      <tr><td>3</td><td>Fabriques de projection <b>pures</b></td>
+          <td>fonction sans argument mutant un membre, intestable</td>
+          <td>TNR possible, réutilisable pour les ombres</td></tr>
+      <tr><td>4</td><td>NDC <code>[0,1]</code> + reverse-Z</td>
+          <td>plan near extrait dans la mauvaise forme ; précision gâchée</td>
+          <td><b>×8000</b> de précision à 1 km</td></tr>
+      <tr><td>5</td><td><code>Classify</code> à 3 états</td>
+          <td>booléen : impossible de sauter le clipping d'un objet entièrement visible</td>
+          <td>le gain du prochain lot</td></tr>
+      <tr><td>6</td><td>Une seule matrice <code>M·V·P</code></td>
+          <td>deux passes sur les sommets, écriture dans le mesh partagé</td>
+          <td>1 passe, mesh <code>const</code>, multithreadable</td></tr>
+      <tr><td>7</td><td>Backface en espace raster</td>
+          <td>normale + produit scalaire + inverse de la model par mesh</td>
+          <td><b>gratuit</b>, gère le scale négatif</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note b">
+    <span class="t">Le changement n°6 n'est pas une optimisation</span>
+    <p><code>TransformLocalMesh</code> écrivait les sommets transformés dans
+    <code>poly-&gt;Vertex(i)-&gt;xtransf</code> — c'est-à-dire <b>dans le mesh lui-même</b>.
+    Deux entités partageant le même <code>MeshHandle</code> s'écrasaient mutuellement, et
+    toute parallélisation de l'étage géométrie était structurellement impossible. Ce n'est pas
+    un gain de cycles, c'est une correction.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s5">
+  <h2><span class="n">5</span>Les règles — comment ça fonctionne</h2>
+
+  <p class="lede">Maintenant la technique. Six règles structurent tout le lot ; les étapes
+  qui suivent ne font que les appliquer.</p>
+
+  <h3>Règle 1 — « La caméra » n'existe pas</h3>
+
+  <p>Il n'y a pas d'objet caméra. Il y a <b>quatre choses distinctes</b> qui ne se connaissent
+  presque pas. Le composant <code>Camera</code> d'Unity ne contient <em class="k">aucune
+  position</em> : si on veut savoir où est la caméra, on demande à son <code>Transform</code>,
+  comme pour n'importe quel objet.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Objet</th><th>Contient</th><th>Produit</th><th>Unity</th><th>Unreal</th></tr></thead>
+    <tbody>
+      <tr><td><b>Transform</b></td><td>position, rotation</td><td>matrice <b>View</b></td>
+          <td><code>Transform</code></td><td><code>FTransform</code></td></tr>
+      <tr><td><b>Lentille</b></td><td>fov/focale, near, far</td><td>matrice <b>Projection</b></td>
+          <td><code>Camera</code></td><td><code>FMinimalViewInfo</code></td></tr>
+      <tr><td><b>Viewport</b></td><td>x, y, largeur, hauteur</td><td><b>NDC → raster</b></td>
+          <td><code>Camera.rect</code></td><td><code>FViewport</code></td></tr>
+      <tr><td><b>Frustum</b></td><td>6 plans</td><td><b>culling</b></td>
+          <td><code>CalculateFrustumPlanes</code></td><td><code>FConvexVolume</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note b">
+    <span class="t">Le défaut du legacy</span>
+    <p>L'ancienne classe <code>Camera</code> portait <b>huit représentations concurrentes</b>
+    d'une seule orientation : <code>Yaw/Pitch/Roll</code>, <code>theta/phi</code>,
+    <code>script3D[]</code>, <code>rotationAngle</code>, <code>camera_rotation</code>,
+    <code>rotation_mat</code>, <code>forward/right/UP</code>, <code>TO</code>. Aucune n'était
+    la source de vérité.</p>
+  </div>
+
+  <h3>Règle 2 — La caméra ne bouge jamais, c'est le monde qui bouge</h3>
+
+  <p>Le rasterizer ne sait projeter que depuis l'origine, le long d'un axe fixe. On ne déplace
+  donc pas l'œil : on déplace la scène en sens inverse.</p>
+
+  <pre><code>View = inverse(WorldMatrix_camera)
+
+Et comme c'est une ISOMÉTRIE, cet inverse est analytique :
+
+    View = [ Rᵀ | −Rᵀ·t ]        jamais un Gauss-Jordan</code></pre>
+
+  <h3>Règle 3 — Le pipeline des espaces</h3>
+
+  <div class="pipe">
+    <span class="s">Local</span><span class="ar">—M→</span>
+    <span class="s">Monde</span><span class="ar">—V→</span>
+    <span class="s">Vue</span><span class="ar">—P→</span>
+    <span class="s hi">Clip</span><span class="ar">—/w→</span>
+    <span class="s">NDC</span><span class="ar">—viewport→</span>
+    <span class="s">Raster</span>
+  </div>
+
+  <ul>
+    <li>On <b>cull dans le monde</b>, on <b>clippe dans le clip</b>. Le nom de l'espace le dit.</li>
+    <li>La division par <code>w</code> arrive <b>après</b> le clipping, jamais avant.</li>
+    <li>Le flip Y n'existe qu'à la <b>dernière</b> flèche, dans <code>Viewport::ToRaster()</code>.
+        Nulle part ailleurs.</li>
+  </ul>
+
+  <p><b>Pourquoi clipper en espace de clip</b> — trois raisons, par ordre d'importance :</p>
+  <ol>
+    <li><b>La correction.</b> Un sommet derrière l'œil a <code>w &lt; 0</code>. Diviser avant de
+    clipper inverse le signe : le point traverse l'écran et réapparaît en miroir.
+    <span class="dim">(coche les deux derniers interrupteurs du §3 pour le voir)</span></li>
+    <li><b>Le coût.</b> En clip space les six plans sont <b>canoniques</b> :
+    <code>-w ≤ x ≤ w</code>, <code>0 ≤ z ≤ w</code>. Une comparaison de deux flottants, contre
+    trois multiplications par plan et par sommet en espace monde.</li>
+    <li><b>L'universalité.</b> Perspective, orthographique, projection oblique, far infini :
+    les plans canoniques ne changent jamais.</li>
+  </ol>
+
+  <h3>Règle 4 — Culling et clipping sont deux métiers</h3>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th></th><th>Culling</th><th>Clipping</th></tr></thead>
+    <tbody>
+      <tr><td>Granularité</td><td>par objet / nœud d'arbre</td><td>par triangle</td></tr>
+      <tr><td>Espace</td><td>monde (ou objet)</td><td>clip</td></tr>
+      <tr><td>Question</td><td>« est-ce que je m'en occupe ? »</td><td>« où est-ce que je coupe ? »</td></tr>
+      <tr><td>Réponse</td><td>Inside / Intersect / Outside</td><td>un polygone découpé</td></tr>
+      <tr><td>Coût</td><td>négligeable</td><td>élevé</td></tr>
+      <tr><td>Erreur tolérée</td><td><b>conservative</b></td><td><b>exacte</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="t">Le secret industriel</span>
+    <p>Dans un rasterizer professionnel, <b>seul le plan near impose un vrai clipping</b>. Les
+    quatre plans latéraux se traitent par <b>scissor</b> sur la bounding box du triangle, avec
+    une <i>guard band</i> au-delà de laquelle seulement on clippe. Sur une scène normale,
+    <b>plus de 99 % des triangles ne sont jamais découpés.</b></p>
+  </div>
+
+  <h3>Règle 5 — La matrice source décide de l'espace des plans</h3>
+
+  <p>On n'obtient pas les plans depuis les 8 coins : on les <b>extrait de la matrice</b>
+  (Gribb-Hartmann). Aucun cas particulier, normales vers l'intérieur par construction, pas de
+  vecteurs <code>forward/right/up</code> à maintenir — donc pas de dégénérescence quand on
+  regarde à la verticale.</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Matrice source</th><th>Espace des plans</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><code>P</code></td><td><b>vue</b></td><td>culling de lumières, tiled shading</td></tr>
+      <tr><td><code>V · P</code></td><td><b>monde</b></td><td>culling de scène — <b>ce lot</b></td></tr>
+      <tr><td><code>M · V · P</code></td><td><b>objet</b></td><td>culling par mesh sans transformer l'AABB</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Règle 6 — Le rendu en quatre couches</h3>
+
+  <div class="layers">
+    <div class="L">     <div class="nm">RenderSystem</div><div class="ds"><b>Géométrie</b> — transforme, cull, projette ; produit des <code>Triangle2D</code> en espace écran</div></div>
+    <div class="L l2">  <div class="nm">Renderer</div>    <div class="ds"><b>État</b> — détient les cibles, le viewport, le mode ; choisit le chemin de fragment</div></div>
+    <div class="L l3">  <div class="nm">Rasterizer</div>  <div class="ds"><b>Balayage</b> — bounding box, règle top-left, coordonnées barycentriques</div></div>
+    <div class="L l4">  <div class="nm">Fragment</div>    <div class="ds"><b>Pixel</b> — test de profondeur, écriture de la couleur</div></div>
+  </div>
+
+  <p><code>Renderer</code> n'est <b>pas</b> « une fonction qui dessine » : c'est le
+  <b>propriétaire de l'état de rendu</b>. Tant qu'il était sans état, il n'était qu'un
+  <code>switch</code> déguisé et paraissait inutile. Une fois qu'il détient les cibles, le
+  viewport et le mode, le mode d'affichage devient un <em class="k">état</em>, pas un argument
+  de dessin — et l'écran splitté coûte un appel de plus.</p>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s6">
+  <h2><span class="n">6</span>NDC et reverse-Z — la décision qui coûte deux coefficients</h2>
+
+  <p class="lede">Le mot « NDC » recouvre deux notions selon la source. Levons l'ambiguïté
+  avant d'entrer dans les étapes, parce que deux coefficients de matrice en dépendent.</p>
+
+  <h3>X et Y : <code>[-1,+1]</code>, sans débat</h3>
+  <ol>
+    <li><b>Le frustum est symétrique</b> autour de l'axe de visée → les termes de décentrement
+    s'annulent.</li>
+    <li><b>Le clipping devient trivial</b> : <code>-w ≤ x ≤ w</code>.</li>
+    <li><b>La précision du flottant est maximale au centre de l'écran</b>, là où l'œil regarde.</li>
+  </ol>
+
+  <h3>Z : c'est là que se joue le débat</h3>
+
+  <p>OpenGL produit <code>[-1,1]</code>, puis <b>répare</b> avec <code>glDepthRange</code>.
+  Direct3D, Vulkan et Metal produisent <code>[0,1]</code> directement — une opération affine
+  en moins, et surtout la conversion d'OpenGL arrive <em class="k">trop tard</em>.</p>
+
+  <h4>Le chiffre qui tranche</h4>
+  <p>Nombre de valeurs <code>float</code> distinctes dans une tranche de 0,001 :</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Intervalle</th><th class="num">Pas du flottant</th><th class="num">Valeurs distinctes</th></tr></thead>
+    <tbody>
+      <tr><td><code>[0 ; 0,001]</code></td><td class="num">jusqu'à 1e-45</td><td class="num"><b>≈ 1 000 000 000</b></td></tr>
+      <tr><td><code>[0,999 ; 1,0]</code></td><td class="num">5,96e-8</td><td class="num">≈ 16 800</td></tr>
+      <tr><td><code>[-1,0 ; -0,999]</code></td><td class="num">5,96e-8</td><td class="num">≈ 16 800</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Facteur <b>60 000</b>. En <code>[0,1]</code>, une extrémité de la plage tombe dans la zone
+  au milliard de valeurs — le reverse-Z l'y place au <b>far</b>, là où la projection en
+  <code>1/z</code> est la plus écrasée. Les deux non-linéarités se compensent.
+  En <code>[-1,1]</code>, les deux extrémités sont grossières :
+  <b>le reverse-Z y est impossible</b>, inverser ne déplace rien.</p>
+
+  <h4>Le gain mesuré</h4>
+  <p>Incertitude sur la distance réelle représentée par un seul pas de flottant
+  (<code>n = 0,1</code>, <code>f = 1000</code>) :</p>
+
+  <div class="tw">
+  <table>
+    <thead><tr><th>Distance</th><th class="num">[0,1] standard</th><th class="num">[0,1] reverse-Z</th><th class="num">Gain</th></tr></thead>
+    <tbody>
+      <tr><td>1 m</td><td class="num">0,0006 mm</td><td class="num">0,00007 mm</td><td class="num">×8</td></tr>
+      <tr><td>100 m</td><td class="num">6 mm</td><td class="num">0,012 mm</td><td class="num">×500</td></tr>
+      <tr><td>1000 m</td><td class="num"><b>60 cm</b></td><td class="num">0,07 mm</td><td class="num"><b>×8000</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note g">
+    <span class="t">La règle à retenir</span>
+    <p><code>[-1,1]</code> sur X et Y, parce que le frustum est symétrique.
+    <code>[0,1]</code> sur Z, parce que le flottant ne l'est pas.
+    <br>OpenGL lui-même a fait marche arrière :
+    <code>glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE)</code> (GL 4.5, 2014) existe uniquement
+    pour permettre le <code>[0,1]</code>. Vulkan n'offre même plus le <code>[-1,1]</code>.</p>
+  </div>
+
+  <div class="note w">
+    <span class="t">Scratchapixel n'a pas tort</span>
+    <p>Il enseigne le pipeline <b>OpenGL</b>, correctement, dans une leçon dont le sujet est la
+    géométrie de la projection — pas l'ingénierie de la précision du Z-buffer. Il emploie
+    d'ailleurs <code>[0,1]</code> pour X et Y dans sa leçon <i>Pinhole Camera</i> et
+    <code>[-1,1]</code> dans sa leçon <i>Projection Matrix</i>. Le legacy LibV2 contenait
+    littéralement les deux conventions dans le même fichier — d'où la confusion.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="steps">
+  <h2>Les étapes, pas à pas</h2>
+  <p class="lede">Treize étapes, du point de vue jusqu'au pixel. <b>Tous les nombres affichés
+  sont recalculés en direct</b> depuis les réglages du §3, en <code>float32</code> —
+  <code>Math.fround()</code> à chaque opération, comme le CPU. Remonte modifier un curseur et
+  redescends : les valeurs auront changé.</p>
+
+  <div class="note">
+    <span class="t">Convention rappelée</span>
+    <p>Row-major <code>m[r][c]</code>, <b>vecteur-ligne</b> <code>v' = v·M</code>, translation
+    en <b>ligne 3</b>, composition <code>S·R·T</code>, main <b>droite</b> (l'avant est
+    <code>-Z</code>), NDC <code>x,y ∈ [-1,+1]</code> et <code>z ∈ [0,1]</code> reverse-Z.</p>
+  </div>
+</section>
+
+<!-- ─── ÉTAPE 1 ─────────────────────────────────────── -->
+<section id="e1"><div class="step">
+  <div class="sh"><div class="ix">1</div><div class="ti">La matrice View — inverse rigide</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Amener la scène dans le repère de l'œil. Comme l'œil ne bouge jamais, c'est le monde
+      qu'on déplace en sens inverse — et comme la matrice monde de la caméra est une
+      <em>isométrie</em>, son inverse s'écrit directement.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — matrice monde de la caméra</div>
+        <div class="c" id="e1in"></div></div>
+      <div class="bx res"><div class="h">Résultat — View</div>
+        <div class="c" id="e1out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e1s">Scalaire</button>
+      <button class="t" data-tab="e1v">Vectorisé</button>
+    </div>
+    <div class="tp on" id="e1s">
+<pre><code>// Maths/MatrixLib.h
+//   M   = [ R | 0 ]        M⁻¹ = [  Rᵀ   | 0 ]
+//         [ t | 1 ]              [ -t·Rᵀ | 1 ]
+Matrix44 inverseRigid() const noexcept
+{
+    Matrix44 r;
+    r.x[0][0]=x[0][0]; r.x[0][1]=x[1][0]; r.x[0][2]=x[2][0];   // transposée 3x3
+    r.x[1][0]=x[0][1]; r.x[1][1]=x[1][1]; r.x[1][2]=x[2][1];
+    r.x[2][0]=x[0][2]; r.x[2][1]=x[1][2]; r.x[2][2]=x[2][2];
+
+    r.x[3][0] = -(x[3][0]*r.x[0][0] + x[3][1]*r.x[1][0] + x[3][2]*r.x[2][0]);
+    r.x[3][1] = -(x[3][0]*r.x[0][1] + x[3][1]*r.x[1][1] + x[3][2]*r.x[2][1]);
+    r.x[3][2] = -(x[3][0]*r.x[0][2] + x[3][1]*r.x[1][2] + x[3][2]*r.x[2][2]);
+
+    r.x[0][3]=r.x[1][3]=r.x[2][3]=0; r.x[3][3]=1;
+    return r;
+}</code></pre>
+      <p class="dim">9 multiplications, 6 additions, 3 négations. À comparer aux ~120
+      opérations et aux divisions d'un Gauss-Jordan 4×4.</p>
+    </div>
+    <div class="tp" id="e1v">
+<pre><code>// La transposition 3x3 est GRATUITE en SSE : une macro de l'intrinsics.
+__m128 r0 = _mm_loadu_ps(&amp;x[0][0]);     // ligne 0
+__m128 r1 = _mm_loadu_ps(&amp;x[1][0]);
+__m128 r2 = _mm_loadu_ps(&amp;x[2][0]);
+__m128 r3 = _mm_setzero_ps();
+
+_MM_TRANSPOSE4_PS(r0, r1, r2, r3);       // 8 shuffles, 0 multiplication
+
+// -t·Rᵀ : un produit scalaire par couloir, via FMA
+const __m128 tx = _mm_set1_ps(x[3][0]);  // broadcast
+const __m128 ty = _mm_set1_ps(x[3][1]);
+const __m128 tz = _mm_set1_ps(x[3][2]);
+__m128 t  = _mm_mul_ps(tx, r0);
+       t  = _mm_fmadd_ps(ty, r1, t);     // AVX2 / FMA3
+       t  = _mm_fmadd_ps(tz, r2, t);
+       t  = _mm_xor_ps(t, _mm_set1_ps(-0.0f));   // négation par le bit de signe</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>couloir 0</th><th>couloir 1</th><th>couloir 2</th><th>couloir 3</th></tr></thead>
+        <tbody id="e1simd"></tbody>
+      </table></div>
+      <p class="dim">Le couloir 3 est inutilisé : c'est le prix d'une matrice 4×4 traitée en
+      registres de 4 flottants. On le récupérera en traitant 4 <em>objets</em> à la fois
+      plutôt qu'une matrice.</p>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple — l'appliquer à une matrice avec échelle</div>
+      <p style="margin-bottom:6px"><code>inverseRigid</code> transpose le bloc 3×3. Si ce bloc
+      contient une échelle <code>s</code>, la transposée vaut <code>s·Rᵀ</code> et le produit
+      donne <code>s²·I</code> au lieu de <code>I</code> :</p>
+<pre><code>M = scale(2) · rotateY(0.5) · translate(1,2,3)
+
+M · M.inverseRigid()  →  diag(4, 4, 4, 1)      ❌  PAS l'identité
+M · M.inverse()       →  diag(1, 1, 1, 1)      ✅</code></pre>
+      <p style="margin-bottom:0">La TNR §6.3 verrouille cette limite en assertant que
+      <code>inverseRigid</code> <b>échoue</b> en présence d'échelle. Un test qui vérifie
+      qu'une fonction ne marche pas est un test qui documente un contrat.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 2 ─────────────────────────────────────── -->
+<section id="e2"><div class="step">
+  <div class="sh"><div class="ix">2</div><div class="ti">La matrice Projection — reverse-Z</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Transformer le repère de l'œil en volume canonique, et <em>coder la profondeur</em>
+      de la façon qui préserve le plus de précision au loin. C'est ici, et seulement ici, que
+      le choix <code>[0,1]</code> + reverse-Z s'incarne — dans deux coefficients.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — paramètres de lentille</div>
+        <div class="c"><div class="kv" id="e2in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — Projection</div>
+        <div class="c" id="e2out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e2s">Scalaire</button>
+      <button class="t" data-tab="e2v">Vectorisé</button>
+      <button class="t" data-tab="e2c">Comparatif</button>
+    </div>
+    <div class="tp on" id="e2s">
+<pre><code>// Maths/Projection.cpp — namespace LV3::Projection
+Matrix44f PerspectiveOffCenter(float l, float r, float b, float t,
+                               float n, float f) noexcept
+{
+    Matrix44f m = Zeroed();              // /!\ PAS l'identité : m[3][3] doit valoir 0
+
+    m[0][0] =  (2.0f * n) / (r - l);
+    m[1][1] =  (2.0f * n) / (t - b);
+    m[2][0] =  (r + l) / (r - l);        // décentrement horizontal
+    m[2][1] =  (t + b) / (t - b);        // décentrement vertical
+    m[2][2] =  n / (f - n);              // ← REVERSE-Z
+    m[2][3] = -1.0f;                     // recopie -z dans w (main droite)
+    m[3][2] =  (n * f) / (f - n);        // ← REVERSE-Z
+    m[3][3] =  0.0f;                     // matrice projective
+    return m;
+}
+
+Matrix44f Perspective(float fovYRad, float aspect, float n, float f) noexcept
+{
+    const float t = std::tan(fovYRad * 0.5f) * n;
+    const float r = t * aspect;
+    return PerspectiveOffCenter(-r, r, -t, t, n, f);   // cas symétrique
+}</code></pre>
+      <p class="dim"><code>Frustum()</code> décentré est la primitive, <code>Perspective()</code>
+      n'en est qu'un appel symétrique — exactement la relation
+      <code>glFrustum</code>&nbsp;/&nbsp;<code>gluPerspective</code>. Le décentrement servira
+      aux cascades d'ombres et à la VR.</p>
+    </div>
+    <div class="tp" id="e2v">
+<pre><code>// Rien à vectoriser ici : une matrice de projection se construit UNE FOIS
+// par vue, pas par sommet. La vectoriser serait du zèle mal placé.
+//
+// En revanche elle mérite un DIRTY FLAG : fov, aspect, near et far ne
+// changent qu'au redimensionnement ou au zoom.
+
+if (cam.m_lensDirty) {
+    m_projection   = Projection::Perspective(fovY, vp.Aspect(), n, f);
+    cam.m_lensDirty = false;
+}</code></pre>
+      <div class="note w" style="margin:10px 0 0">
+        <span class="t">Règle de profilage</span>
+        <p>Ce qui se calcule une fois par frame ne se vectorise pas : on le met en cache.
+        Ce qui se calcule une fois par <em>pixel</em> se vectorise. Entre les deux, on mesure.</p>
+      </div>
+    </div>
+    <div class="tp" id="e2c">
+      <p>Les deux coefficients qui changent tout, et rien d'autre :</p>
+      <div class="tw"><table>
+        <thead><tr><th>Coefficient</th><th class="num">OpenGL [-1,1]</th><th class="num">LV3 [0,1] reverse-Z</th><th class="num">valeur courante</th></tr></thead>
+        <tbody id="e2cmp"></tbody>
+      </table></div>
+      <p class="dim" style="margin-top:10px"><code>m[0][0]</code>, <code>m[1][1]</code> et
+      <code>m[2][3]</code> sont <b>identiques</b> dans les deux conventions. Changer de
+      profondeur ne touche ni X, ni Y, ni la main du repère.</p>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple — partir de l'identité au lieu de zéro</div>
+<pre><code>Matrix44f m;              // ← identité : m[3][3] vaut 1
+m[0][0] = ...;            // on ne touche jamais à m[3][3]
+...
+// clip.w = z·m[2][3] + 1·m[3][3] = -z + 1
+// Pour z = -30 :  w = 31  au lieu de 30
+//
+// La division par w ne divise plus par la distance.
+// Résultat : une projection perspective LÉGÈREMENT fausse, qui se
+// dégrade avec la distance et qu'aucun test visuel ne révèle.</code></pre>
+      <p style="margin-bottom:0">C'est pour ça que <code>Zeroed()</code> existe. Le test
+      <code>CHECK(approx(P[3][3], 0.0f))</code> de la TNR §1.1 le verrouille.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 3 ─────────────────────────────────────── -->
+<section id="e3"><div class="step">
+  <div class="sh"><div class="ix">3</div><div class="ti">La matrice View·Projection</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Composer les deux étapes précédentes en une seule matrice <em>Monde → Clip</em>,
+      calculée une fois par vue. C'est elle qui servira à la fois à extraire le frustum
+      (étape 4) et à projeter les sommets (étape 8).</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrées — View et Projection</div>
+        <div class="c" id="e3in"></div></div>
+      <div class="bx res"><div class="h">Résultat — V·P</div>
+        <div class="c" id="e3out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e3s">Scalaire</button>
+      <button class="t" data-tab="e3v">Vectorisé</button>
+    </div>
+    <div class="tp on" id="e3s">
+<pre><code>v.viewProjectionMatrix = v.viewMatrix * v.projectionMatrix;
+
+// /!\ En convention VECTEUR-LIGNE, A*B signifie « A PUIS B ».
+//     Un sommet subit la View, PUIS la Projection : view * projection.
+//
+// c[i][j] = Σ_k a[i][k] · b[k][j]</code></pre>
+      <div class="note b" style="margin:10px 0 0">
+        <span class="t">Bug B1 du legacy</span>
+        <p><code>Frustum::Rebuild</code> composait <code>proj * view</code>. En vecteur-ligne,
+        cela applique la projection <em>puis</em> la vue. <b>Les six plans extraits étaient
+        faux depuis le début</b> — et le rendu fonctionnait quand même, parce que la
+        projection, elle, utilisait le bon ordre ailleurs. Un bug qui ne casse que le culling
+        est invisible tant qu'on ne compte pas les objets rejetés.</p>
+      </div>
+    </div>
+    <div class="tp" id="e3v">
+<pre><code>// Produit 4x4 en SSE : une ligne du résultat par itération.
+// Chaque ligne de A est diffusée composante par composante, puis
+// accumulée sur les quatre lignes de B.
+for (int i = 0; i &lt; 4; ++i)
+{
+    __m128 acc = _mm_mul_ps(_mm_set1_ps(a[i][0]), bRow0);
+    acc = _mm_fmadd_ps(_mm_set1_ps(a[i][1]), bRow1, acc);
+    acc = _mm_fmadd_ps(_mm_set1_ps(a[i][2]), bRow2, acc);
+    acc = _mm_fmadd_ps(_mm_set1_ps(a[i][3]), bRow3, acc);
+    _mm_storeu_ps(&amp;c[i][0], acc);
+}
+// 16 opérations SIMD au lieu de 64 scalaires.
+// Les 4 couloirs portent les 4 COLONNES du résultat : aucun gaspillage.</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>ligne 3 du résultat</th><th>couloir 0 (col 0)</th><th>couloir 1 (col 1)</th><th>couloir 2 (col 2)</th><th>couloir 3 (col 3)</th></tr></thead>
+        <tbody id="e3simd"></tbody>
+      </table></div>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple chiffré — inverser l'ordre</div>
+      <div class="tw"><table>
+        <thead><tr><th>Matrice</th><th class="num">[3][2]</th><th class="num">[3][3]</th><th>Distance lue pour un point à l'origine</th></tr></thead>
+        <tbody id="e3ce"></tbody>
+      </table></div>
+      <p style="margin:10px 0 0">Avec <code>proj * view</code>, la colonne <code>w</code>
+      ne porte plus la distance à l'œil : l'extraction Gribb-Hartmann de l'étape 4 produit
+      six plans qui ne décrivent plus aucun volume cohérent.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 4 ─────────────────────────────────────── -->
+<section id="e4"><div class="step">
+  <div class="sh"><div class="ix">4</div><div class="ti">Extraction des 6 plans — Gribb-Hartmann</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Obtenir les six plans du volume de vision <em>en espace monde</em>, directement depuis
+      <code>V·P</code>. Pas de trigonométrie, pas de vecteurs à maintenir, pas de cas
+      particulier : perspective, orthographique, far infini — les mêmes quinze lignes.</div>
+
+    <h4>Le raisonnement en une phrase</h4>
+    <p>Un point est dans le volume canonique si <code>-w ≤ x ≤ w</code>,
+    <code>-w ≤ y ≤ w</code> et <code>0 ≤ z ≤ w</code>. Chacune de ces six inégalités est une
+    combinaison linéaire des composantes du clip — donc <b>un plan</b>. Et comme
+    <code>clip.j = Σᵢ vᵢ·M[i][j]</code>, c'est la <b>colonne j</b> de <code>V·P</code> qui
+    porte le composant <code>j</code>.</p>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — les 4 colonnes de V·P</div>
+        <div class="c" id="e4in"></div></div>
+      <div class="bx res"><div class="h">Résultat — 6 plans bruts (non normalisés)</div>
+        <div class="c" id="e4out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e4s">Scalaire</button>
+      <button class="t" data-tab="e4v">Vectorisé</button>
+      <button class="t" data-tab="e4z">Le piège reverse-Z</button>
+    </div>
+    <div class="tp on" id="e4s">
+<pre><code>void Frustum::Build(const Matrix44f&amp; M, bool reverseZ, bool infiniteFar) noexcept
+{
+    auto col = [&amp;M](int j){ return Plane(Vec3f(M[0][j], M[1][j], M[2][j]), M[3][j]); };
+    auto add = [](const Plane&amp; a, const Plane&amp; b){ return Plane(a.normal+b.normal, a.d+b.d); };
+    auto sub = [](const Plane&amp; a, const Plane&amp; b){ return Plane(a.normal-b.normal, a.d-b.d); };
+
+    const Plane cx = col(0), cy = col(1), cz = col(2), cw = col(3);
+
+    m_planes[Left]   = add(cw, cx);      //  x + w ≥ 0
+    m_planes[Right]  = sub(cw, cx);      //  w − x ≥ 0
+    m_planes[Bottom] = add(cw, cy);      //  y + w ≥ 0
+    m_planes[Top]    = sub(cw, cy);      //  w − y ≥ 0
+
+    // NDC z ∈ [0,1] : les deux conditions sont (z ≥ 0) et (w − z ≥ 0).
+    //   standard  → z ≥ 0 est le NEAR
+    //   reverse-Z → z ≥ 0 est le FAR      ... on échange les étiquettes.
+    if (reverseZ) { m_planes[Near] = sub(cw, cz); m_planes[Far] = cz;          }
+    else          { m_planes[Near] = cz;          m_planes[Far] = sub(cw, cz); }
+
+    // Far infini : la colonne z donne une normale nulle → plan dégénéré.
+    // (Far est le DERNIER de l'enum : c'est ce qui rend la troncature possible.)
+    m_count = infiniteFar ? int(Far) : int(PlaneCount);
+
+    for (int i = 0; i &lt; m_count; ++i) m_planes[i].Normalize();
+}</code></pre>
+      <p class="dim">24 additions. Les normales pointent vers l'<b>intérieur</b> par
+      construction : <code>SignedDistance &gt; 0</code> signifie « du bon côté ».</p>
+    </div>
+    <div class="tp" id="e4v">
+<pre><code>// Les quatre plans LATÉRAUX se calculent en deux instructions chacun.
+// On charge les colonnes (après une transposition de la matrice), puis
+// un seul add/sub produit les quatre composantes d'un plan d'un coup.
+__m128 cx = _mm_setr_ps(M[0][0], M[1][0], M[2][0], M[3][0]);   // colonne 0
+__m128 cy = _mm_setr_ps(M[0][1], M[1][1], M[2][1], M[3][1]);
+__m128 cz = _mm_setr_ps(M[0][2], M[1][2], M[2][2], M[3][2]);
+__m128 cw = _mm_setr_ps(M[0][3], M[1][3], M[2][3], M[3][3]);
+
+_mm_storeu_ps(&amp;planes[Left ].nx, _mm_add_ps(cw, cx));   // (nx,ny,nz,d) d'un coup
+_mm_storeu_ps(&amp;planes[Right].nx, _mm_sub_ps(cw, cx));
+_mm_storeu_ps(&amp;planes[Botm ].nx, _mm_add_ps(cw, cy));
+_mm_storeu_ps(&amp;planes[Top  ].nx, _mm_sub_ps(cw, cy));</code></pre>
+      <p class="dim">Chaque couloir porte une composante du plan : <code>nx</code>,
+      <code>ny</code>, <code>nz</code>, <code>d</code>. Zéro gaspillage — à condition que
+      <code>Plane</code> soit un POD de quatre flottants contigus, ce qui est le cas.</p>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>couloir 0 = nx</th><th>couloir 1 = ny</th><th>couloir 2 = nz</th><th>couloir 3 = d</th></tr></thead>
+        <tbody id="e4simd"></tbody>
+      </table></div>
+    </div>
+    <div class="tp" id="e4z">
+      <p>L'algèbre ne distingue pas « near » de « far » : elle produit deux plans en
+      profondeur, <code>z ≥ 0</code> et <code>w − z ≥ 0</code>. C'est la <b>convention de
+      profondeur</b> qui décide lequel est lequel.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Convention</th><th>z ≥ 0 désigne</th><th>w − z ≥ 0 désigne</th></tr></thead>
+        <tbody>
+          <tr><td>NDC <code>[0,1]</code> <b>standard</b></td><td>le plan <b>NEAR</b></td><td>le plan <b>FAR</b></td></tr>
+          <tr><td>NDC <code>[0,1]</code> <b>reverse-Z</b></td><td>le plan <b>FAR</b></td><td>le plan <b>NEAR</b></td></tr>
+          <tr><td>NDC <code>[-1,1]</code> OpenGL</td><td colspan="2">ni l'un ni l'autre — c'est <code>w + z</code> et <code>w − z</code></td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:10px">C'est exactement le <b>bug B3</b> du legacy : l'extraction
+      utilisait la forme <code>[0,1]</code> (<code>col(2)</code> seule) sur une matrice de
+      projection OpenGL <code>[-1,1]</code>. Le plan near était faux depuis le premier jour.</p>
+      <div class="note" style="margin:12px 0 0">
+        <span class="t">Décoche reverse-Z au §3</span>
+        <p>Les lignes NEAR et FAR du tableau ci-dessous s'échangent, et le volume dessiné à
+        droite s'inverse verticalement. La géométrie monde, elle, n'a pas bougé.</p>
+      </div>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple — oublier d'exclure le plan far en far infini</div>
+<pre><code>// Far infini : m[2][2] = 0, donc la colonne z vaut (0, 0, 0, near).
+// Le plan FAR a une normale NULLE.
+//
+//   SignedDistance(p) = 0·px + 0·py + 0·pz + near  =  near  &gt; 0
+//
+// Il répond donc « dedans » pour TOUS les points — y compris ceux
+// derrière la caméra. Inoffensif ici, mais Normalize() divise alors
+// par une longueur nulle, et la garde anti-division devient la seule
+// chose qui empêche des NaN de se propager dans les six plans.</code></pre>
+      <p style="margin-bottom:0">D'où <code>m_count = 5</code>, et d'où le fait que
+      <code>Far</code> soit <b>le dernier</b> de l'énumération. Cet ordre n'est pas cosmétique :
+      c'est lui qui rend la troncature possible.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 5 ─────────────────────────────────────── -->
+<section id="e5"><div class="step">
+  <div class="sh"><div class="ix">5</div><div class="ti">Normalisation des plans</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Rendre <code>SignedDistance()</code> <em>métrique</em>. Sans normalisation, le signe est
+      juste mais la valeur ne vaut rien — et tout ce qui compare une distance à un rayon
+      s'effondre.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — longueurs des normales brutes</div>
+        <div class="c"><div class="kv" id="e5in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — plans normalisés (espace monde)</div>
+        <div class="c" id="e5out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e5s">Scalaire</button>
+      <button class="t" data-tab="e5v">Vectorisé</button>
+      <button class="t" data-tab="e5k">Vérification géométrique</button>
+    </div>
+    <div class="tp on" id="e5s">
+<pre><code>LV3_FORCEINLINE void Plane::Normalize() noexcept
+{
+    const float len2 = normal.norm();          // longueur AU CARRÉ : pas de sqrt inutile
+
+    // Garde ANTI-DIVISION uniquement : seul le zéro véritable est rejeté.
+    // Cas légitime : plan Far dégénéré quand far = infini.
+    if (len2 &gt; NEAR_ZERO_SQ)                   // 1e-30, PAS une tolérance géométrique
+    {
+        const float inv = 1.0f / std::sqrt(len2);
+        normal *= inv;
+        d      *= inv;
+    }
+}</code></pre>
+    </div>
+    <div class="tp" id="e5v">
+<pre><code>// Quatre plans normalisés ensemble : les composantes sont réorganisées
+// en SoA (4 nx, 4 ny, 4 nz, 4 d), puis une seule rsqrt sert les 4 couloirs.
+__m128 nx = ..., ny = ..., nz = ..., dd = ...;          // SoA, 4 plans
+
+__m128 l2  = _mm_fmadd_ps(nx, nx,
+             _mm_fmadd_ps(ny, ny, _mm_mul_ps(nz, nz)));
+
+// rsqrt_ps : ~12 bits de mantisse. Une itération de Newton-Raphson
+// remonte à ~23 bits, soit la précision complète du float32.
+__m128 r   = _mm_rsqrt_ps(l2);
+       r   = _mm_mul_ps(r, _mm_sub_ps(_mm_set1_ps(1.5f),
+             _mm_mul_ps(_mm_set1_ps(0.5f), _mm_mul_ps(l2, _mm_mul_ps(r, r)))));
+
+nx = _mm_mul_ps(nx, r);  ny = _mm_mul_ps(ny, r);
+nz = _mm_mul_ps(nz, r);  dd = _mm_mul_ps(dd, r);</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>registre (SoA)</th><th>couloir 0 = left</th><th>couloir 1 = right</th><th>couloir 2 = bottom</th><th>couloir 3 = top</th></tr></thead>
+        <tbody id="e5simd"></tbody>
+      </table></div>
+      <p class="dim">Ici les quatre couloirs portent quatre <b>plans différents</b> — pas
+      quatre composantes d'un même plan. C'est le passage AoS → SoA : le même calcul, mais
+      les données réorganisées pour que le SIMD ne gaspille rien.</p>
+    </div>
+    <div class="tp" id="e5k">
+      <p>Un plan normalisé a une propriété vérifiable à la main : <code>d</code> est la
+      <b>distance signée de l'origine du monde au plan</b>. On peut donc contrôler les valeurs
+      sans faire confiance au code.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Plan</th><th class="num">|normale|</th><th class="num">d après normalisation</th><th>contrôle</th></tr></thead>
+        <tbody id="e5chk"></tbody>
+      </table></div>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple réel — bug n°3 du projet</div>
+      <p style="margin-bottom:6px">La garde avait d'abord été écrite avec la tolérance
+      géométrique du moteur :</p>
+<pre><code>if (len &gt; EPSILON_FLOAT)        // EPSILON_FLOAT = 0.001f   ❌</code></pre>
+      <p style="margin-bottom:6px">Or en reverse-Z, la normale brute du plan <b>far</b> vaut
+      <code>(0, 0, n/(f−n))</code> — soit <span class="mono" id="e5bugv">1.0e-4</span> avec
+      les réglages courants. <b>Inférieure à 0,001 : la normalisation était refusée.</b></p>
+      <div class="tw"><table>
+        <thead><tr><th>Plan far</th><th class="num">normale</th><th class="num">d</th><th class="num">distance lue pour l'origine</th></tr></thead>
+        <tbody id="e5bug"></tbody>
+      </table></div>
+      <p style="margin:10px 0 0">Le <b>signe</b> restait juste — le culling fonctionnait.
+      Seule la <em>valeur</em> était fausse, d'un facteur 10 000. Un bug qui n'aurait cassé
+      qu'au moment des sphères englobantes ou des cascades d'ombres, des mois plus tard.</p>
+      <div class="note w" style="margin:12px 0 0">
+        <span class="t">La règle qui en sort</span>
+        <p>Une <b>tolérance géométrique</b> (« ce point est-il <em>sur</em> le plan ? ») et une
+        <b>garde anti-division</b> (« ce dénominateur est-il <em>nul</em> ? ») sont deux
+        constantes différentes, à trois ordres de grandeur l'une de l'autre. Les confondre
+        est une erreur silencieuse.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 6 ─────────────────────────────────────── -->
+<section id="e6"><div class="step">
+  <div class="sh"><div class="ix">6</div><div class="ti">Classifier une AABB — p-vertex / n-vertex</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Répondre « dedans / à cheval / dehors » pour un objet entier, en testant <b>un ou deux
+      coins</b> au lieu de huit. Et surtout : renvoyer <em>trois</em> états, parce que le
+      troisième est ce qui permettra d'éviter tout le clipping du prochain lot.</div>
+
+    <h4>L'astuce</h4>
+    <p>Le coin le plus « avancé » dans la direction d'une normale se choisit <b>composante par
+    composante, par le signe de cette normale</b>. Aucune boucle sur huit coins, aucune
+    comparaison : trois tests de signe.</p>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — objet &amp; plan critique</div>
+        <div class="c"><div class="kv" id="e6in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — distances et verdict</div>
+        <div class="c"><div class="kv" id="e6out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e6s">Scalaire</button>
+      <button class="t" data-tab="e6v">Vectorisé</button>
+      <button class="t" data-tab="e6t">Tous les objets</button>
+    </div>
+    <div class="tp on" id="e6s">
+<pre><code>// AABB3d.h — le coin choisi par le SIGNE de la normale, jamais les 8
+Vec3f PVertex(const Vec3f&amp; n) const noexcept        // le plus AVANCÉ
+{
+    return { n.x &gt;= 0.0f ? max.x : min.x,
+             n.y &gt;= 0.0f ? max.y : min.y,
+             n.z &gt;= 0.0f ? max.z : min.z };
+}
+Vec3f NVertex(const Vec3f&amp; n) const noexcept        // le plus RECULÉ
+{
+    return { n.x &gt;= 0.0f ? min.x : max.x,
+             n.y &gt;= 0.0f ? min.y : max.y,
+             n.z &gt;= 0.0f ? min.z : max.z };
+}
+
+// Frustum.cpp
+EIntersect Frustum::Classify(const AABB3d&amp; box) const noexcept
+{
+    EIntersect result = EIntersect::Inside;
+    for (int i = 0; i &lt; m_count; ++i)
+    {
+        const Plane&amp; p = m_planes[i];
+
+        if (p.SignedDistance(box.PVertex(p.normal)) &lt; 0.0f)
+            return EIntersect::Outside;              // sortie immédiate
+
+        if (p.SignedDistance(box.NVertex(p.normal)) &lt; 0.0f)
+            result = EIntersect::Intersect;
+    }
+    return result;
+}</code></pre>
+      <p class="dim">1 à 2 produits scalaires par plan. Au pire 12 produits scalaires pour un
+      objet, contre 48 si l'on testait les 8 coins contre 6 plans.</p>
+    </div>
+    <div class="tp" id="e6v">
+<pre><code>// Quatre plans testés simultanément, données en SoA.
+// La sélection p-vertex / n-vertex devient un BLENDV sur le bit de signe :
+// aucune branche, donc aucune mauvaise prédiction.
+const __m128 cx = _mm_set1_ps(center.x), ex = _mm_set1_ps(extent.x);
+// ... idem y, z
+
+// p-vertex = centre + extent·signe(n)  ⇔  |n|·extent + n·centre
+__m128 dot = _mm_fmadd_ps(nx, cx, _mm_fmadd_ps(ny, cy,
+             _mm_fmadd_ps(nz, cz, dd)));                  // n·centre + d
+__m128 rad = _mm_fmadd_ps(_mm_andnot_ps(SIGNMASK, nx), ex,
+             _mm_fmadd_ps(_mm_andnot_ps(SIGNMASK, ny), ey,
+             _mm_mul_ps  (_mm_andnot_ps(SIGNMASK, nz), ez)));
+
+__m128 dP = _mm_add_ps(dot, rad);     // distance du p-vertex
+__m128 dN = _mm_sub_ps(dot, rad);     // distance du n-vertex
+
+if (_mm_movemask_ps(dP))      return Outside;    // un seul bit de signe suffit
+if (_mm_movemask_ps(dN))      state = Intersect;</code></pre>
+      <p class="dim">Reformulation clé : <code>distance(p-vertex) = n·c + d + |n|·e</code>.
+      La valeur absolue remplace la sélection de coin — <code>_mm_andnot_ps</code> sur le bit
+      de signe, une instruction. Et <code>_mm_movemask_ps</code> réduit les quatre
+      comparaisons à un seul test entier.</p>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>left</th><th>right</th><th>bottom</th><th>top</th></tr></thead>
+        <tbody id="e6simd"></tbody>
+      </table></div>
+    </div>
+    <div class="tp" id="e6t">
+      <p>Le même calcul, pour tous les objets de la scène. Le <b>plan critique</b> est celui
+      dont le p-vertex est le plus proche de la sortie.</p>
+      <div class="tw"><table>
+        <thead><tr><th>Objet</th><th class="num">d(p-vertex)</th><th class="num">d(n-vertex)</th><th>plan critique</th><th>verdict</th><th>conséquence</th></tr></thead>
+        <tbody id="e6tab"></tbody>
+      </table></div>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple — se contenter d'un booléen</div>
+<pre><code>bool isVisible = isAABBVisibleIntoWorldSpace(worldAABB, myFrustum);   // ❌ legacy</code></pre>
+      <p>Deux états au lieu de trois. L'information « cet objet est <b>entièrement</b> dans le
+      champ » est produite par l'algorithme, puis <b>jetée</b>. Conséquence au prochain lot :
+      chaque triangle d'un objet pourtant totalement visible devra quand même être testé
+      contre le plan near.</p>
+      <p style="margin-bottom:0" id="e6ceStat"></p>
+      <div class="note" style="margin:12px 0 0">
+        <span class="t">Faux positif assumé</span>
+        <p>Une grosse AABB peut chevaucher les six plans sans intersecter le frustum — le cas
+        du coin. Les moteurs professionnels l'acceptent : le test reste <b>conservatif</b>,
+        donc correct, et le corriger coûterait plus cher que le rendu inutile qu'il provoque.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 7 ─────────────────────────────────────── -->
+<section id="e7"><div class="step">
+  <div class="sh"><div class="ix">7</div><div class="ti">La matrice M·V·P — une seule, par mesh</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Fusionner les trois transformations en une seule, composée <em>une fois par mesh</em>.
+      Chaque sommet ne subira alors qu'<b>une</b> multiplication vecteur-matrice, au lieu de
+      deux passes sur toute la géométrie.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrées — Model (de l'entité) et V·P (de la vue)</div>
+        <div class="c" id="e7in"></div></div>
+      <div class="bx res"><div class="h">Résultat — M·V·P</div>
+        <div class="c" id="e7out"></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e7s">Scalaire</button>
+      <button class="t" data-tab="e7v">Coût comparé</button>
+    </div>
+    <div class="tp on" id="e7s">
+<pre><code>// Scene/RenderSystem.cpp — UNE fois par mesh, hors de la boucle triangles
+const Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;
+//                    └─ Model ─┘   └─── View · Projection ───┘
+//
+// Vecteur-ligne : le MODÈLE est à GAUCHE, il s'applique en PREMIER.
+// 64 multiplications, une fois. Puis 16 par sommet, et c'est tout.</code></pre>
+      <div class="note b" style="margin:10px 0 0">
+        <span class="t">Ce que ça remplace</span>
+        <p>Le legacy faisait deux passes : <code>TransformLocalMesh()</code> écrivait
+        Local→Monde dans <code>poly-&gt;Vertex(i)-&gt;xtransf</code>, puis
+        <code>Clip3DAndProject()</code> relisait ces champs pour faire Monde→Clip. Donc
+        <b>deux parcours de tous les sommets</b>, et surtout une écriture
+        <b>dans le mesh partagé</b> : deux entités sur le même <code>MeshHandle</code>
+        s'écrasaient mutuellement, et l'étage géométrie était structurellement
+        non-parallélisable.</p>
+      </div>
+    </div>
+    <div class="tp" id="e7v">
+      <div class="tw"><table>
+        <thead><tr><th>Pour un mesh de N sommets</th><th class="num">Legacy (2 passes)</th><th class="num">LV3 (1 passe)</th></tr></thead>
+        <tbody>
+          <tr><td>Produits de matrices</td><td class="num">0</td><td class="num">1 × 64 mult</td></tr>
+          <tr><td>Mult. vecteur-matrice</td><td class="num">2 N × 16</td><td class="num">N × 16</td></tr>
+          <tr><td>Écritures dans le mesh</td><td class="num">3 N floats <span class="b no">partagé</span></td><td class="num">0 <span class="b ok">const</span></td></tr>
+          <tr><td>Lectures supplémentaires</td><td class="num">3 N floats</td><td class="num">0</td></tr>
+          <tr><td>Point d'équilibre</td><td class="num" colspan="2">dès N &gt; 4 sommets</td></tr>
+        </tbody>
+      </table></div>
+      <p class="dim" style="margin-top:10px">Le gain de cycles est secondaire. Le vrai gain est
+      que le mesh redevient <code>const</code> : la boucle devient parallélisable, ce qui est
+      la condition du rendu par tuiles multithreadé prévu plus tard.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 8 ─────────────────────────────────────── -->
+<section id="e8"><div class="step">
+  <div class="sh"><div class="ix">8</div><div class="ti">Local → Clip — sans diviser</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Projeter les sommets en coordonnées homogènes 4D, <em>sans toucher à w</em>. Le
+      <code>w</code> porte la distance à l'œil : c'est lui qui décidera à l'étape suivante
+      si le triangle survit.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — un sommet local (SoA indexé)</div>
+        <div class="c"><div class="kv" id="e8in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — clip 4D</div>
+        <div class="c"><div class="kv" id="e8out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e8s">Scalaire</button>
+      <button class="t" data-tab="e8v">Vectorisé</button>
+    </div>
+    <div class="tp on" id="e8s">
+<pre><code>// Rendering/Rasterizer.h — inline, appelée par SOMMET
+// Vecteur-ligne SANS division par w.
+// multVecMatrix() ne convient PAS : elle divise en interne et nous
+// cacherait le w, dont on a besoin au rejet du near.
+LV3_FORCEINLINE Vec4f MulRow(const Matrix44f&amp; m, const Vec3f&amp; p) noexcept
+{
+    return { p.x*m[0][0] + p.y*m[1][0] + p.z*m[2][0] + m[3][0],
+             p.x*m[0][1] + p.y*m[1][1] + p.z*m[2][1] + m[3][1],
+             p.x*m[0][2] + p.y*m[1][2] + p.z*m[2][2] + m[3][2],
+             p.x*m[0][3] + p.y*m[1][3] + p.z*m[2][3] + m[3][3] };
+}
+
+// Appel : SoA INDEXÉ.  /!\  indices[base + k], PAS indices[base] + k
+for (uint8_t k = 0; k &lt; vpf; ++k)
+    c[k] = MulRow(mvp, mesh-&gt;vertexPositions[ mesh-&gt;indices[base + k] ]);</code></pre>
+      <div class="note w" style="margin:10px 0 0">
+        <span class="t">Le piège du SoA indexé</span>
+        <p><code>MeshClass</code> stocke <code>vertexPositions</code> et <code>indices</code>
+        séparément. <code>indices[base]+k</code> lirait le sommet <em>voisin en mémoire</em>,
+        pas le sommet <em>suivant de la face</em>. En géométrie indexée, les trois sommets
+        d'un triangle ne sont presque jamais contigus — c'est précisément le bug latent
+        de <code>MeshClass::GetFaceView()</code>, relevé en §9.</p>
+      </div>
+    </div>
+    <div class="tp" id="e8v">
+<pre><code>// Le SoA de MeshClass est fait pour ça : 4 sommets transformés d'un coup,
+// composante par composante. Aucun shuffle, aucune transposition.
+__m128 px = _mm_setr_ps(VX[i0], VX[i1], VX[i2], VX[i3]);   // 4 x
+__m128 py = _mm_setr_ps(VY[i0], VY[i1], VY[i2], VY[i3]);   // 4 y
+__m128 pz = _mm_setr_ps(VZ[i0], VZ[i1], VZ[i2], VZ[i3]);   // 4 z
+
+// clip.w des 4 sommets, en 3 FMA :
+__m128 cw = _mm_fmadd_ps(px, _mm_set1_ps(m[0][3]),
+            _mm_fmadd_ps(py, _mm_set1_ps(m[1][3]),
+            _mm_fmadd_ps(pz, _mm_set1_ps(m[2][3]), _mm_set1_ps(m[3][3]))));
+// ... idem cx, cy, cz
+
+// 12 FMA pour 4 sommets complets, au lieu de 4 x 16 = 64 opérations.</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>sommet 0</th><th>sommet 1</th><th>sommet 2</th><th>sommet 3</th></tr></thead>
+        <tbody id="e8simd"></tbody>
+      </table></div>
+      <p class="dim">Ici les quatre couloirs portent quatre <b>sommets</b> — le découpage
+      naturel du SoA. C'est ce qui justifie, rétrospectivement, le choix de layout fait au
+      Lot 03 pour <code>MeshClass</code>.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 9 ─────────────────────────────────────── -->
+<section id="e9"><div class="step">
+  <div class="sh"><div class="ix">9</div><div class="ti">Le rejet du near — avant toute division</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Éliminer les triangles qui traversent le plan near. En attendant le vrai clipping du
+      Lot 04 P2, un rejet du triangle entier : on perd quelques triangles au bord du champ,
+      <em>on n'affiche jamais de miroir</em>.</div>
+
+    <h4>Pourquoi c'est non négociable</h4>
+    <p>Un sommet derrière l'œil a <code>w &lt; 0</code>. La division par <code>w</code>
+    <b>inverse alors le signe</b> de <code>x</code> et <code>y</code> : le point traverse
+    l'écran et réapparaît du côté opposé, à une position parfaitement plausible. Rien
+    n'indique l'erreur — ni NaN, ni valeur aberrante.</p>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — les w des sommets</div>
+        <div class="c"><div class="kv" id="e9in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — décision</div>
+        <div class="c"><div class="kv" id="e9out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e9s">Scalaire</button>
+      <button class="t" data-tab="e9v">Vectorisé</button>
+    </div>
+    <div class="tp on" id="e9s">
+<pre><code>// Rejet du near — clipping provisoire.
+// NE JAMAIS diviser par un w négatif : le point reviendrait EN MIROIR
+// de l'autre côté de l'écran.
+bool behind = false;
+for (uint8_t k = 0; k &lt; vpf; ++k)
+    if (c[k].w &lt;= view.nearPlane) { behind = true; break; }
+if (behind) continue;</code></pre>
+      <p class="dim">Trois comparaisons. C'est tout le « clipping » de ce lot — et c'est
+      correct, simplement conservatif.</p>
+    </div>
+    <div class="tp" id="e9v">
+<pre><code>// Le test canonique en espace de clip, pour les 6 plans d'un coup.
+// Chaque couloir porte un sommet ; movemask réduit tout à un entier.
+__m128 inNear = _mm_cmpgt_ps(cw, _mm_set1_ps(nearPlane));   // w &gt; near
+__m128 inLeft = _mm_cmpge_ps(_mm_add_ps(cw, cx), ZERO);     // x + w ≥ 0
+__m128 inRght = _mm_cmpge_ps(_mm_sub_ps(cw, cx), ZERO);     // w − x ≥ 0
+// ... bottom, top, far
+
+const int mNear = _mm_movemask_ps(inNear);
+if (mNear != 0xF) return;                 // au moins un sommet derrière → rejet
+
+// Bonus GRATUIT : si TOUS les sommets sont dehors du MÊME côté,
+// le triangle est trivialement rejetable sans aucune division.
+if (_mm_movemask_ps(inLeft) == 0) return; // les 4 à gauche du plan gauche</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>sommet 0</th><th>sommet 1</th><th>sommet 2</th><th>masque</th></tr></thead>
+        <tbody id="e9simd"></tbody>
+      </table></div>
+      <p class="dim">Le rejet trivial par masque est le socle du <em>guard band</em> :
+      il distingue « totalement dehors » (rejet) de « à cheval » (clipping) sans
+      jamais diviser.</p>
+    </div>
+
+    <div class="ce">
+      <div class="h">Contre-exemple chiffré — diviser quand même</div>
+      <p style="margin-bottom:6px">Un sommet derrière l'œil, passé à la moulinette
+      <code>/w</code> :</p>
+      <div class="tw"><table>
+        <thead><tr><th>Sommet monde</th><th class="num">clip.x</th><th class="num">clip.w</th><th class="num">x_ndc = x/w</th><th>verdict</th></tr></thead>
+        <tbody id="e9ce"></tbody>
+      </table></div>
+      <p style="margin:10px 0 0">Coche <b>« objet derrière l'œil »</b> puis
+      <b>« /w avant le test »</b> au §3 : le volume rouge en pointillés qui apparaît dans le
+      panneau NDC est de la géométrie située <em>derrière la caméra</em>, dessinée devant.
+      C'est le bug du « triangle qui explose quand on recule dedans ».</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 10 ────────────────────────────────────── -->
+<section id="e10"><div class="step">
+  <div class="sh"><div class="ix">10</div><div class="ti">Division par w → NDC</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      La perspective elle-même : diviser par la distance à l'œil. Un objet deux fois plus
+      loin occupe deux fois moins de place. Tout le reste du pipeline n'était que de
+      l'algèbre linéaire ; c'est <em>ici</em> que la projection devient perspective.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — clip 4D (étape 8)</div>
+        <div class="c"><div class="kv" id="e10in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — NDC</div>
+        <div class="c"><div class="kv" id="e10out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e10s">Scalaire</button>
+      <button class="t" data-tab="e10v">Vectorisé</button>
+      <button class="t" data-tab="e10z">La profondeur obtenue</button>
+    </div>
+    <div class="tp on" id="e10s">
+<pre><code>Vec3f r[4];
+for (uint8_t k = 0; k &lt; vpf; ++k)
+{
+    const float inv = 1.0f / c[k].w;          // UNE division, trois multiplications
+    r[k] = vp.ToRaster({ c[k].x * inv, c[k].y * inv, c[k].z * inv });
+}</code></pre>
+      <p class="dim">Calculer <code>1/w</code> une fois puis multiplier trois fois : une
+      division coûte ~14 cycles, une multiplication ~4. Le <code>invW</code> sera de toute
+      façon conservé pour l'interpolation perspective-correcte du Lot 04 P2.</p>
+    </div>
+    <div class="tp" id="e10v">
+<pre><code>// _mm_rcp_ps : ~12 bits. Une itération de Newton-Raphson suffit
+// pour atteindre la précision complète du float32.
+__m128 r  = _mm_rcp_ps(cw);
+       r  = _mm_mul_ps(r, _mm_sub_ps(_mm_set1_ps(2.0f), _mm_mul_ps(cw, r)));
+
+__m128 nx = _mm_mul_ps(cx, r);     // 4 sommets, 1 division approchée
+__m128 ny = _mm_mul_ps(cy, r);
+__m128 nz = _mm_mul_ps(cz, r);
+// On CONSERVE r : c'est le 1/w dont dépendra l'interpolation
+// perspective-correcte des UV au Lot 04 P2.</code></pre>
+      <div class="simd"><table>
+        <thead><tr><th>registre</th><th>sommet 0</th><th>sommet 1</th><th>sommet 2</th><th>sommet 3</th></tr></thead>
+        <tbody id="e10simd"></tbody>
+      </table></div>
+    </div>
+    <div class="tp" id="e10z">
+      <p>La profondeur obtenue, à plusieurs distances, avec les réglages courants. C'est elle
+      qui ira dans le Z-buffer.</p>
+      <div class="tw"><table>
+        <thead><tr><th class="num">distance</th><th class="num">z_ndc</th><th class="num">× 255 (visualisation)</th><th>remarque</th></tr></thead>
+        <tbody id="e10tab"></tbody>
+      </table></div>
+      <div class="note w" style="margin:12px 0 0">
+        <span class="t">Pourquoi un debug de profondeur linéaire est noir</span>
+        <p>En reverse-Z, <code>z_ndc</code> s'écrase dès qu'on s'éloigne du near : une rampe
+        de gris linéaire n'a de sens que sur les premiers centimètres. Ce n'est pas un bug,
+        c'est la preuve que le reverse-Z fonctionne. Un vrai mode debug <em>reconstruit la
+        distance</em> : <code>d = n·f / (z·(f−n) + n)</code>.</p>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 11 ────────────────────────────────────── -->
+<section id="e11"><div class="step">
+  <div class="sh"><div class="ix">11</div><div class="ti">NDC → Raster — le seul flip Y du moteur</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Passer des coordonnées normalisées aux pixels. C'est aussi le <em>seul</em> endroit du
+      moteur qui retourne l'axe Y : le NDC a son Y vers le haut, le raster vers le bas.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — NDC et viewport</div>
+        <div class="c"><div class="kv" id="e11in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — pixels</div>
+        <div class="c"><div class="kv" id="e11out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e11s">Scalaire</button>
+      <button class="t" data-tab="e11r">Repères</button>
+    </div>
+    <div class="tp on" id="e11s">
+<pre><code>// Rendering/Viewport.h — SEUL endroit du moteur qui connaît les PIXELS,
+// et SEUL endroit qui effectue le flip Y. Si tu cherches un jour une
+// image à l'envers, c'est ici, et nulle part ailleurs.
+LV3_FORCEINLINE void ToRaster(float xn, float yn, float&amp; xr, float&amp; yr) const noexcept
+{
+    xr = float(x) + (xn * 0.5f + 0.5f) * float(width);
+    yr = float(y) + (0.5f - yn * 0.5f) * float(height);   // ← le FLIP
+}</code></pre>
+      <div class="note" style="margin:10px 0 0">
+        <span class="t">Un FrameBuffer, N Viewports</span>
+        <p><code>FrameBuffer</code> décrit la <b>mémoire</b> ; <code>Viewport</code> décrit la
+        <b>région qu'on y dessine</b>. Ils coïncident 99 % du temps — c'est le 1 % restant qui
+        justifie la séparation : écran splitté, minimap, incrustation, letterboxing, faces de
+        cubemap. Le viewport est aussi le <b>scissor</b> du rasterizer : c'est lui qui remplace
+        le clipping des quatre plans latéraux.</p>
+      </div>
+    </div>
+    <div class="tp" id="e11r">
+      <div class="tw"><table>
+        <thead><tr><th>NDC (x, y)</th><th class="num">x_raster</th><th class="num">y_raster</th><th>position écran</th></tr></thead>
+        <tbody id="e11tab"></tbody>
+      </table></div>
+      <p style="margin-top:10px">Le contrôle à faire une fois : un sommet à
+      <code>y_ndc = +1</code> doit sortir en <b>haut</b> de l'écran, donc à
+      <code>y_raster = 0</code>. S'il part vers le bas, le flip est inversé — et le sens de
+      parcours des triangles le sera aussi, ce qui cassera le backface culling de l'étape
+      suivante.</p>
+      <p class="dim">La chaîne d'autorité sur les dimensions : l'OS redimensionne la fenêtre →
+      <code>main.cpp</code> décide de la taille de texture → <code>fb.Bind()</code> la reçoit →
+      <code>Viewport::FullScreen()</code> la dérive → <code>BuildViewData()</code> en tire
+      l'aspect ratio. <b>Aucune classe du moteur ne la stocke durablement</b>, donc le
+      redimensionnement coûte cinq lignes.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 12 ────────────────────────────────────── -->
+<section id="e12"><div class="step">
+  <div class="sh"><div class="ix">12</div><div class="ti">Backface culling — gratuit</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Éliminer les faces qui tournent le dos à la caméra — la moitié de la géométrie d'un
+      objet fermé. Et le faire <em>sans rien calculer de nouveau</em> : l'aire signée sert
+      déjà à normaliser les coordonnées barycentriques.</div>
+
+    <div class="io">
+      <div class="bx in"><div class="h">Entrée — le triangle en pixels</div>
+        <div class="c"><div class="kv" id="e12in"></div></div></div>
+      <div class="bx res"><div class="h">Résultat — aire signée</div>
+        <div class="c"><div class="kv" id="e12out"></div></div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="t on" data-tab="e12s">Scalaire</button>
+      <button class="t" data-tab="e12c">Objet vs raster</button>
+    </div>
+    <div class="tp on" id="e12s">
+<pre><code>// Rendering/Rasterizer.h — un NOYAU scalaire, deux gabarits.
+// La fonction d'arête ne travaille QUE sur x et y : le z n'intervient jamais.
+// Trois services pour le prix d'un :
+//   * sur trois sommets   -> deux fois l'aire signée (backface + normalisation)
+//   * signe sur un pixel  -> le pixel est-il du bon côté de l'arête
+//   * valeur / aire       -> coordonnée barycentrique
+[[nodiscard]] LV3_FORCEINLINE constexpr float EdgeFunction(
+    float ax, float ay, float bx, float by, float px, float py) noexcept
+{
+    return (bx - ax) * (py - ay) - (by - ay) * (px - ax);
+}
+
+template&lt;typename V&gt;   // marche pour Vec2f comme pour Vec3f
+[[nodiscard]] LV3_FORCEINLINE float EdgeFunction(const V&amp; a, const V&amp; b, const V&amp; c) noexcept
+{ return EdgeFunction(a.x, a.y, b.x, b.y, c.x, c.y); }
+
+// Appel, dans RenderView :
+if (EdgeFunction(r[0], r[1], r[2]) &lt;= 0.0f) continue;   // backface</code></pre>
+      <div class="note w" style="margin:10px 0 0">
+        <span class="t">Le signe est une pièce à lancer UNE fois</span>
+        <p>Le flip Y de l'étape 11 inverse le sens de parcours : le signe qui désigne une face
+        avant est l'inverse de l'intuition. On ne le devine pas — on lance en fil de fer avec
+        le test commenté, on voit le maillage entier, puis on décommente : la bonne moitié
+        doit disparaître. Une fois connu, on le verrouille par un test.</p>
+      </div>
+    </div>
+    <div class="tp" id="e12c">
+      <div class="tw"><table>
+        <thead><tr><th></th><th>Espace objet <span class="b no">legacy</span></th><th>Espace raster <span class="b ok">LV3</span></th></tr></thead>
+        <tbody>
+          <tr><td>Méthode</td><td><code>dot(normale, camPos − point) &lt; 0</code></td><td>signe de l'aire signée</td></tr>
+          <tr><td>Coût</td><td>1 normale + 1 produit scalaire par face</td><td><b>0</b> — l'aire sert déjà aux barycentriques</td></tr>
+          <tr><td>Prérequis</td><td>normales stockées, <code>camPos</code> en espace objet, <code>model.inverse()</code> par mesh</td><td>rien</td></tr>
+          <tr><td>Scale négatif / miroir</td><td>résultat faux</td><td>géré nativement</td></tr>
+          <tr><td>Moment du rejet</td><td><b>avant</b> la transformation</td><td>après</td></tr>
+        </tbody>
+      </table></div>
+      <p style="margin-top:10px">Le compromis est assumé : on perd le rejet précoce, on gagne
+      un calcul entièrement gratuit et robuste. C'est le choix de tous les GPU. Le piège
+      serait de faire les deux — et le legacy faisait les deux à moitié, en payant un
+      <code>model.inverse()</code> par mesh et par frame uniquement pour ça.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ─── ÉTAPE 13 ────────────────────────────────────── -->
+<section id="e13"><div class="step">
+  <div class="sh"><div class="ix">13</div><div class="ti">Vérifier</div></div>
+  <div class="bd">
+    <div class="goal"><b>Objectif</b>
+      Rendre le lot <em>défendable</em>. Pas « ça marche sur ma scène » : des tests hors
+      moteur, des invariants qui tournent à chaque frame, et un protocole de diagnostic
+      quand l'écran reste noir.</div>
+
+    <h3 style="margin-top:4px">A — Tests hors moteur</h3>
+    <p>Deux fichiers, ~180 assertions, exécutés avant le démarrage en Debug.</p>
+    <div class="tw"><table>
+      <thead><tr><th>§</th><th>Verrouille</th><th>Si ça casse</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>La convention : ligne 3, row-major, point vs direction</td><td>quelqu'un est passé en colonne-majeur</td></tr>
+        <tr><td>2</td><td><code>A*B</code> = « A puis B »</td><td>tous les produits <code>V·P</code>, <code>enfant·parent</code> s'inversent</td></tr>
+        <tr><td>3</td><td>Sens des rotations, main droite</td><td>objets miroir, backface inversé</td></tr>
+        <tr><td>4</td><td>L'ordre S·R·T du chaînage</td><td>un scale non uniforme déforme après rotation</td></tr>
+        <tr><td>6</td><td><code>inverseRigid</code> <b>et sa limite</b></td><td>quelqu'un l'appelle sur une matrice scalée</td></tr>
+        <tr><td>7</td><td>Quaternion et matrice parlent la même langue</td><td>rotations divergentes selon le chemin</td></tr>
+        <tr><td>—</td><td>Projection : coefficients, reverse-Z, monotonie, bords, <code>w &lt; 0</code> derrière l'œil</td><td>tout le lot</td></tr>
+        <tr><td>—</td><td>Frustum : plans normalisés, near/far, 3 états de <code>Classify</code></td><td>le culling</td></tr>
+        <tr><td>—</td><td>Rasterizer : <b>couverture exacte à toutes les échelles</b></td><td>trous ou doublons</td></tr>
+      </tbody>
+    </table></div>
+
+    <div class="note g" style="margin-top:14px">
+      <span class="t">Le test qui manquait, et la règle qui en sort</span>
+      <p>Le test historique vérifiait qu'aucun pixel n'était dessiné <b>deux fois</b>. Il ne
+      pouvait pas voir le bug n°18 : un pixel dessiné <b>zéro fois</b> passait tous les
+      contrôles. Et il utilisait de gros triangles, alors que le bug ne frappait que les
+      petits.</p>
+      <p style="margin-bottom:0"><b>Un test qui ne balaie pas son paramètre critique ne teste
+      qu'un point de l'espace.</b></p>
+    </div>
+
+<pre><code>for (float size : { 3.0f, 5.0f, 8.0f, 15.0f, 40.0f, 200.0f })
+{
+    int holes = 0, doubles = 0;
+    MeasureQuadCoverage(size, holes, doubles);   // carré pivoté de 0,3 rad,
+    assert(holes == 0 &amp;&amp; doubles == 0);          // découpé sur sa diagonale
+}
+
+// Ce qu'affichait l'ancien biais top-left à -1.0f :
+//   cote    3.0 px :  2 trou(s)   &lt;&lt;&lt; FAIL
+//   cote    5.0 px :  3 trou(s)   &lt;&lt;&lt; FAIL
+//   cote   15.0 px :  0 trou(s)   OK      ← d'où l'invisibilité en 2D
+//   cote  200.0 px :  0 trou(s)   OK</code></pre>
+
+    <h3>B — Filets Debug, à chaque frame</h3>
+<pre><code>void CheckSceneInvariants(Registry&amp; registry)      // #if LV3_DEBUG
+{
+    // 1. Le quaternion reste unitaire      → détecte l'accumulation sur soi-même
+    // 2. |xz(local)| == m_orbitRadius      → détecte la dérive d'orbite
+    // 3. m_orbitRadius &gt; 0 si vitesse ≠ 0  → détecte le chargement muet
+    // 4. scale != 0                        → détecte la géométrie invisible
+}
+LV3_ASSERT(db.Width() == fb.Width() &amp;&amp; db.Height() == fb.Height());</code></pre>
+    <p class="dim">Trois des dix-huit bugs ont été trouvés par ces invariants, pas par
+    l'observation. <b>Un invariant vaut mieux qu'une valeur attendue</b> : une valeur, il faut
+    la calculer à la main ; un invariant se vérifie tout seul, gratuitement.</p>
+
+    <h3>C — Protocole quand l'écran reste noir</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Coupe</th><th>Si les objets apparaissent</th></tr></thead>
+      <tbody>
+        <tr><td>Commenter <code>area &lt;= 0</code></td><td>le signe de winding est inversé — piège du flip Y</td></tr>
+        <tr><td>Commenter <code>Classify == Outside</code></td><td>le frustum ou l'AABB est faux</td></tr>
+        <tr><td>Afficher <code>r[0]</code> d'un triangle</td><td>hors écran → les matrices ; dans l'écran → le rasterizer</td></tr>
+        <tr><td>Lancer avec <code>dt = 0</code></td><td>doit reproduire exactement le JSON — sépare animation et matrices</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Et si le fond transparaît à travers la géométrie</h4>
+    <p><b>La forme des trous est le diagnostic.</b> Mets une couleur de fond criarde :</p>
+    <div class="tw"><table>
+      <thead><tr><th>Ce que tu vois</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Pixels <b>épars, comme du bruit</b></td><td>seuil de couverture dépendant de l'échelle</td></tr>
+        <tr><td><b>Fentes nettes</b> le long des arêtes partagées</td><td>même cause, stade avancé</td></tr>
+        <tr><td><b>Triangles entiers</b> manquants</td><td>culling, clipping ou géométrie</td></tr>
+        <tr><td>Trous qui <b>clignotent</b></td><td>z-fighting sur géométrie coplanaire</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>D — Prédictions pour le lot appairé (04 P2)</h3>
+    <div class="tw"><table>
+      <thead><tr><th>Ce que ce lot a produit</th><th>Ce que le prochain doit en faire</th></tr></thead>
+      <tbody>
+        <tr><td><code>EIntersect::Inside</code></td><td>sauter le clipping <b>entier</b> du mesh</td></tr>
+        <tr><td><code>EIntersect::Intersect</code></td><td>clipper, mais contre le <b>seul</b> plan near</td></tr>
+        <tr><td>Le <code>w</code> conservé à l'étape 9</td><td>devient le <code>1/w</code> de l'interpolation perspective-correcte</td></tr>
+        <tr><td><code>z</code> interpolé linéairement</td><td>reste linéaire — les UV et couleurs, non</td></tr>
+        <tr><td>Reverse-Z, clear à 0, test GREATER</td><td>le Z-buffer s'y branche sans rien changer</td></tr>
+        <tr><td><code>Viewport::ClampBox</code></td><td>devient la guard band</td></tr>
+      </tbody>
+    </table></div>
+
+    <h3>E — Les 18 bugs trouvés</h3>
+    <p>Journal empirique. Chacun aurait survécu à une relecture.</p>
+    <div class="tw"><table>
+      <thead><tr><th>#</th><th>Bug</th><th>Détecté par</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>proj * view</code> au lieu de <code>view * proj</code></td><td>audit</td></tr>
+        <tr><td>2</td><td><code>Vec3::Forward()</code> valait <code>+Z</code> en main droite</td><td>TNR</td></tr>
+        <tr><td>3</td><td>Garde anti-division à <code>1e-3</code> alors que la normale du far vaut <code>1e-4</code></td><td>TNR</td></tr>
+        <tr><td>4</td><td><code>16 / 9</code> en division <b>entière</b> → aspect = 1,0</td><td>TNR</td></tr>
+        <tr><td>5</td><td>Double conversion degrés→radians → inclinaison <b>57× trop petite</b></td><td>trace du pôle</td></tr>
+        <tr><td>6</td><td><code>nlohmann::json</code> itère par ordre <b>alphabétique</b></td><td>log de chargement</td></tr>
+        <tr><td>7</td><td>Rayon d'orbite contaminé par Y</td><td>invariant</td></tr>
+        <tr><td>8</td><td>Struct <code>Transform</code> fantôme masquant le vrai, <code>scale = 0</code></td><td><code>#pragma message(__FILE__)</code></td></tr>
+        <tr><td>9</td><td><code>Entity{}</code> vaut <code>0</code>, une entité <b>valide</b></td><td>relecture</td></tr>
+        <tr><td>10</td><td><code>spin * initial</code> → précession parasite de l'axe</td><td>trace du pôle</td></tr>
+        <tr><td>11</td><td><code>"texte" + entier</code> = arithmétique de pointeur</td><td>compilation</td></tr>
+        <tr><td>12</td><td>Littéraux en ANSI faute de <code>/utf-8</code></td><td>console</td></tr>
+        <tr><td>13</td><td><code>RGB</code> est une macro de <code>wingdi.h</code></td><td><code>C4430</code></td></tr>
+        <tr><td>14</td><td><code>LV3_FORCEINLINE</code> déclaré en <code>.h</code>, défini en <code>.cpp</code></td><td>3 × <code>LNK2019</code></td></tr>
+        <tr><td>15</td><td>Surcharges d'<code>EdgeFunction</code> empilées jusqu'au <code>C2665</code></td><td>compilation</td></tr>
+        <tr><td>16</td><td><code>.cpp</code> absents du <code>.vcxproj</code></td><td><code>LNK2019</code> en série</td></tr>
+        <tr><td>17</td><td>Contextes de fragment divergents derrière un <code>void*</code> → lecture décalée de 12 octets</td><td>mode Depth cassé</td></tr>
+        <tr><td>18</td><td>Biais top-left à <code>-1.0f</code> : constante <b>absolue</b> sur une grandeur <b>relative</b></td><td>bruit de fond en 3D</td></tr>
+      </tbody>
+    </table></div>
+
+    <h4>Les quatre règles transposables qui en sortent</h4>
+    <div class="card">
+      <p><b>1. Une constante absolue appliquée à une grandeur relative est une bombe à
+      retardement.</b> <code>EdgeFunction = |arête| × distance</code> : exiger <code>w ≥ 1</code>
+      revient à exiger <code>distance ≥ 1/|arête|</code> — 0,0025 px sur un triangle de 400 px,
+      <b>0,33 px</b> sur un de 3 px. Symptôme : un échec qui <em>disparaît quand la taille
+      augmente</em>.</p>
+
+      <p><b>2. <code>inline</code> ⇒ le corps va dans le <code>.h</code>.</b> Une fonction
+      <code>inline</code> n'émet aucun symbole externe : sa définition doit être visible dans
+      chaque unité de compilation qui l'appelle.</p>
+
+      <p><b>3. Un seul type de contexte derrière un <code>void*</code>.</b>
+      <code>static_cast&lt;T*&gt;(void*)</code> réussit <em>toujours</em>. Le compilateur ne
+      vérifie rien ; c'est à la conception de le faire.</p>
+
+      <p style="margin-bottom:0"><b>4. Un fichier appartient à la couche de son argument le
+      plus haut.</b> <code>Projection</code> ignore <code>Camera</code>, <code>Frustum</code>
+      ignore <code>Mesh</code>, <code>Renderer</code> ignore le <code>Registry</code>.
+      Test : <em>« si je remplaçais SDL par Win32 GDI, ce fichier changerait-il ? »</em></p>
+    </div>
+  </div>
+</div></section>
+
+<!-- ══════════════════════════════════════════════════ -->
+<section id="s9">
+  <h2><span class="n">9</span>Dette &amp; roadmap</h2>
+
+  <p class="lede">Ce que le lot laisse derrière lui, et les décisions reportées. Rien n'est
+  oublié : tout est soit daté, soit explicitement à trancher.</p>
+
+  <h3>Dette technique identifiée</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Sujet</th><th>Risque</th><th>Urgence</th></tr></thead>
+    <tbody>
+      <tr><td><code>MeshClass::GetFaceView</code> suppose les sommets <b>contigus</b> dans <code>vertexPositions</code></td>
+          <td>normales et UV fausses dès qu'on s'en servira</td><td><span class="b no">haute</span></td></tr>
+      <tr><td><code>ComputeMeshAABB()</code> n'est appelée nulle part automatiquement</td>
+          <td>si l'<code>OBJLoader</code> l'oublie : AABB invalide, culling incohérent, écran noir</td>
+          <td><span class="b no">haute</span></td></tr>
+      <tr><td><code>Renderer</code> n'exploite ni <code>ECullMode</code>, ni <code>EDepthTest</code>, ni <code>EBlendMode</code></td>
+          <td>trois enums sans usage effectif</td><td><span class="b wa">moyenne</span></td></tr>
+      <tr><td>Matériaux : <code>submeshes</code> ignorés, couleur par hash de face</td>
+          <td>pas de rendu réaliste possible</td><td><span class="b wa">moyenne</span></td></tr>
+      <tr><td>Le Lot 02 affirme encore « main gauche, +Z entre dans l'écran »</td>
+          <td>documentation mensongère</td><td><span class="b wa">moyenne</span></td></tr>
+      <tr><td><code>using Entity = uint32_t</code> : aucune sécurité de type</td>
+          <td><code>follow.m_target = 0</code> compile et désigne la 1<sup>re</sup> entité</td>
+          <td><span class="b nt">basse</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Décisions remises en cause par ce lot</h3>
+  <div class="note w">
+    <span class="t">Lot 02 — Décisions A et C</span>
+    <p>Le Lot 02 avait tranché <b>main gauche</b> et <b>NDC [0,1]</b>. Le code, lui, était resté
+    en <b>main droite</b> et <b>NDC [-1,1]</b> : aucune des deux décisions n'avait été
+    appliquée. Ce lot a tranché dans l'autre sens pour la main (<b>droite</b>, conservée) et
+    appliqué le <b>[0,1] + reverse-Z</b>. La Décision B, elle, était de fait respectée —
+    row-major/vecteur-ligne est numériquement <em>identique</em> à column-major/vecteur-colonne,
+    seul le vocabulaire divergeait.
+    <br><b>Action :</b> corriger le document du Lot 02, qui est aujourd'hui faux.</p>
+  </div>
+
+  <h3>Chantiers différés — à décider plus tard</h3>
+  <div class="tw"><table>
+    <thead><tr><th>Chantier</th><th>Gain attendu</th><th>Débloqué par</th></tr></thead>
+    <tbody>
+      <tr><td>Culling en espace <b>objet</b> (extraction depuis <code>M·V·P</code>)</td>
+          <td>AABB locale exacte au lieu d'une AABB monde regrossie</td><td>culling monde validé ✅</td></tr>
+      <tr><td><b>Guard band</b> + scissor élargi</td>
+          <td>99 % des triangles jamais découpés</td><td>Lot 04 P2</td></tr>
+      <tr><td><b>Batching</b> : <code>RenderView</code> remplit un buffer, <code>Renderer</code> le traite</td>
+          <td>tri, binning par tuiles, multithreading, SIMD inter-triangles</td><td>rasterizer complet</td></tr>
+      <tr><td><b>BVH / octree</b> hiérarchique</td>
+          <td>un nœud Outside élimine son sous-arbre</td><td>après profilage</td></tr>
+      <tr><td><b>Occlusion culling</b></td>
+          <td>ce qui est derrière un mur</td><td>bien plus tard</td></tr>
+      <tr><td><code>enum class Entity</code></td>
+          <td>sécurité de type dans tout l'ECS</td><td>touche la signature du Registry</td></tr>
+      <tr><td>Refonte du <code>TriggerSystem</code> (détection N²)</td>
+          <td>broad-phase spatiale avant la narrow-phase</td><td>noté au Lot 03</td></tr>
+      <tr><td>Coins du frustum / debug draw</td>
+          <td>visualisation, cascades d'ombres</td><td>au besoin</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note g">
+    <span class="t">Ordre d'optimisation, pour mémoire</span>
+    <p>immédiat → dispatch hissé → <b>batching</b> → tuiles → threads → SIMD inter-triangles.
+    Chaque étape n'a de sens qu'une fois la précédente <em>mesurée</em>. Le
+    <code>Triangle2D</code> de 36 octets passé par référence représente 0,15 % du coût d'un
+    triangle de 20×20 pixels : ce n'est pas là qu'est le gain.</p>
+  </div>
+
+  <h3>Prochain lot</h3>
+  <p><b>Lot 04 Partie 2</b> — clipping near en espace de clip, interpolation
+  perspective-correcte (le <code>z</code> s'interpole linéairement, les UV et les couleurs
+  exigent le <code>1/w</code>), et exploitation du troisième état du culling.</p>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   MOTEUR DE DÉMONSTRATION
+   Toute l'arithmétique passe par Math.fround() : on simule le
+   float32 du CPU, pas le double de JavaScript. Les nombres
+   affichés sont donc ceux que LibraryV3 calcule réellement.
+   Convention identique au moteur : row-major m[r*4+c],
+   vecteur-ligne (v' = v·M), main droite, NDC z ∈ [0,1].
+   ═══════════════════════════════════════════════════════════ */
+const F = Math.fround;
+const fa = (a,b)=>F(F(a)+F(b));
+const fs = (a,b)=>F(F(a)-F(b));
+const fm = (a,b)=>F(F(a)*F(b));
+const fd = (a,b)=>F(F(a)/F(b));
+const RAD = Math.PI/180;
+
+function matIdent(){
+  const m = new Float32Array(16);
+  m[0]=m[5]=m[10]=m[15]=1;
+  return m;
+}
+/* c[i][j] = Σ a[i][k]·b[k][j] — vecteur-ligne : a*b signifie « a PUIS b » */
+function matMul(a,b){
+  const c = new Float32Array(16);
+  for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+    let s = 0;
+    for(let k=0;k<4;k++) s = fa(s, fm(a[i*4+k], b[k*4+j]));
+    c[i*4+j] = s;
+  }
+  return c;
+}
+/* v' = v·M sans division par w : le w sert au rejet du near */
+function mulRow(m,x,y,z){
+  return {
+    x: fa(fa(fm(x,m[0]), fm(y,m[4])), fa(fm(z,m[8]),  m[12])),
+    y: fa(fa(fm(x,m[1]), fm(y,m[5])), fa(fm(z,m[9]),  m[13])),
+    z: fa(fa(fm(x,m[2]), fm(y,m[6])), fa(fm(z,m[10]), m[14])),
+    w: fa(fa(fm(x,m[3]), fm(y,m[7])), fa(fm(z,m[11]), m[15]))
+  };
+}
+/* Inverse d'une isométrie : [Rᵀ | -t·Rᵀ]. Jamais de Gauss-Jordan. */
+function inverseRigid(m){
+  const r = matIdent();
+  r[0]=m[0]; r[1]=m[4]; r[2]=m[8];
+  r[4]=m[1]; r[5]=m[5]; r[6]=m[9];
+  r[8]=m[2]; r[9]=m[6]; r[10]=m[10];
+  r[12] = F(-fa(fa(fm(m[12],r[0]), fm(m[13],r[4])), fm(m[14],r[8])));
+  r[13] = F(-fa(fa(fm(m[12],r[1]), fm(m[13],r[5])), fm(m[14],r[9])));
+  r[14] = F(-fa(fa(fm(m[12],r[2]), fm(m[13],r[6])), fm(m[14],r[10])));
+  r[3]=r[7]=r[11]=0; r[15]=1;
+  return r;
+}
+/* Perspective main droite. revZ : near→1, far→0. inf : plus de plan far. */
+function perspective(fovYrad, aspect, n, f, revZ, inf){
+  const m = new Float32Array(16);            // ZÉRO, pas l'identité :
+  const th = F(Math.tan(fovYrad*0.5));       // m[3][3] doit valoir 0
+  m[0]  = fd(1, fm(aspect, th));
+  m[5]  = fd(1, th);
+  m[11] = -1;                                // recopie -z dans w
+  if (inf){ m[10] = revZ ? 0 : 1;  m[14] = revZ ? F(n) : F(-2*n); }
+  else if (revZ){ m[10] = fd(n, fs(f,n));            m[14] = fd(fm(n,f), fs(f,n)); }
+  else          { m[10] = F(-fd(f, fs(f,n)));        m[14] = F(-fd(fm(f,n), fs(f,n))); }
+  m[15] = 0;
+  return m;
+}
+/* Matrice monde de la caméra : rotation Y puis translation */
+function camWorld(px,pz,yawDeg){
+  const a = F(yawDeg*RAD), c = F(Math.cos(a)), s = F(Math.sin(a));
+  const m = matIdent();
+  m[0]=c;  m[2]=F(-s);
+  m[8]=s;  m[10]=c;
+  m[12]=F(px); m[13]=0; m[14]=F(pz);
+  return m;
+}
+const camFwd  = y => ({x:F(-Math.sin(y*RAD)), z:F(-Math.cos(y*RAD))});
+const camRight= y => ({x:F( Math.cos(y*RAD)), z:F(-Math.sin(y*RAD))});
+
+/* ── Gribb-Hartmann ──────────────────────────────────────────
+   Vecteur-ligne : la COLONNE j de M porte le composant j du clip.
+     normale = (M[0][j], M[1][j], M[2][j])     d = M[3][j]
+   Volume canonique, z ∈ [0,1] : les deux conditions en profondeur
+   sont (z ≥ 0) et (w − z ≥ 0).
+     standard  → z ≥ 0 est le NEAR
+     reverse-Z → z ≥ 0 est le FAR      ... on échange les étiquettes. */
+const PL = {LEFT:0,RIGHT:1,BOTTOM:2,TOP:3,NEAR:4,FAR:5};
+const PLNAME = ['left','right','bottom','top','near','far'];
+
+function buildFrustum(vp, revZ, inf){
+  const col = j => ({nx:vp[0*4+j], ny:vp[1*4+j], nz:vp[2*4+j], d:vp[3*4+j]});
+  const add = (a,b)=>({nx:fa(a.nx,b.nx), ny:fa(a.ny,b.ny), nz:fa(a.nz,b.nz), d:fa(a.d,b.d)});
+  const sub = (a,b)=>({nx:fs(a.nx,b.nx), ny:fs(a.ny,b.ny), nz:fs(a.nz,b.nz), d:fs(a.d,b.d)});
+  const cx=col(0), cy=col(1), cz=col(2), cw=col(3);
+
+  const p = [];
+  p[PL.LEFT]   = add(cw,cx);
+  p[PL.RIGHT]  = sub(cw,cx);
+  p[PL.BOTTOM] = add(cw,cy);
+  p[PL.TOP]    = sub(cw,cy);
+  if (revZ){ p[PL.NEAR]=sub(cw,cz); p[PL.FAR]=cz; }
+  else     { p[PL.NEAR]=cz;         p[PL.FAR]=sub(cw,cz); }
+
+  const count = inf ? 5 : 6;                 // far dégénéré : normale nulle
+  const raw   = p.map(q=>({...q}));
+  for (let i=0;i<count;i++){
+    const q = p[i];
+    const l2 = fa(fa(fm(q.nx,q.nx), fm(q.ny,q.ny)), fm(q.nz,q.nz));
+    if (l2 > 1e-30){                         // garde ANTI-DIVISION, pas une tolérance
+      const inv = fd(1, F(Math.sqrt(l2)));
+      q.nx=fm(q.nx,inv); q.ny=fm(q.ny,inv); q.nz=fm(q.nz,inv); q.d=fm(q.d,inv);
+    }
+  }
+  return {planes:p, count, raw};
+}
+const dist = (p,x,y,z)=>fa(fa(fa(fm(p.nx,x), fm(p.ny,y)), fm(p.nz,z)), p.d);
+const pVert = (b,p)=>({x:p.nx>=0?b.max.x:b.min.x, y:p.ny>=0?b.max.y:b.min.y, z:p.nz>=0?b.max.z:b.min.z});
+const nVert = (b,p)=>({x:p.nx>=0?b.min.x:b.max.x, y:p.ny>=0?b.min.y:b.max.y, z:p.nz>=0?b.min.z:b.max.z});
+
+/* Trois états. Le p-vertex sort tout de suite ; le n-vertex nuance. */
+function classify(fr,box){
+  let state = 'inside', crit = -1, critD = Infinity;
+  for (let i=0;i<fr.count;i++){
+    const p = fr.planes[i];
+    const pv = pVert(box,p), dp = dist(p,pv.x,pv.y,pv.z);
+    if (dp < critD){ critD = dp; crit = i; }
+    if (dp < 0) return {state:'outside', crit:i, critD:dp};
+    const nv = nVert(box,p);
+    if (dist(p,nv.x,nv.y,nv.z) < 0) state = 'intersect';
+  }
+  return {state, crit, critD};
+}
+
+/* ── Scène de démonstration ───────────────────────────────── */
+const box = (name,cx,cy,cz,h) => ({
+  name, min:{x:F(cx-h),y:F(cy-h),z:F(cz-h)}, max:{x:F(cx+h),y:F(cy+h),z:F(cz+h)},
+  c:{x:F(cx),y:F(cy),z:F(cz)}, h:F(h)
+});
+const SCENE_BASE = [
+  box('Soleil',    0, 0,   0, 4),
+  box('Terre',    12, 0,  10, 2),
+  box('Mars',    -30, 0,  15, 3),
+  box('Comète',    0, 0, -40, 6)
+];
+const BOX_BEHIND = box('Derrière',  0, 0, 36, 3);
+
+/* ── État piloté par l'interface ──────────────────────────── */
+const ST = { fov:45, near:1, far:60, aspect:1.7778, yaw:0,
+             camX:0, camZ:30, revZ:true, inf:false,
+             planes:true, pn:true, behind:false, noDiv:false };
+
+/* Tout le pipeline, recalculé à chaque changement */
+function computeAll(){
+  const n = F(ST.near), f = F(ST.far);
+  const world = camWorld(ST.camX, ST.camZ, ST.yaw);
+  const view  = inverseRigid(world);
+  const proj  = perspective(F(ST.fov*RAD), F(ST.aspect), n, f, ST.revZ, ST.inf);
+  const vp    = matMul(view, proj);                 // vecteur-ligne : v·V·P
+  const fr    = buildFrustum(vp, ST.revZ, ST.inf);
+  const scene = ST.behind ? SCENE_BASE.concat([BOX_BEHIND]) : SCENE_BASE;
+  const cls   = scene.map(b => classify(fr,b));
+  return {n,f,world,view,proj,vp,fr,scene,cls};
+}
+let S = computeAll();
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS 1 — espace monde, vue de dessus (plan XZ)
+   ═══════════════════════════════════════════════════════════ */
+const COL = {inside:'#2a9d6a', intersect:'#e0a92a', outside:'#d44'};
+let worldXf = null;                                  // monde → écran
+
+function drawWorld(){
+  const cv = document.getElementById('cvWorld'), g = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle = '#fff'; g.fillRect(0,0,W,H);
+
+  const fwd = camFwd(ST.yaw), rgt = camRight(ST.yaw);
+  const thH = F(Math.tan(F(ST.fov*RAD)*0.5) * ST.aspect);
+  const fFar = ST.inf ? Math.max(ST.far, 80) : ST.far;
+
+  /* Cadre automatique : frustum + objets + caméra */
+  const pts = [{x:ST.camX,z:ST.camZ}];
+  for (const d of [ST.near, fFar]){
+    const hw = thH*d;
+    const cxp = ST.camX + fwd.x*d, czp = ST.camZ + fwd.z*d;
+    pts.push({x:cxp+rgt.x*hw, z:czp+rgt.z*hw}, {x:cxp-rgt.x*hw, z:czp-rgt.z*hw});
+  }
+  for (const b of S.scene){ pts.push({x:b.min.x,z:b.min.z},{x:b.max.x,z:b.max.z}); }
+  let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;
+  for (const p of pts){ x0=Math.min(x0,p.x); x1=Math.max(x1,p.x); z0=Math.min(z0,p.z); z1=Math.max(z1,p.z); }
+  const pad = Math.max(x1-x0, z1-z0)*0.10 + 4;
+  x0-=pad; x1+=pad; z0-=pad; z1+=pad;
+  const sc = Math.min(W/(x1-x0), H/(z1-z0));
+  const ox = (W - (x1-x0)*sc)/2 - x0*sc;
+  const oz = (H - (z1-z0)*sc)/2 - z0*sc;
+  const SX = x => ox + x*sc;
+  const SZ = z => oz + z*sc;                        /* z croissant → vers le BAS */
+  worldXf = {sc, ox, oz, inv:(px,pz)=>({x:(px-ox)/sc, z:(pz-oz)/sc})};
+
+  /* grille 10 unités */
+  g.strokeStyle='#eef1f5'; g.lineWidth=1;
+  const gs=10;
+  for (let x=Math.ceil(x0/gs)*gs; x<x1; x+=gs){ g.beginPath(); g.moveTo(SX(x),0); g.lineTo(SX(x),H); g.stroke(); }
+  for (let z=Math.ceil(z0/gs)*gs; z<z1; z+=gs){ g.beginPath(); g.moveTo(0,SZ(z)); g.lineTo(W,SZ(z)); g.stroke(); }
+  g.strokeStyle='#dde2ea';
+  g.beginPath(); g.moveTo(SX(0),0); g.lineTo(SX(0),H); g.moveTo(0,SZ(0)); g.lineTo(W,SZ(0)); g.stroke();
+
+  /* volume du frustum */
+  const corner = (d,s) => { const hw=thH*d;
+    return {x:ST.camX+fwd.x*d+rgt.x*hw*s, z:ST.camZ+fwd.z*d+rgt.z*hw*s}; };
+  const nL=corner(ST.near,-1), nR=corner(ST.near,1), fL=corner(fFar,-1), fR=corner(fFar,1);
+  g.beginPath();
+  g.moveTo(SX(nL.x),SZ(nL.z)); g.lineTo(SX(fL.x),SZ(fL.z));
+  g.lineTo(SX(fR.x),SZ(fR.z)); g.lineTo(SX(nR.x),SZ(nR.z)); g.closePath();
+  g.fillStyle='rgba(31,95,208,.07)'; g.fill();
+  g.strokeStyle='#1f5fd0'; g.lineWidth=1.6;
+  g.setLineDash(ST.inf?[6,5]:[]); g.stroke(); g.setLineDash([]);
+
+  /* plan near, bien visible */
+  g.strokeStyle='#1f5fd0'; g.lineWidth=3;
+  g.beginPath(); g.moveTo(SX(nL.x),SZ(nL.z)); g.lineTo(SX(nR.x),SZ(nR.z)); g.stroke();
+  g.fillStyle='#1f5fd0'; g.font='600 11px ui-monospace,monospace';
+  g.fillText('near '+ST.near.toFixed(1), SX(nR.x)+6, SZ(nR.z)-4);
+  if (!ST.inf) g.fillText('far '+ST.far.toFixed(0), SX(fR.x)+6, SZ(fR.z)+12);
+
+  /* normales des plans latéraux (pointent vers l'INTÉRIEUR) */
+  if (ST.planes){
+    g.strokeStyle='rgba(31,95,208,.55)'; g.lineWidth=1.3;
+    for (const i of [PL.LEFT, PL.RIGHT, PL.NEAR, PL.FAR]){
+      if (i>=S.fr.count) continue;
+      const p = S.fr.planes[i];
+      if (Math.abs(p.nx)+Math.abs(p.nz) < 1e-5) continue;
+      /* point du plan le plus proche de la caméra, projeté */
+      const d0 = dist(p, ST.camX, 0, ST.camZ);
+      const bx = ST.camX - p.nx*d0, bz = ST.camZ - p.nz*d0;
+      const L = 18/sc;
+      g.beginPath(); g.moveTo(SX(bx),SZ(bz)); g.lineTo(SX(bx+p.nx*L), SZ(bz+p.nz*L)); g.stroke();
+      g.beginPath(); g.arc(SX(bx+p.nx*L), SZ(bz+p.nz*L), 2.4, 0, 7); g.fillStyle='#1f5fd0'; g.fill();
+    }
+  }
+
+  /* objets */
+  S.scene.forEach((b,i)=>{
+    const c = COL[S.cls[i].state];
+    const X=SX(b.min.x), Y=SZ(b.min.z), Wd=(b.max.x-b.min.x)*sc, Ht=(b.max.z-b.min.z)*sc;
+    g.fillStyle = c+'26'; g.fillRect(X,Y,Wd,Ht);
+    g.strokeStyle = c; g.lineWidth=1.8; g.strokeRect(X,Y,Wd,Ht);
+    g.fillStyle='#15181d'; g.font='600 11.5px -apple-system,sans-serif';
+    g.fillText(b.name, X, Y-5);
+
+    if (ST.pn && S.cls[i].crit>=0 && S.cls[i].crit < S.fr.count){
+      const p = S.fr.planes[S.cls[i].crit];
+      const pv = pVert(b,p), nv = nVert(b,p);
+      g.fillStyle=c;
+      g.beginPath(); g.arc(SX(pv.x),SZ(pv.z),4.2,0,7); g.fill();
+      g.strokeStyle=c; g.lineWidth=1.5;
+      g.beginPath(); g.arc(SX(nv.x),SZ(nv.z),4.2,0,7); g.stroke();
+      g.fillStyle='#4a5260'; g.font='9.5px ui-monospace,monospace';
+      g.fillText('p', SX(pv.x)+6, SZ(pv.z)-5);
+      g.fillText('n', SX(nv.x)+6, SZ(nv.z)-5);
+    }
+  });
+
+  /* caméra */
+  const cxs=SX(ST.camX), czs=SZ(ST.camZ);
+  g.save(); g.translate(cxs,czs);
+  g.rotate(Math.atan2(fwd.x, -fwd.z));
+  g.fillStyle='#1f5fd0'; g.beginPath();
+  g.moveTo(0,-11); g.lineTo(8,8); g.lineTo(0,4); g.lineTo(-8,8); g.closePath(); g.fill();
+  g.restore();
+  g.fillStyle='#1f5fd0'; g.font='600 11px ui-monospace,monospace';
+  g.fillText('œil ('+ST.camX.toFixed(1)+', '+ST.camZ.toFixed(1)+')', cxs+12, czs+16);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CANVAS 2 — espace NDC, après V·P puis division par w
+   ═══════════════════════════════════════════════════════════ */
+function drawNdc(){
+  const cv = document.getElementById('cvNdc'), g = cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  g.setTransform(1,0,0,1,0,0);
+  g.fillStyle='#fff'; g.fillRect(0,0,W,H);
+
+  const M=58, bw=W-2*M, bh=H-2*M;
+  const PX = xn => M + (xn+1)*0.5*bw;               /* x ∈ [-1,+1] */
+  const PY = zn => M + zn*bh;                       /* z ∈ [0,1], 0 en haut */
+
+  /* hors du volume canonique */
+  g.fillStyle='#fafbfc'; g.fillRect(0,0,W,H);
+  g.fillStyle='#fff'; g.fillRect(PX(-1),PY(0),bw,bh);
+  g.strokeStyle='#cfd5de'; g.lineWidth=1.5; g.strokeRect(PX(-1),PY(0),bw,bh);
+
+  /* graduations */
+  g.strokeStyle='#eef1f5'; g.lineWidth=1;
+  for (const v of [-0.5,0,0.5]){ g.beginPath(); g.moveTo(PX(v),PY(0)); g.lineTo(PX(v),PY(1)); g.stroke(); }
+  for (const v of [0.25,0.5,0.75]){ g.beginPath(); g.moveTo(PX(-1),PY(v)); g.lineTo(PX(1),PY(v)); g.stroke(); }
+
+  g.fillStyle='#767f8d'; g.font='11px ui-monospace,monospace';
+  g.fillText('x = -1', PX(-1)-6, PY(1)+20);
+  g.fillText('x = +1', PX(1)-32, PY(1)+20);
+  for (const v of [0,0.5,1]) g.fillText('z = '+v.toFixed(1), 6, PY(v)+4);
+
+  const nearEnd = ST.revZ ? 1 : 0;
+  g.fillStyle='#1f5fd0'; g.font='600 11.5px ui-monospace,monospace';
+  g.fillText('◄ plan NEAR', PX(1)+6, PY(nearEnd)+4);
+  g.fillStyle='#767f8d';
+  g.fillText('◄ plan FAR',  PX(1)+6, PY(1-nearEnd)+4);
+
+  /* objets : 4 coins XZ projetés */
+  let mirrored = 0;
+  S.scene.forEach((b,i)=>{
+    const c = COL[S.cls[i].state];
+    const corners = [[b.min.x,b.min.z],[b.max.x,b.min.z],[b.max.x,b.max.z],[b.min.x,b.max.z]];
+    const proj = corners.map(([x,z])=>{
+      const cl = mulRow(S.vp, F(x), 0, F(z));
+      const behind = cl.w <= F(ST.near);
+      if (behind && !ST.noDiv) return {skip:true};
+      const inv = fd(1, cl.w);                       /* /w — ici même si w<0 : le bug */
+      if (behind) mirrored++;
+      return {x:fm(cl.x,inv), z:fm(cl.z,inv), behind};
+    });
+    const vis = proj.filter(p=>!p.skip);
+    if (!vis.length) return;
+
+    g.beginPath();
+    vis.forEach((p,k)=>{ const X=PX(p.x), Y=PY(p.z); k?g.lineTo(X,Y):g.moveTo(X,Y); });
+    g.closePath();
+    const anyB = vis.some(p=>p.behind);
+    g.fillStyle = anyB ? '#d4442e22' : c+'26'; g.fill();
+    g.strokeStyle = anyB ? '#d44' : c; g.lineWidth = anyB?2.4:1.8;
+    g.setLineDash(anyB?[5,4]:[]); g.stroke(); g.setLineDash([]);
+
+    const cl = mulRow(S.vp, b.c.x, 0, b.c.z);
+    if (cl.w > 0 || ST.noDiv){
+      const iv = fd(1,cl.w);
+      g.fillStyle='#15181d'; g.font='600 11px -apple-system,sans-serif';
+      g.fillText(b.name, PX(fm(cl.x,iv))+5, PY(fm(cl.z,iv))-5);
+    }
+  });
+
+  if (mirrored){
+    g.fillStyle='#fdecec'; g.strokeStyle='#d44'; g.lineWidth=1.4;
+    g.fillRect(M, H-40, bw, 28); g.strokeRect(M, H-40, bw, 28);
+    g.fillStyle='#b32020'; g.font='600 12px -apple-system,sans-serif';
+    g.fillText('⚠ '+mirrored+' sommet(s) avec w ≤ near divisés quand même → réapparaissent EN MIROIR',
+               M+12, H-21);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Tableau de classification
+   ═══════════════════════════════════════════════════════════ */
+function drawTable(){
+  const tb = document.querySelector('#tbObj tbody');
+  const LBL = {inside:'<span class="b ok">Inside</span>',
+               intersect:'<span class="b wa">Intersect</span>',
+               outside:'<span class="b no">Outside</span>'};
+  tb.innerHTML = S.scene.map((b,i)=>{
+    const r = S.cls[i];
+    const d = Math.hypot(b.c.x-ST.camX, b.c.z-ST.camZ);
+    const p = (r.crit>=0 && r.crit<S.fr.count) ? S.fr.planes[r.crit] : null;
+    const pv = p?pVert(b,p):null, nv = p?nVert(b,p):null;
+    const dn = (p&&nv)?dist(p,nv.x,nv.y,nv.z):NaN;
+    return `<tr>
+      <td><b>${b.name}</b></td>
+      <td class="num">${b.c.x.toFixed(0)}, ${b.c.y.toFixed(0)}, ${b.c.z.toFixed(0)}</td>
+      <td class="num">${d.toFixed(2)}</td>
+      <td class="num">${p?`${r.critD.toFixed(3)} <span class="dim">· ${PLNAME[r.crit]}</span>`:'—'}</td>
+      <td class="num">${isNaN(dn)?'—':dn.toFixed(3)}</td>
+      <td>${LBL[r.state]}</td></tr>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Boucle de rafraîchissement
+   ═══════════════════════════════════════════════════════════ */
+const STEP_HOOKS = [];                                /* rempli par les étapes */
+function refresh(){
+  S = computeAll();
+  drawWorld(); drawNdc(); drawTable();
+  document.getElementById('ndcHint').textContent =
+    ST.revZ ? 'x ∈ [-1,+1] · z ∈ [0,1] reverse-Z (near→1)'
+            : 'x ∈ [-1,+1] · z ∈ [0,1] standard (near→0)';
+  for (const h of STEP_HOOKS) { try { h(S); } catch(e){ console.error(e); } }
+}
+
+/* ── liaison des contrôles ───────────────────────────────── */
+(function wire(){
+  const fmt = {sFov:v=>v.toFixed(1)+'°', sNear:v=>v.toFixed(2), sFar:v=>v.toFixed(1),
+               sAsp:v=>v.toFixed(3), sYaw:v=>v.toFixed(1)+'°'};
+  const key = {sFov:'fov', sNear:'near', sFar:'far', sAsp:'aspect', sYaw:'yaw'};
+  const out = {sFov:'vFov', sNear:'vNear', sFar:'vFar', sAsp:'vAsp', sYaw:'vYaw'};
+  for (const id of Object.keys(key)){
+    const el = document.getElementById(id);
+    const sync = ()=>{
+      const v = parseFloat(el.value);
+      ST[key[id]] = v;
+      document.getElementById(out[id]).textContent = fmt[id](v);
+      refresh();
+    };
+    el.addEventListener('input', sync); sync();
+  }
+  const tg = {tRev:'revZ', tInf:'inf', tPlanes:'planes', tPN:'pn', tBehind:'behind', tNoDiv:'noDiv'};
+  for (const id of Object.keys(tg)){
+    const el = document.getElementById(id);
+    el.addEventListener('change', ()=>{
+      ST[tg[id]] = el.checked;
+      el.closest('.tg').classList.toggle('act', el.checked);
+      refresh();
+    });
+  }
+  /* glisser la caméra */
+  const cv = document.getElementById('cvWorld');
+  let drag = false;
+  const toWorld = ev => {
+    const r = cv.getBoundingClientRect();
+    const px = (ev.clientX - r.left) * (cv.width / r.width);
+    const pz = (ev.clientY - r.top)  * (cv.height / r.height);
+    return worldXf.inv(px, pz);
+  };
+  cv.addEventListener('pointerdown', ev=>{ drag=true; cv.classList.add('drag');
+    cv.setPointerCapture(ev.pointerId); const w=toWorld(ev); ST.camX=w.x; ST.camZ=w.z; refresh(); });
+  cv.addEventListener('pointermove', ev=>{ if(!drag) return;
+    const w=toWorld(ev); ST.camX=w.x; ST.camZ=w.z; refresh(); });
+  cv.addEventListener('pointerup',   ()=>{ drag=false; cv.classList.remove('drag'); });
+  cv.addEventListener('pointercancel',()=>{ drag=false; cv.classList.remove('drag'); });
+})();
+refresh();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   PANNEAUX D'ÉTAPE — tout est recalculé depuis l'état courant
+   ═══════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const nx = (v,d=4) => (Object.is(v,-0)?0:v).toFixed(d);
+const sig = v => { const a=Math.abs(v);
+  return a===0?'0' : (a<1e-3||a>=1e5) ? v.toExponential(3) : v.toFixed(a<1?6:4); };
+
+/* grille 4x4 d'une matrice ; hi = liste d'index à surligner */
+function matHtml(m, hi=[]){
+  let s = '<table style="margin:0;font-family:var(--mono);font-size:11.8px">';
+  for(let r=0;r<4;r++){
+    s += '<tr>';
+    for(let c=0;c<4;c++){
+      const i=r*4+c, on=hi.includes(i);
+      s += `<td class="num" style="padding:3px 7px;border:none;${on?'background:var(--accent-bg);color:var(--accent);font-weight:650':''}">${sig(m[i])}</td>`;
+    }
+    s += '</tr>';
+  }
+  return s+'</table>';
+}
+function kv(pairs){
+  return pairs.map(([k,v])=>`<span class="k">${k}</span><span class="v">${v}</span>`).join('');
+}
+/* onglets */
+document.querySelectorAll('.tabs').forEach(bar=>{
+  bar.addEventListener('click', ev=>{
+    const b = ev.target.closest('.t'); if(!b) return;
+    const step = bar.closest('.bd');
+    bar.querySelectorAll('.t').forEach(t=>t.classList.toggle('on', t===b));
+    step.querySelectorAll('.tp').forEach(p=>p.classList.toggle('on', p.id===b.dataset.tab));
+  });
+});
+
+/* ── Étape 1 : View ───────────────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  $('e1in').innerHTML  = matHtml(S.world,[12,13,14]) +
+    '<div class="dim" style="margin-top:6px">translation en LIGNE 3</div>';
+  $('e1out').innerHTML = matHtml(S.view,[12,13,14]) +
+    '<div class="dim" style="margin-top:6px">bloc 3×3 transposé · ligne 3 = −t·Rᵀ</div>';
+
+  const w=S.world, v=S.view;
+  $('e1simd').innerHTML = [
+    ['r0 = ligne 0 de M', w[0],w[1],w[2],w[3]],
+    ['r1 = ligne 1 de M', w[4],w[5],w[6],w[7]],
+    ['r2 = ligne 2 de M', w[8],w[9],w[10],w[11]],
+    ['après _MM_TRANSPOSE4_PS → r0', v[0],v[1],v[2],0],
+    ['t = −t·Rᵀ (ligne 3)', v[12],v[13],v[14],1]
+  ].map(([n,a,b,c,d],i)=>
+    `<tr><td>${n}</td><td class="${i>2?'lane':''}">${sig(a)}</td><td class="${i>2?'lane':''}">${sig(b)}</td><td class="${i>2?'lane':''}">${sig(c)}</td><td class="dim">${sig(d)}</td></tr>`
+  ).join('');
+});
+
+/* ── Étape 2 : Projection ─────────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const th = F(Math.tan(F(ST.fov*RAD)*0.5));
+  $('e2in').innerHTML = kv([
+    ['fovY',      ST.fov.toFixed(1)+'°'],
+    ['tan(fovY/2)', sig(th)],
+    ['aspect',    ST.aspect.toFixed(4)],
+    ['near',      sig(S.n)],
+    ['far',       ST.inf ? '∞' : sig(S.f)],
+    ['reverse-Z', ST.revZ ? 'oui' : 'non']
+  ]);
+  $('e2out').innerHTML = matHtml(S.proj,[10,11,14,15]) +
+    '<div class="dim" style="margin-top:6px">m[2][2] et m[3][2] : la profondeur · m[2][3]=−1 : main droite</div>';
+
+  const n=S.n, f=S.f;
+  const glA  = ST.inf ? -1 : F(-fd(fa(f,n), fs(f,n)));
+  const glB  = ST.inf ? F(-2*n) : F(-fd(fm(2,fm(f,n)), fs(f,n)));
+  const lvA  = S.proj[10], lvB = S.proj[14];
+  $('e2cmp').innerHTML = [
+    ['m[0][0]','1 / (aspect·tan)','1 / (aspect·tan)', S.proj[0], true],
+    ['m[1][1]','1 / tan',         '1 / tan',          S.proj[5], true],
+    ['m[2][2]','−(f+n)/(f−n)',    'n / (f−n)',        lvA, false],
+    ['m[2][3]','−1',              '−1',               S.proj[11], true],
+    ['m[3][2]','−2fn/(f−n)',      'n·f / (f−n)',      lvB, false],
+    ['m[3][3]','0',               '0',                S.proj[15], true]
+  ].map(([k,a,b,v,same])=>{
+    const glv = k==='m[2][2]'? sig(glA) : k==='m[3][2]'? sig(glB) : sig(v);
+    return `<tr><td><code>${k}</code></td><td class="num ${same?'dim':''}">${a} <span class="dim">= ${glv}</span></td>`
+         + `<td class="num" style="${same?'':'font-weight:650'}">${b}</td><td class="num">${sig(v)}</td></tr>`;
+  }).join('');
+});
+
+/* ── Étape 3 : V·P ────────────────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  $('e3in').innerHTML =
+    '<div class="dim" style="margin-bottom:4px">View</div>' + matHtml(S.view) +
+    '<div class="dim" style="margin:8px 0 4px">Projection</div>' + matHtml(S.proj);
+  $('e3out').innerHTML = matHtml(S.vp,[14,15]) +
+    '<div class="dim" style="margin-top:6px">colonne 3 = composante w du clip = distance à l’œil</div>';
+
+  const vp=S.vp;
+  $('e3simd').innerHTML =
+    `<tr><td>acc = a[3][0]·bRow0</td><td>${sig(fm(S.view[12],S.proj[0]))}</td><td>${sig(fm(S.view[12],S.proj[1]))}</td><td>${sig(fm(S.view[12],S.proj[2]))}</td><td>${sig(fm(S.view[12],S.proj[3]))}</td></tr>` +
+    `<tr><td>+ a[3][2]·bRow2 (fmadd)</td><td>${sig(fm(S.view[14],S.proj[8]))}</td><td>${sig(fm(S.view[14],S.proj[9]))}</td><td>${sig(fm(S.view[14],S.proj[10]))}</td><td>${sig(fm(S.view[14],S.proj[11]))}</td></tr>` +
+    `<tr><td>+ a[3][3]·bRow3 (fmadd)</td><td>${sig(S.proj[12])}</td><td>${sig(S.proj[13])}</td><td>${sig(S.proj[14])}</td><td>${sig(S.proj[15])}</td></tr>` +
+    `<tr><td><b>store → vp[3]</b></td><td class="lane">${sig(vp[12])}</td><td class="lane">${sig(vp[13])}</td><td class="lane">${sig(vp[14])}</td><td class="lane">${sig(vp[15])}</td></tr>`;
+
+  const bad = matMul(S.proj, S.view);                 // l'ordre fautif
+  const wGood = mulRow(S.vp, 0,0,0).w;
+  const wBad  = mulRow(bad,  0,0,0).w;
+  const dist  = Math.hypot(ST.camX, ST.camZ);
+  $('e3ce').innerHTML =
+    `<tr><td><code>view * proj</code> <span class="b ok">correct</span></td>`
+      + `<td class="num">${sig(S.vp[14])}</td><td class="num">${sig(S.vp[15])}</td>`
+      + `<td class="num">w = ${sig(wGood)} &nbsp;<span class="dim">(distance réelle ${dist.toFixed(3)})</span></td></tr>`
+    + `<tr><td><code>proj * view</code> <span class="b no">bug B1</span></td>`
+      + `<td class="num">${sig(bad[14])}</td><td class="num">${sig(bad[15])}</td>`
+      + `<td class="num">w = ${sig(wBad)} &nbsp;<span class="dim">${Math.abs(wBad-dist)<1e-3?'':'— ne vaut plus la distance'}</span></td></tr>`;
+});
+
+/* ── Étape 4 : extraction Gribb-Hartmann ──────────────────── */
+const planeRows = (ps, count) => ps.map((p,i)=>{
+  const off = i>=count;
+  return `<tr style="${off?'opacity:.42':''}"><td><b>${PLNAME[i]}</b>${off?' <span class="b nt">exclu</span>':''}</td>`
+       + `<td class="num">${sig(p.nx)}</td><td class="num">${sig(p.ny)}</td>`
+       + `<td class="num">${sig(p.nz)}</td><td class="num">${sig(p.d)}</td></tr>`;
+}).join('');
+
+STEP_HOOKS.push(S=>{
+  const vp=S.vp, c=j=>[vp[j],vp[4+j],vp[8+j],vp[12+j]];
+  const hdr = '<table style="margin:0;font-size:11.8px"><thead><tr><th></th><th class="num">nx</th><th class="num">ny</th><th class="num">nz</th><th class="num">d</th></tr></thead><tbody>';
+  const colRow = (n,j)=>{const v=c(j);
+    return `<tr><td><b>col ${j}</b> <span class="dim">${n}</span></td>`
+         + v.map(x=>`<td class="num">${sig(x)}</td>`).join('')+'</tr>';};
+  $('e4in').innerHTML = hdr + colRow('→ x',0)+colRow('→ y',1)+colRow('→ z',2)+colRow('→ w',3) + '</tbody></table>';
+  $('e4out').innerHTML = hdr + planeRows(S.fr.raw, S.fr.count) + '</tbody></table>'
+    + `<div class="dim" style="margin-top:6px">${ST.revZ?'reverse-Z : near = col3−col2, far = col2':'standard : near = col2, far = col3−col2'}</div>`;
+
+  const cw=c(3), cx=c(0);
+  $('e4simd').innerHTML = [
+    ['cw = colonne 3', cw],
+    ['cx = colonne 0', cx],
+    ['_mm_add_ps → LEFT',  cw.map((v,i)=>fa(v,cx[i]))],
+    ['_mm_sub_ps → RIGHT', cw.map((v,i)=>fs(v,cx[i]))]
+  ].map(([n,v],i)=>`<tr><td>${n}</td>`+v.map(x=>`<td class="${i>1?'lane':''}">${sig(x)}</td>`).join('')+'</tr>').join('');
+});
+
+/* ── Étape 5 : normalisation ──────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const len = p => Math.sqrt(p.nx*p.nx + p.ny*p.ny + p.nz*p.nz);
+  $('e5in').innerHTML = kv(S.fr.raw.map((p,i)=>
+    [PLNAME[i], i<S.fr.count ? sig(len(p)) : '0 — dégénéré']));
+
+  const hdr = '<table style="margin:0;font-size:11.8px"><thead><tr><th></th><th class="num">nx</th><th class="num">ny</th><th class="num">nz</th><th class="num">d</th></tr></thead><tbody>';
+  $('e5out').innerHTML = hdr + planeRows(S.fr.planes, S.fr.count) + '</tbody></table>';
+
+  /* SoA sur les 4 plans latéraux */
+  const idx=[PL.LEFT,PL.RIGHT,PL.BOTTOM,PL.TOP], R=idx.map(i=>S.fr.raw[i]);
+  const l2 = R.map(p=>fa(fa(fm(p.nx,p.nx),fm(p.ny,p.ny)),fm(p.nz,p.nz)));
+  const rs = l2.map(v=>fd(1,F(Math.sqrt(v))));
+  $('e5simd').innerHTML = [
+    ['nx (brut)', R.map(p=>p.nx)], ['ny (brut)', R.map(p=>p.ny)], ['nz (brut)', R.map(p=>p.nz)],
+    ['l2 = fmadd×3', l2], ['rsqrt + Newton', rs],
+    ['nx · r', R.map((p,i)=>fm(p.nx,rs[i]))], ['d · r', R.map((p,i)=>fm(p.d,rs[i]))]
+  ].map(([n,v],i)=>`<tr><td>${n}</td>`+v.map(x=>`<td class="${i>=4?'lane':''}">${sig(x)}</td>`).join('')+'</tr>').join('');
+
+  /* contrôle géométrique : distance de l'ŒIL à chaque plan */
+  $('e5chk').innerHTML = S.fr.planes.map((p,i)=>{
+    if (i>=S.fr.count) return `<tr style="opacity:.42"><td><b>${PLNAME[i]}</b></td><td class="num">0</td><td class="num">—</td><td>plan exclu (far infini)</td></tr>`;
+    const de = dist(p, ST.camX, 0, ST.camZ);
+    const exp = i===PL.NEAR ? ST.near : i===PL.FAR ? ST.far : 0;
+    const ok  = Math.abs(de-exp) < Math.max(1e-2, exp*1e-3);
+    return `<tr><td><b>${PLNAME[i]}</b></td><td class="num">${sig(Math.hypot(p.nx,p.ny,p.nz))}</td>`
+         + `<td class="num">${sig(p.d)}</td>`
+         + `<td>distance œil→plan = <b>${de.toFixed(3)}</b> · attendu ${exp.toFixed(3)} `
+         + `<span class="b ${ok?'ok':'no'}">${ok?'OK':'écart'}</span></td></tr>`;
+  }).join('');
+
+  /* le bug n°3 rejoué */
+  const rawFar = S.fr.raw[PL.FAR], L = len(rawFar);
+  $('e5bugv').textContent = sig(L);
+  const dBad = dist(rawFar, 0,0,0), dGood = dist(S.fr.planes[PL.FAR], 0,0,0);
+  $('e5bug').innerHTML =
+    `<tr><td><span class="b no">garde 1e-3</span> refusée</td><td class="num">${sig(L)}</td>`
+      + `<td class="num">${sig(rawFar.d)}</td><td class="num">${sig(dBad)}</td></tr>`
+    + `<tr><td><span class="b ok">garde 1e-30</span> appliquée</td><td class="num">1.0000</td>`
+      + `<td class="num">${sig(S.fr.planes[PL.FAR].d)}</td><td class="num">${sig(dGood)}</td></tr>`
+    + `<tr><td colspan="3" class="dim">rapport</td><td class="num"><b>×${(Math.abs(dGood/(dBad||1))).toFixed(0)}</b></td></tr>`;
+});
+
+/* ── Étape 6 : Classify ───────────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  let k = S.cls.findIndex(c=>c.state==='intersect');
+  if (k<0) k = S.cls.findIndex(c=>c.state==='outside');
+  if (k<0) k = 0;
+  const b=S.scene[k], r=S.cls[k];
+  const p = (r.crit>=0 && r.crit<S.fr.count) ? S.fr.planes[r.crit] : S.fr.planes[0];
+  const pv=pVert(b,p), nv=nVert(b,p);
+  const dP=dist(p,pv.x,pv.y,pv.z), dN=dist(p,nv.x,nv.y,nv.z);
+
+  $('e6in').innerHTML = kv([
+    ['objet', b.name],
+    ['min', `${sig(b.min.x)}, ${sig(b.min.y)}, ${sig(b.min.z)}`],
+    ['max', `${sig(b.max.x)}, ${sig(b.max.y)}, ${sig(b.max.z)}`],
+    ['plan critique', PLNAME[r.crit]],
+    ['normale', `${sig(p.nx)}, ${sig(p.ny)}, ${sig(p.nz)}`],
+    ['d', sig(p.d)]
+  ]);
+  const LB={inside:'<span class="b ok">Inside</span>',intersect:'<span class="b wa">Intersect</span>',outside:'<span class="b no">Outside</span>'};
+  $('e6out').innerHTML = kv([
+    ['p-vertex', `${sig(pv.x)}, ${sig(pv.y)}, ${sig(pv.z)}`],
+    ['d(p-vertex)', `<b>${sig(dP)}</b> ${dP<0?'&lt; 0 → sortie':''}`],
+    ['n-vertex', `${sig(nv.x)}, ${sig(nv.y)}, ${sig(nv.z)}`],
+    ['d(n-vertex)', `<b>${sig(dN)}</b> ${dN<0?'&lt; 0 → à cheval':''}`],
+    ['verdict', LB[r.state]]
+  ]);
+
+  /* SIMD : la reformulation n·c + d ± |n|·e sur 4 plans */
+  const idx=[PL.LEFT,PL.RIGHT,PL.BOTTOM,PL.TOP].filter(i=>i<S.fr.count);
+  const P=idx.map(i=>S.fr.planes[i]);
+  const cC={x:b.c.x,y:b.c.y,z:b.c.z}, e=b.h;
+  const dot=P.map(q=>fa(fa(fa(fm(q.nx,cC.x),fm(q.ny,cC.y)),fm(q.nz,cC.z)),q.d));
+  const rad=P.map(q=>fa(fa(fm(Math.abs(q.nx),e),fm(Math.abs(q.ny),e)),fm(Math.abs(q.nz),e)));
+  $('e6simd').innerHTML = [
+    ['dot = n·centre + d', dot],
+    ['rad = |n|·extent',   rad],
+    ['dP = dot + rad',     dot.map((v,i)=>fa(v,rad[i]))],
+    ['dN = dot − rad',     dot.map((v,i)=>fs(v,rad[i]))],
+    ['movemask(dP)',       dot.map((v,i)=>fa(v,rad[i])<0?'1 ✗':'0')]
+  ].map(([n,v],i)=>`<tr><td>${n}</td>`+v.map(x=>`<td class="${i>=2?'lane':''}">${typeof x==='string'?x:sig(x)}</td>`).join('')+'</tr>').join('');
+
+  const CONS={inside:'aucun triangle à clipper',intersect:'clipping near à prévoir',outside:'rejeté — zéro transformation'};
+  $('e6tab').innerHTML = S.scene.map((bb,i)=>{
+    const rr=S.cls[i];
+    const pp=(rr.crit>=0&&rr.crit<S.fr.count)?S.fr.planes[rr.crit]:null;
+    const nvv=pp?nVert(bb,pp):null;
+    return `<tr><td><b>${bb.name}</b></td><td class="num">${sig(rr.critD)}</td>`
+      + `<td class="num">${nvv?sig(dist(pp,nvv.x,nvv.y,nvv.z)):'—'}</td>`
+      + `<td>${pp?PLNAME[rr.crit]:'—'}</td><td>${LB[rr.state]}</td>`
+      + `<td class="dim">${CONS[rr.state]}</td></tr>`;
+  }).join('');
+
+  const nIn=S.cls.filter(c=>c.state==='inside').length;
+  const nOut=S.cls.filter(c=>c.state==='outside').length;
+  $('e6ceStat').innerHTML = `Sur la configuration courante : <b>${nIn}</b> objet(s) `
+    + `<span class="b ok">Inside</span> dont le clipping serait économisé, et <b>${nOut}</b> `
+    + `<span class="b no">Outside</span> déjà rejetés sans aucune transformation de sommet.`;
+});
+
+/* ═══ Triangle de démonstration, attaché à « Terre » ═══════
+   Sommets en espace LOCAL ; la matrice Model les place dans le monde. */
+const TRI = [{x:-2,y:0,z:-2},{x:2,y:0,z:-2},{x:0,y:0,z:2},{x:0,y:0,z:-6}];
+function modelMat(){ const m = matIdent(); m[12]=12; m[13]=0; m[14]=10; return m; }
+
+/* ── Étape 7 : M·V·P ──────────────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const M = modelMat(), mvp = matMul(M, S.vp);
+  $('e7in').innerHTML =
+    '<div class="dim" style="margin-bottom:4px">Model — entité « Terre » en (12, 0, 10)</div>' + matHtml(M,[12,13,14]) +
+    '<div class="dim" style="margin:8px 0 4px">View · Projection</div>' + matHtml(S.vp);
+  $('e7out').innerHTML = matHtml(mvp) +
+    '<div class="dim" style="margin-top:6px">composée UNE fois · 16 mult. par sommet ensuite</div>';
+});
+
+/* ── Étape 8 : Local → Clip ───────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const mvp = matMul(modelMat(), S.vp);
+  const cl  = TRI.map(v=>mulRow(mvp, F(v.x), F(v.y), F(v.z)));
+  $('e8in').innerHTML = kv([
+    ['v0 local', `${TRI[0].x}, ${TRI[0].y}, ${TRI[0].z}`],
+    ['v1 local', `${TRI[1].x}, ${TRI[1].y}, ${TRI[1].z}`],
+    ['v2 local', `${TRI[2].x}, ${TRI[2].y}, ${TRI[2].z}`],
+    ['matrice',  'M·V·P (étape 7)']
+  ]);
+  $('e8out').innerHTML = kv(cl.slice(0,3).map((c,i)=>
+    [`clip v${i}`, `x ${sig(c.x)} · y ${sig(c.y)} · z ${sig(c.z)} · <b>w ${sig(c.w)}</b>`]))
+    + kv([['', '<span class="dim">w = distance à l’œil</span>']]);
+
+  $('e8simd').innerHTML = [
+    ['px', TRI.map(v=>v.x)], ['pz', TRI.map(v=>v.z)],
+    ['cw = fmadd×3', cl.map(c=>c.w)], ['cx', cl.map(c=>c.x)], ['cz', cl.map(c=>c.z)]
+  ].map(([n,v],i)=>`<tr><td>${n}</td>`+v.map(x=>`<td class="${i>=2?'lane':''}">${sig(x)}</td>`).join('')+'</tr>').join('');
+});
+
+/* ── Étape 9 : rejet du near ──────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const mvp = matMul(modelMat(), S.vp);
+  const cl  = TRI.slice(0,3).map(v=>mulRow(mvp, F(v.x), F(v.y), F(v.z)));
+  const bad = cl.filter(c=>c.w <= S.n);
+  $('e9in').innerHTML = kv(cl.map((c,i)=>
+    [`w v${i}`, `${sig(c.w)} ${c.w<=S.n?'<span class="b no">≤ near</span>':'<span class="b ok">OK</span>'}`])
+    .concat([['near', sig(S.n)]]));
+  $('e9out').innerHTML = kv([
+    ['sommets fautifs', String(bad.length)],
+    ['décision', bad.length ? '<span class="b no">triangle rejeté</span>'
+                            : '<span class="b ok">triangle conservé</span>'],
+    ['division autorisée', bad.length ? 'non' : 'oui']
+  ]);
+
+  const m4 = TRI.map(v=>mulRow(mvp, F(v.x), F(v.y), F(v.z)));
+  const gt = m4.map(c=>c.w > S.n);
+  $('e9simd').innerHTML =
+    `<tr><td>cw</td>` + m4.map(c=>`<td>${sig(c.w)}</td>`).join('') + `<td class="dim">—</td></tr>` +
+    `<tr><td>_mm_cmpgt_ps(cw, near)</td>` + gt.map(b=>`<td class="lane">${b?'0xFFFF':'0x0000'}</td>`).join('')
+      + `<td class="lane">0x${gt.reduce((a,b,i)=>a|(b<<i),0).toString(16).toUpperCase()}</td></tr>` +
+    `<tr><td>verdict</td><td colspan="4" class="dim" style="text-align:left">${
+      gt.every(b=>b) ? 'masque = 0xF → les 4 sommets devant le near' : 'masque ≠ 0xF → rejet'}</td></tr>`;
+
+  /* contre-exemple : un sommet volontairement derrière l'œil */
+  const fwd = camFwd(ST.yaw);
+  const bx = F(ST.camX - fwd.x*5), bz = F(ST.camZ - fwd.z*5);     // 5 unités DERRIÈRE
+  const cb = mulRow(S.vp, bx, 0, bz);
+  const fx = F(ST.camX + fwd.x*10), fz = F(ST.camZ + fwd.z*10);   // 10 unités devant
+  const cf = mulRow(S.vp, fx, 0, fz);
+  $('e9ce').innerHTML =
+    `<tr><td>devant, 10 u <span class="b ok">légitime</span></td><td class="num">${sig(cf.x)}</td>`
+      + `<td class="num">${sig(cf.w)}</td><td class="num">${sig(fd(cf.x,cf.w))}</td>`
+      + `<td>position correcte</td></tr>`
+    + `<tr><td>derrière, 5 u <span class="b no">w &lt; 0</span></td><td class="num">${sig(cb.x)}</td>`
+      + `<td class="num">${sig(cb.w)}</td><td class="num">${sig(fd(cb.x,cb.w))}</td>`
+      + `<td><b>signe inversé</b> — apparaît du mauvais côté</td></tr>`;
+});
+
+/* ── Étape 10 : division par w ────────────────────────────── */
+STEP_HOOKS.push(S=>{
+  const mvp = matMul(modelMat(), S.vp);
+  const cl  = TRI.map(v=>mulRow(mvp, F(v.x), F(v.y), F(v.z)));
+  const c0  = cl[0], iv = fd(1, c0.w);
+  $('e10in').innerHTML  = kv([['x',sig(c0.x)],['y',sig(c0.y)],['z',sig(c0.z)],['w',sig(c0.w)]]);
+  $('e10out').innerHTML = kv([
+    ['1/w', sig(iv)],
+    ['x_ndc', sig(fm(c0.x,iv))],
+    ['y_ndc', sig(fm(c0.y,iv))],
+    ['z_ndc', `<b>${sig(fm(c0.z,iv))}</b>`],
+    ['', `<span class="dim">${ST.revZ?'reverse-Z : 1 = near, 0 = far':'standard : 0 = near, 1 = far'}</span>`]
+  ]);
+
+  const r = cl.map(c=>fd(1,c.w));
+  $('e10simd').innerHTML = [
+    ['cw', cl.map(c=>c.w)],
+    ['r = rcp + Newton', r],
+    ['nx = cx · r', cl.map((c,i)=>fm(c.x,r[i]))],
+    ['nz = cz · r', cl.map((c,i)=>fm(c.z,r[i]))]
+  ].map(([n,v],i)=>`<tr><td>${n}</td>`+v.map(x=>`<td class="${i>=1?'lane':''}">${sig(x)}</td>`).join('')+'</tr>').join('');
+
+  const ds = [S.n, 1, 5, 20, ST.inf?200:S.f/2, ST.inf?2000:S.f];
+  $('e10tab').innerHTML = ds.map(d=>{
+    const c = mulRow(S.proj, 0, 0, F(-d));
+    const z = fd(c.z, c.w);
+    const g = Math.round(Math.max(0,Math.min(1,z))*255);
+    let note = '';
+    if (Math.abs(d-S.n)<1e-4) note = ST.revZ?'plan near → 1':'plan near → 0';
+    else if (!ST.inf && Math.abs(d-S.f)<1e-3) note = ST.revZ?'plan far → 0':'plan far → 1';
+    else if (g===0) note = 'rampe linéaire = noir — reverse-Z à l’œuvre';
+    return `<tr><td class="num">${d.toFixed(2)}</td><td class="num">${sig(z)}</td>`
+         + `<td class="num">${g}</td><td class="dim">${note}</td></tr>`;
+  }).join('');
+});
+
+/* ── Étape 11 : NDC → Raster ──────────────────────────────── */
+const VPW = 1600, VPH = 900;
+const toRaster = (xn,yn) => ({
+  x: fm(fa(fm(xn,0.5),0.5), VPW),            // x = (xn·0.5 + 0.5) · width
+  y: fm(fs(0.5,fm(yn,0.5)), VPH)             // y = (0.5 − yn·0.5) · height  ← le FLIP
+});
+STEP_HOOKS.push(S=>{
+  const mvp = matMul(modelMat(), S.vp);
+  const c0  = mulRow(mvp, F(TRI[0].x), F(TRI[0].y), F(TRI[0].z));
+  const iv  = fd(1,c0.w);
+  const xn  = fm(c0.x,iv), yn = fm(c0.y,iv), zn = fm(c0.z,iv);
+  const r   = toRaster(xn,yn);
+
+  $('e11in').innerHTML = kv([
+    ['x_ndc', sig(xn)], ['y_ndc', sig(yn)], ['z_ndc', sig(zn)],
+    ['viewport', `{0, 0, ${VPW}, ${VPH}}`], ['aspect viewport', (VPW/VPH).toFixed(4)]
+  ]);
+  const inside = r.x>=0 && r.x<=VPW && r.y>=0 && r.y<=VPH;
+  $('e11out').innerHTML = kv([
+    ['x_raster', `<b>${r.x.toFixed(2)}</b> px`],
+    ['y_raster', `<b>${r.y.toFixed(2)}</b> px`],
+    ['z', `${sig(zn)} <span class="dim">transmis tel quel au Z-buffer</span>`],
+    ['dans l’écran', inside?'<span class="b ok">oui</span>':'<span class="b wa">débordement → scissor</span>']
+  ]);
+
+  const REF = [[-1,1,'coin HAUT-gauche'],[1,-1,'coin BAS-droite'],[0,0,'centre exact'],
+               [0,1,'bord HAUT, milieu'],[0,-1,'bord BAS, milieu']];
+  $('e11tab').innerHTML = REF.map(([a,b,lbl])=>{
+    const p = toRaster(a,b);
+    return `<tr><td class="mono">(${a}, ${b})</td><td class="num">${p.x.toFixed(0)}</td>`
+         + `<td class="num">${p.y.toFixed(0)}</td><td>${lbl}</td></tr>`;
+  }).join('');
+});
+
+/* ── Étape 12 : backface ──────────────────────────────────── */
+const edgeFn = (ax,ay,bx,by,px,py) => fs(fm(fs(bx,ax), fs(py,ay)), fm(fs(by,ay), fs(px,ax)));
+STEP_HOOKS.push(S=>{
+  const mvp = matMul(modelMat(), S.vp);
+  const R = TRI.slice(0,3).map(v=>{
+    const c = mulRow(mvp, F(v.x), F(v.y), F(v.z));
+    if (c.w <= 0) return null;
+    const iv = fd(1,c.w);
+    return toRaster(fm(c.x,iv), fm(c.y,iv));
+  });
+  if (R.some(p=>!p)){
+    $('e12in').innerHTML  = kv([['état','<span class="b no">triangle rejeté à l’étape 9</span>']]);
+    $('e12out').innerHTML = kv([['aire','non calculée — aucun sommet projetable']]);
+    return;
+  }
+  const area = edgeFn(R[0].x,R[0].y, R[1].x,R[1].y, R[2].x,R[2].y);
+  $('e12in').innerHTML = kv(R.map((p,i)=>
+    [`r${i}`, `${p.x.toFixed(2)} , ${p.y.toFixed(2)}`]));
+  $('e12out').innerHTML = kv([
+    ['EdgeFunction(r0,r1,r2)', `<b>${sig(area)}</b>`],
+    ['aire du triangle', sig(Math.abs(area)/2) + ' px²'],
+    ['sens de parcours', area>0 ? 'horaire en raster' : 'anti-horaire en raster'],
+    ['verdict', area>0 ? '<span class="b ok">face avant — rasterisée</span>'
+                       : '<span class="b no">face arrière — rejetée</span>'],
+    ['réutilisation', '<span class="dim">1/aire normalise les barycentriques</span>']
+  ]);
+});
+
+refresh();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Navigation : surlignage de la section courante
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  const links = [...document.querySelectorAll('nav a')];
+  const ids   = links.map(a => a.getAttribute('href').slice(1));
+  function sync(){
+    let best = ids[0], bestTop = -1e9;
+    for (const id of ids){
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const t = el.getBoundingClientRect().top - 90;
+      if (t <= 0 && t > bestTop){ bestTop = t; best = id; }
+    }
+    links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + best));
+  }
+  addEventListener('scroll', sync, {passive:true});
+  addEventListener('resize', sync);
+  sync();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   Export : rejouer les scénarios hors de l'application
+   ═══════════════════════════════════════════════════════════ */
+document.getElementById('exportBtn').addEventListener('click', function(){
+  const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+  const url  = URL.createObjectURL(new Blob([html], {type:'text/html'}));
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'Lot05_Camera_Frustum.html';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+});
+</script>
+</body>
+</html>

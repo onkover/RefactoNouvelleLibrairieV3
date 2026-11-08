@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LibraryV3 — La chaîne des espaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#E7EDEF;
+  --paper-2:#F3F7F8;
+  --grid:#D3DFE3;
+  --grid-strong:#BFD0D6;
+  --ink:#11303A;
+  --ink-soft:#4C6B75;
+  --rule:#A6BCC3;
+  --blue:#1F3EA8;     /* opérateur réversible (matrice) */
+  --red:#CE2416;      /* opérateur destructif */
+  --amber:#E8A33D;    /* le passager : invW */
+  --ok:#0E7A5F;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px) 0 0/100% 24px,
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/24px 100%,
+    var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 80px}
+
+/* ── En-tête ───────────────────────────────── */
+header{border-bottom:2px solid var(--ink);padding-bottom:18px;margin-bottom:26px}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px
+}
+h1{
+  font-family:Archivo,system-ui,sans-serif;font-weight:800;
+  font-size:clamp(30px,6.5vw,54px);line-height:.98;letter-spacing:-.025em;margin:0 0 14px
+}
+h1 em{font-style:normal;color:var(--blue)}
+.thesis{max-width:62ch;margin:0;font-size:16px;color:var(--ink-soft)}
+.thesis b{color:var(--ink);font-weight:600}
+
+/* ── Barre de contrôle ─────────────────────── */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:24px 0 14px}
+.seg{display:flex;border:1.5px solid var(--ink);background:var(--paper-2)}
+.seg button{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.09em;
+  text-transform:uppercase;padding:8px 13px;border:0;background:transparent;
+  color:var(--ink);cursor:pointer;border-right:1px solid var(--rule)
+}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper-2)}
+.seg button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.hint{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-soft)}
+
+/* ── Le rail ───────────────────────────────── */
+.railbox{
+  border:1.5px solid var(--ink);background:var(--paper-2);
+  padding:0;overflow-x:auto;overflow-y:hidden;
+}
+.rail{display:flex;align-items:stretch;min-width:1080px;padding:20px 16px 8px}
+.node{
+  flex:0 0 108px;border:1.5px solid var(--ink);background:var(--paper-2);
+  padding:10px 9px;cursor:pointer;text-align:left;font:inherit;color:inherit;
+  display:flex;flex-direction:column;gap:5px;transition:transform .16s, box-shadow .16s;
+}
+.node:hover{transform:translateY(-3px)}
+.node:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.node[aria-selected="true"]{background:var(--ink);color:var(--paper-2);box-shadow:5px 5px 0 var(--amber)}
+.node[aria-selected="true"] .ncode,.node[aria-selected="true"] .ndim{color:var(--amber)}
+.node.dormant{border-style:dashed;opacity:.55}
+.ncode{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;color:var(--ink-soft)}
+.nname{font-family:Archivo,sans-serif;font-weight:700;font-size:14px;line-height:1.1}
+.ndim{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--ink-soft);margin-top:auto}
+
+.gate{
+  flex:0 0 96px;display:flex;flex-direction:column;justify-content:center;
+  align-items:center;gap:4px;position:relative;padding:0 4px
+}
+.gate .op{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  text-align:center;line-height:1.25;padding:3px 5px;background:var(--paper-2);
+  border:1px solid currentColor;
+}
+.gate.rev{color:var(--blue)}
+.gate.dest{color:var(--red)}
+.arrow{width:100%;height:2px;background:currentColor;position:relative}
+.arrow::after{
+  content:"";position:absolute;right:-1px;top:-4px;
+  border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent
+}
+.carry{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;color:#9A6A16;
+  background:var(--amber);padding:1px 5px;border:1px solid #9A6A16;white-space:nowrap
+}
+.backlab{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.04em;text-align:center}
+
+/* mode retour */
+body[data-mode="retour"] .gate.rev .op{opacity:.28}
+body[data-mode="retour"] .gate.dest .op{opacity:.28}
+.backrail{display:none}
+body[data-mode="retour"] .backrail{display:flex}
+body[data-mode="retour"] .fwdrail{opacity:.30}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:16px;padding:12px 16px 16px;
+  border-top:1px dashed var(--rule);min-width:1080px;
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-soft)
+}
+.legend span{display:flex;align-items:center;gap:6px}
+.chip{width:22px;height:3px;display:inline-block}
+
+/* ── Panneau de détail ─────────────────────── */
+.detail{border:1.5px solid var(--ink);border-top:0;background:var(--paper-2);padding:22px 20px}
+.dhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px;border-bottom:1px solid var(--rule);padding-bottom:12px;margin-bottom:16px}
+.dhead h2{font-family:Archivo,sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0}
+.dhead .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-soft);letter-spacing:.06em}
+.grid5{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0;border:1px solid var(--rule)}
+.cell{padding:13px 14px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.cell h3{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 7px;font-weight:600
+}
+.cell ul{margin:0;padding-left:16px}
+.cell li{margin-bottom:4px;font-size:13.5px}
+.cell p{margin:0;font-size:13.5px}
+code,.mono{font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:#DCE6E9;padding:1px 4px}
+.owner{margin-top:16px;padding:12px 14px;border-left:4px solid var(--blue);background:#DFE6F5}
+.owner h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px;color:var(--blue)}
+.trap{margin-top:10px;padding:12px 14px;border-left:4px solid var(--red);background:#F7E0DD}
+.trap h3{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px;color:var(--red)}
+
+/* ── Section basse ─────────────────────────── */
+section.blk{margin-top:44px}
+section.blk > h2{
+  font-family:Archivo,sans-serif;font-weight:800;font-size:22px;letter-spacing:-.02em;
+  margin:0 0 4px;padding-bottom:8px;border-bottom:2px solid var(--ink)
+}
+section.blk > p.sub{color:var(--ink-soft);font-size:14px;margin:10px 0 16px;max-width:66ch}
+table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--paper-2)}
+th,td{border:1px solid var(--rule);padding:8px 10px;text-align:left;vertical-align:top}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;background:#DCE6E9;font-weight:600
+}
+td.mono{font-family:"IBM Plex Mono",monospace;font-size:12px;background:transparent}
+.tblwrap{overflow-x:auto;border:1.5px solid var(--ink)}
+.tblwrap table{border:0}
+.no{color:var(--red);font-weight:600}
+.yes{color:var(--ok);font-weight:600}
+footer{margin-top:52px;padding-top:16px;border-top:1px solid var(--rule);font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-soft)}
+
+@media (max-width:640px){
+  .grid5{grid-template-columns:1fr}
+  .railbox{border-left:0;border-right:0;margin:0 -18px}
+  .detail{border-left:0;border-right:0;margin:0 -18px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body data-mode="aller">
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">LibraryV3 · rasterizer CPU · consolidation C1</p>
+  <h1>La chaîne des <em>espaces</em></h1>
+  <p class="thesis">Un sommet ne « traverse » pas le pipeline : il est <b>réécrit neuf fois</b>, dans neuf systèmes de coordonnées qui n'ont ni la même origine, ni la même base, ni la même dimension, ni les mêmes invariants. Chaque flèche a un opérateur, un coût, et un sens de circulation. <b>Trois de ces flèches sont à sens unique</b> — et savoir lesquelles, c'est savoir ce qu'on peut encore reconstruire à la fin de la frame.</p>
+</header>
+
+<div class="controls">
+  <div class="seg" role="group" aria-label="Sens de lecture">
+    <button id="btn-aller" aria-pressed="true">Aller · rendu</button>
+    <button id="btn-retour" aria-pressed="false">Retour · inverse</button>
+  </div>
+  <span class="hint">Clique un espace pour son contrat d'entrée / sortie.</span>
+</div>
+
+<div class="railbox">
+  <div class="rail" id="rail"></div>
+  <div class="legend">
+    <span><i class="chip" style="background:var(--blue)"></i> opérateur inversible (matrice)</span>
+    <span><i class="chip" style="background:var(--red)"></i> opérateur destructif — pas de retour sans mémoire</span>
+    <span><i class="chip" style="background:var(--amber)"></i> le passager : ce qui franchit la frontière</span>
+    <span>▨ trait pointillé = espace déclaré, pas encore implémenté</span>
+  </div>
+</div>
+
+<div class="detail" id="detail" aria-live="polite"></div>
+
+<section class="blk">
+  <h2>Ce qui transite, arête par arête</h2>
+  <p class="sub">La question n'est pas « quelle matrice » mais « quelle donnée survit ». Un attribut qui ne figure pas dans cette colonne n'existe pas de l'autre côté de la frontière — il faut le recalculer, ou il est perdu.</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Frontière</th><th>Opérateur</th><th>Charge utile transportée</th><th>Détruit au passage</th><th>Retour</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">E0 → E1</td><td class="mono">OBJLoader</td><td>positions, indices, vertsPerFace, submeshes, AABB locale</td><td>unités et repère du DCC</td><td class="no">non</td></tr>
+      <tr><td class="mono">E1 → E2</td><td class="mono">m_localMatrix</td><td>position (Vec3), normale via <span class="mono">(M⁻¹)ᵀ</span></td><td>—</td><td class="yes">oui</td></tr>
+      <tr><td class="mono">E2 → E3</td><td class="mono">m_worldMatrix</td><td>position, AABB transformée (regrossie), normale</td><td>serrage de l'AABB</td><td class="yes">oui</td></tr>
+      <tr><td class="mono">E3 → E4</td><td class="mono">viewMatrix</td><td>position ; <b>rien d'autre ne descend</b> — le frustum reste en E3</td><td>—</td><td class="yes">oui, gratuit</td></tr>
+      <tr><td class="mono">E4 → E5</td><td class="mono">projectionMatrix</td><td>Vec4f clip, <span class="mono">w = distance à l'œil</span></td><td>la métrique (plus de distances)</td><td class="yes">oui</td></tr>
+      <tr><td class="mono">E5 → E5</td><td class="mono">ClipTriangleNear</td><td>ClipVertex (clip + varyings), <span class="mono">t</span> lerp exact</td><td>1 triangle → 0, 1 ou 2</td><td class="no">non</td></tr>
+      <tr><td class="mono">E5 → E6</td><td class="mono">÷ w</td><td>Vec3 NDC <b>+ invW conservé</b></td><td><b>w</b> — la seule perte irréparable</td><td class="no">seulement via invW</td></tr>
+      <tr><td class="mono">E6 → E7</td><td class="mono">Viewport::ToRaster</td><td>x,y pixels flottants, z_ndc, invW</td><td>—</td><td class="yes">oui</td></tr>
+      <tr><td class="mono">E7 → E8</td><td class="mono">floor + pitch</td><td>uint32 ARGB, float profondeur</td><td>la position sous-pixel</td><td class="no">non</td></tr>
+      <tr><td class="mono">E8 → E3</td><td class="mono">invViewProjection</td><td>reconstruction monde depuis le Z-buffer, picking</td><td>—</td><td class="yes">le chemin de retour</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="blk">
+  <h2>Cinq erreurs d'espace, et leur symptôme exact</h2>
+  <p class="sub">Aucune ne provoque de crash. Toutes produisent une image qui a l'air presque juste — c'est ce qui les rend coûteuses.</p>
+  <div class="tblwrap">
+  <table>
+    <thead><tr><th>Ce qu'on fait</th><th>L'espace violé</th><th>Ce qu'on voit</th></tr></thead>
+    <tbody>
+      <tr><td>Diviser par <span class="mono">w</span> avant de clipper</td><td>E5 traité comme E6</td><td>Le triangle réapparaît en miroir de l'autre côté de l'écran quand on recule dedans</td></tr>
+      <tr><td>Transformer une normale par <span class="mono">M</span> au lieu de <span class="mono">(M⁻¹)ᵀ</span></td><td>E1 → E3 sur un covecteur</td><td>Éclairage faux uniquement sur les objets à scale non uniforme</td></tr>
+      <tr><td>Culler le frustum contre une AABB restée en E1</td><td>plans en E3, boîte en E1</td><td>Objets qui disparaissent quand ils tournent</td></tr>
+      <tr><td>Câbler <span class="mono">area &gt;= 0</span> pour le back-face</td><td>test écrit pour E6, exécuté en E7 (Y inversé)</td><td>Ce sont les faces <i>avant</i> qui sont éliminées — l'intérieur du cube</td></tr>
+      <tr><td>Indexer le framebuffer en <span class="mono">y*width+x</span></td><td>E8 confondu avec E7</td><td>Image en escalier <b>seulement</b> pour les largeurs non alignées</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<footer>LibraryV3 · namespace LV3 · main droite, Y haut, avant = −Z · vecteur-ligne v′ = v·M · NDC x,y ∈ [−1,1] · z ∈ [0,1] reverse-Z</footer>
+
+</div>
+
+<script>
+const SPACES = [
+  {
+    id:"E0", code:"E0", name:"Actif", dim:"3D affine · repère DCC", tag:"hors moteur",
+    def:"Le repère dans lequel l'artiste a modelé. Unité inconnue, axe haut inconnu, sens de winding inconnu.",
+    in:["Fichier .obj (texte)","Chemin + répertoire"],
+    out:["MeshClass en SoA : vertexPositions, indices, vertsPerFace, submeshes","meshAABB locale"],
+    work:["Désindexation / réindexation vers le SoA","Normalisation d'échelle et d'orientation","<b>ComputeMeshAABB()</b> — la seule occasion de la calculer"],
+    carry:"Rien ne revient : l'import est destructif par construction.",
+    owner:"OBJLoader · ResourceManager · MeshHandle",
+    trap:"ComputeMeshAABB() n'est appelée automatiquement nulle part. Si le loader l'oublie, meshAABB reste invalide et le frustum culling élimine tout : écran noir, sans une seule erreur."
+  },
+  {
+    id:"E1", code:"E1", name:"Objet", dim:"3D affine · pivot du mesh", tag:"local / model space",
+    def:"Origine au pivot, base alignée sur la modélisation. C'est le seul espace où la géométrie d'un mesh est constante d'une frame à l'autre — donc le seul où l'on peut précalculer.",
+    in:["vertexPositions (SoA, contigu, cache-friendly)","indices, vertsPerFace ∈ {3,4}"],
+    out:["Vec3f position par sommet","AABB3d locale exacte, jamais regrossie"],
+    work:["Rien par frame. C'est le point : E1 est immobile.","Précalculs amortis : AABB, normales de sommet, tangentes"],
+    carry:"Position, normale (covecteur), AABB.",
+    owner:"MeshClass · ResourceManager",
+    trap:"GetFaceView suppose les sommets contigus dans vertexPositions. Faux dès qu'un OBJ réutilise un sommet — normales et UV silencieusement décalées."
+  },
+  {
+    id:"E2", code:"E2", name:"Parent", dim:"3D affine · N niveaux", tag:"hiérarchie",
+    def:"Pas un espace, une pile d'espaces. Chaque nœud du scenegraph en définit un. La chaîne se replie en une seule matrice avant d'atteindre E3.",
+    in:["m_local (Transform : position, quaternion, scale)","m_worldMatrix du parent"],
+    out:["m_localMatrix (cache, consomme m_dirty)","m_worldMatrix = m_localMatrix · parent.m_worldMatrix"],
+    work:["LocalTransformSystem : TRS → matrice","WorldTransformSystem : propagation <b>descendante</b> depuis les racines","Aucune remontée : rien ne rentre par un enfant"],
+    carry:"Une seule matrice 4×4 par entité. La profondeur de la hiérarchie disparaît.",
+    owner:"TransformComponent · HierarchyComponent · LocalTransformSystem · WorldTransformSystem",
+    trap:"Exécuter BuildViewData avant la fin de WorldTransformSystem : la caméra lit la matrice monde de la frame précédente. Une frame de retard — invisible en statique, très perceptible à la souris."
+  },
+  {
+    id:"E3", code:"E3", name:"Monde", dim:"3D affine · main droite, Y↑, avant −Z", tag:"world space",
+    def:"Le seul espace commun à toutes les entités et à toutes les vues. C'est pour ça que c'est <b>là</b> qu'on cull, et nulle part ailleurs.",
+    in:["m_worldMatrix par entité","AABB locale à transformer","6 plans du frustum (Gribb-Hartmann sur V·P)"],
+    out:["EIntersect ∈ {Inside, Intersect, Outside}","needsNearClip = (vis == Intersect)"],
+    work:["Frustum::Classify par p-vertex / n-vertex — 1 ou 2 coins, jamais 8","Physique, triggers, distance / LOD, occlusion"],
+    carry:"Position monde, et surtout le <b>troisième état</b> : Intersect est ce qui permet de sauter le clipper sur 99 % des meshes.",
+    owner:"Frustum · AABB3d · Plane · RenderSystem (boucle de mesh)",
+    trap:"AABB transformée = AABB regrossie. Le culling doit rester conservatif : répondre « peut-être » à tort coûte du rendu, répondre « invisible » à tort fait disparaître un objet."
+  },
+  {
+    id:"E4", code:"E4", name:"Vue", dim:"3D affine · œil à l'origine", tag:"eye / camera space",
+    def:"La caméra ne bouge jamais. C'est le monde qui vient à elle. View = inverse rigide de la matrice monde du Transform — transposée + translation, jamais un Gauss-Jordan.",
+    in:["TransformComponent de la caméra","CameraComponent (lentille pure : fov, near, far)","Viewport (aspect ratio)"],
+    out:["viewMatrix, projectionMatrix, viewProjectionMatrix","position, forward, frustum, nearPlane / farPlane"],
+    work:["inverseRigid() : Rᵀ et −t·Rᵀ","FovYFromFocal si modèle filmback","Aucun mesh n'est connu ici — d'où la possibilité de N vues par frame"],
+    carry:"Une matrice V·P. Le ViewData ne descend pas au sommet : c'est le sommet qui monte dans la matrice.",
+    owner:"BuildViewData · ViewData · Projection · MatrixLib::inverseRigid",
+    trap:"inverseRigid() n'est valable que sur une isométrie. Un scale sur le Transform de la caméra et la vue devient fausse sans que rien ne l'annonce."
+  },
+  {
+    id:"E5", code:"E5", name:"Clip", dim:"4D projectif homogène", tag:"clip space",
+    def:"Pas un espace de points : un espace de <b>droites</b>. (x,y,z,w) et (2x,2y,2z,2w) désignent le même point. C'est cette redondance qui rend le clipping linéaire et exact.",
+    in:["MVP = modelMatrix · viewProjectionMatrix, composée <b>par mesh</b>","Sommets objet, indexés indices[base+k]"],
+    out:["0, 1 ou 2 triangles, jusqu'à 4 sommets intermédiaires","ClipVertex : clip + varyings interpolés"],
+    work:["NearDistance = w − z ≥ 0 (forme canonique reverse-Z)","Blinn-Newell homogène / Sutherland-Hodgman à un plan","Triangulation en éventail <b>avant</b> le clip : borne fixe, convexité garantie"],
+    carry:"Tout varying s'interpole ici <b>linéairement et exactement</b> par lerp de paramètre t. C'est le dernier espace où c'est vrai.",
+    owner:"Clipper · ClipVertex · RenderSystem",
+    trap:"w ≤ nearPlane comme test de rejet : correct en perspective, totalement inopérant en orthographique où w vaut 1 partout. La forme canonique w − z ne dépend d'aucun paramètre de lentille."
+  },
+  {
+    id:"E6", code:"E6", name:"NDC", dim:"3D · cube canonique", tag:"normalized device",
+    def:"x,y ∈ [−1,1] parce que le frustum est symétrique. z ∈ [0,1] reverse-Z parce que le flottant, lui, ne l'est pas : ×8000 de précision à 1 km pour deux coefficients de matrice.",
+    in:["Vec4f clip après clipping"],
+    out:["Vec3f NDC","<b>invW = 1/w</b>, retenu explicitement"],
+    work:["Une division, trois multiplications","z_ndc devient une fonction affine de 1/w — donc linéaire en espace écran"],
+    carry:"invW. C'est <b>le</b> passager. Sans lui, plus aucune correction perspective en aval.",
+    owner:"RenderSystem (division) · Viewport",
+    trap:"C'est la seule frontière irréversible du chemin géométrique. Jeter w ici, c'est renoncer aux UV, aux normales interpolées et à la reconstruction monde — définitivement."
+  },
+  {
+    id:"E7", code:"E7", name:"Raster", dim:"2,5D continu · Y vers le bas", tag:"screen space",
+    def:"Coordonnées en pixels, mais toujours flottantes. L'origine est le coin haut-gauche du <b>viewport</b>, pas du framebuffer — c'est ce qui rend le split-screen gratuit.",
+    in:["NDC + invW","Viewport {x, y, width, height}"],
+    out:["Triangle2D + z_ndc + invW par sommet","Bounding box entière après ClampBox"],
+    work:["ToRaster : (n·0,5+0,5)·taille, <b>flip Y ici et nulle part ailleurs</b>","Back-face : signe de l'aire raster (gratuit, l'aire sert aux barycentriques)","Edge function antisymétrique, top-left rule, barycentriques"],
+    carry:"z_ndc (affine → early-Z possible) et les varyings pré-divisés a·invW, calculés au triangle setup.",
+    owner:"Viewport · Rasterizer · Renderer (état : mode, cull, depth test)",
+    trap:"Le flip Y inverse le signe de l'aire. Un test de winding calibré sur le NDC élimine exactement les mauvaises faces — et rien ne crash."
+  },
+  {
+    id:"E8", code:"E8", name:"Mémoire", dim:"1D discret · index d'octet", tag:"framebuffer / depth",
+    def:"L'espace d'adressage. Deux buffers, <b>deux règles d'indexation différentes</b>, et confondre les deux est un bug qui n'apparaît que sur certaines résolutions.",
+    in:["FragmentContext derrière un void*, sentinelle magic","x, y entiers ; z_ndc interpolé"],
+    out:["uint32 ARGB écrit","float profondeur écrit"],
+    work:["Early-Z : test GREATER contre un clear à 0,0f, <b>avant</b> tout autre calcul de fragment","FrameBuffer : y·pitch (octets) puis [x] (pixels)","DepthBuffer : y·width+x — il possède sa mémoire, pas de pitch"],
+    carry:"Plus rien ne descend. La seule remontée possible passe par invViewProjection.",
+    owner:"FrameBuffer · DepthBuffer · Fragment · SDL_LockTexture",
+    trap:"pitch ≠ width·4. Beaucoup de largeurs rondes s'alignent naturellement : le bug se tait sur 1920 et se réveille sur 1922."
+  },
+  {
+    id:"EX", code:"—", name:"Tangent", dim:"3D · base par sommet", dormant:true, tag:"déclaré, non implémenté",
+    def:"L'espace du normal mapping : base (T, B, N) attachée à chaque sommet. Il n'existe pas encore dans LV3 — mais sa place dans la chaîne est déjà déterminée : entre E1 et l'évaluation d'éclairage.",
+    in:["UV du mesh","normales de sommet"],
+    out:["Matrice TBN par sommet, interpolée comme un varying"],
+    work:["Rien aujourd'hui. Prérequis : UV fiables, donc correction de GetFaceView."],
+    carry:"Un varying de plus, donc un a·invW de plus au triangle setup.",
+    owner:"— (chantier ouvert)",
+    trap:"Ajouter le TBN sans avoir corrigé l'hypothèse de contiguïté de GetFaceView produirait un éclairage faux et très difficile à imputer."
+  }
+];
+
+const GATES = [
+  {op:"OBJLoader", kind:"dest", back:"import destructif"},
+  {op:"m_localMatrix", kind:"rev", back:"inverse générique"},
+  {op:"m_worldMatrix", kind:"rev", back:"inverse générique"},
+  {op:"viewMatrix", kind:"rev", back:"m_worldMatrix — gratuit"},
+  {op:"projectionMatrix", kind:"rev", back:"inverse P"},
+  {op:"÷ w", kind:"dest", carry:"invW", back:"seulement si invW gardé"},
+  {op:"ToRaster<br>flip Y", kind:"rev", back:"ToNDC"},
+  {op:"floor + pitch", kind:"dest", back:"quantification : perdu"}
+];
+
+const rail = document.getElementById('rail');
+const detail = document.getElementById('detail');
+const active = SPACES.filter(s=>!s.dormant);
+
+active.forEach((s,i)=>{
+  const b = document.createElement('button');
+  b.className = 'node';
+  b.setAttribute('role','tab');
+  b.setAttribute('aria-selected', i===0 ? 'true':'false');
+  b.dataset.id = s.id;
+  b.innerHTML = `<span class="ncode">${s.code}</span><span class="nname">${s.name}</span><span class="ndim">${s.dim.split('·')[0].trim()}</span>`;
+  b.addEventListener('click', ()=>select(s.id));
+  rail.appendChild(b);
+
+  if (i < GATES.length){
+    const g = GATES[i];
+    const d = document.createElement('div');
+    d.className = 'gate ' + g.kind;
+    d.innerHTML =
+      `<span class="op fwdrail">${g.op}</span>
+       <span class="arrow fwdrail"></span>
+       ${g.carry ? `<span class="carry fwdrail">${g.carry} ↗</span>`:''}
+       <span class="backlab backrail">↩ ${g.back}</span>`;
+    rail.appendChild(d);
+  }
+});
+
+// espace dormant en bout de rail
+const dorm = SPACES.find(s=>s.dormant);
+const dsep = document.createElement('div');
+dsep.className='gate rev'; dsep.innerHTML = '<span class="op fwdrail">à venir</span>';
+rail.appendChild(dsep);
+const db = document.createElement('button');
+db.className='node dormant'; db.setAttribute('role','tab'); db.setAttribute('aria-selected','false');
+db.dataset.id = dorm.id;
+db.innerHTML = `<span class="ncode">${dorm.code}</span><span class="nname">${dorm.name}</span><span class="ndim">dormant</span>`;
+db.addEventListener('click', ()=>select(dorm.id));
+rail.appendChild(db);
+
+function li(arr){ return '<ul>'+arr.map(x=>`<li>${x}</li>`).join('')+'</ul>'; }
+
+function select(id){
+  const s = SPACES.find(x=>x.id===id);
+  document.querySelectorAll('.node').forEach(n=>n.setAttribute('aria-selected', n.dataset.id===id ? 'true':'false'));
+  detail.innerHTML = `
+    <div class="dhead">
+      <h2>${s.code === '—' ? '' : s.code + ' · '}${s.name}</h2>
+      <span class="tag">${s.dim} — ${s.tag}</span>
+    </div>
+    <p style="margin:0 0 16px;max-width:70ch">${s.def}</p>
+    <div class="grid5">
+      <div class="cell"><h3>Entrée</h3>${li(s.in)}</div>
+      <div class="cell"><h3>Sortie</h3>${li(s.out)}</div>
+      <div class="cell"><h3>Traité ici</h3>${li(s.work)}</div>
+      <div class="cell"><h3>Ce qui transite</h3><p>${s.carry}</p></div>
+    </div>
+    <div class="owner"><h3>Qui gère cet espace</h3><p style="margin:0">${s.owner}</p></div>
+    <div class="trap"><h3>Contre-exemple</h3><p style="margin:0">${s.trap}</p></div>
+  `;
+}
+select('E0');
+
+const bA = document.getElementById('btn-aller'), bR = document.getElementById('btn-retour');
+function mode(m){
+  document.body.dataset.mode = m;
+  bA.setAttribute('aria-pressed', m==='aller');
+  bR.setAttribute('aria-pressed', m==='retour');
+}
+bA.addEventListener('click', ()=>mode('aller'));
+bR.addEventListener('click', ()=>mode('retour'));
+</script>
+</body>
+</html>

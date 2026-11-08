@@ -1,0 +1,1768 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot L04 — Le Rasterizer, pas à pas</title>
+<style>
+  :root{
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:light;
+    --bg:#f7f8fa; --panel:#ffffff; --panel2:#f0f2f6; --line:#dfe3ea;
+    --ink:#1b1f27; --dim:#5e6778; --faint:#8d96a8;
+    --accent:#2563eb; --accent-soft:rgba(37,99,235,.10);
+    --ok:#15803d; --okbg:rgba(21,128,61,.10);
+    --bad:#b91c1c; --badbg:rgba(185,28,28,.09);
+    --warn:#a16207; --warnbg:rgba(161,98,7,.10);
+    --code:#0f1117; --codeink:#e6e8ee;
+    --mono:'Cascadia Mono',Consolas,'SF Mono',Menlo,monospace;
+  }
+  :root:not([data-theme="light"]){ @media (prefers-color-scheme:dark){
+    color-scheme:dark;
+    --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+    --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+    --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+    --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+    --bad:#f87171; --badbg:rgba(248,113,113,.12);
+    --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+    --code:#0b0d12; --codeink:#e6e8ee;
+  }}
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+    --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+    --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+    --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+    --bad:#f87171; --badbg:rgba(248,113,113,.12);
+    --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+    --code:#0b0d12; --codeink:#e6e8ee;
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px)}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);
+    background:var(--panel);z-index:40}
+
+  /* ---- bandeau ---- */
+  header{
+    position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+    background:var(--panel); border-bottom:1px solid var(--line);
+    padding:10px 18px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  }
+  header .tt{font-weight:650;font-size:15px}
+  header .st{color:var(--dim);font-size:12.5px}
+  header .sp{flex:1}
+  .btn{
+    background:var(--panel2); color:var(--ink); border:1px solid var(--line);
+    border-radius:7px; padding:6px 11px; font:inherit; font-size:12.5px; cursor:pointer;
+  }
+  .btn:hover{border-color:var(--accent)}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
+
+  nav.toc{
+    display:flex;flex-wrap:wrap;gap:7px;margin:0 0 26px;
+  }
+  nav.toc a{
+    text-decoration:none;color:var(--dim);background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12.5px;
+  }
+  nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+
+  section{margin:0 0 42px;scroll-margin-top:72px}
+  h2{font-size:21px;font-weight:650;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:9px}
+  h3{font-size:15.5px;font-weight:650;margin:26px 0 8px}
+  h4{font-size:13px;font-weight:650;margin:18px 0 6px;color:var(--dim);
+     text-transform:uppercase;letter-spacing:.06em}
+  p{margin:9px 0}
+  .lead{color:var(--dim);font-size:14px;margin:0 0 18px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:17px 19px;margin:14px 0}
+  .card.tight{padding:13px 15px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+
+  .tag{display:inline-block;font-size:11px;font-weight:650;padding:2px 8px;border-radius:5px;
+       letter-spacing:.03em;vertical-align:middle}
+  .tag.ok{background:var(--okbg);color:var(--ok)}
+  .tag.bad{background:var(--badbg);color:var(--bad)}
+  .tag.warn{background:var(--warnbg);color:var(--warn)}
+  .tag.acc{background:var(--accent-soft);color:var(--accent)}
+
+  pre{background:var(--code);color:var(--codeink);border-radius:9px;padding:13px 15px;
+      overflow-x:auto;font-family:var(--mono);font-size:12.3px;line-height:1.6;margin:10px 0}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel2);
+       padding:1px 5px;border-radius:4px}
+  pre code{background:none;padding:0;font-size:inherit}
+  .c-com{color:#7f8795}.c-key{color:#c084fc}.c-num{color:#fbbf24}.c-str{color:#86efac}
+  .c-fn{color:#60a5fa}
+
+  .diff{border-radius:9px;overflow:hidden;border:1px solid var(--line);margin:10px 0}
+  .diff .dh{background:var(--panel2);padding:7px 13px;font-size:12px;color:var(--dim);
+            font-family:var(--mono);border-bottom:1px solid var(--line)}
+  .diff pre{margin:0;border-radius:0}
+  .l-del{background:rgba(248,113,113,.17);display:block;margin:0 -15px;padding:0 15px}
+  .l-add{background:rgba(74,222,128,.15);display:block;margin:0 -15px;padding:0 15px}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:11px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);
+        padding:11px 15px;border-radius:0 8px 8px 0;margin:13px 0;font-size:13.5px}
+  .note.bad{border-color:var(--bad);background:var(--badbg)}
+  .note.ok{border-color:var(--ok);background:var(--okbg)}
+  .note.warn{border-color:var(--warn);background:var(--warnbg)}
+  .note b{font-weight:650}
+
+  canvas{background:var(--panel2);border:1px solid var(--line);border-radius:9px;
+         display:block;max-width:100%;touch-action:none}
+  .cv-row{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-start}
+  .ctrl{flex:1;min-width:235px}
+  label.sl{display:block;font-size:12px;color:var(--dim);margin:11px 0 3px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 10px}
+  .seg .btn{flex:1 1 auto;min-width:92px;text-align:center}
+
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:4px 0;
+      border-bottom:1px solid var(--line);font-size:12.5px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--dim)}
+  .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+
+  /* étapes */
+  .stepbar{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 16px}
+  .stepbar button{
+    background:var(--panel);border:1px solid var(--line);color:var(--dim);
+    border-radius:7px;padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;
+    font-variant-numeric:tabular-nums;
+  }
+  .stepbar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .stepbar button:hover{border-color:var(--accent)}
+  .step{display:none}
+  .step.on{display:block}
+  .step .obj{font-size:13.5px}
+  .io{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:12px;margin:12px 0}
+  .io .box{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px}
+  .io .box h5{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  .io .box.in{border-left:3px solid var(--faint)}
+  .io .box.out{border-left:3px solid var(--accent)}
+
+  .lanes{overflow-x:auto;margin:10px 0}
+  .lanes table{min-width:620px;font-size:12px}
+  .lanes td.n{font-size:11.5px}
+  .lane-in{color:var(--ok);font-weight:650}
+  .lane-out{color:var(--bad)}
+
+  .foot{color:var(--faint);font-size:12px;border-top:1px solid var(--line);padding-top:16px;margin-top:40px}
+  details{border:1px solid var(--line);border-radius:9px;padding:11px 14px;margin:11px 0;background:var(--panel)}
+  summary{cursor:pointer;font-weight:600;font-size:13.5px}
+  details[open] summary{margin-bottom:9px}
+  ul,ol{padding-left:21px;margin:8px 0}
+  li{margin:4px 0}
+  .small{font-size:12.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="tt">Lot L04 — Le Rasterizer, pas à pas</div>
+    <div class="st">LibraryV3 · rasterisation CPU · clipping near · perspective · profondeur</div>
+  </div>
+  <div class="sp"></div>
+  <button class="btn" id="themeBtn">Thème auto</button>
+</header>
+
+<div class="wrap">
+
+<nav class="toc">
+  <a href="#pourquoi">1 · Pourquoi ce lot</a>
+  <a href="#methode">2 · La méthode</a>
+  <a href="#schema">3 · Schéma dynamique</a>
+  <a href="#algo">4 · Algorithme avant / après</a>
+  <a href="#technique">5 · Fonctionnement technique</a>
+  <a href="#etapes">6 · Les étapes</a>
+  <a href="#contre">7 · Contre-exemples chiffrés</a>
+  <a href="#verifier">8 · Vérifier</a>
+  <a href="#roadmap">9 · Décisions &amp; dettes</a>
+</nav>
+
+<!-- ═══════════════ 1 ═══════════════ -->
+<section id="pourquoi">
+  <h2><span class="num">1</span>Pourquoi ce lot</h2>
+  <p class="lead">Avant toute technique : d’où l’on part, ce que ce lot doit rendre possible, et pourquoi il ne pouvait pas être fait plus tôt.</p>
+
+  <h3>Ce qui existait déjà</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:90px">Lot</th><th>Ce qu’il a posé</th><th style="width:230px">Ce que le rasterizer en consomme</th></tr>
+      <tr><td><b>L01</b></td><td>Configuration du projet, PCH, enums de rendu (<code>ERenderMode</code>, <code>ECullMode</code>, <code>EWindingOrder</code>, <code>EDepthTest</code>, <code>EBlendMode</code>)</td><td>Le vocabulaire des modes de rendu et la convention de winding</td></tr>
+      <tr><td><b>L02</b></td><td>Algèbre : main droite, vecteur-ligne, stockage row-major, <code>Matrix44f</code>, <code>MulRow</code></td><td>Toute la chaîne de transformation, et l’ordre <code>v · M</code></td></tr>
+      <tr><td><b>L03</b></td><td>ECS, <code>SparseSet</code>, <code>ResourceManager</code>, <code>MeshClass</code></td><td>D’où viennent les sommets et les faces à dessiner</td></tr>
+      <tr><td><b>L05</b></td><td>Caméra, <code>Projection</code>, reverse-Z, far infini, <code>Viewport</code>, <code>ViewData</code>, <code>Frustum</code> à 3 états, <code>DepthBuffer</code>, <code>Renderer</code> à état</td><td>La matrice de projection, la transformation viewport, le Z-buffer, le frustum</td></tr>
+    </table>
+    <p class="small" style="margin-top:9px">La L05 a été traitée <b>avant</b> la fin de la L04 dans le projet réel. Ce lot est donc écrit sur l’état du dépôt <b>après</b> L05, et il révise plusieurs décisions prises à l’époque — c’est signalé à chaque fois.</p>
+  </div>
+
+  <h3>Le problème fonctionnel</h3>
+  <p>À la fin de la L05, le moteur sait <b>où</b> chaque sommet se projette à l’écran. Il ne sait toujours pas <b>remplir</b> la surface entre ces sommets. Entre « j’ai trois points » et « j’ai une image », il manque tout ce lot.</p>
+
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Ce que le lot doit rendre possible</h4>
+      <ul style="margin:0">
+        <li>Déterminer quels pixels appartiennent à un triangle, sans trou ni recouvrement entre triangles voisins</li>
+        <li>Interpoler n’importe quelle grandeur portée par les sommets (profondeur, couleur, UV, normale) en un point quelconque de la surface</li>
+        <li>Survivre à une caméra qui frôle ou traverse un objet, sans <code>NaN</code> ni géométrie qui explose</li>
+        <li>Décider qui est devant qui, pixel par pixel, indépendamment de l’ordre d’envoi</li>
+        <li>Ne dessiner que les faces tournées vers l’observateur</li>
+      </ul>
+    </div>
+    <div class="card tight">
+      <h4>Pourquoi maintenant, et pas avant</h4>
+      <ul style="margin:0">
+        <li>Il faut la <b>projection</b> (L05) pour savoir ce que signifie « devant »</li>
+        <li>Il faut le <b>reverse-Z</b> (L05) pour que la profondeur soit utilisable loin de la caméra</li>
+        <li>Il faut le <b>Viewport</b> (L05) : c’est lui qui introduit le flip Y, donc tout le piège du sens de rotation</li>
+        <li>Il faut un <b>mesh</b> (L03) pour avoir des faces à parcourir</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Les quatre questions auxquelles le lot répond</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:34px"></th><th style="width:210px">Question</th><th>Réponse du lot</th></tr>
+      <tr><td class="n">Q1</td><td>Ce pixel est-il dans le triangle ?</td><td><b>Fonction de bord</b> (edge function) — trois tests de signe</td></tr>
+      <tr><td class="n">Q2</td><td>Quelle valeur y prend un attribut ?</td><td><b>Coordonnées barycentriques</b>, corrigées de la perspective</td></tr>
+      <tr><td class="n">Q3</td><td>Que faire d’un triangle à cheval sur la caméra ?</td><td><b>Clipping near</b> en espace de clip</td></tr>
+      <tr><td class="n">Q4</td><td>Qui est devant qui ?</td><td><b>Z-buffer</b> en reverse-Z, testé avant le shading</td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Intérêt réel du lot, au-delà de « ça affiche ».</b> Les trois quarts des bugs rencontrés ici sont <b>invisibles à l’écran</b> : un cube rendu à l’envers ressemble à un cube, une fissure d’un pixel se perd dans une animation, une interpolation fausse ne devient grotesque qu’à forte inclinaison. Ce lot installe donc autant des <b>instruments de mesure</b> que des algorithmes — et c’est la mesure, pas l’œil, qui a trouvé deux bugs majeurs.
+  </div>
+</section>
+
+<!-- ═══════════════ 2 ═══════════════ -->
+<section id="methode">
+  <h2><span class="num">2</span>La méthode : rasterisation par fonction de bord</h2>
+  <p class="lead">Le lot implémente une technique nommée. Avant le pas à pas : ce qu’elle est, d’où elle vient, qui l’utilise, et pourquoi elle remplace la méthode historique.</p>
+
+  <h3>En une phrase</h3>
+  <p>Au lieu de parcourir le triangle ligne par ligne en suivant ses côtés, on <b>teste chaque pixel indépendamment</b> : pour chacun, trois petits calculs disent de quel côté de chaque arête il se trouve. S’il est du même côté des trois, il est dedans.</p>
+
+  <div class="card tight">
+    <table>
+      <tr><th style="width:150px">Origine</th><td>Juan Pineda, <i>A Parallel Algorithm for Polygon Rasterization</i>, SIGGRAPH 1988</td></tr>
+      <tr><th>Lien</th><td class="small"><code>https://dl.acm.org/doi/10.1145/54852.378457</code> — exposé de référence moderne : Fabian Giesen, « A trip through the Graphics Pipeline » et « Triangle rasterization in practice » (<code>fgiesen.wordpress.com</code>)</td></tr>
+      <tr><th>Qui l’utilise</th><td>Tous les GPU modernes, en silicium (NVIDIA, AMD, Intel, Apple, ARM Mali). Côté logiciel : Mesa/llvmpipe, SwiftShader, WARP, les rasterizers de Nanite (Unreal 5), et la quasi-totalité des moteurs CPU depuis 2000</td></tr>
+      <tr><th>Nom complet du clipping</th><td><i>Blinn-Newell homogeneous clipping</i> — règle d’émission de Sutherland-Hodgman, spécialisée à un plan, avec rejet trivial à la Cyrus-Beck</td></tr>
+    </table>
+  </div>
+
+  <h3>Comparaison avec la méthode standard historique</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:34%">Critère</th><th style="width:33%">Scanline (années 80-90)</th><th style="width:33%">Fonction de bord (LV3)</th></tr>
+      <tr><td>Principe</td><td>Trier les sommets par Y, interpoler les pentes gauche et droite, remplir ligne par ligne</td><td>Boîte englobante, test de signe par pixel</td></tr>
+      <tr><td>Cas particuliers</td><td class="n" style="color:var(--bad)">Nombreux : triangle plat, arête verticale, sommets confondus, triangle inversé</td><td class="n" style="color:var(--ok)">Aucun</td></tr>
+      <tr><td>Parallélisation</td><td style="color:var(--bad)">Difficile : chaque ligne dépend de la précédente</td><td style="color:var(--ok)">Triviale : chaque pixel est indépendant</td></tr>
+      <tr><td>Barycentriques</td><td>À recalculer séparément</td><td style="color:var(--ok)">Produites gratuitement par le test lui-même</td></tr>
+      <tr><td>Vectorisation SIMD</td><td style="color:var(--bad)">Quasi impossible</td><td style="color:var(--ok)">8 pixels par registre AVX2, 16 en AVX-512</td></tr>
+      <tr><td>Coût sur triangle fin</td><td style="color:var(--ok)">Proportionnel à la surface réelle</td><td style="color:var(--warn)">Proportionnel à la boîte englobante — le seul point faible</td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Pourquoi le point faible ne compte pas.</b> Un triangle long et fin en diagonale gaspille jusqu’à 50 % des tests de sa boîte englobante. Mais chaque test coûte 3 multiplications, et 8 pixels passent dans un seul registre AVX2 : tester 8 pixels dont 4 sont rejetés coûte <b>moins cher</b> qu’une seule division de pente scanline. Le matériel a tranché ce débat il y a vingt ans.
+  </div>
+
+  <div class="note warn">
+    <b>Règle dictatoriale n° 1.</b> Le rasterizer LV3 est intégralement basé fonction de bord. Aucune implémentation scanline ne sera acceptée, y compris « juste pour le wireframe ».
+  </div>
+
+  <h3>La formule</h3>
+  <pre><code>E(A, B, P) = (B.x − A.x) · (P.y − A.y) − (B.y − A.y) · (P.x − A.x)</code></pre>
+  <p>C’est le <b>double de l’aire signée</b> du triangle (A, B, P) — autrement dit le produit vectoriel 2D des vecteurs AB et AP. Son signe dit de quel côté de la droite (AB) se trouve P.</p>
+  <p>Pour un triangle (V0, V1, V2), on calcule les trois fonctions de bord des arêtes <b>opposées</b> à chaque sommet :</p>
+  <pre><code>w0 = E(V1, V2, P)   <span class="c-com">// poids de V0</span>
+w1 = E(V2, V0, P)   <span class="c-com">// poids de V1</span>
+w2 = E(V0, V1, P)   <span class="c-com">// poids de V2</span></code></pre>
+  <div class="note warn"><b>Piège d’indexation.</b> <code>w0</code> est le poids <b>du sommet V0</b>, pas de l’arête <code>V0V1</code>. L’inversion est l’erreur classique au moment d’interpoler des UV — elle produit une texture qui semble « tourner » autour du triangle.</div>
+</section>
+
+<!-- ═══════════════ 3 ═══════════════ -->
+<section id="schema">
+  <h2><span class="num">3</span>Schéma dynamique — comprendre avant de coder</h2>
+  <p class="lead">Déplace les trois sommets et le point de test. Tout est recalculé en direct : signes, appartenance, poids barycentriques. Le triangle est colorié par interpolation de ces poids.</p>
+
+  <div class="card">
+    <div class="cv-row">
+      <canvas id="cvEdge" width="520" height="430"></canvas>
+      <div class="ctrl">
+        <h4>Réglages</h4>
+        <div class="seg">
+          <button class="btn on" data-edge="fill">Remplissage</button>
+          <button class="btn" data-edge="bary">Poids barycentriques</button>
+          <button class="btn" data-edge="none">Contour seul</button>
+        </div>
+        <label class="sl">Taille du pas de pixel : <span id="lStep">4</span> px</label>
+        <input type="range" id="sStep" min="1" max="12" value="4">
+
+        <h4>Fonctions de bord au point P</h4>
+        <div class="kv"><span class="k">w0 = E(V1,V2,P)</span><span class="v" id="e_w0">—</span></div>
+        <div class="kv"><span class="k">w1 = E(V2,V0,P)</span><span class="v" id="e_w1">—</span></div>
+        <div class="kv"><span class="k">w2 = E(V0,V1,P)</span><span class="v" id="e_w2">—</span></div>
+        <div class="kv"><span class="k">aire signée (2×)</span><span class="v" id="e_area">—</span></div>
+        <div class="kv"><span class="k">sens de rotation</span><span class="v" id="e_wind">—</span></div>
+        <div class="kv"><span class="k">P est</span><span class="v" id="e_in">—</span></div>
+
+        <h4>Barycentriques normalisés</h4>
+        <div class="kv"><span class="k">b0 — poids de V0</span><span class="v" id="e_b0">—</span></div>
+        <div class="kv"><span class="k">b1 — poids de V1</span><span class="v" id="e_b1">—</span></div>
+        <div class="kv"><span class="k">b2 — poids de V2</span><span class="v" id="e_b2">—</span></div>
+        <div class="kv"><span class="k">somme</span><span class="v" id="e_sum">—</span></div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:11px">Fais passer un sommet « de l’autre côté » : l’aire change de signe, et le test d’appartenance bascule automatiquement sur l’autre comparaison. <b>C’est ce qui rend le rasterizer indifférent au sens de rotation</b> — le culling, lui, est traité ailleurs (étape 7).</p>
+  </div>
+
+  <h3>La règle du haut-gauche, visuellement</h3>
+  <p>Deux triangles partagent une arête. Un pixel tombe <b>exactement</b> sur cette arête (<code>w == 0</code>). Qui le dessine ?</p>
+  <div class="card">
+    <div class="cv-row">
+      <canvas id="cvTL" width="420" height="300"></canvas>
+      <div class="ctrl">
+        <div class="seg">
+          <button class="btn" data-tl="none">Sans règle</button>
+          <button class="btn on" data-tl="topleft">Règle haut-gauche</button>
+        </div>
+        <div id="tlVerdict" class="small"></div>
+        <h4>Classification des arêtes partagées</h4>
+        <div id="tlTable"></div>
+      </div>
+    </div>
+  </div>
+  <div class="note bad">
+    <b>Sans règle, deux issues, toutes deux fausses.</b> Soit aucun des deux triangles ne prend le pixel → <b>trou</b> visible entre faces adjacentes. Soit les deux le prennent → <b>double écriture</b>, invisible en opaque mais catastrophique dès qu’on active <code>EBlendMode::AlphaBlend</code> : le bord devient deux fois plus opaque que le reste.
+  </div>
+  <div class="note warn">
+    <b>Règle dictatoriale n° 3.</b> Une arête <i>top</i> (horizontale allant vers la gauche) ou <i>left</i> (descendante) inclut ses pixels de frontière ; une arête <i>bottom</i> ou <i>right</i> les exclut. Convention identique à Direct3D et OpenGL.
+  </div>
+</section>
+
+<!-- ═══════════════ 4 ═══════════════ -->
+<section id="algo">
+  <h2><span class="num">4</span>L’algorithme — avant / après</h2>
+  <p class="lead">Ce que le lot change dans le code existant. Les lignes retirées sont en rouge, les ajoutées en vert.</p>
+
+  <h3>4.1 — La boucle de face dans <code>RenderView</code></h3>
+  <h4>Avant le lot (état sorti de la L05)</h4>
+  <pre><code><span class="c-key">for</span> (size_t f = 0; f &lt; mesh-&gt;faceCount(); ++f)
+{
+    Vec4f c[4];
+    <span class="c-key">for</span> (uint8_t k = 0; k &lt; vpf; ++k)
+        c[k] = MulRow(mvp, mesh-&gt;vertexPositions[ mesh-&gt;indices[base+k] ]);
+
+<span class="l-del">    <span class="c-com">// rejet brutal : la face ENTIÈRE disparaît</span></span>
+<span class="l-del">    bool behind = <span class="c-key">false</span>;</span>
+<span class="l-del">    <span class="c-key">for</span> (uint8_t k = 0; k &lt; vpf; ++k)</span>
+<span class="l-del">        <span class="c-key">if</span> (c[k].w &lt;= view.nearPlane) { behind = <span class="c-key">true</span>; <span class="c-key">break</span>; }</span>
+<span class="l-del">    <span class="c-key">if</span> (behind) <span class="c-key">continue</span>;</span>
+
+    Vec3f r[4];
+    <span class="c-key">for</span> (uint8_t k = 0; k &lt; vpf; ++k) {
+        <span class="c-key">const float</span> inv = 1.0f / c[k].w;
+        r[k] = view.viewport.ToRaster({ c[k].x*inv, c[k].y*inv, c[k].z*inv });
+    }
+
+<span class="l-del">    <span class="c-key">if</span> (EdgeFunction(r[0], r[1], r[2]) &lt;= 0.0f) <span class="c-key">continue</span>;  <span class="c-com">// backface</span></span>
+
+    <span class="c-key">for</span> (uint8_t t = 0; t+2 &lt; vpf; ++t)
+        renderer.DrawTriangle(Triangle2D{ r[0], r[t+1], r[t+2], ... }, col);
+}</code></pre>
+
+  <h4>Après le lot</h4>
+  <pre><code><span class="l-add"><span class="c-com">// Chantier C.2 — une décision par MESH, pas par face</span></span>
+<span class="l-add"><span class="c-key">const</span> EIntersect vis = view.frustum.Classify(aabbMonde);</span>
+<span class="l-add"><span class="c-key">if</span> (vis == EIntersect::Outside) <span class="c-key">continue</span>;</span>
+<span class="l-add"><span class="c-key">const bool</span> needsNearClip = (vis == EIntersect::Intersect);</span>
+
+<span class="c-key">for</span> (size_t f = 0; f &lt; mesh-&gt;faceCount(); ++f)
+{
+<span class="l-add">    ClipVertex cv[4];                          <span class="c-com">// porte le clip + les varyings</span></span>
+    <span class="c-key">for</span> (uint8_t k = 0; k &lt; vpf; ++k)
+        cv[k].clip = MulRow(mvp, mesh-&gt;vertexPositions[ mesh-&gt;indices[base+k] ]);
+
+<span class="l-add">    bool allIn = <span class="c-key">true</span>;</span>
+<span class="l-add">    <span class="c-key">if</span> (needsNearClip) {</span>
+<span class="l-add">        <span class="c-key">float</span> d[4]; bool allOut = <span class="c-key">true</span>;</span>
+<span class="l-add">        <span class="c-key">for</span> (uint8_t k = 0; k &lt; vpf; ++k) {</span>
+<span class="l-add">            d[k] = NearDistance(cv[k]);        <span class="c-com">// w − z, forme CANONIQUE</span></span>
+<span class="l-add">            <span class="c-key">if</span> (d[k] &gt;= 0.0f) allOut = <span class="c-key">false</span>; <span class="c-key">else</span> allIn = <span class="c-key">false</span>;</span>
+<span class="l-add">        }</span>
+<span class="l-add">        <span class="c-key">if</span> (allOut) <span class="c-key">continue</span>;                 <span class="c-com">// rejet trivial</span></span>
+<span class="l-add">    }</span>
+
+<span class="l-add">    <span class="c-com">// On TRIANGULE d'abord, on clippe ensuite : borne fixe à 4 sommets,</span></span>
+<span class="l-add">    <span class="c-com">// aucune hypothèse de convexité sur les quads du fichier OBJ.</span></span>
+    <span class="c-key">for</span> (uint8_t t = 0; t+2 &lt; vpf; ++t)
+    {
+<span class="l-add">        <span class="c-key">const</span> ClipVertex tri[3] = { cv[0], cv[t+1], cv[t+2] };</span>
+<span class="l-add">        <span class="c-key">if</span> (allIn) {</span>
+<span class="l-add">            EmitClipTriangle(renderer, view, tri[0], tri[1], tri[2], col);</span>
+<span class="l-add">        } <span class="c-key">else</span> {</span>
+<span class="l-add">            ClipVertex poly[kMaxClipVertices];</span>
+<span class="l-add">            <span class="c-key">const</span> int32_t n = ClipTriangleNear(tri, poly);</span>
+<span class="l-add">            <span class="c-key">for</span> (int32_t q = 1; q+1 &lt; n; ++q)   <span class="c-com">// éventail, winding préservé</span></span>
+<span class="l-add">                EmitClipTriangle(renderer, view, poly[0], poly[q], poly[q+1], col);</span>
+<span class="l-add">        }</span>
+    }
+}</code></pre>
+
+  <h3>4.2 — Les trois corrections ponctuelles</h3>
+
+  <div class="diff">
+    <div class="dh">RenderSystem.cpp — test du plan near</div>
+    <pre><code><span class="l-del">- <span class="c-key">if</span> (c[k].w &lt;= view.nearPlane)        <span class="c-com">// connaît la LENTILLE</span></span>
+<span class="l-add">+ <span class="c-key">if</span> (NearDistance(cv[k]) &lt; 0.0f)      <span class="c-com">// w − z : forme canonique du volume de clip</span></span></code></pre>
+  </div>
+  <p class="small">L’ancien test était <b>algébriquement juste en perspective</b> (<code>w = d</code>, donc <code>w ≤ n</code> équivaut à <code>w − z &lt; 0</code>). Mais il devient <b>faux en orthographique</b>, où <code>w = 1</code> pour tous les sommets : il ne teste plus rien. La forme canonique ne connaît ni <code>near</code>, ni <code>far</code>, ni le type de projection.</p>
+
+  <div class="diff">
+    <div class="dh">RenderSystem.cpp — sens du backface culling <span class="tag bad">BUG CORRIGÉ</span></div>
+    <pre><code><span class="l-del">- <span class="c-key">if</span> (EdgeFunction(r[0], r[1], r[2]) &lt;= 0.0f) <span class="c-key">continue</span>;</span>
+<span class="l-add">+ <span class="c-key">if</span> (IsBackFacing(EdgeFunction(r[0], r[1], r[2]))) <span class="c-key">return</span>;</span>
+<span class="l-add">+</span>
+<span class="l-add">+ <span class="c-com">// Rasterizer.h — convention MESURÉE, verrouillée par test unitaire :</span></span>
+<span class="l-add">+ <span class="c-com">//   front-face LV3 = CCW en espace VUE  →  ToRaster inverse Y</span></span>
+<span class="l-add">+ <span class="c-com">//   →  l'aire signée d'une FACE AVANT est NÉGATIVE.</span></span>
+<span class="l-add">+ [[nodiscard]] LV3_FORCEINLINE bool IsBackFacing(<span class="c-key">float</span> signedArea) noexcept</span>
+<span class="l-add">+ { <span class="c-key">return</span> signedArea &gt;= 0.0f; }   <span class="c-com">// le &gt;= rejette aussi l'aire nulle</span></span></code></pre>
+  </div>
+  <p class="small">Le sens était <b>inversé depuis la L05</b> : le moteur affichait les faces arrière. Démonstration chiffrée en §7.</p>
+
+  <div class="diff">
+    <div class="dh">Rasterizer.h — noyau de la fonction de bord <span class="tag bad">BUG CORRIGÉ</span></div>
+    <pre><code>  [[nodiscard]] LV3_FORCEINLINE <span class="c-key">constexpr float</span> EdgeFunction(
+      <span class="c-key">float</span> ax, <span class="c-key">float</span> ay, <span class="c-key">float</span> bx, <span class="c-key">float</span> by, <span class="c-key">float</span> px, <span class="c-key">float</span> py) noexcept
+  {
+<span class="l-del">-     <span class="c-key">return</span> (bx − ax) * (py − ay) − (by − ay) * (px − ax);</span>
+<span class="l-add">+     <span class="c-com">// Forme ANTISYMÉTRIQUE : le point testé p sert de référence, donc</span></span>
+<span class="l-add">+     <span class="c-com">//     E(b,a,p) == −E(a,b,p)  EXACTEMENT en IEEE 754.</span></span>
+<span class="l-add">+     <span class="c-com">// Bénéfice secondaire : les magnitudes restent locales au pixel,</span></span>
+<span class="l-add">+     <span class="c-com">// ce qui supprime l'annulation catastrophique sur les sommets lointains.</span></span>
+<span class="l-add">+     <span class="c-key">const float</span> ux = ax − px, uy = ay − py;</span>
+<span class="l-add">+     <span class="c-key">const float</span> vx = bx − px, vy = by − py;</span>
+<span class="l-add">+     <span class="c-key">return</span> ux * vy − uy * vx;</span>
+  }</code></pre>
+  </div>
+  <div class="note warn"><b>La formule vit dans le NOYAU, jamais dans les surcharges.</b> La cascade <code>(a,b,c)</code> → noyau et <code>(a,b,px,py)</code> → noyau existe précisément pour qu’une correction se fasse à un seul endroit. Modifier une surcharge sans le noyau crée <b>deux formules</b> pour la même quantité : sur un triangle presque dégénéré, le culling et la rasterisation peuvent alors donner des signes opposés.</div>
+
+  <h3>4.3 — Le contexte du fragment</h3>
+  <div class="diff">
+    <div class="dh">Fragment.h — structure passée derrière le <code>void*</code></div>
+    <pre><code>  <span class="c-key">struct</span> FragmentContext
+  {
+<span class="l-add">  #<span class="c-key">ifdef</span> _DEBUG</span>
+<span class="l-add">      uint32_t magic = kFragmentContextMagic;  <span class="c-com">// EN PREMIER — lu quel que soit le décalage</span></span>
+<span class="l-add">  #<span class="c-key">endif</span></span>
+      FrameBuffer* fb = <span class="c-key">nullptr</span>;
+      DepthBuffer* db = <span class="c-key">nullptr</span>;
+      Color        color{};
+      <span class="c-key">float</span> z0 = 0.f, z1 = 0.f, z2 = 0.f;         <span class="c-com">// z_ndc — interpolation AFFINE</span>
+<span class="l-add">      <span class="c-key">float</span> invW0 = 0.f, invW1 = 0.f, invW2 = 0.f; <span class="c-com">// dénominateur perspectif</span></span>
+<span class="l-del">-     <span class="c-key">float</span> nearPlane = 0.1f;</span>
+<span class="l-del">-     <span class="c-key">float</span> farPlane  = 1000.0f;</span>
+<span class="l-add">+     <span class="c-key">float</span> depthDisplayRange = 100.f;  <span class="c-com">// debug — PAS un paramètre de lentille</span></span>
+  };</code></pre>
+  </div>
+  <div class="note">
+    <b>Pourquoi <code>near</code> / <code>far</code> disparaissent.</b> Ils servaient à <i>reconstruire</i> une distance depuis <code>z_ndc</code>. Or <code>invW</code> la donne <b>directement</b> : <code>w = d</code>, la distance à l’œil. La reconstruction cassait en far infini (<code>n·1e30 / (z·1e30 + n)</code> → annulation catastrophique) et n’avait pas de sens en orthographique.
+    <br><br><b>Principe :</b> un champ ajouté pour contourner une information manquante doit être réexaminé le jour où l’information arrive. Sinon il survit, diverge, et devient une seconde source de vérité.
+  </div>
+</section>
+
+<!-- ═══════════════ 5 ═══════════════ -->
+<section id="technique">
+  <h2><span class="num">5</span>Fonctionnement technique</h2>
+  <p class="lead">Le pipeline complet, et les trois décisions structurantes qui le gouvernent.</p>
+
+  <pre><code>   World ──V──▶ VIEW ──P──▶ ┌────────────────────────────────────────┐
+                            │  CLIP SPACE  (x, y, z, w)              │
+                            │  ▶ CLIPPING NEAR  — Sutherland-Hodgman │  avant la division
+                            │    1 triangle → 0, 1 ou 2 triangles    │
+                            └──────────────┬─────────────────────────┘
+                                           │ ÷ w      (invW conservé)
+                            ┌──────────────▼─────────────────────────┐
+                            │  NDC    x,y ∈ [−1,1]    z ∈ [0,1]      │
+                            └──────────────┬─────────────────────────┘
+                                           │ Viewport::ToRaster  (flip Y)
+                            ┌──────────────▼─────────────────────────┐
+                            │  SCREEN SPACE  +  invW                 │
+                            │  ▶ backface : signe de l'aire          │
+                            │  ▶ boîte englobante + biais haut-gauche│
+                            │  ▶ fonctions de bord → barycentriques  │
+                            │  ▶ EARLY-Z  (GREATER, reverse-Z)       │
+                            │  ▶ dénominateur invW → varyings        │
+                            └────────────────────────────────────────┘</code></pre>
+
+  <div class="note ok">
+    <b>Le point d’architecture à graver.</b> Le clipping se fait en espace de clip, le shading en espace écran, et <code>invW</code> est le <b>seul passager</b> qui traverse la frontière. Tout le reste est soit consommé avant (les <code>w</code>), soit produit après (les pixels).
+  </div>
+
+  <h3>Décision 1 — un seul plan est clippé géométriquement</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:150px">Plan</th><th style="width:230px">Traitement</th><th>Pourquoi</th></tr>
+      <tr><td><b>near</b></td><td>Clipping géométrique</td><td><b>Singularité mathématique</b> : <code>w ≤ 0</code> rend la division impossible ou inversée. Obligatoire.</td></tr>
+      <tr><td>gauche / droite<br>haut / bas</td><td><i>Scissor</i> : clamp de la boîte englobante</td><td>Aucune singularité. Le clamp coûte 4 <code>min/max</code> ; le clipping coûterait des triangles supplémentaires. Les GPU font pareil, avec leur <i>guard band</i>.</td></tr>
+      <tr><td><b>far</b></td><td>Rien</td><td>Avec le far infini de la L05, il n’existe pas.</td></tr>
+    </table>
+  </div>
+
+  <h3>Décision 2 — on triangule AVANT de clipper</h3>
+  <p>Les meshes ont <code>vertsPerFace ∈ {3, 4}</code>. Deux ordres étaient possibles :</p>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:34%"></th><th style="width:33%">Clipper le polygone, puis trianguler</th><th style="width:33%">Trianguler, puis clipper <span class="tag acc">RETENU</span></th></tr>
+      <tr><td>Taille max de sortie</td><td class="n">quad → 5 sommets</td><td class="n" style="color:var(--ok)">triangle → 4, borne fixe</td></tr>
+      <tr><td>Convexité exigée</td><td style="color:var(--bad)">oui — un quad OBJ concave produit des arêtes dégénérées</td><td style="color:var(--ok)">jamais : un triangle est convexe par nature</td></tr>
+      <tr><td>Chemin de code</td><td>deux tailles d’entrée à gérer</td><td style="color:var(--ok)">un seul, uniforme</td></tr>
+      <tr><td>Coût sur face traversante</td><td class="n">1 clipping</td><td class="n" style="color:var(--warn)">2 clippings</td></tr>
+      <tr><td>Correspondance matérielle</td><td>—</td><td style="color:var(--ok)">le <i>primitive assembly</i> GPU triangule avant le clip</td></tr>
+    </table>
+    <p class="small" style="margin-top:8px">Le surcoût ne concerne que les faces qui traversent le near (moins de 1 %). Le bénéfice — borne fixe, aucune hypothèse de convexité, chemin unique — est structurel.</p>
+  </div>
+
+  <h3>Décision 3 — pourquoi pas Cyrus-Beck, pourtant plus élégant</h3>
+  <p>Il y a <b>deux « Sutherland » distincts</b>, et la confusion est courante :</p>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:230px">Algorithme</th><th style="width:170px">Entrée → sortie</th><th>Réputation</th></tr>
+      <tr><td><b>Cohen-Sutherland</b> (1967)</td><td>segment → segment</td><td style="color:var(--bad)">« algo pour débutant » — c’est celui-là : itératif, subdivision répétée</td></tr>
+      <tr><td><b>Sutherland-Hodgman</b> (1974)</td><td><b>polygone → polygone</b></td><td style="color:var(--ok)">Rien à voir. Référence en pipeline 3D</td></tr>
+      <tr><td>Cyrus-Beck (1978)</td><td>segment → segment</td><td>Excellent — <b>rival de Cohen-Sutherland</b>, pas de Sutherland-Hodgman</td></tr>
+      <tr><td>Liang-Barsky (1984)</td><td>segment → segment</td><td>Cyrus-Beck spécialisé aux volumes alignés aux axes</td></tr>
+    </table>
+  </div>
+  <p><b>La démonstration.</b> Clippe les trois arêtes d’un triangle indépendamment : l’arête V0→V1 est gardée, V1→V2 est tronquée en I₁, V2→V0 en I₂. On obtient <b>trois segments avec un trou entre I₁ et I₂</b>. Le segment I₁→I₂ — l’arête <i>créée par le plan de coupe</i> — n’appartient à aucune arête d’entrée. <b>Aucun algorithme de clipping de segment ne peut le produire</b>, quelle que soit son efficacité.</p>
+  <div class="note"><b>C’est une limite de topologie, pas de performance.</b> Un rasterizer a besoin d’une <b>surface fermée à remplir</b>. C’est aussi l’explication de la retriangulation manuelle qu’il fallait écrire derrière un clipping Cyrus-Beck : ce n’était pas une étape du clipping, c’était la <b>reconstruction topologique</b> que l’algorithme avait détruite.</div>
+  <div class="note warn"><b>Règle dictatoriale n° 20.</b> Le choix de l’algorithme de clipping suit la <b>topologie de sortie</b>, pas la réputation. Polygone → Sutherland-Hodgman en 4D homogène. Segment → Liang-Barsky (ray/AABB, <i>slab method</i>) ou Cyrus-Beck (volume convexe non aligné). Ces deux-là restent les bons outils pour <code>Ray::Intersect</code> et <code>ScreenPointToRay</code>.</div>
+  <p class="small">Ce qui est tout de même <b>récupéré de Cyrus-Beck</b> : le rejet / acceptation trivial en tête de fonction, et la formulation paramétrique <code>t = dA / (dA − dB)</code> — qui <b>est</b> sa formule, réécrite avec les distances pré-calculées au sommet plutôt que des produits scalaires par arête.</p>
+
+  <h3>Le clipping near, interactif</h3>
+  <p class="small">Vue de dessus, caméra à l’origine regardant vers le haut. Glisse les trois sommets à travers le plan near.</p>
+  <div class="card">
+    <div class="cv-row">
+      <canvas id="cvClip" width="500" height="380"></canvas>
+      <div class="ctrl">
+        <label class="sl">Plan near (n) : <span id="lNear">0.8</span></label>
+        <input type="range" id="sNear" min="3" max="25" value="8">
+        <h4>Distances <code>w − z</code></h4>
+        <div class="kv"><span class="k">V0</span><span class="v" id="c_d0">—</span></div>
+        <div class="kv"><span class="k">V1</span><span class="v" id="c_d1">—</span></div>
+        <div class="kv"><span class="k">V2</span><span class="v" id="c_d2">—</span></div>
+        <h4>Sortie de Sutherland-Hodgman</h4>
+        <div class="kv"><span class="k">sommets gardés</span><span class="v" id="c_kept">—</span></div>
+        <div class="kv"><span class="k">polygone produit</span><span class="v" id="c_poly">—</span></div>
+        <div class="kv"><span class="k">triangles émis</span><span class="v" id="c_tris">—</span></div>
+        <div id="c_note" class="small" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ 6 ═══════════════ -->
+<section id="etapes">
+  <h2><span class="num">6</span>Les étapes, pas à pas</h2>
+  <p class="lead">Un cas concret suivi de bout en bout. Chaque étape donne son <b>objectif</b>, le <b>résultat de l’étape précédente</b> qu’elle consomme, son <b>propre résultat</b> calculé réellement en <code>float32</code>, le code scalaire et son équivalent vectorisé quand il existe.</p>
+
+  <div class="card tight">
+    <h4>Le cas étudié</h4>
+    <div class="seg">
+      <button class="btn on" data-case="cross">Triangle traversant le plan near</button>
+      <button class="btn" data-case="inside">Triangle entièrement visible</button>
+    </div>
+    <div id="caseDesc" class="small"></div>
+  </div>
+
+  <div class="stepbar" id="stepbar"></div>
+  <div id="steps"></div>
+</section>
+
+<!-- ═══════════════ 7 ═══════════════ -->
+<section id="contre">
+  <h2><span class="num">7</span>Contre-exemples chiffrés</h2>
+  <p class="lead">Quatre erreurs réellement commises dans ce lot, avec les nombres qui les démasquent. Toutes étaient invisibles à l’œil.</p>
+
+  <h3>7.1 — Le backface culling était inversé <span class="tag bad">bug n° 20</span></h3>
+  <p>Triangle front-face au sens LV3 : CCW vu de la caméra, main droite, regard −Z.</p>
+  <pre><code>a = (−1,−1,−5)   b = (1,−1,−5)   c = (0,1,−5)
+(b−a) × (c−a) = (2,0,0) × (1,2,0) = (0,0,4)   → normale +Z, vers la caméra ✓</code></pre>
+  <p>Après projection et <code>ToRaster</code> en 800 × 800 — <code>yr = (0.5 − yn·0.5)·800</code>, <b>le flip</b> :</p>
+  <div class="card tight">
+    <table>
+      <tr><th>Sommet</th><th>NDC</th><th>Raster</th></tr>
+      <tr><td>a</td><td class="n">(−0.200, −0.200)</td><td class="n">(320, <b>480</b>)</td></tr>
+      <tr><td>b</td><td class="n">( 0.200, −0.200)</td><td class="n">(480, <b>480</b>)</td></tr>
+      <tr><td>c</td><td class="n">( 0.000,  0.200)</td><td class="n">(400, <b>320</b>)</td></tr>
+    </table>
+  </div>
+  <pre><code>EdgeFunction(a,b,c) = (480−320)·(320−480) − (480−480)·(400−320)
+                    = 160 · (−160) − 0
+                    = <span class="c-num">−25600</span>        ← NÉGATIF</code></pre>
+  <div class="note bad">
+    <b>Le test <code>if (area &lt;= 0) continue;</code> cullait donc les faces AVANT.</b> Le moteur affichait l’intérieur des objets depuis la Leçon 05.
+  </div>
+  <div class="note">
+    <b>Pourquoi personne ne l’a vu pendant toute une leçon.</b> La couleur était un hash par face. Sur un objet convexe fermé : silhouette identique, profondeur cohérente, couleurs arbitraires dans les deux cas. <b>Un cube rendu à l’envers ressemble exactement à un cube.</b>
+    <br><br>Le journal L05 contient même la trace du raisonnement fautif : « <i>commente le test, si le mesh apparaît, le signe est inversé</i> ». Le mesh apparaissait <b>avec</b> le mauvais signe — c’étaient les faces arrière. <b>Le critère « ça s’affiche » ne discrimine pas les deux hypothèses.</b>
+    <br><br>Ce qui l’a révélé : le mode <code>Depth</code>, dont la couleur a un <b>sens géométrique</b>. Une distance mesurée sur la face lointaine, ça se voit.
+  </div>
+
+  <h3>7.2 — L’interpolation affine, chiffrée</h3>
+  <p>Un sol incliné : le bord proche est à <b>3 unités</b> de l’œil, le bord lointain à <b>30</b>. Que vaut la distance au milieu de l’écran (<code>b = 0.5</code>) ?</p>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:230px">Méthode</th><th>Calcul</th><th style="width:130px">Résultat</th></tr>
+      <tr><td>Affine (fausse)</td><td class="n">0.5 · 3 + 0.5 · 30</td><td class="n" style="color:var(--bad)">16.500</td></tr>
+      <tr><td>Perspective-correcte</td><td class="n">1 / (0.5·⅓ + 0.5·1/30)</td><td class="n" style="color:var(--ok)">5.455</td></tr>
+      <tr><td><b>Erreur</b></td><td>—</td><td class="n" style="color:var(--bad)"><b>+ 202 %</b></td></tr>
+    </table>
+  </div>
+  <p>C’est le célèbre déformation de texture de la PlayStation 1 — dont le GTE ne faisait justement <b>pas</b> la division par <code>w</code> par pixel. Le symptôme : un pli qui se déplace le long de la diagonale de chaque quad.</p>
+
+  <div class="card">
+    <div class="cv-row">
+      <canvas id="cvPersp" width="520" height="400"></canvas>
+      <div class="ctrl">
+        <div class="seg">
+          <button class="btn on" data-persp="aff">Affine</button>
+          <button class="btn" data-persp="cor">Perspective-correcte</button>
+        </div>
+        <label class="sl">Inclinaison du sol : <span id="lTilt">72</span>°</label>
+        <input type="range" id="sTilt" min="5" max="88" value="72">
+        <label class="sl">Distance caméra : <span id="lDist">3.0</span></label>
+        <input type="range" id="sDist" min="15" max="80" value="30">
+        <div class="kv"><span class="k">w du sommet proche</span><span class="v" id="p_wn">—</span></div>
+        <div class="kv"><span class="k">w du sommet lointain</span><span class="v" id="p_wf">—</span></div>
+        <div class="kv"><span class="k">rapport w_loin / w_proche</span><span class="v" id="p_ratio">—</span></div>
+        <div class="kv"><span class="k">erreur d’interpolation</span><span class="v" id="p_err">—</span></div>
+        <div id="p_note" class="small" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:10px">La diagonale jaune est l’arête partagée entre les deux triangles du quad. En mode affine, c’est là que le pli apparaît : chaque triangle interpole indépendamment, en ignorant que <code>w</code> varie.</p>
+  </div>
+
+  <h3>7.3 — 124 trous sur les coutures du clipping <span class="tag bad">bug n° 21</span></h3>
+  <p>Deux triangles adjacents partagent une arête, mais la <b>parcourent en sens opposé</b> :</p>
+  <pre><code>Triangle A traverse 2 → 0 :  t = d2/(d2−d0)  →  I20 = Lerp(v2, v0, t)
+Triangle B traverse 0 → 2 :  t = d0/(d0−d2)  →  I02 = Lerp(v0, v2, t)</code></pre>
+  <p>Mathématiquement <code>I20 == I02</code>. <b>En IEEE 754, presque jamais bit à bit</b> : deux séquences d’opérations différentes sur les mêmes données.</p>
+  <div class="card tight">
+    <h4>La mesure</h4>
+    <pre><code>[COVERAGE] doubles=0  trous=124
+[COVERAGE] premier (215,40)  dernier (90,165)
+
+Δx = −125    Δy = +125     →  pente exactement −1
+124 trous pour 125 pas     →  UN pixel par ligne, sans exception</code></pre>
+    <p class="small">Une <b>droite d’un pixel de large</b>, continue. <code>doubles = 0</code> : les deux triangles se rejettent mutuellement. Signature sans ambiguïté de la fissure de couture — <b>et la localisation a désigné la cause avant qu’on ouvre le code</b>.</p>
+  </div>
+
+  <h4>La bissection : les deux correctifs étaient nécessaires</h4>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:52%">Configuration</th><th>Trous</th><th>Doublons</th></tr>
+      <tr><td>Ancienne <code>EdgeFunction</code> + pas de <code>ClipLess</code></td><td class="n" style="color:var(--bad)">124</td><td class="n">0</td></tr>
+      <tr><td><b><code>EdgeFunction</code> antisymétrique seule</b></td><td class="n" style="color:var(--warn)">4</td><td class="n" style="color:var(--warn)">2</td></tr>
+      <tr><td>Antisymétrique + <code>ClipLess</code></td><td class="n" style="color:var(--ok)">0</td><td class="n" style="color:var(--ok)">0</td></tr>
+    </table>
+  </div>
+  <p><b>Deux causes distinctes.</b> L’antisymétrie supprime 97 % du défaut : elle règle l’<b>amplification</b>, car les intersections tombaient à environ 9 900 pixels hors viewport, où l’annulation catastrophique transforme un ULP en plusieurs pixels. <code>ClipLess</code> supprime le reste : il traite la cause <b>racine</b>, à savoir que les deux triangles produisaient physiquement deux points différents.</p>
+  <p class="small">L’apparition de <code>doubles = 2</code> dans la configuration intermédiaire est la confirmation : selon le côté où l’écart tombe, un pixel est réclamé par personne (trou) ou par les deux (doublon). L’erreur change de signe le long de l’arête.</p>
+
+  <pre><code><span class="c-com">// Ordre total DÉTERMINISTE sur les coordonnées de clip.
+// Deux triangles adjacents parcourant la même arête en sens opposé
+// calculent alors le MÊME point, bit à bit.</span>
+[[nodiscard]] LV3_FORCEINLINE <span class="c-key">bool</span> ClipLess(<span class="c-key">const</span> Vec4f&amp; a, <span class="c-key">const</span> Vec4f&amp; b) noexcept
+{
+    <span class="c-key">if</span> (a.x != b.x) <span class="c-key">return</span> a.x &lt; b.x;
+    <span class="c-key">if</span> (a.y != b.y) <span class="c-key">return</span> a.y &lt; b.y;
+    <span class="c-key">if</span> (a.z != b.z) <span class="c-key">return</span> a.z &lt; b.z;
+    <span class="c-key">return</span> a.w &lt; b.w;
+}</code></pre>
+  <div class="note warn"><b>Règle dictatoriale n° 23.</b> Un point d’intersection <b>partagé entre deux primitives</b> doit être calculé dans un <b>ordre canonique</b>, indépendant du sens de parcours. Là où l’arithmétique flottante ne garantit pas l’égalité, une convention arbitraire mais universelle la fabrique — exactement comme la règle du haut-gauche au niveau du pixel.</div>
+
+  <h3>7.4 — Le champ oublié <span class="tag bad">bug n° 19</span></h3>
+  <p><code>invW0/1/2</code> ajoutés à <code>FragmentContext</code>, mais <code>Renderer::DrawTriangle</code> ne les recopiait pas. <b>Aucune erreur de compilation, aucune erreur de lien.</b></p>
+  <pre><code>den  = b0·0 + b1·0 + b2·0 = <span class="c-num">0</span>
+dist = 1.0f / 0.0f        = <span class="c-num">+inf</span>
+t    = Saturate(inf / 100) = <span class="c-num">1.0</span>
+g    = pow(1−1, 1/2.2)·255 = <span class="c-num">0</span>       ← écran NOIR uniforme</code></pre>
+  <div class="note ok">
+    <b>Le défaut à <code>0.f</code> était délibéré, et il a fonctionné comme prévu.</b> Si le remplissage est oublié, <code>1/0 = inf</code> → l’écran devient visiblement faux. <code>1.0f</code> aurait produit un rendu presque correct, donc un bug silencieux. <b>Un défaut qui échoue bruyamment vaut mieux qu’un défaut plausible.</b>
+  </div>
+
+  <h4>Trois structures à obligation invisible</h4>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:200px">Structure</th><th>Site de remplissage à ne pas oublier</th></tr>
+      <tr><td><code>ClipVertex</code></td><td><code>Lerp()</code> — un attribut oublié vaut zéro <b>uniquement sur les triangles clippés</b>, donc uniquement quand la caméra frôle l’objet. Bug fantôme.</td></tr>
+      <tr><td><code>RasterTriangle</code></td><td><code>EmitClipTriangle</code></td></tr>
+      <tr><td><code>FragmentContext</code></td><td><code>Renderer::DrawTriangle</code></td></tr>
+    </table>
+    <pre style="margin-top:10px"><code>LV3_ASSERT(ctx.invW0 &gt; 0.0f &amp;&amp; ctx.invW1 &gt; 0.0f &amp;&amp; ctx.invW2 &gt; 0.0f
+           &amp;&amp; <span class="c-str">"invW non rempli — champ oublie dans DrawTriangle ?"</span>);</code></pre>
+    <p class="small">C’est un <b>invariant</b>, pas une valeur attendue : après clipping, <code>w &gt; 0</code> est une garantie mathématique du lot.</p>
+  </div>
+</section>
+
+<!-- ═══════════════ 8 ═══════════════ -->
+<section id="verifier">
+  <h2><span class="num">8</span>Vérifier</h2>
+  <p class="lead">Tests hors moteur, filets Debug, et ce que chaque test attrape précisément.</p>
+
+  <h3>La suite de non-régression</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:34px">#</th><th style="width:270px">Test</th><th>Critère</th><th style="width:58px">État</th></tr>
+      <tr><td class="n">1</td><td>Caméra à moins de <code>near</code> d’une grande face</td><td>Coupée, pas supprimée. Aucun <code>NaN</code></td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">2</td><td><code>ClipTriangleNear</code> — 4 configurations</td><td>3 devant → <code>n=3</code> <b>identique bit à bit</b> · 3 derrière → 0 · 1 devant → 3 · <b>2 devant → 4</b></td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">3</td><td>Winding préservé après clipping</td><td>Même signe d’aire que le triangle source</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">4</td><td>Deux quads croisés en X, <b>dans les deux ordres</b></td><td><code>gauche_faux=0 droite_faux=0 vides=0</code></td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">5</td><td><code>ERenderMode::Depth</code></td><td><b>Clair PRÈS</b>, sombre au loin</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">6</td><td><code>LinearDepth</code> sur sol incliné + <b>mode fautif</b></td><td>Bandes rectilignes resserrées au loin ; le mode fautif plie</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">7</td><td>Damier sur quad synthétique</td><td>Carreaux qui rétrécissent, diagonale invisible</td><td><span class="tag warn">reporté</span></td></tr>
+      <tr><td class="n">8</td><td><code>far: 30</code> fini vs infini, <b>même valeur de far</b></td><td>Coupure présente, puis disparue</td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">9</td><td>Couverture <b>après clipping</b></td><td><code>doubles=0 trous=0</code></td><td><span class="tag ok">OK</span></td></tr>
+      <tr><td class="n">10</td><td>Boîtes vides + <b>contre-exemple positif</b></td><td>Rejets à 0 fragment, triangle valide &gt; 0</td><td><span class="tag ok">OK</span></td></tr>
+    </table>
+  </div>
+
+  <h3>Pourquoi ces tests-là, et pas d’autres</h3>
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Test 4 — pourquoi les deux ordres</h4>
+      <p class="small">Le Z-buffer doit trancher, <b>pas l’ordre de soumission</b>. Un test à sens unique peut passer par coïncidence : si <code>TestAndSet</code> laissait tout passer, le premier ordre donnerait quand même la bonne image. Les deux ordres donnant le même résultat, c’est la <b>définition opérationnelle</b> d’un Z-buffer qui fonctionne.</p>
+    </div>
+    <div class="card tight">
+      <h4>Test 10 — pourquoi un contre-exemple positif</h4>
+      <p class="small">Une suite qui ne vérifie que des <b>rejets</b> serait entièrement satisfaite par <code>void RasterizeTriangle(...) { return; }</code>. Le cas « triangle valide → au moins 1 fragment » est ce qui donne du sens aux cinq cas négatifs.</p>
+    </div>
+    <div class="card tight">
+      <h4>Test 9 — le seul qui attrape les fissures</h4>
+      <p class="small">Une fissure d’un pixel ne crashe pas, ne produit pas de <code>NaN</code>, et se perd dans le bruit d’une scène animée. <b>Il faut compter, pas regarder.</b> Le critère du trou — <i>un pixel vide dont les quatre voisins sont pleins</i> — rend le test insensible aux bords : seules les fissures intérieures sont comptées.</p>
+    </div>
+    <div class="card tight">
+      <h4>Test 6 — pourquoi un mode fautif</h4>
+      <p class="small">Voir des bandes droites ne prouve rien tant qu’on n’a pas vu à quoi ressemble l’erreur. Si les deux modes donnaient la même image, c’est que la version « correcte » ne ferait rien. <b>Pour valider une correction, il faut pouvoir produire le défaut à volonté.</b></p>
+    </div>
+  </div>
+
+  <h3>Les filets Debug permanents</h3>
+  <pre><code><span class="c-com">// Renderer::BeginFrame — invariant de dimensions</span>
+LV3_ASSERT(db.Width() == fb.Width() &amp;&amp; db.Height() == fb.Height() &amp;&amp;
+           <span class="c-str">"DepthBuffer et FrameBuffer de tailles differentes"</span>);
+
+<span class="c-com">// Renderer::DrawTriangle — invariant de remplissage (w &gt; 0 garanti après clipping)</span>
+LV3_ASSERT(ctx.invW0 &gt; 0.0f &amp;&amp; ctx.invW1 &gt; 0.0f &amp;&amp; ctx.invW2 &gt; 0.0f);
+
+<span class="c-com">// Clipper.cpp — la sortie ne peut valoir que 0, 3 ou 4</span>
+LV3_ASSERT(count == 3 || count == 4);
+
+<span class="c-com">// Fragment.h — sentinelle du void*, EN PREMIER MEMBRE</span>
+LV3_ASSERT(ctx-&gt;magic == kFragmentContextMagic &amp;&amp;
+           <span class="c-str">"FragmentContext : contexte incompatible derriere le void*"</span>);</code></pre>
+
+  <div class="note warn">
+    <b>Une assertion qu’on n’a jamais vue échouer n’est pas prouvée.</b> Le protocole appliqué ici : retirer délibérément le <code>Resize</code> du Z-buffer au redimensionnement de la fenêtre → l’assertion <b>doit</b> sauter. Sans cette étape, on teste que le code marche, pas que le filet attrape.
+  </div>
+
+  <h3>Prédictions du lot appairé</h3>
+  <p class="small">Ce que le lot suivant (texturing) devra observer si celui-ci est correct :</p>
+  <ul>
+    <li>Un damier sur sol incliné à 80° doit avoir ses carreaux <b>rétrécissant avec la distance</b>, et <b>aucun pli</b> sur la diagonale des quads</li>
+    <li>Une texture sur un objet frôlant la caméra doit rester cohérente de part et d’autre de la coupure near — c’est <code>ClipVertex::Lerp</code> qui le garantit</li>
+    <li>Ajouter <code>uv</code> à <code>ClipVertex</code> <b>sans</b> l’ajouter à <code>Lerp()</code> produira des UV à zéro <b>uniquement</b> sur les triangles clippés : première mise à l’épreuve du contrat de maintenance</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ 9 ═══════════════ -->
+<section id="roadmap">
+  <h2><span class="num">9</span>Décisions &amp; dettes à porter en roadmap</h2>
+  <p class="lead">Rien n’est acté ici. Ces points sont à trancher explicitement, et à reporter dans <code>Plan_Phase_G_LibraryV3.md</code>.</p>
+
+  <h3>9.1 — Écarts entre la leçon et le dépôt</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:62px">Réf</th><th style="width:230px">Écart</th><th>Raison, apport, statut</th></tr>
+      <tr><td class="n">L4-1</td><td>La L05 a été faite avant la fin de la L04</td><td>Le rasterizer a été écrit, puis la caméra, puis le rasterizer révisé. <b>Apport :</b> la révision a été faite avec le reverse-Z et le far infini déjà actés, donc sans compromis. <b>Statut :</b> évolution, rien à décider.</td></tr>
+      <tr><td class="n">L4-2</td><td><code>ClipVertex</code> ne porte ni <code>uv</code> ni <code>normal</code></td><td>Bloqué par la dette <code>MeshClass::GetFaceView</code>. <b>Apport :</b> pas de champs morts dans une structure copiée des milliers de fois par frame. <b>Statut : dette</b> — à lever avec le chantier texturing, en ajoutant <b>simultanément</b> dans <code>Lerp()</code>.</td></tr>
+      <tr><td class="n">L4-3</td><td>Règle 19 <b>rétrogradée</b> : pas de <code>ClipOrientation</code></td><td>Le culling en espace de clip économiserait 3 divisions sur ≈ 50 % des triangles, pour 14 opérations sur 100 %. <b>Match nul mesuré</b>, et il introduirait un second signe d’orientation à calibrer. <b>Statut : chantier différé sous condition de profilage.</b></td></tr>
+      <tr><td class="n">L4-4</td><td>Culling en espace objet <b>rejeté</b></td><td>Gain réel ≈ 40 % de transformations sur mesh fermé indexé, <b>0 % sur terrain et UI</b> ; coût : 12 o/triangle, cas particulier pour le scale négatif, winding encodé à deux endroits. <b>Statut : rejeté</b>, motivé.</td></tr>
+      <tr><td class="n">L4-5</td><td><code>ECullMode</code>, <code>EDepthTest</code>, <code>EBlendMode</code> non exploités par <code>Renderer</code></td><td>Les enums de la L01 existent, le <code>Renderer</code> ne les lit pas. <code>EDepthTest</code> deviendra propriétaire du flag <code>EDepthWrite</code> quand l’alpha-test arrivera (l’early-Z devient alors invalide). <b>Statut : dette.</b></td></tr>
+      <tr><td class="n">L4-6</td><td>Les quads OBJ sont supposés <b>convexes et planaires</b></td><td>L’éventail de triangulation le supposait déjà avant ce lot ; le clipper, lui, ne le suppose plus (décision 2). <b>Statut : dette à documenter</b>, pas à corriger tant que les assets sont maîtrisés.</td></tr>
+    </table>
+  </div>
+
+  <h3>9.2 — Bugs relevés, non corrigés à la clôture du lot</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:62px">Réf</th><th style="width:230px">Bug</th><th>Détail</th></tr>
+      <tr><td class="n">L4-7</td><td><code>ParseCamera</code> : <code>out_activeCamera != NULL_ENTITY;</code></td><td>Comparaison au lieu d’affectation — l’expression est jetée. Le paramètre de sortie n’est jamais assigné. MSVC devrait émettre <b>C4553</b> en <code>/W4</code>. <b>Hors périmètre L04</b>, mais trente secondes à corriger.</td></tr>
+      <tr><td class="n">L4-8</td><td><code>ShadeFragment_Barycentric</code> contourne <code>AsFragmentContext</code></td><td><code>static_cast</code> direct → la sentinelle <code>magic</code> n’est pas vérifiée. <b>Règle grepable :</b> <code>static_cast&lt;FragmentContext*&gt;</code> ne doit apparaître <b>qu’une seule fois</b> dans tout le projet.</td></tr>
+      <tr><td class="n">L4-9</td><td><code>ShadeFragment_Count</code> utilise un <code>CountContext</code></td><td>Second type derrière le <code>void*</code> — le mécanisme exact du bug n° 17. Admissible <b>uniquement</b> dans un test qui n’utilise ni <code>Renderer</code> ni <code>FragmentContext</code> : les deux types ne peuvent alors pas se croiser. <b>À documenter comme exception, pas à laisser implicite.</b></td></tr>
+      <tr><td class="n">L4-10</td><td>Exclusion FPS / Follow promise par un commentaire</td><td>Les deux systèmes écrivent dans le même <code>m_local</code> ; le second appelé gagne. Seul <code>SwitchCameraMode</code> arbitre, et il faut l’appeler. <b>Remède : un invariant</b> <code>CheckControllerExclusivity</code> au chargement, pas un commentaire.</td></tr>
+    </table>
+  </div>
+
+  <h3>9.3 — Outils nés du lot, à conserver</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:230px">Outil</th><th>Ce qu’il protège</th></tr>
+      <tr><td><code>Test_ClipCoverage</code></td><td>Trous et doublons après clipping. <b>Seul détecteur</b> des fissures de couture. À rejouer à chaque évolution du clipper.</td></tr>
+      <tr><td><code>Test_FrontFaceSign</code></td><td>Le signe du winding à travers la chaîne complète, <b>et</b> l’antisymétrie de <code>EdgeFunction</code>. Le test qui manquait en L05.</td></tr>
+      <tr><td><code>ERenderMode::LinearDepth</code></td><td>Mode debug sans dépendance aux données de mesh : répond en une frame à « le problème vient-il des UV ou de la projection ? »</td></tr>
+      <tr><td><code>ERenderMode::BarycentricColors</code></td><td>Test de non-régression visuel permanent du triangle setup.</td></tr>
+      <tr><td>Compteurs <code>[CULL]</code> par vue</td><td>Prouvent que le clipper <b>s’exerce réellement</b> (jusqu’à 95 % d’<code>Intersect</code>), pas seulement en test unitaire.</td></tr>
+      <tr><td><code>JsonReader</code> + <code>WarnUnread</code></td><td>Clés JSON écrites mais jamais lues. <b>Limite connue :</b> il attrape les clés <b>inconnues</b>, jamais les clés <b>absentes</b>.</td></tr>
+    </table>
+  </div>
+
+  <h3>9.4 — Règles dictatoriales ajoutées par ce lot</h3>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:44px">#</th><th>Règle</th></tr>
+      <tr><td class="n">19</td><td><b>Un seul test de backface : le signe de l’aire raster.</b> <span class="tag warn">révisée</span> <code>ClipOrientation</code> différé sous condition de profilage.</td></tr>
+      <tr><td class="n">20</td><td>Le choix de l’algorithme de clipping suit la <b>topologie de sortie</b>, pas la réputation.</td></tr>
+      <tr><td class="n">21</td><td><b>Un seul type derrière le <code>void*</code></b>, avec <code>magic</code> en <b>premier membre</b>, vérifié en Debug.</td></tr>
+      <tr><td class="n">22</td><td>Quand un test par élément coûte trop cher, <b>changer de granularité</b> plutôt que déplacer le test.</td></tr>
+      <tr><td class="n">23</td><td>Un point d’intersection <b>partagé</b> se calcule dans un <b>ordre canonique</b>, indépendant du sens de parcours.</td></tr>
+      <tr><td class="n">24</td><td>La fonction d’arête s’écrit sous forme <b>antisymétrique</b> : <code>E(b,a,p) = −E(a,b,p)</code> exactement.</td></tr>
+      <tr><td class="n">25</td><td>Le <code>#ifdef</code> conditionne le <b>corps</b> d’une fonction, jamais sa <b>signature</b> — sinon divergence Debug / Release à l’édition de liens.</td></tr>
+    </table>
+  </div>
+
+  <h3>9.5 — Principes méthodologiques dégagés</h3>
+  <div class="card tight">
+    <ol style="margin:0">
+      <li><b>« Ça s’affiche » n’est jamais un critère de validation.</b> Il faut une sortie dont la valeur a un sens géométrique vérifiable.</li>
+      <li><b>Pour rendre visible une erreur continue, il faut un signal discontinu.</b> Un dégradé cache les petites erreurs ; des bandes ou un damier les amplifient.</li>
+      <li><b>Compter, pas regarder.</b> Deux fois de suite, la mesure a trouvé ce que l’œil ne pouvait pas voir — et la <i>localisation</i> a désigné la cause avant qu’on ouvre le code.</li>
+      <li><b>Pour valider une correction, il faut pouvoir produire le défaut à volonté.</b></li>
+      <li><b>Mesurer avant de garder.</b> La bissection a prouvé que les deux correctifs étaient nécessaires — pas un de trop, pas un de moins.</li>
+      <li><b>Une assertion jamais vue échouer n’est pas prouvée.</b></li>
+      <li><b>Quand un algorithme oblige à écrire une passe de réparation derrière lui, c’est qu’il ne calculait pas ce qu’on voulait.</b></li>
+      <li><b>Comparer la topologie de sortie avant de comparer les performances.</b></li>
+      <li><b>Une donnée écrite dans un fichier de configuration et jamais lue est un mensonge que rien ne compile.</b></li>
+      <li><b>Quand une information doit être répétée à deux endroits sans vérification automatique, il faut soit la dériver, soit l’asserter.</b></li>
+    </ol>
+  </div>
+</section>
+
+<div class="foot">
+  Lot L04 — Le Rasterizer · LibraryV3 · C++23 / Visual Studio 2026 · rasterisation 100 % CPU<br>
+  Tous les nombres de cet artefact sont calculés en direct en <code>float32</code> (<code>Math.fround</code>), comme le ferait le CPU.
+</div>
+
+</div>
+
+<script>
+/* ════════════════ utilitaires ════════════════ */
+const f32 = Math.fround;
+const fmt = (v,n=3)=> (Number.isFinite(v) ? v.toFixed(n) : String(v));
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* thème */
+const themeBtn = document.getElementById('themeBtn');
+let themeMode = 0; // 0 auto, 1 clair, 2 sombre
+themeBtn.onclick = ()=>{
+  themeMode = (themeMode+1)%3;
+  const r = document.documentElement;
+  if(themeMode===0){ r.removeAttribute('data-theme'); themeBtn.textContent='Thème auto'; }
+  if(themeMode===1){ r.setAttribute('data-theme','light'); themeBtn.textContent='Thème clair'; }
+  if(themeMode===2){ r.setAttribute('data-theme','dark'); themeBtn.textContent='Thème sombre'; }
+  redrawAll();
+};
+
+/* ════════════════ 3 — edge function ════════════════ */
+const cvE = document.getElementById('cvEdge'), ctxE = cvE.getContext('2d');
+let EV=[{x:110,y:350,c:[248,113,113]},{x:420,y:330,c:[74,222,128]},{x:265,y:80,c:[96,165,250]}];
+let EP={x:265,y:245}, Edrag=null, Emode='fill', Estep=4;
+
+function edge(a,b,p){ // forme antisymétrique, comme dans LV3
+  const ux=f32(a.x-p.x), uy=f32(a.y-p.y);
+  const vx=f32(b.x-p.x), vy=f32(b.y-p.y);
+  return f32(f32(ux*vy)-f32(uy*vx));
+}
+function drawEdge(){
+  ctxE.fillStyle=css('--panel2'); ctxE.fillRect(0,0,cvE.width,cvE.height);
+  const area=edge(EV[0],EV[1],EV[2]);
+  if(Emode!=='none' && Math.abs(area)>1e-6){
+    const minX=Math.max(0,Math.floor(Math.min(EV[0].x,EV[1].x,EV[2].x)));
+    const maxX=Math.min(cvE.width,Math.ceil(Math.max(EV[0].x,EV[1].x,EV[2].x)));
+    const minY=Math.max(0,Math.floor(Math.min(EV[0].y,EV[1].y,EV[2].y)));
+    const maxY=Math.min(cvE.height,Math.ceil(Math.max(EV[0].y,EV[1].y,EV[2].y)));
+    for(let y=minY;y<maxY;y+=Estep) for(let x=minX;x<maxX;x+=Estep){
+      const p={x:x+Estep/2,y:y+Estep/2};
+      const w0=edge(EV[1],EV[2],p), w1=edge(EV[2],EV[0],p), w2=edge(EV[0],EV[1],p);
+      const inside = area>0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+      if(!inside) continue;
+      const b0=w0/area,b1=w1/area,b2=w2/area;
+      if(Emode==='fill'){
+        const r=b0*EV[0].c[0]+b1*EV[1].c[0]+b2*EV[2].c[0];
+        const g=b0*EV[0].c[1]+b1*EV[1].c[1]+b2*EV[2].c[1];
+        const bl=b0*EV[0].c[2]+b1*EV[1].c[2]+b2*EV[2].c[2];
+        ctxE.fillStyle=`rgb(${r|0},${g|0},${bl|0})`;
+      } else {
+        const m=Math.max(b0,b1,b2);
+        const v=Math.round(m*255);
+        ctxE.fillStyle = m===b0?`rgb(${v},40,40)`: m===b1?`rgb(40,${v},40)`:`rgb(40,40,${v})`;
+      }
+      ctxE.fillRect(x,y,Estep,Estep);
+    }
+  }
+  ctxE.beginPath(); ctxE.moveTo(EV[0].x,EV[0].y);
+  ctxE.lineTo(EV[1].x,EV[1].y); ctxE.lineTo(EV[2].x,EV[2].y); ctxE.closePath();
+  ctxE.strokeStyle=css('--ink'); ctxE.lineWidth=1.4; ctxE.stroke();
+  EV.forEach((v,i)=>{
+    ctxE.beginPath(); ctxE.arc(v.x,v.y,8,0,7);
+    ctxE.fillStyle=`rgb(${v.c[0]},${v.c[1]},${v.c[2]})`; ctxE.fill();
+    ctxE.strokeStyle=css('--panel2'); ctxE.lineWidth=2.2; ctxE.stroke();
+    ctxE.fillStyle=css('--ink'); ctxE.font='12px sans-serif'; ctxE.fillText('V'+i,v.x+12,v.y-10);
+  });
+  ctxE.beginPath(); ctxE.arc(EP.x,EP.y,6,0,7);
+  ctxE.fillStyle=css('--ink'); ctxE.fill();
+  ctxE.strokeStyle=css('--panel2'); ctxE.lineWidth=2.2; ctxE.stroke();
+  ctxE.fillStyle=css('--ink'); ctxE.fillText('P',EP.x+11,EP.y-9);
+
+  const w0=edge(EV[1],EV[2],EP), w1=edge(EV[2],EV[0],EP), w2=edge(EV[0],EV[1],EP);
+  const inside = area>0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+  document.getElementById('e_w0').textContent=fmt(w0,1);
+  document.getElementById('e_w1').textContent=fmt(w1,1);
+  document.getElementById('e_w2').textContent=fmt(w2,1);
+  document.getElementById('e_area').textContent=fmt(area,1);
+  document.getElementById('e_wind').textContent= area>0?'CCW (aire > 0)':'CW (aire < 0)';
+  const el=document.getElementById('e_in');
+  el.textContent = inside?'À L’INTÉRIEUR':'à l’extérieur';
+  el.style.color = inside?css('--ok'):css('--bad');
+  if(Math.abs(area)>1e-6){
+    const b0=w0/area,b1=w1/area,b2=w2/area;
+    document.getElementById('e_b0').textContent=fmt(b0);
+    document.getElementById('e_b1').textContent=fmt(b1);
+    document.getElementById('e_b2').textContent=fmt(b2);
+    document.getElementById('e_sum').textContent=fmt(b0+b1+b2);
+  }
+}
+function cpos(cv,e){ const r=cv.getBoundingClientRect();
+  const sx=cv.width/r.width, sy=cv.height/r.height;
+  const t = e.touches?e.touches[0]:e;
+  return {x:(t.clientX-r.left)*sx, y:(t.clientY-r.top)*sy}; }
+function bindDrag(cv,getPts,onMove){
+  const down=e=>{ const p=cpos(cv,e); const pts=getPts();
+    let best=null,bd=24; pts.forEach((t,i)=>{const d=Math.hypot(t.x-p.x,t.y-p.y); if(d<bd){bd=d;best=i;}});
+    cv._drag=best; if(best!==null) e.preventDefault(); };
+  const move=e=>{ if(cv._drag===null||cv._drag===undefined) return; e.preventDefault(); onMove(cv._drag,cpos(cv,e)); };
+  const up=()=>{ cv._drag=null; };
+  cv.addEventListener('mousedown',down); cv.addEventListener('touchstart',down,{passive:false});
+  window.addEventListener('mousemove',move); window.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('mouseup',up); window.addEventListener('touchend',up);
+}
+bindDrag(cvE,()=>[...EV,EP],(i,p)=>{ if(i<3){EV[i].x=p.x;EV[i].y=p.y;} else {EP.x=p.x;EP.y=p.y;} drawEdge(); });
+document.querySelectorAll('[data-edge]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-edge]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); Emode=b.dataset.edge; drawEdge();
+});
+document.getElementById('sStep').oninput=e=>{ Estep=+e.target.value;
+  document.getElementById('lStep').textContent=Estep; drawEdge(); };
+
+/* ════════════════ 3bis — top-left ════════════════ */
+const cvT=document.getElementById('cvTL'), ctxT=cvT.getContext('2d');
+let TLmode='topleft';
+function isTopLeft(a,b){ const ex=b.x-a.x, ey=b.y-a.y;
+  return (ey===0 && ex<0) || (ey>0); }
+function drawTL(){
+  ctxT.fillStyle=css('--panel2'); ctxT.fillRect(0,0,cvT.width,cvT.height);
+  const Q=[{x:60,y:50},{x:360,y:50},{x:360,y:250},{x:60,y:250}];
+  const T1=[Q[0],Q[1],Q[2]], T2=[Q[0],Q[2],Q[3]];
+  const S=5;
+  const cover=new Map();
+  const rast=(T,id)=>{
+    const area=edge(T[0],T[1],T[2]);
+    if(Math.abs(area)<1e-6) return;
+    const bias=[0,0,0];
+    if(TLmode==='topleft'){
+      bias[0]=isTopLeft(T[1],T[2])?0:-0.0001*Math.abs(area);
+      bias[1]=isTopLeft(T[2],T[0])?0:-0.0001*Math.abs(area);
+      bias[2]=isTopLeft(T[0],T[1])?0:-0.0001*Math.abs(area);
+    }
+    const minX=Math.floor(Math.min(T[0].x,T[1].x,T[2].x)), maxX=Math.ceil(Math.max(T[0].x,T[1].x,T[2].x));
+    const minY=Math.floor(Math.min(T[0].y,T[1].y,T[2].y)), maxY=Math.ceil(Math.max(T[0].y,T[1].y,T[2].y));
+    for(let y=minY;y<maxY;y+=S) for(let x=minX;x<maxX;x+=S){
+      const p={x:x+S/2,y:y+S/2};
+      const w0=edge(T[1],T[2],p)+bias[0], w1=edge(T[2],T[0],p)+bias[1], w2=edge(T[0],T[1],p)+bias[2];
+      const inside= area>0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+      if(!inside) continue;
+      const k=x+','+y; cover.set(k,(cover.get(k)||0)+1);
+    }
+  };
+  rast(T1,1); rast(T2,2);
+  let dbl=0;
+  for(const [k,v] of cover){
+    const [x,y]=k.split(',').map(Number);
+    ctxT.fillStyle = v>1 ? css('--bad') : css('--accent');
+    if(v>1) dbl++;
+    ctxT.globalAlpha = v>1 ? 1 : .35;
+    ctxT.fillRect(x,y,S,S);
+  }
+  ctxT.globalAlpha=1;
+  ctxT.beginPath(); ctxT.moveTo(Q[0].x,Q[0].y); ctxT.lineTo(Q[2].x,Q[2].y);
+  ctxT.strokeStyle=css('--warn'); ctxT.setLineDash([5,4]); ctxT.lineWidth=1.5; ctxT.stroke(); ctxT.setLineDash([]);
+  ctxT.fillStyle=css('--warn'); ctxT.font='11px sans-serif';
+  ctxT.fillText('arête partagée', 150, 160);
+
+  const v=document.getElementById('tlVerdict');
+  v.innerHTML = TLmode==='topleft'
+    ? `<span style="color:${css('--ok')}"><b>0 doublon.</b></span> Chaque pixel appartient à exactement un triangle. L’arête partagée est attribuée sans ambiguïté.`
+    : `<span style="color:${css('--bad')}"><b>${dbl} pixels en double</b></span> (en rouge) le long de l’arête partagée. En opaque, invisible. En <code>AlphaBlend</code>, une ligne deux fois plus opaque.`;
+
+  const tbl=document.getElementById('tlTable');
+  const edges=[['T1 · V0→V1',Q[0],Q[1]],['T1 · V1→V2',Q[1],Q[2]],['T1 · V2→V0',Q[2],Q[0]],
+               ['T2 · V0→V2',Q[0],Q[2]],['T2 · V2→V3',Q[2],Q[3]],['T2 · V3→V0',Q[3],Q[0]]];
+  tbl.innerHTML = '<table>'+edges.map(([n,a,b])=>{
+    const t=isTopLeft(a,b);
+    return `<tr><td style="font-size:12px">${n}</td><td class="n" style="color:${t?css('--ok'):css('--dim')}">${t?'top/left → inclus':'bottom/right → exclu'}</td></tr>`;
+  }).join('')+'</table>';
+}
+document.querySelectorAll('[data-tl]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-tl]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); TLmode=b.dataset.tl; drawTL();
+});
+
+/* ════════════════ 5 — clipping near ════════════════ */
+const cvC=document.getElementById('cvClip'), ctxC=cvC.getContext('2d');
+const ORIG={x:250,y:345}, SC=55; let nearN=0.8;
+let TV=[{x:-1.5,z:2.7},{x:1.7,z:2.3},{x:0.2,z:0.3}];
+const toS=p=>({x:ORIG.x+p.x*SC, y:ORIG.y-p.z*SC});
+const toW=s=>({x:(s.x-ORIG.x)/SC, z:(ORIG.y-s.y)/SC});
+const cdist=p=>p.z-nearN;
+const lerpV=(a,b,t)=>({x:a.x+(b.x-a.x)*t, z:a.z+(b.z-a.z)*t});
+function clipNear(tri){
+  const ins=[]; tri.forEach((v,i)=>{ if(cdist(v)>=0) ins.push(i); });
+  if(ins.length===0) return {poly:[],kept:0};
+  if(ins.length===3) return {poly:[...tri],kept:3};
+  const poly=[];
+  for(let i=0;i<3;i++){
+    const A=tri[i],B=tri[(i+1)%3], dA=cdist(A), dB=cdist(B);
+    if(dA>=0) poly.push(A);
+    if((dA>=0)!==(dB>=0)) poly.push(lerpV(A,B,dA/(dA-dB)));
+  }
+  return {poly,kept:ins.length};
+}
+function drawClip(){
+  ctxC.fillStyle=css('--panel2'); ctxC.fillRect(0,0,cvC.width,cvC.height);
+  const yN=ORIG.y-nearN*SC;
+  ctxC.fillStyle='rgba(248,113,113,.08)'; ctxC.fillRect(0,yN,cvC.width,cvC.height-yN);
+  ctxC.beginPath(); ctxC.moveTo(0,yN); ctxC.lineTo(cvC.width,yN);
+  ctxC.strokeStyle=css('--bad'); ctxC.lineWidth=2; ctxC.stroke();
+  ctxC.fillStyle=css('--bad'); ctxC.font='11px sans-serif';
+  ctxC.fillText('plan NEAR    w − z = 0', 8, yN-7);
+
+  const s=TV.map(toS);
+  ctxC.beginPath(); ctxC.moveTo(s[0].x,s[0].y); ctxC.lineTo(s[1].x,s[1].y); ctxC.lineTo(s[2].x,s[2].y); ctxC.closePath();
+  ctxC.strokeStyle=css('--faint'); ctxC.setLineDash([4,4]); ctxC.lineWidth=1.3; ctxC.stroke(); ctxC.setLineDash([]);
+
+  const res=clipNear(TV);
+  if(res.poly.length>=3){
+    const ps=res.poly.map(toS);
+    ctxC.beginPath(); ctxC.moveTo(ps[0].x,ps[0].y);
+    for(let i=1;i<ps.length;i++) ctxC.lineTo(ps[i].x,ps[i].y);
+    ctxC.closePath();
+    ctxC.fillStyle='rgba(74,222,128,.22)'; ctxC.fill();
+    ctxC.strokeStyle=css('--ok'); ctxC.lineWidth=2; ctxC.stroke();
+    if(ps.length===4){
+      ctxC.beginPath(); ctxC.moveTo(ps[0].x,ps[0].y); ctxC.lineTo(ps[2].x,ps[2].y);
+      ctxC.strokeStyle=css('--warn'); ctxC.setLineDash([5,4]); ctxC.lineWidth=1.5; ctxC.stroke(); ctxC.setLineDash([]);
+    }
+    ps.forEach(p=>{ ctxC.beginPath(); ctxC.arc(p.x,p.y,3.6,0,7); ctxC.fillStyle=css('--ok'); ctxC.fill(); });
+  }
+  ctxC.beginPath(); ctxC.arc(ORIG.x,ORIG.y,6,0,7); ctxC.fillStyle=css('--accent'); ctxC.fill();
+  ctxC.fillStyle=css('--dim'); ctxC.fillText('caméra',ORIG.x+10,ORIG.y+4);
+
+  s.forEach((p,i)=>{
+    const d=cdist(TV[i]);
+    ctxC.beginPath(); ctxC.arc(p.x,p.y,7,0,7);
+    ctxC.fillStyle = d>=0?css('--ok'):css('--bad'); ctxC.fill();
+    ctxC.strokeStyle=css('--panel2'); ctxC.lineWidth=2; ctxC.stroke();
+    ctxC.fillStyle=css('--ink'); ctxC.font='12px sans-serif'; ctxC.fillText('V'+i,p.x+11,p.y-9);
+  });
+
+  for(let i=0;i<3;i++){
+    const d=cdist(TV[i]), el=document.getElementById('c_d'+i);
+    el.textContent=fmt(d,2)+(d>=0?'  gardé':'  rejeté');
+    el.style.color = d>=0?css('--ok'):css('--bad');
+  }
+  const n=res.poly.length;
+  document.getElementById('c_kept').textContent=res.kept;
+  document.getElementById('c_poly').textContent = n===0?'—':(n===3?'triangle':(n===4?'quadrilatère':n+' sommets'));
+  document.getElementById('c_tris').textContent = n>=3?n-2:0;
+  const notes={
+    0:`<span style="color:${css('--bad')}"><b>Rejet trivial.</b></span> Aucun sommet devant le plan near : le triangle n’entre jamais dans le rasterizer. Coût : 3 soustractions.`,
+    1:`<span style="color:${css('--warn')}"><b>1 sommet gardé</b></span> → un petit triangle (le sommet + 2 intersections). <b>1 triangle émis.</b>`,
+    2:`<span style="color:${css('--warn')}"><b>2 sommets gardés</b></span> → un <b>quadrilatère</b>, retriangulé en éventail (diagonale jaune). <b>2 triangles émis</b> — c’est ce cas qui impose que la fonction retourne jusqu’à 4 sommets.`,
+    3:`<span style="color:${css('--ok')}"><b>Acceptation triviale.</b></span> Le triangle passe intact, copié bit à bit. <b>C’est le chemin de ≈ 95 % des triangles.</b>`
+  };
+  document.getElementById('c_note').innerHTML=notes[res.kept];
+}
+bindDrag(cvC,()=>TV.map(toS),(i,p)=>{ TV[i]=toW(p); drawClip(); });
+document.getElementById('sNear').oninput=e=>{ nearN=+e.target.value/10;
+  document.getElementById('lNear').textContent=nearN.toFixed(1); drawClip(); };
+
+/* ════════════════ 7.2 — perspective ════════════════ */
+const cvP=document.getElementById('cvPersp'), ctxP=cvP.getContext('2d');
+let pCorrect=false, tilt=72, camDist=3.0;
+const FOVY=60*Math.PI/180;
+function projP(p){
+  const th=Math.tan(FOVY*0.5), asp=cvP.width/cvP.height, w=-p.z;
+  return { x:((p.x/(asp*th))/w*0.5+0.5)*cvP.width,
+           y:(1-((p.y/th)/w*0.5+0.5))*cvP.height, w:w };
+}
+function quadP(){
+  const a=tilt*Math.PI/180, S=2.2;
+  return [{x:-S,y:0,z:-S,u:0,v:0},{x:S,y:0,z:-S,u:1,v:0},
+          {x:S,y:0,z:S,u:1,v:1},{x:-S,y:0,z:S,u:0,v:1}].map(p=>{
+    const y=p.y*Math.cos(a)-p.z*Math.sin(a), z=p.y*Math.sin(a)+p.z*Math.cos(a);
+    return {x:p.x,y:y-0.6,z:z-camDist,u:p.u,v:p.v};
+  });
+}
+function drawPersp(){
+  ctxP.fillStyle=css('--panel2'); ctxP.fillRect(0,0,cvP.width,cvP.height);
+  const img=ctxP.getImageData(0,0,cvP.width,cvP.height);
+  const q=quadP(), sc=q.map(projP);
+  const tri=(A,B,C,uA,uB,uC)=>{
+    const area=edge(A,B,C); if(Math.abs(area)<1e-6) return;
+    const minX=Math.max(0,Math.floor(Math.min(A.x,B.x,C.x))), maxX=Math.min(cvP.width-1,Math.ceil(Math.max(A.x,B.x,C.x)));
+    const minY=Math.max(0,Math.floor(Math.min(A.y,B.y,C.y))), maxY=Math.min(cvP.height-1,Math.ceil(Math.max(A.y,B.y,C.y)));
+    const iA=1/A.w,iB=1/B.w,iC=1/C.w;
+    for(let y=minY;y<=maxY;y++) for(let x=minX;x<=maxX;x++){
+      const p={x:x+.5,y:y+.5};
+      const w0=edge(B,C,p),w1=edge(C,A,p),w2=edge(A,B,p);
+      const inside= area>0?(w0>=0&&w1>=0&&w2>=0):(w0<=0&&w1<=0&&w2<=0);
+      if(!inside) continue;
+      const b0=w0/area,b1=w1/area,b2=w2/area;
+      let u,v;
+      if(pCorrect){ const den=b0*iA+b1*iB+b2*iC;
+        u=(b0*uA.u*iA+b1*uB.u*iB+b2*uC.u*iC)/den;
+        v=(b0*uA.v*iA+b1*uB.v*iB+b2*uC.v*iC)/den; }
+      else { u=b0*uA.u+b1*uB.u+b2*uC.u; v=b0*uA.v+b1*uB.v+b2*uC.v; }
+      const c=((Math.floor(u*8)+Math.floor(v*8))&1)?[235,235,240]:[40,80,190];
+      const o=(y*cvP.width+x)*4;
+      img.data[o]=c[0];img.data[o+1]=c[1];img.data[o+2]=c[2];img.data[o+3]=255;
+    }
+  };
+  tri(sc[0],sc[1],sc[2],q[0],q[1],q[2]);
+  tri(sc[0],sc[2],sc[3],q[0],q[2],q[3]);
+  ctxP.putImageData(img,0,0);
+  ctxP.beginPath(); ctxP.moveTo(sc[0].x,sc[0].y); ctxP.lineTo(sc[2].x,sc[2].y);
+  ctxP.strokeStyle=css('--warn'); ctxP.setLineDash([5,5]); ctxP.lineWidth=1.6; ctxP.stroke(); ctxP.setLineDash([]);
+  ctxP.fillStyle=css('--warn'); ctxP.font='11px sans-serif'; ctxP.fillText('diagonale partagée',8,16);
+
+  const ws=sc.map(s=>s.w), wn=Math.min(...ws), wf=Math.max(...ws), ratio=wf/wn;
+  document.getElementById('p_wn').textContent=fmt(wn,2);
+  document.getElementById('p_wf').textContent=fmt(wf,2);
+  document.getElementById('p_ratio').textContent=fmt(ratio,2)+' ×';
+  const el=document.getElementById('p_err');
+  if(pCorrect){ el.textContent='0 (exacte)'; el.style.color=css('--ok'); }
+  else { const err=(ratio-1)/(ratio+1)*100; el.textContent='≈ '+err.toFixed(0)+' %';
+         el.style.color= err>15?css('--bad'):css('--warn'); }
+  document.getElementById('p_note').innerHTML = pCorrect
+    ? `<span style="color:${css('--ok')}"><b>Correcte.</b></span> Les carreaux rétrécissent avec la distance, la diagonale est invisible. Coût : <b>une division flottante par pixel</b>, partagée par tous les varyings.`
+    : `<span style="color:${css('--bad')}"><b>Fausse.</b></span> Le damier plie sur la diagonale : chaque triangle interpole indépendamment, en ignorant que <code>w</code> varie. Plus le rapport est grand, plus l’erreur explose.`;
+}
+document.querySelectorAll('[data-persp]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-persp]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); pCorrect=(b.dataset.persp==='cor'); drawPersp();
+});
+document.getElementById('sTilt').oninput=e=>{ tilt=+e.target.value;
+  document.getElementById('lTilt').textContent=tilt; drawPersp(); };
+document.getElementById('sDist').oninput=e=>{ camDist=+e.target.value/10;
+  document.getElementById('lDist').textContent=camDist.toFixed(1); drawPersp(); };
+
+/* ════════════════ 6 — les étapes ════════════════ */
+const NEAR=0.1, FOV=60*Math.PI/180, ASP=1.0, VW=800, VH=600;
+const M00=f32(1/(ASP*Math.tan(FOV/2))), M11=f32(1/Math.tan(FOV/2));
+
+const CASES={
+  cross:{ label:'Triangle traversant le plan near',
+    desc:'Un grand triangle dont un sommet se trouve à 0.05 unité de l’œil, donc <b>devant</b> le plan near (n = 0.1). Deux sommets sont gardés : c’est le cas qui produit un <b>quadrilatère</b>, donc deux triangles — la configuration la plus instructive.',
+    v:[{x:-2,y:-2,z:-5},{x:2,y:-2,z:-5},{x:0,y:2,z:-0.05}] },
+  inside:{ label:'Triangle entièrement visible',
+    desc:'Le même triangle, mais son troisième sommet est ramené à 5 unités. Les trois distances sont positives : <b>acceptation triviale</b>, le clipping est court-circuité et les sommets sont copiés bit à bit.',
+    v:[{x:-2,y:-2,z:-5},{x:2,y:-2,z:-5},{x:0,y:2,z:-5}] }
+};
+let curCase='cross';
+
+function computePipeline(cs){
+  const R={};
+  R.local = CASES[cs].v;
+  // 1. clip space (far infini : z_clip = n, w = -z)
+  R.clip = R.local.map(p=>({ x:f32(p.x*M00), y:f32(p.y*M11), z:f32(NEAR), w:f32(-p.z) }));
+  // 2. distances
+  R.d = R.clip.map(c=>f32(c.w-c.z));
+  // 3. classification
+  R.allOut = R.d.every(v=>v<0);
+  R.allIn  = R.d.every(v=>v>=0);
+  // 4. clipping
+  if(R.allOut){ R.poly=[]; R.mode='rejet'; }
+  else if(R.allIn){ R.poly=R.clip.slice(); R.mode='accept'; }
+  else {
+    R.mode='clip'; const poly=[]; R.inter=[];
+    for(let i=0;i<3;i++){
+      const j=(i+1)%3, di=R.d[i], dj=R.d[j];
+      if(di>=0) poly.push(R.clip[i]);
+      if((di>=0)!==(dj>=0)){
+        const a=R.clip[i], b=R.clip[j];
+        const less = (a.x!==b.x)?a.x<b.x:(a.y!==b.y)?a.y<b.y:(a.z!==b.z)?a.z<b.z:a.w<b.w;
+        const swap = !less, lo = swap?j:i, hi = swap?i:j;
+        const dl=R.d[lo], dh=R.d[hi], t=f32(dl/f32(dl-dh));
+        const A=R.clip[lo], B=R.clip[hi];
+        const I={ x:f32(A.x+f32((B.x-A.x)*t)), y:f32(A.y+f32((B.y-A.y)*t)),
+                  z:f32(A.z+f32((B.z-A.z)*t)), w:f32(A.w+f32((B.w-A.w)*t)) };
+        R.inter.push({edge:`${i}→${j}`, lo, hi, t, I});
+        poly.push(I);
+      }
+    }
+    R.poly=poly;
+  }
+  R.n = R.poly.length;
+  // 5. division + viewport
+  R.ndc=[]; R.invW=[]; R.raster=[];
+  R.poly.forEach(c=>{
+    const iw=f32(1/c.w); R.invW.push(iw);
+    const n={x:f32(c.x*iw), y:f32(c.y*iw), z:f32(c.z*iw)};
+    R.ndc.push(n);
+    R.raster.push({ x:f32(f32(n.x*0.5+0.5)*VW), y:f32(f32(0.5-n.y*0.5)*VH), z:n.z });
+  });
+  // 6. triangles émis + aire
+  R.tris=[];
+  for(let q=1;q+1<R.n;q++){
+    const a=R.raster[0], b=R.raster[q], c=R.raster[q+1];
+    const area=edge(a,b,c);
+    R.tris.push({ idx:[0,q,q+1], area, back:area>=0 });
+  }
+  return R;
+}
+
+function tbl(rows, head){
+  return '<table>'+(head?`<tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>`:'')
+       + rows.map(r=>`<tr>${r.map(c=>`<td class="${/^[-−]?[\d.]/.test(String(c))||String(c).includes('—')?'n':''}">${c}</td>`).join('')}</tr>`).join('')
+       + '</table>';
+}
+
+function buildSteps(){
+  const R=computePipeline(curCase);
+  const S=[];
+  const V=(v,n=4)=>fmt(v,n);
+
+  /* ÉTAPE 0 */
+  S.push({t:'0 · Entrée', h:'Les sommets en espace local',
+    obj:'Poser le point de départ : trois positions en coordonnées d’objet, plus la matrice <code>MVP</code> qui les emmènera jusqu’à l’espace de clip. Rien n’est encore calculé.',
+    inHtml:`<p class="small">Caméra à l’origine, regard −Z. Projection perspective, <b>far infini</b> : <code>fov = 60°</code>, <code>aspect = 1</code>, <code>near = 0.1</code>. Viewport <code>${VW} × ${VH}</code>.</p>`
+      + tbl([['m[0][0]',V(M00,6)],['m[1][1]',V(M11,6)],['m[2][2]','0  (limite de n/(f−n) quand f → ∞)'],['m[2][3]','−1  (recopie −z dans w)'],['m[3][2]',V(NEAR,6)+'  (= near)'],['m[3][3]','0  (matrice projective)']],['Terme','Valeur']),
+    outHtml: tbl(R.local.map((p,i)=>['V'+i,V(p.x,2),V(p.y,2),V(p.z,2)]),['Sommet','x','y','z']),
+    code:`<span class="c-com">// Les positions viennent de MeshClass (L03), les indices de la face.</span>
+<span class="c-key">const</span> Vec3f p = mesh-&gt;vertexPositions[ mesh-&gt;indices[base + k] ];`});
+
+  /* ÉTAPE 1 */
+  S.push({t:'1 · MVP', h:'Local → espace de clip',
+    obj:'Amener les sommets dans l’espace où le volume de vue est <b>canonique</b> : un simple jeu d’inégalités sur (x, y, z, w). C’est le seul espace où le clipping se réduit à des comparaisons, et où l’interpolation des attributs reste linéaire.',
+    inHtml:'<p class="small">Entrée : les 3 sommets locaux de l’étape 0, et la matrice <code>MVP</code>.</p>',
+    outHtml: tbl(R.clip.map((c,i)=>['V'+i,V(c.x),V(c.y),V(c.z),V(c.w)]),['Sommet','x_clip','y_clip','z_clip','w_clip'])
+      + `<p class="small"><b>Lecture :</b> <code>w = −z_vue</code>, c’est exactement la <b>distance à l’œil</b>. Et avec le far infini, <code>z_clip = near</code> pour tous les sommets — <code>m[2][2] = 0</code> annule la contribution de z.</p>`,
+    code:`<span class="c-com">// Convention L02 : vecteur-LIGNE, v' = v · M. MulRow applique cet ordre.</span>
+cv[k].clip = MulRow(mvp, mesh-&gt;vertexPositions[ mesh-&gt;indices[base+k] ]);`,
+    simd:`<span class="c-com">// Vectorisation : 8 sommets transformés en parallèle, format SoA.
+// Les positions sont stockées en 8 x, puis 8 y, puis 8 z (structure de tableaux),
+// ce qui permet de charger un registre complet par composante.</span>
+__m256 px = _mm256_load_ps(xs);            <span class="c-com">// 8 coordonnées x</span>
+__m256 py = _mm256_load_ps(ys);            <span class="c-com">// 8 coordonnées y</span>
+__m256 pz = _mm256_load_ps(zs);            <span class="c-com">// 8 coordonnées z</span>
+
+<span class="c-com">// Chaque terme de la matrice est diffusé dans tout le registre :
+// la même valeur scalaire occupe les 8 couloirs.</span>
+<span class="c-key">const</span> __m256 m00 = _mm256_set1_ps(mvp[0][0]);
+<span class="c-key">const</span> __m256 m10 = _mm256_set1_ps(mvp[1][0]);
+<span class="c-key">const</span> __m256 m20 = _mm256_set1_ps(mvp[2][0]);
+<span class="c-key">const</span> __m256 m30 = _mm256_set1_ps(mvp[3][0]);
+
+<span class="c-com">// x_clip = px*m00 + py*m10 + pz*m20 + m30, en 3 FMA enchaînés.
+// _mm256_fmadd_ps(a,b,c) calcule a*b + c en UNE instruction, sans
+// arrondi intermédiaire : plus rapide ET plus précis que mul puis add.</span>
+__m256 cx = _mm256_fmadd_ps(px, m00, m30);
+       cx = _mm256_fmadd_ps(py, m10, cx);
+       cx = _mm256_fmadd_ps(pz, m20, cx);
+<span class="c-com">// ... idem pour cy (colonne 1), cz (colonne 2), cw (colonne 3).</span>`});
+
+  /* ÉTAPE 2 */
+  S.push({t:'2 · Distances', h:'La distance signée au plan near',
+    obj:'Savoir, pour chaque sommet, s’il est devant ou derrière le plan near — <b>sans jamais nommer <code>near</code> ni <code>far</code></b>. Le test s’écrit dans la forme canonique du volume de clip, ce qui le rend valable en perspective comme en orthographique, en far fini comme en far infini.',
+    inHtml:'<p class="small">Entrée : les coordonnées de clip de l’étape 1.</p>'
+      + tbl(R.clip.map((c,i)=>['V'+i,V(c.w),V(c.z)]),['Sommet','w_clip','z_clip']),
+    outHtml: tbl(R.d.map((d,i)=>['V'+i,V(d), d>=0?'<span style="color:var(--ok)">gardé</span>':'<span style="color:var(--bad)">rejeté</span>']),['Sommet','d = w − z','Verdict'])
+      + `<p class="small"><b>Pourquoi <code>w − z</code> et pas <code>z</code>.</b> En reverse-Z, les étiquettes near et far sont échangées : <code>z ≥ 0</code> devient le plan <b>far</b>, et <code>w − z ≥ 0</code> le plan <b>near</b>. Vérification : <code>w − z = f(d−n)/(f−n)</code>, positif si et seulement si <code>d ≥ n</code>.</p>
+      <p class="small"><b>Bonus non évident :</b> ce test unique rejette aussi tous les points <b>derrière la caméra</b> (<code>w ≤ 0</code>), puisque <code>d ≤ 0 &lt; n</code>. Aucun cas particulier à écrire.</p>`,
+    code:`<span class="c-com">// Distance signée au plan near, forme CANONIQUE du volume de clip.
+// Ne connaît ni near, ni far, ni le type de projection.</span>
+[[nodiscard]] LV3_FORCEINLINE <span class="c-key">float</span> NearDistance(<span class="c-key">const</span> ClipVertex&amp; v) noexcept
+{
+    <span class="c-key">return</span> v.clip.w − v.clip.z;
+}`,
+    simd:`<span class="c-com">// 8 sommets d'un coup : une seule soustraction vectorielle.</span>
+__m256 d = _mm256_sub_ps(cw, cz);
+
+<span class="c-com">// Classification sans branchement : on compare à zéro, puis on condense
+// les 8 résultats en un masque de 8 bits lisible par le CPU scalaire.
+// _CMP_GE_OQ = "greater or equal, ordered, quiet" — ordered signifie
+// qu'un NaN rend la comparaison fausse au lieu de lever une exception.</span>
+__m256 ge  = _mm256_cmp_ps(d, _mm256_setzero_ps(), _CMP_GE_OQ);
+<span class="c-key">const int</span> mask = _mm256_movemask_ps(ge);   <span class="c-com">// 1 bit par couloir</span>
+
+<span class="c-com">// mask == 0    -> les 8 sommets sont derrière : rejet trivial
+// mask == 0xFF -> les 8 sont devant : acceptation triviale
+// sinon        -> au moins une face traverse, chemin lent</span>`});
+
+  /* ÉTAPE 3 */
+  const cls = R.allOut?'REJET TRIVIAL':(R.allIn?'ACCEPTATION TRIVIALE':'CLIPPING REQUIS');
+  S.push({t:'3 · Classification', h:'Choisir le chemin, avant de travailler',
+    obj:'Court-circuiter le travail inutile. C’est l’idée reprise de <b>Cyrus-Beck</b> : avant de calculer quoi que ce soit, vérifier si le résultat est déjà connu. En pratique, environ <b>95 % des triangles</b> prennent le chemin d’acceptation triviale et ne paient jamais le parcours Sutherland-Hodgman.',
+    inHtml:'<p class="small">Entrée : les distances de l’étape 2.</p>'
+      + tbl(R.d.map((d,i)=>['V'+i,V(d),d>=0?'≥ 0':'&lt; 0']),['Sommet','d','Signe']),
+    outHtml:`<div class="kv"><span class="k">tous d &lt; 0 (rejet)</span><span class="v">${R.allOut?'oui':'non'}</span></div>
+      <div class="kv"><span class="k">tous d ≥ 0 (accept)</span><span class="v">${R.allIn?'oui':'non'}</span></div>
+      <div class="kv"><span class="k">chemin retenu</span><span class="v" style="color:var(--accent)">${cls}</span></div>`
+      + `<p class="small">${R.allIn?'Les trois sommets sont copiés <b>bit à bit</b> — c’est ce que le test 2 vérifie par <code>memcmp</code>. Si les sommets différaient, on serait passé par le parcours général, ce qui serait un <b>bug de performance invisible à l’écran</b>.':'Le triangle traverse le plan : il faut le découper.'}</p>`,
+    code:`<span class="c-com">// Rejet trivial : tout est derrière le plan near.</span>
+<span class="c-key">if</span> (d[0] &lt; 0.0f &amp;&amp; d[1] &lt; 0.0f &amp;&amp; d[2] &lt; 0.0f)
+    <span class="c-key">return</span> 0;
+
+<span class="c-com">// Acceptation triviale : rien à couper. Copie directe, aucun calcul.</span>
+<span class="c-key">if</span> (d[0] &gt;= 0.0f &amp;&amp; d[1] &gt;= 0.0f &amp;&amp; d[2] &gt;= 0.0f)
+{
+    dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2];
+    <span class="c-key">return</span> 3;
+}`});
+
+  /* ÉTAPE 4 */
+  let s4out, s4extra='';
+  if(R.mode==='clip'){
+    s4out = tbl(R.poly.map((c,i)=>{
+      const it = R.inter.find(x=>x.I===c);
+      return ['dst['+i+']', it?('I '+it.edge):'sommet gardé', V(c.x), V(c.y), V(c.z), V(c.w)];
+    }),['Sortie','Origine','x','y','z','w']);
+    s4extra = `<h4 style="margin-top:14px">Les intersections, en détail</h4>` + tbl(R.inter.map(it=>
+      ['arête '+it.edge, `V${it.lo} → V${it.hi}`, V(it.t,6), V(it.I.w), V(it.I.z)]),
+      ['Arête','Sens canonique','t','w du point','z du point'])
+      + `<p class="small"><b>Vérification :</b> sur chaque intersection, <code>w == z</code> — le point est exactement sur le plan near, par construction. C’est la preuve que <code>t</code> est exact : <code>NearDistance</code> est <b>affine</b> dans les coordonnées de clip, donc le paramètre d’intersection est une expression rationnelle exacte des distances, pas une approximation.</p>`;
+  } else {
+    s4out = tbl(R.poly.map((c,i)=>['dst['+i+']','copie de V'+i,V(c.x),V(c.y),V(c.z),V(c.w)]),['Sortie','Origine','x','y','z','w']);
+  }
+  S.push({t:'4 · Clipping', h:'Sutherland-Hodgman, un plan, parcours ordonné',
+    obj:'Produire un <b>polygone fermé</b> à partir du triangle coupé. Le parcours ordonné des arêtes préserve deux choses que personne ne vérifiera ensuite : la <b>connectivité</b> du contour, et son <b>sens de rotation</b> — donc la validité du backface culling en aval.',
+    inHtml:'<p class="small">Entrée : les sommets de clip (étape 1) et leurs distances (étape 2).</p>'
+      + tbl(R.clip.map((c,i)=>['V'+i,V(c.w),V(R.d[i])]),['Sommet','w','d']),
+    outHtml: `<div class="kv"><span class="k">count</span><span class="v">${R.n}</span></div>
+      <div class="kv"><span class="k">triangles à émettre</span><span class="v">${Math.max(0,R.n-2)}</span></div>` + s4out + s4extra,
+    code:`<span class="c-key">for</span> (int32_t i = 0; i &lt; 3; ++i)
+{
+    <span class="c-key">const</span> int32_t j = (i + 1) % 3;
+    <span class="c-key">const float</span> di = d[i], dj = d[j];
+
+    <span class="c-com">// 1. le sommet AVANT l'intersection de son arête sortante.
+    //    Inverser ces deux blocs produit un polygone auto-intersectant.</span>
+    <span class="c-key">if</span> (di &gt;= 0.0f)
+        dst[count++] = src[i];
+
+    <span class="c-com">// 2. changement de signe -&gt; l'arête traverse le plan</span>
+    <span class="c-key">if</span> ((di &gt;= 0.0f) != (dj &gt;= 0.0f))
+    {
+        <span class="c-com">// Ordre CANONIQUE lo -&gt; hi : deux triangles adjacents parcourant
+        // la même arête en sens opposé obtiennent le MÊME point, bit à bit.
+        // Sans ça : 124 trous mesurés sur la couture (cf. §7.3).</span>
+        <span class="c-key">const bool</span>    swap = !ClipLess(src[i].clip, src[j].clip);
+        <span class="c-key">const</span> int32_t lo   = swap ? j : i;
+        <span class="c-key">const</span> int32_t hi   = swap ? i : j;
+
+        <span class="c-com">// di − dj est STRICTEMENT positif ici : l'un est &gt;= 0, l'autre &lt; 0.
+        // Aucun epsilon requis, aucune division par zéro possible.</span>
+        <span class="c-key">const float</span> dl = d[lo], dh = d[hi];
+        dst[count++] = Lerp(src[lo], src[hi], dl / (dl − dh));
+    }
+}`,
+    simd:`<span class="c-com">// Ce parcours n'est PAS vectorisable utilement, et c'est voulu :
+//   - il est emprunté par moins de 1 % des triangles ;
+//   - sa sortie a une taille variable (0, 3 ou 4), ce qui imposerait
+//     une compaction par masque (_mm256_permutevar8x32_ps + table de
+//     permutations) dont le coût dépasserait le gain ;
+//   - le gros du travail est déjà court-circuité à l'étape 3, qui,
+//     elle, se vectorise parfaitement.
+// Règle : vectoriser le chemin CHAUD, pas le chemin RARE.</span>`});
+
+  /* ÉTAPE 5 */
+  S.push({t:'5 · Division', h:'÷ w → NDC, et on garde invW',
+    obj:'Passer en coordonnées normalisées, et <b>conserver l’inverse</b>. <code>invW</code> est le seul passager qui traverse la frontière clip → écran : sans lui, toute interpolation d’attribut serait fausse en perspective.',
+    inHtml:'<p class="small">Entrée : le polygone clippé de l’étape 4. <b>Après clipping, <code>w &gt; 0</code> est garanti</b> — aucune garde anti-division n’est nécessaire.</p>'
+      + tbl(R.poly.map((c,i)=>['dst['+i+']',V(c.x),V(c.y),V(c.z),V(c.w)]),['Sommet','x','y','z','w']),
+    outHtml: tbl(R.ndc.map((n,i)=>['dst['+i+']',V(R.invW[i]),V(n.x),V(n.y),V(n.z,6)]),['Sommet','invW = 1/w','x_ndc','y_ndc','z_ndc'])
+      + `<p class="small"><b>Lecture :</b> <code>z_ndc = near / distance</code> — en reverse-Z, <b>1 au plus près, 0 à l’infini</b>. ${R.mode==='clip'?'Et regarde <code>y_ndc</code> sur les deux intersections : plus de <b>33</b>, soit environ <b>9 900 pixels</b> hors viewport. C’est cette magnitude qui provoque l’annulation catastrophique de §7.3.':'Tous les sommets sont dans [−1, 1] : rien ne sort du viewport.'}</p>`,
+    code:`<span class="c-key">for</span> (int k = 0; k &lt; 3; ++k)
+{
+    <span class="c-com">// Après clipping, w &gt; 0 est GARANTI. Pas de garde nécessaire.</span>
+    invW[k] = 1.0f / v[k]-&gt;clip.w;
+    r[k] = view.viewport.ToRaster({ v[k]-&gt;clip.x * invW[k],
+                                    v[k]-&gt;clip.y * invW[k],
+                                    v[k]-&gt;clip.z * invW[k] });
+}`,
+    simd:`<span class="c-com">// La division est l'opération la plus chère du jeu d'instructions
+// (≈ 14 cycles de latence contre 4 pour une multiplication).
+// _mm256_rcp_ps donne un inverse APPROCHÉ en 1 cycle, précis à ~12 bits.
+// Une itération de Newton-Raphson le ramène à la précision float32 :
+//     x1 = x0 * (2 − w * x0)</span>
+__m256 x0 = _mm256_rcp_ps(cw);                      <span class="c-com">// ≈ 1/w, 12 bits</span>
+__m256 two = _mm256_set1_ps(2.0f);
+__m256 x1 = _mm256_mul_ps(x0,
+              _mm256_fnmadd_ps(cw, x0, two));       <span class="c-com">// fnmadd = −(a*b)+c</span>
+
+<span class="c-com">// ATTENTION : ne jamais utiliser rcp seul pour invW. Le dénominateur
+// perspectif est ensuite divisé par lui-même — une erreur de 12 bits
+// y devient visible sous forme de bandes sur les grandes surfaces.
+// Avec Newton-Raphson, on reste exact à l'ULP près pour 2 cycles de plus.</span>
+__m256 ndcx = _mm256_mul_ps(cx, x1);
+__m256 ndcy = _mm256_mul_ps(cy, x1);`});
+
+  /* ÉTAPE 6 */
+  S.push({t:'6 · Viewport', h:'NDC → pixels, et le flip Y',
+    obj:'Convertir en coordonnées de pixel. <b>C’est ici que naît le piège du lot</b> : le framebuffer a son axe Y vers le bas, donc la transformation inverse le sens de rotation de tous les triangles.',
+    inHtml:'<p class="small">Entrée : le NDC de l’étape 5.</p>'
+      + tbl(R.ndc.map((n,i)=>['dst['+i+']',V(n.x),V(n.y)]),['Sommet','x_ndc','y_ndc']),
+    outHtml: tbl(R.raster.map((r,i)=>['dst['+i+']',V(r.x,2),V(r.y,2),V(r.z,6)]),['Sommet','x_raster','y_raster','z'])
+      + `<pre style="margin-top:10px"><code>xr = (xn · 0.5 + 0.5) · ${VW}
+yr = (0.5 − yn · 0.5) · ${VH}      <span class="c-com">// ← LE FLIP : le signe de yn est inversé</span></code></pre>`
+      + `<p class="small"><b>Conséquence directe :</b> un triangle CCW en espace vue devient <b>CW</b> à l’écran. Son aire signée change de signe. C’est la cause du bug n° 20, et la raison pour laquelle le signe du culling doit être <b>mesuré</b> à travers la chaîne complète, jamais déduit de la convention de winding seule.</p>`,
+    code:`<span class="c-com">// Viewport::ToRaster — le flip Y est ici, et nulle part ailleurs.</span>
+[[nodiscard]] Vec3f ToRaster(<span class="c-key">const</span> Vec3f&amp; ndc) <span class="c-key">const</span> noexcept
+{
+    <span class="c-key">return</span> { x + (ndc.x * 0.5f + 0.5f) * <span class="c-key">float</span>(width),
+             y + (0.5f − ndc.y * 0.5f) * <span class="c-key">float</span>(height),   <span class="c-com">// flip</span>
+             ndc.z };
+}`});
+
+  /* ÉTAPE 7 */
+  const trows = R.tris.map((t,i)=>['triangle '+i, `dst[${t.idx.join('], dst[')}]`, V(t.area,1),
+    t.back?'<span style="color:var(--bad)">rejeté (arrière)</span>':'<span style="color:var(--ok)">gardé (avant)</span>']);
+  S.push({t:'7 · Backface', h:'Le signe de l’aire décide',
+    obj:'Éliminer les faces tournées à l’opposé. Le test est <b>gratuit</b> : l’aire signée sert déjà à normaliser les barycentriques, on ne fait que lire son signe. Et contrairement à un test sur les normales, il gère correctement les scales négatifs et les miroirs.',
+    inHtml:'<p class="small">Entrée : les sommets raster de l’étape 6, regroupés en éventail depuis <code>dst[0]</code>.</p>',
+    outHtml: tbl(trows,['Triangle','Sommets','aire signée','Verdict'])
+      + `<div class="note" style="margin-top:12px"><b>La convention, mesurée et non devinée :</b> front-face LV3 = CCW en espace vue. Le flip Y de l’étape 6 inverse le sens. <b>Donc l’aire signée d’une face avant est NÉGATIVE</b>, et <code>IsBackFacing</code> retourne <code>area &gt;= 0</code>. Le <code>&gt;=</code> rejette au passage l’aire nulle : triangle dégénéré, rien à dessiner.</div>`,
+    code:`<span class="c-com">// CONVENTION DE FACE — mesurée, pas devinée. Verrouillée par TNR.
+//   Front-face LV3 = CCW en espace VUE (main droite, regard −Z).
+//   Viewport::ToRaster inverse Y  =&gt;  CW en espace RASTER
+//   =&gt;  l'aire signée d'une FACE AVANT est NEGATIVE.</span>
+[[nodiscard]] LV3_FORCEINLINE <span class="c-key">bool</span> IsBackFacing(<span class="c-key">float</span> signedArea) noexcept
+{
+    <span class="c-key">return</span> signedArea &gt;= 0.0f;   <span class="c-com">// le &gt;= rejette aussi l'aire nulle</span>
+}`});
+
+  /* ÉTAPE 8 */
+  const T0 = R.tris.find(t=>!t.back) || R.tris[0];
+  let bb=null;
+  if(T0){
+    const a=R.raster[T0.idx[0]], b=R.raster[T0.idx[1]], c=R.raster[T0.idx[2]];
+    bb={ minX:Math.max(0,Math.floor(Math.min(a.x,b.x,c.x))), maxX:Math.min(VW-1,Math.ceil(Math.max(a.x,b.x,c.x))),
+         minY:Math.max(0,Math.floor(Math.min(a.y,b.y,c.y))), maxY:Math.min(VH-1,Math.ceil(Math.max(a.y,b.y,c.y))),
+         rawMinY:Math.floor(Math.min(a.y,b.y,c.y)), a,b,c, area:T0.area };
+  }
+  S.push({t:'8 · Boîte', h:'Boîte englobante et biais haut-gauche',
+    obj:'Restreindre la zone à tester, et fixer une fois pour toutes la règle d’attribution des pixels de frontière. Le <i>scissor</i> latéral — le clamp au viewport — remplace ici le clipping des quatre plans de côté, pour quatre <code>min/max</code> au lieu de triangles supplémentaires.',
+    inHtml:'<p class="small">Entrée : le premier triangle gardé à l’étape 7.</p>'
+      + (bb?tbl([['A',V(bb.a.x,2),V(bb.a.y,2)],['B',V(bb.b.x,2),V(bb.b.y,2)],['C',V(bb.c.x,2),V(bb.c.y,2)]],['Sommet','x','y']):''),
+    outHtml: bb?(`<div class="kv"><span class="k">boîte brute en Y</span><span class="v">${bb.rawMinY} … ${Math.ceil(Math.max(bb.a.y,bb.b.y,bb.c.y))}</span></div>`
+      + `<div class="kv"><span class="k">après clamp viewport</span><span class="v">x ∈ [${bb.minX}, ${bb.maxX}]   y ∈ [${bb.minY}, ${bb.maxY}]</span></div>`
+      + `<div class="kv"><span class="k">pixels à tester</span><span class="v">${((bb.maxX-bb.minX+1)*(bb.maxY-bb.minY+1)).toLocaleString('fr-FR')}</span></div>`
+      + (bb.rawMinY<0?`<p class="small"><b>Le clamp travaille réellement ici :</b> la boîte brute commence à <b>${bb.rawMinY}</b> en Y, très au-dessus de l’écran. Sans clamp, <code>SetPixel</code> écrirait hors du framebuffer — ou, pire, la boucle tournerait sur des millions de pixels inexistants.</p>`:'')):'—',
+    code:`<span class="c-com">// 1. Boîte englobante, clampée au viewport (scissor latéral)</span>
+int32_t minX = (int32_t)std::floor(std::min({ v0.x, v1.x, v2.x }));
+int32_t maxX = (int32_t)std::ceil (std::max({ v0.x, v1.x, v2.x }));
+minX = std::max(minX, vp.x);
+maxX = std::min(maxX, vp.x + vp.width − 1);
+<span class="c-com">// ... idem en Y</span>
+
+<span class="c-com">// 2. Biais haut-gauche, RELATIF à l'aire (bug n° 18 de la L05 :
+//    un biais absolu de −1.0f est énorme sur un petit triangle
+//    et négligeable sur un grand — il faut l'échelle de l'aire).</span>
+<span class="c-key">const float</span> eps = kBiasEpsilon * std::fabs(area);
+<span class="c-key">const float</span> bias0 = IsTopLeft(v1, v2) ? 0.0f : −eps;
+<span class="c-key">const float</span> bias1 = IsTopLeft(v2, v0) ? 0.0f : −eps;
+<span class="c-key">const float</span> bias2 = IsTopLeft(v0, v1) ? 0.0f : −eps;`});
+
+  /* ÉTAPE 9 — SIMD lanes */
+  let laneHtml='—', laneNote='';
+  if(bb){
+    const py=Math.max(bb.minY, Math.min(bb.maxY, Math.floor((bb.minY+bb.maxY)/2)))+0.5;
+    const x0=Math.max(bb.minX, Math.floor((bb.minX+bb.maxX)/2)-3);
+    const rows=[];
+    for(let k=0;k<8;k++){
+      const px=x0+k+0.5;
+      const P={x:px,y:py};
+      const w0=edge(bb.b,bb.c,P), w1=edge(bb.c,bb.a,P), w2=edge(bb.a,bb.b,P);
+      const inside = bb.area>0 ? (w0>=0&&w1>=0&&w2>=0) : (w0<=0&&w1<=0&&w2<=0);
+      rows.push([`couloir ${k}`, (x0+k), fmt(w0,0), fmt(w1,0), fmt(w2,0),
+        inside?'<span class="lane-in">1</span>':'<span class="lane-out">0</span>',
+        inside?fmt(w0/bb.area,3):'—']);
+    }
+    laneHtml = `<p class="small">Scanline <code>y = ${Math.floor(py)}</code>, huit pixels consécutifs à partir de <code>x = ${x0}</code> — exactement le contenu d’un registre <code>__m256</code>.</p>`
+      + `<div class="lanes">${tbl(rows,['Couloir','x','w0','w1','w2','dedans','b0'])}</div>`;
+    laneNote = `<p class="small">Le masque d’appartenance est la <b>conjonction des trois signes</b>. En AVX2 on l’obtient sans aucun branchement : trois comparaisons, deux <code>and</code>, puis <code>movemask</code> pour savoir s’il reste quelque chose à écrire.</p>`;
+  }
+  S.push({t:'9 · Pixels', h:'Fonctions de bord et barycentriques',
+    obj:'Le cœur du rasterizer, et le seul endroit véritablement coûteux. Pour chaque pixel : trois fonctions de bord donnent à la fois <b>l’appartenance</b> (par leurs signes) et <b>les poids d’interpolation</b> (par leurs valeurs normalisées). Deux réponses pour le prix d’une.',
+    inHtml:'<p class="small">Entrée : les trois sommets raster et la boîte de l’étape 8.</p>'
+      + (bb?`<div class="kv"><span class="k">aire signée du triangle</span><span class="v">${V(bb.area,1)}</span></div>`:''),
+    outHtml: laneHtml + laneNote,
+    code:`<span class="c-key">for</span> (int32_t y = minY; y &lt;= maxY; ++y)
+<span class="c-key">for</span> (int32_t x = minX; x &lt;= maxX; ++x)
+{
+    <span class="c-com">// CENTRE du pixel, jamais son coin : une erreur ici décale
+    // silencieusement toute la géométrie d'un demi-pixel.</span>
+    <span class="c-key">const float</span> px = <span class="c-key">float</span>(x) + 0.5f;
+    <span class="c-key">const float</span> py = <span class="c-key">float</span>(y) + 0.5f;
+
+    <span class="c-key">const float</span> w0 = EdgeFunction(v1, v2, px, py) + bias0;
+    <span class="c-key">const float</span> w1 = EdgeFunction(v2, v0, px, py) + bias1;
+    <span class="c-key">const float</span> w2 = EdgeFunction(v0, v1, px, py) + bias2;
+
+    <span class="c-key">const bool</span> inside = (area &gt; 0.0f)
+        ? (w0 &gt;= 0 &amp;&amp; w1 &gt;= 0 &amp;&amp; w2 &gt;= 0)
+        : (w0 &lt;= 0 &amp;&amp; w1 &lt;= 0 &amp;&amp; w2 &lt;= 0);
+    <span class="c-key">if</span> (!inside) <span class="c-key">continue</span>;
+
+    <span class="c-key">const</span> BarycentricWeights b{ w0 * invArea, w1 * invArea, w2 * invArea };
+    onFragment(x, y, b, userData);
+}`,
+    simd:`<span class="c-com">// 8 pixels par itération. La fonction de bord est AFFINE en x :
+//   E(x+1) = E(x) + A   où A = (a.y − b.y) est constant sur la ligne.
+// On calcule donc E une seule fois en début de ligne, puis on
+// l'incrémente — c'est l'astuce de Pineda, et elle se vectorise
+// directement : 8 couloirs = 8 incréments précalculés.</span>
+
+<span class="c-com">// Pente de la fonction de bord 0, diffusée dans les 8 couloirs</span>
+<span class="c-key">const</span> __m256 A0 = _mm256_set1_ps(v1.y − v2.y);
+<span class="c-key">const</span> __m256 B0 = _mm256_set1_ps(v2.x − v1.x);
+
+<span class="c-com">// Décalages 0,1,2,...,7 : chaque couloir traite le pixel x+k</span>
+<span class="c-key">const</span> __m256 lane = _mm256_set_ps(7,6,5,4,3,2,1,0);
+
+<span class="c-com">// w0 du premier pixel de la ligne, diffusé puis décalé par couloir</span>
+__m256 w0 = _mm256_fmadd_ps(A0, lane, _mm256_set1_ps(w0_row));
+__m256 w1 = _mm256_fmadd_ps(A1, lane, _mm256_set1_ps(w1_row));
+__m256 w2 = _mm256_fmadd_ps(A2, lane, _mm256_set1_ps(w2_row));
+
+<span class="c-com">// Test d'appartenance : trois comparaisons, deux AND, zéro branchement.
+// Chaque couloir produit 0x00000000 (dehors) ou 0xFFFFFFFF (dedans).</span>
+<span class="c-key">const</span> __m256 zero = _mm256_setzero_ps();
+__m256 m = _mm256_and_ps(
+             _mm256_and_ps(_mm256_cmp_ps(w0, zero, _CMP_GE_OQ),
+                           _mm256_cmp_ps(w1, zero, _CMP_GE_OQ)),
+                           _mm256_cmp_ps(w2, zero, _CMP_GE_OQ));
+
+<span class="c-com">// Condensation en 8 bits : permet de sauter le bloc entier
+// si aucun pixel n'est dedans (fréquent dans les coins de la boîte).</span>
+<span class="c-key">const int</span> bits = _mm256_movemask_ps(m);
+<span class="c-key">if</span> (bits == 0) { <span class="c-com">/* avancer de 8 pixels */</span> <span class="c-key">continue</span>; }
+
+<span class="c-com">// Barycentriques : une seule multiplication par l'inverse de l'aire,
+// calculé UNE fois par triangle et non par pixel.</span>
+<span class="c-key">const</span> __m256 invA = _mm256_set1_ps(1.0f / area);
+__m256 b0 = _mm256_mul_ps(w0, invA);
+__m256 b1 = _mm256_mul_ps(w1, invA);
+__m256 b2 = _mm256_mul_ps(w2, invA);
+
+<span class="c-com">// AVX-512 : même code avec __m512 et 16 couloirs, et surtout
+// des masques natifs (__mmask16) qui remplacent les AND de masques —
+// l'écriture conditionnelle devient _mm512_mask_storeu_ps, sans blend.</span>`});
+
+  /* ÉTAPE 10 */
+  let zHtml='—';
+  if(bb){
+    const z0=bb.a.z, z1=bb.b.z, z2=bb.c.z;
+    const P={x:(bb.minX+bb.maxX)/2+0.5, y:(bb.minY+bb.maxY)/2+0.5};
+    const w0=edge(bb.b,bb.c,P), w1=edge(bb.c,bb.a,P), w2=edge(bb.a,bb.b,P);
+    const b0=w0/bb.area, b1=w1/bb.area, b2=w2/bb.area;
+    const z=f32(f32(b0*z0)+f32(b1*z1)+f32(b2*z2));
+    zHtml = tbl([
+      ['b0, b1, b2', `${fmt(b0,4)} · ${fmt(b1,4)} · ${fmt(b2,4)}`],
+      ['z0, z1, z2', `${fmt(z0,6)} · ${fmt(z1,6)} · ${fmt(z2,6)}`],
+      ['z interpolé (affine)', fmt(z,6)],
+      ['valeur du Z-buffer (clear)', '0.000000'],
+      ['test z &gt; stored', z>0?'<span style="color:var(--ok)">PASSE</span>':'<span style="color:var(--bad)">rejeté</span>'],
+      ['distance correspondante', fmt(NEAR/z,3)+' unités']
+    ],['Grandeur','Valeur']);
+  }
+  S.push({t:'10 · Early-Z', h:'La profondeur, testée avant tout le reste',
+    obj:'Décider qui est devant, <b>avant</b> de payer le moindre calcul de shading. Sur une scène avec du recouvrement, c’est le facteur de <i>overdraw</i> en moins sur le coût total.',
+    inHtml:'<p class="small">Entrée : les barycentriques de l’étape 9 et les <code>z</code> de l’étape 6.</p>',
+    outHtml: zHtml + `<div class="note ok" style="margin-top:12px"><b>Pourquoi <code>z</code> s’interpole AFFINEMENT, sans correction.</b><br>
+      <code>z_ndc = [n·f/(f−n)]·(1/d) − n/(f−n)</code> est une fonction <b>affine de 1/d</b>. Or <code>1/d = 1/w</code> est linéaire en espace écran. Donc <code>z_ndc</code> l’est aussi. En far infini, c’est encore plus net : <code>z_ndc = n/d</code>, purement proportionnel à <code>1/w</code>.<br><br>
+      <b>C’est exactement ce qui rend l’early-Z possible :</b> la profondeur est le seul attribut testable sans avoir calculé le dénominateur perspectif.</div>`,
+    code:`<span class="c-com">// 1. PROFONDEUR : affine, aucune correction</span>
+<span class="c-key">const float</span> z = b.w0 * ctx-&gt;z0 + b.w1 * ctx-&gt;z1 + b.w2 * ctx-&gt;z2;
+
+<span class="c-com">// 2. EARLY-Z : rejeter AVANT tout autre calcul.
+//    TestAndSet fusionne le test et l'écriture : impossible
+//    d'oublier l'écriture après un test réussi.</span>
+<span class="c-key">if</span> (!ctx-&gt;db-&gt;TestAndSet(x, y, z)) <span class="c-key">return</span>;
+
+<span class="c-com">// 3. Le dénominateur n'est calculé QUE si le fragment survit.</span>`,
+    simd:`<span class="c-com">// Z-buffer vectorisé : 8 profondeurs comparées, écriture masquée.
+// Reverse-Z + clear à 0 + test GREATER : on garde le plus GRAND z.</span>
+__m256 zNew = _mm256_fmadd_ps(b0, z0v,
+                _mm256_fmadd_ps(b1, z1v, _mm256_mul_ps(b2, z2v)));
+
+<span class="c-com">// Lecture non alignée du Z-buffer (la boîte ne commence pas
+// forcément sur une frontière de 32 octets).</span>
+__m256 zOld = _mm256_loadu_ps(&amp;depth[y * width + x]);
+
+<span class="c-com">// Masque de profondeur, combiné au masque d'appartenance de l'étape 9</span>
+__m256 pass = _mm256_and_ps(m, _mm256_cmp_ps(zNew, zOld, _CMP_GT_OQ));
+
+<span class="c-com">// _mm256_maskstore_ps n'écrit QUE les couloirs dont le bit de signe
+// du masque est à 1. Les autres pixels du registre sont laissés intacts :
+// c'est ce qui permet de traiter 8 pixels dont seuls 3 passent le test,
+// sans aucun branchement ni lecture-modification-écriture.</span>
+_mm256_maskstore_ps(&amp;depth[y * width + x], _mm256_castps_si256(pass), zNew);`});
+
+  /* ÉTAPE 11 */
+  let vHtml='—';
+  if(bb && R.poly.length){
+    const i0=T0.idx[0],i1=T0.idx[1],i2=T0.idx[2];
+    const iw0=R.invW[i0],iw1=R.invW[i1],iw2=R.invW[i2];
+    const P={x:(bb.minX+bb.maxX)/2+0.5, y:(bb.minY+bb.maxY)/2+0.5};
+    const w0=edge(bb.b,bb.c,P), w1=edge(bb.c,bb.a,P), w2=edge(bb.a,bb.b,P);
+    const b0=w0/bb.area,b1=w1/bb.area,b2=w2/bb.area;
+    const den=f32(f32(b0*iw0)+f32(b1*iw1)+f32(b2*iw2));
+    const distC=f32(1/den);
+    const distA=f32(f32(b0/iw0)+f32(b1/iw1)+f32(b2/iw2));
+    vHtml = tbl([
+      ['invW des 3 sommets', `${fmt(iw0,4)} · ${fmt(iw1,4)} · ${fmt(iw2,4)}`],
+      ['dénominateur  den', fmt(den,6)],
+      ['distance correcte  1/den', `<b style="color:var(--ok)">${fmt(distC,4)}</b>`],
+      ['distance affine (fausse)', `<b style="color:var(--bad)">${fmt(distA,4)}</b>`],
+      ['écart', `<b style="color:var(--bad)">${fmt(Math.abs(distA-distC)/distC*100,1)} %</b>`]
+    ],['Grandeur','Valeur']);
+  }
+  S.push({t:'11 · Varyings', h:'La correction perspective, enfin',
+    obj:'Interpoler correctement tout attribut porté par les sommets : UV, couleur, normale, position monde. Une <b>seule division par pixel</b>, quel que soit le nombre d’attributs — le dénominateur est calculé une fois et partagé par tous.',
+    inHtml:'<p class="small">Entrée : les barycentriques de l’étape 9, et les <code>invW</code> de l’étape 5. Le fragment a déjà survécu à l’early-Z.</p>',
+    outHtml: vHtml + `<div class="note" style="margin-top:12px"><b>Le théorème, en une ligne.</b> Pour tout attribut <code>a</code> linéaire en espace 3D, <code>a/w</code> est linéaire en espace écran, et <code>1/w</code> l’est aussi. La projection perspective est une homographie ; <code>1/w</code> est le facteur qui « défait » la division.</div>`,
+    code:`<span class="c-com">// LA division perspective par pixel — une seule, partagée.</span>
+<span class="c-key">const float</span> den = b.w0 * ctx-&gt;invW0 + b.w1 * ctx-&gt;invW1 + b.w2 * ctx-&gt;invW2;
+<span class="c-key">const float</span> inv = 1.0f / den;
+
+<span class="c-com">// Chaque varying a été PRÉ-DIVISÉ au triangle setup (3 fois par
+// triangle), jamais dans la boucle pixel. C'est la différence
+// entre O(sommets) et O(pixels).</span>
+<span class="c-key">const float</span> u = (b.w0 * ctx-&gt;u0 + b.w1 * ctx-&gt;u1 + b.w2 * ctx-&gt;u2) * inv;
+<span class="c-key">const float</span> v = (b.w0 * ctx-&gt;v0 + b.w1 * ctx-&gt;v1 + b.w2 * ctx-&gt;v2) * inv;`,
+    simd:`<span class="c-com">// Le dénominateur est calculé pour 8 pixels, puis inversé une fois.
+// Ici l'inverse approché SUFFIT : le résultat multiplie un attribut
+// visuel (UV, couleur), pas une profondeur comparée au bit près.
+// On économise la correction de Newton-Raphson de l'étape 5.</span>
+__m256 den = _mm256_fmadd_ps(b0, iw0,
+               _mm256_fmadd_ps(b1, iw1, _mm256_mul_ps(b2, iw2)));
+__m256 inv = _mm256_rcp_ps(den);          <span class="c-com">// ~12 bits, assez pour un UV</span>
+
+<span class="c-com">// Les varyings pré-divisés sont interpolés puis remis à l'échelle.
+// Le même "inv" sert à TOUS les varyings : le coût de la correction
+// perspective ne croît pas avec leur nombre.</span>
+__m256 u = _mm256_mul_ps(inv, _mm256_fmadd_ps(b0, u0,
+             _mm256_fmadd_ps(b1, u1, _mm256_mul_ps(b2, u2))));
+__m256 v = _mm256_mul_ps(inv, _mm256_fmadd_ps(b0, v0,
+             _mm256_fmadd_ps(b1, v1, _mm256_mul_ps(b2, v2))));`});
+
+  /* ÉTAPE 12 */
+  S.push({t:'12 · Vérifier', h:'Ce qu’on mesure, et pourquoi',
+    obj:'Aucune des erreurs majeures de ce lot n’était visible à l’écran. L’étape finale n’est donc pas « regarder le résultat » mais <b>instrumenter</b> : des tests hors moteur, des invariants Debug, et des modes de rendu dont la couleur a un sens géométrique.',
+    inHtml:'<p class="small">Entrée : tout ce qui précède.</p>',
+    outHtml:`<h4>Les trois mesures qui ont trouvé un bug</h4>`
+      + tbl([
+        ['Comptage de couverture','124 trous, pente −1','Fissure de couture — invisible à l’œil'],
+        ['Mode <code>Depth</code>','distance de la face lointaine','Backface inversé depuis la L05'],
+        ['Défaut <code>invW = 0.f</code>','écran noir uniforme','Champ oublié dans <code>DrawTriangle</code>']
+      ],['Instrument','Symptôme','Bug trouvé'])
+      + `<h4 style="margin-top:16px">Les invariants permanents</h4>`
+      + `<pre><code>LV3_ASSERT(db.Width() == fb.Width() &amp;&amp; db.Height() == fb.Height());
+LV3_ASSERT(ctx.invW0 &gt; 0.0f &amp;&amp; ctx.invW1 &gt; 0.0f &amp;&amp; ctx.invW2 &gt; 0.0f);
+LV3_ASSERT(count == 3 || count == 4);
+LV3_ASSERT(ctx-&gt;magic == kFragmentContextMagic);</code></pre>`
+      + `<p class="small">Tous sont des <b>invariants</b>, pas des valeurs attendues : aucun ne demande de calcul à la main, et chacun resterait vrai quelle que soit la scène.</p>`,
+    code:`<span class="c-com">// Le test qui manquait en L05 : il aurait attrapé le bug n° 20.</span>
+<span class="c-key">const float</span> areaFront = EdgeFunction(r[0], r[1], r[2]);
+<span class="c-key">const float</span> areaBack  = EdgeFunction(r[0], r[2], r[1]);
+
+assert(areaFront &lt; 0.0f);                <span class="c-com">// face avant = aire NEGATIVE</span>
+assert(IsBackFacing(areaFront) == <span class="c-key">false</span>);
+assert(IsBackFacing(areaBack)  == <span class="c-key">true</span>);
+assert(areaFront == −areaBack);          <span class="c-com">// antisymétrie EXACTE (règle 24)</span>`});
+
+  return S;
+}
+
+function renderSteps(){
+  const S=buildSteps();
+  document.getElementById('caseDesc').innerHTML=CASES[curCase].desc;
+  const bar=document.getElementById('stepbar'), host=document.getElementById('steps');
+  bar.innerHTML=''; host.innerHTML='';
+  S.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.textContent=s.t; b.onclick=()=>select(i); bar.appendChild(b);
+    const d=document.createElement('div'); d.className='step';
+    d.innerHTML=`<div class="card">
+        <h3 style="margin-top:0">${s.h}</h3>
+        <div class="obj"><b style="color:var(--accent)">Objectif — </b>${s.obj}</div>
+        <div class="io">
+          <div class="box in"><h5>Ce qu’elle utilise (étape précédente)</h5>${s.inHtml||'—'}</div>
+          <div class="box out"><h5>Résultat de cette étape</h5>${s.outHtml||'—'}</div>
+        </div>
+        ${s.code?`<h4>Code scalaire</h4><pre><code>${s.code}</code></pre>`:''}
+        ${s.simd?`<details><summary>Équivalent vectorisé — AVX2 / AVX-512</summary><pre><code>${s.simd}</code></pre></details>`:''}
+      </div>`;
+    host.appendChild(d);
+  });
+  const select=i=>{
+    [...bar.children].forEach((b,k)=>b.classList.toggle('on',k===i));
+    [...host.children].forEach((d,k)=>d.classList.toggle('on',k===i));
+  };
+  window.__selStep=select; select(0);
+}
+document.querySelectorAll('[data-case]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('[data-case]').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); curCase=b.dataset.case; renderSteps();
+});
+
+/* ════════════════ init ════════════════ */
+function redrawAll(){ drawEdge(); drawTL(); drawClip(); drawPersp(); }
+redrawAll(); renderSteps();
+</script>
+</body>
+</html>
