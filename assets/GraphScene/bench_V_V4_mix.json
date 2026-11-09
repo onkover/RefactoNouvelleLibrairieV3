@@ -1,0 +1,683 @@
+{
+ "sceneName": "Banc V - V4 mix : les quatre classes melangees, (ligne + colonne) mod 4 (lot D-a1c)",
+ "nodes": [
+  {
+   "id": "Bench_Cam_Game",
+   "parent": null,
+   "_type": "Camera",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.0,
+      0.0,
+      4.0
+     ],
+     "rotation": [
+      0,
+      0.0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Camera": {
+     "projection": "perspective",
+     "lens": "fov",
+     "fov": 60.0,
+     "near": 0.1,
+     "infiniteFar": true,
+     "active": true,
+     "priority": 10,
+     "category": "gameplay",
+     "gizmo": {
+      "length": 0.0
+     },
+     "depthDisplayRange": 150,
+     "lodTolerancePx": null
+    }
+   }
+  },
+  {
+   "id": "Bench_Cam_Dbg1",
+   "parent": null,
+   "_type": "Camera",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.0031,
+      0.0047,
+      4.0
+     ],
+     "rotation": [
+      0,
+      0.0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Camera": {
+     "projection": "perspective",
+     "lens": "fov",
+     "fov": 60.0,
+     "near": 0.1,
+     "infiniteFar": true,
+     "active": true,
+     "priority": 3,
+     "category": "debug",
+     "gizmo": {
+      "length": 0.0
+     },
+     "depthDisplayRange": 150,
+     "lodTolerancePx": null
+    }
+   }
+  },
+  {
+   "id": "Bench_Cam_Dbg2",
+   "parent": null,
+   "_type": "Camera",
+   "components": {
+    "Transform": {
+     "translation": [
+      -0.0059,
+      0.0023,
+      4.0
+     ],
+     "rotation": [
+      0,
+      0.0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Camera": {
+     "projection": "perspective",
+     "lens": "fov",
+     "fov": 60.0,
+     "near": 0.1,
+     "infiniteFar": true,
+     "active": true,
+     "priority": 2,
+     "category": "debug",
+     "gizmo": {
+      "length": 0.0
+     },
+     "depthDisplayRange": 150,
+     "lodTolerancePx": null
+    }
+   }
+  },
+  {
+   "id": "Bench_Cam_Dbg3",
+   "parent": null,
+   "_type": "Camera",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.0072,
+      -0.0066,
+      4.0
+     ],
+     "rotation": [
+      0,
+      0.0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Camera": {
+     "projection": "perspective",
+     "lens": "fov",
+     "fov": 60.0,
+     "near": 0.1,
+     "infiniteFar": true,
+     "active": true,
+     "priority": 1,
+     "category": "debug",
+     "gizmo": {
+      "length": 0.0
+     },
+     "depthDisplayRange": 150,
+     "lodTolerancePx": null
+    }
+   }
+  },
+  {
+   "id": "Wall_0_0_c3",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -2.875,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c3.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_0_1_c5",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -1.725,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c5.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_0_2_c7",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -0.575,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c7.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_0_3_c12",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.575,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c12.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_0_4_c3",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      1.725,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c3.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_0_5_c5",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      2.875,
+      -1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c5.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_0_c5",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -2.875,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c5.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_1_c7",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -1.725,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c7.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_2_c12",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -0.575,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c12.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_3_c3",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.575,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c3.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_4_c5",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      1.725,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c5.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_1_5_c7",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      2.875,
+      0.0,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c7.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_0_c7",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -2.875,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c7.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_1_c12",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -1.725,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c12.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_2_c3",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      -0.575,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c3.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_3_c5",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      0.575,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c5.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_4_c7",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      1.725,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c7.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  },
+  {
+   "id": "Wall_2_5_c12",
+   "parent": null,
+   "_type": "Bench",
+   "components": {
+    "Transform": {
+     "translation": [
+      2.875,
+      1.15,
+      0.0
+     ],
+     "rotation": [
+      0,
+      0,
+      0
+     ],
+     "scale": [
+      1.0,
+      1.0,
+      1.0
+     ]
+    },
+    "Mesh": {
+     "model": "assets/Meshes/v4_wall_c12.obj",
+     "orbitalSpeed": 0.0,
+     "rotationSpeed": 0.0
+    }
+   }
+  }
+ ]
+}

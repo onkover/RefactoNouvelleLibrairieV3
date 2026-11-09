@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lot D-a1d pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=JetBrains+Mono:wght@400;600&family=Source+Sans+3:wght@400;600&display=swap">
+
+<style>
+/* Mise en page : colonne de lecture unique (≈ 72 car.), schémas et code en pleine largeur de colonne,
+   repères « Étape n » réels (c'est une séquence), encadrés objectif / entrée / sortie par étape. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e8ecf2; --fg:#18202c; --muted:#5a6578; --line:#d3d9e3;
+  --accent:#b45f06; --accent-soft:#fbead6; --exact:#0b7a6e; --exact-soft:#d8f1ec; --bad:#b4232c; --bad-soft:#f8dcde;
+  --code-bg:#11161f; --code-fg:#d8dee9; --code-cm:#8a97ab; --code-in:#f0b266; --code-kw:#7fc8f8; --code-pp:#c3a6ff;
+  --f-display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", Roboto, sans-serif;
+  --f-mono:"JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f141b; --surface:#161d27; --sunk:#1d2632; --fg:#e3e8f0; --muted:#97a3b6; --line:#2b3644;
+  --accent:#f0a24a; --accent-soft:#3a2a17; --exact:#4fd1bd; --exact-soft:#123430; --bad:#ff7a83; --bad-soft:#3d1c20;
+  --code-bg:#0a0e14; color-scheme:dark; } }
+:root[data-theme="dark"]{
+  --bg:#0f141b; --surface:#161d27; --sunk:#1d2632; --fg:#e3e8f0; --muted:#97a3b6; --line:#2b3644;
+  --accent:#f0a24a; --accent-soft:#3a2a17; --exact:#4fd1bd; --exact-soft:#123430; --bad:#ff7a83; --bad-soft:#3d1c20;
+  --code-bg:#0a0e14; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--fg); font:16px/1.6 var(--f-body);}
+.wrap{max-width:980px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); padding-block:28px 64px}
+h1,h2,h3,h4{font-family:var(--f-display); line-height:1.2; text-wrap:balance; margin:0}
+h1{font-size:clamp(28px,4.6vw,42px); font-weight:800; letter-spacing:-.01em}
+h2{font-size:clamp(22px,3vw,28px); font-weight:750; margin-top:56px; padding-top:18px; border-top:2px solid var(--fg)}
+h3{font-size:20px; font-weight:700; margin-top:8px}
+h4{font-size:16px; font-weight:700; margin-top:22px}
+h5{font:600 12px/1.3 var(--f-mono); text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin:10px 0 6px}
+p,li{max-width:72ch}
+a{color:var(--accent)}
+.eyebrow{font:600 12px/1.4 var(--f-mono); letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+.lede{font-size:18px; color:var(--muted); max-width:70ch}
+.meta{display:flex; flex-wrap:wrap; gap:8px 18px; font:13px/1.4 var(--f-mono); color:var(--muted); margin-top:14px}
+.toc{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:4px 24px; margin:22px 0 0; padding:14px 18px; background:var(--surface); border:1px solid var(--line); border-radius:6px; font-size:14px}
+.toc a{color:var(--fg); text-decoration:none} .toc a:hover{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+code,.mono{font-family:var(--f-mono); font-size:.88em}
+p code, li code, td code{background:var(--sunk); padding:1px 5px; border-radius:3px}
+table{border-collapse:collapse; width:100%; font-size:14px}
+.tbl{overflow-x:auto; margin:14px 0; border:1px solid var(--line); border-radius:6px; background:var(--surface)}
+th,td{padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{font:600 12px/1.3 var(--f-mono); text-transform:uppercase; letter-spacing:.05em; color:var(--muted); background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.r, th.r{text-align:right; font-variant-numeric:tabular-nums}
+.timeline{list-style:none; padding:0; margin:16px 0; display:grid; gap:0}
+.timeline li{display:grid; grid-template-columns:112px 1fr; gap:14px; padding:12px 0; border-bottom:1px dashed var(--line); max-width:none}
+.timeline .d{font:600 12px/1.5 var(--f-mono); color:var(--muted)}
+.timeline b{font-family:var(--f-display)}
+.timeline li.now{background:var(--accent-soft); border-radius:6px; padding:12px; border-bottom:0}
+@media (max-width:560px){ .timeline li{grid-template-columns:1fr; gap:2px} }
+.callout{border-left:4px solid var(--accent); background:var(--surface); padding:12px 16px; margin:16px 0; border-radius:0 6px 6px 0}
+.callout.exact{border-color:var(--exact)} .callout.bad{border-color:var(--bad)}
+.callout p{margin:.3em 0}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; margin:14px 0}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:14px 16px; min-width:0}
+.card h4{margin-top:0}
+.pill{display:inline-block; font:600 11px/1 var(--f-mono); padding:4px 7px; border-radius:20px; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap}
+.pill.ok{background:var(--exact-soft); color:var(--exact)} .pill.no{background:var(--bad-soft); color:var(--bad)} .pill.warn{background:var(--accent-soft); color:var(--accent)}
+figure.code{margin:10px 0; min-width:0}
+figure.code pre{margin:0; background:var(--code-bg); color:var(--code-fg); padding:12px 14px; border-radius:6px; overflow-x:auto; font:12.5px/1.55 var(--f-mono); tab-size:4}
+.code-label{font:600 11px/1 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; padding:6px 10px; display:inline-block; border-radius:5px 5px 0 0}
+.code-label.before{background:var(--bad-soft); color:var(--bad)} .code-label.after{background:var(--exact-soft); color:var(--exact)}
+figure.code.before pre, figure.code.after pre{border-top-left-radius:0}
+.cm{color:var(--code-cm)} .in{color:var(--code-in)} .kw{color:var(--code-kw)} .pp{color:var(--code-pp)}
+.diff{margin:16px 0; padding:12px 14px; border:1px solid var(--line); border-radius:6px; background:var(--surface); min-width:0}
+.diff-where{font:600 13px/1.4 var(--f-mono); color:var(--fg)}
+.diff-note{color:var(--muted); font-size:14px; margin:4px 0 6px}
+.step{margin-top:34px; padding-top:6px}
+.sn{font:600 12px/1 var(--f-mono); color:var(--surface); background:var(--fg); padding:4px 7px; border-radius:4px; vertical-align:3px; margin-right:6px}
+.io{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; margin:12px 0}
+.io-b{padding:10px 12px; border-radius:6px; background:var(--surface); border:1px solid var(--line); min-width:0}
+.io-b b{font:600 11px/1.3 var(--f-mono); letter-spacing:.07em; text-transform:uppercase}
+.io-b p{margin:.3em 0 0; font-size:14px}
+.io-b.obj b{color:var(--accent)} .io-b.use b{color:var(--muted)} .io-b.out b{color:var(--exact)}
+.pair{display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px}
+.pair > div{min-width:0}
+.lab{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:16px; margin:16px 0}
+.lab .controls{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:12px}
+.lab button{font:600 13px/1 var(--f-body); padding:8px 11px; border-radius:5px; border:1px solid var(--line); background:var(--sunk); color:var(--fg); cursor:pointer}
+.lab button[aria-pressed="true"]{background:var(--fg); color:var(--bg); border-color:var(--fg)}
+.lab button:focus-visible, .lab input:focus-visible, .lab select:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.lab label{font-size:13px; color:var(--muted); display:flex; gap:6px; align-items:center}
+.lab input[type=number]{width:150px; font:14px var(--f-mono); padding:6px 8px; border:1px solid var(--line); border-radius:5px; background:var(--bg); color:var(--fg)}
+.lab input[type=range]{width:180px}
+.lab select{font:14px var(--f-body); padding:6px; border-radius:5px; border:1px solid var(--line); background:var(--bg); color:var(--fg)}
+.svgbox{overflow-x:auto} .svgbox svg{display:block; width:100%; min-width:560px; height:auto}
+.res{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin-top:12px}
+.res .k{font:600 11px/1.3 var(--f-mono); text-transform:uppercase; letter-spacing:.06em; color:var(--muted)}
+.res .v{font:15px/1.4 var(--f-mono); word-break:break-all}
+.bits{font:12px/1.5 var(--f-mono); overflow-x:auto; white-space:nowrap}
+.bits .s{color:var(--bad)} .bits .e{color:var(--accent)} .bits .m{color:var(--exact)} .bits .lo{opacity:.45}
+.verdict{margin-top:10px; padding:10px 12px; border-radius:6px; font-weight:600}
+.verdict.ok{background:var(--exact-soft); color:var(--exact)} .verdict.no{background:var(--bad-soft); color:var(--bad)} .verdict.warn{background:var(--accent-soft); color:var(--accent)}
+.lanes td, .lanes th{font-family:var(--f-mono); font-size:12px; white-space:nowrap}
+.lanes td.bad{color:var(--bad); font-weight:600} .lanes td.ok{color:var(--exact)}
+.bar{fill:var(--muted)} .bar.hl{fill:var(--accent)} .bar.ok{fill:var(--exact)} .bar.no{fill:var(--bad)}
+.ax{stroke:var(--line)} .tx{fill:var(--fg); font:12px var(--f-mono)} .tx.m{fill:var(--muted)}
+.cx{display:grid; gap:12px}
+.cx .card{border-left:4px solid var(--bad)}
+.cx .n{font:700 24px/1 var(--f-display); color:var(--bad)}
+.kpi{font:700 30px/1.1 var(--f-display); font-variant-numeric:tabular-nums}
+details{margin:10px 0; background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:8px 12px}
+summary{cursor:pointer; font-weight:600}
+.formula{font:15px/1.7 var(--f-mono); background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:10px 14px; overflow-x:auto; margin:12px 0}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">LibraryV3 · phase G · jalon D · lot D-a1d · accepté le 08/11</div>
+  <h1>Lot D-a1d pas à pas — l’accrochage des sommets par nombre magique</h1>
+  <p class="lede">Giesen exige que chaque sommet soit posé sur une grille de 1/256 de pixel. Ce lot ne change ni la grille, ni l’image, ni une seule profondeur : il change la façon de poser le sommet sur la grille, pour payer ce passage moins cher.</p>
+  <div class="meta"><span>Base : LIB 93757b1 · EXE b58c132 (D-a1b commité)</span><span>Rédigé le 06/11/2026 · mesuré et accepté le 08/11</span><span>i7-1265U (référence) · banc hors moteur : Xeon 2,3 GHz, g++ 13</span></div>
+  <nav class="toc" aria-label="Sommaire">
+    <a href="#rappel">1. Rappel : d’où l’on vient</a>
+    <a href="#contexte">2. Contexte : le péage de Giesen</a>
+    <a href="#objectif">3. Objectif fonctionnel du lot</a>
+    <a href="#decisions">4. Décisions à prendre</a>
+    <a href="#methode">5. La méthode du nombre magique</a>
+    <a href="#labo">6. Schéma interactif : la règle des float</a>
+    <a href="#etapes">7. Les étapes (code avant / après)</a>
+    <a href="#contre">8. Contre-exemples chiffrés</a>
+    <a href="#verifier">9. Vérifier (et résultats du 08/11)</a>
+    <a href="#fond">10. Question de fond : astuces d’hier</a>
+    <a href="#suite">11. Et ensuite</a>
+  </nav>
+</header>
+
+<!-- ═════════════════════════ 1. RAPPEL ═════════════════════════ -->
+<h2 id="rappel">1. Rappel : d’où l’on vient</h2>
+<p>La phase G optimise le rendu CPU chantier par chantier, chaque pas mesuré en paires A/B avant d’être accepté. Voici les étapes qui mènent à ce lot, dans l’ordre où elles ont eu lieu.</p>
+<ol class="timeline">
+  <li><span class="d">17 → 21/10</span><div><b>Chantier B : étage géométrie vectorisé.</b> Sommets en SoA projetés 8 par 8 (B3), rejet des faces par lots de 8 (B4), face arrière testée en espace objet (B5). V1 Render 5,80 → 1,35 ms.</div></li>
+  <li><span class="d">21 → 29/10</span><div><b>Chantier C : dessin des survivantes.</b> Noyau spécialisé par shader (C1), arêtes évaluées 8 pixels à la fois en AVX2 (C2, V2 ×2,27), chemin direct des boîtes d’un pixel (C3, étage faces V1 −34,6 %).</div></li>
+  <li><span class="d">30 → 31/10</span><div><b>Lot V3 : scène de niveau FPS.</b> Six pièces, portails, murs proches. Les arêtes pèsent 41 % du Render : le jalon D (méthodes de Giesen puis d’Abrash) est ouvert.</div></li>
+  <li><span class="d">31/10 → 03/11</span><div><b>D-a1 : arêtes en virgule fixe (Giesen).</b> Coordonnées entières 24.8, arêtes incrémentales exactes. Pour que tout le moteur voie la même position, <b>chaque sommet est accroché au 1/256 de pixel dans l’étage sommets</b>. Rooms −13,9 % ; V1 +4 à +5 %, coût accepté par décision d’Onky.</div></li>
+  <li><span class="d">04 → 06/11</span><div><b>D-a1b : barycentriques tirées des E′ entiers.</b> Rooms −6,5 %, V2 ≈ −7 %, V1 −0,2 %. Accepté et commité (LIB 93757b1 / EXE b58c132).</div></li>
+  <li class="now"><span class="d">06/11</span><div><b>Mesure V1 en C B B C : où est le surcoût de Giesen ?</b> C = D-a1b sans virgule fixe, B = avec. Total +24 µs. <b>Étage sommets (RenderVerts) 172 → 207 µs, +35 µs (+20 %)</b> ; étage faces 800 → 789 µs (−11). Tout le surcoût est dans l’accrochage. Le seuil fixé le 04/11 pour cette piste (≥ 30 µs sur RenderVerts) est atteint : <b>c’est ce lot</b>.</div></li>
+</ol>
+
+<!-- ═════════════════════════ 2. CONTEXTE ═════════════════════════ -->
+<h2 id="contexte">2. Contexte : le péage de Giesen</h2>
+<h4>Pourquoi les sommets sont accrochés</h4>
+<p>La méthode de Giesen calcule les fonctions d’arête avec des entiers. Un sommet doit donc devenir un entier en unités de 1/256 de pixel. Si chaque consommateur faisait cette conversion de son côté, deux étages pourraient voir le même sommet à deux endroits différents : B4 jugerait une face « avant » pendant que le noyau la verrait autrement, C3 testerait un centre que le noyau ne testerait pas. D-a1 a donc posé une règle : <b>un sommet, un accrochage</b>, fait une seule fois, dans l’étage sommets. Ensuite tout le monde lit le même float, qui est déjà un multiple exact de 1/256.</p>
+<p>Deux fonctions font cet accrochage aujourd’hui :</p>
+<ul>
+  <li><code>SnapToSubpixel</code> (Viewport.h), appelée par <code>ProjectClip</code> : chemin clippé (meshes Intersect) et pendant scalaire (<code>LV3_SIMD 0</code>) ;</li>
+  <li><code>ProjectPositions8</code> (VertexStage.cpp), étape 5b : meshes Inside, 8 sommets par lot.</li>
+</ul>
+<h4>Ce que coûte cet accrochage, et qui le paie</h4>
+
+<p>Commençons par ce que fait l’accrochage, sans parler de vectorisation. Pour chaque coordonnée écran v (x puis y), D-a1b applique trois pas :</p>
+<ol>
+  <li><b>Compter en 1/256 de pixel</b> : t = v × 256. Multiplier par une puissance de 2 ne touche que l’exposant : c’est exact.</li>
+  <li><b>Arrondir à l’entier le plus proche</b> : k = round(t), au pair en cas d’égalité (2 560,5 → 2 560 ; 2 561,5 → 2 562).</li>
+  <li><b>Revenir en pixels</b> : v′ = k / 256, exact lui aussi.</li>
+</ol>
+<div class="tbl"><table>
+<thead><tr><th>v (px, float32)</th><th class="r">t = v × 256</th><th class="r">k = round(t)</th><th class="r">v′ = k / 256</th><th>Remarque</th></tr></thead>
+<tbody>
+<tr><td class="num">123,4567032</td><td class="r">31 604,916</td><td class="r">31 605</td><td class="r">123,45703125</td><td>cas ordinaire</td></tr>
+<tr><td class="num">−37,2538986</td><td class="r">−9 536,998</td><td class="r">−9 537</td><td class="r">−37,25390625</td><td>négatif</td></tr>
+<tr><td class="num">10,001953125</td><td class="r">2 560,5</td><td class="r">2 560</td><td class="r">10</td><td>égalité, va au pair</td></tr>
+<tr><td class="num">10,005859375</td><td class="r">2 561,5</td><td class="r">2 562</td><td class="r">10,0078125</td><td>égalité, va au pair</td></tr>
+<tr><td class="num">−0,001</td><td class="r">−0,256</td><td class="r">−0</td><td class="r">−0</td><td>zéro négatif conservé</td></tr>
+</tbody></table></div>
+<p>Le pas 2 est le coûteux : l’instruction d’arrondi (<code>roundss</code> en scalaire, <code>vroundps</code> en AVX2) compte 2 micro-opérations et 8 cycles de latence, le double d’une addition. C’est le seul travail que C2 ne faisait pas.</p>
+<div class="pair"><div><h5>Pendant scalaire</h5><figure class="code "><pre><code><span class="cm">// D-a1b, pendant scalaire (SnapToSubpixel, appelee par ProjectClip) : 3 instructions par coordonnee</span>
+<span class="kw">float</span> SnapRound(<span class="kw">float</span> v)
+{
+    <span class="kw">const</span> <span class="kw">float</span> t = v * 256.0f;              <span class="cm">// mulss   : compter en 1/256 de pixel   (exact : puissance de 2)</span>
+    <span class="kw">const</span> <span class="kw">float</span> k = RoundHalfEven(t);        <span class="cm">// roundss : entier le plus proche, au pair (2 uops, 8 cycles)</span>
+    <span class="kw">return</span> k * (1.0f / 256.0f);              <span class="cm">// mulss   : retour en pixels           (exact)</span>
+}
+<span class="cm">// Un sommet = x et y : 6 instructions, 8 uops, dont 2 chaines de 4 + 8 + 4 = 16 cycles.</span></code></pre></figure></div><div><h5>AVX2</h5><figure class="code "><pre><code><span class="cm">// D-a1b, AVX2 (ProjectPositions8, etape 5b) : les MEMES 3 pas, sur 8 sommets a la fois.</span>
+<span class="cm">// Le x256 est deja replie dans les constantes du viewport (vpx256, vpw256 : correction du 03/11),</span>
+<span class="cm">// il reste 2 instructions par coordonnee et par lot de 8 :</span>
+xr = <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_round_ps</span>(xr256, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>), kInv256);
+yr = <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_round_ps</span>(yr256, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>), kInv256);
+<span class="cm">// Un lot = 2 x (vroundps 2 uops + vmulps 1 uop) = 6 uops pour 8 sommets.</span></code></pre></figure></div></div>
+<div class="tbl"><table>
+<thead><tr><th></th><th>Scalaire (<code>ProjectClip</code> → <code>SnapToSubpixel</code>)</th><th>AVX2 (<code>ProjectPositions8</code>)</th></tr></thead>
+<tbody>
+<tr><td>Qui passe par là</td><td>meshes Intersect, à chaque coin après clipping (3 appels par face) ; tout le moteur en <code>LV3_SIMD 0</code></td><td>meshes Inside, 8 sommets par lot</td></tr>
+<tr><td>Instructions d’accrochage</td><td><code>mulss</code> + <code>roundss</code> + <code>mulss</code> par coordonnée</td><td><code>vroundps</code> + <code>vmulps</code> par coordonnée et par lot</td></tr>
+<tr><td>Micro-opérations par sommet</td><td>8</td><td>6 / 8 = 0,75</td></tr>
+</tbody></table></div>
+
+<p>Ce coût est payé <b>par sommet, par vue</b>, que le triangle passe ensuite par la boucle de Giesen ou non. Sur V1 (274 568 sommets par frame, 32 sphères sur 4 vues), tous les triangles dessinés font au plus un pixel : ils prennent C3 et n’entrent jamais dans le noyau de Giesen. Ils paient le péage de l’autoroute sans jamais l’emprunter.</p>
+<div class="tbl"><table>
+<thead><tr><th>V1, séquence C B B C du 06/11</th><th class="r">C (fixed 0)</th><th class="r">B (fixed 1)</th><th class="r">Écart</th></tr></thead>
+<tbody>
+<tr><td>Render</td><td class="r">972,7 µs</td><td class="r">996,9 µs</td><td class="r">+24 µs (+2,5 %)</td></tr>
+<tr><td>Étage sommets (RenderVerts)</td><td class="r">172 µs</td><td class="r">207 µs</td><td class="r"><b>+35 µs (+20 %)</b></td></tr>
+<tr><td>Étage faces (Render − RenderVerts)</td><td class="r">800 µs</td><td class="r">789 µs</td><td class="r">−11 µs</td></tr>
+<tr><td>Témoins (Clear, Present)</td><td class="r" colspan="2">machine ≈ 4 % plus lente en B</td><td class="r">séquence recevable</td></tr>
+</tbody></table></div>
+
+<!-- ═════════════════════════ 3. OBJECTIF ═════════════════════════ -->
+<h2 id="objectif">3. Objectif fonctionnel du lot</h2>
+<div class="grid2">
+  <div class="card"><h4>Ce qui ne change pas</h4><p>L’image. Mêmes couleurs, mêmes profondeurs, mêmes compteurs sur toutes les scènes. Un sommet est posé exactement sur le même multiple de 1/256 qu’avec D-a1b. La seule différence visible au bit près est le signe d’un zéro (−0 devient +0), sans effet sur aucun calcul en aval (§5).</p></div>
+  <div class="card"><h4>Ce qui change</h4><p>Le prix du passage sur la grille : 2 additions au lieu d’un arrondi et d’une multiplication. Banc sur le vrai code de l’étage sommets : le surcoût de l’accrochage passe de +32 à +20 µs par frame type V1 (−12 µs, 37 % du péage). Prédiction moteur : V1 RenderVerts −8 à −20 µs.</p></div>
+  <div class="card"><h4>Pourquoi c’est utile au-delà de V1</h4><p>Le péage est payé par toute la géométrie Inside, dans chaque vue. Un niveau FPS contient beaucoup d’objets moyens et lointains : beaucoup de sommets pour des triangles petits. Le LOD réduit le nombre de sommets, il ne supprime pas le coût de chacun. Et en vue quadruple, tout est payé 4 fois.</p></div>
+  <div class="card"><h4>Ce que le lot ne touche pas</h4><p>Ni le noyau de Giesen, ni C3, ni la préparation des triangles, ni l’étage faces. Seuls l’étage sommets (deux fonctions) et deux TNR changent. Le contrat « un sommet, un accrochage » reste entier.</p></div>
+</div>
+<div class="callout exact"><p><b>Critères de réussite, écrits avant toute mesure.</b> TNR vertes et journaux inchangés ; filet B3 silencieux sur les 3 scènes en Debug ; compteurs identiques ; asm sans <code>vroundps</code> dans la boucle de <code>ProjectPositions8</code> ; V1 RenderVerts plus bas d’au moins 5 µs dans une séquence A B B A valide ; aucune scène plus lente de plus de 2 %. Si le gain n’apparaît pas, le lot est refusé : sa contrainte de domaine et sa dépendance au mode d’arrondi ne se justifient que par un gain.</p></div>
+
+<!-- ═════════════════════════ 4. DÉCISIONS ═════════════════════════ -->
+<h2 id="decisions">4. Décisions à prendre, et pourquoi</h2>
+<p>Onky m’a confié le choix des optimisations après D-a1b (contrainte unique : Giesen reste). Voici les choix faits pour ce lot ; chacun est démontré plus bas.</p>
+<div class="tbl"><table>
+<thead><tr><th>Question</th><th>Options</th><th>Choix</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>1. Comment accrocher ?</td><td><code>round_ps</code> (actuel) · nombre magique · stocker des entiers 24.8</td><td><span class="pill ok">nombre magique</span></td><td>Même résultat au bit près (prouvé sur les 2,37 milliards de float du domaine), 2 µops au lieu de 3, chaîne de dépendance 12 → 8 cycles. Les entiers 24.8 ont été rayés le 04/11 (le coût passe aux consommateurs).</td></tr>
+<tr><td>2. Quelle constante ?</td><td>2<sup>15</sup> · 1,5×2<sup>15</sup> · 1,5×2<sup>14</sup></td><td><span class="pill ok">1,5 × 2<sup>15</sup> = 49 152</span></td><td>Seule à placer tout v de [−2<sup>14</sup>, 2<sup>14</sup>[ dans la tranche [2<sup>15</sup>, 2<sup>16</sup>[ où l’écart entre float vaut 1/256. 2<sup>15</sup> casse tous les négatifs, 1,5×2<sup>14</sup> accroche au 1/512.</td></tr>
+<tr><td>3. Hors du domaine, en AVX2 ?</td><td>repli par masque (round + blend) · contrat + assertion</td><td><span class="pill ok">contrat Inside + assertion 5a</span></td><td>Un mesh Inside est dans les 4 plans latéraux : ses sommets sont dans le viewport (≤ 1 536 px), dix fois sous 2<sup>14</sup>. Un repli coûterait 4 opérations de plus par lot et annulerait le gain.</td></tr>
+<tr><td>4. Et le pendant scalaire ?</td><td>garder <code>round</code> · même formule + repli</td><td><span class="pill ok">même formule, repli <code>round</code> au-delà de 2<sup>14</sup></span></td><td>Garder <code>round</code> rendrait −0 là où l’AVX2 rend +0 : TNR B3 en échec (231 désaccords). Le chemin clippé, lui, voit des sommets jusqu’à 2<sup>20</sup> px : il garde un repli.</td></tr>
+<tr><td>5. Plier M dans le viewport ?</td><td>oui (1 op au lieu de 2) · non</td><td><span class="pill no">non</span></td><td>Double arrondi : 1,1 % des sommets des vues décalées bougent de 1/256 px. Ce serait changer l’image sans décision d’Onky.</td></tr>
+<tr><td>6. Dépendre du mode d’arrondi ?</td><td>refuser · accepter et verrouiller</td><td><span class="pill warn">accepter, assertion MXCSR + #error /fp:fast</span></td><td><code>ToFixed</code> en dépend déjà depuis D-a1. LV3 ne change jamais MXCSR ; /fp:fast simplifierait (v + M) − M en v.</td></tr>
+</tbody></table></div>
+
+<!-- ═════════════════════════ 5. MÉTHODE ═════════════════════════ -->
+<h2 id="methode">5. La méthode du nombre magique</h2>
+<h4>En une image</h4>
+<p>Un float est une règle graduée dont les graduations s’écartent à mesure qu’on s’éloigne de zéro : elles doublent d’écart à chaque puissance de 2. Entre 32 768 et 65 536, deux float voisins sont séparés d’exactement 1/256. Si l’on pose notre coordonnée sur ce morceau de règle (en lui ajoutant 49 152), le processeur est obligé de la ranger sur la graduation la plus proche : c’est l’accrochage. On retire ensuite 49 152 : cette soustraction tombe juste, la valeur revient à sa place, accrochée.</p>
+
+<h4>D’où vient 49 152 ?</h4>
+<p>Il ne tombe pas du ciel : il se calcule à partir de la grille voulue (1/256) et de la taille de la mantisse d’un float. Trois questions, trois réponses.</p>
+<p><b>Question 1 : dans quelle tranche de float les graduations valent-elles 1/256 ?</b> Un float32 garde 24 bits significatifs : un 1 implicite et 23 bits de mantisse. Dans la tranche [2<sup>e</sup>, 2<sup>e+1</sup>[, le bit le plus faible de la mantisse vaut donc 2<sup>e−23</sup>, et c’est l’écart entre deux float voisins. On veut 2<sup>e−23</sup> = 2<sup>−8</sup> (1/256), donc e − 23 = −8, soit <b>e = 15</b> : la tranche [2<sup>15</sup>, 2<sup>16</sup>[ = [32 768, 65 536[.</p>
+<p><b>Question 2 : où poser M dans cette tranche ?</b> Il faut que v + M y reste pour tous les v utiles, négatifs compris. La tranche fait 32 768 de large ; en posant M en son milieu, on garde la même marge de chaque côté : M = 32 768 + 16 384 = <b>49 152 = 1,5 × 2<sup>15</sup></b>, et la marge vaut 2<sup>14</sup> = <b>16 384 px</b>, c’est le domaine |v| &lt; 2<sup>14</sup>.</p>
+<p><b>Question 3 : à quoi ressemble M en bits ?</b> 49 152 = <code>0x47400000</code> : signe 0, exposant 127 + 15 = 142, mantisse <code>100…0</code>. Le seul bit de mantisse allumé est le premier, qui vaut 2<sup>14</sup> : c’est le « 0,5 » de 1,5. Les 22 bits restants, de 2<sup>13</sup> jusqu’à 2<sup>−8</sup>, sont libres : c’est là que v vient se loger quand on l’ajoute, partie entière en haut, 8 bits de fraction en bas. Ce qui ne tient pas sous le bit 2<sup>−8</sup> est arrondi. Pour un v négatif, la soustraction « emprunte » au bit 2<sup>14</sup> sans changer d’exposant : c’est pourquoi on ne prend pas M = 2<sup>15</sup>, dont la mantisse est vide et qui ferait descendre la somme dans la tranche du dessous.</p>
+<div class="formula">grille 2<sup>−k</sup>  →  tranche e = 23 − k  →  M = 1,5 × 2<sup>23−k</sup>  ;  domaine |v| &lt; 2<sup>22−k</sup></div>
+<div class="tbl"><table>
+<thead><tr><th>Grille voulue</th><th class="r">k</th><th class="r">Tranche e</th><th class="r">M = 1,5 × 2<sup>e</sup></th><th class="r">Bits de M</th><th class="r">Domaine |v| &lt;</th><th>Usage</th></tr></thead>
+<tbody>
+<tr><td>1 (entier)</td><td class="r">0</td><td class="r">23</td><td class="r">12 582 912</td><td class="r"><code>0x4B400000</code></td><td class="r">4 194 304</td><td>conversion float → entier classique</td></tr>
+<tr><td>1/16</td><td class="r">4</td><td class="r">19</td><td class="r">786 432</td><td class="r"><code>0x49400000</code></td><td class="r">262 144</td><td>4 bits sous-pixel (mesuré au lot V3 : 1,2 % de pixels couverts changés)</td></tr>
+<tr><td><b>1/256</b></td><td class="r"><b>8</b></td><td class="r"><b>15</b></td><td class="r"><b>49 152</b></td><td class="r"><code>0x47400000</code></td><td class="r"><b>16 384</b></td><td><b>D-a1d (grille de Giesen, 8 bits)</b></td></tr>
+<tr><td>1/512</td><td class="r">9</td><td class="r">14</td><td class="r">24 576</td><td class="r"><code>0x46C00000</code></td><td class="r">8 192</td><td>grille deux fois plus fine</td></tr>
+<tr><td>1/1024</td><td class="r">10</td><td class="r">13</td><td class="r">12 288</td><td class="r"><code>0x46400000</code></td><td class="r">4 096</td><td>10 bits sous-pixel</td></tr>
+<tr><td>1 (entier, en double)</td><td class="r">0</td><td class="r">52</td><td class="r">6 755 399 441 055 744</td><td class="r">—</td><td class="r">2<sup>51</sup></td><td>Lua 5.1, <code>Int64x8ToFloat</code> (D-a1b) : la mantisse d’un double a 52 bits</td></tr>
+</tbody></table></div>
+<p><b>Pour 1/512, on aurait donc pris 24 576</b> (1,5 × 2<sup>14</sup>), avec un domaine de ±8 192 px. Chaque bit de fraction gagné coûte un bit de domaine : la mantisse a 24 bits en tout, dont un pour le 1 implicite et un pour le « 0,5 », il en reste 22 à partager entre la partie entière et la fraction (14 + 8 pour nous, 13 + 9 en 1/512). Notre écran de 1 536 px tiendrait encore largement en 1/512, mais la grille est fixée par Giesen à 8 bits : 24 576 accrocherait au mauvais pas. C’est d’ailleurs ce que montre le contre-exemple 1 (M = 1,5 × 2<sup>14</sup> : 3 223 793 valeurs fausses). À l’autre bout, une grille de 1/4096 (k = 12) ramènerait le domaine à 1 024 px : l’écran de 1 536 px n’y tiendrait plus. Déplacez le curseur ci-dessous pour voir M, sa tranche et son domaine bouger ensemble.</p>
+<div class="lab" id="lab4">
+  <div class="controls">
+    <label for="lab4-k">grille 2<sup>−k</sup>, k =</label><input id="lab4-k" type="range" min="0" max="12" step="1" value="8"><span id="lab4-kv" class="mono">8</span>
+    <label for="lab4-v">v (px)</label><input id="lab4-v" type="number" step="0.0001" value="123.4567">
+  </div>
+  <div class="res" id="lab4-res"></div>
+  <div class="bits" id="lab4-bits"></div>
+  <div id="lab4-verdict" class="verdict"></div>
+</div>
+
+
+<h4>L’algorithme, pas à pas (scalaire)</h4>
+<p>Mettons les deux méthodes côte à côte, sur un seul nombre, sans aucune instruction vectorielle.</p>
+<div class="pair">
+  <div><h5>Méthode standard : 3 pas</h5>
+    <ol><li>t = v × 256 (exact)</li><li>k = arrondi de t à l’entier, au pair</li><li>v′ = k / 256 (exact)</li></ol>
+    <figure class="code "><pre><code><span class="cm">// Methode standard (D-a1b), en C++ simple</span>
+<span class="kw">float</span> SnapRound(<span class="kw">float</span> v)
+{
+    <span class="kw">const</span> <span class="kw">float</span> t = v * 256.0f;          <span class="cm">// 1. compter en 1/256   (exact)</span>
+    <span class="kw">const</span> <span class="kw">float</span> k = RoundHalfEven(t);    <span class="cm">// 2. arrondir            (roundss)</span>
+    <span class="kw">return</span> k * (1.0f / 256.0f);          <span class="cm">// 3. revenir en pixels   (exact)</span>
+}</code></pre></figure></div>
+  <div><h5>Nombre magique : 2 pas</h5>
+    <ol><li>s = v + 49 152 : le vrai résultat n’existe pas en float, le processeur prend le float le plus proche, qui est forcément un multiple de 1/256</li><li>v′ = s − 49 152 (exact)</li></ol>
+    <figure class="code "><pre><code><span class="cm">// Nombre magique (D-a1d), en C++ simple</span>
+<span class="cm">// Precondition : |v| &lt; 16384 px, MXCSR au plus proche, /fp:precise.</span>
+<span class="kw">float</span> SnapMagic(<span class="kw">float</span> v)
+{
+    <span class="kw">const</span> <span class="kw">float</span> s = v + 49152.0f;        <span class="cm">// 1. ARRONDI : s ne peut valoir qu'un multiple de 1/256</span>
+    <span class="kw">return</span> s - 49152.0f;                 <span class="cm">// 2. EXACT   : on retire ce qu'on a ajoute</span>
+}</code></pre></figure></div>
+</div>
+<p>Les mêmes valeurs que dans le tableau du §2, cette fois par le nombre magique. La colonne « v + 49 152 exact » est le résultat mathématique ; la colonne suivante est ce que le float peut stocker.</p>
+<div class="tbl"><table>
+<thead><tr><th>v (px, float32)</th><th class="r">v + 49 152 exact</th><th class="r">s (float32 le plus proche)</th><th class="r">s − 49 152</th><th class="r">Méthode standard</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td class="num">123,4567032</td><td class="r">49 275,4567032</td><td class="r">49 275,45703125</td><td class="r">123,45703125</td><td class="r">123,45703125</td><td><span class="pill ok">identique</span></td></tr>
+<tr><td class="num">−37,2538986</td><td class="r">49 114,7461014</td><td class="r">49 114,74609375</td><td class="r">−37,25390625</td><td class="r">−37,25390625</td><td><span class="pill ok">identique</span></td></tr>
+<tr><td class="num">10,001953125</td><td class="r">49 162,001953125</td><td class="r">49 162</td><td class="r">10</td><td class="r">10</td><td><span class="pill ok">identique (pair)</span></td></tr>
+<tr><td class="num">10,005859375</td><td class="r">49 162,005859375</td><td class="r">49 162,0078125</td><td class="r">10,0078125</td><td class="r">10,0078125</td><td><span class="pill ok">identique (pair)</span></td></tr>
+<tr><td class="num">−0,001</td><td class="r">49 151,999</td><td class="r">49 152</td><td class="r">+0</td><td class="r">−0</td><td><span class="pill warn">même position, signe du zéro</span></td></tr>
+</tbody></table></div>
+<p>Le pas coûteux (l’arrondi) a disparu : c’est l’addition elle-même qui arrondit, parce qu’on a choisi un endroit de la règle des float où les graduations valent exactement 1/256. L’algorithme complet ajoute la garde du domaine :</p>
+<figure class="code "><pre><code><span class="cm">// L'algorithme complet de SnapToSubpixel (D-a1d), tel que le moteur l'applique :</span>
+SnapToSubpixel(v) :
+    si |v| &lt; 2^14 :                      <span class="cm">// domaine du nombre magique (tous les meshes Inside)</span>
+        s &lt;- v + 49152                   <span class="cm">// l'addition arrondit au 1/256 le plus proche, au pair</span>
+        retourner s - 49152              <span class="cm">// exact ; rend +0 et jamais -0</span>
+    sinon :                              <span class="cm">// chemin clippe, sommets hors ecran (jusqu'a 2^20 px)</span>
+        retourner round(v * 256) / 256   <span class="cm">// methode standard, conservee en repli</span>
+<span class="cm">// ProjectPositions8 (AVX2) applique la seule premiere branche : le contrat Inside garantit |v| &lt; 2^14.</span></code></pre></figure>
+<p>Le pendant AVX2 est la même chose sur 8 couloirs : <code>_mm256_add_ps</code> puis <code>_mm256_sub_ps</code> (étape 6). La section suivante démontre pourquoi le résultat est toujours celui de la méthode standard.</p>
+
+<h4>D’où vient l’astuce, qui l’utilise</h4>
+<ul>
+  <li>Elle date des années 1990, quand convertir un float en entier coûtait cher sur x87. Chris Hecker la décrit dans « Let’s Get to the (Floating) Point », <i>Game Developer Magazine</i>, février-mars 1996 (<a href="https://media.gdcvault.com/GD_Mag_Archives/GDM_FebMar_1996.pdf" target="_blank" rel="noopener">archive GDC Vault</a>). Michael Herf la reprend dans « Know Your FPU ».</li>
+  <li>Lua 5.1 convertit ses nombres en entiers ainsi sur x86 : <code>lua_number2int</code> ajoute 6 755 399 441 055 744,0 = 1,5×2<sup>52</sup> à un double (<a href="https://lua-users.org/lists/lua-l/2006-11/msg00310.html" target="_blank" rel="noopener">liste lua-l</a>).</li>
+  <li>VTK l’emballe dans <code>vtkFastNumericConversion</code>, avec ses variantes et ses pièges (<a href="https://vtk.org/doc/release/5.0/html/a01383.html" target="_blank" rel="noopener">documentation VTK 5.0</a>).</li>
+  <li>Nous l’avons déjà utilisée : <code>Int64x8ToFloat</code> (D-a1b) convertit des int64 en double avec le même 1,5×2<sup>52</sup>. D-a1d en est la version float, avec un décalage choisi pour tomber sur 1/256 au lieu de 1.</li>
+</ul>
+<h4>L’explication complète</h4>
+<p><b>(a) La grille d’un float.</b> Un float32 a 24 bits significatifs. Dans la tranche [2<sup>e</sup>, 2<sup>e+1</sup>[, deux float voisins sont séparés de ulp = 2<sup>e−23</sup>. Pour e = 15, ulp = 2<sup>−8</sup> = 1/256. Tout float de [32 768, 65 536[ est donc un multiple de 1/256, et tous les multiples de 1/256 de cette tranche sont des float.</p>
+<p><b>(b) L’addition arrondit.</b> Soit M = 49 152 = 1,5×2<sup>15</sup>. Si −2<sup>14</sup> ≤ v &lt; 2<sup>14</sup>, alors v + M ∈ [32 768, 65 536[. Le résultat exact v + M n’est en général pas un float ; le processeur le remplace par le float le plus proche, c’est-à-dire le multiple de 1/256 le plus proche. Comme M est lui-même un multiple de 1/256, on obtient s = M + k/256 avec k = l’entier le plus proche de 256·v.</p>
+<p><b>(c) La soustraction est exacte.</b> s − M = k/256 avec |k/256| ≤ 2<sup>14</sup> : ce nombre s’écrit avec au plus 22 bits significatifs, il est représentable, l’opération ne fait aucun arrondi.</p>
+<p><b>(d) Le cas d’égalité.</b> Quand 256·v tombe pile entre deux entiers, le mode par défaut (au plus proche, au pair) choisit la mantisse paire de s. Le bit de poids 1/256 de M est nul, donc « s pair » équivaut à « k pair » : c’est exactement le choix de <code>_MM_FROUND_TO_NEAREST_INT</code>. Les deux méthodes s’accordent aussi sur les égalités.</p>
+<p><b>(e) Pourquoi 1,5 et pas 1 (rappel de « D’où vient 49 152 ? »).</b> Avec M = 2<sup>15</sup>, un v négatif donne v + M &lt; 2<sup>15</sup> : la somme tombe dans la tranche du dessous, où l’écart vaut 1/512. Tous les négatifs seraient accrochés au 1/512. Le facteur 1,5 place M au milieu de la tranche, avec 2<sup>14</sup> de marge de chaque côté.</p>
+<p><b>(f) Le signe du zéro.</b> Pour −1/512 ≤ v ≤ −0, <code>round_ps</code> rend −0 (il conserve le signe) ; le nombre magique rend +0 (49 152 − 49 152 = +0). La position est la même. En aval, −0 et +0 sont égaux dans toutes les comparaisons (aire B4, top-left, couverture), <code>ToFixed</code> donne 0 dans les deux cas, et les barycentriques de C3 restent positives au total : profondeur et couleur identiques. Seul un <code>memcmp</code> entre l’ancienne et la nouvelle formule voit la différence. D’où la décision 4 : scalaire et AVX2 changent ensemble.</p>
+<p><b>(g) Hors du domaine.</b> Pour 2<sup>14</sup> ≤ |v| &lt; 2<sup>15</sup>, la somme sort de la tranche : l’accrochage se fait au 1/128 (v positif) ou au 1/512 (v négatif). Sur ces 16,8 millions de float, 37,5 % sont faux. Au-delà de 2<sup>15</sup>, tout float est déjà un multiple de 1/256 et l’accrochage ne devrait rien faire, alors que le nombre magique arrondirait encore. D’où le repli <code>round</code> du scalaire et l’assertion de l’AVX2.</p>
+<div class="formula">s = fl(v + 49 152)  →  fl = arrondi au float le plus proche, ici multiple de 1/256<br>r = s − 49 152      →  exact<br>r = round(256·v) / 256   pour tout float v, |v| &lt; 2<sup>14</sup>, au signe du zéro près</div>
+<h4>Comparaison avec la méthode standard</h4>
+<div class="tbl"><table>
+<thead><tr><th></th><th>D-a1b : <code>round_ps</code></th><th>D-a1d : nombre magique</th></tr></thead>
+<tbody>
+<tr><td>Scalaire, par coordonnée</td><td><code>mulss</code> + <code>roundss</code> + <code>mulss</code> (4 µops)</td><td><code>addss</code> + <code>subss</code> (2 µops) + garde du domaine (<code>andps</code>, <code>comiss</code>, saut bien prédit)</td></tr>
+<tr><td>AVX2, par coordonnée et par lot de 8</td><td><code>vroundps</code> + <code>vmulps</code> (×1/256)</td><td><code>vaddps</code> + <code>vsubps</code></td></tr>
+<tr><td>Micro-opérations (AVX2, par coordonnée et par lot)</td><td>3 (<code>vroundps</code> en compte 2)</td><td>2</td></tr>
+<tr><td>Latence de la chaîne (AVX2 ; scalaire : 4 + 8 + 4 = 16 contre 8)</td><td>8 + 4 = 12 cycles</td><td>4 + 4 = 8 cycles (2 + 2 sur Golden Cove)</td></tr>
+<tr><td>Mode d’arrondi</td><td>explicite, indépendant de MXCSR</td><td>celui de MXCSR (au plus proche par défaut)</td></tr>
+<tr><td>Domaine</td><td>tout float</td><td>|v| &lt; 2<sup>14</sup> px</td></tr>
+<tr><td>Zéro négatif</td><td>conservé (−0)</td><td>rendu +0</td></tr>
+<tr><td>Position accrochée</td><td colspan="2">identique au bit près dans le domaine (vérifié exhaustivement)</td></tr>
+</tbody></table></div>
+<p>En AVX2, à nombre d’instructions égal (63 dans la boucle, avant comme après, listing g++), le gain vient de la micro-opération économisée sur chaque <code>vroundps</code> et d’une chaîne plus courte entre le calcul de <code>xr0</code> et la transposition.</p>
+
+<!-- ═════════════════════════ 6. LABO ═════════════════════════ -->
+<h2 id="labo">6. Schéma interactif : la règle des float</h2>
+<p>Choisissez une coordonnée écran v (en pixels). La règle du haut montre les float autour de v + M : la somme exacte (trait orange) est rangée sur le float le plus proche (point vert). La règle du bas montre la grille des 1/256 autour de v et la position accrochée. Tous les calculs sont faits en float32, comme le CPU.</p>
+<div class="lab" id="lab1">
+  <div class="controls" role="group" aria-label="Cas particuliers">
+    <button type="button" data-v="123.4567" aria-pressed="true">Valeur ordinaire</button>
+    <button type="button" data-v="10.001953125">Égalité, k pair</button>
+    <button type="button" data-v="10.005859375">Égalité, k impair</button>
+    <button type="button" data-v="-0.001">Négatif minuscule</button>
+    <button type="button" data-v="-37.25390625">Négatif ordinaire</button>
+    <button type="button" data-v="16384.3">Hors domaine (+)</button>
+    <button type="button" data-v="-20000.1234">Hors domaine (−)</button>
+  </div>
+  <div class="controls">
+    <label for="lab1-v">v (px)</label><input id="lab1-v" type="number" step="0.0001" value="123.4567">
+    <label for="lab1-fine">ajustement fin</label><input id="lab1-fine" type="range" min="-512" max="512" step="1" value="0">
+    <label for="lab1-m">M</label>
+    <select id="lab1-m"><option value="49152">1,5 × 2^15 = 49 152 (choix)</option><option value="32768">2^15 = 32 768</option><option value="24576">1,5 × 2^14 = 24 576</option></select>
+  </div>
+  <div class="svgbox"><svg id="lab1-svg" viewBox="0 0 900 230" role="img" aria-label="Grille des float autour de v + M et grille des 1/256 autour de v"></svg></div>
+  <div class="res" id="lab1-res"></div>
+  <div class="bits" id="lab1-bits"></div>
+  <div id="lab1-verdict" class="verdict"></div>
+</div>
+
+<!-- ═════════════════════════ 7. ÉTAPES ═════════════════════════ -->
+<h2 id="etapes">7. Les étapes</h2>
+<p>Fichiers touchés : LIB <code>Rendering/Viewport.h</code>, <code>Rendering/VertexStage.cpp</code> ; EXE <code>Test/Test_B3_ProjectPositions8.cpp</code>, <code>Test/Test_Da1d_Snap.cpp</code> (nouveau), <code>Test/RunAllTests.cpp</code>, <code>RefactoNouvelleLibrairieV3.vcxproj</code> (+ <code>.filters</code>). <code>VertexStage.h</code>, <code>RenderSystem.cpp</code> et tout le reste sont inchangés.</p>
+
+
+<section class="step" id="e1">
+  <h3><span class="sn">Étape 1</span> Mesurer et localiser le péage</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Savoir précisément quelle opération coûte, avant de toucher au code. Le lot C B B C a isolé l’étage sommets ; un banc sur le vrai fichier VertexStage.cpp isole l’accrochage.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Séquence V1 C B B C du 06/11 : RenderVerts +35 µs, étage faces −11 µs.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Un coût par lot de 8 sommets : 2 × (vroundps + vmulps). Banc : C2 167 µs, D-a1b 199 µs, D-a1d 187 µs.</p></div>
+  </div>
+  <p>Le banc compile <code>ProjectPositions8</code> trois fois (C2 sans accrochage, D-a1b, D-a1d) et la fait tourner sur 274 688 sommets par frame (8 sphères × 4 vues 768 × 450, comme V1). Meilleur de 25 × 40 frames. L’empreinte de toutes les sorties est identique entre D-a1b et D-a1d (<code>75a8e3f0</code>).</p>
+<div class="svgbox"><svg id="bench-svg" viewBox="0 0 760 224" role="img" aria-label="Temps de l’étage sommets par variante"></svg></div>
+<p>Le surcoût de l’accrochage passe de +32 µs à +20 µs (−12 µs). La variante « pli de M » (176 µs) est plus rapide encore, mais elle déplace des sommets (contre-exemple 5) : elle est écartée.</p>
+  
+</section>
+
+
+<section class="step" id="e2">
+  <h3><span class="sn">Étape 2</span> Établir le domaine : |raster| &lt; 2<sup>14</sup> pour un mesh Inside</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Le nombre magique n’est exact que pour |v| &lt; 2<sup>14</sup>. Il faut prouver que l’AVX2 ne voit jamais autre chose, et le surveiller en Debug.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 1 : seul ProjectPositions8 (meshes Inside) compte dans le coût mesuré.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Le contrat : Inside ⇒ sommet dans les 4 plans latéraux ⇒ raster dans le viewport, ≤ 1 536 px (marge ×10). Assertion 5a.</p></div>
+  </div>
+  <p><code>ProjectPositions8</code> n’est appelée que pour un mesh classé <code>Inside</code> : son AABB monde est devant les 6 plans du frustum, donc chaque sommet aussi. Devant les plans gauche, droit, haut et bas, le NDC vaut au plus ±1 (à l’arrondi près), donc le raster est entre <code>vp.x</code> et <code>vp.x + width</code>. L’écran fait 1 536 × 900 : on est dix fois sous la borne.</p><figure class="code "><div class="code-label ">Maths/Geometry/Frustum.cpp (inchangé) : la source du contrat</div><pre><code>    EIntersect Frustum::Classify(<span class="kw">const</span> AABB3d&amp; box) <span class="kw">const</span> <span class="kw">noexcept</span>
+    {
+        EIntersect result = EIntersect::Inside;
+        <span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; m_count; ++i)
+        {
+            <span class="kw">const</span> Plane&amp; p = m_planes[i];
+            <span class="kw">if</span> (p.SignedDistance(box.PVertex(p.normal)) &lt; 0.0f)
+                <span class="kw">return</span> EIntersect::Outside;                  <span class="cm">// sortie immédiate</span>
+            <span class="kw">if</span> (p.SignedDistance(box.NVertex(p.normal)) &lt; 0.0f)
+                result = EIntersect::Intersect;              <span class="cm">// à confirmer sur les autres plans</span>
+        }
+        <span class="kw">return</span> result;     <span class="cm">// Inside : le n-vertex est devant les 4 plans latéraux (et le near)</span>
+    }</code></pre></figure><p>Si le contrat était un jour violé en Release, le sommet resterait sur une grille (1/128 ou 1/512) et le même sommet garderait la même valeur pour tous ses triangles : pas de fissure, seulement une position décalée d’au plus 1/256 px. En Debug, l’assertion 5a l’arrête net, et le filet B3 de <code>RenderSystem</code> aussi (le scalaire, lui, a un repli).</p>
+  
+</section>
+
+
+<section class="step" id="e3">
+  <h3><span class="sn">Étape 3</span> Poser les constantes et verrouiller /fp:fast</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Donner un nom à M et au domaine, à un seul endroit, et empêcher un compilateur trop zélé de supprimer l’accrochage.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 2 : domaine |v| &lt; 2<sup>14</sup>.</p></div>
+    <div class="io-b out"><b>Produit</b><p>kSnapMagic = 49 152, kSnapMagicRange = 16 384, et une erreur de compilation sous /fp:fast.</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">LIB · Rendering/Viewport.h · includes</div><figure class="code before"><div class="code-label before">Avant</div><pre><code><span class="pp">#include</span> "../Core/Compiler.h"
+<span class="pp">#include</span> "../Maths/Vectorlib.h"
+<span class="pp">#include</span> &lt;immintrin.h&gt;      <span class="cm">// D-a1 (Giesen méthod) : _mm_round_ss (accrochage sous-pixel)</span></code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code><span class="pp">#include</span> "../Core/Compiler.h"
+<span class="pp">#include</span> "../Maths/Vectorlib.h"
+<span class="pp">#include</span> &lt;immintrin.h&gt;      <span class="cm">// D-a1 (Giesen méthod) : _mm_round_ss (accrochage sous-pixel)</span>
+<span class="pp">#include</span> &lt;cmath&gt;            <span class="cm">// D-a1d : std::fabs (domaine du nombre magique)</span></code></pre></figure></div><div class="diff"><div class="diff-where">LIB · Rendering/Viewport.h · après kFixedGuardPx</div><p class="diff-note">Sous /fp:fast, le compilateur a le droit de réassocier : (v + M) − M devient v, et les sommets ne sont plus accrochés, sans aucun message. MSVC définit _M_FP_FAST sous /fp:fast, g++ définit __FAST_MATH__ sous -ffast-math (vérifié : l’#error tombe).</p><figure class="code before"><div class="code-label before">Avant</div><pre><code>	<span class="kw">inline</span> <span class="kw">constexpr</span> <span class="kw">float</span>   kFixedGuardPx = 1048576.0f;    <span class="cm">// limite de la conversion float -&gt; int32_t * 256 (D-a1), soit  2^20 pixels</span>
+
+    <span class="cm">// v -&gt; multiple de 1/256 le plus proche (au pair en cas d'égalité), EN FLOAT.</span></code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>	<span class="kw">inline</span> <span class="kw">constexpr</span> <span class="kw">float</span>   kFixedGuardPx = 1048576.0f;    <span class="cm">// limite de la conversion float -&gt; int32_t * 256 (D-a1), soit  2^20 pixels</span>
+
+    <span class="cm">// ════════════════════════════════════════════════════════════</span>
+    <span class="cm">//  D-a1d : ACCROCHAGE PAR NOMBRE MAGIQUE</span>
+    <span class="cm">//  Pour |v| &lt; 2^14, v + 1,5 x 2^15 tombe dans [2^15, 2^16) : dans cet intervalle, deux float</span>
+    <span class="cm">//  voisins sont espaces de 2^(15-23) = 2^-8 = 1/256 px. L'ADDITION arrondit donc v au multiple</span>
+    <span class="cm">//  de 1/256 le plus proche (au pair : mode MXCSR par defaut) ; la SOUSTRACTION est exacte.</span>
+    <span class="cm">//  2 additions au lieu de mul + round (2 uops) + mul.</span>
+    <span class="cm">// ════════════════════════════════════════════════════════════</span>
+    <span class="kw">inline</span> <span class="kw">constexpr</span> <span class="kw">float</span> kSnapMagic = 49152.0f;           <span class="cm">// 1,5 x 2^15</span>
+    <span class="kw">inline</span> <span class="kw">constexpr</span> <span class="kw">float</span> kSnapMagicRange = 16384.0f;      <span class="cm">// 2^14 : domaine |v| &lt; 2^14 (borne exclue)</span>
+
+    <span class="cm">// /fp:fast (ou -ffast-math) aurait le droit de simplifier (v + M) - M en v : l'accrochage</span>
+    <span class="cm">// disparaitrait sans bruit. LV3 compile en /fp:precise (LV3.Common.props) : on le verrouille.</span>
+    <span class="pp">#<span class="kw">if</span></span> defined(_M_FP_FAST) || defined(__FAST_MATH__)
+        <span class="pp">#error</span> "D-a1d : /fp:fast interdit, (v + kSnapMagic) - kSnapMagic serait simplifie en v"
+    <span class="pp">#endif</span>
+
+    <span class="cm">// v -&gt; multiple de 1/256 le plus proche (au pair en cas d'égalité), EN FLOAT.</span></code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e4">
+  <h3><span class="sn">Étape 4</span> SnapToSubpixel : le pendant scalaire</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Que le scalaire rende exactement le même float que l’AVX2, +0 compris, tout en restant juste hors du domaine (chemin clippé).</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 3 : kSnapMagic, kSnapMagicRange.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Dans le domaine : la même formule que l’AVX2. Au-delà : l’arrondi explicite de D-a1. Jamais −0.</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">LIB · Rendering/Viewport.h · SnapToSubpixel</div><p class="diff-note">Le test |v| &lt; 2<sup>14</sup> est une branche presque toujours prise dans le même sens : bien prédite. NaN : la comparaison est fausse, la branche round rend NaN.</p><figure class="code before"><div class="code-label before">Avant</div><pre><code>    <span class="cm">// v -&gt; multiple de 1/256 le plus proche (au pair en cas d'égalité), EN FLOAT.</span>
+    <span class="cm">//   v * 256  : exact (puissance de 2)</span>
+    <span class="cm">//   round    : entier le plus proche, mode EXPLICITE (indépendant de MXCSR)</span>
+    <span class="cm">//   * 1/256  : exact</span>
+    <span class="cm">// Idempotent : Snap(Snap(v)) == Snap(v). NaN reste NaN, l'infini reste l'infini.</span>
+    <span class="cm">// Au-delà de |v| = 2^15, tout float est déjà un multiple de 1/256 : Snap ne change rien.</span>
+    [[nodiscard]] LV3_FORCEINLINE <span class="kw">float</span> SnapToSubpixel(<span class="kw">float</span> v) <span class="kw">noexcept</span>
+    {
+        <span class="kw">const</span> __m128 s = <span class="in">_mm_mul_ss</span>(<span class="in">_mm_set_ss</span>(v), <span class="in">_mm_set_ss</span>(kSubpixelScale));
+        <span class="kw">const</span> __m128 r = <span class="in">_mm_round_ss</span>(s, s, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>); <span class="cm">// // round to nearest, and suppress exceptions</span>
+        <span class="kw">return</span> <span class="in">_mm_cvtss_f32</span>(<span class="in">_mm_mul_ss</span>(r, <span class="in">_mm_set_ss</span>(kSubpixelInv)));
+    }</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>    <span class="cm">// v -&gt; multiple de 1/256 le plus proche (au pair en cas d'égalité), EN FLOAT.</span>
+    <span class="cm">//   |v| &lt; 2^14 : nombre magique, MEME formule que ProjectPositions8 (etape 5b) ;</span>
+    <span class="cm">//                scalaire et AVX2 rendent le meme float au bit pres, +0 compris.</span>
+    <span class="cm">//   sinon      : v * 256 (exact) -&gt; round explicite -&gt; * 1/256 (exact). Chemin clippe</span>
+    <span class="cm">//                seulement (sommets hors ecran, jusqu'a la garde 2^20 px).</span>
+    <span class="cm">// Ne rend JAMAIS -0 : un negatif minuscule (-1/512 &lt;= v &lt;= -0) donne +0 (ToFixed : 0 dans les deux cas).</span>
+    <span class="cm">// Idempotent. NaN reste NaN (comparaison fausse -&gt; branche round). Exige MXCSR au plus proche.</span>
+    <span class="cm">// Au-delà de |v| = 2^15, tout float est déjà un multiple de 1/256 : Snap ne change rien.</span>
+    [[nodiscard]] LV3_FORCEINLINE <span class="kw">float</span> SnapToSubpixel(<span class="kw">float</span> v) <span class="kw">noexcept</span>
+    {
+        <span class="kw">if</span> (std::fabs(v) &lt; kSnapMagicRange)
+        {
+            <span class="cm">//   v            =  123.4567032   (float, ulp 2^-17)</span>
+            <span class="cm">//   v + 49152    =  49275.45703125  &lt;- la somme ne peut garder que des multiples de 1/256 : ARRONDI</span>
+            <span class="cm">//   ... - 49152  =  123.45703125    &lt;- EXACT : le resultat tient en 22 bits significatifs</span>
+            <span class="kw">const</span> __m128 m = <span class="in">_mm_set_ss</span>(kSnapMagic);
+            <span class="kw">return</span> <span class="in">_mm_cvtss_f32</span>(<span class="in">_mm_sub_ss</span>(<span class="in">_mm_add_ss</span>(<span class="in">_mm_set_ss</span>(v), m), m));   <span class="cm">// arrondi, puis exact</span>
+        }
+        <span class="kw">const</span> __m128 s = <span class="in">_mm_mul_ss</span>(<span class="in">_mm_set_ss</span>(v), <span class="in">_mm_set_ss</span>(kSubpixelScale));
+        <span class="kw">const</span> __m128 r = <span class="in">_mm_round_ss</span>(s, s, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>);
+        <span class="kw">return</span> <span class="in">_mm_cvtss_f32</span>(<span class="in">_mm_mul_ss</span>(r, <span class="in">_mm_set_ss</span>(kSubpixelInv)));
+    }</code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e5">
+  <h3><span class="sn">Étape 5</span> ProjectPositions8 : les constantes hors de la boucle</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Retirer les constantes ×256 devenues inutiles et diffuser M dans un registre, une fois par appel.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 3 : kSnapMagic. Code D-a1b : viewport pré-multiplié par 256 et kInv256.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Un registre kMagic, une assertion MXCSR par appel. 5 constantes de moins à garder dans les 16 registres ymm.</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">LIB · Rendering/VertexStage.cpp · ProjectPositions8, avant la boucle</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>        <span class="kw">const</span> __m256 vph = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.height));
+
+        <span class="cm">// Giesen method - rojectPositions8 : le pendant AVX2 (B3, meshes Inside). Même arrondi explicite que le scalaire : la TNR B3 reste bit à bit.</span>
+        <span class="pp">#<span class="kw">if</span></span> LV3_RASTER_FIXED
+            <span class="cm">// Viewport pré-multiplié par 256 : xr256 sort directement en 1/256 px.</span>
+            <span class="cm">// Bit-exact : ×2^8 ne touche que l'exposant, il commute avec chaque arrondi float.</span>
+            <span class="kw">const</span> __m256 vpx256 = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.x) * kSubpixelScale);
+            <span class="kw">const</span> __m256 vpy256 = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.y) * kSubpixelScale);
+            <span class="kw">const</span> __m256 vpw256 = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.width) * kSubpixelScale);
+            <span class="kw">const</span> __m256 vph256 = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.height) * kSubpixelScale);
+            <span class="kw">const</span> __m256 kInv256 = <span class="in">_mm256_set1_ps</span>(kSubpixelInv);     <span class="cm">// ×1/256 : retour en pixels</span>
+        <span class="pp">#endif</span>
+
+        <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; paddedCount; i += 8)</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>        <span class="kw">const</span> __m256 vph = <span class="in">_mm256_set1_ps</span>(static_cast&lt;<span class="kw">float</span>&gt;(vp.height));
+
+        <span class="pp">#<span class="kw">if</span></span> LV3_RASTER_FIXED
+            <span class="cm">// D-a1d : accrochage par nombre magique (Viewport.h). L'etape 5 calcule en PIXELS</span>
+            <span class="cm">// (plus de viewport x256 ni de x1/256), l'etape 5b accroche par une add et une sub.</span>
+            <span class="cm">// kMagic = [49152 49152 49152 49152 | 49152 49152 49152 49152]</span>
+            <span class="kw">const</span> __m256 kMagic = <span class="in">_mm256_set1_ps</span>(kSnapMagic);
+            <span class="cm">// L'addition magique arrondit selon MXCSR (le round_ps de D-a1 avait un mode explicite).</span>
+            <span class="cm">// Bits 13-14 de MXCSR = RC (mode d'arrondi) : 00 = au plus proche, au pair.</span>
+            LV3_ASSERT((<span class="in">_mm_getcsr</span>() &amp; 0x6000u) == 0u &amp;&amp; "MXCSR : arrondi au plus proche exige (D-a1d)");
+        <span class="pp">#endif</span>
+
+        <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; paddedCount; i += 8)</code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e6">
+  <h3><span class="sn">Étape 6</span> ProjectPositions8 : étapes 5, 5a et 5b</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Calculer la position écran en pixels (comme C2), vérifier le domaine en Debug, puis accrocher par add + sub.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 4 du noyau (xn, yn en NDC) et étape 5 ci-dessus (kMagic).</p></div>
+    <div class="io-b out"><b>Produit</b><p>xr, yr : multiples exacts de 1/256, au bit près ceux de D-a1b (au signe du zéro près), et ceux de ProjectClip.</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">LIB · Rendering/VertexStage.cpp · ProjectPositions8, étape 5 de la boucle</div><p class="diff-note">Le bloc commenté hérité de D-a1 disparaît avec l’« avant » : il décrivait un état du code qui n’existe plus. Au listing g++, la soustraction de M apparaît comme une addition de −M : c’est la même opération, exacte, au bit près.</p><figure class="code before"><div class="code-label before">Avant</div><pre><code>            <span class="cm">// ── 5. ToRaster, copie de Viewport::ToRaster (a+b = b+a et a*b = b*a sont exacts) :</span>
+            <span class="cm">//   xr = vp.x + (xn*0.5 + 0.5) * width</span>
+            <span class="cm">//   yr = vp.y + (0.5 - yn*0.5) * height       &lt;- le flip Y</span>
+   <span class="cm">//         const __m256 xr0 = _mm256_add_ps(vpx, _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(xn, half), half), vpw));</span>
+   <span class="cm">//         const __m256 yr0 = _mm256_add_ps(vpy, _mm256_mul_ps(_mm256_sub_ps(half, _mm256_mul_ps(yn, half)), vph));</span>
+   <span class="cm">//</span>
+			<span class="cm">//// Giesen method</span>
+   <span class="cm">//         #if LV3_RASTER_FIXED</span>
+   <span class="cm">//             // ── 5b. D-a1 : accrochage sous-pixel, copie de SnapToSubpixel (Viewport.h).</span>
+   <span class="cm">//             //   xr*256 (exact) -&gt; entier le plus proche, mode EXPLICITE -&gt; *1/256 (exact)</span>
+   <span class="cm">//             //   _MM_FROUND_TO_NEAREST_INT : le MEME arrondi que _mm_round_ss du scalaire.</span>
+   <span class="cm">//             const __m256 xr = _mm256_mul_ps(_mm256_round_ps(_mm256_mul_ps(xr0, k256), _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC), kInv256); // round to nearest, and suppress exceptions</span>
+   <span class="cm">//             const __m256 yr = _mm256_mul_ps(_mm256_round_ps(_mm256_mul_ps(yr0, k256), _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC), kInv256); // round to nearest, and suppress exceptions</span>
+   <span class="cm">//         #else</span>
+   <span class="cm">//             const __m256 xr = xr0, yr = yr0;</span>
+   <span class="cm">//         #endif</span>
+
+            <span class="cm">// Giesen method</span>
+            <span class="pp">#<span class="kw">if</span></span> LV3_RASTER_FIXED
+                <span class="cm">// 5 : position écran directement en unités de 1/256 px (viewport pré-multiplié).</span>
+                <span class="kw">const</span> __m256 xr256 = <span class="in">_mm256_add_ps</span>(vpx256, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_add_ps</span>(<span class="in">_mm256_mul_ps</span>(xn, half), half), vpw256));
+                <span class="kw">const</span> __m256 yr256 = <span class="in">_mm256_add_ps</span>(vpy256, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_sub_ps</span>(half, <span class="in">_mm256_mul_ps</span>(yn, half)), vph256));
+                <span class="cm">// 5b : accrochage = arrondi au plus proche (explicite, indépendant de MXCSR), puis retour en px.</span>
+                <span class="kw">const</span> __m256 xr = <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_round_ps</span>(xr256, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>), kInv256);
+                <span class="kw">const</span> __m256 yr = <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_round_ps</span>(yr256, <span class="in">_MM_FROUND_TO_NEAREST_INT</span> | <span class="in">_MM_FROUND_NO_EXC</span>), kInv256);
+            <span class="pp">#<span class="kw">else</span></span>
+                <span class="kw">const</span> __m256 xr = <span class="in">_mm256_add_ps</span>(vpx, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_add_ps</span>(<span class="in">_mm256_mul_ps</span>(xn, half), half), vpw));
+                <span class="kw">const</span> __m256 yr = <span class="in">_mm256_add_ps</span>(vpy, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_sub_ps</span>(half, <span class="in">_mm256_mul_ps</span>(yn, half)), vph));
+            <span class="pp">#endif</span></code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>            <span class="cm">// ── 5. ToRaster, copie de Viewport::ToRaster (a+b = b+a et a*b = b*a sont exacts) :</span>
+            <span class="cm">//   xr = vp.x + (xn*0.5 + 0.5) * width</span>
+            <span class="cm">//   yr = vp.y + (0.5 - yn*0.5) * height       &lt;- le flip Y</span>
+            <span class="cm">// D-a1d : EN PIXELS dans les deux modes (plus de viewport pre-multiplie par 256).</span>
+            <span class="cm">// Exemple, vue (0, 0, 768, 450), 8 sommets au bord gauche (voir schema de l'etape 6) :</span>
+            <span class="cm">//   xn  = [-1        -1.0000001  -1.0000025  -1.000005  | ... ]</span>
+            <span class="cm">//   xr0 = [+0        -4.58e-05   -9.60e-04   -1.92e-03  | ... ]   px</span>
+            <span class="kw">const</span> __m256 xr0 = <span class="in">_mm256_add_ps</span>(vpx, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_add_ps</span>(<span class="in">_mm256_mul_ps</span>(xn, half), half), vpw));
+            <span class="kw">const</span> __m256 yr0 = <span class="in">_mm256_add_ps</span>(vpy, <span class="in">_mm256_mul_ps</span>(<span class="in">_mm256_sub_ps</span>(half, <span class="in">_mm256_mul_ps</span>(yn, half)), vph));
+
+            <span class="pp">#<span class="kw">if</span></span> LV3_RASTER_FIXED
+                <span class="cm">// ── 5a. DOMAINE du nombre magique : |xr0| &lt; 2^14 et |yr0| &lt; 2^14 dans les 8 couloirs.</span>
+                <span class="cm">//   Contrat Inside : sommets dans les 4 plans lateraux =&gt; dans le viewport (&lt;= 1536 px).</span>
+                <span class="cm">//   andnot(-0, v) : efface le bit de signe -&gt; |v|, couloir par couloir.</span>
+                <span class="cm">//   cmp LT_OQ -&gt; 0xFFFFFFFF si |v| &lt; 16384 (NaN -&gt; 0 -&gt; assertion, voulu).</span>
+                <span class="cm">//   and des deux masques, movemask -&gt; 8 bits : 0xFF = les 8 couloirs dans le domaine.</span>
+                <span class="cm">//   Release : expression compilee (sizeof) mais jamais evaluee -&gt; 0 instruction.</span>
+                LV3_ASSERT(<span class="in">_mm256_movemask_ps</span>(<span class="in">_mm256_and_ps</span>(
+                    <span class="in">_mm256_cmp_ps</span>(<span class="in">_mm256_andnot_ps</span>(<span class="in">_mm256_set1_ps</span>(-0.0f), xr0), <span class="in">_mm256_set1_ps</span>(kSnapMagicRange), <span class="in">_CMP_LT_OQ</span>),
+                    <span class="in">_mm256_cmp_ps</span>(<span class="in">_mm256_andnot_ps</span>(<span class="in">_mm256_set1_ps</span>(-0.0f), yr0), <span class="in">_mm256_set1_ps</span>(kSnapMagicRange), <span class="in">_CMP_LT_OQ</span>))) == 0xFF);
+
+                <span class="cm">// ── 5b. ACCROCHAGE : xr0 + M arrondit au 1/256 le plus proche (au pair), - M est exact.</span>
+                <span class="cm">//   xr0 + M = [49152  49151.99995  49151.99904  49151.99808 | ... ]   valeurs EXACTES</span>
+                <span class="cm">//   s       = [49152  49152        49152        49152       | ... ]   (grille de 1/256 : ARRONDI)</span>
+                <span class="cm">//   s - M   = [+0     +0           +0           +0          | ... ]   EXACT, et +0, jamais -0</span>
+                <span class="cm">//   D-a1 (round_ps) rendait -0 pour les couloirs 1 a 3 : meme position, autre bit de signe.</span>
+                <span class="cm">//   Meme formule que SnapToSubpixel : scalaire == AVX2 au bit pres, +0 compris.</span>
+                <span class="kw">const</span> __m256 xr = <span class="in">_mm256_sub_ps</span>(<span class="in">_mm256_add_ps</span>(xr0, kMagic), kMagic);
+                <span class="kw">const</span> __m256 yr = <span class="in">_mm256_sub_ps</span>(<span class="in">_mm256_add_ps</span>(yr0, kMagic), kMagic);
+            <span class="pp">#<span class="kw">else</span></span>
+                <span class="kw">const</span> __m256 xr = xr0;
+                <span class="kw">const</span> __m256 yr = yr0;
+            <span class="pp">#endif</span></code></pre></figure></div><h4>Les registres couloir par couloir</h4>
+<p>Choisissez un scénario : le tableau calcule réellement en float32 les 8 couloirs d’un lot, pour x (le calcul de y est le même). La dernière colonne compare D-a1d à D-a1b.</p>
+<div class="lab" id="lab2">
+  <div class="controls" role="group" aria-label="Scénario du lot">
+    <button type="button" data-s="0" aria-pressed="true">Vue (0,0) : bord gauche</button>
+    <button type="button" data-s="1">Vue (768,450) : sommets ordinaires</button>
+    <button type="button" data-s="2">Viewport 512 : égalités exactes</button>
+    <button type="button" data-s="3">Hors contrat : sommets à 16 000-20 000 px</button>
+  </div>
+  <div class="tbl"><table class="lanes" id="lab2-t"></table></div>
+  <div id="lab2-v" class="verdict"></div>
+</div>
+  <div class="pair"><div><h5>Pendant scalaire</h5><figure class="code "><pre><code><span class="cm">// ProjectClip (VertexStage.h), inchangé : il appelle SnapToSubpixel, désormais magique.</span>
+<span class="kw">const</span> <span class="kw">float</span> invW = 1.0f / c.w;
+<span class="kw">const</span> Vec3f r = vp.ToRaster({ c.x * invW, c.y * invW, c.z * invW });   <span class="cm">// xr0, yr0</span>
+<span class="kw">return</span> { SnapToSubpixel(r.x), SnapToSubpixel(r.y), r.z, invW };          <span class="cm">// 5a + 5b scalaires</span></code></pre></figure></div><div><h5>AVX2</h5><figure class="code "><pre><code><span class="cm">// 5b, un registre = 8 couloirs, 2 instructions par coordonnée :</span>
+<span class="kw">const</span> __m256 xr = <span class="in">_mm256_sub_ps</span>(<span class="in">_mm256_add_ps</span>(xr0, kMagic), kMagic);
+<span class="kw">const</span> __m256 yr = <span class="in">_mm256_sub_ps</span>(<span class="in">_mm256_add_ps</span>(yr0, kMagic), kMagic);</code></pre></figure></div></div>
+</section>
+
+
+<section class="step" id="e7">
+  <h3><span class="sn">Étape 7</span> ProjectPositions : l’assertion MXCSR du chemin scalaire</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Le pendant scalaire (LV3_SIMD 0) dépend lui aussi du mode d’arrondi : le dire au même endroit que l’AVX2.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étape 4 : SnapToSubpixel magique, appelée par ProjectClip.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Une assertion par appel, en Debug. Aucun changement de calcul.</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">LIB · Rendering/VertexStage.cpp · ProjectPositions</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>        <span class="kw">const</span> Matrix44f m = mvp;
+        <span class="kw">const</span> Viewport  v = vp;
+
+        <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; count; ++i)</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>        <span class="kw">const</span> Matrix44f m = mvp;
+        <span class="kw">const</span> Viewport  v = vp;
+        <span class="pp">#<span class="kw">if</span></span> LV3_RASTER_FIXED
+            <span class="cm">// D-a1d : SnapToSubpixel (via ProjectClip) accroche par nombre magique, arrondi MXCSR.</span>
+            LV3_ASSERT((<span class="in">_mm_getcsr</span>() &amp; 0x6000u) == 0u &amp;&amp; "MXCSR : arrondi au plus proche exige (D-a1d)");
+        <span class="pp">#endif</span>
+
+        <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; count; ++i)</code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e8">
+  <h3><span class="sn">Étape 8</span> TNR B3 : respecter le contrat de domaine, prouver le cas ±0</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>B3 tire des matrices au hasard : 55 sommets sur 1 228 800 tombent au-delà de 2<sup>14</sup> px, hors du contrat Inside. Il faut les retirer (sinon l’assertion 5a tombe), et exiger que le cas −0 / +0 soit présent.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étapes 4 à 6 : scalaire et AVX2 accrochent par la même formule dans le domaine.</p></div>
+    <div class="io-b out"><b>Produit</b><p>B3 compare toujours ProjectPositions8 à ProjectClip au bit près, sur des données dans le contrat, avec 211 négatifs minuscules (g++).</p></div>
+  </div>
+  <div class="diff"><div class="diff-where">EXE · Test/Test_B3_ProjectPositions8.cpp · includes</div><figure class="code before"><div class="code-label before">Avant</div><pre><code><span class="pp">#include</span> &lt;vector&gt;
+<span class="pp">#include</span> "geometry/MeshClass.h"</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code><span class="pp">#include</span> &lt;vector&gt;
+<span class="pp">#include</span> &lt;cmath&gt;       <span class="cm">// D-a1d : std::fabs</span>
+<span class="pp">#include</span> "geometry/MeshClass.h"</code></pre></figure></div><div class="diff"><div class="diff-where">EXE · Test/Test_B3_ProjectPositions8.cpp · compteurs</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>        <span class="kw">uint64_t</span> verts = 0, mismatches = 0, outside = 0;</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>        <span class="kw">uint64_t</span> verts = 0, mismatches = 0, outside = 0, replaced = 0, tinyNeg = 0;</code></pre></figure></div><div class="diff"><div class="diff-where">EXE · Test/Test_B3_ProjectPositions8.cpp · avant l’appel du noyau</div><p class="diff-note">Le filtre s’insère entre le choix du viewport et l’appel du noyau : il a besoin du viewport. Il ne consomme aucun tirage : le reste de la suite aléatoire est inchangé.</p><figure class="code before"><div class="code-label before">Avant</div><pre><code>            <span class="kw">const</span> Viewport&amp; vp = vps[it % 3];
+            ProjectPositions8(m, vp, px.data(), py.data(), pz.data(), kN, out.Data());</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>            <span class="kw">const</span> Viewport&amp; vp = vps[it % 3];
+
+            <span class="cm">// D-a1d : le noyau AVX2 accroche par nombre magique, valable si |raster| &lt; 2^14 (contrat</span>
+            <span class="cm">// Inside, assertion 5a de ProjectPositions8). Un sommet hors de ce domaine est remplace par</span>
+            <span class="cm">// l'origine (w = m33 &gt;= 151 : NDC minuscule, dans le domaine). Aucun tirage consomme.</span>
+            <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; kN; ++i)
+            {
+                <span class="kw">const</span> Vec4f c = MulRow(m, aos[i]);
+                <span class="kw">const</span> <span class="kw">float</span> iw = 1.0f / c.w;
+                <span class="kw">float</span> xr, yr;
+                vp.ToRaster(c.x * iw, c.y * iw, xr, yr);
+                <span class="kw">if</span> (!(std::fabs(xr) &lt; kSnapMagicRange &amp;&amp; std::fabs(yr) &lt; kSnapMagicRange))
+                {
+                    aos[i] = Vec3f{ 0.0f, 0.0f, 0.0f };
+                    px[i] = 0.0f; py[i] = 0.0f; pz[i] = 0.0f;
+                    ++replaced;
+                    <span class="kw">continue</span>;
+                }
+                <span class="cm">// Negatifs minuscules : D-a1 (round) rendait -0, D-a1d rend +0 (scalaire ET AVX2).</span>
+                tinyNeg += ((xr &lt; 0.0f &amp;&amp; xr &gt;= -1.0f / 512.0f) || (yr &lt; 0.0f &amp;&amp; yr &gt;= -1.0f / 512.0f)) ? 1u : 0u;
+            }
+            ProjectPositions8(m, vp, px.data(), py.data(), pz.data(), kN, out.Data());</code></pre></figure></div><div class="diff"><div class="diff-where">EXE · Test/Test_B3_ProjectPositions8.cpp · fin du test</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>        <span class="kw">const</span> <span class="kw">bool</span> nonTrivial = outside &gt; 0 &amp;&amp; outside &lt; verts;
+        Logger::info("[B3] " + std::to_string(verts) + " sommets, " + std::to_string(mismatches)
+            + " desaccords, cuisson " + (bakeOk ? "OK" : "KO"));</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>        <span class="cm">// D-a1d : le cas -0 / +0 doit etre PRESENT, sinon le test ne prouve rien sur lui.</span>
+        <span class="kw">const</span> <span class="kw">bool</span> nonTrivial = outside &gt; 0 &amp;&amp; outside &lt; verts &amp;&amp; (LV3_RASTER_FIXED == 0 || tinyNeg &gt; 0);
+        Logger::info("[B3] " + std::to_string(verts) + " sommets, " + std::to_string(mismatches)
+            + " desaccords, cuisson " + (bakeOk ? "OK" : "KO") + " ; D-a1d : " + std::to_string(replaced)
+            + " hors domaine remplaces, " + std::to_string(tinyNeg) + " negatifs minuscules");</code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e9">
+  <h3><span class="sn">Étape 9</span> TNR D-a1d : une référence indépendante</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>B3 compare deux copies de la même formule : il ne voit pas une erreur commune aux deux (contre-exemples 1 et 6). Il faut une référence qui ne doit rien au nombre magique.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étapes 3 à 6.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Test_Da1d_Snap : 20 580 827 valeurs contre la référence (double + nearbyint, zéro canonique +0), et le noyau AVX2 contre le scalaire sur les bords gauche et haut.</p></div>
+  </div>
+  <figure class="code after"><div class="code-label after">EXE · Test/Test_Da1d_Snap.cpp · NOUVEAU fichier (complet)</div><pre><code><span class="pp">#include</span> "pch.h"
+<span class="pp">#include</span> &lt;cmath&gt;
+<span class="pp">#include</span> &lt;cstring&gt;
+<span class="pp">#include</span> &lt;limits&gt;
+<span class="pp">#include</span> &lt;random&gt;
+<span class="pp">#include</span> "rendering/Viewport.h"
+<span class="pp">#include</span> "rendering/Rasterizer.h"     <span class="cm">// MulRow</span>
+<span class="pp">#include</span> "rendering/VertexStage.h"
+<span class="pp">#include</span> "core/Logger.h"
+<span class="pp">#include</span> "TestRandom.h"               <span class="cm">// tirages portables MSVC / g++</span>
+
+<span class="cm">// ════════════════════════════════════════════════════════════</span>
+<span class="cm">//  TNR D-a1d : accrochage par nombre magique</span>
+<span class="cm">//   (1) SnapToSubpixel == reference INDEPENDANTE (double, nearbyint, zero canonique +0) :</span>
+<span class="cm">//       1 motif de bits sur 127 dans |v| &lt; 2^15 (le passage du domaine 2^14 est traverse),</span>
+<span class="cm">//       toutes les egalites k/256 + 1/512 sur [-64, 2048[ px et leurs deux voisins, bornes,</span>
+<span class="cm">//       repli round jusqu'a 2^21 px, NaN ;</span>
+<span class="cm">//   (2) jamais -0, idempotence ;</span>
+<span class="cm">//   (3) ProjectPositions8 == ProjectPositions (scalaire) au bit pres sur des sommets poses</span>
+<span class="cm">//       sur les bords gauche et haut (raster -0,003 .. 0 : l'ancien round rendait -0).</span>
+<span class="cm">// ════════════════════════════════════════════════════════════</span>
+<span class="kw">namespace</span> LV3::Tests
+{
+<span class="pp">#<span class="kw">if</span></span> LV3_DEBUG &amp;&amp; LV3_RASTER_FIXED
+    <span class="kw">namespace</span>
+    {
+        <span class="kw">uint32_t</span> Bits(<span class="kw">float</span> f) { <span class="kw">uint32_t</span> u; std::memcpy(&amp;u, &amp;f, 4); <span class="kw">return</span> u; }
+        <span class="kw">float</span> FromBits(<span class="kw">uint32_t</span> u) { <span class="kw">float</span> f; std::memcpy(&amp;f, &amp;u, 4); <span class="kw">return</span> f; }
+
+        <span class="cm">// Reference sans nombre magique ni intrinseque : v*256 exact en double, entier le plus</span>
+        <span class="cm">// proche au pair (mode par defaut), /256 exact, retour en float exact (|r| &lt; 2^24 / 256 ou</span>
+        <span class="cm">// deja multiple de 2^-8). Zero CANONIQUE : +0 (contrat D-a1d).</span>
+        <span class="kw">float</span> RefSnap(<span class="kw">float</span> v)
+        {
+            <span class="kw">const</span> <span class="kw">float</span> f = <span class="kw">float</span>(std::nearbyint(<span class="kw">double</span>(v) * 256.0) / 256.0);
+            <span class="kw">return</span> f == 0.0f ? 0.0f : f;
+        }
+    }
+
+    <span class="kw">bool</span> Test_Da1d_Snap()
+    {
+        <span class="kw">bool</span> ok = <span class="kw">true</span>;
+
+        <span class="cm">// ── (1) et (2) : la fonction scalaire contre la reference ─────────────</span>
+        <span class="kw">uint64_t</span> n = 0, bad = 0, minusZero = 0, notIdem = 0;
+        <span class="kw">auto</span> check = [&amp;](<span class="kw">float</span> v)
+        {
+            <span class="kw">const</span> <span class="kw">float</span> s = SnapToSubpixel(v), r = RefSnap(v);
+            ++n;
+            <span class="kw">if</span> (Bits(s) != Bits(r))
+            {
+                <span class="kw">if</span> (bad &lt; 5) Logger::error("[D-a1d] v = " + std::to_string(v) + " : snap "
+                    + std::to_string(s) + " / reference " + std::to_string(r));
+                ++bad;
+            }
+            minusZero += (Bits(s) == 0x80000000u) ? 1u : 0u;
+            notIdem += (Bits(SnapToSubpixel(s)) != Bits(s)) ? 1u : 0u;
+        };
+
+        <span class="kw">for</span> (<span class="kw">uint32_t</span> b = 0; b &lt; 0x47000000u; b += 127)            <span class="cm">// |v| &lt; 2^15, les deux signes</span>
+        {
+            check(FromBits(b));
+            check(FromBits(b | 0x80000000u));
+        }
+        <span class="kw">for</span> (<span class="kw">int</span> k = -64 * 256; k &lt; 2048 * 256; ++k)                <span class="cm">// egalites exactes : le pair decide</span>
+        {
+            <span class="kw">const</span> <span class="kw">float</span> t = (<span class="kw">float</span>(k) + 0.5f) * kSubpixelInv;
+            check(t);
+            check(std::nextafter(t, -1.0e9f));
+            check(std::nextafter(t, 1.0e9f));
+        }
+        <span class="kw">for</span> (<span class="kw">const</span> <span class="kw">float</span> e : { 0.0f, -0.0f, -1.0f / 512.0f, -3.0f / 512.0f, 16383.99609375f, 16384.0f,
+                               -16384.0f, 32767.998f, 32768.0f, 1048576.0f, -1048576.3f })
+        {
+            check(e);
+            check(std::nextafter(e, 0.0f));
+            check(std::nextafter(e, 1.0e30f));
+        }
+        {   <span class="cm">// repli round (chemin clippe, sommets hors ecran) : [2^14, 2^21] px</span>
+            std::mt19937 rng(11u);
+            TestRand01 U;
+            <span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; 200000; ++i)
+                check((U(rng) &lt; 0.5f ? -1.0f : 1.0f) * (16384.0f + U(rng) * 2080768.0f));
+        }
+        <span class="kw">const</span> <span class="kw">bool</span> nanOk = std::isnan(SnapToSubpixel(std::numeric_limits&lt;<span class="kw">float</span>&gt;::quiet_NaN()));
+
+        Logger::info("[D-a1d] SnapToSubpixel : " + std::to_string(n) + " valeurs, " + std::to_string(bad)
+            + " differences, " + std::to_string(minusZero) + " -0, " + std::to_string(notIdem)
+            + " non idempotentes, NaN " + (nanOk ? "OK" : "KO"));
+        ok &amp;= (bad == 0 &amp;&amp; minusZero == 0 &amp;&amp; notIdem == 0 &amp;&amp; nanOk);
+
+        <span class="cm">// ── (3) le noyau AVX2 contre le scalaire, sur les bords gauche et haut ────────</span>
+        {
+            <span class="cm">// mvp = identite : clip = (x, y, z, 1), w = 1 &gt; 0 (contrat Inside). Viewport 768 x 450 en (0, 0) :</span>
+            <span class="cm">//   xr = (x*0.5 + 0.5) * 768  -&gt;  x juste sous -1 donne un raster juste sous 0 ;</span>
+            <span class="cm">//   yr = (0.5 - y*0.5) * 450  -&gt;  y juste au-dessus de +1, idem en y.</span>
+            Matrix44f m;
+            <span class="kw">for</span> (<span class="kw">int</span> r = 0; r &lt; 4; ++r)
+                <span class="kw">for</span> (<span class="kw">int</span> c = 0; c &lt; 4; ++c)
+                    m[r][c] = (r == c) ? 1.0f : 0.0f;
+            <span class="kw">const</span> Viewport vp{ 0, 0, 768, 450 };
+
+            <span class="kw">constexpr</span> <span class="kw">size_t</span> kN = 64;                                <span class="cm">// multiple de 8</span>
+            SimdVector&lt;<span class="kw">float</span>&gt; px(kN), py(kN), pz(kN);
+            std::vector&lt;Vec3f&gt; aos(kN);
+            <span class="kw">float</span> x = -1.0f, y = 1.0f;
+            <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; kN; ++i)                          <span class="cm">// 64 float consecutifs vers l'exterieur</span>
+            {
+                aos[i] = { x, y, 0.5f };
+                px[i] = x; py[i] = y; pz[i] = 0.5f;
+                x = std::nextafter(x, -2.0f);
+                y = std::nextafter(y, 2.0f);
+            }
+
+            RasterSpaceBuffer simd, scal;
+            ProjectPositions8(m, vp, px.data(), py.data(), pz.data(), kN, simd.Data());
+            ProjectPositions(m, vp, aos.data(), kN, scal.Data());
+
+            <span class="kw">uint64_t</span> diff = 0, zeros = 0, negZeros = 0;
+            <span class="kw">for</span> (<span class="kw">size_t</span> i = 0; i &lt; kN; ++i)
+            {
+                <span class="kw">const</span> RasterVertex&amp; a = simd.Data()[i];
+                <span class="kw">const</span> RasterVertex&amp; b = scal.Data()[i];
+                diff += std::memcmp(&amp;a, &amp;b, sizeof(RasterVertex)) != 0 ? 1u : 0u;
+                zeros += (Bits(a.x) == 0u ? 1u : 0u) + (Bits(a.y) == 0u ? 1u : 0u);
+                negZeros += (Bits(a.x) == 0x80000000u ? 1u : 0u) + (Bits(a.y) == 0x80000000u ? 1u : 0u);
+            }
+            Logger::info("[D-a1d] bords : " + std::to_string(kN) + " sommets, " + std::to_string(diff)
+                + " differences AVX2 / scalaire, " + std::to_string(zeros) + " coordonnees +0, "
+                + std::to_string(negZeros) + " -0");
+            ok &amp;= (diff == 0 &amp;&amp; negZeros == 0 &amp;&amp; zeros &gt; 0);
+        }
+        <span class="kw">return</span> ok;
+    }
+<span class="pp">#<span class="kw">else</span></span>
+    <span class="kw">bool</span> Test_Da1d_Snap() { <span class="kw">return</span> <span class="kw">true</span>; }    <span class="cm">// D-a1d inactif (LV3_RASTER_FIXED = 0) ou Release</span>
+<span class="pp">#endif</span>
+}</code></pre></figure><div class="diff"><div class="diff-where">EXE · Test/RunAllTests.cpp · déclarations</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>    <span class="kw">bool</span> Test_Da1_Fixed();          <span class="cm">// D-a1 : aretes en virgule fixe</span>
+    <span class="kw">bool</span> Test_Da1b_Bary();          <span class="cm">// D-a1b : barycentriques tirees des E' entiers</span></code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>    <span class="kw">bool</span> Test_Da1_Fixed();          <span class="cm">// D-a1 : aretes en virgule fixe</span>
+    <span class="kw">bool</span> Test_Da1b_Bary();          <span class="cm">// D-a1b : barycentriques tirees des E' entiers</span>
+    <span class="kw">bool</span> Test_Da1d_Snap();          <span class="cm">// D-a1d : accrochage par nombre magique</span></code></pre></figure></div><div class="diff"><div class="diff-where">EXE · Test/RunAllTests.cpp · après Test_Da1b_Bary</div><figure class="code before"><div class="code-label before">Avant</div><pre><code>        <span class="kw">if</span> (!Test_Da1b_Bary())
+        {
+            Logger::error("ECHEC : Test_Da1b_Bary()");
+            <span class="kw">return</span> <span class="kw">false</span>;
+        }
+        <span class="kw">else</span>
+        {
+            Logger::success("SUCCES : Test_Da1b_Bary()");
+        }</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>        <span class="kw">if</span> (!Test_Da1b_Bary())
+        {
+            Logger::error("ECHEC : Test_Da1b_Bary()");
+            <span class="kw">return</span> <span class="kw">false</span>;
+        }
+        <span class="kw">else</span>
+        {
+            Logger::success("SUCCES : Test_Da1b_Bary()");
+        }
+
+        <span class="kw">if</span> (!Test_Da1d_Snap())
+        {
+            Logger::error("ECHEC : Test_Da1d_Snap()");
+            <span class="kw">return</span> <span class="kw">false</span>;
+        }
+        <span class="kw">else</span>
+        {
+            Logger::success("SUCCES : Test_Da1d_Snap()");
+        }</code></pre></figure></div><div class="diff"><div class="diff-where">EXE · RefactoNouvelleLibrairieV3.vcxproj</div><p class="diff-note">Ajouter aussi l’entrée dans le .filters (même bloc que Test_Da1b_Bary.cpp, filtre « Fichiers sources\Test »), ou glisser le fichier dans le dossier Test de l’explorateur de solutions.</p><figure class="code before"><div class="code-label before">Avant</div><pre><code>    &lt;ClCompile Include="Test\Test_Da1b_Bary.cpp" /&gt;
+    &lt;ClCompile Include="Test\Test_Da1_Fixed.cpp" /&gt;</code></pre></figure><figure class="code after"><div class="code-label after">Après</div><pre><code>    &lt;ClCompile Include="Test\Test_Da1b_Bary.cpp" /&gt;
+    &lt;ClCompile Include="Test\Test_Da1d_Snap.cpp" /&gt;
+    &lt;ClCompile Include="Test\Test_Da1_Fixed.cpp" /&gt;</code></pre></figure></div>
+  
+</section>
+
+
+<section class="step" id="e10">
+  <h3><span class="sn">Étape 10</span> Vérifier</h3>
+  <div class="io">
+    <div class="io-b obj"><b>Objectif</b><p>Décider sur des faits : tests hors moteur, filets Debug, assembleur, puis mesure appairée avec des prédictions écrites avant.</p></div>
+    <div class="io-b use"><b>Utilise (étape précédente)</b><p>Étapes 1 à 9.</p></div>
+    <div class="io-b out"><b>Produit</b><p>Le lot accepté ou refusé selon la règle du §3.</p></div>
+  </div>
+  <p>Voir la section 9 ci-dessous, qui détaille chaque contrôle et ses résultats attendus.</p>
+  
+</section>
+
+<!-- ═════════════════════════ 8. CONTRE-EXEMPLES ═════════════════════════ -->
+<h2 id="contre">8. Contre-exemples chiffrés</h2>
+<p>Chacun a été exécuté sur une copie de travail des vrais fichiers (g++ 13, -mavx2, -ffp-contract=off).</p>
+<div class="cx">
+  <div class="card"><div class="n">841 786</div><h4>1. M = 2<sup>15</sup> au lieu de 1,5 × 2<sup>15</sup></h4><p>Tous les négatifs sont accrochés au 1/512. Test_Da1d : 841 786 valeurs fausses sur 20,6 millions. <b>B3 reste vert</b> : scalaire et AVX2 sont faux de la même façon. Avec M = 1,5 × 2<sup>14</sup> : 3 223 793 valeurs fausses (grille de 1/512 partout).</p></div>
+  <div class="card"><div class="n">231</div><h4>2. Changer l’AVX2 seul, garder round dans le scalaire</h4><p>TNR B3 : 231 désaccords sur 1 228 800 sommets, dont 211 « x 0.000000 / −0.000000 » (−0 contre +0) et 20 hors domaine. Le filet de <code>RenderSystem</code> tomberait de même sur chaque sommet posé juste à gauche ou au-dessus d’un viewport.</p></div>
+  <div class="card"><div class="n">20</div><h4>3. Garder les données de B3 telles quelles</h4><p>En Debug, l’assertion 5a tombe au premier lot hors contrat. Sans assertion : 20 désaccords, tous au-delà de 2<sup>14</sup> px (« x 17155.140625 / 17155.136719 » : le nombre magique accroche au 1/128).</p></div>
+  <div class="card"><div class="n">37,5 %</div><h4>4. Nombre magique hors domaine</h4><p>Entre 2<sup>14</sup> et 2<sup>15</sup> : 6 291 456 float faux sur 16 777 216. Exemple : 16 384,3 donne 16 384,296875 au lieu de 16 384,30078125. Le scalaire garde donc un repli round.</p></div>
+  <div class="card"><div class="n">1,1 %</div><h4>5. Plier M dans le décalage du viewport</h4><p>Calculer (vp.x + M) + t·width puis − M économise une addition, mais arrondit deux fois en une. Sur 274 688 sommets : 3 060 sont décalés de 1/256 px (0 dans la vue (0,0), 1 002 / 532 / 1 526 dans les vues décalées). L’image change : rejeté. Rejouez-le ci-dessous.</p>
+    <div class="lab" id="lab3"><div class="controls"><button type="button" id="lab3-run">Tirer 20 000 sommets par vue</button></div><div id="lab3-out" class="tbl"></div></div></div>
+  <div class="card"><div class="n">50 019</div><h4>6. Domaine 2<sup>15</sup> au lieu de 2<sup>14</sup></h4><p>Test_Da1d : 50 019 valeurs fausses entre 2<sup>14</sup> et 2<sup>15</sup>. B3 reste vert (0 sommet remplacé, les deux côtés faux à l’identique). Leçon : une TNR qui compare deux implémentations d’une même formule ne voit pas une erreur dans la formule ; il faut une référence indépendante.</p></div>
+  <div class="card"><div class="n">#error</div><h4>7. Compiler sous /fp:fast</h4><p>Le compilateur aurait le droit de réécrire (v + M) − M en v. L’accrochage disparaîtrait sans bruit et le noyau de Giesen recevrait des sommets hors grille. Le verrou de Viewport.h arrête la compilation (vérifié avec -ffast-math).</p></div>
+</div>
+
+<!-- ═════════════════════════ 9. VÉRIFIER ═════════════════════════ -->
+<h2 id="verifier">9. Vérifier</h2>
+<h4>Tests hors moteur (faits)</h4>
+<div class="tbl"><table>
+<thead><tr><th>Contrôle</th><th>Résultat</th></tr></thead>
+<tbody>
+<tr><td>Exhaustif : tous les float |v| &lt; 2<sup>14</sup>, magique contre round_ps</td><td class="num">2 365 587 456 valeurs : <b>0 différence de position</b> ; 989 855 745 différences de signe du zéro (exactement les négatifs de [−1/512, −0])</td></tr>
+<tr><td>TNR B3 (modifiée)</td><td class="num">1 228 800 sommets, 0 désaccord, cuisson OK ; 55 hors domaine remplacés, 211 négatifs minuscules (g++ ; MSVC tire autrement avec <code>uniform_real_distribution</code> : comptes voisins, seuls « 0 désaccord » et « négatifs &gt; 0 » comptent)</td></tr>
+<tr><td>TNR D-a1d (nouvelle)</td><td class="num">20 580 827 valeurs, 0 différence, 0 −0, 0 non idempotente, NaN OK ; bords : 64 sommets, 0 différence AVX2 / scalaire, 107 coordonnées +0, 0 −0 (tirages portables : mêmes nombres attendus sous MSVC)</td></tr>
+<tr><td>Journaux inchangés</td><td class="num">D-a1 : 3 484/198/112/861, 1 942/129/112/678, 927/115/112/511 ; D-a1b : 376 512 sondes, erreur max 2,26e-07 ; C3 : 12 353 / 6 236 / 3 363</td></tr>
+<tr><td>Configurations</td><td>Debug et Release × LV3_RASTER_FIXED 0 / 1 : 0 avertissement (-Wall -Wextra) ; ASan + UBSan : aucun signalement</td></tr>
+<tr><td>Mutations</td><td>M = 2<sup>15</sup>, M = 1,5×2<sup>14</sup>, domaine 2<sup>15</sup>, AVX2 seul, données B3 hors contrat, /fp:fast : toutes détectées (§8)</td></tr>
+</tbody></table></div>
+<h4>À faire chez Onky, dans l’ordre</h4>
+<ol>
+  <li><b>TNR Debug</b> : toutes vertes ; comparer les journaux D-a1, D-a1b, C3 à ceux du 06/11 (identiques attendus) ; noter les comptes B3 (remplacés, négatifs minuscules) et D-a1d.</li>
+  <li><b>Trois scènes en Debug</b> (V1, V2, rooms ; mode Solid + un coup d’œil en Depth) : aucune assertion. Le filet B3 de <code>RenderSystem</code> (memcmp par sommet) et l’assertion 5a doivent rester muets.</li>
+  <li><b>Asm Release</b> (<code>/FAs</code> sur <code>Rendering/VertexStage.cpp</code>) : dans la boucle de <code>ProjectPositions8</code>, <b>0 <code>vroundps</code></b>, 0 <code>vfmadd</code>, 1 <code>vdivps</code>, plus de <code>vmulps</code> par 1/256 (listing g++ : 19 <code>vmulps</code> au lieu de 21), 4 opérations d’accrochage (<code>vaddps</code> / <code>vsubps</code>, l’une pouvant être écrite + (−M)). Puis <code>/FAs</code> sur <code>Scene/RenderSystem.cpp</code> : <code>SnapToSubpixel</code> inlinée dans <code>ProjectClip</code>, avec un <code>vandps</code> (valeur absolue), un <code>vcomiss</code> et un saut, puis <code>vaddss</code> + <code>vsubss</code> ; <code>vroundss</code> seulement dans la branche de repli. Retirer <code>/FAs</code> ensuite.</li>
+  <li><b>Lot appairé</b>, configuration de production (RASTER_FIXED 1, SIMD 1, ABLATION 0, RASTER_STATS 0), affinity 4, secteur, mode performances. A = 93757b1 / b58c132 (D-a1b), B = D-a1d. V1 A B B A (RenderVerts lu en premier), rooms A B B A, V2 A B B A. Séquence valide si ClearDepth varie de moins de 5 % et |A1 − A2| &lt; 3 %.</li>
+</ol>
+<h4>Prédictions (écrites avant la mesure)</h4>
+<div class="tbl"><table>
+<thead><tr><th>Grandeur</th><th>Prédiction</th><th>Raison</th></tr></thead>
+<tbody>
+<tr><td>Compteurs (toutes scènes)</td><td>identiques à D-a1b (V1 TrisPix1 18 772, rooms TrisSimd8 36 262…)</td><td>positions identiques au bit près, ±0 indifférent</td></tr>
+<tr><td>Image et Z-buffer</td><td>identiques</td><td>§5 (f)</td></tr>
+<tr><td>V1 RenderVerts</td><td><b>−8 à −20 µs</b> (−4 à −10 %), soit 207 → ≈ 190-199 µs</td><td>banc −12 µs ; le vroundps pèse davantage sur Golden Cove (FADD 2 cycles)</td></tr>
+<tr><td>V1 Render</td><td>−1 à −2 % (au bord du bruit)</td><td>l’étage faces ne change pas</td></tr>
+<tr><td>Rooms RenderVerts</td><td>−1 à −5 %</td><td>une partie des sommets passe par le chemin clippé (scalaire, gain faible)</td></tr>
+<tr><td>Rooms Render, V2, L</td><td>bruit</td><td>étage sommets ≤ 3 % de leur Render</td></tr>
+</tbody></table></div>
+<div class="callout"><p><b>Règle de décision.</b> Accepté si : TNR + filets + compteurs conformes, asm sans <code>vroundps</code>, V1 RenderVerts B ≤ A − 5 µs sur une séquence valide, et aucune scène plus lente de plus de 2 % en Render. Gain V1 inférieur à 5 µs : relire l’asm d’abord ; si l’asm est conforme et le gain absent, le lot est refusé et D-a1b reste en place.</p></div>
+
+
+
+<h4>Résultats du 08/11 (i7-1265U) : lot accepté</h4>
+<div class="callout exact"><p><b>Décision : D-a1d ACCEPTÉ.</b> TNR vertes, aucune assertion, aucun défaut visible ; asm conforme ; compteurs identiques ; V1 RenderVerts −12,4 µs brut (−7,7 à −14,5 µs selon le thermomètre, au-dessus du seuil de 5 µs) ; aucune scène plus lente. Reste : le commit.</p></div>
+<div class="tbl"><table>
+<thead><tr><th>Contrôle</th><th>Attendu</th><th>Obtenu</th><th></th></tr></thead>
+<tbody>
+<tr><td>Compilation Debug / Release</td><td>sans erreur</td><td>OK</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td>TNR D-a1d</td><td>20 580 827 valeurs, 0 différence ; bords 107 +0, 0 −0</td><td>identique au chiffre près (tirages portables)</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td>V1, V2, rooms, plusieurs modes</td><td>aucune assertion, image inchangée</td><td>OK, ni trou ni clignotement</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td>Asm de la boucle <code>ProjectPositions8</code></td><td>0 <code>vroundps</code>, 0 <code>vfmadd</code>, 1 <code>vdivps</code>, 19 <code>vmulps</code>, 4 add/sub d’accrochage</td><td>72 instructions : 0 <code>vroundps</code>, 0 <code>vfmadd</code>, 1 <code>vdivps</code>, 19 <code>vmulps</code>, 17 <code>vaddps</code> + 3 <code>vsubps</code> ; 49 152 dans <code>ymm11</code> (<code>__ymm@47400000…</code>), diffusé hors de la boucle</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td>Compteurs</td><td>identiques A / B</td><td>identiques sur les 3 scènes</td><td><span class="pill ok">conforme</span></td></tr>
+</tbody></table></div>
+<p class="diff-note">Asm, remarques non bloquantes et déjà présentes avant D-a1d : les 16 registres ymm sont pleins, 6 coefficients de la matrice et la constante 1,0 sont relus depuis la mémoire à chaque lot (coût L1). L’AVX-512 (32 registres, piste B6) les garderait. MSVC écrit bien <code>vsubps</code> ; g++ écrivait une addition de −49 152, équivalente au bit près.</p>
+<div class="tbl"><table>
+<thead><tr><th>Scène (A = D-a1b, B = D-a1d)</th><th class="r">RenderVerts A1 / B1 / B2 / A2</th><th class="r">Δ RenderVerts</th><th class="r">Render A → B</th><th>Validité</th></tr></thead>
+<tbody>
+<tr><td><b>V1</b> (274 568 sommets)</td><td class="r">204,8 / 190,9 / 191,8 / 202,6 µs</td><td class="r"><b>−12,4 µs (−6,1 %)</b></td><td class="r">1 014,7 → 1 011,5 µs (−0,3 %)</td><td>ClearDepth 6,2 % (&gt; 5 %), |A1 − A2| 2,4 %</td></tr>
+<tr><td>rooms (163 555 sommets)</td><td class="r">334,6 / 315,1 / 328,7 / 315,8 µs</td><td class="r">−3,3 µs (−1,0 %)</td><td class="r">10 107,8 → 10 100,6 µs (−0,07 %)</td><td>valide (2,3 % ; 0,7 %)</td></tr>
+<tr><td>V2 (8 836 sommets)</td><td class="r">14,5 / 14,8 / 19,0 / 18,6 µs</td><td class="r">bruit</td><td class="r">855,5 → 852,0 µs (−0,4 %)</td><td>non valide (13,4 % ; 11,8 %), forte dérive</td></tr>
+</tbody></table></div>
+<p><b>Lecture de V1.</b> Les deux runs B sont sous les deux runs A, avec des groupes serrés à ±1 %. La séquence n’est pas valide au sens strict (ClearDepth varie de 6,2 %) : pendant les runs B, la mémoire tournait 2,4 % plus vite (Clear 504 → 492 µs). On divise donc par deux thermomètres, comme le veut la méthode :</p>
+<ul>
+  <li>RenderVerts / ClearDepth (zone limitée par la mémoire) : <b>−3,8 %</b>, soit −7,7 µs ;</li>
+  <li>RenderVerts / étage faces (zone limitée par le calcul, code inchangé) : <b>−7,1 %</b>, soit −14,5 µs.</li>
+</ul>
+<p>Les deux corrections encadrent le brut et restent au-dessus du seuil de 5 µs : la conclusion ne dépend pas de la dérive. Le Render total ne gagne que 3 µs, parce que l’étage faces, dont le code n’a pas changé, a varié de +9 µs (A1 et A2 étaient déjà espacés de 22 µs) : c’est son bruit qui masque le gain.</p>
+<div class="tbl"><table>
+<thead><tr><th>Prédiction (écrite le 06/11)</th><th>Mesuré le 08/11</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Compteurs et image identiques</td><td>identiques</td><td><span class="pill ok">confirmée</span></td></tr>
+<tr><td>V1 RenderVerts −8 à −20 µs</td><td>−12,4 µs brut (−7,7 à −14,5 corrigé)</td><td><span class="pill ok">confirmée, moitié basse</span></td></tr>
+<tr><td>V1 Render −1 à −2 %</td><td>−0,3 %</td><td><span class="pill warn">sous la fourchette, masquée par le bruit de l’étage faces (±1 %)</span></td></tr>
+<tr><td>Rooms RenderVerts −1 à −5 %</td><td>−1,0 %</td><td><span class="pill ok">confirmée, borne basse (dans le bruit)</span></td></tr>
+<tr><td>Rooms Render, V2 : bruit</td><td>−0,07 % ; −0,4 %</td><td><span class="pill ok">confirmée</span></td></tr>
+</tbody></table></div>
+<p>Le banc hors moteur prédisait −12 µs (199 → 187) : c’est exactement le gain brut mesuré sur V1. Le surcoût de Giesen sur l’étage sommets de V1, +35 µs le 06/11, tombe vers +21 à +27 µs (estimation : les deux mesures sont de jours différents).</p>
+<p><b>À faire :</b> commit D-a1d (LIB <code>Viewport.h</code>, <code>VertexStage.cpp</code> ; EXE <code>Test_B3_ProjectPositions8.cpp</code>, <code>Test_Da1d_Snap.cpp</code>, <code>RunAllTests.cpp</code>, vcxproj + filters), en configuration de production et sans <code>/FAs</code>. <b>Suggestion de méthode :</b> les en-têtes des summaries A et B sont identiques, seul le nom du fichier les distingue. Un champ <code>build=</code> (hash git ou libellé de lot fixé à la compilation) rendrait chaque run identifiable par lui-même.</p>
+
+<!-- ═════════════════════════ 10. QUESTION DE FOND ═════════════════════════ -->
+<h2 id="fond">10. Question de fond : une astuce d’hier contre le matériel d’aujourd’hui ?</h2>
+<p class="lede">« C’est comme si les astuces d’hier faisaient toujours mieux que l’évolution technique. » La réponse courte : non. Une astuce ne vaut que par rapport à un modèle de coût, et le matériel change ce modèle. Certaines astuces meurent quand il change, d’autres survivent parce qu’elles s’appuient sur quelque chose qui, lui, n’a pas changé.</p>
+
+<h4>1. Le nombre magique ne concurrence pas la vectorisation : il vit dedans</h4>
+<p>D-a1d n’oppose pas une vieille astuce à l’AVX2. Le nombre magique est exécuté par <code>_mm256_add_ps</code>, sur 8 couloirs. La vectorisation multiplie le débit de l’instruction qu’on lui donne ; le choix de l’instruction, couloir par couloir, reste à faire. Économiser une micro-opération par couloir, c’est en économiser huit par lot. Les deux leviers se multiplient, ils ne s’excluent pas.</p>
+
+<h4>2. Ce qui n’a pas changé depuis 1985 : le format des float</h4>
+<p>Le nombre magique exploite la structure d’un float IEEE 754 : un exposant, une mantisse de 24 bits, des graduations qui doublent à chaque puissance de 2, et une addition qui arrondit toujours au plus proche. Cette norme date de 1985 et n’a pas bougé (révisions de 2008 et 2019 compatibles). Une astuce qui repose sur une propriété mathématique du format est aussi valable sur un i7 de 2022 qu’en 1996. Elle n’a rien de « vieux » : c’est de l’arithmétique, comme ×2<sup>8</sup> qui commute avec l’arrondi (le repli du ×256 dans le viewport, D-a1).</p>
+
+<h4>3. Ce qui a changé : le prix relatif des instructions</h4>
+<p>L’astuce est rentable aujourd’hui pour une raison précise et mesurable : sur les cœurs Intel récents, l’arrondi matériel (<code>vroundps</code>) coûte 2 micro-opérations et 8 cycles, alors qu’une addition coûte 1 micro-opération et 2 à 4 cycles (Golden Cove a même ajouté des additionneurs rapides). Le matériel sait arrondir à l’entier, pas à un multiple de 1/256 : il lui faut ×256, arrondir, ×1/256. Or chaque addition flottante contient déjà un arrondi, gratuit, à la position fixée par l’exposant. Le nombre magique se contente de choisir cette position.</p>
+<p>Ce prix relatif peut changer. Sur un cœur où l’arrondi ne coûterait qu’une micro-opération rapide, le gain fondrait ; ce coût varie d’un fabricant et d’une génération à l’autre, et seule la mesure sur la machine cible tranche. C’est exactement pour cela que le lot porte une règle de refus écrite avant la mesure : si l’i7 ne montre pas au moins 5 µs de gain, D-a1d est retiré. Une astuce n’est jamais acquise ; elle se remesure à chaque génération.</p>
+
+<h4>4. L’astuce de Quake III : l’exemple inverse, battue par le matériel</h4>
+<p>Le <code>Q_rsqrt</code> de Quake III (1999, constante <code>0x5f3759df</code>) calcule 1/√x en traitant les bits d’un float comme un entier, puis en faisant une itération de Newton. En 1999, sur x87, une division plus une racine coûtaient des dizaines de cycles : l’astuce valait de l’or. La même année, Intel a livré SSE avec <code>rsqrtss</code> / <code>rsqrtps</code>, une seule instruction, 4 cycles, 8 couloirs en AVX.</p>
+<div class="tbl"><table>
+<thead><tr><th>Inverse de racine carrée</th><th class="r">Erreur relative max</th><th>Coût aujourd’hui</th></tr></thead>
+<tbody>
+<tr><td>Quake III, sans Newton (bits seuls)</td><td class="r">3,4 × 10<sup>−2</sup></td><td>soustraction entière + décalage, passage entier ↔ float</td></tr>
+<tr><td>Quake III, 1 itération de Newton</td><td class="r">1,75 × 10<sup>−3</sup></td><td>+ 3 multiplications, 1 soustraction</td></tr>
+<tr><td><code>rsqrtps</code> seul</td><td class="r">3,3 × 10<sup>−4</sup> (borne Intel 3,7 × 10<sup>−4</sup>)</td><td>1 instruction</td></tr>
+<tr><td><code>rsqrtps</code> + 1 Newton</td><td class="r">2,6 × 10<sup>−7</sup></td><td>1 instruction + 4 opérations</td></tr>
+</tbody></table></div>
+<p class="diff-note">Erreurs mesurées en float32 sur 2 millions de valeurs de 2<sup>−10</sup> à 2<sup>10</sup> (calcul du 07/11, <code>rsqrtss</code> exécuté sur le Xeon du banc) ; borne <code>rsqrtps</code> : 1,5 × 2<sup>−12</sup>, documentée par Intel. Analyse de référence : Chris Lomont, « Fast Inverse Square Root », 2003.</p>
+<p>Aujourd’hui le <code>Q_rsqrt</code> est à la fois plus lent et cinq fois moins précis que l’instruction dédiée. On en parle encore pour son élégance et son histoire, pas parce qu’il servirait. Il illustre la règle : il exploitait un coût (la racine x87) que le matériel a fait disparaître. Le nombre magique de D-a1d exploite un coût (l’arrondi à 2 µops) que le matériel n’a pas encore fait disparaître.</p>
+
+<h4>5. Le FMA : ce n’est pas une question de vitesse</h4>
+<p>Refuser le FMA n’est pas préférer l’ancien au moderne. Le FMA est plus rapide <b>et</b> plus précis (un seul arrondi au lieu de deux). Nous le refusons pour une autre raison : le contrat de reproductibilité.</p>
+<ul>
+  <li><b>Scalaire == AVX2 au bit près.</b> Si l’AVX2 fusionne a·b + c et que le scalaire ne le fait pas, les deux chemins divergent : 32 % des sommets diffèrent (contre-exemple de B3). Le filet <code>memcmp</code> et toutes les TNR de bit-exactitude reposent sur ce contrat.</li>
+  <li><b>L’arête partagée.</b> <code>EdgeFunction</code> doit être exactement antisymétrique : E(a, b) = −E(b, a), et zéro exact sur l’arête. Avec <code>fma(a, b, −c·d)</code>, un produit est arrondi et l’autre non : l’antisymétrie casse et des coutures apparaissent entre triangles voisins.</li>
+</ul>
+<p>Le FMA reste une décision ouverte au plan (« sur MulRow / ProjectClip / ToRaster seulement, tous les chemins à la fois »). Le jour où on l’adopte partout d’un coup, le contrat est tenu et on gagne vitesse et précision. Ce qui est interdit, c’est le mélange.</p>
+
+<h4>6. Pourquoi le compilateur ne le fait pas à notre place</h4>
+<p>Si l’astuce est bonne, pourquoi MSVC ne remplace-t-il pas lui-même <code>round</code> par le nombre magique ? Parce qu’il n’en a pas le droit : la transformation n’est exacte que pour |v| &lt; 2<sup>14</sup>, elle change le signe du zéro et dépend du mode d’arrondi. Le compilateur ne peut prouver aucune de ces conditions. Nous, si : le contrat Inside garantit |v| ≤ 1 536 px, LV3 ne touche jamais MXCSR, et nous avons démontré que −0 / +0 est indifférent en aval. C’est la place durable de ces savoir-faire : ils traduisent une connaissance du programme (un invariant) que ni le matériel ni le compilateur ne peuvent deviner.</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Astuce</th><th>Repose sur</th><th>Le matériel a-t-il changé la donne ?</th><th>Statut</th></tr></thead>
+<tbody>
+<tr><td><code>Q_rsqrt</code> (Quake III)</td><td>coût de la racine x87</td><td>oui : <code>rsqrtps</code> (SSE, 1999)</td><td><span class="pill no">obsolète</span></td></tr>
+<tr><td>Nombre magique (D-a1d)</td><td>format IEEE 754 + arrondi matériel à 2 µops</td><td>pas encore sur l’i7 ; à vérifier sur chaque nouvelle machine</td><td><span class="pill warn">utile, à remesurer</span></td></tr>
+<tr><td>Refus du FMA</td><td>contrat de reproductibilité, pas la vitesse</td><td>sans objet : le FMA est meilleur, le mélange est interdit</td><td><span class="pill ok">décision de contrat</span></td></tr>
+</tbody></table></div>
+<div class="callout"><p><b>À retenir.</b> Une optimisation n’est ni vieille ni moderne : elle est vraie pour un modèle de coût et un contrat donnés. Celles qui exploitent un invariant (le format des nombres, une propriété mathématique, une précondition du programme) survivent aux générations ; celles qui exploitent un coût passager disparaissent avec lui. D’où la discipline de la phase G : chaque astuce est démontrée, mesurée, et assortie d’une règle de refus.</p></div>
+
+<!-- ═════════════════════════ 11. SUITE ═════════════════════════ -->
+<h2 id="suite">11. Et ensuite</h2>
+<p>Après D-a1d, le surcoût de Giesen sur V1 se réduit à l’accrochage le moins cher possible sans changer l’image : deux additions par coordonnée. Le reste du jalon D reprend son ordre :</p>
+<ul>
+  <li><b>D-a1c</b> (conditionnel) : aiguiller les petits triangles (boîte &lt; 16 px) vers le flottant de C2 si une scène V4 montre qu’il y est plus rapide que Giesen ; l’image identique reste garantie.</li>
+  <li><b>D-a2</b> : la hiérarchie de tuiles d’Abrash posée sur Giesen.</li>
+  <li>Rangé : <b>B5c</b> (ne projeter que les sommets des faces non rejetées) attaquerait le même poste par l’autre bout, en réduisant le nombre de sommets au lieu de leur prix.</li>
+</ul>
+<p class="meta">Sources : <a href="https://media.gdcvault.com/GD_Mag_Archives/GDM_FebMar_1996.pdf" target="_blank" rel="noopener">Game Developer Magazine, fév.-mars 1996 (Hecker)</a> · <a href="https://lua-users.org/lists/lua-l/2006-11/msg00310.html" target="_blank" rel="noopener">lua-l, lua_number2int</a> · <a href="https://vtk.org/doc/release/5.0/html/a01383.html" target="_blank" rel="noopener">VTK, vtkFastNumericConversion</a></p>
+</div>
+
+<script>
+(function(){
+"use strict";
+const f32 = Math.fround;
+const dv = new DataView(new ArrayBuffer(4));
+const bits = x => { dv.setFloat32(0, x); return dv.getUint32(0) >>> 0; };
+const hex = x => '0x' + bits(x).toString(16).toUpperCase().padStart(8, '0');
+const negz = x => x === 0 && 1 / x < 0;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function fmt(x, p){ if (Number.isNaN(x)) return 'NaN'; if (negz(x)) return '−0'; if (x === 0) return '+0';
+  const s = (p ? Number(x.toPrecision(p)) : x).toString(); return s.replace('-', '−'); }
+// au plus proche, au pair, signe conservé comme _mm_round_ps
+function rne(x){ const r = Math.floor(x), d = x - r; let y = d > 0.5 ? r + 1 : d < 0.5 ? r : (r % 2 === 0 ? r : r + 1);
+  if (y === 0 && (x < 0 || negz(x))) y = -0; return y; }
+const snapRound = v => f32(rne(f32(v * 256)) / 256);           // D-a1 / D-a1b
+const magic = (v, M) => f32(f32(v + M) - M);                    // D-a1d (somme double puis fround : arrondi float correct)
+const ulpOf = s => Math.pow(2, Math.floor(Math.log2(Math.abs(s))) - 23);
+function bitsHTML(x, lowMask){ const b = bits(x).toString(2).padStart(32, '0');
+  return '<span class="s">' + b[0] + '</span> <span class="e">' + b.slice(1, 9) + '</span> <span class="m">' + b.slice(9) + '</span>'; }
+function press(group, btn){ group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')); }
+
+/* ───────── Labo 1 : la règle des float ───────── */
+const L1 = document.getElementById('lab1');
+const inV = document.getElementById('lab1-v'), inF = document.getElementById('lab1-fine'), inM = document.getElementById('lab1-m');
+const svg1 = document.getElementById('lab1-svg');
+function draw1(){
+  const M = Number(inM.value);
+  const v = f32(Number(inV.value) + Number(inF.value) / 65536);
+  const exact = v + M;                       // double : exact
+  const s = f32(exact), r = f32(s - M);
+  const ref = snapRound(v);
+  const inDom = Math.abs(v) < 16384;
+  const ul = ulpOf(exact);
+  const W = 900, x0 = 40, x1 = 860, cx = (x0 + x1) / 2;
+  const span = 5 * ul;                       // ±5 ulps
+  const X = t => cx + (t - exact) / span * (x1 - x0) / 2;
+  const ink = css('--fg'), mut = css('--muted'), acc = css('--accent'), ok = css('--exact'), bad = css('--bad'), line = css('--line');
+  let g = '';
+  // règle du haut : float autour de v+M
+  g += `<text x="${x0}" y="20" fill="${mut}" font-family="monospace" font-size="12">float32 autour de v + M (écart ${ul >= 1 ? ul : '1/' + (1 / ul)})</text>`;
+  g += `<line x1="${x0}" y1="62" x2="${x1}" y2="62" stroke="${line}" stroke-width="2"/>`;
+  const k0 = Math.floor((exact - span) / ul), k1 = Math.ceil((exact + span) / ul);
+  for (let k = k0; k <= k1; ++k){ const t = k * ul, X0 = X(t); if (X0 < x0 - 1 || X0 > x1 + 1) continue;
+    g += `<line x1="${X0}" y1="52" x2="${X0}" y2="72" stroke="${mut}" stroke-width="1.5"/>`; }
+  g += `<line x1="${X(exact)}" y1="36" x2="${X(exact)}" y2="80" stroke="${acc}" stroke-width="2.5"/>`;
+  g += `<text x="${Math.min(Math.max(X(exact), 120), 780)}" y="96" fill="${acc}" text-anchor="middle" font-family="monospace" font-size="12">v + M exact = ${fmt(exact, 12)}</text>`;
+  g += `<circle cx="${X(s)}" cy="62" r="7" fill="${ok}"/>`;
+  g += `<text x="${Math.min(Math.max(X(s), 120), 780)}" y="38" fill="${ok}" text-anchor="middle" font-family="monospace" font-size="12">s = fl(v + M) = ${fmt(s)}</text>`;
+  // règle du bas : grille de 1/256 autour de v
+  const g256 = 1 / 256, span2 = 5 * g256, X2 = t => cx + (t - v) / span2 * (x1 - x0) / 2;
+  g += `<text x="${x0}" y="130" fill="${mut}" font-family="monospace" font-size="12">grille des 1/256 px autour de v</text>`;
+  g += `<line x1="${x0}" y1="172" x2="${x1}" y2="172" stroke="${line}" stroke-width="2"/>`;
+  const j0 = Math.floor((v - span2) / g256), j1 = Math.ceil((v + span2) / g256);
+  for (let j = j0; j <= j1; ++j){ const X0 = X2(j * g256); if (X0 < x0 - 1 || X0 > x1 + 1) continue;
+    g += `<line x1="${X0}" y1="162" x2="${X0}" y2="182" stroke="${mut}" stroke-width="1.5"/>`; }
+  g += `<line x1="${X2(v)}" y1="150" x2="${X2(v)}" y2="190" stroke="${acc}" stroke-width="2.5"/>`;
+  g += `<text x="${Math.min(Math.max(X2(v), 90), 810)}" y="206" fill="${acc}" text-anchor="middle" font-family="monospace" font-size="12">v = ${fmt(v, 10)}</text>`;
+  const same = bits(r) === bits(ref), posSame = r === ref;
+  const rx = X2(r);
+  if (rx >= x0 - 20 && rx <= x1 + 20){
+    g += `<circle cx="${Math.min(Math.max(rx, x0), x1)}" cy="172" r="7" fill="${posSame ? ok : bad}"/>`;
+    g += `<text x="${Math.min(Math.max(rx, 120), 780)}" y="150" fill="${posSame ? ok : bad}" text-anchor="middle" font-family="monospace" font-size="12">s − M = ${fmt(r)}</text>`;
+  } else {
+    g += `<text x="${cx}" y="150" fill="${bad}" text-anchor="middle" font-family="monospace" font-size="12">s − M = ${fmt(r)} (hors de la fenêtre)</text>`;
+  }
+  if (!posSame){ const fx = X2(ref); if (fx >= x0 && fx <= x1) g += `<circle cx="${fx}" cy="172" r="5" fill="none" stroke="${ok}" stroke-width="2"/>`; }
+  svg1.innerHTML = g;
+  document.getElementById('lab1-res').innerHTML = [
+    ['v (float32)', fmt(v, 12) + '  ' + hex(v)], ['v + M (exact, réel)', fmt(exact, 14)], ['s = fl(v + M)', fmt(s) + '  ' + hex(s)],
+    ['D-a1d : s − M', fmt(r) + '  ' + hex(r)], ['D-a1b : round(256 v) / 256', fmt(ref) + '  ' + hex(ref)],
+    ['256 v (combien de 1/256)', fmt(f32(v * 256), 12)]
+  ].map(([k, x]) => `<div><div class="k">${k}</div><div class="v">${x}</div></div>`).join('');
+  document.getElementById('lab1-bits').innerHTML =
+    '<div class="k" style="font:600 11px var(--f-mono);color:var(--muted);margin-top:10px">bits : signe · exposant · mantisse (23)</div>' +
+    '<div>v      ' + bitsHTML(v) + '</div><div>s      ' + bitsHTML(s) + '</div><div>s − M  ' + bitsHTML(r) + '</div><div>round  ' + bitsHTML(ref) + '</div>';
+  const vd = document.getElementById('lab1-verdict');
+  if (M !== 49152 && !posSame){ vd.className = 'verdict no'; vd.textContent = 'Mauvaise constante : la somme tombe dans une tranche où l’écart entre float n’est pas 1/256. Position fausse.'; }
+  else if (!inDom && !posSame){ vd.className = 'verdict no'; vd.textContent = 'Hors domaine (|v| ≥ 2^14) : la somme sort de [2^15, 2^16[, l’accrochage se fait sur une autre grille. Le scalaire prend le repli round ; en AVX2, l’assertion 5a tombe.'; }
+  else if (!inDom){ vd.className = 'verdict warn'; vd.textContent = 'Hors domaine : ici le résultat tombe juste par chance. Le scalaire prend quand même le repli round, l’AVX2 refuse (assertion 5a).'; }
+  else if (same){ vd.className = 'verdict ok'; vd.textContent = 'Identique au bit près à D-a1b : même multiple de 1/256.'; }
+  else if (posSame){ vd.className = 'verdict warn'; vd.textContent = 'Même position, autre bit de signe : D-a1b rend −0, D-a1d rend +0. Indifférent en aval ; scalaire et AVX2 doivent donc changer ensemble.'; }
+  else { vd.className = 'verdict no'; vd.textContent = 'Position différente.'; }
+}
+L1.querySelectorAll('button[data-v]').forEach(b => b.addEventListener('click', () => { inV.value = b.dataset.v; inF.value = 0; press(b.parentElement, b); draw1(); }));
+[inV, inF, inM].forEach(e => e.addEventListener('input', draw1));
+
+/* ───────── Labo 2 : 8 couloirs de ProjectPositions8 ───────── */
+function nextDown(x){ dv.setFloat32(0, x); let u = dv.getUint32(0); u = x < 0 ? u + 1 : u - 1; dv.setUint32(0, u); return dv.getFloat32(0); }
+function chainFrom(x, n){ const a = []; let v = f32(x); for (let i = 0; i < n; ++i){ a.push(v); for (let k = 0; k < 21; ++k) v = nextDown(v); } return a; }
+const SC = [
+  { name: 'vue (0, 0, 768, 450)', vp: [0, 768], xn: [-1, ...chainFrom(nextDown(-1), 4), f32(-0.99999), f32(-0.5), f32(0.25)] },
+  { name: 'vue (768, 450, 768, 450)', vp: [768, 768], xn: [-0.73125, 0.1, 0.33333, 0.9999, -0.0001, 0.5, -0.98, 0.618034].map(f32) },
+  { name: 'viewport (0, 0, 512, 512)', vp: [0, 512], xn: [10, 11, 100, 101, 3, 4, 255, 256].map((k, i) => f32(2 * ((k + (i % 2 ? 3 : 1) / 512) / 512) - 1)) },
+  { name: 'vue (0, 0, 768, 450), hors contrat', vp: [0, 768], xn: [16384.3, 20000.37, -20000.1, 16000.5, 123.25, 700.1, -16390.7, 900.9].map(t => f32(2 * (t / 768) - 1)) }
+];
+function draw2(i){
+  const s = SC[i], vpx = s.vp[0], vpw = s.vp[1], M = 49152;
+  const rows = { xn: [], t: [], xr0: [], sum: [], xr: [], old: [], dom: [], ok: [] };
+  let bad = 0, sz = 0, out = 0;
+  s.xn.forEach(xn => {
+    const t = f32(f32(xn * 0.5) + 0.5);
+    const xr0 = f32(vpx + f32(t * vpw));
+    const sm = f32(xr0 + M), xr = f32(sm - M);
+    const old = f32(rne(f32(f32(vpx * 256) + f32(t * f32(vpw * 256)))) / 256);
+    const dom = Math.abs(xr0) < 16384;
+    rows.xn.push(fmt(xn, 9)); rows.t.push(fmt(t, 9)); rows.xr0.push(fmt(xr0, 9)); rows.sum.push(fmt(sm));
+    rows.xr.push(fmt(xr)); rows.old.push(fmt(old)); rows.dom.push(dom ? '✓' : '✗');
+    let k; if (bits(xr) === bits(old)) k = ['=', 'ok']; else if (xr === old){ k = ['±0', '']; sz++; } else { k = ['≠', 'bad']; bad++; }
+    if (!dom) out++;
+    rows.ok.push(k);
+  });
+  const lab = { xn: 'xn (NDC)', t: 'xn·0,5 + 0,5', xr0: 'xr0 (px)', sum: 's = xr0 + M', xr: 'xr = s − M', old: 'D-a1b', dom: '5a |xr0| < 2^14' };
+  let h = '<thead><tr><th>registre</th>' + [0,1,2,3,4,5,6,7].map(j => `<th class="r">couloir ${j}</th>`).join('') + '</tr></thead><tbody>';
+  for (const key of Object.keys(lab)) h += `<tr><td>${lab[key]}</td>` + rows[key].map((x, j) => `<td class="r ${key === 'dom' && x === '✗' ? 'bad' : ''}">${x}</td>`).join('') + '</tr>';
+  h += '<tr><td>D-a1d / D-a1b</td>' + rows.ok.map(([x, c]) => `<td class="r ${c}">${x}</td>`).join('') + '</tr></tbody>';
+  document.getElementById('lab2-t').innerHTML = h;
+  const vd = document.getElementById('lab2-v');
+  if (out){ vd.className = 'verdict no'; vd.textContent = `${s.name} : ${out} couloir(s) hors domaine, movemask ≠ 0xFF → l’assertion 5a tombe en Debug. ${bad} couloir(s) accroché(s) sur une autre grille.`; }
+  else if (sz){ vd.className = 'verdict warn'; vd.textContent = `${s.name} : positions identiques à D-a1b ; ${sz} couloir(s) où D-a1b rendait −0 et D-a1d rend +0.`; }
+  else { vd.className = 'verdict ok'; vd.textContent = `${s.name} : les 8 couloirs sont identiques à D-a1b au bit près.`; }
+}
+const L2 = document.getElementById('lab2');
+L2.querySelectorAll('button[data-s]').forEach(b => b.addEventListener('click', () => { press(b.parentElement, b); draw2(Number(b.dataset.s)); }));
+
+/* ───────── Labo 3 : pli de M dans le viewport ───────── */
+let seed = 12345; const rnd = () => (seed = (seed * 1103515245 + 12345) >>> 0) / 4294967296;
+function run3(){
+  const views = [[0, 0], [768, 0], [0, 450], [768, 450]], M = 49152, N = 20000;
+  let h = '<table><thead><tr><th>vue</th><th class="r">sommets</th><th class="r">décalés de 1/256</th><th class="r">part</th></tr></thead><tbody>';
+  views.forEach(([ox, oy]) => {
+    let d = 0;
+    for (let i = 0; i < N; ++i){
+      const tx = f32(f32(f32(rnd() * 2 - 1) * 0.5) + 0.5), ty = f32(0.5 - f32(f32(rnd() * 2 - 1) * 0.5));
+      const ax = f32(ox + f32(tx * 768)), ay = f32(oy + f32(ty * 450));
+      const gx = magic(ax, M), gy = magic(ay, M);
+      const fx = f32(f32(f32(ox + M) + f32(tx * 768)) - M), fy = f32(f32(f32(oy + M) + f32(ty * 450)) - M);
+      if (gx !== fx || gy !== fy) d++;
+    }
+    h += `<tr><td>(${ox}, ${oy})</td><td class="r">${N}</td><td class="r">${d}</td><td class="r">${(100 * d / N).toFixed(2)} %</td></tr>`;
+  });
+  document.getElementById('lab3-out').innerHTML = h + '</tbody></table>';
+}
+document.getElementById('lab3-run').addEventListener('click', run3);
+
+
+/* ───────── Labo 4 : d'où vient M ───────── */
+const in4k = document.getElementById('lab4-k'), in4v = document.getElementById('lab4-v');
+function draw4(){
+  const k = Number(in4k.value), e = 23 - k, M = f32(1.5 * Math.pow(2, e)), dom = Math.pow(2, e - 1), q = Math.pow(2, k);
+  document.getElementById('lab4-kv').textContent = k + '  (1/' + q + ')';
+  const v = f32(Number(in4v.value));
+  const s = f32(v + M), r = f32(s - M);
+  let ref = f32(rne(f32(v * q)) / q); if (ref === 0) ref = 0;
+  const inDom = Math.abs(v) < dom;
+  document.getElementById('lab4-res').innerHTML = [
+    ['tranche des float', '[2^' + e + ', 2^' + (e + 1) + '[ = [' + Math.pow(2, e) + ', ' + Math.pow(2, e + 1) + '['],
+    ['écart entre float voisins', '2^' + (e - 23) + ' = 1/' + q],
+    ['M = 1,5 × 2^' + e, String(M) + '  ' + hex(M)], ['domaine |v| <', String(dom) + ' px'],
+    ['(v + M) − M', fmt(r)], ['round(v × ' + q + ') / ' + q, fmt(ref)]
+  ].map(([a, b]) => `<div><div class="k">${a}</div><div class="v">${b}</div></div>`).join('');
+  document.getElementById('lab4-bits').innerHTML =
+    '<div class="k" style="font:600 11px var(--f-mono);color:var(--muted);margin-top:10px">M en bits : signe · exposant (127 + ' + e + ') · mantisse (le 1er bit = le « 0,5 », le dernier vaut 1/' + q + ')</div><div>M  ' + bitsHTML(M) + '</div><div>s  ' + bitsHTML(s) + '</div>';
+  const vd = document.getElementById('lab4-verdict');
+  if (!inDom){ vd.className = 'verdict no'; vd.textContent = `|v| ≥ ${dom} : hors du domaine de cette grille, la somme sort de la tranche.`; }
+  else if (bits(r) === bits(ref)){ vd.className = 'verdict ok'; vd.textContent = `Accroché au 1/${q} le plus proche, identique à la méthode standard.`; }
+  else { vd.className = 'verdict no'; vd.textContent = 'Différent de la méthode standard.'; }
+}
+[in4k, in4v].forEach(x => x.addEventListener('input', draw4));
+draw4();
+
+/* ───────── Banc : barres à l'échelle ───────── */
+function drawBench(){
+  const data = [['C2 (pas d’accrochage)', 167, 'bar'], ['D-a1b : round_ps', 199, 'bar no'], ['D-a1d : nombre magique', 187, 'bar ok'], ['Pli de M (rejeté)', 176, 'bar']];
+  const x0 = 210, x1 = 700, max = 220, X = v => x0 + v / max * (x1 - x0);
+  let g = '';
+  [0, 50, 100, 150, 200].forEach(t => { g += `<line class="ax" x1="${X(t)}" y1="10" x2="${X(t)}" y2="178"/><text class="tx m" x="${X(t)}" y="196" text-anchor="middle">${t}</text>`; });
+  data.forEach(([n, v, c], i) => { const y = 18 + i * 40;
+    g += `<text class="tx" x="${x0 - 10}" y="${y + 17}" text-anchor="end">${n}</text><rect class="${c}" x="${x0}" y="${y}" width="${X(v) - x0}" height="24" rx="3"/><text class="tx" x="${X(v) + 8}" y="${y + 17}">${v} µs</text>`; });
+  g += `<text class="tx m" x="${x1}" y="220" text-anchor="end">µs par frame (274 688 sommets)</text>`;
+  document.getElementById('bench-svg').innerHTML = g;
+}
+
+function all(){ draw1(); draw2(Number(L2.querySelector('[aria-pressed="true"]').dataset.s)); drawBench(); }
+all(); run3();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw1);
+new MutationObserver(draw1).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
+</body>
+</html>

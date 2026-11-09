@@ -100,7 +100,9 @@ namespace LV3::Tests
             for (const Tri& t : tris)
             {
                 Fill(ca, t); RasterizeTriangle(t.v[0], t.v[1], t.v[2], vp, generic, &ca);
-                Fill(cb, t); RasterizeTriangleT<Shader>(t.v[0], t.v[1], t.v[2], vp, cb);
+                // D-a1c : sommets de cette TNR NON accrochés (antérieure au contrat D-a1) -> aiguillage coupé.
+                // Les petits triangles flottants sont vérifiés par Test_Da1c_SmallFloat (sommets accrochés).
+                Fill(cb, t); RasterizeTriangleT<Shader, kSimdMinBoxWidth, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cb);
             }
             size_t cd = 0, dd = 0;
             bool ok = SameImage(A, B, cd, dd);

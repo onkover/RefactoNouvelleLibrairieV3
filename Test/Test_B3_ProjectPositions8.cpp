@@ -2,6 +2,7 @@
 #include <random>
 #include <cstring>
 #include <vector>
+#include <cmath>       // D-a1d : std::fabs
 #include "geometry/MeshClass.h"
 #include "rendering/Viewport.h"
 #include "rendering/Rasterizer.h"     // MulRow
@@ -41,7 +42,7 @@ namespace LV3::Tests
         split.x = 768; split.y = 450; split.width = 768; split.height = 450;
         const Viewport vps[] = { Viewport::FullScreen(1536, 900), split, Viewport::FullScreen(1, 1) };
 
-        uint64_t verts = 0, mismatches = 0, outside = 0;
+        uint64_t verts = 0, mismatches = 0, outside = 0, replaced = 0, tinyNeg = 0;
         for (int it = 0; it < 300; ++it)
         {
             Matrix44f m;
@@ -58,6 +59,27 @@ namespace LV3::Tests
             }
 
             const Viewport& vp = vps[it % 3];
+
+            // D-a1d : le noyau AVX2 accroche par nombre magique, valable si |raster| < 2^14 (contrat
+            // Inside, assertion 5a de ProjectPositions8). Un sommet hors de ce domaine est remplace par
+            // l'origine (w = m33 >= 151 : NDC minuscule, dans le domaine). Aucun tirage consomme.
+            for (size_t i = 0; i < kN; ++i)
+            {
+                const Vec4f c = MulRow(m, aos[i]);
+                const float iw = 1.0f / c.w;
+                float xr, yr;
+                vp.ToRaster(c.x * iw, c.y * iw, xr, yr);
+                if (!(std::fabs(xr) < kSnapMagicRange && std::fabs(yr) < kSnapMagicRange))
+                {
+                    aos[i] = Vec3f{ 0.0f, 0.0f, 0.0f };
+                    px[i] = 0.0f; py[i] = 0.0f; pz[i] = 0.0f;
+                    ++replaced;
+                    continue;
+                }
+                // Negatifs minuscules : D-a1 (round) rendait -0, D-a1d rend +0 (scalaire ET AVX2).
+                tinyNeg += ((xr < 0.0f && xr >= -1.0f / 512.0f) || (yr < 0.0f && yr >= -1.0f / 512.0f)) ? 1u : 0u;
+            }
+
             ProjectPositions8(m, vp, px.data(), py.data(), pz.data(), kN, out.Data());
 
             for (size_t i = 0; i < kN; ++i)
@@ -77,9 +99,11 @@ namespace LV3::Tests
         }
 
         // CONTRE-EXEMPLE du test qui ne teste rien : des sommets dedans ET dehors.
-        const bool nonTrivial = outside > 0 && outside < verts;
+        // D-a1d : le cas -0 / +0 doit etre PRESENT, sinon le test ne prouve rien sur lui.
+        const bool nonTrivial = outside > 0 && outside < verts && (LV3_RASTER_FIXED == 0 || tinyNeg > 0);
         Logger::info("[B3] " + std::to_string(verts) + " sommets, " + std::to_string(mismatches)
-            + " desaccords, cuisson " + (bakeOk ? "OK" : "KO"));
+            + " desaccords, cuisson " + (bakeOk ? "OK" : "KO") + " ; D-a1d : " + std::to_string(replaced)
+            + " hors domaine remplaces, " + std::to_string(tinyNeg) + " negatifs minuscules");
         return bakeOk && mismatches == 0 && nonTrivial;
     }
 #endif

@@ -1,0 +1,769 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot D-a1c pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Concept : suite du carnet de laboratoire du jalon D (lots V3, D-a1, D-a1b, D-a1d). Une table de rastérisation,
+   la grille des pixels et les registres sous les yeux ; puis les fiches d'étapes, chacune avec son code avant / après.
+   Cobalt = géométrie et entiers exacts, ambre = prédiction / Giesen, vert = vérifié / flottant C2, rouge = contre-exemple. */
+:root{
+  --bg:#ecf0f4; --surface:#ffffff; --surface2:#f4f7fa; --ink:#101b27; --muted:#546479; --line:#ccd5df;
+  --accent:#2b57c4; --accent-soft:#e3ebfc; --warn:#9c5300; --warn-soft:#fbefdc; --ok:#146c43; --ok-soft:#dff3e8;
+  --bad:#ad2118; --bad-soft:#fbe4e1; --code-bg:#f1f4f8; --code-ink:#16222f;
+  --cov:#9db7f2; --cov-ink:#1a3d91; --grid:#c6d0dc; --center:#55657a; --tri:#101b27; --boxl:#9c5300;
+  --gie:#c77a12; --flt:#1f8a55; --c3:#7a5bc0; --nar:#7f8da0;
+  --f-display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --cov:#2d4b8c; --cov-ink:#bcd0ff; --grid:#2a3644; --center:#8c9db1; --tri:#e3e9f0; --boxl:#e8aa55;
+  --gie:#e8a24a; --flt:#4fc489; --c3:#a991ea; --nar:#8c9db1; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d131a; --surface:#141c26; --surface2:#19232f; --ink:#e3e9f0; --muted:#8c9db1; --line:#27333f;
+  --accent:#86a8ff; --accent-soft:#18263f; --warn:#e8aa55; --warn-soft:#2f2412; --ok:#52c68c; --ok-soft:#12301f;
+  --bad:#ff8f86; --bad-soft:#3a1916; --code-bg:#0f1720; --code-ink:#d6e0ec;
+  --cov:#2d4b8c; --cov-ink:#bcd0ff; --grid:#2a3644; --center:#8c9db1; --tri:#e3e9f0; --boxl:#e8aa55;
+  --gie:#e8a24a; --flt:#4fc489; --c3:#a991ea; --nar:#8c9db1; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.58;margin:0;
+  padding-block:0 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:30}
+.wrap{max-width:1120px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);font-stretch:100%;text-wrap:balance;margin:0}
+h1{font-size:clamp(30px,5vw,46px);font-weight:760;letter-spacing:-.01em;line-height:1.05}
+h2{font-size:clamp(22px,3vw,28px);font-weight:700}
+h3{font-size:17px;font-weight:650}
+p{margin:.55em 0;max-width:78ch} li{max-width:76ch} a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+.eyebrow{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+header.top{padding-top:34px;display:grid;gap:14px}
+.lede{max-width:74ch;color:var(--muted);font-size:16px}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:8px}
+.fact{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.fact b{display:block;font-family:var(--f-display);font-size:26px;font-weight:720;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.tag{display:inline-block;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:1px 7px;border-radius:3px;border:1px solid currentColor;vertical-align:middle;white-space:nowrap}
+.tag.m{color:var(--accent)} .tag.p{color:var(--warn)} .tag.ok{color:var(--ok)} .tag.bad{color:var(--bad)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line);margin-top:22px;display:flex;gap:2px;overflow-x:auto;padding-block:6px}
+nav.tabs a{font-family:var(--f-mono);font-size:12px;text-decoration:none;color:var(--muted);padding:6px 10px;border-radius:4px;white-space:nowrap}
+nav.tabs a:hover,nav.tabs a:focus-visible{background:var(--accent-soft);color:var(--accent);outline:none}
+section{padding-top:40px;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+section>*{min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:9px 13px;border-radius:0 5px 5px 0;margin:10px 0}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)} .note.bad{border-color:var(--bad);background:var(--bad-soft)} .note.ok{border-color:var(--ok);background:var(--ok-soft)}
+.note p:first-child{margin-top:0} .note p:last-child{margin-bottom:0}
+.lab{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.lab{grid-template-columns:minmax(0,1fr)}}
+canvas.cv{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:6px;background:var(--surface2);touch-action:none}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.ctl{display:grid;gap:4px;min-width:0}
+.ctl label{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.ctl output{font-family:var(--f-mono);font-size:12px;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+button.b,select.b{font-family:var(--f-mono);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:4px;padding:5px 10px;cursor:pointer}
+button.b:hover,button.b:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+button.b[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--surface2);font-weight:500}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+.good{color:var(--ok);font-weight:600} .badc{color:var(--bad);font-weight:600} .pred{color:var(--warn)}
+pre.code{margin:0;background:var(--code-bg);color:var(--code-ink);font-family:var(--f-mono);font-size:12.3px;line-height:1.5;padding:12px 14px;border-radius:5px;overflow-x:auto;border:1px solid var(--line);white-space:pre}
+.diff{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr));gap:10px}
+.diff .side{min-width:0;display:grid;gap:4px;align-content:start}
+.diff .side>span{font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.diff .before>span{color:var(--bad)} .diff .after>span{color:var(--ok)}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
+.step>*{min-width:0}
+.step>header .tag{white-space:normal}
+.step>header{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:baseline}
+.step .num{font-family:var(--f-mono);font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:1px 6px}
+.kv{display:grid;grid-template-columns:150px minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv>dt{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);padding-top:2px}
+.kv>dd{margin:0;min-width:0}
+@media (max-width:600px){.kv{grid-template-columns:minmax(0,1fr)}}
+details.edit{border:1px solid var(--line);border-radius:5px;background:var(--surface2)}
+details.edit>summary{cursor:pointer;padding:7px 11px;font-family:var(--f-mono);font-size:12.5px;list-style-position:inside}
+details.edit[open]>summary{border-bottom:1px solid var(--line)}
+details.edit>.diff{padding:10px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin-right:5px}
+.lanes td,.lanes th{font-family:var(--f-mono);font-size:11.5px;padding:4px 7px;white-space:nowrap}
+.lanes td.eq{color:var(--ok)} .lanes td.ne{color:var(--bad);font-weight:600}
+.bar{height:16px;border-radius:2px}
+.barrow{display:grid;grid-template-columns:110px minmax(0,1fr) 80px;gap:8px;align-items:center;font-size:12.5px}
+.barrow .lbl{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.barrow .val{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.timeline{display:grid;gap:0;border-left:2px solid var(--line);margin-left:6px}
+.timeline>div{position:relative;padding:4px 0 12px 18px}
+.timeline>div::before{content:"";position:absolute;left:-7px;top:9px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.timeline>div.now::before{background:var(--warn);border-color:var(--warn)}
+.timeline b{font-family:var(--f-display);font-size:15px}
+.small{font-size:13px;color:var(--muted)}
+svg text{font-family:var(--f-mono)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">LibraryV3 · phase G · jalon D · lot D-a1c · base LIB 93757b1 / EXE b58c132 · 8 novembre 2026</div>
+  <h1>Lot D-a1c pas à pas</h1>
+  <p class="lede">Les petits triangles. Giesen accélère les grands triangles, mais pour un triangle de quelques pixels il dépense plus en préparation qu'il ne gagne en boucle. Ce lot fait dessiner les petits triangles par les blocs flottants de C2, sans changer un seul pixel de l'image, et fournit la scène V4 qui dira si le gain existe sur ta machine.</p>
+  <div class="facts">
+    <div class="fact"><b>−23,6 %</b><span>temps du noyau sur V4 c3 (cellules de 3 px), banc g++ sur le vrai code, image identique</span></div>
+    <div class="fact"><b>0 / 12,7 M</b><span>pixels différents (couverture et barycentriques) sur 1,67 M triangles d'étendue &lt; 16 px</span></div>
+    <div class="fact"><b>W* = 8 px</b><span>seuil retenu : la boîte tient dans un bloc de 8 par ligne. Au-delà, Giesen reprend la main</span></div>
+    <div class="fact"><b>2 sub + 2 cmp</b><span>coût de l'aiguillage par triangle AVX2 ; aucune préparation refaite</span></div>
+  </div>
+</header>
+<nav class="tabs" aria-label="Sections">
+  <a href="#rappel">Rappel</a><a href="#pourquoi">Pourquoi ce lot</a><a href="#lecon">La leçon</a><a href="#exact">Exactitude</a>
+  <a href="#decisions">Décisions</a><a href="#v4">Scène V4</a><a href="#banc">Banc</a><a href="#etapes">Étapes</a>
+  <a href="#contre">Contre-exemples</a><a href="#predictions">Prédictions</a><a href="#verifier">Vérifier</a><a href="#da2">Et D-a2 ?</a><a href="#ordre">Ordre</a>
+</nav>
+<section id="rappel">
+  <div class="eyebrow">1 · Rappel</div>
+  <h2>D'où l'on vient</h2>
+  <p>Le jalon D a commencé quand la scène V3 (un niveau de FPS en six pièces) a montré que les <b>arêtes</b>, c'est-à-dire le test « ce pixel est-il dans le triangle ? », coûtaient 41 % du rendu. Avant cela, le chantier C avait déjà réécrit le dessin des triangles en trois temps. Voici la suite des lots, dans l'ordre où ils ont été appliqués, avec ce que chacun a laissé derrière lui.</p>
+  <div class="grid2">
+    <div class="panel timeline">
+      <div><b>C0, C1</b> · 21-23/10<br><span class="small">C0 découpe le coût du dessin par ablation (préparation / arêtes / fragments). C1 résout le shader à la compilation : un appel indirect par triangle au lieu d'un par pixel.</span></div>
+      <div><b>C2</b> · 24-25/10<br><span class="small">Arêtes évaluées directement par blocs de 8 pixels en AVX2, en flottant, au bit près. V2 : Render ×2,27.</span></div>
+      <div><b>C3</b> · 25-29/10<br><span class="small">Triangles dont la boîte fait 1 × 1 pixel : traités dans l'étage faces, sans appeler le noyau. V1 : étage faces −34,6 %.</span></div>
+      <div><b>V3</b> · 30-31/10<br><span class="small">Scène de niveau FPS (64 934 triangles), découpe en 6 pièces (−25,5 %). Les arêtes valent 41 % du Render : jalon D ouvert.</span></div>
+      <div><b>D-a1, Giesen</b> · 31/10-03/11<br><span class="small">Sommets accrochés au 1/256 px, arêtes entières avancées par additions. Rooms −13,9 %, mais V1 +4 à +5 % (accrochage payé par tous les sommets). Gardé par décision d'Onky.</span></div>
+      <div><b>D-a1b</b> · 04-06/11<br><span class="small">Barycentriques tirées des E' entiers (9 opérations par bloc au lieu de 26). Rooms −6,5 %, V2 ≈ −7 %, V1 0 %. Commité (LIB 93757b1 / EXE b58c132).</span></div>
+      <div><b>D-a1d</b> · 06/11<br><span class="small">Accrochage des sommets par nombre magique (2 µops au lieu de 3). Livré, à appliquer et mesurer. Il touche Viewport.h et VertexStage.cpp, que D-a1c ne touche pas : les deux lots s'appliquent dans n'importe quel ordre.</span></div>
+      <div class="now"><b>D-a1c</b> · aujourd'hui<br><span class="small">Les petits triangles. Conditionnel : on garde seulement si la scène V4 montre un gain.</span></div>
+      <div><b>D-a2, Abrash</b> · ensuite<br><span class="small">La hiérarchie de tuiles posée sur Giesen, pour les grands triangles (voir la dernière section).</span></div>
+    </div>
+    <div class="panel">
+      <h3>Ce que D-a1 a appris, et la question qu'il a laissée</h3>
+      <p>La conclusion de l'artefact D-a1 tenait en une phrase : <i>Giesen est rentable quand la boucle de couverture domine.</i> Son gain par triangle est proportionnel au nombre de pixels testés, son surcoût est fixe (par sommet et par triangle). D'où trois régimes mesurés :</p>
+      <ul>
+        <li>boîte ≤ 1 px (C3) : légère perte, seule la grille est payée ;</li>
+        <li>2 à environ 8 px : <b>neutre ou léger gain</b> ;</li>
+        <li>≥ 8 px : gain croissant avec l'aire.</li>
+      </ul>
+      <p>Le 4 novembre, tu as demandé de prévoir un chemin plus rapide pour les petits triangles, puisque Giesen n'y gagne pas. Le plan l'a inscrit comme <b>D-a1c, conditionnel</b> : aiguiller les petits triangles vers le noyau flottant de C2, <i>seulement si</i> une scène « petits triangles » le montre plus rapide, et à image identique.</p>
+      <div class="note warn"><p><b>Un point du plan est corrigé ici.</b> Le protocole écrit le 04/11 prévoyait un A/B <code>LV3_RASTER_FIXED</code> 0/1. Ce n'est pas la bonne mesure : fixed = 0 retire aussi l'accrochage des sommets (+35 µs sur V1, lot D-a1d). On mesurerait deux changements à la fois. Ce lot ajoute un commutateur qui ne change <i>que</i> la boucle de blocs (section Décisions, D5).</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pourquoi">
+  <div class="eyebrow">2 · Pourquoi ce lot</div>
+  <h2>Un vrai jeu dessine surtout des petits triangles</h2>
+  <div class="grid2">
+    <div>
+      <p>Un mur à deux mètres de la caméra fait quelques grands triangles. Tout le reste de l'image est fait de triangles petits : les objets au fond d'une salle, un personnage à trente mètres, la végétation, les débris, le terrain qui s'éloigne. Le LOD en retire beaucoup, mais pas tous : pendant une transition, ou quand l'auteur de la scène a fixé le niveau 0 (décision du 04/10 : une chaîne n'a pas le droit de monter au-dessus de la résolution choisie), les triangles restent petits.</p>
+      <p>Dans la scène V3, le simulateur compte, pour les quatre caméras, <b>16 927 triangles AVX2 d'étendue inférieure à 8 px</b> sur 35 707, soit 47 %. La caméra Dbg2 (milieu de la galerie) en voit 9 676 sur 14 214. Ce ne sont pas des cas marginaux : c'est la moitié du travail du chemin AVX2.</p>
+      <h3>L'objectif fonctionnel</h3>
+      <p>Dessiner chaque triangle par la boucle la plus rapide <i>pour sa taille</i> :</p>
+      <ul>
+        <li><b>même image</b>, au bit près : couleurs, profondeurs, compteurs ;</li>
+        <li><b>plus rapide</b> sur les scènes à petits triangles ;</li>
+        <li><b>pas plus lent</b> ailleurs (V1, V2, rooms, et la classe de contrôle de V4).</li>
+      </ul>
+      <p>Si la mesure sur ta machine ne montre pas de gain, la question est close par la mesure et le commutateur reste à 0. C'est le sens de « conditionnel ».</p>
+    </div>
+    <div class="panel">
+      <h3>Un sol qui s'éloigne</h3>
+      <p class="small">Un sol de 2 m × 6 m découpé en 16 × 48 cellules (1 536 triangles), vu d'une caméra à 0,8 m de hauteur. Au premier plan les triangles sont grands, au fond ils deviennent minuscules. La couleur indique la boucle qui dessine chaque triangle avec D-a1c (W* = 8 px). Recule le sol pour voir la bande verte avancer.</p>
+      <canvas class="cv" id="fcv" width="640" height="300" aria-label="Dalle projetée, triangles colorés par chemin"></canvas>
+      <div class="ctl" style="margin-top:8px"><label for="fdist">distance du bord avant du sol</label><input id="fdist" type="range" min="0.8" max="30" step="0.05" value="1.6"><output id="fdistv"></output></div>
+      <div class="legend" style="margin-top:6px">
+        <span><i class="sw" style="background:var(--c3)"></i>C3, boîte 1 × 1</span>
+        <span><i class="sw" style="background:var(--nar)"></i>Giesen scalaire, boîte &lt; 3 px</span>
+        <span><i class="sw" style="background:var(--flt)"></i>blocs flottants C2 (D-a1c)</span>
+        <span><i class="sw" style="background:var(--gie)"></i>Giesen AVX2</span>
+      </div>
+      <div id="fstats" style="margin-top:8px;display:grid;gap:4px"></div>
+    </div>
+  </div>
+</section>
+<section id="lecon">
+  <div class="eyebrow">3 · La leçon</div>
+  <h2>Ce que coûte un triangle, étage par étage</h2>
+  <p>Pour savoir quelle boucle est la plus rapide pour un triangle, il faut d'abord savoir <i>de quoi</i> est fait son coût. Dans le noyau (après l'étage faces, hors C3), un triangle paie quatre choses, chacune un nombre de fois différent :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Étage</th><th>Payé combien de fois</th><th>Blocs flottants C2 (<code>RasterizeBlocks8</code>)</th><th>Blocs Giesen D-a1b (<code>RasterizeBlocks8Fx</code>)</th></tr></thead>
+    <tbody>
+      <tr><td>Préparation</td><td>1 par triangle</td><td colspan="2">Dans D-a1c, <b>la même</b> : <code>SetupTriangleFx</code> (entière). L'aiguillage se fait après elle. C'est la décision D1.</td></tr>
+      <tr><td>Entrée de la boucle de blocs</td><td>1 par triangle AVX2</td><td>≈ 14 diffusions de constantes (sommets, top-left, 1/aire)</td><td><code>PrepareLanesFx</code> (6 multiplications 64 bits, 12 sélections, 6 comparaisons, choix 32/64 bits), puis 3 <code>vpmulld</code> (décalages par voie), 3 décalages, 7 diffusions</td></tr>
+      <tr><td>Début de ligne</td><td>1 par ligne de la boîte</td><td>1 conversion + 1 addition + 1 diffusion (<code>py</code>)</td><td>3 diffusions + 3 additions vectorielles + 3 additions scalaires</td></tr>
+      <tr><td>Bloc de 8 pixels</td><td>⌈largeur / 8⌉ par ligne</td><td>3 arêtes en 7 opérations (12 après partage par MSVC) + 3 × (2 comparaisons, ET, OU) + boîte + <code>movemask</code> ≈ 30 à 35</td><td>3 OU + <code>movemask</code> + 4 additions ≈ 10</td></tr>
+      <tr><td>Bloc non vide</td><td>blocs ayant ≥ 1 pixel couvert</td><td><code>popcnt</code> + 3 multiplications (barycentriques)</td><td><code>popcnt</code> + comparaison + 3 × (conversion, addition, multiplication) = 11</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2">
+    <div>
+      <h3>Deux droites qui se croisent</h3>
+      <p>Giesen paie plus <b>à l'entrée</b> (une fois par triangle) et moins <b>par bloc</b>. C2 fait l'inverse. Le temps d'un triangle ressemble donc à <code>a + b × blocs</code>, avec un <code>a</code> grand et un <code>b</code> petit pour Giesen, un <code>a</code> petit et un <code>b</code> grand pour C2. Les deux droites se croisent : en dessous d'un certain nombre de blocs, C2 gagne ; au-dessus, Giesen gagne.</p>
+      <p>Où est le croisement ? Le banc (section Banc) le place très nettement : <b>tant que la boîte tient dans 8 colonnes</b>, donc un seul bloc par ligne, C2 gagne. Dès qu'une ligne a deux blocs, C2 paie deux fois son coût de bloc et Giesen repasse devant. Sur le mur de cellules, le basculement se fait entre des cellules de 8 px (boîte 8,9 px : C2 −11 %) et de 9 px (boîte 10 px : C2 +9 %).</p>
+      <div class="note bad"><p><b>Compter les instructions ne suffit pas.</b> Avec les ordres de grandeur du tableau, un triangle de 4 × 4 coûte à peu près autant d'instructions dans les deux boucles, et Giesen devrait gagner dès 3 ou 4 lignes. La mesure dit l'inverse : C2 gagne jusqu'à 8 lignes. L'explication probable est la <b>latence</b> à l'entrée de <code>RasterizeBlocks8Fx</code> : 3 <code>vpmulld</code> (10 cycles de latence chacune) et les multiplications 64 bits de <code>PrepareLanesFx</code> forment une chaîne de dépendances qu'un triangle de quelques lignes ne laisse pas le temps de cacher. C'est une hypothèse : l'asm et le compteur de cycles la confirmeront ou non (point ouvert P1). Même leçon qu'en C1 : une prédiction tirée d'un décompte se vérifie toujours par une mesure.</p></div>
+      <h3>D'où vient l'idée</h3>
+      <ul>
+        <li><b>Fabian Giesen</b>, <a href="https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/" target="_blank" rel="noopener">« Optimizing the basic rasterizer »</a>, The ryg blog, février 2013 : la méthode de D-a1. Giesen précise lui-même que l'évaluation incrémentale vaut par l'amortissement de sa mise en place sur beaucoup de pixels.</li>
+        <li><b>Michael Abrash</b>, « Rasterization on Larrabee », Dr. Dobb's, 2009 : le rasteriseur hiérarchique (lot D-a2) traite à part les triangles plus petits qu'une tuile, pour lesquels la descente hiérarchique ne rapporte rien.</li>
+        <li><b>Brian Karis et al.</b>, « Nanite: A Deep Dive », SIGGRAPH 2021 (Advances in Real-Time Rendering) : Unreal Engine 5 choisit, pour chaque groupe de triangles, entre un rasteriseur logiciel (petits triangles) et le rasteriseur matériel (grands triangles). C'est le même principe que D-a1c : un aiguillage par taille entre deux boucles.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Un triangle sur la grille, ses lignes et ses blocs</h3>
+      <canvas class="cv" id="lcv" width="560" height="420" aria-label="Triangle sur la grille des pixels avec ses blocs de 8"></canvas>
+      <div class="grid2" style="margin-top:8px;gap:8px">
+        <div class="ctl"><label for="lsize">étendue du triangle</label><input id="lsize" type="range" min="1.5" max="20" step="0.05" value="6.5"><output id="lsizev"></output></div>
+        <div class="ctl"><label for="lang">rotation</label><input id="lang" type="range" min="0" max="360" step="1" value="23"><output id="langv"></output></div>
+        <div class="ctl"><label for="lshape">forme</label><input id="lshape" type="range" min="0.15" max="1" step="0.01" value="0.62"><output id="lshapev"></output></div>
+        <div class="ctl"><label for="loff">décalage sous-pixel</label><input id="loff" type="range" min="0" max="1" step="0.01" value="0.31"><output id="loffv"></output></div>
+      </div>
+      <div class="legend" style="margin-top:6px"><span><i class="sw" style="background:var(--cov)"></i>pixel couvert</span><span><i class="sw" style="border:2px solid var(--boxl)"></i>boîte serrée</span><span><i class="sw" style="border:2px dashed var(--accent)"></i>blocs de 8 (un par ligne si largeur ≤ 8)</span></div>
+      <div id="lstats" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<section id="exact">
+  <div class="eyebrow">4 · Exactitude</div>
+  <h2>Pourquoi le flottant donne exactement l'image de Giesen sous 16 px</h2>
+  <p>D-a1 a changé l'image (accrochage des sommets) et chaque lot depuis a gardé cette image au bit près. Aiguiller une partie des triangles vers une autre boucle n'est acceptable que si cette boucle donne <b>les mêmes pixels, les mêmes barycentriques et les mêmes profondeurs</b>. Sinon, deux triangles voisins pris par deux boucles différentes pourraient laisser un trou ou un doublon sur leur arête commune. La démonstration tient en six étapes.</p>
+  <div class="grid2">
+    <div class="panel">
+      <ol style="margin:0;padding-left:20px;display:grid;gap:8px">
+        <li><b>Les sommets sont sur la grille.</b> L'étage sommets accroche chaque sommet au 1/256 px (contrat de D-a1). Un sommet vaut <code>X / 256</code> avec <code>X</code> entier, exactement, en float32.</li>
+        <li><b>Les différences sont exactes.</b> C2 calcule <code>d = sommet − centre</code>, avec un centre <code>x + 0,5</code>. Les centres testés sont dans la boîte, donc entre le min et le max des sommets : <code>|d| ≤ étendue &lt; 16</code>. <code>d</code> est un multiple de 2<sup>−8</sup> inférieur à 16, donc <code>d × 256</code> est un entier de moins de 12 bits : exact en float32 (24 bits de mantisse).</li>
+        <li><b>Les produits sont exacts.</b> <code>ux·vy</code> est un multiple de 2<sup>−16</sup> inférieur à 16 × 16 = 256, soit un entier de moins de 24 bits en unités 2<sup>−16</sup> : exact.</li>
+        <li><b>La différence est arrondie une seule fois, correctement.</b> <code>w = fl(ux·vy − uy·vx)</code> est l'arrondi au plus proche de la valeur exacte <code>E · 2<sup>−16</sup></code>. Côté Giesen, <code>float(E') + ofs</code> est l'arrondi au plus proche de <code>E / 256</code> (D-a1b). Ce sont deux arrondis corrects de la même valeur exacte, à une puissance de 2 près : <b>mêmes bits</b>, puissance de 2 mise à part.</li>
+        <li><b>La décision et la règle top-left sont les mêmes.</b> Un arrondi au plus proche garde le signe et ne rend zéro que pour zéro : <code>w &gt; 0 ⇔ E &gt; 0</code>, <code>w = 0 ⇔ E = 0</code>. Le drapeau top-left, calculé sur des différences de sommets exactes, est le même en flottant et en entier.</li>
+        <li><b>Les barycentriques et la profondeur sont les mêmes.</b> <code>1/aire</code> : l'aire flottante est exacte (même argument, étendue &lt; 16), donc <code>s.invArea</code> est identique. C2 calcule <code>w × invArea</code>, Giesen <code>(E/256) × (invArea / 256)</code> : multiplier par une puissance de 2 commute avec l'arrondi. Barycentriques identiques, donc profondeur identique (même formule, même ordre).</li>
+      </ol>
+      <div class="note"><p><b>Pourquoi l'étendue NON rognée.</b> La boîte est rognée au viewport. Un grand triangle qui déborde du bord peut avoir une boîte rognée de 4 px et une étendue de 400 px : ses <code>d</code> dépassent 16 et l'étape 2 tombe. Le critère porte sur <code>maxX − minX</code> des sommets, avant rognage (contre-exemple 6 : 1 058 barycentriques fausses).</p></div>
+      <div class="note ok"><p><b>Vérifié</b> sur le vrai code : 1 668 527 triangles d'étendue &lt; 16 px tirés au hasard (20 % de sommets sur des centres), 12 702 162 pixels couverts dont 506 181 sur une arête : <b>0 différence</b> de couverture, <b>0</b> barycentrique différente. À 40 px : 1 243 537 barycentriques différentes sur 78 M (1,6 %).</p></div>
+    </div>
+    <div class="panel">
+      <h3>Laboratoire float32</h3>
+      <p class="small">Le navigateur refait les deux calculs avec l'arrondi du float32 (<code>Math.fround</code> après chaque opération, comme le CPU) : arêtes et barycentriques de C2, E' entiers et barycentriques de Giesen. Tire des triangles accrochés d'une étendue donnée et compare pixel par pixel.</p>
+      <div class="grid2" style="gap:8px">
+        <div class="ctl"><label for="xext">étendue maximale</label><input id="xext" type="range" min="2" max="64" step="1" value="12"><output id="xextv"></output></div>
+        <div class="ctl"><label for="xcount">triangles tirés</label><input id="xcount" type="range" min="50" max="1500" step="50" value="400"><output id="xcountv"></output></div>
+      </div>
+      <div class="row" style="margin-top:8px"><button class="b" id="xrun" type="button">Tirer et comparer</button><span class="small" id="xseed"></span></div>
+      <div id="xbits" style="margin-top:10px"></div>
+      <div id="xres" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="eyebrow">5 · Décisions</div>
+  <h2>Ce qui a été choisi, et pourquoi</h2>
+  <p>Tu m'as confié le 04/11 le choix des optimisations, avec une seule contrainte : Giesen reste. Chaque décision ci-dessous vient d'une mesure du banc (section Banc) ou d'une démonstration (section Exactitude). Rien n'est appliqué au moteur tant que tu ne l'as pas fait toi-même.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Décision</th><th>Pourquoi</th><th>Écarté</th></tr></thead>
+    <tbody>
+      <tr><td class="n">D1</td><td><b>Aiguiller après la préparation entière</b>, dans la branche AVX2 de <code>RasterizeTriangleFx</code>, entre <code>RasterizeBlocks8</code> et <code>RasterizeBlocks8Fx</code>.</td><td>Pour un petit triangle, le <code>TriangleSetup</code> que remplit <code>SetupTriangleFx</code> est identique au bit à celui de <code>SetupTriangle</code>. On garde la préparation entière (la moins chère sur MSVC, R2 de D-a1 : −22 %) et on ne change que la boucle. Le chemin scalaire étroit (largeur &lt; 3) ne change pas.</td><td>Aiguiller avant la préparation, sur les sommets flottants : un second calcul d'étendue pour tous les triangles, et deux corps de noyau qui se gênent (contre-exemples 1 et 2).</td></tr>
+      <tr><td class="n">D2</td><td><b>Critère sur l'étendue non rognée</b> des sommets accrochés, <code>spanX</code> et <code>spanY</code> en 1/256 px, calculée par <code>SetupTriangleFx</code> (2 soustractions sur des min/max déjà là).</td><td>C'est elle qui borne <code>|d|</code> (Exactitude, étape 2). Comparaison entière, sans branche (<code>&amp;</code>).</td><td>La boîte rognée (contre-exemple 6) ; l'aire (ne borne pas <code>|d|</code>).</td></tr>
+      <tr><td class="n">D3</td><td><b>W* = 8 px.</b> Plafond 16 px imposé par <code>config.h</code>.</td><td>Étendue &lt; 8 ⇒ boîte ≤ 8 colonnes ⇒ un bloc par ligne : la zone où C2 gagne (banc). 16 est la limite d'exactitude, pas de rapidité.</td><td>W* = 12 ou 16 : murs de 9 à 10 px pris par C2, +9 à +13 % (contre-exemple 4).</td></tr>
+      <tr><td class="n">D4</td><td><b>Pas de ré-accrochage</b> dans la branche : contrat de l'étage sommets, vérifié par une assertion Debug (<code>IsOnSubpixelGrid</code>).</td><td>Les sommets du moteur sont déjà accrochés (ProjectClip, ProjectPositions8). Ré-accrocher coûte 14 à 17 ns par triangle et mange l'essentiel du gain (contre-exemple 3).</td><td>Accrocher une copie des sommets dans la branche.</td></tr>
+      <tr><td class="n">D5</td><td><b>Commutateur <code>LV3_RASTER_SMALL_FLOAT</code></b> (config.h, section 13) : 0 = Giesen partout, W* = aiguillage. Défaut 8. En-tête CSV <code>smallfp=</code>. Paramètre de template <code>kSmallPx</code> pour les TNR.</td><td>A et B ont le même accrochage et la même préparation : le lot A/B ne mesure que la boucle de blocs.</td><td>A/B <code>LV3_RASTER_FIXED</code> 0/1 prévu le 04/11 (mesure deux choses à la fois).</td></tr>
+      <tr><td class="n">D6</td><td><b>Compteurs par classe de largeur de boîte</b> (RASTER_STATS) : <code>TrisBoxW1</code>, <code>W2</code>, <code>W3to4</code>, <code>W5to8</code>, <code>W9to16</code>, <code>W17plus</code>, et <code>TrisSmallFloat</code>.</td><td>« Compteurs par classe » demandés par le plan. La largeur choisit le chemin (scalaire / AVX2) et le nombre de blocs par ligne.</td><td>Un chronomètre par classe (une paire de bornes coûte deux triangles, C0).</td></tr>
+      <tr><td class="n">D7</td><td><b>TNR C1 et C2 : aiguillage coupé</b> (<code>kSmallFloatOff</code>) ; nouvelle TNR <code>Test_Da1c_SmallFloat</code> à sommets accrochés.</td><td>C1 et C2 tirent des sommets NON accrochés (antérieurs au contrat de D-a1) : le chemin flottant y lirait d'autres sommets que Giesen (contre-exemple 7). Leurs journaux restent identiques.</td><td>Accrocher les sommets de C1 et C2 (tous leurs journaux changeraient).</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<section id="v4">
+  <div class="eyebrow">6 · Scène V4</div>
+  <h2>Un mur de petits triangles, une classe de taille par scène</h2>
+  <div class="grid2">
+    <div>
+      <p>Aucune scène actuelle ne contient assez de triangles de 2 à 16 px pour mesurer quoi que ce soit : V1 n'a que des boîtes d'un pixel (tout passe par C3), V2 est dominée par de grands triangles, rooms mélange tout. La scène V4 isole la taille.</p>
+      <ul>
+        <li><b>Une dalle</b> de 1 m, découpée en N × N cellules (2 triangles par cellule), tournée de 7° dans son plan pour qu'aucune arête ne tombe sur la grille des pixels.</li>
+        <li><b>Un mur</b> de 6 × 3 dalles (pas 1,15 m), face aux quatre caméras, à 4 m. Le mur entier est dans le frustum avec une marge : chemin Inside, donc B3, B4, B5 et le noyau, comme un vrai objet.</li>
+        <li><b>Quatre classes</b>, une scène chacune : c3 (N = 32, cellule 3,05 px), c5 (N = 20, 4,87 px), c7 (N = 14, 6,96 px) et <b>c12</b> (N = 8, 12,2 px), la classe de <b>contrôle</b> : aucun de ses triangles ne change de chemin, son temps ne doit pas bouger.</li>
+        <li><b>Une scène mix</b> : les quatre dalles mélangées, (ligne + colonne) mod 4.</li>
+        <li>Quatre caméras décalées de 0,3 à 0,7 px : mêmes tailles, positions sous-pixel différentes (boîtes de largeurs voisines, règle top-left exercée). Gizmos à 0, comme les autres bancs.</li>
+      </ul>
+      <p>Les fichiers sont fournis tels quels (tu n'as pas à exécuter le générateur) : 4 OBJ, 4 MTL (un par OBJ, règle du 08/10), 5 JSON de scène, et <code>gen_v4.py</code> pour la trace.</p>
+      <div class="note"><p>Pour mesurer une classe : dans <code>config.json</code>, <code>"scene_graph": { "type": "scene_graph", "object": "bench_V_V4_c3.json" }</code>. Les quatre vues donnent la vue quad 768 × 450 (f = 389,7 px) des bancs V.</p></div>
+    </div>
+    <div class="panel">
+      <div class="row" id="v4btns" role="group" aria-label="Scène"></div>
+      <canvas class="cv" id="vcv" width="768" height="450" style="margin-top:8px" aria-label="Vue Game de la scène V4"></canvas>
+      <div class="legend" style="margin-top:6px"><span><i class="sw" style="background:var(--flt)"></i>blocs flottants (D-a1c)</span><span><i class="sw" style="background:var(--gie)"></i>Giesen AVX2</span><span><i class="sw" style="background:var(--nar)"></i>Giesen scalaire</span></div>
+      <div id="vstats" class="small" style="margin-top:6px"></div>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th class="n">FacesSubmitted</th><th class="n">TrisRasterized</th><th class="n">Early</th><th class="n">Pix1</th><th class="n">BoxW3to4</th><th class="n">BoxW5to8</th><th class="n">BoxW9to16</th><th class="n">TrisSmallFloat (B)</th><th class="n">PixelsCovered</th></tr></thead>
+    <tbody>
+      <tr><td>c3</td><td class="n">147 456</td><td class="n">147 456</td><td class="n">0</td><td class="n">0</td><td class="n">147 456</td><td class="n">0</td><td class="n">0</td><td class="n">147 456</td><td class="n">683 440</td></tr>
+      <tr><td>c5</td><td class="n">57 600</td><td class="n">57 600</td><td class="n">0</td><td class="n">0</td><td class="n">9 285</td><td class="n">48 315</td><td class="n">0</td><td class="n">57 600</td><td class="n">683 439</td></tr>
+      <tr><td>c7</td><td class="n">28 224</td><td class="n">28 224</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">28 224</td><td class="n">0</td><td class="n">28 224</td><td class="n">683 440</td></tr>
+      <tr><td>c12</td><td class="n">9 216</td><td class="n">9 216</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">9 216</td><td class="n">0</td><td class="n">683 439</td></tr>
+      <tr><td>mix</td><td class="n">58 656</td><td class="n">58 656</td><td class="n">0</td><td class="n">0</td><td class="n">35 348</td><td class="n">21 260</td><td class="n">2 048</td><td class="n">56 608</td><td class="n">683 442</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Valeurs par frame (4 vues), calculées par le simulateur <code>v4sim</code> sur le vrai noyau patché, projection en double puis accrochage float32. Le moteur projette en float32 : tolérance de quelques unités sur les classes et de ±10 sur PixelsCovered. Prédictions écrites avant toute mesure moteur. En binaire A (W* = 0), TrisSmallFloat vaut 0 et tous les autres compteurs sont identiques à B.</p>
+</section>
+
+<section id="banc">
+  <div class="eyebrow">7 · Banc hors moteur</div>
+  <h2>Ce que mesure le banc, et ce qu'il ne mesure pas</h2>
+  <p>Le banc compile les <b>vrais en-têtes du dépôt</b> (Fragment.h, Rasterizer.h, PixelStage8.h de 93757b1) avec g++ 13 sur un Xeon à 2,1 GHz, <code>-O2 -mavx2 -ffp-contract=off</code>, un cœur épinglé, meilleur de 25 à 41 passages, ordre des noyaux alterné. Il dessine des milliers de triangles accrochés, par classe de taille, avec trois noyaux appelés par pointeur (comme <code>TriangleKernel</code>) : <span style="color:var(--gie)">Giesen</span> (le <code>RasterizeTriangleT</code> du dépôt), <span style="color:var(--flt)">C2</span> (le corps flottant seul) et l'<span style="color:var(--accent)">hybride D-a1c</span> (W* = 8). Les images des trois sont comparées au bit à chaque classe.</p>
+  <div class="note warn"><p><b>Indicatif.</b> Le banc g++/Xeon s'est déjà trompé de signe (C1 : prédit 0 à −3 % sur V1, mesuré +6,8 %). Il sert à choisir la conception et le seuil, pas à prédire le chiffre : seul le lot A/B sur ta machine décide.</p></div>
+  <div class="panel">
+    <div class="row"><span class="small">Famille de triangles :</span><button class="b" type="button" id="bmur" aria-pressed="true">mur de cellules (comme V4)</button><button class="b" type="button" id="becl" aria-pressed="false">éclats quelconques dans une case</button></div>
+    <div id="bchart" style="margin-top:10px;overflow-x:auto"></div>
+    <p class="small" id="bnote"></p>
+  </div>
+  <h3>Sur les scènes V4 elles-mêmes (simulateur, noyau seul, une frame = 4 vues)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th class="n">Triangles noyau</th><th class="n">A : W* = 0 <span style="text-transform:none">(µs)</span></th><th class="n">B : W* = 8 <span style="text-transform:none">(µs)</span></th><th class="n">B / A</th><th class="n">Pixels différents</th></tr></thead>
+    <tbody>
+      <tr><td>c3</td><td class="n">147 456</td><td class="n">13 053</td><td class="n">9 978</td><td class="n good">0,764</td><td class="n">0</td></tr>
+      <tr><td>c5</td><td class="n">57 600</td><td class="n">6 683</td><td class="n">5 956</td><td class="n good">0,891</td><td class="n">0</td></tr>
+      <tr><td>c7</td><td class="n">28 224</td><td class="n">4 242</td><td class="n">4 081</td><td class="n good">0,962</td><td class="n">0</td></tr>
+      <tr><td>c12 (contrôle)</td><td class="n">9 216</td><td class="n">2 696</td><td class="n">2 757</td><td class="n">1,022</td><td class="n">0</td></tr>
+      <tr><td>mix</td><td class="n">58 656</td><td class="n">6 691</td><td class="n">5 954</td><td class="n good">0,890</td><td class="n">0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">Le gain fond avec la taille (c3 → c7) parce que la part du coût fixe de Giesen diminue quand la boîte grandit, exactement le croisement des deux droites. c12 bouge de +2,2 % sans qu'aucun triangle ne change de chemin : c'est l'ordre de grandeur de l'effet de placement du code (et du bruit) sur ce banc.</p>
+</section>
+<section id="etapes">
+  <div class="eyebrow">8 · Les étapes</div>
+  <h2>Le code, fichier par fichier, avant et après</h2>
+  <p>Ordre d'application conseillé : config, puis les en-têtes de rendu du plus bas au plus haut (PixelStage8.h, Rasterizer.h, Fragment.h), puis le profiler, puis l'EXE. Chaque « avant » est copié du dépôt LIB 93757b1 / EXE b58c132 ; chaque bloc remplace exactement le texte « avant » (une seule occurrence dans le fichier, sauf mention contraire). Le pendant scalaire est rappelé à chaque étape : avec <code>LV3_SIMD = 0</code>, la branche AVX2 n'est jamais prise, l'aiguillage est donc sans effet et le chemin scalaire reste Giesen en int64, inchangé.</p>
+  <div id="steps" style="display:grid;gap:14px"></div>
+</section>
+
+<section id="contre">
+  <div class="eyebrow">9 · Contre-exemples chiffrés</div>
+  <h2>Sept façons de rater ce lot</h2>
+  <div class="grid2">
+    <div class="note bad"><p><b>1. Aiguiller avant la préparation, avec <code>std::min</code> / <code>std::max</code>.</b> Le calcul d'étendue sur les sommets flottants par <code>std::min</code> (qui rend une référence) devient sous g++ une série de sauts. Sur des éclats quelconques, ils sont imprévisibles : <b>+16 ns par triangle</b> à lui seul, l'hybride finit <b>+41 %</b> plus lent que Giesen sur les éclats de 1,5 px. Même famille que le contre-exemple « std::min par référence » de D-a1 (préparation +33 %). Remède appliqué : le critère est calculé en entiers dans <code>SetupTriangleFx</code>, sur des min/max déjà là.</p></div>
+    <div class="note bad"><p><b>2. Deux corps de noyau dans une même fonction.</b> Ajouter la condition au branchement existant de <code>RasterizeTriangleT</code> (le corps flottant de repli y est déjà) : le corps flottant, devenu chaud, perd son avantage. Éclats de 1,5 px : C2 seul 0,83 × Giesen, hybride ainsi construit <b>1,22 ×</b>. Le compilateur répartit mal les registres d'une fonction qui contient deux boucles chaudes. Remède : la boucle flottante reste dans <code>RasterizeBlocks8</code>, hors ligne (<code>LV3_NOINLINE</code>, comme en C2).</p></div>
+    <div class="note bad"><p><b>3. Ré-accrocher les sommets dans la branche « petit ».</b> Par prudence, refaire <code>SnapToSubpixel</code> sur une copie du <code>TriangleSetup</code> : <b>+14 à +17 ns par triangle</b>. Mur de 3 px : le gain tombe de −27 % à −10 % ; à 7 px, l'hybride devient plus lent (+5 %). Le contrat de l'étage sommets et une assertion Debug coûtent zéro en Release.</p></div>
+    <div class="note bad"><p><b>4. Un seuil trop grand (W* = 12 ou 16).</b> Exact, mais lent : les murs de cellules de 9 et 10 px (boîtes de 10 et 11 px, deux blocs par ligne) partent en flottant. Mesuré : <b>+10 % et +13 %</b> par rapport à Giesen (W* = 16), alors que W* = 8 les laisse à Giesen (0,98 et 0,99). La limite d'exactitude n'est pas la limite de rapidité.</p></div>
+    <div class="note bad"><p><b>5. Dépasser 16 px.</b> TNR <code>Test_Da1c_SmallFloat</code>, W* = 64 forcé sur des étendues de 16 à 60 px : <b>27 couleurs et 2 416 profondeurs différentes</b>. Banc d'exactitude à 40 px : 1 243 537 barycentriques différentes sur 78 M pixels (1,6 %). Les produits ne tiennent plus sur 24 bits, C2 arrondit deux fois là où Giesen arrondit une fois. <code>config.h</code> refuse donc toute valeur &gt; 16 par un <code>#error</code>.</p></div>
+    <div class="note bad"><p><b>6. Tester la boîte rognée au lieu de l'étendue.</b> 50 000 triangles qui débordent du bord droit de la vue (boîte rognée ≤ 8 px, étendue 50 à 2 000 px) : <b>1 058 barycentriques fausses sur 4 937 pixels</b>, 450 triangles touchés. Le rognage borne la boîte, pas la distance des sommets au centre.</p></div>
+    <div class="note bad"><p><b>7. Des sommets non accrochés.</b> Les TNR C1 et C2 tirent leurs sommets sans les accrocher (elles précèdent le contrat de D-a1). Avec l'aiguillage actif, la boucle flottante lit les sommets reçus, Giesen les sommets arrondis : C1, <b>107 profondeurs</b> et 20 couleurs (Barycentric) différentes ; C2, jusqu'à 240 profondeurs et 199 couleurs. D'où la décision D7 et l'assertion <code>IsOnSubpixelGrid</code>.</p></div>
+    <div class="note warn"><p><b>Et ce qui n'est pas un contre-exemple.</b> L'hybride ne gagne rien sur les boîtes de largeur 1 ou 2 : elles prennent le chemin scalaire, qui reste Giesen en int64. C'est voulu : le scalaire flottant et le scalaire entier se valent (banc : 0,91 à 0,99), il n'y avait rien à prendre.</p></div>
+  </div>
+</section>
+
+<section id="predictions">
+  <div class="eyebrow">10 · Prédictions</div>
+  <h2>Écrites avant la mesure</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Compteurs (A et B)</th><th class="n">TrisSmallFloat (B)</th><th>Render B / A prédit</th><th>D'où vient le chiffre</th></tr></thead>
+    <tbody>
+      <tr><td>V4 c3</td><td>tableau de la section V4 ; tous identiques A/B</td><td class="n">147 456</td><td class="pred">−12 à −24 %</td><td>noyau −23,6 % (banc) ; le noyau domine le Render de V4, la fourchette basse tient compte de l'étage sommets et faces, et de l'erreur du banc</td></tr>
+      <tr><td>V4 c5</td><td>idem</td><td class="n">57 600</td><td class="pred">−5 à −11 %</td><td>noyau −10,9 %</td></tr>
+      <tr><td>V4 c7</td><td>idem</td><td class="n">28 224</td><td class="pred">0 à −5 %</td><td>noyau −3,8 % : au bord du croisement</td></tr>
+      <tr><td>V4 c12</td><td>idem</td><td class="n">0</td><td class="pred">0 ± 2 %</td><td>aucun triangle ne change de chemin (contrôle)</td></tr>
+      <tr><td>V4 mix</td><td>idem</td><td class="n">56 608</td><td class="pred">−5 à −11 %</td><td>noyau −11,0 %</td></tr>
+      <tr><td>rooms (V3)</td><td>R1 de D-a1b inchangé</td><td class="n">≈ 16 900 ± 600</td><td class="pred">−1 à −5 %</td><td>v3sim : 16 927 petits sur 35 707 AVX2 (47 %), ≈ 15 à 25 ns gagnés chacun sur ≈ 9 ms</td></tr>
+      <tr><td>V2</td><td>R1 inchangé</td><td class="n">≈ 100 à 600</td><td class="pred">0 ± 2 %</td><td>éclats de silhouette seulement</td></tr>
+      <tr><td>V1</td><td>R1 inchangé</td><td class="n">0</td><td class="pred">0 ± 2 %</td><td>tous les triangles dessinés passent par C3 (TrisPix1 = 18 772)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><p><b>Règle de décision</b>, écrite maintenant : <b>accepté</b> (défaut 8 conservé) si TNR, filets Debug et compteurs sont conformes, si l'asm Release est conforme, si <b>V4 c3 gagne au moins 5 %</b> (séquence A B B A valide) et <b>mix au moins 3 %</b>, et si <b>c12, rooms, V2 et V1 restent dans ±2 %</b>. Si c3 gagne moins de 5 % : lecture de l'asm d'abord ; si rien ne l'explique, <b>refusé</b> : <code>LV3_RASTER_SMALL_FLOAT 0</code> par défaut, la question est close par la mesure. Pour V2, 16 runs avant de juger un écart de 2 % (leçon de C3).</p></div>
+</section>
+
+<section id="verifier">
+  <div class="eyebrow">11 · Vérifier</div>
+  <h2>Hors moteur d'abord, puis dans le moteur</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Fait hors moteur (g++ 13, copie de travail du dépôt patché)</h3>
+      <ul>
+        <li><b>TNR existantes vertes, journaux inchangés</b> : B3 1 228 800 sommets 0 désaccord ; C1 1 898 725 / 992 299 ; C2 1 559 109 / 804 237 / 285 751 ; C3 12 353 / 6 236 / 3 363 ; D-a1 198 / 129 / 115 en voies 64 bits, 861 / 678 / 511 arêtes acceptées ; D-a1b 0 reconstruction fausse, 2,26e-7.</li>
+        <li><b>Test_Da1_Fixed vert avec l'aiguillage actif</b>, et c'est un test fort : il compare le scalaire, l'AVX2 forcé (<code>kSimdAlways</code>, donc l'aiguillage pour toutes les largeurs), la production et Force64, pour 5 shaders, sur des sommets accrochés.</li>
+        <li><b>Nouvelle TNR <code>Test_Da1c_SmallFloat</code></b> : journal attendu<br><code>[D-a1c] vue 317x203 : 9885 triangles, 4739 petits (W*=8), 7426 (W*=16)</code><br><code>[D-a1c] vue 203x150 : 9885 triangles, 2261 petits (W*=8), 3593 (W*=16)</code><br><code>[D-a1c] vue 61x180 : 9885 triangles, 833 petits (W*=8), 1325 (W*=16)</code><br><code>[D-a1c] bord : 4416 triangles, 3835 petits (W*=16)</code><br><code>[D-a1c] contre-exemple W*=64 : 27 couleurs et 2416 profondeurs differentes (attendu &gt; 0)</code></li>
+        <li><b>Configurations</b> : vert en <code>LV3_SIMD 0</code>, <code>LV3_RASTER_FIXED 0</code>, <code>SMALL_FLOAT 0</code> et <code>16</code> ; <code>17</code> refusé par le <code>#error</code> ; <code>ABLATION_PIXELS 1</code> et <code>2</code> compilent ; <code>RASTER_STATS 1</code> compile sans avertissement (<code>-Wall -Wextra</code>). Profiler.cpp (Windows seul) n'a pas pu être compilé ici : l'ajout y est une ligne d'en-tête, à vérifier à la compilation MSVC.</li>
+      </ul>
+      <p class="small">Sous MSVC, les journaux C1, C2 et C3 peuvent différer de 1 à 2 unités de ceux de g++ sur les seules TNR qui n'utilisent pas <code>TestRand01</code> (cause connue, close le 29/10).</p>
+    </div>
+    <div class="panel">
+      <h3>À faire dans le moteur, dans cet ordre</h3>
+      <ol style="padding-left:20px;display:grid;gap:6px;margin:0">
+        <li><b>TNR Debug</b> : toutes vertes, journaux comparés à la colonne de gauche.</li>
+        <li><b>Run Debug des 3 scènes + V4 c3 et mix</b>, 4 modes de shader : aucune assertion (<code>IsOnSubpixelGrid</code> muette, filet C3 muet).</li>
+        <li><b>Asm Release</b>, <code>/FAs</code> sur <code>Scene/RenderSystem.cpp</code>. Dans le noyau <code>RasterizeTriangleT&lt;ShaderSolid,3,0,8&gt;</code> : après la préparation entière, deux <code>cmp</code> de <code>spanX</code> / <code>spanY</code> contre 2048 (8 × 256), un <code>and</code>, un saut, puis <b>soit</b> <code>call RasterizeBlocks8&lt;ShaderSolid&gt;</code> <b>soit</b> <code>call RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</code>. Aucun <code>vfmadd</code>, aucun appel nouveau dans les boucles. Binaire A (<code>SMALL_FLOAT 0</code>) : aucune comparaison de <code>spanX</code> (le <code>if constexpr</code> l'a retirée).</li>
+        <li><b>R1</b> (rasterstats = 1) sur V4 c3, c5, c7, c12, mix, puis rooms, V2, V1 : classes et TrisSmallFloat contre la table V4 ; en-tête <code>smallfp=8</code>. Invariant : Σ TrisBoxW* = triangles du noyau à préparation réussie ; TrisSmallFloat ≤ TrisSimd8.</li>
+        <li><b>R2</b> (temps) : A = même code compilé avec <code>LV3_RASTER_SMALL_FLOAT 0</code> (en-tête <code>smallfp=0</code>), B = 8. Affinity 4, secteur, mode performances. V4 c3 et mix A B B A, c12 A B B A, rooms A B B A, V1 A B B A, V2 A B B A A B B A (deux fois). Règles de validité de D-a1 : ClearDepth &lt; 5 %, |A1 − A2| &lt; 3 %.</li>
+      </ol>
+      <div class="note"><p><b>Points ouverts</b>. P1 : la cause du coût fixe de <code>RasterizeBlocks8Fx</code> (latence des <code>vpmulld</code> et des multiplications 64 bits ?) ; si elle se confirme, on pourrait l'alléger pour tout le monde (décalages par voie calculés par additions). P2 : rooms, part exacte des petits triangles (le simulateur V3 calcule en double, sans accrochage).</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="da2">
+  <div class="eyebrow">12 · La suite</div>
+  <h2>Et D-a2, la hiérarchie d'Abrash ?</h2>
+  <div class="grid2">
+    <div>
+      <p>D-a2 vient juste après, comme prévu dans le plan, mais il dépend de la mesure de ce lot. La raison est simple : Abrash découpe l'écran en tuiles (typiquement 8 × 8 pixels, regroupées en 64 × 64) et rejette ou accepte des tuiles entières avant de descendre aux pixels. Cela rapporte sur les <b>grands</b> triangles, ceux dont beaucoup de blocs sont entièrement dedans ou entièrement dehors (V3 : 38 % des tuiles 8 × 8 rejetées ou acceptées d'un coup, 49 % de blocs vides). Pour un triangle dont la boîte tient dans 8 × 8, la hiérarchie n'a rien à découper.</p>
+      <p>D-a1c trace donc la frontière basse de D-a2 : sous 8 px, blocs flottants (si la mesure le confirme) ; au-dessus, Giesen ; et D-a2 ajoutera un niveau de tuiles pour les triangles nettement plus grands que 8 px. Le critère de D-a1c (étendue &lt; 8, un bloc par ligne) est la taille d'une tuile d'Abrash : les deux lots parlent la même unité.</p>
+    </div>
+    <div class="panel">
+      <h3>Ce que le lot D-a2 apportera</h3>
+      <ul>
+        <li>la méthode présentée en entier (Abrash, Larrabee, 2009), avec la comparaison à Giesen seul ;</li>
+        <li>un schéma dynamique des tuiles rejetées / acceptées / partielles sur un triangle réglable ;</li>
+        <li>le découpage par ablation sur rooms et V2 (les grands triangles), et sa règle de déclenchement du plan : arêtes ≥ 40 % et Covered/Tight &lt; 50 % ;</li>
+        <li>le code avant/après posé sur D-a1b + D-a1c, et ses contre-exemples.</li>
+      </ul>
+      <p class="small">Pour le construire sur des chiffres justes, il me faut les résultats R1 et R2 de ce lot (au minimum V4 c3, mix, rooms).</p>
+    </div>
+  </div>
+</section>
+
+<section id="ordre">
+  <div class="eyebrow">13 · Ordre d'application</div>
+  <h2>En résumé</h2>
+  <ol style="padding-left:20px;display:grid;gap:6px">
+    <li>Copier la scène V4 : <code>assets/Meshes/v4_wall_c3|c5|c7|c12.obj/.mtl</code>, <code>assets/GraphScene/bench_V_V4_*.json</code>.</li>
+    <li>Étapes 1 à 9 (LIB), puis étape 10 (EXE : TNR C1/C2, nouveau fichier, RunAllTests, vcxproj et filters).</li>
+    <li>Compiler Debug et Release (aucun avertissement), TNR Debug, run Debug.</li>
+    <li>Asm, R1, R2, selon la section Vérifier, et m'envoyer les summaries.</li>
+    <li>Selon la règle : commit D-a1c (défaut 8) ou défaut 0 et question close. Puis lot D-a2.</li>
+  </ol>
+</section>
+</div>
+<script id="edits-lib" type="application/json">[{"file": "Core/config.h", "label": "section 13 (nouvelle), après la section 12", "before": "#if LV3_RASTER_FIXED < 0 || LV3_RASTER_FIXED > 1\n\t#error \"LV3_RASTER_FIXED : 0 (aretes flottantes C2) ou 1 (virgule fixe D-a1)\"\n#endif\n", "after": "#if LV3_RASTER_FIXED < 0 || LV3_RASTER_FIXED > 1\n\t#error \"LV3_RASTER_FIXED : 0 (aretes flottantes C2) ou 1 (virgule fixe D-a1)\"\n#endif\n\n\n// 13. PETITS TRIANGLES SUR LES BLOCS FLOTTANTS (jalon D, lot D-a1c). Commutateur de MESURE A / B.\n//     Valeur = W* en pixels ; 0 = desactive (Giesen pour tous les triangles, comme D-a1b).\n//     Sous LV3_RASTER_FIXED = 1, un triangle qui prend le chemin AVX2 (boite >= kSimdMinBoxWidth)\n//     ET dont l'etendue NON ROGNEE des sommets est < W* en x ET en y est dessine par les blocs\n//     flottants de C2 (RasterizeBlocks8) au lieu des blocs Giesen (RasterizeBlocks8Fx).\n//     La preparation reste ENTIERE (SetupTriangleFx) : seule la boucle de blocs change.\n//     Image IDENTIQUE au bit pres (couleur ET profondeur) tant que W* <= 16 : sur la grille 1/256,\n//     sous 16 px, les produits des aretes tiennent sur 24 bits (preuve : Lot D-a1c, etape 2).\n//     Aucune reference TNR ne change. Declare dans l'en-tete CSV (smallfp=).\n#ifndef LV3_RASTER_SMALL_FLOAT\n\t#define LV3_RASTER_SMALL_FLOAT 8\n#endif\n\n#if LV3_RASTER_SMALL_FLOAT < 0 || LV3_RASTER_SMALL_FLOAT > 16\n\t#error \"LV3_RASTER_SMALL_FLOAT : 0 (desactive) a 16 px. Au-dela, le flottant n'est plus exact (lot D-a1c)\"\n#endif\n"}, {"file": "Core/Profiler.h", "label": "enum EProfCounter : fin de l'énumération", "before": "\t\tTrisFixedWide,\n\t\tTrisFixedGuard,\n\n\t\tCount\n\t};", "after": "\t\tTrisFixedWide,\n\t\tTrisFixedGuard,\n\n\t\t// ── D-a1c (RASTER_STATS seulement) : classes de LARGEUR de boite des triangles\n\t\t//    dessines par le NOYAU (C3 exclu : ses boites 1 x 1 ne l'appellent pas).\n\t\t//    La largeur choisit le chemin (scalaire < kSimdMinBoxWidth <= AVX2) et le nombre de blocs par ligne.\n\t\t//    Invariant : Σ TrisBoxW* == triangles dont la preparation a reussi dans le noyau.\n\t\t//    ORDRE CONTIGU OBLIGATOIRE : RecordBoxClass indexe par (TrisBoxW1 + classe).\n\t\tTrisBoxW1, TrisBoxW2, TrisBoxW3to4, TrisBoxW5to8, TrisBoxW9to16, TrisBoxW17plus,\n\t\t//    TrisSmallFloat : triangles AVX2 rendus par les blocs flottants de C2 (W* > 0).\n\t\t//                     Sous-ensemble de TrisSimd8 ; 0 si LV3_RASTER_SMALL_FLOAT = 0.\n\t\tTrisSmallFloat,\n\n\t\tCount\n\t};"}, {"file": "Core/Profiler.h", "label": "kProfCounterNames : fin du tableau", "before": "\t\t\"TrisFixedWide\", \"TrisFixedGuard\"\n\t};", "after": "\t\t\"TrisFixedWide\", \"TrisFixedGuard\",\n\t\t\"TrisBoxW1\", \"TrisBoxW2\", \"TrisBoxW3to4\", \"TrisBoxW5to8\", \"TrisBoxW9to16\", \"TrisBoxW17plus\",\n\t\t\"TrisSmallFloat\"\n\t};"}, {"file": "Core/Profiler.h", "label": "après l'enum : ordre contigu des classes", "before": "\tstatic_assert(uint8_t(EProfCounter::InstPx16plus) == uint8_t(EProfCounter::InstPx0to1) + 3", "after": "\tstatic_assert(uint8_t(EProfCounter::TrisBoxW17plus) == uint8_t(EProfCounter::TrisBoxW1) + 5,\n\t\t\"D-a1c : TrisBoxW1 .. TrisBoxW17plus doivent rester contigus (RecordBoxClass indexe par classe)\");\n\tstatic_assert(uint8_t(EProfCounter::InstPx16plus) == uint8_t(EProfCounter::InstPx0to1) + 3"}, {"file": "Core/Profiler.cpp", "label": "en-têtes CSV (les DEUX occurrences, summary et frames)", "before": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n", "after": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n\t\t\t\t<< \";smallfp=\" << LV3_RASTER_SMALL_FLOAT // 0 = Giesen partout, W* = petits triangles AVX2 en flottant (config.h, 13)\n"}, {"file": "Rendering/PixelStage8.h", "label": "après kSimdAlways", "before": "    inline constexpr int32_t kSimdAlways = 0;           // force le chemin C2 (AVX2), même pour 1 pixel\n", "after": "    inline constexpr int32_t kSimdAlways = 0;           // force le chemin C2 (AVX2), même pour 1 pixel\n\n    // ── D-a1c : W* effectif (pixels). Un triangle AVX2 dont l'étendue non rognée est < W*\n    //    en x ET en y prend les blocs FLOTTANTS de C2. 0 : Giesen pour tous (D-a1b).\n    //    Sans virgule fixe (LV3_RASTER_FIXED = 0), tout est déjà flottant : sans objet.\n    //    Plafond 16 px : vérifié par config.h (exactitude, Lot D-a1c étape 2).\n    #if LV3_RASTER_FIXED\n        inline constexpr int32_t kSmallFloatPx = LV3_RASTER_SMALL_FLOAT;\n    #else\n        inline constexpr int32_t kSmallFloatPx = 0;\n    #endif\n    inline constexpr int32_t kSmallFloatOff = 0;        // valeur de TEST : Giesen pour tous (référence TNR)\n"}, {"file": "Rendering/Rasterizer.h", "label": "struct EdgeSetupFx : deux champs", "before": "        float   invQ;      // 256 / aire = s.invArea * 2^-8 : EXACT (division par une puissance de 2)\n        bool    wide;      // true : E' sort de int32 sur la boîte étendue -> voies AVX2 de 64 bits", "after": "        float   invQ;      // 256 / aire = s.invArea * 2^-8 : EXACT (division par une puissance de 2)\n        // D-a1c : étendue NON ROGNÉE des sommets accrochés, en 1/256 px (max - min). Décide si le\n        // flottant de C2 est exact (< 16 px) et assez rapide (< W*). |X| < 2^28 : tient dans int32.\n        int32_t spanX, spanY;\n        bool    wide;      // true : E' sort de int32 sur la boîte étendue -> voies AVX2 de 64 bits"}, {"file": "Rendering/Rasterizer.h", "label": "SetupTriangleFx : étape 3, après minX..maxY", "before": "        const int64_t minY = Min(Y0, Min(Y1, Y2)), maxY = Max(Y0, Max(Y1, Y2));\n", "after": "        const int64_t minY = Min(Y0, Min(Y1, Y2)), maxY = Max(Y0, Max(Y1, Y2));\n        fx.spanX = int32_t(maxX - minX);                      // D-a1c : 2 soustractions, valeurs déjà là\n        fx.spanY = int32_t(maxY - minY);\n"}, {"file": "Rendering/Rasterizer.h", "label": "après BaryFromFixed : le critère", "before": "    // Les deux largeurs de voie AVX2. Auto = choix de la préparation (fx.wide).", "after": "    // ── D-a1c : le triangle est-il PETIT au sens du lot ? Étendue non rognée < W* en x ET en y.\n    //    kSmallPx <= 16 : les blocs flottants de C2 donnent alors EXACTEMENT les pixels, les\n    //    barycentriques et les profondeurs de Giesen (Lot D-a1c, étape 2). kSmallPx > 16 n'existe\n    //    que dans la TNR, pour PROUVER qu'elle voit une différence (contre-exemple).\n    //    kSmallPx = 0 : toujours faux, la condition disparaît à la compilation.\n    template<int32_t kSmallPx>\n    [[nodiscard]] LV3_FORCEINLINE bool IsSmallFloatTri(const EdgeSetupFx& fx) noexcept\n    {\n        if constexpr (kSmallPx <= 0) { (void)fx; return false; }\n        else\n        {\n            constexpr int32_t lim = kSmallPx << kSubpixelBits;    // W* en 1/256 px\n            return (fx.spanX < lim) & (fx.spanY < lim);           // & : sans branche (les deux sont calculés)\n        }\n    }\n\n    // Debug (assertion D-a1c) : le sommet est-il sur la grille des 1/256 px ? Snap idempotent.\n    [[nodiscard]] LV3_FORCEINLINE bool IsOnSubpixelGrid(const Vec2f& p) noexcept\n    {\n        return SnapToSubpixel(p.x) == p.x && SnapToSubpixel(p.y) == p.y;\n    }\n\n    // Les deux largeurs de voie AVX2. Auto = choix de la préparation (fx.wide)."}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleFx : signature et corps", "before": "    template<class Shader, int32_t kMinSimdWidth, EFixedLanes kLanes>\n    LV3_FORCEINLINE void RasterizeTriangleFx(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {", "after": "    //    D-a1c : kSmallPx = W* (pixels). Un triangle AVX2 PETIT (IsSmallFloatTri) prend les blocs\n    //    flottants de C2 sur le TriangleSetup de la préparation entière : identique au bit à celui de\n    //    SetupTriangle pour un petit triangle (sommets, échange, boîte, top-left, 1/aire exacts).\n    //    Force64 (TNR des voies 64 bits) coupe l'aiguillage : chaque triangle doit y passer par Fx64.\n    template<class Shader, int32_t kMinSimdWidth, EFixedLanes kLanes, int32_t kSmallPx>\n    LV3_FORCEINLINE void RasterizeTriangleFx(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {"}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleFx : kSmall effectif", "before": "        constexpr bool kForce64 = (kLanes == EFixedLanes::Force64);\n   ", "after": "        constexpr bool kForce64 = (kLanes == EFixedLanes::Force64);\n        constexpr int32_t kSmall = kForce64 ? 0 : kSmallPx;            // D-a1c\n   "}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleFx : palier E de l'ablation", "before": "            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)\n            {\n                PrepareLanesFx(s, fx);\n                AblationEdgeSink8 edges;\n                g_ablationSink = g_ablationSink + ((kForce64 || fx.wide) ? ForEachCoveredBlock8Fx64(s, fx, edges)\n                    : ForEachCoveredBlock8Fx32(s, fx, edges));\n            }", "after": "            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)\n            {\n                AblationEdgeSink8 edges;\n                if (IsSmallFloatTri<kSmall>(fx))                        // D-a1c : MÊME aiguillage que le moteur\n                {\n                    g_ablationSink = g_ablationSink + ForEachCoveredBlock8(s, edges);\n                }\n                else\n                {\n                    PrepareLanesFx(s, fx);\n                    g_ablationSink = g_ablationSink + ((kForce64 || fx.wide) ? ForEachCoveredBlock8Fx64(s, fx, edges)\n                        : ForEachCoveredBlock8Fx32(s, fx, edges));\n                }\n            }"}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleFx : chemin normal", "before": "            uint32_t covered;\n            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)                    // boîte assez large : AVX2\n            {\n                covered = RasterizeBlocks8Fx<Shader, kForce64>(s, fx, ctx);    // hors ligne : prologue inchangé\n            }", "after": "            uint32_t covered;\n            LV3_RASTER_BOXCLASS(s.bb.x1 - s.bb.x0);                    // D-a1c : classe de largeur (RASTER_STATS)\n            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)                    // boîte assez large : AVX2\n            {\n                if (IsSmallFloatTri<kSmall>(fx))                       // D-a1c : petit -> blocs flottants C2\n                {\n                    // Les blocs flottants lisent s.p0..p2, les sommets REÇUS : ils doivent être sur la\n                    // grille (contrat de l'étage sommets), sinon pixels différents de Giesen (contre-exemple 4).\n                    LV3_ASSERT(IsOnSubpixelGrid(s.p0) && IsOnSubpixelGrid(s.p1) && IsOnSubpixelGrid(s.p2)\n                        && \"D-a1c : sommets non accroches au 1/256 px (contrat de l'etage sommets)\");\n                    covered = RasterizeBlocks8<Shader>(s, ctx);        // hors ligne, comme en C2\n                    #if LV3_RASTER_STATS\n                        LV3_PROF_COUNT(EProfCounter::TrisSmallFloat, 1);\n                    #endif\n                }\n                else\n                {\n                    covered = RasterizeBlocks8Fx<Shader, kForce64>(s, fx, ctx);    // hors ligne : prologue inchangé\n                }\n            }"}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleT : signature", "before": "    template<class Shader, int32_t kMinSimdWidth = kSimdMinBoxWidth, EFixedLanes kLanes = EFixedLanes::Auto>\n    void RasterizeTriangleT(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {\n        #if LV3_RASTER_FIXED\n                if (InFixedGuard(v0, v1, v2))\n                {\n                    RasterizeTriangleFx<Shader, kMinSimdWidth, kLanes>(v0, v1, v2, vp, ctx);", "after": "    //    D-a1c : kSmallPx = W* (défaut kSmallFloatPx, config.h section 13) ; les TNR forcent\n    //    kSmallFloatOff (Giesen pour tous, la référence) ou une valeur > 16 (contre-exemple).\n    template<class Shader, int32_t kMinSimdWidth = kSimdMinBoxWidth, EFixedLanes kLanes = EFixedLanes::Auto,\n             int32_t kSmallPx = kSmallFloatPx>\n    void RasterizeTriangleT(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {\n        #if LV3_RASTER_FIXED\n                if (InFixedGuard(v0, v1, v2))\n                {\n                    RasterizeTriangleFx<Shader, kMinSimdWidth, kLanes, kSmallPx>(v0, v1, v2, vp, ctx);"}, {"file": "Rendering/Fragment.h", "label": "RasterizeTriangleT : corps flottant, classe de largeur", "before": "            uint32_t covered;\n            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)                    // C2 : boîte assez large", "after": "            uint32_t covered;\n            LV3_RASTER_BOXCLASS(s.bb.x1 - s.bb.x0);                    // D-a1c : classe de largeur (RASTER_STATS)\n            if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)                    // C2 : boîte assez large"}, {"file": "Rendering/Fragment.h", "label": "avant RasterizeBlocks8 : RecordBoxClass", "before": "    // ── C2 : le chemin AVX2 d'un triangle, dans SA PROPRE fonction (jamais inline).", "after": "    // ── D-a1c : classe de LARGEUR de boîte d'un triangle dessiné par le noyau (RASTER_STATS).\n    //    Classes : 1 | 2 | 3-4 | 5-8 | 9-16 | 17+. Sans RASTER_STATS, l'argument disparaît.\n    #if LV3_RASTER_STATS\n        LV3_FORCEINLINE void RecordBoxClass(int32_t w) noexcept\n        {\n            const uint32_t k = w <= 1 ? 0u : w == 2 ? 1u : w <= 4 ? 2u : w <= 8 ? 3u : w <= 16 ? 4u : 5u;\n            LV3_PROF_COUNT(EProfCounter(uint32_t(EProfCounter::TrisBoxW1) + k), 1);\n        }\n        #define LV3_RASTER_BOXCLASS(w) ::LV3::RecordBoxClass(w)\n    #else\n        #define LV3_RASTER_BOXCLASS(w) ((void)0)\n    #endif\n\n    // ── C2 : le chemin AVX2 d'un triangle, dans SA PROPRE fonction (jamais inline)."}]</script>
+<script id="edits-exe" type="application/json">[{"file": "Test/Test_C1_RasterKernels.cpp", "label": "CheckShader : appel du noyau", "before": "                Fill(cb, t); RasterizeTriangleT<Shader>(t.v[0], t.v[1], t.v[2], vp, cb);", "after": "                // D-a1c : sommets de cette TNR NON accrochés (antérieure au contrat D-a1) -> aiguillage coupé.\n                // Les petits triangles flottants sont vérifiés par Test_Da1c_SmallFloat (sommets accrochés).\n                Fill(cb, t); RasterizeTriangleT<Shader, kSimdMinBoxWidth, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cb);"}, {"file": "Test/Test_C2_Raster8.cpp", "label": "CheckShader : les trois appels", "before": "                Fill(ca, t); RasterizeTriangleT<Shader, kScalarOnly>(t.v[0], t.v[1], t.v[2], vp, ca);\n                Fill(cb, t); RasterizeTriangleT<Shader, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, cb);\n                Fill(cc, t); RasterizeTriangleT<Shader>(t.v[0], t.v[1], t.v[2], vp, cc);", "after": "                // D-a1c : sommets NON accrochés (TNR antérieure au contrat D-a1) -> aiguillage coupé (kSmallFloatOff).\n                constexpr auto kA = EFixedLanes::Auto;\n                Fill(ca, t); RasterizeTriangleT<Shader, kScalarOnly, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, ca);\n                Fill(cb, t); RasterizeTriangleT<Shader, kSimdAlways, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cb);\n                Fill(cc, t); RasterizeTriangleT<Shader, kSimdMinBoxWidth, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cc);"}, {"file": "Test/Test_C2_Raster8.cpp", "label": "test de couverture brute (ShaderCount)", "before": "            for (const Tri& t : tris) { Fill(c, t); RasterizeTriangleT<ShaderCount, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, c); }", "after": "            for (const Tri& t : tris) { Fill(c, t); RasterizeTriangleT<ShaderCount, kSimdAlways, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, c); }"}, {"file": "Test/Test_C2_Raster8.cpp", "label": "test du remplissage de pitch (ShaderSolid)", "before": "                for (const Tri& t : tris) { Fill(cs, t); RasterizeTriangleT<ShaderSolid, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, cs); }", "after": "                for (const Tri& t : tris) { Fill(cs, t); RasterizeTriangleT<ShaderSolid, kSimdAlways, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cs); }"}, {"file": "Test/RunAllTests.cpp", "label": "déclarations", "before": "    bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers", "after": "    bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers\n    bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image"}, {"file": "Test/RunAllTests.cpp", "label": "appel, après Test_Da1b_Bary", "before": "            Logger::success(\"SUCCES : Test_Da1b_Bary()\");\n        }\n", "after": "            Logger::success(\"SUCCES : Test_Da1b_Bary()\");\n        }\n\n        if (!Test_Da1c_SmallFloat())\n        {\n            Logger::error(\"ECHEC : Test_Da1c_SmallFloat()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1c_SmallFloat()\");\n        }\n"}]</script>
+<script id="test-file" type="application/json">"#include \"pch.h\"\n#include <random>\n#include <cstring>\n#include <limits>\n#include \"rendering/Viewport.h\"\n#include \"rendering/Rasterizer.h\"\n#include \"rendering/Fragment.h\"\n#include \"core/Logger.h\"\n#include \"TestRandom.h\"   // tirages portables MSVC / g++\n\n// ════════════════════════════════════════════════════════════\n//  TNR D-a1c : petits triangles sur les blocs FLOTTANTS de C2\n//   (1) MÊME IMAGE au bit près (couleur ET profondeur, 5 shaders + couverture brute) :\n//       référence = Giesen pour tous (kSmallFloatOff), contre W* = 16 (plafond exact) et\n//       contre la configuration de production (kSmallFloatPx). Chemin AVX2 forcé (kSimdAlways) :\n//       même les boîtes de 1 ou 2 px passent par l'aiguillage.\n//   (2) CONTRE-EXEMPLE intégré : W* = 64 (interdit par config.h) DOIT produire des différences.\n//       Une TNR qui ne voit jamais de différence ne prouve rien (règle du lot D-a1d).\n//   (3) Bord exact : étendues tirées dans [15,9 ; 16[ px, le pire cas permis.\n//  Contrat : sommets ACCROCHÉS au 1/256 px, comme les rend l'étage sommets.\n// ════════════════════════════════════════════════════════════\nnamespace LV3::Tests\n{\n#if LV3_DEBUG && LV3_RASTER_FIXED\n    namespace\n    {\n        constexpr int32_t kW = 317, kH = 203;                     // largeur et pitch non multiples de 8\n\n        struct Target\n        {\n            static constexpr int32_t kPitchPx = kW + 11;\n            std::vector<uint32_t> pixels = std::vector<uint32_t>(size_t(kPitchPx) * kH, 0u);\n            FrameBuffer fb;\n            DepthBuffer db;\n            Target() { fb.Bind(pixels.data(), kPitchPx * 4, kW, kH); db.Resize(kW, kH); db.Clear(); }\n        };\n\n        struct Tri { Vec2f v[3]; float z[3], invW[3]; Color col; };\n\n        // Étendues tirées dans [lo, hi[ px, autour des deux seuils (8 et 16) ; cas particuliers de la TNR C2.\n        std::vector<Tri> MakeTriangles(uint32_t seed, int count, float lo, float hi)\n        {\n            std::mt19937 rng(seed);\n            TestRand01 U;\n            std::vector<Tri> tris;\n            tris.reserve(size_t(count) + size_t(count) / 10);\n            for (int i = 0; i < count; ++i)\n            {\n                const float ext = lo + (hi - lo) * U(rng);\n                const float cx = -10.0f + (kW + 20.0f) * U(rng), cy = -10.0f + (kH + 20.0f) * U(rng);\n                Tri t{};\n                for (int k = 0; k < 3; ++k)\n                {\n                    t.v[k] = { cx + U(rng) * ext, cy + U(rng) * ext };\n                    const float w = 0.5f + 40.0f * U(rng);\n                    t.invW[k] = 1.0f / w;\n                    t.z[k] = 0.1f / w;\n                }\n                const float e = U(rng);\n                if (e < 0.20f) for (auto& p : t.v) p = { std::floor(p.x) + 0.5f, std::floor(p.y) + 0.5f };  // w == 0 exact\n                else if (e < 0.30f) t.v[1].y = t.v[0].y;                                                      // arête horizontale\n                else if (e < 0.35f) t.v[2] = { 0.5f * (t.v[0].x + t.v[1].x), 0.5f * (t.v[0].y + t.v[1].y) }; // dégénéré\n                else if (e < 0.37f) t.z[0] = std::numeric_limits<float>::quiet_NaN();                          // z NaN\n                for (auto& p : t.v) p = { SnapToSubpixel(p.x), SnapToSubpixel(p.y) };   // contrat de l'étage sommets\n                t.col = MakeColor(uint8_t(rng()), uint8_t(rng()), uint8_t(rng()));\n                tris.push_back(t);\n                if (U(rng) < 0.1f)                                                     // sommets tournés : égalités de Z\n                    tris.push_back(Tri{ { t.v[1], t.v[2], t.v[0] }, { t.z[1], t.z[2], t.z[0] },\n                                        { t.invW[1], t.invW[2], t.invW[0] }, t.col });\n            }\n            return tris;\n        }\n\n        void Fill(FragmentContext& c, const Tri& t)\n        {\n            c.color = t.col;\n            c.z0 = t.z[0];       c.z1 = t.z[1];       c.z2 = t.z[2];\n            c.invW0 = t.invW[0]; c.invW1 = t.invW[1]; c.invW2 = t.invW[2];\n            c.depthDisplayRange = 25.0f;\n        }\n\n        struct ShaderCount                                     // couverture brute (copie de la TNR C2)\n        {\n            static LV3_FORCEINLINE bool Shade(const FragmentContext&, const BarycentricWeights&, float&, uint32_t& pixel) noexcept\n            { ++pixel; return true; }\n            static constexpr bool kHasShade8 = true;\n            static LV3_FORCEINLINE uint32_t Shade8(const Uniforms8&, __m256, __m256, __m256, float*, uint32_t* pixel, __m256 cover) noexcept\n            {\n                const __m256i m = _mm256_castps_si256(cover);\n                const __m256i v = _mm256_maskload_epi32(reinterpret_cast<const int*>(pixel), m);\n                _mm256_maskstore_epi32(reinterpret_cast<int*>(pixel), m, _mm256_add_epi32(v, _mm256_set1_epi32(1)));\n                return uint32_t(_mm256_movemask_ps(cover));\n            }\n        };\n\n        size_t Diff(Target& a, Target& b, size_t& depthDiff)\n        {\n            size_t colorDiff = 0; depthDiff = 0;\n            for (int32_t y = 0; y < kH; ++y)\n            {\n                for (int32_t x = 0; x < kW; ++x)\n                {\n                    const size_t i = size_t(y) * Target::kPitchPx + size_t(x);\n                    if (a.pixels[i] != b.pixels[i]) ++colorDiff;\n                    if (std::memcmp(&a.db.Row(y)[x], &b.db.Row(y)[x], sizeof(float)) != 0) ++depthDiff;\n                }\n                for (int32_t x = kW; x < Target::kPitchPx; ++x)             // remplissage de pitch intact\n                    if (b.pixels[size_t(y) * Target::kPitchPx + size_t(x)] != 0u) ++colorDiff;\n            }\n            return colorDiff;\n        }\n\n        // Combien de triangles prennent réellement les blocs flottants pour un W* donné.\n        template<int32_t kSmallPx>\n        uint32_t CountSmall(const std::vector<Tri>& tris, const Viewport& vp)\n        {\n            uint32_t n = 0;\n            for (const Tri& t : tris)\n            {\n                if (!InFixedGuard(t.v[0], t.v[1], t.v[2])) continue;\n                TriangleSetup s; EdgeSetupFx fx;\n                if (SetupTriangleFx(t.v[0], t.v[1], t.v[2], vp, s, fx) && IsSmallFloatTri<kSmallPx>(fx)) ++n;\n            }\n            return n;\n        }\n\n        // Référence Giesen (Off) contre W* = kTest ; rend le nombre de couleurs + profondeurs différentes.\n        template<class Shader, int32_t kTest>\n        size_t Compare(const std::vector<Tri>& tris, const Viewport& vp, size_t& cd, size_t& dd)\n        {\n            Target A, B;\n            FragmentContext ca{}, cb{};\n            ca.fb = &A.fb; ca.db = &A.db; cb.fb = &B.fb; cb.db = &B.db;\n            for (const Tri& t : tris)\n            {\n                Fill(ca, t); RasterizeTriangleT<Shader, kSimdAlways, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, ca);\n                Fill(cb, t); RasterizeTriangleT<Shader, kSimdAlways, EFixedLanes::Auto, kTest>(t.v[0], t.v[1], t.v[2], vp, cb);\n            }\n            cd = Diff(A, B, dd);\n            #if LV3_RASTER_STATS\n                if (ca.depthPassed != cb.depthPassed) ++cd;\n            #endif\n            return cd + dd;\n        }\n\n        template<class Shader>\n        bool CheckShader(const char* name, const std::vector<Tri>& tris, const Viewport& vp)\n        {\n            size_t c16 = 0, d16 = 0, cP = 0, dP = 0;\n            const size_t bad = Compare<Shader, 16>(tris, vp, c16, d16) + Compare<Shader, kSmallFloatPx>(tris, vp, cP, dP);\n            if (bad != 0)\n                Logger::error(std::string(\"[D-a1c] \") + name + \" : W*=16 \" + std::to_string(c16) + \" couleurs / \" + std::to_string(d16)\n                    + \" profondeurs ; production \" + std::to_string(cP) + \" / \" + std::to_string(dP));\n            return bad == 0;\n        }\n    }\n\n    bool Test_Da1c_SmallFloat()\n    {\n        bool ok = true;\n        const Viewport views[3] = { Viewport::FullScreen(kW, kH), Viewport{ 57, 31, 203, 150 }, Viewport{ kW - 61, 11, 61, 180 } };\n\n        // ── (1) même image, étendues 0,3 à 20 px (les deux seuils dedans) ──\n        const std::vector<Tri> tris = MakeTriangles(31u, 9000, 0.3f, 20.0f);\n        for (const Viewport& vp : views)\n        {\n            ok &= CheckShader<ShaderCount>(\"Couverture\", tris, vp);\n            ok &= CheckShader<ShaderSolid>(\"Solid\", tris, vp);\n            ok &= CheckShader<ShaderBarycentric>(\"Barycentric\", tris, vp);\n            ok &= CheckShader<ShaderDepth>(\"Depth\", tris, vp);\n            ok &= CheckShader<ShaderLinearDepth>(\"LinearDepth\", tris, vp);\n            ok &= CheckShader<ShaderLinearDepthWRONG>(\"LinearDepth_WRONG\", tris, vp);\n            const uint32_t n8 = CountSmall<kSmallFloatPx>(tris, vp), n16 = CountSmall<16>(tris, vp);\n            Logger::info(\"[D-a1c] vue \" + std::to_string(vp.width) + \"x\" + std::to_string(vp.height) + \" : \"\n                + std::to_string(tris.size()) + \" triangles, \" + std::to_string(n8) + \" petits (W*=\" + std::to_string(kSmallFloatPx)\n                + \"), \" + std::to_string(n16) + \" (W*=16)\");\n            ok &= (n16 > 0) && (kSmallFloatPx == 0 || n8 > 0);\n        }\n\n        // ── (3) bord exact : étendues dans [15,9 ; 16[ px ──\n        {\n            const std::vector<Tri> edge = MakeTriangles(37u, 4000, 15.9f, 16.0f);\n            const Viewport& vp = views[0];\n            ok &= CheckShader<ShaderBarycentric>(\"Bord 16 px, Barycentric\", edge, vp);\n            ok &= CheckShader<ShaderLinearDepth>(\"Bord 16 px, LinearDepth\", edge, vp);\n            Logger::info(\"[D-a1c] bord : \" + std::to_string(edge.size()) + \" triangles, \" + std::to_string(CountSmall<16>(edge, vp)) + \" petits (W*=16)\");\n        }\n\n        // ── (2) contre-exemple : W* = 64 DOIT changer l'image (étendues 16 à 60 px) ──\n        {\n            const std::vector<Tri> big = MakeTriangles(41u, 4000, 16.0f, 60.0f);\n            size_t cd = 0, dd = 0;\n            const size_t diff = Compare<ShaderBarycentric, 64>(big, views[0], cd, dd);\n            Logger::info(\"[D-a1c] contre-exemple W*=64 : \" + std::to_string(cd) + \" couleurs et \" + std::to_string(dd)\n                + \" profondeurs differentes (attendu > 0)\");\n            ok &= (diff > 0);\n        }\n        return ok;\n    }\n#else\n    bool Test_Da1c_SmallFloat() { return true; }   // D-a1 inactif (LV3_RASTER_FIXED = 0) ou Release\n#endif\n}\n"</script>
+<script>
+(function(){
+"use strict";
+const $ = (id) => document.getElementById(id);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const esc = (s) => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const fr = Math.fround;
+const F32 = new Float32Array(1), U32 = new Uint32Array(F32.buffer);
+const hex = (v) => { F32[0] = v; return "0x" + U32[0].toString(16).padStart(8,"0"); };
+const same = (a,b) => { F32[0]=a; const x=U32[0]; F32[0]=b; return x===U32[0]; };
+const snap = (v) => { const s = fr(v*256); let r = Math.round(s); if (Math.abs(s % 1) === 0.5) r = 2*Math.round(s/2); return fr(r/256); };   // SnapToSubpixel : au plus proche, au pair
+const nf = (v, d=0) => v.toLocaleString("fr-FR", {minimumFractionDigits:d, maximumFractionDigits:d});
+
+// ════════ Les deux noyaux, refaits en float32 / entiers exacts ════════
+// Giesen D-a1b : SetupTriangleFx + E' entiers + barycentriques (float(E') + ofs) * invQ
+function setupFx(v, VW, VH){
+  let X=[v[0].x*256, v[1].x*256, v[2].x*256], Y=[v[0].y*256, v[1].y*256, v[2].y*256];   // exacts (sommets accrochés)
+  let area = (X[0]-X[2])*(Y[1]-Y[2]) - (Y[0]-Y[2])*(X[1]-X[2]);
+  if (area === 0) return null;
+  const flipped = area < 0; let p=[v[0],v[1],v[2]];
+  if (flipped){ [X[1],X[2]]=[X[2],X[1]]; [Y[1],Y[2]]=[Y[2],Y[1]]; [p[1],p[2]]=[p[2],p[1]]; area=-area; }
+  const minX=Math.min(...X), maxX=Math.max(...X), minY=Math.min(...Y), maxY=Math.max(...Y);
+  let x0=Math.floor((minX+127)/256), y0=Math.floor((minY+127)/256), x1=Math.floor((maxX-128)/256)+1, y1=Math.floor((maxY-128)/256)+1;
+  const ux0=x0, uy0=y0, ux1=x1, uy1=y1;
+  x0=Math.max(x0,0); y0=Math.max(y0,0); x1=Math.min(x1,VW); y1=Math.min(y1,VH);
+  if (x0>=x1 || y0>=y1) return null;
+  const invArea = fr(1 / fr(fr(area) * 2**-16)), invQ = fr(invArea * 2**-8);
+  const px = 256*x0+128, py = 256*y0+128, ed=[];
+  const pairs=[[1,2],[2,0],[0,1]];
+  for (const [a,b] of pairs){
+    const A=Y[a]-Y[b], B=X[b]-X[a], tl=(A===0&&B<0)||(A<0);
+    const E=(X[a]-px)*(Y[b]-py)-(Y[a]-py)*(X[b]-px), bias=tl?0:-1, eb=E+bias, e=Math.floor(eb/256), r=eb-256*e;
+    ed.push({A,B,tl,e,ofs:fr((r-bias)/256)});
+  }
+  return {p, flipped, x0,y0,x1,y1, ux0,uy0,ux1,uy1, invArea, invQ, ed, spanX:maxX-minX, spanY:maxY-minY, area};
+}
+function edgeF(ax,ay,bx,by,px,py){ const ux=fr(ax-px), uy=fr(ay-py), vx=fr(bx-px), vy=fr(by-py); return fr(fr(ux*vy) - fr(uy*vx)); }
+function tlF(a,b){ const ex=fr(b.x-a.x), ey=fr(b.y-a.y); return (ey===0&&ex<0)||ey>0; }
+// Pixel (x, y) par les deux boucles, sur la MÊME préparation (c'est D-a1c)
+function pixelFx(s,x,y){
+  const e=s.ed.map(k=>k.e + k.A*(x-s.x0) + k.B*(y-s.y0));
+  const cov = e[0]>=0 && e[1]>=0 && e[2]>=0;
+  const w=e.map((ev,k)=>fr(fr(fr(ev)+s.ed[k].ofs)*s.invQ));
+  return {cov, e, b:[w[0], s.flipped?w[2]:w[1], s.flipped?w[1]:w[2]]};
+}
+function pixelC2(s,x,y){
+  const [p0,p1,p2]=s.p, px=fr(x+0.5), py=fr(y+0.5);
+  const w=[edgeF(p1.x,p1.y,p2.x,p2.y,px,py), edgeF(p2.x,p2.y,p0.x,p0.y,px,py), edgeF(p0.x,p0.y,p1.x,p1.y,px,py)];
+  const tl=[tlF(p1,p2), tlF(p2,p0), tlF(p0,p1)];
+  const ins=(v,t)=> t ? v>=0 : v>0;
+  const cov = ins(w[0],tl[0]) && ins(w[1],tl[1]) && ins(w[2],tl[2]);
+  const b=[fr(w[0]*s.invArea), fr((s.flipped?w[2]:w[1])*s.invArea), fr((s.flipped?w[1]:w[2])*s.invArea)];
+  return {cov, w, b};
+}
+function classify(s){                                   // chemin pris par le noyau D-a1c (W* = 8)
+  const uw = s.ux1-s.ux0, uh = s.uy1-s.uy0;
+  if (uw===1 && uh===1) return "c3";
+  const w = s.x1-s.x0;
+  if (w < 3) return "nar";
+  return (s.spanX < 8*256 && s.spanY < 8*256) ? "flt" : "gie";
+}
+const PATHCOL = () => ({c3:css("--c3"), nar:css("--nar"), flt:css("--flt"), gie:css("--gie")});
+const PATHNAME = {c3:"C3 (étage faces)", nar:"Giesen scalaire", flt:"blocs flottants C2", gie:"Giesen AVX2"};
+
+// ════════ Schéma fonctionnel : une dalle qui s'éloigne ════════
+const FOC = 225 / Math.tan(Math.PI/6);
+function dalle(N, rotDeg){ const th=rotDeg*Math.PI/180, c=Math.cos(th), s=Math.sin(th), V=[], T=[];
+  for (let j=0;j<=N;j++) for (let i=0;i<=N;i++){ const u=i/N-0.5, v=j/N-0.5; V.push([u*c-v*s, u*s+v*c]); }
+  const id=(i,j)=>j*(N+1)+i;
+  for (let j=0;j<N;j++) for (let i=0;i<N;i++){ const a=id(i,j),b=id(i+1,j),cc=id(i+1,j+1),d=id(i,j+1); T.push([a,b,cc],[a,cc,d]); }
+  return {V,T}; }
+function drawFunctional(){
+  const cv=$("fcv"), g=cv.getContext("2d"), W=cv.width, H=cv.height, d0=+$("fdist").value, h=0.8, hz=36;
+  $("fdistv").textContent = nf(d0,2)+" m · cellule avant "+nf(FOC*0.125/d0,1)+" px, arrière "+nf(FOC*0.125/(d0+6),1)+" px";
+  g.fillStyle=css("--surface2"); g.fillRect(0,0,W,H);
+  g.strokeStyle=css("--grid"); g.beginPath(); g.moveTo(0,hz); g.lineTo(W,hz); g.stroke();
+  const col=PATHCOL(), cnt={c3:0,nar:0,flt:0,gie:0}, NX=16, NZ=48;
+  const P=[]; for (let j=0;j<=NZ;j++) for (let i=0;i<=NX;i++){ const x=-1+2*i/NX, z=d0+6*j/NZ; P.push({x:snap(W/2+FOC*x/z), y:snap(hz+FOC*h/z)}); }
+  const id=(i,j)=>j*(NX+1)+i;
+  for (let j=NZ-1;j>=0;j--) for (let i=0;i<NX;i++){
+    for (const t of [[id(i,j),id(i+1,j+1),id(i+1,j)],[id(i,j),id(i,j+1),id(i+1,j+1)]]){
+      const v=[P[t[0]],P[t[1]],P[t[2]]]; const s=setupFx(v,W,H); if(!s) continue;
+      const k=classify(s); cnt[k]++;
+      g.beginPath(); g.moveTo(v[0].x,v[0].y); g.lineTo(v[1].x,v[1].y); g.lineTo(v[2].x,v[2].y); g.closePath();
+      g.fillStyle=col[k]; g.fill(); if (s.x1-s.x0>5){ g.strokeStyle=css("--surface2"); g.lineWidth=0.7; g.stroke(); }
+    }
+  }
+  const tot=Object.values(cnt).reduce((a,b)=>a+b,0)||1;
+  $("fstats").innerHTML = Object.keys(cnt).map(k=>`<div class="barrow"><span class="lbl">${PATHNAME[k]}</span><div class="bar" style="width:${100*cnt[k]/tot}%;background:${col[k]}"></div><span class="val">${nf(cnt[k])}</span></div>`).join("");
+}
+
+// ════════ Leçon : un triangle, ses lignes, ses blocs ════════
+let LTRI=null;
+function lessonTri(){
+  const S=+$("lsize").value, a=+$("lang").value*Math.PI/180, sh=+$("lshape").value, off=+$("loff").value;
+  const base=[[0,0],[1,0],[0.35+0.3*sh, sh]];
+  const cx=base.reduce((q,p)=>q+p[0],0)/3, cy=base.reduce((q,p)=>q+p[1],0)/3;
+  const ox=12+off, oy=10+off*0.7;
+  return base.map(([x,y])=>{ const u=(x-cx)*S, v=(y-cy)*S; return {x:snap(ox + u*Math.cos(a)-v*Math.sin(a)), y:snap(oy + u*Math.sin(a)+v*Math.cos(a))}; });
+}
+function drawLesson(){
+  $("lsizev").textContent=nf(+$("lsize").value,2)+" px"; $("langv").textContent=$("lang").value+"°";
+  $("lshapev").textContent=nf(+$("lshape").value,2); $("loffv").textContent=nf(+$("loff").value,2)+" px";
+  const cv=$("lcv"), g=cv.getContext("2d"), W=cv.width, H=cv.height, GX=24, GY=20, sc=Math.min(W/GX,H/GY);
+  const v=lessonTri(); const s=setupFx(v, GX, GY); LTRI={v,s};
+  g.fillStyle=css("--surface2"); g.fillRect(0,0,W,H);
+  let covN=0, blocks=0, ne=0, rows=0;
+  if (s){
+    rows=s.y1-s.y0;
+    for (let y=s.y0;y<s.y1;y++){ for (let bx=s.x0; bx<s.x1; bx+=8){ blocks++; let any=false;
+      for (let x=bx;x<Math.min(bx+8,s.x1);x++){ const r=pixelFx(s,x,y); if(r.cov){ any=true; covN++; g.fillStyle=css("--cov"); g.fillRect(x*sc,y*sc,sc,sc);} }
+      if(any) ne++; } }
+  }
+  g.strokeStyle=css("--grid"); g.lineWidth=1;
+  for (let x=0;x<=GX;x++){ g.beginPath(); g.moveTo(x*sc,0); g.lineTo(x*sc,GY*sc); g.stroke(); }
+  for (let y=0;y<=GY;y++){ g.beginPath(); g.moveTo(0,y*sc); g.lineTo(GX*sc,y*sc); g.stroke(); }
+  g.fillStyle=css("--center"); for (let y=0;y<GY;y++) for (let x=0;x<GX;x++){ g.fillRect((x+0.5)*sc-1,(y+0.5)*sc-1,2,2); }
+  if (s){
+    g.setLineDash([5,4]); g.strokeStyle=css("--accent"); g.lineWidth=1.5;
+    for (let y=s.y0;y<s.y1;y++) for (let bx=s.x0; bx<s.x1; bx+=8) g.strokeRect(bx*sc+2,y*sc+2,8*sc-4,sc-4);
+    g.setLineDash([]); g.strokeStyle=css("--boxl"); g.lineWidth=2.2; g.strokeRect(s.x0*sc,s.y0*sc,(s.x1-s.x0)*sc,(s.y1-s.y0)*sc);
+  }
+  g.beginPath(); g.moveTo(v[0].x*sc,v[0].y*sc); g.lineTo(v[1].x*sc,v[1].y*sc); g.lineTo(v[2].x*sc,v[2].y*sc); g.closePath();
+  g.strokeStyle=css("--tri"); g.lineWidth=2; g.stroke();
+  const ex = s? s.spanX/256 : 0, ey = s? s.spanY/256 : 0, k = s? classify(s) : "—";
+  const col=PATHCOL();
+  // ordres de grandeur d'instructions (tableau de la leçon) : entrée + lignes + blocs + blocs non vides
+  const c2 = 14 + 3*rows + 32*blocks + 4*ne, gi = 50 + 10*rows + 10*blocks + 11*ne;
+  $("lstats").innerHTML = !s ? `<p class="small">Aucun centre de pixel dans le triangle : rejeté avant le noyau.</p>` :
+   `<dl class="kv"><dt>étendue x / y</dt><dd class="mono">${nf(ex,3)} / ${nf(ey,3)} px (non rognée)</dd>
+    <dt>boîte</dt><dd class="mono">${s.x1-s.x0} × ${s.y1-s.y0} px · ${rows} lignes · ${blocks} blocs · ${ne} non vides · ${covN} pixels couverts</dd>
+    <dt>chemin D-a1c</dt><dd><b style="color:${col[k]||"inherit"}">${PATHNAME[k]}</b>${k==="flt"?" : étendue &lt; 8 en x et en y, largeur ≥ 3":k==="gie"?" : étendue ≥ 8, au moins une ligne à 2 blocs possible":k==="nar"?" : largeur &lt; 3, boucle scalaire (inchangée)":" : boîte 1 × 1"}</dd>
+    <dt>instructions (ordre de grandeur)</dt><dd class="mono">C2 ≈ ${c2} · Giesen ≈ ${gi}</dd></dl>
+    <p class="small">Le décompte donne souvent Giesen gagnant ; le banc donne C2 gagnant tant qu'il y a un bloc par ligne. C'est la note rouge à gauche.</p>`;
+  renderLanes();
+}
+
+// ════════ Laboratoire d'exactitude ════════
+let SEED=12345; const rnd=()=>{ SEED=(SEED*1103515245+12345)>>>0; return (SEED>>>8)/16777216; };
+function runExact(){
+  const E=+$("xext").value, n=+$("xcount").value, VW=768, VH=450;
+  let tris=0, px=0, covD=0, baryD=0, edge=0, worstD=0, worstP=0;
+  const seed0=SEED;
+  for (let i=0;i<n;i++){
+    const cx=8+rnd()*(VW-E-16), cy=8+rnd()*(VH-E-16);
+    let v=[0,1,2].map(()=>({x:snap(cx+rnd()*E), y:snap(cy+rnd()*E)}));
+    if (rnd()<0.2) v=v.map(p=>({x:Math.floor(p.x)+0.5, y:Math.floor(p.y)+0.5}));
+    const s=setupFx(v,VW,VH); if(!s) continue; tris++;
+    worstD=Math.max(worstD, s.spanX, s.spanY);
+    for (let y=s.y0;y<s.y1;y++) for (let x=s.x0;x<s.x1;x++){
+      const a=pixelFx(s,x,y), b=pixelC2(s,x,y);
+      if (a.cov!==b.cov){ covD++; continue; }
+      if (!a.cov) continue; px++;
+      if (a.e.some(z=>z===0)) edge++;
+      for (let k=0;k<3;k++) if(!same(a.b[k],b.b[k])){ baryD++; break; }
+    }
+  }
+  const dmax=worstD/256, dbits=Math.ceil(Math.log2(Math.max(2,worstD+1))), pbits=2*dbits;
+  $("xseed").textContent="graine "+seed0;
+  $("xbits").innerHTML=`<dl class="kv"><dt>|d| max</dt><dd class="mono">${nf(dmax,3)} px → d × 256 tient sur ${dbits} bits</dd>
+   <dt>produits ux·vy</dt><dd class="mono">jusqu'à ${pbits} bits en unités 2<sup>−16</sup> ${pbits<=24?'<span class="good">≤ 24 : exacts</span>':'<span class="badc">&gt; 24 : arrondis</span>'}</dd></dl>`;
+  const ok = covD===0 && baryD===0;
+  $("xres").innerHTML=`<div class="note ${ok?"ok":"bad"}"><p><b>${nf(tris)} triangles, ${nf(px)} pixels couverts</b> (${nf(edge)} sur une arête) : couverture différente <b>${nf(covD)}</b>, barycentriques différentes <b>${nf(baryD)}</b>${px?` (${nf(100*baryD/px,2)} %)`:""}.</p><p class="small">${ok?(E<=16?"Sous 16 px : les deux boucles donnent les mêmes bits, comme la démonstration l'annonce.":"Pas de différence sur ce tirage, mais rien ne la garantit au-dessus de 16 px : relance, ou augmente l'étendue."):"Au-dessus de 16 px, C2 arrondit les produits avant la différence ; Giesen n'arrondit qu'une fois."}</p></div>`;
+}
+
+// ════════ Scène V4 ════════
+const V4N={c3:32,c5:20,c7:14,c12:8}, V4ORDER=["c3","c5","c7","c12"]; let V4CUR="c3"; const V4M={};
+for (const k of V4ORDER) V4M[k]=dalle(V4N[k],7);
+function drawV4(){
+  const cv=$("vcv"), g=cv.getContext("2d"), W=768, H=450, col=PATHCOL();
+  g.fillStyle=css("--surface2"); g.fillRect(0,0,W,H);
+  const cnt={c3:0,nar:0,flt:0,gie:0};
+  for (let r=0;r<3;r++) for (let c=0;c<6;c++){
+    const name = V4CUR==="mix" ? V4ORDER[(r+c)%4] : V4CUR, m=V4M[name], tx=(c-2.5)*1.15, ty=(r-1)*1.15;
+    const P=m.V.map(([x,y])=>({x:snap(W/2 + FOC*(x+tx)/4), y:snap(H/2 - FOC*(y+ty)/4)}));
+    for (const t of m.T){ const v=[P[t[0]],P[t[1]],P[t[2]]]; const s=setupFx(v,W,H); if(!s) continue; const k=classify(s); cnt[k]++;
+      g.beginPath(); g.moveTo(v[0].x,v[0].y); g.lineTo(v[1].x,v[1].y); g.lineTo(v[2].x,v[2].y); g.closePath(); g.fillStyle=col[k]; g.fill();
+      if (name==="c12"||name==="c7"){ g.strokeStyle=css("--surface"); g.lineWidth=0.5; g.stroke(); } }
+  }
+  const tot=Object.values(cnt).reduce((a,b)=>a+b,0);
+  $("vstats").textContent=`Vue Game (0 ; 0 ; 4) : ${nf(tot)} triangles dessinés par le noyau ; blocs flottants ${nf(cnt.flt)}, Giesen AVX2 ${nf(cnt.gie)}, Giesen scalaire ${nf(cnt.nar)}, C3 ${nf(cnt.c3)}. Une frame en compte quatre fois autant (4 caméras).`;
+}
+function v4buttons(){
+  const box=$("v4btns"); box.innerHTML="";
+  for (const k of [...V4ORDER,"mix"]){ const b=document.createElement("button"); b.className="b"; b.type="button"; b.textContent=k; b.setAttribute("aria-pressed", k===V4CUR);
+    b.onclick=()=>{ V4CUR=k; v4buttons(); drawV4(); }; box.appendChild(b); }
+}
+
+// ════════ Banc : rapports au noyau Giesen ════════
+const BENCH={
+ mur:[[1.5,32.66,29.62,30.93],[2,44.35,43.77,42.75],[3,81.85,53.09,58.06],[4,97.49,65.87,71.66],[5,118.61,85.66,92.46],[6,137.01,105.14,111.79],[7,155.15,127.95,137.92],[8,168.32,149.49,165.32],[9,212.92,230.13,210.08],[10,256.03,292.52,255.12],[12,309.12,368.95,303.61],[14,320.98,414.20,321.94],[16,313.82,405.32,313.27],[24,525.67,713.86,529.87]],
+ ecl:[[1.5,35.58,32.13,33.84],[2,46.26,44.55,43.95],[3,61.22,59.66,57.53],[4,76.51,71.40,70.47],[5,89.56,78.84,80.22],[6,101.26,81.51,88.26],[7,107.65,92.13,98.54],[8,120.65,99.30,110.00],[9,128.07,106.81,116.14],[10,137.27,118.52,128.85],[12,221.28,208.75,217.94],[14,257.47,238.86,258.09],[16,219.29,216.06,215.79],[24,316.78,392.49,307.28]]
+};
+let BSET="mur";
+function drawBench(){
+  const data=BENCH[BSET], W=760, H=330, L=56, R=18, T=18, B=46;
+  const xs=v=>L+(Math.log2(v)-Math.log2(1.5))/(Math.log2(24)-Math.log2(1.5))*(W-L-R);
+  const y0=0.6, y1=1.45, ys=v=>T+(y1-Math.min(y1,Math.max(y0,v)))/(y1-y0)*(H-T-B);
+  const ink=css("--ink"), mu=css("--muted"), gr=css("--grid");
+  const thr = BSET==="mur" ? 8/1.1144 : 8;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;min-width:520px" role="img" aria-label="Temps par triangle rapporté à Giesen">`;
+  s+=`<rect x="${L}" y="${T}" width="${xs(thr)-L}" height="${H-T-B}" fill="${css("--ok-soft")}"/>`;
+  for (let v=0.6; v<=1.451; v+=0.1){ s+=`<line x1="${L}" x2="${W-R}" y1="${ys(v)}" y2="${ys(v)}" stroke="${gr}" stroke-width="${Math.abs(v-1)<1e-6?1.6:0.7}"/><text x="${L-8}" y="${ys(v)+4}" font-size="11" text-anchor="end" fill="${mu}">${v.toFixed(1).replace(".",",")}</text>`; }
+  for (const v of [1.5,2,3,4,6,8,12,16,24]){ s+=`<line x1="${xs(v)}" x2="${xs(v)}" y1="${H-B}" y2="${H-B+5}" stroke="${mu}"/><text x="${xs(v)}" y="${H-B+18}" font-size="11" text-anchor="middle" fill="${mu}">${String(v).replace(".",",")}</text>`; }
+  s+=`<text x="${(L+W-R)/2}" y="${H-8}" font-size="11.5" text-anchor="middle" fill="${mu}">${BSET==="mur"?"taille de cellule (px), échelle log ; étendue d'un triangle = 1,11 × cellule":"étendue maximale de l'éclat (px), échelle log"}</text>`;
+  s+=`<text x="${xs(thr)-6}" y="${T+14}" font-size="11" text-anchor="end" fill="${css("--ok")}">étendue &lt; 8 : D-a1c</text>`;
+  s+=`<text x="${W-R}" y="${ys(1)-6}" font-size="11" text-anchor="end" fill="${mu}">Giesen = 1</text>`;
+  const line=(idx,color,dash)=>{ const pts=data.map(d=>`${xs(d[0]).toFixed(1)},${ys(d[idx]/d[1]).toFixed(1)}`).join(" ");
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.4" ${dash?'stroke-dasharray="6 4"':""}/>`+data.map(d=>`<circle cx="${xs(d[0])}" cy="${ys(d[idx]/d[1])}" r="3.4" fill="${color}"><title>${d[0]} px : ${(d[idx]/d[1]).toFixed(3)} (${d[idx]} ns contre ${d[1]} ns)</title></circle>`).join(""); };
+  s+=line(2,css("--flt"),true)+line(3,css("--accent"),false);
+  s+=`</svg>`;
+  $("bchart").innerHTML=`<div class="legend" style="margin-bottom:6px"><span><i class="sw" style="background:${css("--flt")}"></i>C2 seul / Giesen (pointillés)</span><span><i class="sw" style="background:${css("--accent")}"></i>hybride D-a1c, W* = 8 / Giesen</span><span>plus bas que 1 = plus rapide que Giesen</span></div>`+s;
+  $("bnote").innerHTML = BSET==="mur" ? "Mur tourné de 7° : chaque triangle couvre la moitié de sa boîte. C2 gagne nettement jusqu'à 8 px (boîte ≤ 8 colonnes), perd dès 9 px (deux blocs par ligne). L'hybride suit C2 sous le seuil, puis colle à Giesen (la comparaison d'étendue ne coûte rien de mesurable). Survole un point pour les temps en ns par triangle." : "Éclats : triangles quelconques, souvent fins, tirés dans une case W × W et dessinés dans l'ordre de balayage (comme les faces d'un mesh). Plus petits que leur boîte, ils gagnent un peu plus loin ; le seuil de 8 px reste prudent. Les points à 12 et 14 px sont bruités.";
+  $("bmur").setAttribute("aria-pressed", BSET==="mur"); $("becl").setAttribute("aria-pressed", BSET==="ecl");
+}
+
+// ════════ Étapes ════════
+const EL=JSON.parse($("edits-lib").textContent), EX=JSON.parse($("edits-exe").textContent), TF=JSON.parse($("test-file").textContent);
+const VCX = { before:`    <ClCompile Include="Test\\Test_Da1b_Bary.cpp" />`, after:`    <ClCompile Include="Test\\Test_Da1b_Bary.cpp" />\n    <ClCompile Include="Test\\Test_Da1c_SmallFloat.cpp" />`, file:"RefactoNouvelleLibrairieV3.vcxproj", label:"ItemGroup des ClCompile" };
+const VCF = { before:`    <ClCompile Include="Test\\Test_Da1b_Bary.cpp">\n      <Filter>Fichiers sources\\Test</Filter>\n    </ClCompile>`, after:`    <ClCompile Include="Test\\Test_Da1b_Bary.cpp">\n      <Filter>Fichiers sources\\Test</Filter>\n    </ClCompile>\n    <ClCompile Include="Test\\Test_Da1c_SmallFloat.cpp">\n      <Filter>Fichiers sources\\Test</Filter>\n    </ClCompile>`, file:"RefactoNouvelleLibrairieV3.vcxproj.filters", label:"même ItemGroup" };
+const STEPS=[
+ {t:"Le commutateur W*", f:"LIB · Core/config.h", e:[["L",0]],
+  goal:"Rendre l'aiguillage mesurable en A/B : un seul nombre, compilé partout, déclaré dans l'en-tête des CSV. 0 = Giesen pour tous (le binaire A), 8 = D-a1c (le binaire B).",
+  uses:"La section 12 (LV3_RASTER_FIXED) : D-a1c n'existe que sous la virgule fixe.",
+  prod:"LV3_RASTER_SMALL_FLOAT, défaut 8, et le verrou : au-delà de 16 px, #error (contre-exemple 5).",
+  simd:"Sans objet : une macro. Sous LV3_SIMD 0, elle est lue mais n'a pas d'effet (la branche AVX2 n'est jamais prise)."},
+ {t:"La valeur effective de W*", f:"LIB · Rendering/PixelStage8.h", e:[["L",5]],
+  goal:"Donner au code une constante C++ (kSmallFloatPx) plutôt qu'une macro, et une valeur de test (kSmallFloatOff) pour les TNR, à côté de kScalarOnly et kSimdAlways qui jouent le même rôle pour la largeur.",
+  uses:"Étape 1 (LV3_RASTER_SMALL_FLOAT) et la section 12 (sans virgule fixe, tout est déjà flottant : 0).",
+  prod:"kSmallFloatPx, kSmallFloatOff.",
+  simd:"Les constantes sont les mêmes ; seule la branche AVX2 les lit."},
+ {t:"L'étendue non rognée, mesurée par la préparation", f:"LIB · Rendering/Rasterizer.h", e:[["L",6],["L",7]],
+  goal:"Le critère d'exactitude porte sur l'étendue des sommets avant rognage (section Exactitude, étape 2). SetupTriangleFx a déjà calculé minX, maxX, minY, maxY en entiers pour sa boîte : deux soustractions suffisent, aucune nouvelle lecture.",
+  uses:"Les sommets accrochés X = x · 256 et leurs min/max, calculés à l'étape 3 de SetupTriangleFx (cmov, sans branche, leçon D-a1).",
+  prod:"fx.spanX, fx.spanY en 1/256 px. Exemple, le triangle du schéma de la leçon : voir le tableau de l'étape 6.",
+  simd:"Calcul scalaire, par triangle, commun aux deux chemins."},
+ {t:"Le critère : IsSmallFloatTri, et le filet IsOnSubpixelGrid", f:"LIB · Rendering/Rasterizer.h", e:[["L",8]],
+  goal:"Écrire le critère une seule fois, en entier, sans branche ; et donner à l'assertion Debug de quoi vérifier le contrat de l'étage sommets (décision D4).",
+  uses:"fx.spanX, fx.spanY (étape 3), W* (étape 2).",
+  prod:"Un booléen par triangle. kSmallPx = 0 : if constexpr, la condition disparaît du binaire A. Comparaison : spanX < W*·256 et spanY < W*·256, combinées par & (les deux sont déjà calculées : un & ne coûte rien de plus et n'introduit pas de saut à prédire).",
+  simd:"Scalaire, une fois par triangle AVX2."},
+ {t:"Les compteurs par classe de largeur", f:"LIB · Rendering/Fragment.h", e:[["L",15]],
+  goal:"Savoir, scène par scène, combien de triangles tombent dans chaque classe de largeur de boîte : c'est ce qui permet de lire un gain ou une perte (décision D6).",
+  uses:"La largeur de la boîte rognée bb.x1 − bb.x0, connue après la préparation.",
+  prod:"RecordBoxClass(w) → TrisBoxW1 … TrisBoxW17plus. Sans RASTER_STATS, la macro LV3_RASTER_BOXCLASS ne génère rien (argument non évalué).",
+  simd:"Commun aux deux chemins (Giesen et repli flottant)."},
+ {t:"L'aiguillage dans RasterizeTriangleFx", f:"LIB · Rendering/Fragment.h", e:[["L",9],["L",10],["L",12]], lanes:true,
+  goal:"Le cœur du lot : dans la branche AVX2, un petit triangle part vers RasterizeBlocks8 (la boucle de C2, hors ligne) au lieu de RasterizeBlocks8Fx. Même TriangleSetup, rempli une fois par la préparation entière.",
+  uses:"s (TriangleSetup de SetupTriangleFx : sommets reçus, échange, boîte, top-left, invArea), fx.spanX/spanY (étape 3), IsSmallFloatTri (étape 4).",
+  prod:"Les mêmes pixels, barycentriques et profondeurs que Giesen, obtenus par l'autre boucle. Le tableau ci-dessous les calcule couloir par couloir, en float32, pour le triangle du schéma de la leçon (règle-le là-haut).",
+  simd:"Pendant scalaire : la boucle ForEachCoveredPixelFx (boîtes < 3 px, ou LV3_SIMD 0) ne change pas. Force64 (TNR des voies 64 bits) coupe l'aiguillage, pour que chaque triangle de cette TNR passe encore par Fx64."},
+ {t:"Le palier E de l'ablation suit le même aiguillage", f:"LIB · Rendering/Fragment.h", e:[["L",11]],
+  goal:"Une ablation doit couper au même endroit que le moteur. Sinon le palier E (arêtes sans fragment) mesurerait des boucles que le moteur ne prend plus.",
+  uses:"Le même critère (étape 4) ; PrepareLanesFx passe dans la branche Giesen, puisqu'elle n'appartient qu'à elle.",
+  prod:"Paliers S / E / N cohérents avec le binaire normal, si un découpage C0 de V4 est demandé.",
+  simd:"Le palier E scalaire (AblationEdgeSink, ForEachCoveredPixelFx) est inchangé."},
+ {t:"RasterizeTriangleT transmet W*", f:"LIB · Rendering/Fragment.h", e:[["L",13],["L",14]],
+  goal:"Faire passer kSmallPx du noyau public jusqu'à RasterizeTriangleFx, avec la valeur de production par défaut, et compter la classe de largeur aussi dans le repli flottant (triangles hors garde) pour que l'invariant des classes tienne.",
+  uses:"Étapes 5 et 6.",
+  prod:"RasterizeTriangleT<Shader, kMinSimdWidth, kLanes, kSmallPx = kSmallFloatPx>. Les appels existants du moteur (Renderer::SetMode) ne changent pas.",
+  simd:"Inchangé pour le scalaire."},
+ {t:"Le profiler : compteurs, noms, en-tête CSV", f:"LIB · Core/Profiler.h, Core/Profiler.cpp", e:[["L",1],["L",2],["L",3],["L",4]],
+  goal:"Déclarer les sept compteurs en fin d'énumération (les anciens gardent leurs indices), les nommer pour le CSV, verrouiller leur ordre, et écrire smallfp= dans les deux en-têtes pour qu'un run se reconnaisse.",
+  uses:"Étape 5 (RecordBoxClass indexe par TrisBoxW1 + classe).",
+  prod:"Colonnes TrisBoxW1 … TrisSmallFloat dans les summaries ; smallfp=0 ou 8 dans la première ligne (à vérifier avant de livrer un run, règle de méthode).",
+  simd:"Sans objet."},
+ {t:"L'EXE : TNR C1 et C2, nouvelle TNR, projet", f:"EXE · Test/*.cpp, vcxproj", e:[["X",0],["X",1],["X",2],["X",3],["X",4],["X",5],["V",0],["V",1]], test:true,
+  goal:"Garder les TNR existantes exactes et leurs journaux (décision D7), et vérifier D-a1c par une TNR dédiée, à sommets accrochés, qui contient son propre contre-exemple.",
+  uses:"kSmallFloatOff (étape 2), le 4e paramètre de RasterizeTriangleT (étape 8), IsSmallFloatTri (étape 4).",
+  prod:"Journal de la section Vérifier. Test_Da1c_SmallFloat est un fichier NOUVEAU (déplier ci-dessous) : à ajouter dans Test/.",
+  simd:"La TNR force kSimdAlways : même les boîtes de 1 ou 2 px traversent l'aiguillage. En LV3_SIMD 0 elle reste verte (vérifié)."}
+];
+function editBlock(ed){
+  return `<details class="edit"><summary>${esc(ed.file)} · ${esc(ed.label)}</summary><div class="diff"><div class="side before"><span>Avant</span><pre class="code">${esc(ed.before)}</pre></div><div class="side after"><span>Après</span><pre class="code">${esc(ed.after)}</pre></div></div></details>`;
+}
+function renderSteps(){
+  const box=$("steps");
+  box.innerHTML = STEPS.map((st,i)=>{
+    const eds = st.e.map(([src,k])=> src==="L"?EL[k]: src==="X"?EX[k]: (k===0?VCX:VCF));
+    return `<article class="step" id="etape-${i+1}"><header><span class="num">étape ${i+1}</span><h3>${esc(st.t)}</h3><span class="tag m">${esc(st.f)}</span></header>
+      <dl class="kv"><dt>objectif</dt><dd>${esc(st.goal)}</dd><dt>utilise</dt><dd>${esc(st.uses)}</dd><dt>produit</dt><dd>${esc(st.prod)}</dd><dt>scalaire / AVX2</dt><dd>${esc(st.simd)}</dd></dl>
+      ${st.lanes?'<div id="lanes6"></div>':""}
+      ${eds.map(editBlock).join("")}
+      ${st.test?`<details class="edit"><summary>Test/Test_Da1c_SmallFloat.cpp · fichier nouveau, en entier</summary><div style="padding:10px"><pre class="code">${esc(TF)}</pre></div></details>`:""}
+    </article>`; }).join("");
+  // ouvrir le premier bloc de l'étape 6
+  const s6=$("etape-6"); if (s6){ const d=s6.querySelectorAll("details.edit"); if(d[2]) d[2].open=true; }
+}
+function renderLanes(){
+  const el=$("lanes6"); if(!el || !LTRI) return;
+  const s=LTRI.s;
+  if(!s){ el.innerHTML='<p class="small">Le triangle de la leçon ne couvre aucun centre : règle-le dans la section 3.</p>'; return; }
+  let row=-1; for (let y=s.y0;y<s.y1 && row<0;y++) for (let x=s.x0;x<s.x1;x++) if(pixelFx(s,x,y).cov){ row=y; break; }
+  if (row<0){ el.innerHTML='<p class="small">Aucun pixel couvert.</p>'; return; }
+  const k=classify(s);
+  let h=`<p class="small">Triangle de la leçon : boîte x ${s.x0} à ${s.x1-1}, y ${s.y0} à ${s.y1-1} ; spanX = ${s.spanX}, spanY = ${s.spanY} (1/256 px) ; invArea = ${hex(s.invArea)} ; chemin <b>${PATHNAME[k]}</b>. Premier bloc de la ligne y = ${row}, 8 couloirs.</p>`;
+  h+=`<div class="tbl"><table class="lanes"><thead><tr><th>couloir</th><th>x</th><th>C2 : px</th><th>C2 : w0 (float32)</th><th>Giesen : E'0</th><th>Giesen : ofs0</th><th>C2 : b0</th><th>Giesen : b0</th><th>couvert C2 / Giesen</th></tr></thead><tbody>`;
+  let all=true;
+  for (let i=0;i<8;i++){ const x=s.x0+i; const inBox = x<s.x1;
+    const a=pixelFx(s,x,row), b=pixelC2(s,x,row); const eq = (a.cov===b.cov) && (!a.cov || a.b.every((v,j)=>same(v,b.b[j])));
+    if(inBox && !eq) all=false;
+    h+=`<tr><td>${i}</td><td>${x}${inBox?"":" (hors boîte)"}</td><td>${fr(x+0.5)}</td><td>${nf(b.w[0],6)}</td><td>${a.e[0]}</td><td>${s.ed[0].ofs}</td><td>${hex(b.b[0])}</td><td class="${same(a.b[0],b.b[0])?"eq":"ne"}">${hex(a.b[0])}</td><td class="${a.cov===b.cov?"eq":"ne"}">${inBox?(b.cov?"oui":"non")+" / "+(a.cov?"oui":"non"):"masqué"}</td></tr>`; }
+  h+=`</tbody></table></div><p class="small">${all?'<span class="good">Les 8 couloirs sont identiques au bit</span> : w0 = E · 2<sup>−16</sup> arrondi une fois, (E\'0 + ofs0) = E / 256 arrondi une fois, puis le même facteur à une puissance de 2 près.':'<span class="badc">Différence</span> : étendue au-delà de 16 px ?'} Les colonnes b1 et b2 suivent la même règle (échange défait).</p>`;
+  el.innerHTML=h;
+}
+
+// ════════ Branchements ════════
+for (const id of ["fdist"]) $(id).addEventListener("input", drawFunctional);
+for (const id of ["lsize","lang","lshape","loff"]) $(id).addEventListener("input", drawLesson);
+$("xext").addEventListener("input", ()=>{ $("xextv").textContent=$("xext").value+" px"; });
+$("xcount").addEventListener("input", ()=>{ $("xcountv").textContent=$("xcount").value; });
+$("xrun").addEventListener("click", runExact);
+$("bmur").addEventListener("click", ()=>{ BSET="mur"; drawBench(); });
+$("becl").addEventListener("click", ()=>{ BSET="ecl"; drawBench(); });
+$("xextv").textContent=$("xext").value+" px"; $("xcountv").textContent=$("xcount").value;
+renderSteps(); v4buttons();
+const redraw=()=>{ drawFunctional(); drawLesson(); drawV4(); drawBench(); };
+redraw(); runExact();
+const mq=window.matchMedia("(prefers-color-scheme: dark)"); if (mq.addEventListener) mq.addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+})();
+</script>
+
+</body></html>

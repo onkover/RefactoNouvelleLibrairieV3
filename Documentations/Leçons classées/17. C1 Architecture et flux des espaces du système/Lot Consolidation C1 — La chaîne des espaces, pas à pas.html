@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot Consolidation C1 — La chaîne des espaces, pas à pas</title>
+<style>
+  :root{
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    color-scheme:light;
+    --bg:#f7f8fa; --panel:#ffffff; --panel2:#f0f2f6; --line:#dfe3ea;
+    --ink:#1b1f27; --dim:#5e6778; --faint:#8d96a8;
+    --accent:#2563eb; --accent-soft:rgba(37,99,235,.10);
+    --ok:#15803d; --okbg:rgba(21,128,61,.10);
+    --bad:#b91c1c; --badbg:rgba(185,28,28,.09);
+    --warn:#a16207; --warnbg:rgba(161,98,7,.10);
+    --code:#0f1117; --codeink:#e6e8ee;
+    --cA:#2563eb; --cB:#c2410c; --cC:#7c3aed;
+    --mono:'Cascadia Mono',Consolas,'SF Mono',Menlo,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+      --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+      --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+      --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+      --bad:#f87171; --badbg:rgba(248,113,113,.12);
+      --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+      --code:#0b0d12; --codeink:#e6e8ee;
+      --cA:#60a5fa; --cB:#fb923c; --cC:#c4b5fd;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0e1015; --panel:#171a21; --panel2:#1e222b; --line:#2b313c;
+    --ink:#e8eaef; --dim:#99a2b3; --faint:#6c7686;
+    --accent:#60a5fa; --accent-soft:rgba(96,165,250,.12);
+    --ok:#4ade80; --okbg:rgba(74,222,128,.12);
+    --bad:#f87171; --badbg:rgba(248,113,113,.12);
+    --warn:#facc15; --warnbg:rgba(250,204,21,.12);
+    --code:#0b0d12; --codeink:#e6e8ee;
+    --cA:#60a5fa; --cB:#fb923c; --cC:#c4b5fd;
+  }
+  *,*::before,*::after{box-sizing:inherit}
+  html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 64px)}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--panel);z-index:40}
+  header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--panel);
+    border-bottom:1px solid var(--line);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  header .tt{font-weight:650;font-size:15px}
+  header .st{color:var(--dim);font-size:12.5px}
+  header .sp{flex:1}
+  .btn{background:var(--panel2);color:var(--ink);border:1px solid var(--line);border-radius:7px;
+    padding:6px 11px;font:inherit;font-size:12.5px;cursor:pointer}
+  .btn:hover{border-color:var(--accent)}
+  .btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 80px}
+  nav.toc{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 26px}
+  nav.toc a{text-decoration:none;color:var(--dim);background:var(--panel);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px;font-size:12.5px}
+  nav.toc a:hover{color:var(--accent);border-color:var(--accent)}
+  section{margin:0 0 42px;scroll-margin-top:72px}
+  h2{font-size:21px;font-weight:650;margin:0 0 4px;letter-spacing:-.01em}
+  h2 .num{color:var(--accent);font-variant-numeric:tabular-nums;margin-right:9px}
+  h3{font-size:15.5px;font-weight:650;margin:26px 0 8px}
+  h4{font-size:12px;font-weight:650;margin:16px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em}
+  p{margin:9px 0}
+  .lead{color:var(--dim);font-size:14px;margin:0 0 18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:17px 19px;margin:14px 0}
+  .card.tight{padding:13px 15px}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .tag{display:inline-block;font-size:11px;font-weight:650;padding:2px 8px;border-radius:5px;letter-spacing:.03em;vertical-align:middle}
+  .tag.ok{background:var(--okbg);color:var(--ok)} .tag.bad{background:var(--badbg);color:var(--bad)}
+  .tag.warn{background:var(--warnbg);color:var(--warn)} .tag.acc{background:var(--accent-soft);color:var(--accent)}
+  pre{background:var(--code);color:var(--codeink);border-radius:9px;padding:13px 15px;overflow-x:auto;
+    font-family:var(--mono);font-size:12.3px;line-height:1.6;margin:10px 0}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  pre code{background:none;padding:0;font-size:inherit}
+  .c-com{color:#8b93a1}.c-key{color:#c084fc}
+  .l-del{background:rgba(248,113,113,.18);display:block;margin:0 -15px;padding:0 15px}
+  .l-add{background:rgba(74,222,128,.16);display:block;margin:0 -15px;padding:0 15px}
+  .diff{border-radius:9px;overflow:hidden;border:1px solid var(--line);margin:10px 0}
+  .diff .dh{background:var(--panel2);padding:7px 13px;font-size:12px;color:var(--dim);font-family:var(--mono);border-bottom:1px solid var(--line)}
+  .diff pre{margin:0;border-radius:0}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin:11px 0}
+  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .tw{overflow-x:auto}
+  .note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:11px 15px;border-radius:0 8px 8px 0;margin:13px 0;font-size:13.5px}
+  .note.bad{border-color:var(--bad);background:var(--badbg)}
+  .note.ok{border-color:var(--ok);background:var(--okbg)}
+  .note.warn{border-color:var(--warn);background:var(--warnbg)}
+  .note b{font-weight:650}
+  canvas{background:var(--panel2);border:1px solid var(--line);border-radius:9px;display:block;max-width:100%;height:auto}
+  .cv-row{display:flex;gap:15px;flex-wrap:wrap;align-items:flex-start}
+  .ctrl{flex:1;min-width:250px}
+  label.sl{display:block;font-size:12px;color:var(--dim);margin:9px 0 2px}
+  input[type=range]{width:100%;accent-color:var(--accent)}
+  .seg{display:flex;gap:6px;flex-wrap:wrap;margin:4px 0 8px}
+  .seg .btn{flex:1 1 auto;min-width:84px;text-align:center}
+  .chk{display:flex;align-items:center;gap:7px;font-size:12.5px;margin:5px 0;cursor:pointer}
+  .chk input{accent-color:var(--accent)}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:3px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--dim)} .kv .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+  .stepbar{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 16px}
+  .stepbar button{background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:7px;
+    padding:5px 9px;font:inherit;font-size:11.5px;cursor:pointer;font-variant-numeric:tabular-nums}
+  .stepbar button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .stepbar button:hover{border-color:var(--accent)}
+  .io{display:grid;grid-template-columns:repeat(auto-fit,minmax(265px,1fr));gap:12px;margin:12px 0}
+  .io .box{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:13px}
+  .io .box h5{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+  .io .box.in{border-left:3px solid var(--faint)} .io .box.out{border-left:3px solid var(--accent)}
+  .lanes{overflow-x:auto;margin:10px 0}
+  .lanes table{min-width:720px;font-size:11.5px}
+  .lanes td,.lanes th{padding:4px 7px}
+  .lanes td.sep{border-left:2px solid var(--faint)}
+  .lanes .rn{font-family:var(--mono);color:var(--dim);white-space:nowrap}
+  .codehead{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);margin:14px 0 -4px}
+  .rail{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:6px 2px 10px}
+  .rnode{flex:0 0 96px;border:1.5px solid var(--line);border-radius:9px;background:var(--panel);padding:8px;font-size:12px;cursor:pointer;text-align:left;color:var(--ink);font-family:inherit}
+  .rnode b{display:block;font-size:13px}
+  .rnode .m{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+  .rnode.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .rnode.dorm{border-style:dashed;opacity:.65}
+  .rgate{flex:0 0 84px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:var(--mono);font-size:10.5px;text-align:center;padding:0 3px;gap:3px}
+  .rgate .ar{width:100%;height:2px;background:currentColor;position:relative}
+  .rgate .ar::after{content:"";position:absolute;right:-1px;top:-4px;border-left:7px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+  .rgate.rev{color:var(--accent)} .rgate.dest{color:var(--bad)}
+  .rgate .bk{display:none;color:var(--dim)}
+  .rail.retour .rgate .op,.rail.retour .rgate .ar{opacity:.25}
+  .rail.retour .rgate .bk{display:block}
+  .foot{color:var(--faint);font-size:12px;border-top:1px solid var(--line);padding-top:16px;margin-top:40px}
+  details{border:1px solid var(--line);border-radius:9px;padding:11px 14px;margin:11px 0;background:var(--panel)}
+  summary{cursor:pointer;font-weight:600;font-size:13.5px}
+  details[open] summary{margin-bottom:9px}
+  ul,ol{padding-left:21px;margin:8px 0} li{margin:4px 0}
+  .small{font-size:12.5px;color:var(--dim)}
+  .hiA{color:var(--cA);font-weight:650}.hiB{color:var(--cB);font-weight:650}.hiC{color:var(--cC);font-weight:650}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="tt">Lot Consolidation C1 — La chaîne des espaces, pas à pas</div>
+    <div class="st">LibraryV3 · relecture transversale · reconstruite sur l’état du dépôt du 08/11/2026</div>
+  </div>
+  <div class="sp"></div>
+  <button class="btn" id="themeBtn">Thème auto</button>
+</header>
+
+<div class="wrap">
+
+<nav class="toc">
+  <a href="#pourquoi">1 · Pourquoi ce lot</a>
+  <a href="#methode">2 · La méthode</a>
+  <a href="#schema">3 · Schéma dynamique</a>
+  <a href="#algo">4 · Avant / après</a>
+  <a href="#technique">5 · Fonctionnement technique</a>
+  <a href="#etapes">6 · Les étapes</a>
+  <a href="#contre">7 · Contre-exemples chiffrés</a>
+  <a href="#verifier">8 · Vérifier</a>
+  <a href="#roadmap">9 · Décisions &amp; dettes</a>
+</nav>
+
+<!-- ═══════════════ 1 ═══════════════ -->
+<section id="pourquoi">
+  <h2><span class="num">1</span>Pourquoi ce lot</h2>
+  <p class="lead">Avant toute technique : ce qu’est une consolidation, d’où l’on part, et ce que ce lot doit rendre possible.</p>
+
+  <h3>Ce n’est pas une leçon de construction</h3>
+  <p>Une <b>leçon</b> ajoute du code et se <b>valide</b> (compilation + test). Une <b>consolidation</b> n’ajoute rien : elle relit ce qui existe, à travers toutes les leçons à la fois, et se <b>vérifie</b> — aucune contradiction entre ce que disent les leçons et ce que fait le dépôt. Elle a été ouverte juste avant la Leçon 06 (scenegraph), au moment où le moteur savait afficher, mais où l’on ne savait plus dire <b>où</b> vivait chaque nombre manipulé.</p>
+  <div class="note warn"><b>Deux principes non négociables de la série.</b> (1) Aucune décision d’architecture ne se prend dans une consolidation : un écart trouvé est <i>nommé</i> et <i>porté en roadmap</i>, jamais corrigé au vol. (2) Chaque affirmation distingue le <b>confirmé</b> (lu dans une leçon ou dans le dépôt) du <b>déduit</b>.</div>
+
+  <h3>Ce qui existait déjà</h3>
+  <div class="card tight tw">
+    <table>
+      <tr><th style="width:120px">Lot</th><th>Ce qu’il a posé</th><th style="width:260px">L’espace qu’il a créé ou modifié</th></tr>
+      <tr><td><b>L02 / L02-C</b></td><td>Algèbre, vecteur-ligne <code>v·M</code>, row-major ; reverse-Z</td><td>Les conventions de E3, E4, E5, E6</td></tr>
+      <tr><td><b>L03</b></td><td>ECS, <code>MeshClass</code> SoA, <code>ResourceManager</code></td><td>E0 → E1 (l’import)</td></tr>
+      <tr><td><b>L04</b></td><td>Fonction de bord, top-left, clipping near, perspective, Z-buffer</td><td>E5 (clip), E7 (raster), E8 (mémoire)</td></tr>
+      <tr><td><b>L05</b></td><td>Caméra, <code>Projection</code>, <code>Viewport</code>, <code>ViewData</code>, <code>Frustum</code> 3 états</td><td>E3 → E4 → E5, E6 → E7</td></tr>
+      <tr><td><b>Consolidation C1</b> <span class="tag acc">version d’origine</span></td><td>La carte des 9 espaces, document <code>Consolidation_C1_Espaces.md</code></td><td>Aucun : c’est une carte</td></tr>
+      <tr><td colspan="3" class="small" style="padding-top:12px"><b>Depuis la version d’origine, le dépôt a beaucoup bougé.</b> Les lots suivants touchent directement la chaîne des espaces :</td></tr>
+      <tr><td><b>L06</b></td><td>Scenegraph, <code>Hierarchy.cpp</code></td><td>E2 devient réel (pile de parents)</td></tr>
+      <tr><td><b>Phase G — 2, 2b</b></td><td><code>VertexStage</code> : <code>TransformPositions</code>, <code>ProjectPositions</code>, <code>ProjectClip</code>, <code>RasterVertex</code></td><td><b>E5 et E6 ne sont plus matérialisés</b> sur le chemin Inside</td></tr>
+      <tr><td><b>Phase G — 3a/3b</b></td><td><code>TightPixelBox</code> : centres de pixel <code>x+½</code></td><td>Redéfinit la frontière E7 → E8</td></tr>
+      <tr><td><b>LOD (A13/A14)</b></td><td>Taille apparente en pixels, <code>LodChain</code></td><td>Une mesure qui saute de E1 à E7 sans passer par les sommets</td></tr>
+      <tr><td><b>B3 / B4 / B5</b></td><td>Étage sommets SoA AVX2 bit-exact ; rejet des faces par 8 ; face arrière en espace objet</td><td>Le test de face arrière <b>remonte en E1</b> (pré-filtre)</td></tr>
+      <tr><td><b>D-a1 (Giesen)</b></td><td>Accrochage des sommets au 1/256 px, arêtes en virgule fixe</td><td>Un <b>nouvel espace</b> : la grille sous-pixel</td></tr>
+    </table>
+  </div>
+
+  <h3>Le contexte et l’objectif fonctionnel</h3>
+  <div class="grid2">
+    <div class="card tight">
+      <h4>Le problème</h4>
+      <p class="small" style="margin:0">Un sommet est <b>réécrit</b> une dizaine de fois entre le fichier OBJ et le pixel. Chaque réécriture change l’origine, la base, parfois la dimension et le type. Quand on ne sait plus dans quel espace vit un nombre, on écrit des tests justes au mauvais endroit : ils compilent, ils ne crashent pas, et ils donnent une image presque juste. C’est la famille de bugs la plus chère du moteur.</p>
+    </div>
+    <div class="card tight">
+      <h4>Ce que le lot doit rendre possible</h4>
+      <ul style="margin:0" class="small">
+        <li>Nommer, pour n’importe quelle variable du moteur, l’espace où elle vit</li>
+        <li>Savoir quelles frontières sont <b>réversibles</b> (picking, reconstruction depuis le Z-buffer)</li>
+        <li>Savoir quelle donnée <b>franchit</b> chaque frontière, et laquelle est perdue</li>
+        <li>Savoir quel fichier <b>possède</b> chaque espace</li>
+        <li>Préparer la L06 : E2 est le seul espace qui n’avait pas encore de leçon</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Les sept questions auxquelles le lot répond</h3>
+  <div class="card tight tw">
+    <table>
+      <tr><th style="width:34px"></th><th style="width:300px">Question</th><th>Où</th></tr>
+      <tr><td class="n">Q1</td><td>Quels sont les espaces ?</td><td>§2 (définition), §5.1 (la liste à jour)</td></tr>
+      <tr><td class="n">Q2</td><td>Comment y entre-t-on, comment en sort-on ?</td><td>§5.2 et le rail Aller / Retour</td></tr>
+      <tr><td class="n">Q3</td><td>Quelles informations en entrée, en sortie ?</td><td>§5.3 et chaque étape du §6</td></tr>
+      <tr><td class="n">Q4</td><td>Qu’est-ce qui est traité dans chaque espace ?</td><td>§5.3</td></tr>
+      <tr><td class="n">Q5</td><td>Qu’est-ce qui transite entre les espaces ?</td><td>§5.4</td></tr>
+      <tr><td class="n">Q6</td><td>Quel code gère quel espace ?</td><td>§5.5</td></tr>
+      <tr><td class="n">Q7</td><td>Un schéma de l’ensemble</td><td>§3 (dynamique) et §5.6 (les deux chemins)</td></tr>
+    </table>
+  </div>
+
+  <div class="note bad"><b>Collision de nom à trancher.</b> « C1 » désigne à la fois cette <b>consolidation</b> et le <b>chantier C1</b> de la phase G (boucle pixels spécialisée par shader). Même chose pour C2. La roadmap contient déjà une « Dette relevée en C1 » (z NaN) qui appartient au <i>chantier</i>, pas à ce lot. Proposition au §9, rien n’est acté.</div>
+</section>
+
+<!-- ═══════════════ 2 ═══════════════ -->
+<section id="methode">
+  <h2><span class="num">2</span>La méthode : un espace est un contrat</h2>
+  <p class="lead">Le lot ne présente pas un algorithme mais une technique de lecture, standard dans tous les pipelines. Ce qu’elle est, d’où elle vient, et où LV3 s’écarte de la norme.</p>
+
+  <h3>En une phrase</h3>
+  <p>Un espace n’est pas une structure de données : c’est un <b>contrat en cinq clauses</b>. Deux nombres égaux dans deux espaces différents ne désignent pas la même chose, et un calcul n’a de sens que si toutes ses entrées signent le même contrat.</p>
+  <pre><code>ESPACE = ( origine , base , main , unité , domaine de validité )</code></pre>
+  <div class="card tight tw">
+    <table>
+      <tr><th style="width:120px">Clause</th><th>Ce qu’elle fixe</th><th style="width:330px">Exemple LV3 où elle compte</th></tr>
+      <tr><td>Origine</td><td>Le point qui vaut (0,0,0)</td><td>E4 : l’œil. E7 : le coin haut-gauche du <b>viewport</b>, pas du framebuffer</td></tr>
+      <tr><td>Base</td><td>Les trois axes et leur longueur</td><td>Un scale non uniforme rend la base de E1 non orthonormée → normales via <code>(M⁻¹)ᵀ</code></td></tr>
+      <tr><td>Main</td><td>Droite ou gauche</td><td><b>Une échelle négative change la main de E1</b> par rapport à E3 : le sens de rotation des faces s’inverse (§7, miroir)</td></tr>
+      <tr><td>Unité</td><td>Mètre, pixel, 1/256 de pixel, octet</td><td>E7 en pixels flottants, E7·g en 1/256 px, E8 en octets (FrameBuffer) et en éléments (DepthBuffer)</td></tr>
+      <tr><td>Domaine</td><td>Où un point est valide</td><td>E5 : <code>0 ≤ z ≤ w</code>. Hors domaine, la division par <code>w</code> produit un point <b>faux</b>, pas une erreur</td></tr>
+    </table>
+  </div>
+
+  <h3>Sources</h3>
+  <div class="card tight tw">
+    <table>
+      <tr><th style="width:190px">Référence</th><td>Ce qu’on y trouve</td></tr>
+      <tr><th>Spécification OpenGL 4.6 Core, chapitre 13</th><td>La chaîne canonique objet → œil → clip → NDC → fenêtre (« Coordinate Transformations »), le volume de clip <code>−w ≤ x,y,z ≤ w</code>. <span class="small">registry.khronos.org/OpenGL/specs/gl/</span></td></tr>
+      <tr><th>Spécification fonctionnelle Direct3D 11</th><td>NDC <code>z ∈ [0,1]</code>, origine de fenêtre en haut à gauche, règle top-left. <span class="small">microsoft.github.io/DirectX-Specs</span></td></tr>
+      <tr><th>J. Blinn, M. Newell, <i>Clipping using homogeneous coordinates</i>, SIGGRAPH 1978</th><td>Pourquoi on clippe <b>avant</b> de diviser : l’espace clip est le dernier où le near est une comparaison linéaire</td></tr>
+      <tr><th>Akenine-Möller et al., <i>Real-Time Rendering</i>, 4ᵉ éd., chap. 2 et 4</th><td>La présentation de référence des espaces et des transformations</td></tr>
+      <tr><th>Documentation Unity, <code>Camera.worldToCameraMatrix</code></th><td>Unity a un monde main gauche, mais documente que son <b>espace caméra suit la convention OpenGL</b> : l’avant y est −Z. Preuve qu’un moteur professionnel change de main entre deux espaces — et le dit.</td></tr>
+    </table>
+  </div>
+
+  <h3>Comparaison avec la norme</h3>
+  <div class="card tight tw">
+    <table>
+      <tr><th style="width:150px"></th><th>OpenGL (convention)</th><th>Direct3D</th><th>Unity</th><th>LV3</th></tr>
+      <tr><td>Main du monde</td><td>droite</td><td>au choix (DirectXMath : LH et RH)</td><td>gauche, +Z avant</td><td><b>droite, −Z avant</b></td></tr>
+      <tr><td>Espace caméra</td><td>regarde −Z</td><td>selon la fonction LH / RH</td><td>regarde −Z (convention OpenGL)</td><td><b>regarde −Z</b></td></tr>
+      <tr><td>Vecteurs</td><td>colonnes <code>M·v</code></td><td>lignes <code>v·M</code> (DirectXMath)</td><td>colonnes <code>M·v</code></td><td><b>lignes <code>v·M</code></b>, row-major</td></tr>
+      <tr><td>NDC z</td><td><code>[−1, 1]</code> (ou <code>[0,1]</code> par <code>glClipControl</code>)</td><td><code>[0, 1]</code></td><td>selon la plateforme, reverse-Z sur les API récentes</td><td><b><code>[0,1]</code> reverse-Z, far infini</b></td></tr>
+      <tr><td>Origine fenêtre</td><td>bas-gauche</td><td>haut-gauche</td><td>selon l’API</td><td><b>haut-gauche, flip Y dans <code>Viewport</code> seul</b></td></tr>
+    </table>
+    <p class="small" style="margin-top:8px">LV3 prend la vue d’OpenGL (−Z avant), le vecteur-ligne de DirectXMath, la profondeur de D3D en reverse-Z, et l’origine de fenêtre de D3D. Chaque choix est défendable ; le danger est de les <b>mélanger dans un même calcul</b>.</p>
+  </div>
+  <div class="note warn"><b>Règle C1.1.</b> Un espace est un contrat en cinq clauses. Deux repères qui ne diffèrent que par une clause — même le domaine seul — sont deux espaces distincts.</div>
+</section>
+
+<!-- ═══════════════ 3 ═══════════════ -->
+<section id="schema">
+  <h2><span class="num">3</span>Schéma dynamique — suivre trois sommets à travers tous les espaces</h2>
+  <p class="lead">Un triangle, trois sommets <span class="hiA">A</span>, <span class="hiB">B</span>, <span class="hiC">C</span>. À gauche le monde vu de dessus (E3), à droite l’écran (E7). Chaque valeur du panneau est calculée en <code>float32</code>, une opération = un arrondi, avec les formules du dépôt. Approche le triangle de la caméra jusqu’à traverser le near.</p>
+
+  <div class="card">
+    <div class="cv-row">
+      <div>
+        <h4 style="margin-top:0">E3 — monde, vue de dessus (plan XZ)</h4>
+        <canvas id="cvTop" width="460" height="360"></canvas>
+        <h4>E7 — raster, viewport 480 × 300</h4>
+        <canvas id="cvScr" width="480" height="300"></canvas>
+      </div>
+      <div class="ctrl">
+        <h4 style="margin-top:0">Objet (E1 → E3)</h4>
+        <label class="sl">Distance de l’objet (z monde) : <span id="lOz"></span></label>
+        <input type="range" id="sOz" min="-120" max="-2" value="-60">
+        <label class="sl">Décalage x : <span id="lOx"></span></label>
+        <input type="range" id="sOx" min="-40" max="40" value="0">
+        <label class="sl">Rotation de l’objet (yaw) : <span id="lOr"></span>°</label>
+        <input type="range" id="sOr" min="-180" max="180" value="20">
+        <label class="chk"><input type="checkbox" id="cMir"> Échelle x = −1 (miroir : la main de E1 s’inverse)</label>
+
+        <h4>Caméra (E3 → E4 → E5)</h4>
+        <div class="seg"><button class="btn on" data-proj="persp">Perspective</button><button class="btn" data-proj="ortho">Orthographique</button></div>
+        <label class="sl">Yaw caméra : <span id="lCy"></span>°</label>
+        <input type="range" id="sCy" min="-60" max="60" value="0">
+        <label class="sl">FOV vertical : <span id="lFov"></span>°</label>
+        <input type="range" id="sFov" min="20" max="110" value="60">
+        <label class="sl">Plan near : <span id="lNear"></span></label>
+        <input type="range" id="sNear" min="1" max="20" value="5">
+
+        <h4>Cas particuliers</h4>
+        <label class="chk"><input type="checkbox" id="cDivFirst"> Contre-exemple : diviser par w <b>avant</b> de clipper</label>
+        <label class="chk"><input type="checkbox" id="cFixed" checked> <code>LV3_RASTER_FIXED</code> : accrochage 1/256 px</label>
+        <label class="chk"><input type="checkbox" id="cNdcCull"> Contre-exemple : test de face arrière écrit pour le NDC</label>
+
+        <h4>Sommet suivi</h4>
+        <div class="seg"><button class="btn on" data-vx="0">A</button><button class="btn" data-vx="1">B</button><button class="btn" data-vx="2">C</button></div>
+      </div>
+    </div>
+    <h4>Le sommet suivi, espace par espace</h4>
+    <div class="tw"><table id="spaceTbl"></table></div>
+    <h4>Décisions prises sur le triangle</h4>
+    <div class="grid2">
+      <div id="triDecA"></div>
+      <div id="triDecB"></div>
+    </div>
+    <div id="schemaNote"></div>
+  </div>
+</section>
+
+<!-- ═══════════════ 4 ═══════════════ -->
+<section id="algo">
+  <h2><span class="num">4</span>L’algorithme — avant / après</h2>
+  <p class="lead">« Avant » = la chaîne telle que la consolidation d’origine l’a décrite (état sorti de la L05). « Après » = la chaîne du dépôt aujourd’hui. Rouge : ce qui n’est plus vrai. Vert : ce qui l’a remplacé.</p>
+
+  <h3>4.1 — La chaîne complète</h3>
+  <div id="algoChain"></div>
+
+  <h3>4.2 — Les quatre frontières qui ont bougé</h3>
+  <div id="algoDiffs"></div>
+</section>
+
+<!-- ═══════════════ 5 ═══════════════ -->
+<section id="technique">
+  <h2><span class="num">5</span>Fonctionnement technique</h2>
+  <p class="lead">Les réponses aux questions Q1 à Q7, sur l’état actuel du dépôt.</p>
+
+  <h3>5.1 — La liste des espaces <span class="small">(Q1)</span></h3>
+  <div class="card tight tw"><table id="tblSpaces"></table></div>
+  <div class="note"><b>Deux corrections de vocabulaire, toujours valables.</b> E2 n’est pas un espace, c’est une <b>pile</b> d’espaces (un par parent). E5 n’est pas un espace de points, c’est un espace de <b>droites</b> : <code>(x,y,z,w)</code> et <code>(2x,2y,2z,2w)</code> sont le même point. C’est cette redondance qui rend le clipping linéaire, et c’est elle que la division détruit.</div>
+
+  <h3>5.2 — Entrer, sortir : le rail <span class="small">(Q2)</span></h3>
+  <div class="seg" style="max-width:420px"><button class="btn on" id="rAller">Aller · rendu</button><button class="btn" id="rRetour">Retour · inverse</button></div>
+  <div class="card tight"><div class="rail" id="rail"></div><div id="railDetail" class="small"></div></div>
+  <div class="note warn"><b>Règle C1.2.</b> Trois frontières sur dix sont à sens unique : l’<b>import</b>, la <b>division par w</b>, la <b>quantification pixel</b>. L’accrochage 1/256 en ajoute une quatrième, mais bornée : il déplace un sommet d’au plus 1/512 px. Toutes les autres sont des matrices. <code>invViewProjection</code> existe parce que la quantification est irréversible.</div>
+
+  <h3>5.3 — Entrées, sorties, travail <span class="small">(Q3, Q4)</span></h3>
+  <div class="card tight tw"><table id="tblWork"></table></div>
+  <div class="note warn"><b>Règle C1.3 (amendée).</b> Chaque opération appartient à l’espace où elle est la moins chère <b>et</b> la plus universelle. Un test juste au mauvais endroit est un test faux. <b>Amendement B5 :</b> un test peut avoir un <i>pré-filtre conservatif</i> dans un espace plus en amont, à condition que l’espace d’origine garde le dernier mot (§4.2 d).</div>
+
+  <h3>5.4 — Ce qui transite <span class="small">(Q5)</span></h3>
+  <div class="card tight tw"><table id="tblTransit"></table></div>
+  <div class="note ok"><b>Règle C1.4, inchangée et désormais gravée dans un type.</b> <code>invW</code> est le seul passager qui franchit la frontière clip → NDC. Le chantier 2b l’a rendu visible : <code>struct RasterVertex { float x, y, z, invW; }</code> est <b>le type de E7</b>. Un <code>Vec4f</code> clip et un <code>RasterVertex</code> ont la même taille (16 o) mais ne sont pas interchangeables, et le compilateur le garantit.</div>
+
+  <h3>5.5 — Qui gère quoi <span class="small">(Q6)</span></h3>
+  <div class="card tight tw"><table id="tblOwner"></table></div>
+
+  <h3>5.6 — Les deux chemins, et la fréquence de chaque espace <span class="small">(Q7)</span></h3>
+  <pre><code>                    Frustum::Classify  (E3, une fois par instance et par vue)
+                                       |
+        +------------------------------+--------------------------------+
+        |                              |                                |
+     Outside                    Inside (~97 % des faces)       Intersect (~2 % des faces)
+     rien                              |                                |
+                                       v                                v
+                     E1 px[] py[] pz[] (SoA)              E1 ---> TransformPositions
+                                       |                          E5 en memoire (ClipSpaceBuffer)
+                     ProjectPositions8 : par SOMMET                     |
+                     MulRow, /w, ToRaster, snap 1/256          test near : w - z >= 0
+                     (E5 et E6 : registres seulement)          ClipTriangleNear (E5)
+                                       |                                |
+                                       v                                v
+                     E7 RasterVertex[] {x, y, z, invW}  <---  ProjectClip par COIN
+                                       |                  (le seul "/ w" du moteur)
+                                       v
+                     B5 : pre-filtre face arriere en E1 (L.E < -tau), Inside + SIMD
+                     B4 : aire raster + boite serree, 8 faces par registre (E7)
+                                       |
+                                       v
+                     EmitRasterTriangle -> setup E7.fx (1/256 px entiers) -> pixels (E8)</code></pre>
+  <div class="card tight tw"><table id="tblFreq"></table></div>
+  <div class="note"><b>Lecture.</b> Chaque espace a une fréquence naturelle : E3→E4 change une fois par vue, la MVP une fois par instance et par vue, E1→E7 une fois par sommet, E7 une fois par face, E8 une fois par pixel. La règle de fréquence de l’annexe A12 (« un calcul s’exécute au niveau le moins fréquent où son résultat est constant ») est la même règle que C1.3, vue sous l’angle du coût.</div>
+</section>
+
+<!-- ═══════════════ 6 ═══════════════ -->
+<section id="etapes">
+  <h2><span class="num">6</span>Les étapes, pas à pas</h2>
+  <p class="lead">Un cube suivi de bout en bout, sur le chemin <b>Inside</b> (celui de 97 % des faces). Chaque étape donne son <b>objectif</b>, le <b>résultat de l’étape précédente</b> qu’elle consomme, son <b>propre résultat</b> calculé en <code>float32</code>, le code scalaire et son pendant AVX2 — couloir par couloir quand il existe.</p>
+  <div class="card tight">
+    <h4 style="margin-top:0">Le cas étudié</h4>
+    <p class="small" style="margin:0">Cube unité (8 sommets, 12 triangles), <code>model = S(1,1,1) · Ry(30°) · T(0.5, 0.2, −6)</code>. Caméra à l’origine, yaw 0, FOV 60°, near 0,1, far infini. Viewport 480 × 300. <code>LV3_RASTER_FIXED = 1</code>. Les 8 sommets remplissent exactement un registre AVX2 : <b>couloir j = sommet j</b>, bits (x, y, z) = (j &amp; 1, j &amp; 2, j &amp; 4).</p>
+  </div>
+  <div class="note small">Convention de lecture des registres, celle de <code>FaceStage.h</code> : ordre mémoire, couloir 0 à gauche, la barre épaisse marque la frontière des 128 bits. La documentation Intel dessine l’inverse.</div>
+  <div class="stepbar" id="stepbar"></div>
+  <div id="steps"></div>
+</section>
+
+<!-- ═══════════════ 7 ═══════════════ -->
+<section id="contre">
+  <h2><span class="num">7</span>Contre-exemples chiffrés</h2>
+  <p class="lead">Aucun ne crashe. Tous donnent une image presque juste. Chaque chiffre est recalculé en direct, en <code>float32</code>.</p>
+  <div id="ceHost"></div>
+</section>
+
+<!-- ═══════════════ 8 ═══════════════ -->
+<section id="verifier">
+  <h2><span class="num">8</span>Vérifier</h2>
+  <p class="lead">Une consolidation se vérifie : tests hors moteur, filets Debug, règles « grepables », et prédictions pour le lot appairé.</p>
+  <div id="verHost"></div>
+</section>
+
+<!-- ═══════════════ 9 ═══════════════ -->
+<section id="roadmap">
+  <h2><span class="num">9</span>Décisions &amp; dettes à porter en roadmap</h2>
+  <p class="lead">Rien n’est acté ici. Chaque point est à <b>vérifier sur le dépôt</b> puis à trancher, et à reporter dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard ».</p>
+  <div id="rmHost"></div>
+</section>
+
+<div class="foot">LibraryV3 · Lot Consolidation C1 reconstruit · main droite, Y haut, avant = −Z · vecteur-ligne <code>v′ = v·M</code> · NDC x,y ∈ [−1,1], z ∈ [0,1] reverse-Z · calculs du schéma et des étapes en float32 (Math.fround), une opération = un arrondi, sans FMA.</div>
+</div>
+
+<script>
+// ====== Noyau float32 — reproduit les formules LV3, une opération = un arrondi ======
+const F = Math.fround;
+const add = (a, b) => F(a + b), sub = (a, b) => F(a - b), mul = (a, b) => F(a * b), div = (a, b) => F(a / b);
+const roundEven = v => { const r = Math.round(v); return (Math.abs(v % 1) === 0.5 && r % 2 !== 0) ? r - 1 : r; };
+
+// Matrices 4x4 row-major, convention vecteur-ligne v' = v·M (translation en ligne 3)
+const ident = () => [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+function mmul(A, B) {        // produit float32, ordre de sommation de MatrixLib (gauche -> droite)
+  const C = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++)
+    C[i][j] = add(add(add(mul(A[i][0], B[0][j]), mul(A[i][1], B[1][j])), mul(A[i][2], B[2][j])), mul(A[i][3], B[3][j]));
+  return C;
+}
+const fm = M => M.map(r => r.map(F));
+function scaleM(sx, sy, sz) { const M = ident(); M[0][0] = F(sx); M[1][1] = F(sy); M[2][2] = F(sz); return M; }
+function rotYM(deg) {        // rotation autour de Y, vecteur-ligne : x' = x c + z s ; z' = -x s + z c
+  const a = deg * Math.PI / 180, c = F(Math.cos(a)), s = F(Math.sin(a));
+  return [[c,0,-s,0],[0,1,0,0],[s,0,c,0],[0,0,0,1]];
+}
+function transM(x, y, z) { const M = ident(); M[3][0] = F(x); M[3][1] = F(y); M[3][2] = F(z); return M; }
+// MulRow : c_j = ((x*m0j + y*m1j) + z*m2j) + m3j   (même parenthésage que le scalaire et AVX2)
+function mulRow(M, p) {
+  const o = [0,0,0,0];
+  for (let j = 0; j < 4; j++) o[j] = add(add(add(mul(p[0], M[0][j]), mul(p[1], M[1][j])), mul(p[2], M[2][j])), M[3][j]);
+  return o;
+}
+function mulRowFMA(M, p) {   // contre-exemple : la même chose avec des FMA (un seul arrondi par mul+add)
+  const o = [0,0,0,0];
+  for (let j = 0; j < 4; j++) {
+    let a = F(p[0] * M[0][j]);
+    a = F(p[1] * M[1][j] + a);      // produit float*float exact en double, puis un seul arrondi
+    a = F(p[2] * M[2][j] + a);
+    o[j] = add(a, M[3][j]);
+  }
+  return o;
+}
+function inverseRigid(W) {   // [R|t] -> [Rt | -t·Rt]
+  const R = [[W[0][0],W[1][0],W[2][0]],[W[0][1],W[1][1],W[2][1]],[W[0][2],W[1][2],W[2][2]]];
+  const t = [W[3][0], W[3][1], W[3][2]];
+  const V = ident();
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) V[i][j] = R[i][j];
+  for (let j = 0; j < 3; j++) V[3][j] = F(-add(add(mul(t[0], R[0][j]), mul(t[1], R[1][j])), mul(t[2], R[2][j])));
+  return V;
+}
+function invGeneric(M) {     // Gauss-Jordan en double, puis arrondi float32 (référence du retour)
+  const A = M.map(r => r.slice()), I = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+  for (let c = 0; c < 4; c++) {
+    let p = c; for (let r = c + 1; r < 4; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+    [A[c], A[p]] = [A[p], A[c]]; [I[c], I[p]] = [I[p], I[c]];
+    const d = A[c][c]; for (let j = 0; j < 4; j++) { A[c][j] /= d; I[c][j] /= d; }
+    for (let r = 0; r < 4; r++) if (r !== c) { const f = A[r][c]; for (let j = 0; j < 4; j++) { A[r][j] -= f * A[c][j]; I[r][j] -= f * I[c][j]; } }
+  }
+  return fm(I);
+}
+const det3 = M => M[0][0]*(M[1][1]*M[2][2]-M[1][2]*M[2][1]) - M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0]) + M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+
+// Projection reverse-Z. Perspective far infini : z_clip = n, w = -z_vue  -> z_ndc = n / d
+function perspM(fovYdeg, aspect, n) {
+  const f = F(1 / Math.tan(fovYdeg * Math.PI / 360));
+  const M = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  M[0][0] = div(f, F(aspect)); M[1][1] = f; M[2][3] = -1; M[3][2] = F(n);
+  return M;
+}
+// Orthographique reverse-Z, far fini (choix du schéma) : z_ndc = (far + z_vue)/(far - n), w = 1
+function orthoM(halfH, aspect, n, far) {
+  const M = ident();
+  M[0][0] = F(1 / (halfH * aspect)); M[1][1] = F(1 / halfH);
+  M[2][2] = F(1 / (far - n)); M[3][2] = F(far / (far - n)); M[3][3] = 1;
+  return M;
+}
+// Viewport::ToRaster — xr = vp.x + (xn*0.5+0.5)*W ; yr = vp.y + (0.5 - yn*0.5)*H   (flip Y)
+function toRaster(vp, xn, yn) {
+  return [add(F(vp.x), mul(add(mul(xn, 0.5), 0.5), F(vp.w))), add(F(vp.y), mul(sub(0.5, mul(yn, 0.5)), F(vp.h)))];
+}
+function toNDC(vp, xr, yr) {
+  return [sub(mul(div(sub(xr, F(vp.x)), F(vp.w)), 2), 1), sub(1, mul(div(sub(yr, F(vp.y)), F(vp.h)), 2))];
+}
+const snap = v => mul(F(roundEven(mul(v, 256))), F(1 / 256));
+// ProjectClip : LE seul endroit où l'on divise par w
+function projectClip(c, vp, fixed) {
+  const invW = div(1, c[3]);
+  const xn = mul(c[0], invW), yn = mul(c[1], invW), zn = mul(c[2], invW);
+  let [xr, yr] = toRaster(vp, xn, yn);
+  const raw = [xr, yr];
+  if (fixed) { xr = snap(xr); yr = snap(yr); }
+  return { invW, ndc: [xn, yn, zn], raw, r: [xr, yr, zn, invW] };
+}
+// EdgeFunction(a, b, c), forme antisymétrique (référence c)
+function edge(a, b, c) { const ux = sub(a[0], c[0]), uy = sub(a[1], c[1]), vx = sub(b[0], c[0]), vy = sub(b[1], c[1]); return sub(mul(ux, vy), mul(uy, vx)); }
+const isBackFacing = area => area >= 0;   // face AVANT = aire raster < 0 (le flip Y inverse le sens)
+// TightPixelBox : centres x+½ couverts -> [ceil(min-½), floor(max-½)+1[
+function tightBox(a, b, c, vp) {
+  const minX = Math.min(a[0], b[0], c[0]), maxX = Math.max(a[0], b[0], c[0]);
+  const minY = Math.min(a[1], b[1], c[1]), maxY = Math.max(a[1], b[1], c[1]);
+  let x0 = Math.ceil(sub(minX, 0.5)), y0 = Math.ceil(sub(minY, 0.5));
+  let x1 = Math.floor(sub(maxX, 0.5)) + 1, y1 = Math.floor(sub(maxY, 0.5)) + 1;
+  const loose = [Math.floor(minX), Math.floor(minY), Math.ceil(maxX) + 1, Math.ceil(maxY) + 1];
+  x0 = Math.max(x0, vp.x); y0 = Math.max(y0, vp.y); x1 = Math.min(x1, vp.x + vp.w); y1 = Math.min(y1, vp.y + vp.h);
+  return { x0, y0, x1, y1, empty: x0 >= x1 || y0 >= y1, loose };
+}
+// B5 — oeil homogène tiré de la mvp (colonnes x, y, w), 4 produits mixtes, aucune inverse
+function homogeneousEye(m) {
+  const r = i => [m[i][0], m[i][1], m[i][3]];
+  const cross = (a, b) => [sub(mul(a[1], b[2]), mul(a[2], b[1])), sub(mul(a[2], b[0]), mul(a[0], b[2])), sub(mul(a[0], b[1]), mul(a[1], b[0]))];
+  const dot = (a, b) => add(add(mul(a[0], b[0]), mul(a[1], b[1])), mul(a[2], b[2]));
+  const r0 = r(0), r1 = r(1), r2 = r(2), r3 = r(3);
+  const c23 = cross(r2, r3);
+  return [dot(r1, c23), F(-dot(r0, c23)), dot(r0, cross(r1, r3)), F(-dot(r0, cross(r1, r2)))];
+}
+// Plan de face cuit en double (BakeFacePlanesSoA), stocké en float
+function facePlane(p0, p1, p2) {
+  const u = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]], v = [p2[0]-p0[0], p2[1]-p0[1], p2[2]-p0[2]];
+  let n = [u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+  const L = Math.hypot(...n); n = n.map(x => x / L);
+  const d = -(n[0]*p0[0] + n[1]*p0[1] + n[2]*p0[2]);
+  return [F(n[0]), F(n[1]), F(n[2]), F(d)];
+}
+const planeDotE = (L, E) => add(add(add(mul(L[0], E[0]), mul(L[1], E[1])), mul(L[2], E[2])), mul(L[3], E[3]));
+// Sutherland-Hodgman sur le seul plan near : d = w - z
+function clipNear(tri) {
+  const out = [], d = tri.map(c => sub(c[3], c[2]));
+  for (let i = 0; i < 3; i++) {
+    const A = tri[i], B = tri[(i + 1) % 3], dA = d[i], dB = d[(i + 1) % 3];
+    if (dA >= 0) out.push({ c: A, made: false });
+    if ((dA >= 0) !== (dB >= 0)) {
+      const t = div(dA, sub(dA, dB));
+      out.push({ c: A.map((a, k) => add(a, mul(t, sub(B[k], a)))), made: true, t });
+    }
+  }
+  return { d, poly: out };
+}
+// Frustum de Gribb-Hartmann sur VP (vecteur-ligne : colonnes), plan = (a,b,c,d), dedans si a x + b y + c z + d >= 0
+function frustumPlanes(VP, hasFar) {
+  const col = j => [VP[0][j], VP[1][j], VP[2][j], VP[3][j]];
+  const X = col(0), Y = col(1), Z = col(2), W = col(3);
+  const P = [
+    ['gauche', W.map((w, i) => w + X[i])], ['droite', W.map((w, i) => w - X[i])],
+    ['bas', W.map((w, i) => w + Y[i])], ['haut', W.map((w, i) => w - Y[i])],
+    ['near', W.map((w, i) => w - Z[i])]];                  // 0 <= z <= w  : near reverse-Z = z <= w
+  if (hasFar) P.push(['far', Z.slice()]);                  // z >= 0
+  return P.map(([name, p]) => { const l = Math.hypot(p[0], p[1], p[2]); return { name, p: p.map(v => F(v / l)) }; });
+}
+function classifyAABB(planes, mn, mx) {   // p-vertex / n-vertex
+  let res = 'Inside'; const det = [];
+  for (const { name, p } of planes) {
+    const pv = [p[0] >= 0 ? mx[0] : mn[0], p[1] >= 0 ? mx[1] : mn[1], p[2] >= 0 ? mx[2] : mn[2]];
+    const nv = [p[0] >= 0 ? mn[0] : mx[0], p[1] >= 0 ? mn[1] : mx[1], p[2] >= 0 ? mn[2] : mx[2]];
+    const dp = add(add(add(mul(p[0], pv[0]), mul(p[1], pv[1])), mul(p[2], pv[2])), p[3]);
+    const dn = add(add(add(mul(p[0], nv[0]), mul(p[1], nv[1])), mul(p[2], nv[2])), p[3]);
+    det.push({ name, dp, dn });
+    if (dp < 0) { res = 'Outside'; } else if (dn < 0 && res !== 'Outside') res = 'Intersect';
+  }
+  return { res, det };
+}
+function transformAABB(M, mn, mx) {       // 8 coins transformés puis regrossis
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  for (let i = 0; i < 8; i++) {
+    const p = mulRow(M, [i & 1 ? mx[0] : mn[0], i & 2 ? mx[1] : mn[1], i & 4 ? mx[2] : mn[2]]);
+    for (let k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], p[k]); hi[k] = Math.max(hi[k], p[k]); }
+  }
+  return [lo, hi];
+}
+// Cube unité : sommet i = (x ? +1 : -1, y ?.., z ?..) avec bits 1, 2, 4 ; faces CCW vues de l'extérieur
+const CUBE_V = Array.from({ length: 8 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1].map(F));
+const CUBE_T = [[4,5,7],[4,7,6],[0,2,3],[0,3,1],[1,3,7],[1,7,5],[0,4,6],[0,6,2],[2,6,7],[2,7,3],[0,1,5],[0,5,4]];
+
+
+// ═════════════════════════ OUTILS ═════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function fx(v, d = 4) {
+  if (v === undefined || v === null) return '—';
+  if (!isFinite(v)) return isNaN(v) ? 'NaN' : (v > 0 ? '+∞' : '−∞');
+  const s = (Object.is(v, -0) ? '-0' : v.toFixed(d));
+  return s.replace('-', '−');
+}
+const v3 = (p, d = 4) => '(' + p.slice(0, 3).map(x => fx(x, d)).join(', ') + ')';
+const v4 = (p, d = 4) => '(' + p.map(x => fx(x, d)).join(', ') + ')';
+function hl(code) {   // échappe puis colore les commentaires //
+  return esc(code).split('\n').map(l => {
+    const i = l.indexOf('//');
+    return i < 0 ? l : l.slice(0, i) + '<span class="c-com">' + l.slice(i) + '</span>';
+  }).join('\n');
+}
+const pre = code => '<pre><code>' + hl(code) + '</code></pre>';
+function table(head, rows, widths) {
+  let h = '<tr>' + head.map((x, i) => `<th${widths && widths[i] ? ` style="width:${widths[i]}"` : ''}>${x}</th>`).join('') + '</tr>';
+  return h + rows.map(r => '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>').join('');
+}
+const f32hex = v => { const b = new DataView(new ArrayBuffer(4)); b.setFloat32(0, v); return '0x' + b.getUint32(0).toString(16).toUpperCase().padStart(8, '0'); };
+function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+// thème
+(function () {
+  const b = $('themeBtn'), root = document.documentElement; const modes = ['auto', 'light', 'dark']; let i = 0;
+  b.onclick = () => { i = (i + 1) % 3; if (modes[i] === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', modes[i]);
+    b.textContent = 'Thème ' + modes[i]; drawSchema(); };
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawSchema());
+})();
+
+// ═════════════════════════ SCHÉMA DYNAMIQUE (§3) ═════════════════════════
+const TRI = [[-1.2, -0.6, 0.4], [1.2, -0.6, 0.4], [0, 0.9, -0.6]].map(p => p.map(F));
+const VP_SCR = { x: 0, y: 0, w: 480, h: 300 };
+const S = { proj: 'persp', sel: 0 };
+const COLS = () => [cssVar('--cA'), cssVar('--cB'), cssVar('--cC')];
+const NAMES = ['A', 'B', 'C'];
+const ORTHO_HALF_H = 3, ORTHO_FAR = 100;
+
+function readSchema() {
+  S.oz = +$('sOz').value / 10; S.ox = +$('sOx').value / 10; S.orY = +$('sOr').value;
+  S.mir = $('cMir').checked; S.camYaw = +$('sCy').value; S.fov = +$('sFov').value; S.near = +$('sNear').value / 20;
+  S.divFirst = $('cDivFirst').checked; S.fixed = $('cFixed').checked; S.ndcCull = $('cNdcCull').checked;
+  $('lOz').textContent = fx(S.oz, 1); $('lOx').textContent = fx(S.ox, 1); $('lOr').textContent = S.orY;
+  $('lCy').textContent = S.camYaw; $('lFov').textContent = S.fov; $('lNear').textContent = fx(S.near, 2);
+}
+
+function computeSchema() {
+  const aspect = VP_SCR.w / VP_SCR.h;
+  const model = mmul(mmul(scaleM(S.mir ? -1 : 1, 1, 1), rotYM(S.orY)), transM(S.ox, 0, S.oz));
+  const camW = mmul(rotYM(S.camYaw), transM(0, 0, 0));
+  const V = inverseRigid(camW);
+  const P = S.proj === 'persp' ? perspM(S.fov, aspect, S.near) : orthoM(ORTHO_HALF_H, aspect, S.near, ORTHO_FAR);
+  const VP = mmul(V, P), mvp = mmul(model, VP), invVP = invGeneric(VP);
+  const verts = TRI.map(p => {
+    const world = mulRow(model, p), view = mulRow(V, world), clip = mulRow(mvp, p);
+    const d = sub(clip[3], clip[2]);
+    const pr = clip[3] !== 0 ? projectClip(clip, VP_SCR, S.fixed) : null;
+    return { p, world, view, clip, d, pr };
+  });
+  // frustum
+  const planes = frustumPlanes(VP, S.proj === 'ortho');
+  const lo = [Infinity, Infinity, Infinity], hi = [-Infinity, -Infinity, -Infinity];
+  TRI.forEach(p => p.forEach((v, k) => { lo[k] = Math.min(lo[k], v); hi[k] = Math.max(hi[k], v); }));
+  const [wlo, whi] = transformAABB(model, lo, hi);
+  const cls = classifyAABB(planes, wlo, whi);
+  // triangle(s) émis
+  let polys = [], clipInfo = null, mirrorFlag = false;
+  if (S.divFirst) {
+    if (verts.every(v => v.clip[3] !== 0)) polys.push(verts.map((v, i) => ({ r: v.pr.r, ndc: v.pr.ndc, label: NAMES[i], made: false })));
+    mirrorFlag = verts.some(v => v.clip[3] < 0);
+  } else if (cls.res !== 'Outside') {
+    const allIn = verts.every(v => v.d >= 0);
+    if (cls.res === 'Inside' || allIn) {
+      polys.push(verts.map((v, i) => ({ r: v.pr.r, ndc: v.pr.ndc, label: NAMES[i], made: false })));
+    } else {
+      clipInfo = clipNear(verts.map(v => v.clip));
+      const poly = clipInfo.poly.map((q, i) => { const pr = projectClip(q.c, VP_SCR, S.fixed); return { r: pr.r, ndc: pr.ndc, made: q.made, t: q.t, label: q.made ? 'I' : null }; });
+      // remettre les étiquettes d’origine
+      let k = 0; clipInfo.poly.forEach((q, i) => { if (!q.made) { const idx = verts.findIndex(v => v.clip === q.c); poly[i].label = NAMES[idx]; } });
+      for (let q = 1; q + 1 < poly.length; q++) polys.push([poly[0], poly[q], poly[q + 1]]);
+    }
+  }
+  const tris = polys.map(t => {
+    const area = edge(t[0].r, t[1].r, t[2].r);
+    const areaNdc = edge(t[0].ndc, t[1].ndc, t[2].ndc);
+    const front = S.ndcCull ? !(areaNdc >= 0) : !isBackFacing(area);
+    return { t, area, areaNdc, front };
+  });
+  // vérité géométrique : la face regarde-t-elle l’œil ? (normale monde réelle · vecteur vers l’œil)
+  const w = verts.map(v => v.world);
+  const u = [0, 1, 2].map(k => w[1][k] - w[0][k]), vv = [0, 1, 2].map(k => w[2][k] - w[0][k]);
+  let nW = [u[1] * vv[2] - u[2] * vv[1], u[2] * vv[0] - u[0] * vv[2], u[0] * vv[1] - u[1] * vv[0]];
+  // la normale « voulue par l’artiste » est celle de E1 transformée par (M⁻¹)ᵀ ; avec det < 0 le produit vectoriel des sommets monde la retourne
+  const detM = det3(model);
+  const nTrue = detM < 0 ? nW.map(x => -x) : nW;
+  const toEye = S.proj === 'persp' ? [0, 1, 2].map(k => -w[0][k]) : [Math.sin(S.camYaw * Math.PI / 180), 0, Math.cos(S.camYaw * Math.PI / 180)];
+  const facing = nTrue[0] * toEye[0] + nTrue[1] * toEye[1] + nTrue[2] * toEye[2] > 0;
+  return { model, camW, V, P, VP, mvp, invVP, verts, planes, wlo, whi, cls, polys, tris, clipInfo, mirrorFlag, detM, facing };
+}
+
+let SC = null;
+function drawSchema() {
+  if (!SC) return;
+  drawTop(SC); drawScreen(SC); fillSpaceTable(SC); fillDecisions(SC);
+}
+function drawTop(R) {
+  const cv = $('cvTop'), g = cv.getContext('2d'); const W = cv.width, H = cv.height;
+  g.clearRect(0, 0, W, H);
+  const sc = 30, ox = W / 2, oz = H - 28;
+  const X = x => ox + x * sc, Z = z => oz + z * sc;
+  const ink = cssVar('--ink'), dim = cssVar('--faint'), acc = cssVar('--accent'), bad = cssVar('--bad'), ok = cssVar('--ok'), warn = cssVar('--warn');
+  // grille
+  g.strokeStyle = cssVar('--line'); g.lineWidth = 1;
+  for (let x = -9; x <= 9; x++) { g.beginPath(); g.moveTo(X(x), 0); g.lineTo(X(x), H); g.stroke(); }
+  for (let z = -13; z <= 2; z++) { g.beginPath(); g.moveTo(0, Z(z)); g.lineTo(W, Z(z)); g.stroke(); }
+  g.fillStyle = dim; g.font = '11px ' + cssVar('--mono');
+  g.fillText('x →', W - 34, Z(0) - 6); g.fillText('z = −1', X(0) + 4, Z(-1) + 4); g.fillText('z = −10', X(0) + 4, Z(-10) + 4);
+  // caméra et frustum
+  const yaw = S.camYaw * Math.PI / 180, fwd = [-Math.sin(yaw), -Math.cos(yaw)], right = [Math.cos(yaw), -Math.sin(yaw)];
+  const aspect = VP_SCR.w / VP_SCR.h;
+  g.strokeStyle = acc; g.lineWidth = 1.5;
+  if (S.proj === 'persp') {
+    const hh = Math.atan(Math.tan(S.fov * Math.PI / 360) * aspect), L = 20;
+    for (const s of [-1, 1]) {
+      const dx = fwd[0] * Math.cos(hh) + right[0] * Math.sin(hh) * s, dz = fwd[1] * Math.cos(hh) + right[1] * Math.sin(hh) * s;
+      g.beginPath(); g.moveTo(X(0), Z(0)); g.lineTo(X(dx * L), Z(dz * L)); g.stroke();
+    }
+    const n = S.near, hw = n * Math.tan(hh);
+    g.strokeStyle = warn; g.lineWidth = 2.5; g.beginPath();
+    g.moveTo(X(fwd[0] * n - right[0] * hw), Z(fwd[1] * n - right[1] * hw)); g.lineTo(X(fwd[0] * n + right[0] * hw), Z(fwd[1] * n + right[1] * hw)); g.stroke();
+  } else {
+    const hw = ORTHO_HALF_H * aspect, L = 20;
+    for (const s of [-1, 1]) { g.beginPath(); g.moveTo(X(right[0] * hw * s), Z(right[1] * hw * s)); g.lineTo(X(right[0] * hw * s + fwd[0] * L), Z(right[1] * hw * s + fwd[1] * L)); g.stroke(); }
+    const n = S.near; g.strokeStyle = warn; g.lineWidth = 2.5; g.beginPath();
+    g.moveTo(X(fwd[0] * n - right[0] * hw), Z(fwd[1] * n - right[1] * hw)); g.lineTo(X(fwd[0] * n + right[0] * hw), Z(fwd[1] * n + right[1] * hw)); g.stroke();
+  }
+  g.fillStyle = ink; g.beginPath(); g.arc(X(0), Z(0), 5, 0, 7); g.fill();
+  g.fillStyle = warn; g.fillText('plan near', X(fwd[0] * S.near) + 8, Z(fwd[1] * S.near) + 14);
+  // AABB monde
+  const cc = R.cls.res === 'Inside' ? ok : R.cls.res === 'Intersect' ? warn : bad;
+  g.setLineDash([5, 4]); g.strokeStyle = cc; g.lineWidth = 1.3;
+  g.strokeRect(X(R.wlo[0]), Z(R.wlo[2]), (R.whi[0] - R.wlo[0]) * sc, (R.whi[2] - R.wlo[2]) * sc);
+  g.setLineDash([]); g.fillStyle = cc; g.fillText('AABB monde : ' + R.cls.res, X(R.wlo[0]), Z(R.wlo[2]) - 5);
+  // triangle
+  const cols = COLS();
+  g.strokeStyle = ink; g.lineWidth = 1.5; g.beginPath();
+  R.verts.forEach((v, i) => { const f = i ? 'lineTo' : 'moveTo'; g[f](X(v.world[0]), Z(v.world[2])); }); g.closePath(); g.stroke();
+  R.verts.forEach((v, i) => {
+    g.fillStyle = cols[i]; g.beginPath(); g.arc(X(v.world[0]), Z(v.world[2]), i === S.sel ? 6 : 4, 0, 7); g.fill();
+    g.fillText(NAMES[i], X(v.world[0]) + 7, Z(v.world[2]) - 6);
+  });
+}
+function drawScreen(R) {
+  const cv = $('cvScr'), g = cv.getContext('2d'); const W = cv.width, H = cv.height;
+  g.clearRect(0, 0, W, H);
+  g.strokeStyle = cssVar('--line'); g.lineWidth = 1;
+  for (let x = 0; x <= W; x += 20) { g.beginPath(); g.moveTo(x + .5, 0); g.lineTo(x + .5, H); g.stroke(); }
+  for (let y = 0; y <= H; y += 20) { g.beginPath(); g.moveTo(0, y + .5); g.lineTo(W, y + .5); g.stroke(); }
+  const ink = cssVar('--ink'), acc = cssVar('--accent'), bad = cssVar('--bad'), dim = cssVar('--faint');
+  g.fillStyle = dim; g.font = '11px ' + cssVar('--mono'); g.fillText('(0,0)  Y vers le bas', 4, 13);
+  const cols = COLS();
+  for (const T of R.tris) {
+    const pts = T.t.map(q => q.r);
+    g.beginPath(); pts.forEach((p, i) => g[i ? 'lineTo' : 'moveTo'](p[0], p[1])); g.closePath();
+    if (T.front) { g.fillStyle = acc + '55'; g.fill(); g.strokeStyle = acc; g.lineWidth = 1.5; g.setLineDash([]); g.stroke(); }
+    else { g.strokeStyle = bad; g.lineWidth = 1.5; g.setLineDash([6, 4]); g.stroke(); g.setLineDash([]); }
+  }
+  const seen = new Set();
+  for (const T of R.tris) for (const q of T.t) {
+    const key = q.r[0].toFixed(3) + ',' + q.r[1].toFixed(3); if (seen.has(key)) continue; seen.add(key);
+    const i = NAMES.indexOf(q.label);
+    g.fillStyle = i >= 0 ? cols[i] : ink; g.beginPath(); g.arc(q.r[0], q.r[1], 4, 0, 7); g.fill();
+    g.fillText(q.label || 'I', q.r[0] + 6, q.r[1] - 6);
+  }
+  if (!R.tris.length) { g.fillStyle = dim; g.font = '13px sans-serif'; g.fillText(R.cls.res === 'Outside' ? 'Outside : l’instance n’atteint jamais l’étage sommets' : 'Triangle entièrement derrière le near : rejet trivial', 20, H / 2); }
+}
+function fillSpaceTable(R) {
+  const v = R.verts[S.sel], c = v.clip, n = NAMES[S.sel];
+  const rows = [];
+  const cls = ['hiA', 'hiB', 'hiC'][S.sel];
+  rows.push(['<b>E1</b> objet', v3(v.p), 'Constant d’une frame à l’autre. Seul espace où un précalcul s’amortit.']);
+  rows.push(['<b>E3</b> monde', v3(v.world), '<i>Affiché pour comprendre :</i> le moteur ne calcule jamais E3 par sommet, la MVP le traverse.']);
+  rows.push(['<b>E4</b> vue', v3(v.view) + `<br><span class="small">distance d = −z = ${fx(-v.view[2])}</span>`, 'Idem : traversé, jamais stocké par sommet.']);
+  rows.push(['<b>E5</b> clip', v4(c), S.proj === 'persp' ? 'w = distance à l’œil ; z = n constant (far infini).' : 'Orthographique : w = 1 partout.']);
+  const inDom = v.d >= 0;
+  rows.push(['domaine near', `w − z = <b>${fx(v.d)}</b> ${inDom ? '<span class="tag ok">≥ 0</span>' : '<span class="tag bad">&lt; 0 : derrière le near</span>'}`, 'Forme canonique : ne connaît ni near, ni far, ni le type de projection.']);
+  if (c[3] > 0) {
+    rows.push(['<b>E6</b> NDC', v3(v.pr.ndc) + `<br><span class="small">invW = ${fx(v.pr.invW, 6)}</span>`, 'Une division, trois multiplications. invW est conservé.']);
+  } else {
+    rows.push(['<b>E6</b> NDC', S.divFirst && c[3] !== 0 ? `<span class="tag bad">MIROIR</span> ${v3(v.pr.ndc)}` : '<span class="tag warn">indéfini : w ≤ 0</span>', 'Diviser ici renverrait le point de l’autre côté de l’écran.']);
+  }
+  if (v.pr && (c[3] > 0 || S.divFirst)) {
+    rows.push(['<b>E7</b> raster', `(${fx(v.pr.raw[0], 4)}, ${fx(v.pr.raw[1], 4)})  z=${fx(v.pr.ndc[2], 5)}`, 'Pixels flottants, Y vers le bas, origine du viewport.']);
+    rows.push(['<b>E7·g</b> grille', S.fixed ? `(${fx(v.pr.r[0], 6)}, ${fx(v.pr.r[1], 6)})<br><span class="small">en 1/256 : (${Math.round(v.pr.r[0] * 256)}, ${Math.round(v.pr.r[1] * 256)})</span>` : '<span class="small">LV3_RASTER_FIXED = 0 : pas d’accrochage</span>', 'Écart à E7 ≤ 1/512 px. Tout l’aval voit la même position.']);
+    const px = Math.floor(v.pr.r[0]), py = Math.floor(v.pr.r[1]);
+    const inVp = px >= 0 && px < VP_SCR.w && py >= 0 && py < VP_SCR.h;
+    rows.push(['<b>E8</b> mémoire', `pixel (${px}, ${py}) ${inVp ? '' : '<span class="tag warn">hors viewport</span>'}<br><span class="small">FrameBuffer : y·pitch + 4x = ${inVp ? py * 1920 + px * 4 : '—'} o · DepthBuffer : y·W + x = ${inVp ? py * 480 + px : '—'}</span>`, 'Deux buffers, deux règles d’indexation.']);
+    if (c[3] > 0) {
+      const nd = toNDC(VP_SCR, v.pr.r[0], v.pr.r[1]);
+      const h = mulRow(R.invVP, [nd[0], nd[1], v.pr.ndc[2]]);
+      const back = [div(h[0], h[3]), div(h[1], h[3]), div(h[2], h[3])];
+      const err = Math.hypot(back[0] - v.world[0], back[1] - v.world[1], back[2] - v.world[2]);
+      rows.push(['<b>retour</b> E7 → E3', v3(back) + `<br><span class="small">|Δ| = ${err.toExponential(2)}</span>`, S.fixed ? 'ToNDC puis invViewProjection, puis ÷w. L’erreur cumule l’accrochage (≤ 1/512 px) et le float32.' : 'ToNDC puis invViewProjection, puis ÷w. Sans accrochage, il ne reste que l’arrondi float32.']);
+    }
+  }
+  $('spaceTbl').innerHTML = table([`Espace — sommet <span class="${cls}">${n}</span>`, 'Valeur (float32)', 'Ce qu’il faut lire'], rows, ['150px', '330px', '']);
+}
+function fillDecisions(R) {
+  const mins = R.cls.det.map(d => `${d.name} : ${fx(d.dn, 3)}`).join(' · ');
+  const col = R.cls.res === 'Inside' ? 'ok' : R.cls.res === 'Intersect' ? 'warn' : 'bad';
+  const path = R.cls.res === 'Inside' ? 'ProjectPositions(8) : E1 → E7 en un seul passage, E5 et E6 restent dans les registres'
+    : R.cls.res === 'Intersect' ? 'TransformPositions → E5 stocké, test near, ClipTriangleNear, puis ProjectClip par coin' : 'aucun : l’instance est rejetée avant l’étage sommets';
+  $('triDecA').innerHTML = `<div class="card tight" style="margin:0"><h4 style="margin-top:0">E3 — Frustum::Classify</h4>
+    <div class="kv"><span class="k">résultat</span><span class="v"><span class="tag ${col}">${R.cls.res}</span></span></div>
+    <div class="kv"><span class="k">chemin pris</span><span class="v" style="font-weight:400;font-family:inherit;max-width:60%">${path}</span></div>
+    <div class="small" style="margin-top:6px">distances du n-vertex : ${mins}</div></div>`;
+  let h = `<div class="card tight" style="margin:0"><h4 style="margin-top:0">E5 / E7 — clipping et face arrière</h4>`;
+  h += `<div class="kv"><span class="k">w − z (A, B, C)</span><span class="v">${R.verts.map(v => fx(v.d, 3)).join(' · ')}</span></div>`;
+  if (R.clipInfo) h += `<div class="kv"><span class="k">polygone après clip</span><span class="v">${R.clipInfo.poly.length} sommets → ${R.tris.length} triangle(s)</span></div>`;
+  h += `<div class="kv"><span class="k">det(model) — main de E1</span><span class="v">${fx(R.detM, 3)} ${R.detM < 0 ? '<span class="tag bad">inversée</span>' : ''}</span></div>`;
+  R.tris.forEach((T, i) => {
+    h += `<div class="kv"><span class="k">triangle ${i + 1} : aire raster / aire NDC</span><span class="v">${fx(T.area, 1)} / ${fx(T.areaNdc, 4)}</span></div>`;
+  });
+  if (R.tris.length) {
+    const eng = R.tris[0].front;
+    h += `<div class="kv"><span class="k">verdict du moteur</span><span class="v">${eng ? '<span class="tag ok">AVANT, dessinée</span>' : '<span class="tag bad">ARRIÈRE, jetée</span>'}</span></div>`;
+    h += `<div class="kv"><span class="k">vérité géométrique</span><span class="v">${R.facing ? 'regarde l’œil' : 'tourne le dos'} ${eng === R.facing ? '<span class="tag ok">accord</span>' : '<span class="tag bad">DÉSACCORD</span>'}</span></div>`;
+  }
+  $('triDecB').innerHTML = h + '</div>';
+  const notes = [];
+  if (S.divFirst && R.mirrorFlag) notes.push('<div class="note bad"><b>Contre-exemple actif : division avant clipping.</b> Un sommet a <code>w &lt; 0</code>. Divisé, il est projeté <b>de l’autre côté de l’écran</b> : le triangle s’étire à travers toute la vue. Aucun NaN, aucune erreur — juste une géométrie fausse.</div>');
+  if (S.mir && R.tris.length && R.tris[0].front !== R.facing) notes.push('<div class="note bad"><b>Miroir.</b> L’échelle négative a inversé la main de E1 : les sommets tournent dans l’autre sens à l’écran, et le test d’aire jette une face qui regarde la caméra. Dette connue (révélée par B5) : inverser la convention quand <code>det(model) &lt; 0</code>, sur les deux tests à la fois.</div>');
+  if (S.ndcCull && R.tris.length) notes.push('<div class="note bad"><b>Test écrit pour le NDC, exécuté en raster.</b> Le flip Y de <code>ToRaster</code> inverse le signe de l’aire. Le même test, calibré sur le NDC, élimine exactement les mauvaises faces.</div>');
+  if (R.cls.res === 'Intersect' && !S.divFirst) notes.push('<div class="note warn"><b>Chemin Intersect.</b> L’AABB monde coupe un plan du frustum : l’étage sommets ne peut plus garantir <code>w &gt; 0</code>, donc il <b>ne divise pas</b>. E5 est stocké en mémoire (<code>ClipSpaceBuffer</code>), et la division n’a lieu qu’après le clipping, coin par coin.</div>');
+  if (S.proj === 'ortho') notes.push('<div class="note"><b>Orthographique.</b> <code>w = 1</code> pour tous les sommets : l’ancien test <code>w ≤ near</code> ne testait plus rien. La forme canonique <code>w − z</code> fonctionne sans changement. (Schéma : far = 100 en ortho.)</div>');
+  $('schemaNote').innerHTML = notes.join('');
+}
+function updateSchema() { readSchema(); SC = computeSchema(); drawSchema(); }
+['sOz', 'sOx', 'sOr', 'sCy', 'sFov', 'sNear'].forEach(id => $(id).addEventListener('input', updateSchema));
+['cMir', 'cDivFirst', 'cFixed', 'cNdcCull'].forEach(id => $(id).addEventListener('change', updateSchema));
+document.querySelectorAll('[data-proj]').forEach(b => b.onclick = () => { S.proj = b.dataset.proj; document.querySelectorAll('[data-proj]').forEach(x => x.classList.toggle('on', x === b)); updateSchema(); });
+document.querySelectorAll('[data-vx]').forEach(b => b.onclick = () => { S.sel = +b.dataset.vx; document.querySelectorAll('[data-vx]').forEach(x => x.classList.toggle('on', x === b)); updateSchema(); });
+// ═════════════════════════ §4 AVANT / APRÈS ═════════════════════════
+function diffBlock(title, lines, tag) {
+  // lines : [type, texte]  type = ' ' | '-' | '+'
+  const body = lines.map(([t, s]) => {
+    const h = hl(s);
+    return t === '-' ? `<span class="l-del">${h}</span>` : t === '+' ? `<span class="l-add">${h}</span>` : h + '\n';
+  }).join('');
+  return `<div class="diff"><div class="dh">${title}${tag ? ' ' + tag : ''}</div><pre><code>${body}</code></pre></div>`;
+}
+$('algoChain').innerHTML = diffBlock('La chaîne des espaces, du fichier au pixel', [
+  [' ', 'E0 actif  ──OBJLoader──►  E1 objet'],
+  ['-', '                           (AoS : vertexPositions, ComputeMeshAABB « à appeler »)'],
+  ['+', '                           RegisterMesh = porte unique : BakePositionsSoA() + BakeFacePlanesSoA()'],
+  ['+', '                           E1 en SoA : px[], py[], pz[] alignés 32 o ; plans de face (n, d) cuits'],
+  [' ', 'E1 ──m_localMatrix──► E2 (pile de parents) ──m_worldMatrix──► E3 monde'],
+  [' ', 'E3 : Frustum::Classify(AABB monde) → Outside | Inside | Intersect'],
+  [' ', 'E3 ──viewMatrix = inverseRigid(m_worldMatrix caméra)──► E4 vue'],
+  [' ', 'E4 ──projectionMatrix──► E5 clip (x, y, z, w)'],
+  ['-', 'pour chaque FACE, pour chaque COIN : MulRow(mvp) → Vec4f clip      // E5 par coin'],
+  ['-', '   test near (w − z) → clip → ÷w → NDC → ToRaster (flip Y)           // E6, E7 par coin'],
+  ['+', 'Inside   : ProjectPositions8 — par SOMMET, 8 à la fois :'],
+  ['+', '           MulRow · ÷w (vdivps) · ToRaster · accrochage 1/256          // E5, E6 en REGISTRES seulement'],
+  ['+', '           → RasterVertex[] {x, y, z_ndc, invW}                       // E7 en mémoire'],
+  ['+', 'Intersect: TransformPositions → ClipSpaceBuffer (E5 en mémoire)'],
+  ['+', '           test near, ClipTriangleNear, puis ProjectClip par COIN    // le seul « ÷ w » du moteur'],
+  ['-', 'E7 continu (pixels flottants)'],
+  ['+', 'E7·g grille sous-pixel 1/256 (LV3_RASTER_FIXED) → E7·fx entiers X = x·256 au setup'],
+  ['-', 'face arrière : signe de l’aire en E7, seul test'],
+  ['+', 'face arrière : pré-filtre E1 (B5, L·E < −τ) puis aire E7 par 8 faces (B4) — l’écran garde le dernier mot'],
+  ['-', 'E7 → E8 : floor(x), floor(y), boîte lâche'],
+  ['+', 'E7 → E8 : centres x+½ ; boîte serrée [ceil(min−½), floor(max−½)+1[ (TightPixelBox)'],
+  [' ', 'E8 : early-Z GREATER (clear 0.0f) · FrameBuffer y·pitch · DepthBuffer y·W + x'],
+  [' ', 'retour E8 → E3 : invViewProjection paresseuse'],
+]);
+
+$('algoDiffs').innerHTML = [
+  `<h4>a) La frontière E5 → E6 → E7 : de « par coin » à « par sommet » <span class="tag acc">chantier 2b — évolution</span></h4>`,
+  diffBlock('RenderSystem.cpp — avant (Référence G) : EmitClipTriangle, pour TOUS les triangles', [
+    [' ', 'for (int k = 0; k < 3; ++k)'],
+    [' ', '{'],
+    ['-', '    invW[k] = 1.0f / v[k]->clip.w;                       // division PAR COIN'],
+    ['-', '    r[k] = view.viewport.ToRaster({ v[k]->clip.x * invW[k],'],
+    ['-', '                                    v[k]->clip.y * invW[k], v[k]->clip.z * invW[k] });'],
+    [' ', '}'],
+  ]),
+  diffBlock('VertexStage.h / .cpp — après (dépôt actuel)', [
+    ['+', '// LE seul endroit du moteur ou la division par w a lieu.'],
+    ['+', '[[nodiscard]] LV3_FORCEINLINE RasterVertex ProjectClip(const Vec4f& c, const Viewport& vp) noexcept'],
+    ['+', '{'],
+    ['+', '    const float invW = 1.0f / c.w;'],
+    ['+', '    const Vec3f r = vp.ToRaster({ c.x * invW, c.y * invW, c.z * invW });'],
+    ['+', '    return { SnapToSubpixel(r.x), SnapToSubpixel(r.y), r.z, invW };   // si LV3_RASTER_FIXED'],
+    ['+', '}'],
+    ['+', '// Inside : une fois par SOMMET, avant la boucle des faces'],
+    ['+', 'for (size_t i = 0; i < count; ++i)'],
+    ['+', '{'],
+    ['+', '    const Vec4f c = MulRow(m, src[i]);'],
+    ['+', '    LV3_ASSERT(c.w > 0.0f);          // contrat Inside, prouve sur donnees reelles'],
+    ['+', '    dst[i] = ProjectClip(c, v);'],
+    ['+', '}'],
+  ]),
+  `<p class="small"><b>Pourquoi.</b> La projection d’un sommet ne dépend que du sommet, de la <code>mvp</code> et du viewport : elle est constante pour un sommet dans une (instance, vue). Sa place est la bande <i>sommet</i>. Une roche : 504 divisions → 117. <b>Conséquence pour la carte des espaces :</b> sur le chemin Inside, E5 et E6 <b>n’existent plus en mémoire</b>. Ils ne vivent que dans des registres, le temps d’une instruction. La frontière E5/E6 est devenue une frontière <i>de registre</i>, pas de tableau. <b>Ce qui la rend légitime</b> : le frustum, qui garantit <code>w ≥ near &gt; 0</code> pour tout sommet d’une instance Inside.</p>`,
+
+  `<h4>b) E7 n’est plus continu : la grille sous-pixel <span class="tag acc">D-a1 (Giesen) — nouvel espace</span></h4>`,
+  diffBlock('Viewport.h — l’accrochage, et le seul endroit où il a lieu', [
+    ['-', '// E7 : pixels flottants quelconques'],
+    ['+', '// D-a1 : GRILLE SOUS-PIXEL. Un sommet raster vit sur la grille des 1/256 de pixel.'],
+    ['+', '// Ses coordonnees restent des float, mais des float qui SONT des entiers / 256 :'],
+    ['+', '// la conversion en virgule fixe (x * 256) est alors exacte, partout.'],
+    ['+', 'LV3_FORCEINLINE float SnapToSubpixel(float v) noexcept'],
+    ['+', '{'],
+    ['+', '    const __m128 s = _mm_mul_ss(_mm_set_ss(v), _mm_set_ss(kSubpixelScale));     // v * 256, exact'],
+    ['+', '    const __m128 r = _mm_round_ss(s, s, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);'],
+    ['+', '    return _mm_cvtss_f32(_mm_mul_ss(r, _mm_set_ss(kSubpixelInv)));               // * 1/256, exact'],
+    ['+', '}'],
+  ]),
+  `<p class="small"><b>Pourquoi un nouvel espace, et pas un détail.</b> Les cinq clauses changent : même origine et même base que E7, mais <b>unité</b> = 1/256 px et <b>domaine</b> = |x| &lt; 2<sup>20</sup> px (<code>kFixedGuardPx</code>, au-delà le triangle reprend le chemin flottant). L’apport : l’aire B4, la boîte 3b, le centre C3 et le noyau voient <b>la même position</b> — un sommet, un accrochage. C’est ce qui rend les arêtes entières de Giesen exactes. <b>Statut :</b> évolution, la carte C1 d’origine (« E7 : 2,5D continu ») est fausse sous <code>LV3_RASTER_FIXED = 1</code>.</p>`,
+
+  `<h4>c) La frontière E7 → E8 : du coin au centre du pixel <span class="tag bad">correction de la carte d’origine</span></h4>`,
+  diffBlock('Consolidation C1 d’origine — et ce que fait le dépôt (TightPixelBox, chantiers 3a/3b)', [
+    ['-', 'E7 → E8 : floor(x), floor(y) + adressage pitch'],
+    ['+', '// Un pixel x est couvert si son CENTRE x + 0.5 est dans le triangle.'],
+    ['+', 'x0 = ceil (minX - 0.5)          // premier centre >= minX  (inclusif)'],
+    ['+', 'x1 = floor(maxX - 0.5) + 1      // dernier centre <= maxX  (EXCLUSIF)'],
+    ['+', '// puis ClampBox au viewport ; boite vide => le triangle n’atteint pas le rasterizer (3b)'],
+  ]),
+  `<p class="small">« <code>floor(x)</code> » répond à la question « dans quel pixel tombe ce <i>point</i> ? ». La rasterisation pose l’autre question : « quels <i>centres</i> de pixel ce <i>triangle</i> couvre-t-il ? ». La boîte lâche faisait au moins 2 × 2 même pour un triangle qui ne couvre rien (92 % des triangles d’un demi-pixel). <b>La quantification reste destructive</b> ; ce qui change, c’est le point de référence du pixel.</p>`,
+
+  `<h4>d) La face arrière quitte E7 — en partie <span class="tag warn">B5 — révise la règle C1.3 et l’écart L4-4</span></h4>`,
+  diffBlock('FaceStage.h — pré-filtre en espace OBJET (Inside + SIMD uniquement)', [
+    ['-', '// C1.3 d’origine : « on teste le winding en E7 : l’aire y est deja calculee, le test est gratuit »'],
+    ['+', '// IDENTITE (Cauchy-Binet) : aire_raster(a, b, c) = -K * (L . E) / (w0 * w1 * w2),  K > 0'],
+    ['+', '//   L = (n, d) : plan de la face (cuit) ; E : oeil homogene, tire de mvp'],
+    ['+', '// Inside : w > 0  =>  face AVANT  <=>  s = L . E > 0.'],
+    ['+', 'const Vec4f E = HomogeneousEye(mvp);               // 4 produits mixtes, aucune inverse'],
+    ['+', '// rejet en objet seulement si s < -tau (sin(angle rasant) > 1/64) : un doute ne rejette JAMAIS'],
+    ['+', 'const uint32_t objBack = ObjBackMask8(nx, ny, nz, d, ex, ey, ez, ew, negTau);'],
+    ['+', '// lot mixte : keep = valid & ~objBack, puis ClassifyFaces8 (aire E7) comme en B4'],
+  ]),
+  `<p class="small">C’est un cas d’école pour la carte des espaces : <b>le même prédicat</b> (« la face regarde-t-elle l’œil ? ») a une expression dans E1 et une dans E7, reliées par une identité exacte. Le test en E1 lit 4 floats contigus par face (SoA) ; le test en E7 lit 3 sommets dispersés. En scalaire les deux se valent (≈ 8 opérations contre 6) ; en AVX2, E1 évite 24 lectures dispersées par lot. <b>E7 garde le dernier mot</b> : E1 ne rejette que ce qui est <i>sûrement</i> arrière. Cela contredit l’écart <b>L4-4</b> (« culling en espace objet rejeté ») tel qu’il est écrit dans la roadmap : à réconcilier (§9).</p>`,
+].join('');
+
+// ═════════════════════════ §5 TABLEAUX ═════════════════════════
+$('tblSpaces').innerHTML = table(['#', 'Espace', 'Nature', 'Repère / unité', 'Domaine', 'Type C++ qui le porte'], [
+  ['E0', 'Actif', '3D affine', 'celui du DCC', 'inconnu', 'fichier <code>.obj</code> / <code>.lod.json</code>'],
+  ['E1', 'Objet', '3D affine', 'pivot du mesh', 'AABB locale', '<code>positionsSoA</code> (px, py, pz), <code>FacePlanesSoA</code>'],
+  ['E2', 'Parent', '3D affine, <b>pile</b>', 'pivot du parent', 'par branche', '<code>m_localMatrix</code>'],
+  ['E3', 'Monde', '3D affine', 'scène, main droite, Y↑, −Z', 'ℝ³', '<code>m_worldMatrix</code>, <code>AABB3d</code> monde, <code>Frustum</code>'],
+  ['E4', 'Vue', '3D affine', 'œil, regarde −Z', 'z &lt; 0 devant', '<code>viewMatrix</code> (jamais de sommet stocké)'],
+  ['E5', 'Clip', '<b>4D projectif</b>', 'canonique', '0 ≤ z ≤ w, |x|,|y| ≤ w', '<code>Vec4f</code>, <code>ClipVertex</code>, <code>ClipSpaceBuffer</code> (Intersect)'],
+  ['E6', 'NDC', '3D', 'cube canonique', 'x,y ∈ [−1,1], z ∈ [0,1]', 'aucun : registres seulement'],
+  ['E7', 'Raster', '2,5D, Y vers le bas', 'pixels, origine du viewport', 'viewport (+ scissor)', '<code>RasterVertex {x, y, z, invW}</code>'],
+  ['E7·g', 'Grille sous-pixel <span class="tag acc">nouveau</span>', '2D quantifié', '1/256 px', '|x| &lt; 2<sup>20</sup> px', 'mêmes <code>float</code>, multiples de 1/256'],
+  ['E7·fx', 'Virgule fixe <span class="tag acc">nouveau</span>', '2D entier', 'entiers X = x·256', 'int32 / int64', '<code>EdgeSetupFx</code> (setup du noyau)'],
+  ['E8', 'Mémoire', '1D discret', 'octets (FB), éléments (DB)', '[0, pitch·H[', '<code>FrameBuffer</code>, <code>DepthBuffer</code>'],
+  ['<i>EX</i>', '<i>Tangent</i>', '<i>3D, base par sommet</i>', '(T, B, N)', '—', '<i>non implémenté</i>'],
+  ['<i>EY</i>', '<i>Texture (UV)</i>', '<i>2D</i>', '[0,1]²', '—', '<i>non fiable : <code>GetFaceView</code></i>'],
+], ['48px', '150px', '', '', '', '']);
+
+const RAIL = [
+  { id: 'E0', n: 'Actif', m: 'fichier', d: 'Hors moteur. Unité, axe haut et winding inconnus.' },
+  { g: 'OBJLoader + RegisterMesh', k: 'dest', b: 'import destructif' },
+  { id: 'E1', n: 'Objet', m: 'SoA', d: 'Constant. Cuissons : SoA des positions, plans de face (B5).' },
+  { g: 'm_localMatrix', k: 'rev', b: 'inverse générique' },
+  { id: 'E2', n: 'Parent', m: 'pile', d: 'Une matrice par niveau. Propagation descendante depuis les racines (L06).' },
+  { g: 'm_worldMatrix', k: 'rev', b: 'inverse générique' },
+  { id: 'E3', n: 'Monde', m: 'cull', d: 'Seul espace commun à toutes les vues : on y cull. Décide du chemin Inside / Intersect.' },
+  { g: 'inverseRigid', k: 'rev', b: 'm_worldMatrix — gratuit' },
+  { id: 'E4', n: 'Vue', m: 'œil', d: 'La caméra ne bouge jamais. Aucun mesh n’est connu ici : N vues par frame.' },
+  { g: 'projection', k: 'rev', b: 'inverse P' },
+  { id: 'E5', n: 'Clip', m: '4D', d: 'Espace de droites. Inside : registres. Intersect : ClipSpaceBuffer + clipping near.' },
+  { g: '÷ w', k: 'dest', b: 'seulement via invW' },
+  { id: 'E6', n: 'NDC', m: 'registres', d: 'N’existe plus en mémoire. z_ndc est affine en 1/w : c’est ce qui permet l’early-Z.' },
+  { g: 'ToRaster flip Y', k: 'rev', b: 'ToNDC' },
+  { id: 'E7', n: 'Raster', m: 'RasterVertex', d: 'Le type de l’étage faces. Origine = coin du viewport : split-screen gratuit.' },
+  { g: 'Snap 1/256', k: 'dest', b: 'borné : ≤ 1/512 px' },
+  { id: 'E7·g', n: 'Grille', m: '1/256 px', d: 'Un sommet, un accrochage : aire, boîte, centre et noyau voient la même position.' },
+  { g: 'centres x+½', k: 'dest', b: 'quantification : perdu' },
+  { id: 'E8', n: 'Mémoire', m: 'octets', d: 'FrameBuffer : y·pitch + 4x. DepthBuffer : y·W + x. Retour possible : invViewProjection.' },
+];
+function renderRail() {
+  const host = $('rail');
+  host.innerHTML = RAIL.map((r, i) => r.id
+    ? `<button class="rnode" data-i="${i}"><b>${r.id}</b>${r.n}<div class="m">${r.m}</div></button>`
+    : `<div class="rgate ${r.k}"><span class="op">${r.g}</span><span class="ar"></span><span class="bk">↩ ${r.b}</span></div>`).join('');
+  host.querySelectorAll('.rnode').forEach(b => b.onclick = () => {
+    host.querySelectorAll('.rnode').forEach(x => x.classList.toggle('on', x === b));
+    const r = RAIL[+b.dataset.i]; $('railDetail').innerHTML = `<b>${r.id} — ${r.n}.</b> ${r.d}`;
+  });
+  host.querySelector('.rnode').click();
+}
+renderRail();
+$('rAller').onclick = () => { $('rail').classList.remove('retour'); $('rAller').classList.add('on'); $('rRetour').classList.remove('on'); };
+$('rRetour').onclick = () => { $('rail').classList.add('retour'); $('rRetour').classList.add('on'); $('rAller').classList.remove('on'); };
+
+$('tblWork').innerHTML = table(['Espace', 'Entrée', 'Sortie', 'Travail qui n’a de sens QUE là'], [
+  ['E0', 'fichier <code>.obj</code>, options', '<code>MeshClass</code> enregistré', 'désindexation, échelle, <b>cuissons à la porte unique</b> <code>RegisterMesh</code>'],
+  ['E1', 'positions, indices, <code>vertsPerFace</code>', 'px/py/pz alignés, plans (n, d), AABB locale', 'rien par frame ; <b>pré-filtre face arrière B5</b> (s = L·E)'],
+  ['E2', 'Transform TRS, matrice du parent', 'une 4×4 par entité', 'composition hiérarchique, descendante'],
+  ['E3', '<code>m_worldMatrix</code>, AABB, plans du frustum', 'Outside / Inside / Intersect', '<b>culling</b>, choix du chemin, LOD (taille apparente)'],
+  ['E4', 'Transform caméra, lentille, viewport', '<code>ViewData</code> (V, P, VP, frustum)', '<code>inverseRigid</code> ; aucun sommet'],
+  ['E5', '<code>mvp</code> par instance', 'Vec4f (Intersect) ou registres (Inside)', '<b>clipping near</b> <code>w − z ≥ 0</code>, lerp exact des varyings'],
+  ['E6', 'clip post-clipping', 'NDC + <b>invW</b>', 'une division, trois multiplications — dans <code>ProjectClip</code> seulement'],
+  ['E7', 'NDC + invW + viewport', '<code>RasterVertex</code>', '<b>aire signée</b> (face arrière), boîte serrée, top-left, barycentriques'],
+  ['E7·g / E7·fx', 'RasterVertex accrochés', 'arêtes entières, boîte entière', 'couverture exacte (Giesen), <code>(e0|e1|e2) ≥ 0</code>'],
+  ['E8', 'pixel entier, barycentriques', 'ARGB, profondeur', '<b>early-Z</b> GREATER, écriture'],
+], ['90px', '', '', '']);
+
+$('tblTransit').innerHTML = table(['Frontière', 'Opérateur', 'Charge utile', 'Détruit au passage', 'Retour'], [
+  ['E0 → E1', '<code>OBJLoader</code>, <code>RegisterMesh</code>', 'positions (SoA), indices, plans de face, submeshes', 'repère et unités du DCC', '<span class="tag bad">non</span>'],
+  ['E1 → E3', 'MVP (via E2)', 'position ; normale via <code>(M⁻¹)ᵀ</code> ; <b>le signe de det(M)</b>', 'le serrage de l’AABB', '<span class="tag ok">oui</span>'],
+  ['E3 → E4', '<code>viewMatrix</code>', 'position — le frustum reste en E3', '—', '<span class="tag ok">gratuit</span>'],
+  ['E4 → E5', 'projection', 'Vec4f, <code>w</code> = distance à l’œil', 'la métrique', '<span class="tag ok">oui</span>'],
+  ['E5 → E5', '<code>ClipTriangleNear</code>', '<code>ClipVertex</code>, paramètre <code>t</code>', '1 triangle → 0, 1 ou 2', '<span class="tag bad">non</span>'],
+  ['E5 → E6', '<b>÷ w</b> (<code>ProjectClip</code>)', 'NDC <b>+ invW</b>', '<b>w</b>', '<span class="tag warn">via invW</span>'],
+  ['E6 → E7', '<code>ToRaster</code>', 'x, y pixels, z_ndc, invW → <code>RasterVertex</code>', '—', '<span class="tag ok">ToNDC</span>'],
+  ['E7 → E7·g', '<code>SnapToSubpixel</code>', 'x, y multiples de 1/256', '≤ 1/512 px de position', '<span class="tag warn">borné</span>'],
+  ['E7·g → E8', 'boîte serrée, arêtes, early-Z', 'uint32 ARGB, float profondeur', 'la position sous-pixel', '<span class="tag bad">non</span>'],
+  ['E8 → E3', '<code>invViewProjection</code>', 'position monde reconstruite (picking)', '—', 'le chemin de retour'],
+], ['100px', '', '', '', '90px']);
+
+$('tblOwner').innerHTML = table(['Espace', 'Propriétaire (dépôt actuel)', 'Ce qu’il ignore délibérément'], [
+  ['E0 → E1', '<code>OBJLoader</code>, <code>LodChainLoader</code>, <code>ResourceManager::RegisterMesh</code>', 'tout le rendu'],
+  ['E1', '<code>MeshClass</code> (SoA, plans cuits)', 'où il est dans le monde'],
+  ['E2', '<code>Hierarchy.cpp</code>, <code>LocalTransformSystem</code>, <code>WorldTransformSystem</code>', 'la caméra, les meshes'],
+  ['E3', '<code>Frustum</code>, <code>AABB3d</code>, <code>Plane</code>, boucle d’instances de <code>RenderSystem</code>', 'le rasterizer'],
+  ['E4', '<code>BuildViewData</code>, <code>ViewData</code>, <code>Projection</code>, <code>MatrixLib::inverseRigid</code>', 'tous les meshes'],
+  ['E5', '<code>VertexStage</code> (<code>TransformPositions</code>), <code>Clipper</code>, <code>ClipVertex</code>', 'les pixels'],
+  ['E5 → E7', '<code>VertexStage</code> : <code>ProjectClip</code>, <code>ProjectPositions</code>, <code>ProjectPositions8</code>', 'les faces'],
+  ['E6 → E7', '<code>Viewport</code> (seul à connaître les pixels et le flip Y)', 'les matrices'],
+  ['E7', '<code>FaceStage.h</code> (B4, B5, C3), <code>RenderSystem::EmitRasterTriangle</code>', 'le contenu du shading'],
+  ['E7·fx → E8', '<code>Rasterizer</code> (<code>SetupTriangleFx</code>), <code>PixelStage8</code>, <code>Fragment</code>', '<code>RenderSystem</code>'],
+  ['E8', '<code>FrameBuffer</code>, <code>DepthBuffer</code>, <code>ClearKernels</code>, SDL (EXE)', 'tout le reste'],
+], ['110px', '', '210px']);
+
+$('tblFreq').innerHTML = table(['Fréquence', 'Espaces traversés', 'Ce qui est calculé', 'Code'], [
+  ['par chargement', 'E0 → E1', 'SoA, plans de face, AABB', '<code>RegisterMesh</code>'],
+  ['par frame', 'E2 → E3', '<code>m_worldMatrix</code> de chaque entité', '<code>WorldTransformSystem</code>'],
+  ['par vue', 'E3 → E4 → E5', 'V, P, VP, frustum', '<code>BuildViewData</code>'],
+  ['par (instance, vue)', 'E1 → E3 → E5', '<code>mvp</code>, Classify, œil homogène E (B5), niveau de LOD', '<code>RenderSystem</code>'],
+  ['par sommet', 'E1 → E7 (E5, E6 en registres)', 'MulRow, ÷w, ToRaster, accrochage', '<code>ProjectPositions8</code>'],
+  ['par face (lots de 8)', 'E1 (B5) puis E7 (B4)', 'pré-filtre objet, aire, boîte serrée', '<code>FaceStage.h</code>'],
+  ['par pixel (blocs de 8)', 'E7·fx → E8', 'arêtes, barycentriques, profondeur', '<code>Rasterizer</code>, <code>PixelStage8</code>'],
+], ['150px', '', '', '']);
+// ═════════════════════════ §6 LES ÉTAPES ═════════════════════════
+const VPS = { x: 0, y: 0, w: 480, h: 300 };
+const CK = (function () {
+  const R = {};
+  R.model = mmul(mmul(scaleM(1, 1, 1), rotYM(30)), transM(0.5, 0.2, -6));
+  R.camW = ident(); R.V = inverseRigid(R.camW);
+  R.P = perspM(60, VPS.w / VPS.h, 0.1); R.VP = mmul(R.V, R.P); R.mvp = mmul(R.model, R.VP);
+  R.px = CUBE_V.map(p => p[0]); R.py = CUBE_V.map(p => p[1]); R.pz = CUBE_V.map(p => p[2]);
+  R.world = CUBE_V.map(p => mulRow(R.model, p));
+  R.view = R.world.map(p => mulRow(R.V, p));
+  R.clip = CUBE_V.map(p => mulRow(R.mvp, p));
+  R.invW = R.clip.map(c => div(1, c[3]));
+  R.ndc = R.clip.map((c, i) => [mul(c[0], R.invW[i]), mul(c[1], R.invW[i]), mul(c[2], R.invW[i])]);
+  R.raw = R.ndc.map(n => toRaster(VPS, n[0], n[1]));
+  // pendant AVX2 : viewport pré-multiplié par 256 (bit-exact, ×2^8 commute avec l’arrondi)
+  R.xr256 = R.ndc.map(n => add(F(VPS.x * 256), mul(add(mul(n[0], 0.5), 0.5), F(VPS.w * 256))));
+  R.yr256 = R.ndc.map(n => add(F(VPS.y * 256), mul(sub(0.5, mul(n[1], 0.5)), F(VPS.h * 256))));
+  R.xs = R.xr256.map(v => mul(F(roundEven(v)), F(1 / 256))); R.ys = R.yr256.map(v => mul(F(roundEven(v)), F(1 / 256)));
+  R.xsScal = R.raw.map(r => snap(r[0])); R.ysScal = R.raw.map(r => snap(r[1]));
+  R.rv = CUBE_V.map((_, i) => [R.xs[i], R.ys[i], R.ndc[i][2], R.invW[i]]);
+  // E3 : AABB monde et frustum
+  [R.wlo, R.whi] = transformAABB(R.model, [-1, -1, -1], [1, 1, 1]);
+  R.planes = frustumPlanes(R.VP, false); R.cls = classifyAABB(R.planes, R.wlo, R.whi);
+  // faces 0..7 (un lot de 8)
+  R.faces = CUBE_T.slice(0, 8);
+  R.area = R.faces.map(t => edge(R.rv[t[0]], R.rv[t[1]], R.rv[t[2]]));
+  R.front = R.area.map(a => !(a >= 0));
+  R.E = homogeneousEye(R.mvp);
+  R.planesF = R.faces.map(t => facePlane(CUBE_V[t[0]], CUBE_V[t[1]], CUBE_V[t[2]]));
+  R.s = R.planesF.map(L => planeDotE(L, R.E));
+  const maxAbsD = Math.max(...CUBE_T.map(t => Math.abs(facePlane(CUBE_V[t[0]], CUBE_V[t[1]], CUBE_V[t[2]])[3])));
+  R.tau = mul(F(1 / 64), add(F(Math.sqrt(R.E[0] * R.E[0] + R.E[1] * R.E[1] + R.E[2] * R.E[2])), mul(F(Math.abs(R.E[3])), F(maxAbsD))));
+  R.objBack = R.s.map(s => s < -R.tau);
+  R.boxes = R.faces.map(t => tightBox(R.rv[t[0]], R.rv[t[1]], R.rv[t[2]], VPS));
+  R.survive = R.front.map((f, i) => f && !R.boxes[i].empty);
+  // E5 Intersect : un triangle qui traverse le near (V = identité, donc mvp = P)
+  R.iv = [[-0.5, -0.2, -1.0], [0.5, -0.2, -1.0], [0.0, 0.3, 0.05]].map(p => p.map(F));
+  R.iclip = R.iv.map(p => mulRow(R.P, p));
+  R.iclipRes = clipNear(R.iclip);
+  // retour (étape 12) : sommet 4
+  R.invVP = invGeneric(R.VP);
+  const k = 4;
+  const ndr = toNDC(VPS, R.raw[k][0], R.raw[k][1]);           // depuis E7 NON accroché : erreur du float32 seul
+  const hr = mulRow(R.invVP, [ndr[0], ndr[1], R.ndc[k][2]]);
+  const pr = [div(hr[0], hr[3]), div(hr[1], hr[3]), div(hr[2], hr[3])];
+  const nd = toNDC(VPS, R.xs[k], R.ys[k]);
+  R.back = { k, nd, h: mulRow(R.invVP, [nd[0], nd[1], R.ndc[k][2]]) };
+  R.back.p = [div(R.back.h[0], R.back.h[3]), div(R.back.h[1], R.back.h[3]), div(R.back.h[2], R.back.h[3])];
+  R.back.err = Math.hypot(...R.back.p.map((v, i) => v - R.world[k][i]));
+  R.back.errRaw = Math.hypot(...pr.map((v, i) => v - R.world[k][i]));
+  const px = Math.floor(R.xs[k]) + 0.5, py = Math.floor(R.ys[k]) + 0.5, nd2 = toNDC(VPS, px, py);
+  const h2 = mulRow(R.invVP, [nd2[0], nd2[1], R.ndc[k][2]]);
+  R.back.pc = [div(h2[0], h2[3]), div(h2[1], h2[3]), div(h2[2], h2[3])];
+  R.back.errc = Math.hypot(...R.back.pc.map((v, i) => v - R.world[k][i]));
+  R.back.pix = [px - 0.5, py - 0.5];
+  return R;
+})();
+
+function lanes(rows, d = 4, labels) {
+  const head = '<tr><th class="rn">registre</th>' + Array.from({ length: 8 }, (_, j) => `<th${j === 4 ? ' class="sep"' : ''}>${labels ? labels[j] : 'c' + j}</th>`).join('') + '</tr>';
+  return '<div class="lanes"><table>' + head + rows.map(([n, arr, dd]) => '<tr><td class="rn">' + n + '</td>' +
+    arr.map((v, j) => `<td class="n${j === 4 ? ' sep' : ''}">${typeof v === 'string' ? v : fx(v, dd ?? d)}</td>`).join('') + '</tr>').join('') + '</table></div>';
+}
+const mat = (M, d = 4) => '<div class="tw"><table style="width:auto">' + M.map(r => '<tr>' + r.map(v => `<td class="n">${fx(v, d)}</td>`).join('') + '</tr>').join('') + '</table></div>';
+const bits = arr => arr.map(b => b ? '1' : '0').join('');
+const maskHex = arr => '0x' + arr.reduce((m, b, i) => m | (b ? 1 << i : 0), 0).toString(16).toUpperCase().padStart(2, '0');
+
+const STEPS = [
+  {
+    t: 'E0 → E1 : importer, puis cuire la SoA', sp: 'E0 → E1',
+    obj: 'Le fichier OBJ donne des sommets <b>AoS</b> (x, y, z collés). L’étage sommets AVX2 veut <b>8 x contigus</b>, 8 y, 8 z : la transposition est faite <b>une seule fois</b>, au chargement, à la porte unique <code>RegisterMesh</code>. C’est le principe DOD de la frontière E0 → E1 : payer la mise en forme quand la donnée naît, jamais dans la boucle chaude.',
+    inT: 'Entrée', inH: 'Fichier OBJ : 8 lignes <code>v x y z</code>, 12 faces <code>f a b c</code>. Coordonnées ±1.',
+    outT: 'Sortie — E1 en SoA, alignée 32 o', outH: 'Trois tableaux de 8 floats, un registre <code>ymm</code> chacun, aucune transposition à l’exécution.',
+    lanes: () => lanes([['px', CK.px, 1], ['py', CK.py, 1], ['pz', CK.pz, 1]]),
+    scal: `// MeshClass.h — E1 historique, AoS : un Vec3f par sommet
+std::vector<Vec3f> vertexPositions;      // x0 y0 z0 | x1 y1 z1 | ...
+const Vec3f& p = vertexPositions[i];     // 12 o, 1 lecture par sommet`,
+    simd: `// ResourceManager::RegisterMesh — porte UNIQUE de tout mesh
+mesh->BakePositionsSoA();    // px[], py[], pz[] alignes 32 o, bourrage = dernier sommet
+mesh->BakeFacePlanesSoA();   // B5 : plans (nx, ny, nz, d) cuits en double, stockes en float
+// ProjectPositions8 — 3 lectures, AUCUNE transposition (faite au chargement)
+const __m256 x = _mm256_load_ps(px + i);     // [x0 x1 x2 x3 | x4 x5 x6 x7]
+const __m256 y = _mm256_load_ps(py + i);
+const __m256 z = _mm256_load_ps(pz + i);`,
+    note: '<div class="note warn"><b>Ce qui manque encore à la porte unique :</b> <code>ComputeMeshAABB()</code>. <code>RegisterMesh</code> cuit la SoA et les plans, mais pas l’AABB. Si un chargeur l’oublie, le culling travaille sur une boîte invalide. Point C1-6 du §9.</div>'
+  },
+  {
+    t: 'E1 → E3 : la matrice monde', sp: 'E1 → E3',
+    obj: 'Placer l’objet dans le seul espace commun à toutes les vues. En vecteur-ligne, la composition se lit dans l’ordre d’application : <code>S · R · T</code> — d’abord l’échelle, puis la rotation, puis la translation. <b>Le moteur ne transforme pas les sommets en E3</b> : la matrice monde ne sert qu’à fabriquer la MVP et à transformer l’AABB. Les positions monde ci-dessous sont calculées pour comprendre.',
+    inT: 'Entrée — étape 1', inH: () => 'Sommets E1 : ' + CUBE_V.slice(0, 2).map(p => v3(p, 0)).join(', ') + ', …',
+    outT: 'Sortie — model (row-major, translation en ligne 3)', outH: () => mat(CK.model) + `<div class="kv"><span class="k">det(model)</span><span class="v">${fx(det3(CK.model), 6)} — main conservée</span></div>`,
+    lanes: () => lanes([['monde.x', CK.world.map(p => p[0])], ['monde.y', CK.world.map(p => p[1])], ['monde.z', CK.world.map(p => p[2])]]),
+    scal: `// Transform -> m_localMatrix (S.R.T), puis WorldTransformSystem :
+//   m_worldMatrix = m_localMatrix * parent.m_worldMatrix      (E2 replie en une matrice)
+// MulRow : composante c = ((x*m0c + y*m1c) + z*m2c) + m3c
+const Vec4f w = MulRow(model, p);   // forme de principe : le moteur ne le fait PAS par sommet`,
+    simd: null, simdNote: 'Pas de pendant vectorisé, volontairement : E3 n’est jamais matérialisé par sommet. La transformation monde est <b>fusionnée</b> dans la MVP (étape 5).',
+    note: '<div class="note"><b>La main de E1.</b> <code>det(model) &gt; 0</code> : E1 et E3 ont la même main. Avec une échelle négative, det &lt; 0 et le sens de rotation des faces s’inverse à l’écran (contre-exemple 7).</div>'
+  },
+  {
+    t: 'E3 : classer l’instance contre le frustum', sp: 'E3',
+    obj: 'Décider, <b>une fois par instance et par vue</b>, quel chemin prendront ses sommets. C’est la décision la plus structurante de la chaîne : <b>Inside</b> autorise la division par sommet (étapes 5 à 9 en un passage) parce qu’elle garantit <code>w ≥ near &gt; 0</code> ; <b>Intersect</b> l’interdit.',
+    inT: 'Entrée — étape 2', inH: () => 'AABB locale [−1, 1]³ transformée par <code>model</code> (8 coins, puis regrossie) :<br><code>' + v3(CK.wlo) + ' → ' + v3(CK.whi) + '</code>',
+    outT: 'Sortie', outH: () => `<div class="kv"><span class="k">résultat</span><span class="v"><span class="tag ok">${CK.cls.res}</span></span></div>` +
+      CK.cls.det.map(d => `<div class="kv"><span class="k">plan ${d.name} : p-vertex / n-vertex</span><span class="v">${fx(d.dp, 3)} / ${fx(d.dn, 3)}</span></div>`).join(''),
+    scal: `// Frustum::Classify — p-vertex / n-vertex : 1 ou 2 coins par plan, jamais 8
+for (const Plane& pl : planes)
+{
+    if (pl.SignedDistance(box.PVertex(pl.n)) < 0) return EIntersect::Outside;   // le coin le plus "dedans" est dehors
+    if (pl.SignedDistance(box.NVertex(pl.n)) < 0) result = EIntersect::Intersect;
+}
+return result;   // forme de principe — voir Frustum.cpp`,
+    simd: null, simdNote: 'Pas de pendant vectorisé : une décision par instance (quelques milliers par frame au plus). Le coût est négligeable devant l’étage sommets ; vectoriser cette boucle serait de l’optimisation sans mesure.',
+    note: '<div class="note warn"><b>Constat du lot V3 (roadmap).</b> Un mesh dont l’AABB contient la caméra est <b>toujours Intersect</b> : un niveau FPS d’un seul mesh n’utilise donc aucun des chemins rapides. La carte des espaces l’explique : le chemin Inside dépend d’une garantie <b>géométrique</b> (E3), pas d’un réglage.</div>'
+  },
+  {
+    t: 'E3 → E4 : la vue, inverse rigide', sp: 'E3 → E4',
+    obj: 'Amener le monde à la caméra : dans E4, l’œil est à l’origine et regarde −Z. La vue est l’<b>inverse</b> de la matrice monde de la caméra ; comme cette matrice est une isométrie, son inverse est une transposée plus une translation, jamais un Gauss-Jordan.',
+    inT: 'Entrée', inH: 'Caméra à l’origine, yaw 0 : <code>m_worldMatrix</code> = identité.',
+    outT: 'Sortie — viewMatrix', outH: () => mat(CK.V, 1) + '<span class="small">Identité ici : E4 = E3. Le cas n’en est que plus lisible — d = −z.</span>',
+    lanes: () => lanes([['vue.z', CK.view.map(p => p[2])], ['d = −vue.z', CK.view.map(p => F(-p[2]))]]),
+    scal: `// MatrixLib::inverseRigid — [R | t]  ->  [Rt | -t.Rt]
+viewMatrix = tr.m_worldMatrix.inverseRigid();
+// retour E4 -> E3 : on ne l'inverse PAS, on relit tr.m_worldMatrix (gratuit)`,
+    simd: null, simdNote: 'Une fois par vue : aucun intérêt à vectoriser.',
+    note: '<div class="note bad"><b>Contrat de <code>inverseRigid()</code> :</b> valable uniquement sur une isométrie. Si la caméra devient enfant d’une entité à échelle (L06), la composée n’est plus rigide et la vue est fausse, silencieusement. Prédiction pour le lot appairé, §8.</div>'
+  },
+  {
+    t: 'E4 → E5 : la MVP, puis MulRow par sommet', sp: 'E1 → E5',
+    obj: 'Traverser E3 et E4 <b>sans s’y arrêter</b>. La MVP <code>model · view · projection</code> est composée une fois par (instance, vue) ; chaque sommet n’en paye qu’une multiplication. <code>w</code> devient la distance à l’œil, <code>z</code> vaut <code>n</code> (far infini, reverse-Z).',
+    inT: 'Entrée — étapes 1 et 2', inH: () => 'px, py, pz (étape 1) et <code>mvp = model · VP</code> :' + mat(CK.mvp),
+    outT: 'Sortie — E5, dans 4 registres', outH: 'Les 4 composantes clip des 8 sommets. Jamais écrites en mémoire sur le chemin Inside.',
+    lanes: () => lanes([['cx', CK.clip.map(c => c[0])], ['cy', CK.clip.map(c => c[1])], ['cz', CK.clip.map(c => c[2])], ['cw', CK.clip.map(c => c[3])]]),
+    scal: `// VertexStage.cpp — ProjectPositions (pendant scalaire)
+const Matrix44f m = mvp;           // copie LOCALE : dst ne peut pas l'aliaser
+const Vec4f c = MulRow(m, src[i]); // ((x*m0c + y*m1c) + z*m2c) + m3c`,
+    simd: `// VertexStage.cpp — ProjectPositions8, etape 2
+// Le scalaire "a + b + c + d" s'evalue de GAUCHE a DROITE : memes parentheses ici.
+// Fusionner une mul et une add (vfmadd) changerait l'arrondi : interdit.
+const __m256 cw = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(
+    _mm256_mul_ps(x, m03), _mm256_mul_ps(y, m13)), _mm256_mul_ps(z, m23)), m33);
+// idem cx (m00, m10, m20, m30), cy, cz : 16 constantes diffusees HORS de la boucle`,
+    note: '<div class="note"><b>Règle du bit près.</b> Chaque intrinsèque reproduit une opération du scalaire, dans le même ordre : pas de FMA, pas de <code>rcp</code>. C’est ce qui permet à la TNR B3 de comparer les deux chemins <b>au bit près</b> (contre-exemple 3).</div>'
+  },
+  {
+    t: 'E5 : le domaine — contrat Inside, ou clipping near', sp: 'E5',
+    obj: 'Vérifier que chaque sommet est dans le domaine où la division a un sens. <b>Inside</b> : on ne teste rien, on <i>prouve</i> en Debug (<code>w &gt; 0</code> dans les 8 couloirs). <b>Intersect</b> : on mesure <code>w − z</code> et on coupe le triangle sur le plan near, dans E5, avant toute division. Le cas Intersect ci-dessous est un autre triangle, qui traverse le near.',
+    inT: 'Entrée — étape 5', inH: () => 'Inside : <code>cw</code> = ' + CK.clip.map(c => fx(c[3], 3)).join(' ') + '<br>Intersect (triangle de démonstration, vue = identité) :<br>' + CK.iclip.map((c, i) => `<code>${'ABC'[i]} = ${v4(c, 3)}</code>`).join('<br>'),
+    outT: 'Sortie', outH: () => {
+      const m = CK.clip.map(c => c[3] > 0);
+      let h = `<div class="kv"><span class="k">Inside : movemask(cw &gt; 0)</span><span class="v">${maskHex(m)} ${m.every(Boolean) ? '<span class="tag ok">0xFF attendu</span>' : '<span class="tag bad">assertion</span>'}</span></div>`;
+      h += `<div class="kv"><span class="k">Intersect : w − z (A, B, C)</span><span class="v">${CK.iclipRes.d.map(d => fx(d, 4)).join(' · ')}</span></div>`;
+      CK.iclipRes.poly.forEach((q, i) => { h += `<div class="kv"><span class="k">sortie ${i}${q.made ? ` (créé, t = ${fx(q.t, 5)})` : ''}</span><span class="v">${v4(q.c, 4)}</span></div>`; });
+      return h + `<div class="small">${CK.iclipRes.poly.length} sommets → ${CK.iclipRes.poly.length - 2} triangle(s), éventail depuis le sommet 0.</div>`;
+    },
+    scal: `// RenderSystem.cpp — chemin Intersect
+d[k] = NearDistance(cv[k]);            // w - z : forme CANONIQUE (perspective ET ortho)
+if (allOut) continue;                  // rejet trivial
+const int32_t n = ClipTriangleNear(tri, poly);   // Sutherland-Hodgman, 1 plan, t = dA / (dA - dB)
+for (int32_t q = 1; q + 1 < n; ++q)    // eventail : winding preserve
+    EmitRasterTriangle(renderer, view, ProjectClip(poly[0].clip, vp),
+                       ProjectClip(poly[q].clip, vp), ProjectClip(poly[q + 1].clip, vp), col);`,
+    simd: `// ProjectPositions8 — Inside : pas de test, une PREUVE (Debug / RelWithAsserts)
+// cmp -> 0xFFFFFFFF par couloir vrai ; movemask -> 1 bit par couloir ; 0xFF = les 8.
+// NaN -> faux -> assertion (voulu).
+LV3_ASSERT(_mm256_movemask_ps(_mm256_cmp_ps(cw, _mm256_setzero_ps(), _CMP_GT_OQ)) == 0xFF);`,
+    simdNote: 'Le clipping lui-même n’a <b>pas</b> de pendant vectorisé : il concerne environ 2 % des faces, et sa sortie est de taille variable (0, 3 ou 4 sommets) — le pire cas pour le SIMD.',
+  },
+  {
+    t: 'E5 → E6 : la division, une seule fois, un seul endroit', sp: 'E5 → E6',
+    obj: 'Passer de l’espace de droites à l’espace de points. C’est la frontière irréversible du chemin géométrique : <code>w</code> est détruit, <b>seul <code>invW</code> survit</b>. On multiplie ensuite par <code>invW</code> (on ne divise pas trois fois).',
+    inT: 'Entrée — étape 5', inH: () => 'cw = ' + CK.clip.map(c => fx(c[3], 4)).join(' · '),
+    outT: 'Sortie — E6 + le passager', outH: 'invW, puis xn, yn, zn. <code>zn</code> = n / w : affine en 1/w, donc interpolable par barycentriques affines (early-Z).',
+    lanes: () => lanes([['invW', CK.invW, 6], ['xn', CK.ndc.map(n => n[0])], ['yn', CK.ndc.map(n => n[1])], ['zn', CK.ndc.map(n => n[2]), 6]]),
+    scal: `// VertexStage.h — ProjectClip : LE seul endroit du moteur ou la division par w a lieu.
+const float invW = 1.0f / c.w;
+const Vec3f r = vp.ToRaster({ c.x * invW, c.y * invW, c.z * invW });`,
+    simd: `// ProjectPositions8, etapes 3 et 4
+// vdivps est IEEE exact, comme le divss du scalaire.
+// Jamais _mm256_rcp_ps (12 bits justes) : l'image ne serait plus celle du scalaire.
+const __m256 invW = _mm256_div_ps(one, cw);
+const __m256 xn = _mm256_mul_ps(cx, invW);
+const __m256 yn = _mm256_mul_ps(cy, invW);
+const __m256 zn = _mm256_mul_ps(cz, invW);   // reverse-Z, transmis tel quel`,
+    note: '<div class="note warn"><b>Règle grepable.</b> <code>1.0f / c.w</code> ne doit apparaître <b>qu’une fois</b> dans tout le dépôt (<code>ProjectClip</code>), plus sa copie AVX2 vérifiée par la TNR B3. Une deuxième division ailleurs est une deuxième formule de la même quantité : elle finira par diverger.</div>'
+  },
+  {
+    t: 'E6 → E7 : ToRaster et le flip Y', sp: 'E6 → E7',
+    obj: 'Passer du cube canonique aux pixels du viewport. <b>Le flip Y a lieu ici et nulle part ailleurs</b> : le NDC a Y vers le haut, le raster Y vers le bas. L’origine est le coin du <i>viewport</i>, pas du framebuffer — c’est ce qui rend le split-screen gratuit.',
+    inT: 'Entrée — étape 7', inH: () => 'xn = ' + CK.ndc.map(n => fx(n[0], 3)).join(' ') + '<br>yn = ' + CK.ndc.map(n => fx(n[1], 3)).join(' '),
+    outT: 'Sortie — E7 continu (avant accrochage)', outH: 'Pixels flottants. Pour le chemin AVX2 avec <code>LV3_RASTER_FIXED</code>, le résultat sort directement en 1/256 px (viewport pré-multiplié par 256).',
+    lanes: () => lanes([['xr', CK.raw.map(r => r[0])], ['yr', CK.raw.map(r => r[1])], ['xr·256 (AVX2)', CK.xr256, 3], ['yr·256 (AVX2)', CK.yr256, 3]]),
+    scal: `// Viewport.h — le SEUL fichier qui connait les pixels
+xr = float(x) + (xn * 0.5f + 0.5f) * float(width);
+yr = float(y) + (0.5f - yn * 0.5f) * float(height);   // <- le flip Y`,
+    simd: `// ProjectPositions8, etape 5 (LV3_RASTER_FIXED) : position en 1/256 px directement
+// Bit-exact : x2^8 ne touche que l'exposant, il commute avec chaque arrondi float.
+const __m256 xr256 = _mm256_add_ps(vpx256, _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(xn, half), half), vpw256));
+const __m256 yr256 = _mm256_add_ps(vpy256, _mm256_mul_ps(_mm256_sub_ps(half, _mm256_mul_ps(yn, half)), vph256));`,
+  },
+  {
+    t: 'E7 → E7·g : l’accrochage au 1/256 de pixel', sp: 'E7 → E7·g',
+    obj: 'Poser chaque sommet sur la grille des 1/256 de pixel, <b>une fois, dans l’étage sommets</b>. Ensuite, l’aire (B4), la boîte (3b), le centre (C3) et le noyau entier (Giesen) voient tous la même position : <code>x · 256</code> devient un entier exact.',
+    inT: 'Entrée — étape 8', inH: () => 'xr·256 = ' + CK.xr256.map(v => fx(v, 2)).join(' '),
+    outT: 'Sortie — E7·g', outH: () => {
+      const same = CK.xs.every((v, i) => v === CK.xsScal[i]) && CK.ys.every((v, i) => v === CK.ysScal[i]);
+      return `Arrondi au plus proche (pair en cas d’égalité), mode explicite, puis × 1/256. Scalaire et AVX2 : ${same ? '<span class="tag ok">identiques au bit</span>' : '<span class="tag bad">divergent</span>'}`;
+    },
+    lanes: () => lanes([['xs = round(xr·256)/256', CK.xs, 6], ['ys', CK.ys, 6], ['X = xs·256 (entier)', CK.xs.map(v => String(Math.round(v * 256)))], ['décalage x (px)', CK.xs.map((v, i) => v - CK.raw[i][0]), 6]]),
+    scal: `// Viewport.h — SnapToSubpixel (dans ProjectClip)
+const __m128 s = _mm_mul_ss(_mm_set_ss(v), _mm_set_ss(kSubpixelScale));            // v*256 exact
+const __m128 r = _mm_round_ss(s, s, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);  // entier le plus proche
+return _mm_cvtss_f32(_mm_mul_ss(r, _mm_set_ss(kSubpixelInv)));                      // *1/256 exact`,
+    simd: `// ProjectPositions8, etape 5b : le MEME arrondi que _mm_round_ss du scalaire
+const __m256 xr = _mm256_mul_ps(_mm256_round_ps(xr256, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC), kInv256);
+const __m256 yr = _mm256_mul_ps(_mm256_round_ps(yr256, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC), kInv256);
+// etape 6 : transposition 4x8 -> 8 RasterVertex {x, y, z, invW} (unpack, shuffle, permute2f128)`,
+    note: '<div class="note"><b>La roadmap mentionne un lot D-a1d</b> (accrochage par nombre magique, <code>x + 1,5·2<sup>15</sup> − 1,5·2<sup>15</sup></code>), livré le 06/11 mais encore à appliquer : le dépôt montre toujours <code>_mm_round_ss</code>. À vérifier au moment de clore ce lot.</div>'
+  },
+  {
+    t: 'E1 et E7 : la face arrière, deux expressions d’un même prédicat', sp: 'E1 + E7',
+    obj: 'Éliminer les faces qui tournent le dos à l’œil. La face regarde-t-elle l’œil ? En E7 : signe de l’aire raster (face avant = aire <b>négative</b>, à cause du flip Y). En E1 : signe de <code>s = L · E</code> (plan de la face · œil homogène). L’identité de Cauchy-Binet relie les deux : <code>aire = −K · s / (w0·w1·w2)</code>, K &gt; 0. Le test E1 est un pré-filtre <b>prudent</b> ; E7 garde le dernier mot.',
+    inT: 'Entrée — étapes 1, 5 et 9', inH: () => 'Faces 0 à 7 du cube (un lot de 8) ; sommets E7·g de l’étape 9 ; œil homogène tiré de la mvp :<br><code>E = ' + v4(CK.E, 4) + '</code> · <code>τ = ' + fx(CK.tau, 5) + '</code>',
+    outT: 'Sortie — deux masques de 8 bits', outH: () => `<div class="kv"><span class="k">front (E7, aire &lt; 0)</span><span class="v">${bits(CK.front)} = ${maskHex(CK.front)}</span></div>
+      <div class="kv"><span class="k">objBack (E1, s &lt; −τ)</span><span class="v">${bits(CK.objBack)} = ${maskHex(CK.objBack)}</span></div>
+      <div class="kv"><span class="k">accord : objBack ⊆ ¬front</span><span class="v">${CK.objBack.every((b, i) => !b || !CK.front[i]) ? '<span class="tag ok">oui</span>' : '<span class="tag bad">rejet faux</span>'}</span></div>`,
+    lanes: () => lanes([['aire raster', CK.area, 1], ['front', CK.front.map(b => b ? '1' : '0')], ['s = L·E', CK.s, 4], ['objBack', CK.objBack.map(b => b ? '1' : '0')]], 4, Array.from({ length: 8 }, (_, j) => 'f' + j)),
+    scal: `// Rasterizer.h — convention MESUREE, verrouillee par test unitaire
+//   front-face LV3 = CCW en espace VUE -> ToRaster inverse Y -> aire d'une face AVANT < 0
+[[nodiscard]] LV3_FORCEINLINE bool IsBackFacing(float signedArea) noexcept
+{ return signedArea >= 0.0f; }     // le >= rejette aussi l'aire nulle
+// B5, version scalaire de lecture (non integree) : IsSurelyBackFacing(planes, f, E, tau)`,
+    simd: `// FaceStage.h — B5 : 4 lectures CONTIGUES, aucun gather
+const __m256 s = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(
+    _mm256_mul_ps(_mm256_load_ps(nx), ex), _mm256_mul_ps(_mm256_load_ps(ny), ey)),
+    _mm256_mul_ps(_mm256_load_ps(nz), ez)), _mm256_mul_ps(_mm256_load_ps(d), ew));
+// _CMP_LT_OQ : NaN -> FAUX = "pas sur", l'ecran decide (un doute ne rejette JAMAIS)
+uint32_t objBack = _mm256_movemask_ps(_mm256_cmp_ps(s, negTau, _CMP_LT_OQ));
+// FaceStage.h — B4 : aire de 8 faces (3 x LoadCornerXY8 = 24 lectures dispersees)
+const __m256 area  = _mm256_sub_ps(_mm256_mul_ps(ux, vy), _mm256_mul_ps(uy, vx));   // PAS de fmsub
+const __m256 front = _mm256_cmp_ps(area, _mm256_setzero_ps(), _CMP_NGE_UQ);         // NaN = AVANT`,
+  },
+  {
+    t: 'E7·g → E8 : centres de pixel, profondeur, adresse', sp: 'E7·g → E8',
+    obj: 'Passer des positions continues aux cases mémoire. Trois règles : un pixel est couvert si son <b>centre</b> <code>x+½</code> l’est ; la profondeur passe si elle est <b>plus grande</b> (reverse-Z, clear à 0) ; et les deux buffers ne s’indexent <b>pas</b> de la même façon.',
+    inT: 'Entrée — étapes 9 et 10', inH: () => { const t = CUBE_T[0]; return 'Face f0 (avant), sommets ' + t.map(i => `(${fx(CK.xs[i], 2)}, ${fx(CK.ys[i], 2)})`).join(', '); },
+    outT: 'Sortie', outH: () => {
+      const b = CK.boxes[0], L = b.loose; const k = CUBE_T[0][0];
+      const tight = (b.x1 - b.x0) * (b.y1 - b.y0), loose = (L[2] - L[0]) * (L[3] - L[1]);
+      return `<div class="kv"><span class="k">boîte serrée [x0, x1[ × [y0, y1[</span><span class="v">[${b.x0}, ${b.x1}[ × [${b.y0}, ${b.y1}[ = ${tight} centres</span></div>
+      <div class="kv"><span class="k">boîte lâche (floor / ceil+1)</span><span class="v">${loose} tests</span></div>
+      <div class="kv"><span class="k">z_ndc au sommet ${k} — test GREATER vs clear 0</span><span class="v">${fx(CK.ndc[k][2], 6)} &gt; 0 <span class="tag ok">passe</span></span></div>
+      <div class="kv"><span class="k">pixel (${b.x0}, ${b.y0}) : FrameBuffer</span><span class="v">${b.y0} · 1920 + 4 · ${b.x0} = ${b.y0 * 1920 + 4 * b.x0} o</span></div>
+      <div class="kv"><span class="k">pixel (${b.x0}, ${b.y0}) : DepthBuffer</span><span class="v">${b.y0} · 480 + ${b.x0} = ${b.y0 * 480 + b.x0}</span></div>
+      <div class="kv"><span class="k">survive (front ∧ boîte non vide), lot</span><span class="v">${bits(CK.survive)}</span></div>`;
+    },
+    scal: `// TightPixelBox — premiers / derniers CENTRES couverts
+x0 = int(std::ceil (minX - 0.5f));  x1 = int(std::floor(maxX - 0.5f)) + 1;   // [x0, x1[
+vp.ClampBox(x0, y0, x1, y1);        // scissor : pas de clipping lateral
+// E8 : deux regles d'indexation
+uint8_t* row = fb.pixels + y * fb.pitch;      // OCTETS : SDL peut aligner la ligne
+float&   z   = db.data[y * db.Width() + x];   // ELEMENTS : le DepthBuffer possede sa memoire`,
+    simd: `// FaceStage.h — ClassifyFacesT8, etape 5 : la meme boite pour 8 faces
+__m256i x0 = _mm256_cvttps_epi32(_mm256_round_ps(_mm256_sub_ps(minX, half), kCeil));
+__m256i x1 = _mm256_add_epi32(
+    _mm256_cvttps_epi32(_mm256_round_ps(_mm256_sub_ps(maxX, half), kFloor)), one);
+// etape 7 : non vide == (x1 > x0 && y1 > y0)
+const __m256i nonEmpty = _mm256_and_si256(_mm256_cmpgt_epi32(x1, x0), _mm256_cmpgt_epi32(y1, y0));`,
+  },
+  {
+    t: 'Retour E8 → E3 : reconstruire le monde depuis l’écran', sp: 'E8 → E3',
+    obj: 'Le chemin que personne ne dessine : picking, reconstruction de la position monde depuis le Z-buffer, effets en espace écran. Il n’existe que parce que <code>invW</code> (ou <code>z_ndc</code>) a été conservé, et il ne peut pas annuler la quantification.',
+    inT: 'Entrée — étapes 9 et 7', inH: () => { const k = CK.back.k; return `Sommet ${k} : E7·g (${fx(CK.xs[k], 6)}, ${fx(CK.ys[k], 6)}), z_ndc = ${fx(CK.ndc[k][2], 6)}<br>Position monde d’origine (étape 2) : ${v3(CK.world[k])}`; },
+    outT: 'Sortie', outH: () => `<div class="kv"><span class="k">ToNDC</span><span class="v">(${fx(CK.back.nd[0], 6)}, ${fx(CK.back.nd[1], 6)})</span></div>
+      <div class="kv"><span class="k">(ndc, 1) · invVP</span><span class="v">${v4(CK.back.h, 5)}</span></div>
+      <div class="kv"><span class="k">÷ w → monde</span><span class="v">${v3(CK.back.p, 5)}</span></div>
+      <div class="kv"><span class="k">erreur depuis E7 non accroché (float32 seul)</span><span class="v">${CK.back.errRaw.toExponential(2)}</span></div>
+      <div class="kv"><span class="k">erreur depuis E7·g (+ accrochage ≤ 1/512 px)</span><span class="v">${CK.back.err.toExponential(2)}</span></div>
+      <div class="kv"><span class="k">erreur, depuis le centre du pixel (${CK.back.pix.join(', ')})</span><span class="v">${CK.back.errc.toExponential(2)}</span></div>`,
+    scal: `// ViewData : invViewProjection calculee PARESSEUSEMENT, une fois par vue
+Viewport::ToNDC(xr, yr, xn, yn);                 // l'inverse exact du flip Y
+const Vec4f h = MulRow(view.InverseViewProjection(), { xn, yn, zNdc });
+const Vec3f world = { h.x / h.w, h.y / h.w, h.z / h.w };   // forme de principe`,
+    simd: null, simdNote: 'Pas de pendant vectorisé dans le dépôt : le picking est ponctuel. Une reconstruction plein écran (lumière différée, L10) le vectorisera ligne par ligne.',
+    note: '<div class="note"><b>Lire les trois erreurs.</b> Depuis E7 non accroché, il ne reste que l’arrondi float32 de l’aller et du retour. Depuis E7·g s’ajoute l’accrochage : borné (≤ 1/512 px), donc une erreur bornée, de l’ordre de quelques 10⁻⁵ m à 5 m. Depuis le centre du pixel, elle grimpe encore d’un ou deux ordres de grandeur : c’est la <b>quantification</b>, la frontière irréversible. Aucune matrice ne la rattrape.</div>'
+  },
+];
+
+function renderSteps() {
+  const bar = $('stepbar'), host = $('steps');
+  bar.innerHTML = STEPS.map((s, i) => `<button data-s="${i}">${i + 1} · ${s.sp}</button>`).join('');
+  host.innerHTML = STEPS.map((s, i) => {
+    const val = x => typeof x === 'function' ? x() : x;
+    let h = `<div class="step card" data-s="${i}" style="display:none"><h3 style="margin-top:0">Étape ${i + 1} — ${s.t}</h3>`;
+    h += `<p class="obj"><b>Objectif.</b> ${s.obj}</p>`;
+    h += `<div class="io"><div class="box in"><h5>${s.inT}</h5>${val(s.inH)}</div><div class="box out"><h5>${s.outT}</h5>${val(s.outH)}</div></div>`;
+    if (s.lanes) h += `<h4>Valeurs couloir par couloir (float32)</h4>` + s.lanes();
+    h += `<div class="codehead">Scalaire</div>` + pre(s.scal);
+    if (s.simd) h += `<div class="codehead">AVX2 — pendant vectorisé</div>` + pre(s.simd);
+    if (s.simdNote) h += `<p class="small"><b>Vectorisé :</b> ${s.simdNote}</p>`;
+    if (s.note) h += s.note;
+    return h + '</div>';
+  }).join('');
+  const show = i => {
+    bar.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.s === i));
+    host.querySelectorAll('.step').forEach(d => d.style.display = (+d.dataset.s === i) ? 'block' : 'none');
+  };
+  bar.querySelectorAll('button').forEach(b => b.onclick = () => show(+b.dataset.s));
+  show(0);
+}
+renderSteps();
+// ═════════════════════════ §7 CONTRE-EXEMPLES ═════════════════════════
+function ceCard(n, title, space, body, verdict) {
+  return `<div class="card"><h3 style="margin-top:0">${n} — ${title} <span class="tag bad">${space}</span></h3>${body}${verdict ? `<div class="note bad">${verdict}</div>` : ''}</div>`;
+}
+const CE = [];
+// CE1 — diviser avant de clipper
+(function () {
+  const P = CK.P, c = mulRow(P, [F(0.4), F(0.3), F(0.5)]);   // sommet DERRIÈRE l’œil (z vue > 0)
+  const bad = projectClip(c, VPS, false), good = mulRow(P, [F(0.4), F(0.3), F(-0.5)]), gp = projectClip(good, VPS, false);
+  CE.push(ceCard(1, 'Diviser par w avant de clipper', 'E5 traité comme E6',
+    `<p class="small">Deux sommets symétriques par rapport à l’œil : (0,4 ; 0,3 ; −0,5) devant, (0,4 ; 0,3 ; +0,5) derrière.</p>
+     <div class="tw"><table>${table(['', 'clip (x, y, z, w)', 'w − z', 'raster après ÷w'], [
+      ['devant', v4(good, 3), fx(sub(good[3], good[2]), 3), `(${fx(gp.raw[0], 1)}, ${fx(gp.raw[1], 1)})`],
+      ['derrière', v4(c, 3), fx(sub(c[3], c[2]), 3), `(${fx(bad.raw[0], 1)}, ${fx(bad.raw[1], 1)}) <span class="tag bad">miroir</span>`]])}</table></div>
+     <p class="small">Le point de derrière, divisé par un <code>w</code> négatif, atterrit à l’<b>opposé</b> du centre de l’écran : x et y changent de côté. Le triangle qui le contient traverse alors tout l’écran.</p>`,
+    'Symptôme : quand la caméra recule dans un objet, une face « réapparaît » en miroir de l’autre côté de l’écran. Aucune erreur, aucun NaN. Remède : clipper dans E5 (w − z ≥ 0), puis seulement diviser.'));
+})();
+// CE2 — rcp au lieu de div
+(function () {
+  const rcp = w => { const r = 1 / w; const e = Math.floor(Math.log2(Math.abs(r))); const q = Math.pow(2, e - 11); return F(Math.round(r / q) * q); };   // 12 bits de mantisse
+  let diffs = 0; const rows = [];
+  for (let j = 0; j < 8; j++) {
+    const c = CK.clip[j], iw = rcp(c[3]);
+    const xr = toRaster(VPS, mul(c[0], iw), mul(c[1], iw)); const xs = snap(xr[0]), ys = snap(xr[1]);
+    const d = xs !== CK.xs[j] || ys !== CK.ys[j]; if (d) diffs++;
+    if (j < 3) rows.push(['c' + j, fx(CK.invW[j], 8), fx(iw, 8), fx((xr[0] - CK.raw[j][0]) * 256, 2) + ' / 256 px', d ? '<span class="tag bad">autre case</span>' : 'même case']);
+  }
+  CE.push(ceCard(2, 'Remplacer la division par <code>_mm256_rcp_ps</code>', 'E5 → E6',
+    `<p class="small"><code>rcpps</code> ne garantit qu’environ 12 bits justes (simulé ici en tronquant 1/w à 12 bits de mantisse). C’est 3 à 4 fois plus rapide que <code>vdivps</code> — et faux.</p>
+    <div class="tw"><table>${table(['couloir', 'invW (vdivps)', 'invW (rcp simulé)', 'écart en x', 'grille 1/256'], rows)}</table></div>
+    <p class="small"><b>${diffs} sommets sur 8</b> changent de case sur la grille sous-pixel. L’AVX2 ne produit plus l’image du scalaire : la TNR B3 tombe, et deux triangles voisins peuvent ne plus partager exactement la même arête.</p>`,
+    'Règle : jamais rcp, ni seul ni avec Newton-Raphson (la roadmap B3 mesure 99,98 % puis 38 % de sommets différents). La division IEEE est la seule qui garantit le bit près.'));
+})();
+// CE3 — FMA
+(function () {
+  let diff = 0, N = 20000, ex = null; let seed = 12345;
+  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i = 0; i < N; i++) {
+    const p = [F(rnd() * 2 - 1), F(rnd() * 2 - 1), F(rnd() * 2 - 1)];
+    const a = mulRow(CK.mvp, p), b = mulRowFMA(CK.mvp, p);
+    if (a.some((v, k) => v !== b[k])) { diff++; if (!ex) { const k = a.findIndex((v, kk) => v !== b[kk]); ex = { p, k, a: a[k], b: b[k] }; } }
+  }
+  CE.push(ceCard(3, 'Laisser le compilateur fusionner en FMA', 'E1 → E5',
+    `<p class="small">Une FMA calcule <code>a·b + c</code> avec <b>un seul</b> arrondi au lieu de deux. Plus précis — mais différent du scalaire. Sur ${N} sommets tirés dans le cube, avec la mvp de l’étape 5 :</p>
+    <div class="kv"><span class="k">sommets dont au moins une composante clip diffère</span><span class="v">${diff} (${(100 * diff / N).toFixed(1)} %)</span></div>
+    ${ex ? `<div class="kv"><span class="k">exemple, composante ${'xyzw'[ex.k]}</span><span class="v">${fx(ex.a, 8)} (${f32hex(ex.a)}) contre ${fx(ex.b, 8)} (${f32hex(ex.b)})</span></div>` : ''}
+    <p class="small">Un bit de différence sur <code>w</code> suffit à faire basculer un sommet d’une case de la grille 1/256, donc une arête de Giesen, donc un pixel de bord.</p>`,
+    'Règle du bit près : pas de vfmadd dans VertexStage.cpp ni FaceStage.h (vérifié à l’asm, /fp:fast interdit par #error). La TNR compare scalaire et AVX2 au bit : elle exige des formules identiques, arrondi par arrondi.'));
+})();
+// CE4 — test de face arrière calibré sur le NDC
+(function () {
+  const t = CUBE_T[0];
+  const aR = edge(CK.rv[t[0]], CK.rv[t[1]], CK.rv[t[2]]);
+  const aN = edge(CK.ndc[t[0]], CK.ndc[t[1]], CK.ndc[t[2]]);
+  CE.push(ceCard(4, 'Écrire le test de face arrière pour le NDC', 'E6 ≠ E7',
+    `<p class="small">Face f0 du cube, qui regarde la caméra :</p>
+    <div class="kv"><span class="k">aire en NDC (Y vers le haut)</span><span class="v">${fx(aN, 5)} → « avant si &gt; 0 »</span></div>
+    <div class="kv"><span class="k">aire en raster (Y vers le bas)</span><span class="v">${fx(aR, 1)} → avant si &lt; 0 (LV3)</span></div>
+    <p class="small">Mêmes trois sommets, signe opposé : <code>ToRaster</code> est une symétrie. Un test calibré en NDC et exécuté en raster jette <b>exactement</b> les faces avant (active le cas particulier dans le §3).</p>`,
+    'Symptôme : on voit l’intérieur du cube. C’est le bug historique de la L05, corrigé en L04 par IsBackFacing(area) = area ≥ 0, convention mesurée et verrouillée par un test unitaire.'));
+})();
+// CE5 — pitch
+(function () {
+  const W = 1922, pitch = Math.ceil(W * 4 / 64) * 64, x = 10, y = 100;
+  const good = y * pitch + 4 * x, bad = y * W * 4 + 4 * x;
+  const ry = Math.floor(bad / pitch), rx = (bad - ry * pitch) / 4;
+  CE.push(ceCard(5, 'Indexer le FrameBuffer en <code>y·width + x</code>', 'E8 confondu avec E7',
+    `<p class="small">Une texture de largeur ${W} dont la ligne est alignée sur 64 octets (exemple : l’alignement réel est choisi par SDL et le pilote).</p>
+    <div class="kv"><span class="k">pitch réel</span><span class="v">${pitch} o (et non ${W * 4})</span></div>
+    <div class="kv"><span class="k">pixel (${x}, ${y}) — y·pitch + 4x</span><span class="v">${good} o</span></div>
+    <div class="kv"><span class="k">pixel (${x}, ${y}) — 4·(y·W + x)</span><span class="v">${bad} o → écrit en (${rx}, ${ry})</span></div>
+    <p class="small">Le décalage grandit de ${pitch - W * 4} octets par ligne : l’image part en escalier. En 1920 de large, 7680 est déjà multiple de 64 : le bug se tait.</p>`,
+    'Le FrameBuffer s’adresse en octets (pitch), le DepthBuffer en éléments (il possède sa mémoire). Deux règles, deux espaces E8 : ne jamais factoriser l’indexation des deux.'));
+})();
+// CE6 — normale transformée par M
+(function () {
+  const s = [1, 3, 1], n = [Math.SQRT1_2, Math.SQRT1_2, 0], t = [1, -1, 0];
+  const nb = n.map((v, i) => v * s[i]), ng = n.map((v, i) => v / s[i]), tw = t.map((v, i) => v * s[i]);
+  const nrm = a => { const l = Math.hypot(...a); return a.map(x => x / l); };
+  const NB = nrm(nb), NG = nrm(ng), TW = nrm(tw);
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const ang = Math.acos(Math.min(1, dot(NB, NG))) * 180 / Math.PI;
+  CE.push(ceCard(6, 'Transformer une normale par M', 'covecteur traité comme un vecteur',
+    `<p class="small">Échelle (1, 3, 1). Une face inclinée à 45° : normale (0,707 ; 0,707 ; 0), tangente (1 ; −1 ; 0).</p>
+    <div class="kv"><span class="k">normale par M</span><span class="v">${v3(NB, 4)} — tangente·n = ${fx(dot(TW, NB), 4)}</span></div>
+    <div class="kv"><span class="k">normale par (M⁻¹)ᵀ</span><span class="v">${v3(NG, 4)} — tangente·n = ${fx(dot(TW, NG), 4)}</span></div>
+    <div class="kv"><span class="k">écart angulaire</span><span class="v">${ang.toFixed(1)}°</span></div>`,
+    'Éclairage faux uniquement sur les objets à échelle non uniforme, et parfait partout ailleurs : le pire des bugs à diagnostiquer. Une normale est un covecteur : elle traverse E1 → E3 par (M⁻¹)ᵀ.'));
+})();
+// CE7 — miroir
+(function () {
+  const count = (sx) => {
+    const model = mmul(mmul(scaleM(sx, 1, 1), rotYM(30)), transM(0.5, 0.2, -6)), mvp = mmul(model, CK.VP);
+    const rv = CUBE_V.map(p => projectClip(mulRow(mvp, p), VPS, true).r);
+    let front = 0, wrong = 0;
+    CUBE_T.forEach(tr => {
+      const a = edge(rv[tr[0]], rv[tr[1]], rv[tr[2]]); const isF = !(a >= 0);
+      // vérité : normale monde réelle (signe corrigé par det) · (œil − p)
+      const w = tr.map(i => mulRow(model, CUBE_V[i]));
+      const u = [0, 1, 2].map(k => w[1][k] - w[0][k]), v = [0, 1, 2].map(k => w[2][k] - w[0][k]);
+      let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+      if (det3(model) < 0) n = n.map(x => -x);
+      const facing = -(n[0] * w[0][0] + n[1] * w[0][1] + n[2] * w[0][2]) > 0;
+      if (isF) front++; if (isF !== facing) wrong++;
+    });
+    return { front, wrong };
+  };
+  const a = count(1), b = count(-1);
+  CE.push(ceCard(7, 'Oublier que la main de E1 peut changer', 'det(model) &lt; 0',
+    `<div class="kv"><span class="k">échelle x = +1 : faces dessinées / verdicts faux</span><span class="v">${a.front} / 12 — ${a.wrong} faux</span></div>
+     <div class="kv"><span class="k">échelle x = −1 : faces dessinées / verdicts faux</span><span class="v">${b.front} / 12 — <b>${b.wrong} faux</b></span></div>
+     <p class="small">Le miroir inverse l’ordre des sommets à l’écran. Le moteur dessine les faces qui tournent le dos et jette celles qui regardent : l’objet apparaît « en creux ». B5 a le même comportement (E suit le signe de det), ce qui est cohérent — et c’est précisément pourquoi la correction doit toucher <b>les deux tests à la fois</b>.</p>`,
+    'Dette connue (révélée par B5), aucune scène actuelle concernée. Correction prévue : inverser la convention quand det(model) &lt; 0, comme Unity. La L06 la rendra probable : un parent à échelle négative contamine toute sa descendance.'));
+})();
+// CE8 — AABB locale contre plans monde
+(function () {
+  const model = transM(8, 0, 0), camW = mmul(rotYM(-90), transM(3, 0, 0)), V = inverseRigid(camW), VP = mmul(V, CK.P);
+  const planes = frustumPlanes(VP, false);
+  const [lo, hi] = transformAABB(model, [-1, -1, -1], [1, 1, 1]);
+  const good = classifyAABB(planes, lo, hi).res, bad = classifyAABB(planes, [-1, -1, -1], [1, 1, 1]).res;
+  CE.push(ceCard(8, 'Classer une AABB restée en E1 contre des plans en E3', 'deux espaces dans un test',
+    `<p class="small">Caméra en (3, 0, 0) regardant +X ; cube placé en (8, 0, 0), donc bien devant elle.</p>
+    <div class="kv"><span class="k">AABB transformée en E3 : [${v3(lo, 0)} → ${v3(hi, 0)}]</span><span class="v"><span class="tag ok">${good}</span></span></div>
+    <div class="kv"><span class="k">AABB locale E1 : [−1, 1]³, utilisée telle quelle</span><span class="v"><span class="tag bad">${bad}</span></span></div>`,
+    'L’objet disparaît alors qu’il est en plein écran — et réapparaît quand il passe près de l’origine du monde. Les plans et la boîte doivent signer le même contrat d’espace.'));
+})();
+// CE9 — inverseRigid sur une caméra à échelle
+(function () {
+  const camW = mmul(scaleM(2, 2, 2), transM(0, 0, 5)), Vr = inverseRigid(camW), Vg = invGeneric(camW);
+  const p = [F(1), F(1), F(-5)], a = mulRow(Vr, p), b = mulRow(Vg, p);
+  CE.push(ceCard(9, 'Appeler <code>inverseRigid()</code> sur une transformation non rigide', 'contrat E3 → E4',
+    `<p class="small">Caméra avec une échelle 2 (par exemple héritée d’un parent, en L06), point monde (1, 1, −5).</p>
+    <div class="kv"><span class="k">vue par inverseRigid</span><span class="v">${v3(a, 3)}</span></div>
+    <div class="kv"><span class="k">vue par inverse générique</span><span class="v">${v3(b, 3)}</span></div>`,
+    'inverseRigid transpose la rotation : avec une échelle, la transposée n’est plus l’inverse. La vue est fausse d’un facteur 4 sur les axes, sans aucune assertion. Remède : un filet Debug qui vérifie l’orthonormalité avant l’appel.'));
+})();
+$('ceHost').innerHTML = CE.join('');
+
+// ═════════════════════════ §8 VÉRIFIER ═════════════════════════
+$('verHost').innerHTML = `
+  <h3>Les tests hors moteur</h3>
+  <div class="card tight tw"><table>${table(['#', 'Test', 'Critère', 'État'], [
+    ['V1', 'Aller-retour E3 → E7 → E3 par <code>invViewProjection</code> (étape 12)', `sans accrochage : erreur ≤ 10⁻⁵ m à 5 m — mesuré ici : ${CK.back.errRaw.toExponential(2)} ; avec accrochage, bornée par 1/512 px — mesuré : ${CK.back.err.toExponential(2)}`, CK.back.errRaw < 1e-5 ? '<span class="tag ok">OK</span>' : '<span class="tag warn">à revoir</span>'],
+    ['V2', 'TNR B3 : <code>ProjectPositions</code> contre <code>ProjectPositions8</code>', 'identiques au bit, accrochage compris', '<span class="tag ok">existante</span>'],
+    ['V3', 'TNR B5 : pré-filtre E1 contre aire E7', '0 rejet faux (11,9 M faces)', '<span class="tag ok">existante</span>'],
+    ['V4', 'Convention de face avant', 'face CCW en vue → aire raster &lt; 0 (test unitaire de la L04)', '<span class="tag ok">existante</span>'],
+    ['V5', 'Miroir : cube à échelle x = −1', 'nombre de faces dessinées identique à x = +1 (aujourd’hui : différent, cf. CE7)', '<span class="tag warn">proposé</span>'],
+    ['V6', 'Caméra enfant d’un parent à échelle (L06)', 'assertion avant <code>inverseRigid</code>', '<span class="tag warn">proposé</span>'],
+    ['V7', 'Contre-exemple positif du V5', 'un objet non miroir reste dessiné à l’identique (sinon le test ne prouve rien)', '<span class="tag warn">proposé</span>'],
+  ])}</table></div>
+
+  <h3>Les règles « grepables »</h3>
+  <p class="small">Une consolidation se vérifie aussi par recherche textuelle : chaque espace a un propriétaire, et une formule qui apparaît deux fois est une formule qui divergera.</p>
+  <div class="card tight tw"><table>${table(['Recherche', 'Attendu', 'Pourquoi'], [
+    ['<code>/ c.w</code> , <code>/ clip.w</code>', '1 occurrence : <code>ProjectClip</code> (+ <code>_mm256_div_ps(one, cw)</code> dans <code>ProjectPositions8</code>)', 'E5 → E6 a un seul propriétaire'],
+    ['<code>0.5f - yn</code> , <code>0.5 - yn</code>', '<code>Viewport::ToRaster</code> + sa copie AVX2 dans <code>ProjectPositions8</code>', 'le flip Y a un seul propriétaire ; la copie est gardée par la TNR B3'],
+    ['<code>SnapToSubpixel</code>', 'appelée dans <code>ProjectClip</code> seulement ; pendant AVX2 étape 5b', 'un sommet, un accrochage'],
+    ['<code>static_cast&lt;FragmentContext*&gt;</code>', '1 occurrence (<code>AsFragmentContext</code>)', 'E8 : la sentinelle <code>magic</code> doit toujours être vérifiée (L4-8)'],
+    ['<code>vfmadd</code> dans l’asm de <code>VertexStage</code> / <code>RenderSystem</code>', '0', 'règle du bit près'],
+    ['<code>inverseRigid(</code>', 'uniquement sur des matrices de caméra', 'contrat d’isométrie'],
+  ])}</table></div>
+
+  <h3>Les filets Debug en place</h3>
+  ${pre(`// VertexStage.cpp — contrat Inside, prouve sur ~5e7 sommets en RelWithAsserts
+LV3_ASSERT(c.w > 0.0f);
+LV3_ASSERT(_mm256_movemask_ps(_mm256_cmp_ps(cw, _mm256_setzero_ps(), _CMP_GT_OQ)) == 0xFF);
+// ResourceManager::RegisterMesh — plafond de sommets verifie UNE fois, a la porte d'entree
+if (mesh->vertexCount() > kMaxMeshVerticesHard) return MeshHandle::Invalid();
+// Clipper.cpp — la sortie ne peut valoir que 0, 3 ou 4
+LV3_ASSERT(count == 3 || count == 4);
+// FaceStage.h — B5 : la VERITE des filets est l'aire raster calculee en DOUBLE de bout en bout
+[[nodiscard]] inline double ExactRasterArea(const Matrix44f& m, const Viewport& vp, ...);`)}
+  <div class="note warn"><b>Une assertion qu’on n’a jamais vue échouer n’est pas prouvée.</b> Pour l’assertion <code>w &gt; 0</code> : forcer temporairement un mesh Intersect sur le chemin Inside (approcher la caméra à moins de near d’une roche) → l’assertion <b>doit</b> sauter. Puis retirer la provocation.</div>
+
+  <h3>Prédictions pour le lot appairé : la Leçon 06 (scenegraph, E2)</h3>
+  <div class="card tight tw"><table>${table(['#', 'Prédiction', 'Si elle est fausse…'], [
+    ['P1', 'Aucun fichier en aval de E3 ne change : <code>RenderSystem</code> ne lit que <code>m_worldMatrix</code>. Une scène hiérarchique et sa version « aplatie » donnent les <b>mêmes compteurs</b> (FacesSubmitted, TrisRasterized, PixelsCovered).', '…un système d’aval dépend de E2 : violation de la séparation des espaces.'],
+    ['P2', 'Un parent à échelle négative contamine toute sa descendance : chaque enfant hérite de det &lt; 0 et du bug miroir (CE7).', '…la composition n’est pas <code>local · parent</code>.'],
+    ['P3', '<code>BuildViewData</code> après <code>WorldTransformSystem</code> : sinon une frame de retard, invisible à l’arrêt, visible à la souris.', '—'],
+    ['P4', 'Une caméra enfant d’une entité à échelle produit une vue fausse sans assertion (CE9).', '…<code>inverseRigid</code> a déjà un filet : tant mieux.'],
+  ])}</table></div>`;
+
+// ═════════════════════════ §9 ROADMAP ═════════════════════════
+$('rmHost').innerHTML = `
+  <h3>9.1 — Écarts entre la consolidation d’origine et le dépôt</h3>
+  <div class="card tight tw"><table>${table(['Réf', 'Écart', 'Raison, apport, statut'], [
+    ['C1-0', 'Collision de nom : « Consolidation C1/C2 » et « chantier C1/C2 » (phase G)', 'La roadmap contient une « Dette relevée en C1 » (z NaN) qui appartient au <i>chantier</i>. <b>Proposition</b> : renommer la série des consolidations (par exemple <code>K1</code>, <code>K2</code>) et ne plus réutiliser une lettre de chantier. <b>Statut :</b> décision à prendre.'],
+    ['C1-1', 'Sur le chemin Inside, E5 et E6 ne sont plus matérialisés (chantier 2b)', '<code>ProjectPositions(8)</code> fait E1 → E7 en un passage ; <code>RasterVertex</code> est le type de E7. <b>Apport :</b> 504 divisions → 117 par roche, Render −33 %. <b>Statut :</b> évolution ; le document C1 (§3, §5, §8) décrit encore la frontière « par coin » : à amender.'],
+    ['C1-2', 'Deux nouveaux espaces : E7·g (grille 1/256) et E7·fx (entiers)', '<code>LV3_RASTER_FIXED</code>, D-a1. <b>Apport :</b> couverture exacte, un sommet = un accrochage. <b>Statut :</b> évolution ; la carte d’origine (« E7 continu ») est fausse sous FIXED = 1. À ajouter à la liste des espaces.'],
+    ['C1-3', 'Frontière E7 → E8 : <code>floor(x)</code> dans la carte, centres <code>x+½</code> dans le dépôt', 'La carte d’origine était imprécise (elle décrivait « dans quel pixel tombe un point »). <b>Statut :</b> correction documentaire.'],
+    ['C1-4', 'Règle C1.3 (« le winding se teste en E7 ») et écart L4-4 (« culling en espace objet rejeté ») contredits par B5', 'B5 a introduit un pré-filtre E1 <b>conservatif</b>, rentable seulement en AVX2. <b>Statut :</b> amender C1.3 (fait dans ce lot, §5.3) et <b>réécrire L4-4</b> en roadmap : « rejeté en remplacement, adopté en pré-filtre SIMD (B5) ».'],
+    ['C1-5', 'Clause « main » : <code>det(model) &lt; 0</code> inverse la main de E1', 'Dette déjà relevée par B5 (« Miroir »). Ce lot la rattache à la carte des espaces et prédit sa propagation par E2 (P2). <b>Statut :</b> dette, à traiter <b>avant ou pendant</b> la L06.'],
+  ])}</table></div>
+
+  <h3>9.2 — Dettes de la consolidation d’origine : où en sont-elles ?</h3>
+  <p class="small"><b>À vérifier sur le dépôt avant toute modification.</b> Ce qui suit est ce que la lecture du 08/11 permet d’affirmer.</p>
+  <div class="card tight tw"><table>${table(['Réf', 'Dette', 'Constat au 08/11', 'Statut proposé'], [
+    ['C1-6', '<code>ComputeMeshAABB()</code> appelée nulle part automatiquement', '<code>RegisterMesh</code> est devenue la porte unique (SoA, plans B5, plafond de sommets) mais n’appelle toujours pas <code>ComputeMeshAABB()</code>. Le chargeur OBJ l’appelle-t-il ? non vérifié.', 'dette ; l’endroit naturel existe désormais'],
+    ['C1-7', '<code>GetFaceView</code> suppose les sommets contigus', 'Inchangé : <code>fv.verts = &amp;vertexPositions[indices[base]]</code>. Bloque toujours EX (tangent) et EY (UV), et l’écart L4-2.', 'dette bloquante pour le texturing'],
+    ['C1-8', 'Leçon 02 : « main gauche, +Z entre dans l’écran »', 'Traité par les lots L02 / L02-C reconstruits (07-08/11) ? à vérifier dans la section « socle L02 » de la roadmap.', 'à vérifier'],
+    ['C1-9', '<code>ECullMode</code>, <code>EDepthTest</code>, <code>EBlendMode</code> non exploités', 'Déjà porté en L4-5.', 'doublon : renvoyer à L4-5'],
+    ['C1-10', 'Chantier B (L04 P2) : interpolation perspective-correcte', 'Toujours ouvert ; rattaché à la L09 (textures). Prérequis : C1-7.', 'reste ouvert'],
+  ])}</table></div>
+
+  <h3>9.3 — Points nouveaux relevés par cette relecture</h3>
+  <div class="card tight tw"><table>${table(['Réf', 'Sujet', 'Détail'], [
+    ['C1-11', 'Le chemin Intersect n’a pas de version AVX2', '<code>TransformPositions</code> est scalaire, la projection se fait par coin. Négligeable en scène « astronomique » (≈ 2 % des faces), dominant dans une scène FPS (lot V3 : un niveau d’un seul mesh est toujours Intersect). À relier au plan FPS / culling.'],
+    ['C1-12', 'Lot D-a1d (accrochage par nombre magique)', 'Livré le 06/11, « à appliquer » ; le dépôt montre encore <code>_mm_round_ss</code>. À vérifier.'],
+    ['C1-13', '<code>inverseRigid</code> sans filet', 'Aucune assertion d’orthonormalité avant l’appel. Devient probable avec la L06 (caméra enfant). Proposition : <code>LV3_ASSERT(IsRigid(m))</code> en Debug.'],
+    ['C1-14', 'Mesure qui saute des espaces : la taille apparente du LOD', 'Calculée depuis l’AABB locale et la <code>mvp</code>, sans passer par les sommets. Une seule formule perspective / ortho. Rien à décider : à documenter dans la carte comme « mesure E1 → E7 par instance ».'],
+  ])}</table></div>
+  <div class="note"><b>Fichier à coller dans la roadmap :</b> une section « Décisions en attente — Consolidation C1 » est fournie avec ce lot, au même format que les sections L01 à L04.</div>`;
+
+// lancement du schéma
+updateSchema();
+
+</script>
+</body>
+</html>

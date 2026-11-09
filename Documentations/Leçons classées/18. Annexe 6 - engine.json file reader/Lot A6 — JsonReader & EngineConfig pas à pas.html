@@ -1,0 +1,1071 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot A6 — JsonReader &amp; EngineConfig pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Mise en page : une colonne de lecture (max 1040px), barre de navigation collante, une carte par décision, étapes en blocs repliables par objectif. */
+:root{--bg:#fbfaf7;--surf:#ffffff;--surf2:#f2f0ea;--text:#1f1d1a;--muted:#6b665e;--bd:#d9d5cc;--acc:#1f6feb;--accbg:#e6f0ff;--ok:#1a7f37;--okbg:#e3f5e8;--bad:#c4281c;--badbg:#fde8e6;--warn:#8a5a00;--warnbg:#fff1cf;--code:#f4f2ec;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17161a;--surf:#201f24;--surf2:#2a2930;--text:#ece9e2;--muted:#a09b92;--bd:#3a3841;--acc:#6ea8ff;--accbg:#1c2b44;--ok:#5bd17f;--okbg:#17301f;--bad:#ff8a80;--badbg:#3a1a18;--warn:#f0c060;--warnbg:#3a2e12;--code:#1b1a1f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17161a;--surf:#201f24;--surf2:#2a2930;--text:#ece9e2;--muted:#a09b92;--bd:#3a3841;--acc:#6ea8ff;--accbg:#1c2b44;--ok:#5bd17f;--okbg:#17301f;--bad:#ff8a80;--badbg:#3a1a18;--warn:#f0c060;--warnbg:#3a2e12;--code:#1b1a1f;color-scheme:dark}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 56px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.6 var(--sans)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surf);z-index:30}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{padding-block:28px 8px}
+h1{font-size:28px;line-height:1.25;margin:0 0 6px;text-wrap:balance}
+h2{font-size:22px;margin:0 0 10px;text-wrap:balance}
+h3{font-size:17px;margin:22px 0 6px}
+p{margin:8px 0}
+.sub{color:var(--muted);margin:0 0 12px}
+nav.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surf);border-bottom:.5px solid var(--bd);overflow-x:auto;white-space:nowrap;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+nav.bar a{display:inline-block;margin-right:14px;color:var(--muted);text-decoration:none;font-size:14px}
+nav.bar a:hover{color:var(--acc)}
+main{padding-bottom:80px}
+section{margin:34px 0;padding-top:6px}
+.card{background:var(--surf);border:.5px solid var(--bd);border-radius:12px;padding:16px 18px;margin:14px 0;min-width:0}
+.note{border-left:3px solid var(--acc);background:var(--accbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.warn{border-left:3px solid var(--warn);background:var(--warnbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.bad{border-left:3px solid var(--bad);background:var(--badbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.good{border-left:3px solid var(--ok);background:var(--okbg);padding:10px 14px;border-radius:0 8px 8px 0;margin:12px 0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{border:.5px solid var(--bd);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--surf2);font-weight:600}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+code,.mono{font-family:var(--mono);font-size:13px}
+code.i{background:var(--code);padding:1px 5px;border-radius:4px}
+pre{background:var(--code);border:.5px solid var(--bd);border-radius:8px;padding:10px 12px;overflow-x:auto;font:12.5px/1.5 var(--mono);margin:8px 0;white-space:pre}
+pre.d span{display:block}
+pre.d .add{background:var(--okbg);color:var(--ok)}
+pre.d .del{background:var(--badbg);color:var(--bad)}
+.v-before .add{display:none}.v-after .del{display:none}
+button,select,input,textarea{font:inherit;color:var(--text)}
+button{background:var(--surf2);border:.5px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible,.row:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+button.p{background:var(--acc);color:#fff;border-color:var(--acc)}
+select,input[type=number]{background:var(--surf);border:.5px solid var(--bd);border-radius:6px;padding:4px 8px}
+textarea{width:100%;min-height:210px;background:var(--code);border:.5px solid var(--bd);border-radius:8px;padding:10px 12px;font:12.5px/1.5 var(--mono);resize:vertical}
+label{margin-right:14px;white-space:nowrap}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:10px 0}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;border:.5px solid var(--bd);background:var(--surf2);margin-right:6px}
+.tag.ok{background:var(--okbg);color:var(--ok);border-color:transparent}
+.tag.ko{background:var(--badbg);color:var(--bad);border-color:transparent}
+.tag.w{background:var(--warnbg);color:var(--warn);border-color:transparent}
+.step{border:.5px solid var(--bd);border-radius:12px;background:var(--surf);margin:22px 0;overflow:hidden}
+.step>h3{margin:0;padding:12px 18px;background:var(--surf2);border-bottom:.5px solid var(--bd);font-size:17px}
+.step .body{padding:6px 18px 16px;min-width:0}
+.lbl{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:14px 0 2px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cols>*{min-width:0}
+@media(max-width:760px){.cols{grid-template-columns:1fr}}
+details{border:.5px solid var(--bd);border-radius:10px;background:var(--surf);padding:8px 14px;margin:10px 0}
+summary{cursor:pointer;font-weight:600}
+.small{font-size:13px;color:var(--muted)}
+.kpi{display:inline-block;margin:4px 12px 4px 0}.kpi b{font-family:var(--mono)}
+/* arbre de clés (laboratoire) */
+.tree{border:.5px solid var(--bd);border-radius:8px;background:var(--code);padding:6px 10px;font:12.5px/1.7 var(--mono);overflow-x:auto}
+.row{display:flex;gap:10px;align-items:baseline;white-space:nowrap}
+.row .k{min-width:0}
+.pill{font:11px var(--sans);padding:0 7px;border-radius:9px;border:.5px solid transparent}
+.pill.read{background:var(--okbg);color:var(--ok)}
+.pill.def{background:var(--warnbg);color:var(--warn)}
+.pill.ign{background:var(--badbg);color:var(--bad)}
+.pill.cmt{background:var(--surf2);color:var(--muted);border-color:var(--bd)}
+.pill.sec{background:var(--accbg);color:var(--acc)}
+.con{background:#14131a;color:#e6e2d8;border-radius:8px;padding:8px 12px;font:12.5px/1.6 var(--mono);overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.con .e{color:#ff8a80}.con .w{color:#f0c060}.con .l{color:#8fd19e}
+.verdict{display:inline-block;font-weight:600;padding:2px 10px;border-radius:8px}
+.verdict.ok{background:var(--okbg);color:var(--ok)}.verdict.ko{background:var(--badbg);color:var(--bad)}
+.hl{background:var(--warnbg);color:var(--warn);padding:0 3px;border-radius:3px}
+.seq{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}
+.box{border:.5px solid var(--bd);border-radius:8px;padding:6px 10px;background:var(--surf2);font:12.5px var(--mono)}
+.box.on{background:var(--accbg);color:var(--acc);border-color:var(--acc)}
+.box.lost{background:var(--badbg);color:var(--bad);text-decoration:line-through}
+.arrow{color:var(--muted)}
+</style>
+
+<header class="top wrap">
+  <h1>Lot A6 — JsonReader &amp; EngineConfig, pas à pas</h1>
+  <p class="sub">LibraryV3 · C++23 · moteur 100 % CPU · annexe à la leçon 1 (Config) et à l’annexe A5 (origine de <code class="i">JsonReader</code>) · tout ce qui est chiffré ci-dessous est recalculé dans la page par une simulation fidèle du code C++.</p>
+  <div class="ctl"><button class="p" id="btnExport">Exporter en HTML (rejouer hors ligne)</button><span class="small" id="expMsg"></span></div>
+</header>
+<nav class="bar">
+  <a href="#pourquoi">1 · Pourquoi ce lot</a><a href="#methode">2 · La méthode</a><a href="#labo">3 · Laboratoire</a><a href="#avantapres">4 · Avant / après</a><a href="#technique">5 · Fonctionnement</a><a href="#etapes">6 · Pas à pas</a><a href="#verifier">7 · Vérifier</a><a href="#fond">8 · Questions de fond</a><a href="#roadmap">9 · Roadmap &amp; écarts</a>
+</nav>
+<main class="wrap">
+
+<section id="pourquoi">
+<h2>1 · Pourquoi ce lot existe</h2>
+<div class="card">
+<h3 style="margin-top:0">Ce qui a déjà été fait</h3>
+<p>La <b>leçon 1</b> a séparé ce qui se décide à la compilation (<code class="i">EngineSettings.h</code>, les <code class="i">LV3_DEFAULT_*</code>) de ce qui se décide à l’exécution (<code class="i">EngineConfig</code> et son fichier <code class="i">engine.json</code>). L’<b>annexe A5</b> a créé <code class="i">JsonReader</code>, un lecteur qui note chaque clé qu’il consulte et qui signale toutes les autres (règle R5), mais il vivait caché dans <code class="i">Scene/Serializer.cpp</code> et ne servait qu’au graphe de scène.</p>
+<h3>Le contexte : deux constats, une seule faute</h3>
+<p>En relisant le projet, Onky a vu que <code class="i">engine.json</code> était défini, à jour, et <b>jamais lu</b> : <code class="i">EngineConfig::LoadFromJson</code> n’était qu’une déclaration. Le premier réflexe aurait été d’écrire une lecture rapide avec <code class="i">contains()</code> et <code class="i">operator[]</code>. Mais cette façon de lire est exactement celle que R5 interdit : une clé mal orthographiée retombe sans bruit sur sa valeur par défaut. Le bon lecteur existait déjà, il était simplement enfermé dans un seul fichier.</p>
+<h3>L’objectif fonctionnel</h3>
+<ul>
+<li><b>Lire <code class="i">engine.json</code> pour de bon</b> : le moteur obéit enfin à son fichier de réglages.</li>
+<li><b>Une seule façon de lire du JSON</b> dans tout le moteur : config, scène, assets, viewports passent par le même lecteur.</li>
+<li><b>Aucune faute d’auteur silencieuse</b> : une clé inconnue, une valeur mal typée, un doublon d’index se voient dans le journal, sans jamais faire planter le chargement.</li>
+<li><b>Chaque fichier à sa place</b> : le lecteur dans <code class="i">Core/</code>, les conversions métier chez leur domaine, <code class="i">engine.json</code> dans le projet qui l’exécute.</li>
+</ul>
+<h3>Pourquoi c’est important pour la suite</h3>
+<p>Les lots à venir (viewports, assets, événements du Trigger, caméras multiples) ajoutent tous des clés JSON. Chaque lecture écrite à la main ajoute un endroit où une faute de frappe passe inaperçue pendant des semaines. Un lecteur unique transforme ce risque en une ligne rouge dans le journal.</p>
+<div class="note">Cet artefact reste dans le sujet de l’échange : extraction de <code class="i">JsonReader</code>, <code class="i">EngineConfig::LoadFromJson</code>, emplacement de <code class="i">engine.json</code>, migration des <code class="i">Parse*</code>, lecture d’objets à clés libres et de tableaux, doublons de clés. La refonte des événements du Trigger a été reportée par Onky à une annexe dédiée : elle n’est ici qu’un point de roadmap.</div>
+</div>
+
+<h3>Les décisions, et leur pourquoi</h3>
+<div class="scroll"><table>
+<tr><th>Décision</th><th>Choix retenu</th><th>Pourquoi</th><th>Alternative écartée</th><th>Statut</th></tr>
+<tr><td>Où vit <code class="i">JsonReader</code></td><td><code class="i">Core/JsonReader.h</code>, header-only, hors <code class="i">pch.h</code>, namespace <code class="i">LV3</code></td><td>Il ne dépend que de <code class="i">json.hpp</code> et du <code class="i">Logger</code> ; <code class="i">json.hpp</code> est lourd, donc hors précompilé</td><td>le laisser dans <code class="i">Serializer.cpp</code> ; le mettre dans <code class="i">pch.h</code></td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Conversions vers un type métier</td><td>Fonction libre du domaine (<code class="i">ReadProjectionType</code>) prenant un <code class="i">JsonReader&amp;</code></td><td>Le lecteur ne connaît que des types Core (R20)</td><td>méthode <code class="i">ReadProjectionType</code> dans le lecteur</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td><code class="i">ReadVector</code> reste dans le lecteur</td><td>Oui, exception assumée</td><td><code class="i">Vec3f</code> est un type Core, multi-système (même critère que <code class="i">CoreTypes.h</code>)</td><td>fonction libre par système</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Erreur de valeur dans <code class="i">engine.json</code></td><td><code class="i">try/catch</code> sur <code class="i">json::exception</code>, retour <code class="i">false</code>, défauts intacts</td><td>Une donnée d’auteur ne plante pas le moteur (R7)</td><td><code class="i">LV3_ASSERT</code> sur la donnée</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Forme de <code class="i">EngineConfig</code></td><td>Sous-structures imbriquées comme le JSON : <code class="i">resources.path</code></td><td><code class="i">Child("resources")</code> doit avoir un endroit où écrire</td><td>champs à plat (<code class="i">resourcePath</code>)</td><td><span class="tag ok">acté</span> changement cassant</td></tr>
+<tr><td>Emplacement de <code class="i">engine.json</code></td><td>Projet EXE, <code class="i">Content</code> + copie si plus récent</td><td>Un autre jeu liant la même LIB aurait un autre contenu (R23)</td><td>projet LIB (<code class="i">None</code>, inerte)</td><td><span class="tag w">à appliquer</span> par Onky</td></tr>
+<tr><td><code class="i">ParseNode</code></td><td>Reste en lecture manuelle</td><td>Routage structurel, hors périmètre de R5 (R21)</td><td>le migrer de force</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td><code class="i">std::move</code> avant <code class="i">addComponent</code></td><td>Réflexe systématique</td><td>Gratuit sur un POD, réel sur un composant qui possède de la mémoire (R24)</td><td>décider composant par composant</td><td><span class="tag ok">acté</span></td></tr>
+<tr><td>Clés libres (assets) et tableaux (viewports)</td><td><code class="i">ForEachChild</code> et <code class="i">ForEachElement</code> dans le lecteur</td><td>Mécanisme générique, aucun type métier ; garde la traçabilité R5</td><td>macro <code class="i">NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE</code> (lève une exception sur le premier champ manquant)</td><td><span class="tag ok">acté</span> trois détails ouverts, voir §9</td></tr>
+<tr><td>Doublon de clé dans le texte JSON</td><td>Non détectable par le lecteur</td><td>Le parseur fusionne avant que notre code tourne</td><td>—</td><td><span class="tag w">à décider</span> détecteur en amont ?</td></tr>
+</table></div>
+</section>
+
+<section id="methode">
+<h2>2 · La méthode : un lecteur qui note ce qu’il consulte</h2>
+<div class="card">
+<h3 style="margin-top:0">Ce que c’est, vulgarisé</h3>
+<p>Imagine un secrétaire à qui tu confies une fiche de réglages écrite par quelqu’un d’autre. Tu ne lui dis pas « lis tout » : tu lui demandes, ligne par ligne, « donne-moi le <i>tile_size</i>, et si tu ne le trouves pas, prends 32 ». À chaque demande, il <b>coche</b> la ligne de la fiche. À la fin, il te dit : « voici les lignes de la fiche que tu ne m’as jamais demandées ». Une ligne non cochée est soit une faute de frappe de l’auteur (<i>tile_sise</i>), soit un réglage que le moteur ne sait pas encore utiliser. Dans les deux cas, tu veux le savoir.</p>
+<h3>Ce que ça change par rapport à la lecture manuelle</h3>
+<p>Avec <code class="i">contains()</code> puis <code class="i">operator[]</code>, il n’y a pas de cahier de cochage : une clé que personne ne demande reste invisible. Avec <code class="i">JsonReader</code>, la <b>seule</b> porte d’entrée est <code class="i">Read()</code> (ou <code class="i">Child()</code>), et cette porte coche toujours. D’où la règle R5 : on ne lit jamais une clé autrement.</p>
+<h3>Sources et usage</h3>
+<ul>
+<li><b>Bibliothèque</b> : <code class="i">nlohmann::json</code> de Niels Lohmann (<code class="i">github.com/nlohmann/json</code>), fournie sous la forme d’un seul header <code class="i">json.hpp</code>.</li>
+<li><b>Format</b> : RFC 8259 (JSON). Elle précise que les noms d’un objet « devraient » être uniques, sans définir le comportement en cas de doublon : c’est l’origine du point traité en §6, étape 10.</li>
+<li><b>Patron</b> : un lecteur à « cochage » est l’équivalent, pour la lecture de données, du <i>strict mode</i> de certains lecteurs de configuration (clé inconnue = erreur). Ici on garde la tolérance (on continue avec le défaut) mais on garde la voix (on le dit).</li>
+</ul>
+</div>
+<h3>Comparaison avec les méthodes courantes</h3>
+<div class="scroll"><table>
+<tr><th></th><th><code class="i">contains()</code> + <code class="i">[]</code></th><th><code class="i">j.value(k, def)</code> seul</th><th><b><code class="i">JsonReader</code> (ce lot)</b></th><th>Macro <code class="i">NLOHMANN_DEFINE_TYPE_…</code></th></tr>
+<tr><td>Clé mal orthographiée</td><td>invisible</td><td>invisible</td><td><b>signalée</b> (<code class="i">WarnUnread</code>)</td><td>ignorée (le champ manquant lève une exception, la clé en trop passe)</td></tr>
+<tr><td>Clé absente</td><td>code à écrire à chaque fois</td><td>défaut silencieux</td><td>défaut explicite (et avertissement possible)</td><td><code class="i">.at()</code> lève une exception</td></tr>
+<tr><td>Type invalide (<code class="i">"abc"</code> pour un entier)</td><td>exception au premier accès</td><td>exception</td><td>exception, rattrapée une fois en haut</td><td>exception</td></tr>
+<tr><td>Sous-objets</td><td>imbrication manuelle</td><td>imbrication manuelle</td><td><code class="i">Child()</code> avec chemin dans les messages</td><td>un type C++ par sous-objet</td></tr>
+<tr><td>Concision</td><td>faible</td><td>forte</td><td>forte</td><td><b>la plus forte</b></td></tr>
+</table></div>
+<div class="note">La macro reste utile pour un format rigide et stable. Pour un fichier édité à la main, qui évolue, la tolérance avec voix de <code class="i">JsonReader</code> est le meilleur compromis.</div>
+</section>
+
+<section id="labo">
+<h2>3 · Laboratoire : lire un fichier avant de lire le code</h2>
+<p>Deux bancs d’essai. Le premier rejoue <code class="i">EngineConfig::LoadFromJson</code> sur un <code class="i">engine.json</code> que tu peux casser. Le second rejoue les lectures d’objets à clés libres (assets) et de tableaux (viewports). Le JSON est réellement analysé par la page ; seule la logique de <code class="i">JsonReader</code> est une copie fidèle du C++.</p>
+
+<div class="card">
+  <h3 style="margin-top:0">3.1 · <code class="i">engine.json</code> → <code class="i">EngineConfig</code></h3>
+  <div class="ctl">
+    <label><input type="checkbox" id="l1file" checked> Fichier présent</label>
+    <label><input type="checkbox" id="l1abs"> Avertir aussi des clés absentes (règle du 07/10)</label>
+    <label><input type="checkbox" id="l1prop"> Appliquer les correctifs proposés (§9)</label>
+  </div>
+  <div class="ctl"><span class="small">Casser le fichier :</span>
+    <button data-l1="reset">Fichier réel</button><button data-l1="typo">Faute de frappe sur tile_size</button><button data-l1="type">tile_size: "abc"</button><button data-l1="tile0">tile_size: 0</button><button data-l1="both">rasterizer et raycaster</button><button data-l1="nosec">Section features absente</button><button data-l1="ren3">"renderer": 3</button><button data-l1="featnum">shadows: 1 (au lieu de true)</button><button data-l1="bad">JSON malformé</button>
+  </div>
+  <textarea id="l1txt" spellcheck="false" aria-label="Contenu de engine.json"></textarea>
+  <div id="l1out"></div>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0">3.2 · assets (clés libres) et viewports (tableau)</h3>
+  <div class="ctl">
+    <label><input type="checkbox" id="l2skip"> <code class="i">ForEachChild</code> ignore les clés en « _ » (correctif proposé)</label>
+    <label><input type="checkbox" id="l2dup" checked> Garde-fou de doublon sur <code class="i">nom</code></label>
+  </div>
+  <div class="cols">
+    <div><div class="lbl">assets (objet, clés libres)</div><textarea id="l2a" spellcheck="false" aria-label="JSON assets"></textarea>
+      <div class="ctl"><button data-l2="dupkey">Doublon de clé scene_test</button><button data-l2="nodup">Retirer le doublon</button><button data-l2="cmt">Ajouter une clé _comment</button><button data-l2="num">Une valeur qui n’est pas un objet</button></div></div>
+    <div><div class="lbl">viewports (tableau d’objets)</div><textarea id="l2v" spellcheck="false" aria-label="JSON viewports"></textarea>
+      <div class="ctl"><button data-l2="dupnom">Deux viewports de même nom</button><button data-l2="vok">Noms distincts</button><button data-l2="vobj">viewports devient un objet</button></div></div>
+  </div>
+  <div id="l2out"></div>
+</div>
+</section>
+
+<section id="avantapres"><h2>4 · Algorithme initial, puis ce que le lot change</h2>
+<p>Chaque bloc montre le code <b>avant</b> et <b>après</b>. Rouge : retiré. Vert : ajouté. Les blocs marqués « proposé » ne sont pas appliqués au dépôt : ils découlent de cet échange et attendent ta décision (§9).</p>
+<div class="ctl"><span class="small">Affichage :</span><label><input type="radio" name="vw" value="" checked> diff</label><label><input type="radio" name="vw" value="v-before"> avant seul</label><label><input type="radio" name="vw" value="v-after"> après seul</label></div>
+<div id="diffs"></div>
+</section>
+
+<section id="technique"><h2>5 · Fonctionnement technique</h2>
+<div id="tech"></div>
+</section>
+
+<section id="etapes"><h2>6 · Le pas à pas</h2>
+<p>Fil rouge : le vrai <code class="i">engine.json</code>, chargé par <code class="i">LoadFromJson</code>. Chaque étape dit ce qu’elle reçoit de la précédente et ce qu’elle produit. Les réglages ci-dessous s’appliquent aux étapes 1 à 6 ; les étapes 7 à 12 ont leurs propres commandes.</p>
+<div class="card"><div class="ctl">
+ <label><input type="checkbox" data-p="nofile"> Fichier introuvable</label>
+ <label><input type="checkbox" data-p="typo"> Faute de frappe : <code class="i">tile_sise</code></label>
+ <label><input type="checkbox" data-p="badtype"> <code class="i">tile_size: "abc"</code></label>
+ <label><input type="checkbox" data-p="ren3"> <code class="i">"renderer": 3</code></label>
+ <label><input type="checkbox" data-p="prop"> Correctifs proposés</label>
+</div></div>
+<div id="steps"></div>
+</section>
+
+<section id="verifier"><h2>7 · Vérifier</h2>
+<div id="verOut"></div>
+</section>
+
+<section id="fond"><h2>8 · Questions de fond</h2><div id="fondOut"></div></section>
+
+<section id="roadmap"><h2>9 · Roadmap, écarts et décisions à prendre</h2><div id="roadOut"></div></section>
+
+</main>
+<script>
+const SRC = '<!doctype html>\n' + document.documentElement.outerHTML;   // capturé AVANT tout rendu : sert à l'export
+const $ = id => document.getElementById(id);
+/*ENGINE-START*/
+const f32 = Math.fround;
+const clone = o => JSON.parse(JSON.stringify(o));
+const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+const tname = v => v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'object' ? 'object' : typeof v;
+class TypeErr extends Error {}
+const mkCtx = (warnAbsent) => ({ rows: [], logs: [], warnAbsent: !!warnAbsent, log(l, m) { this.logs.push({ l, m }); } });
+
+/* ---------- JsonReader (miroir de Core/JsonReader.h) ---------- */
+class JR {
+  constructor(j, comp, owner, ctx, o) { this.j = j; this.comp = comp; this.owner = owner; this.ctx = ctx; this.o = o || {}; this.seen = new Set(); }
+  has(k) { return isObj(this.j) && Object.prototype.hasOwnProperty.call(this.j, k); }
+  read(key, kind, def) {
+    if (!this.o.noSeenRead) this.seen.add(key);
+    if (!this.has(key)) {
+      if (this.ctx.warnAbsent) this.ctx.log('w', '[' + this.comp + '] cle absente \'' + key + '\' sur ' + this.owner + ' -> defaut ' + JSON.stringify(def));
+      this.ctx.rows.push({ comp: this.comp, key, state: 'def', val: def });
+      return def;
+    }
+    const v = this.j[key];
+    const want = { int: 'number', float: 'number', bool: 'boolean', string: 'string' }[kind];
+    if ((kind === 'int' || kind === 'float') ? typeof v !== 'number' : typeof v !== want)
+      throw new TypeErr('[json.exception.type_error.302] type must be ' + want + ', but is ' + tname(v));
+    const out = kind === 'int' ? Math.trunc(v) : kind === 'float' ? f32(v) : v;
+    this.ctx.rows.push({ comp: this.comp, key, state: 'read', val: out });
+    return out;
+  }
+  readVec(key, def) {
+    if (!this.o.noSeenRead) this.seen.add(key);
+    const v = this.has(key) ? this.j[key] : undefined;
+    const ok = Array.isArray(v) && v.length === 3 && v.every(x => typeof x === 'number');
+    const out = ok ? v.map(f32) : def;
+    this.ctx.rows.push({ comp: this.comp, key, state: ok ? 'read' : 'def', val: out });
+    return out;
+  }
+  child(key) {
+    if (!this.o.noSeenChild) this.seen.add(key);
+    const v = this.has(key) ? this.j[key] : undefined;
+    const ok = isObj(v) || (Array.isArray(v) && !this.o.childObjectOnly);
+    if (v !== undefined && !ok && this.o.childWarn)
+      this.ctx.log('w', '[' + this.comp + '] \'' + key + '\' attendu comme objet (recu : ' + tname(v) + ') sur ' + this.owner + ' -> section ignoree');
+    this.ctx.rows.push({ comp: this.comp, key, state: 'sec' });
+    return new JR(ok ? v : {}, this.comp + '.' + key, this.owner, this.ctx, this.o);
+  }
+  warnUnread() {
+    if (this.o.noWarnUnread) return;
+    if (!isObj(this.j) && !this.o.noGuardNonObject) return;
+    for (const key of Object.keys(this.j)) {
+      if (!this.o.noUnderscoreSkip && key.startsWith('_')) { this.ctx.rows.push({ comp: this.comp, key, state: 'cmt' }); continue; }
+      if (!this.seen.has(key)) {
+        this.ctx.log('e', '[' + this.comp + '] cle ignoree \'' + key + '\' sur ' + this.owner);
+        this.ctx.rows.push({ comp: this.comp, key, state: 'ign' });
+      }
+    }
+  }
+  forEachChild(fn, opt) {
+    for (const [key, value] of Object.entries(this.j)) {
+      if (!this.o.noForEachSeen) this.seen.add(key);
+      if (opt && opt.skipUnderscore && key.startsWith('_')) { this.ctx.rows.push({ comp: this.comp, key, state: 'cmt' }); continue; }
+      if (!isObj(value)) { this.ctx.log('w', '[' + this.comp + '] \'' + key + '\' n\'est pas un objet, ignore sur ' + this.owner); continue; }
+      fn(key, new JR(value, this.comp + '.' + key, this.owner, this.ctx, this.o));
+    }
+  }
+  forEachElement(fn) {
+    if (!Array.isArray(this.j)) { this.ctx.log('w', '[' + this.comp + '] attendu comme tableau sur ' + this.owner); return; }
+    this.j.forEach((value, i) => {
+      if (!isObj(value)) { this.ctx.log('w', '[' + this.comp + '][' + i + '] n\'est pas un objet, ignore'); return; }
+      fn(i, new JR(value, this.comp + '[' + i + ']', this.owner, this.ctx, this.o));
+    });
+  }
+}
+
+/* ---------- EngineConfig::LoadFromJson ---------- */
+/* valeurs LV3_DEFAULT_* : SUPPOSEES pour la demonstration (le vrai EngineSettings.h n'est pas relu ici) */
+const DEF = {
+  renderer: { rasterizer: true, raycaster: false, tileSize: 32, maxBounces: 4, shadowBias: 0.001, alphaThresh: 0.5, multithread: true },
+  features: { shadows: true, fog: false, wireframe: false, stats: true, raycast: false },
+  resources: { path: 'assets/' },
+  debug: { depthDisplayRange: 80 }
+};
+const BASE_ENGINE = {
+  _comment: 'LibraryV3 — Configuration moteur (engine.json)', _version: '1.0.0',
+  renderer: { rasterizer: true, raycaster: false, tile_size: 64, max_bounces: 10, shadow_bias: 0.0001, alpha_thresh: 0.5, multithread: true },
+  features: { shadows: true, fog: false, wireframe: false, stats: true, raycast: true },
+  resources: { path: 'assets/' },
+  debug: { depthDisplayRange: 80.0 }
+};
+const FIELDS = [
+  ['renderer', 'rasterizer', 'rasterizer'], ['renderer', 'raycaster', 'raycaster'], ['renderer', 'tile_size', 'tileSize'], ['renderer', 'max_bounces', 'maxBounces'],
+  ['renderer', 'shadow_bias', 'shadowBias'], ['renderer', 'alpha_thresh', 'alphaThresh'], ['renderer', 'multithread', 'multithread'],
+  ['features', 'shadows', 'shadows'], ['features', 'fog', 'fog'], ['features', 'wireframe', 'wireframe'], ['features', 'stats', 'stats'], ['features', 'raycast', 'raycast'],
+  ['resources', 'path', 'path'], ['debug', 'depthDisplayRange', 'depthDisplayRange']
+];
+function loadEngine(text, o) {
+  const bugs = Object.assign({}, o.bugs || {}); if (o.prop) bugs.childWarn = true;
+  const ctx = mkCtx(o.warnAbsent); let cfg = clone(DEF);
+  if (o.exists === false) { ctx.log('e', 'EngineConfig::LoadFromJson — fichier introuvable : engine.json'); return { ok: false, cfg, ctx, partial: false }; }
+  let root;
+  try { root = JSON.parse(text); }
+  catch (e) { ctx.log('e', 'EngineConfig::LoadFromJson — JSON malforme : ' + e.message); return { ok: false, cfg, ctx, partial: false }; }
+  try {
+    const r = new JR(root, 'engine', 'engine.json', ctx, bugs);
+    const rr = r.child('renderer'), R = cfg.renderer;
+    R.rasterizer = rr.read('rasterizer', 'bool', true); R.raycaster = rr.read('raycaster', 'bool', false);
+    R.tileSize = rr.read('tile_size', 'int', DEF.renderer.tileSize); R.maxBounces = rr.read('max_bounces', 'int', DEF.renderer.maxBounces);
+    R.shadowBias = rr.read('shadow_bias', 'float', DEF.renderer.shadowBias); R.alphaThresh = rr.read('alpha_thresh', 'float', DEF.renderer.alphaThresh);
+    R.multithread = rr.read('multithread', 'bool', true);
+    if (R.rasterizer && R.raycaster) ctx.log('w', '[EngineConfig] rasterizer ET raycaster actifs — aucun arbitrage defini');
+    if (R.tileSize <= 0) { ctx.log('w', '[EngineConfig] renderer.tile_size <= 0, force a ' + DEF.renderer.tileSize); R.tileSize = DEF.renderer.tileSize; }
+    rr.warnUnread();
+    const rf = r.child('features'), F = cfg.features;
+    F.shadows = rf.read('shadows', 'bool', true); F.fog = rf.read('fog', 'bool', false); F.wireframe = rf.read('wireframe', 'bool', false);
+    F.stats = rf.read('stats', 'bool', true); F.raycast = rf.read('raycast', 'bool', false);
+    if (F.raycast && !R.raycaster) ctx.log('w', '[EngineConfig] features.raycast=true mais renderer.raycaster=false — sans effet');
+    rf.warnUnread();
+    const rs = r.child('resources'); cfg.resources.path = rs.read('path', 'string', DEF.resources.path); rs.warnUnread();
+    if (r.has('debug')) { const rd = r.child('debug'); cfg.debug.depthDisplayRange = rd.read('depthDisplayRange', 'float', 80); rd.warnUnread(); }
+    r.warnUnread();
+  } catch (e) {
+    if (!(e instanceof TypeErr)) throw e;
+    if (bugs.noTypeCatch) throw e;
+    ctx.log('e', 'EngineConfig::LoadFromJson — type invalide dans engine.json : ' + e.message);
+    if (o.prop) cfg = clone(DEF);                        // correctif propose : chargement transactionnel
+    return { ok: false, cfg, ctx, partial: JSON.stringify(cfg) !== JSON.stringify(DEF) };
+  }
+  ctx.log('l', 'EngineConfig::LoadFromJson — configuration chargee depuis engine.json');
+  return { ok: true, cfg, ctx, partial: false };
+}
+
+/* ---------- Parse* du scenegraph ---------- */
+function parseTransform(node, o) {
+  const ctx = mkCtx(false), r = new JR(node, 'Transform', 'entite "Terre"', ctx, o || {});
+  const t = r.readVec('translation', [0, 0, 0]), s = r.readVec('scale', [1, 1, 1]), rot = r.readVec('rotation', [0, 0, 0]);
+  r.warnUnread(); return { t, s, rot, ctx };
+}
+function parseTrigger(node, mode, o) {
+  const ctx = mkCtx(false), r = new JR(node, 'Trigger', 'entite "Zone"', ctx, o || {});
+  const radius = r.read('radius', 'float', 1), on1 = r.read('onEnterEvent', 'string', ''), on2 = r.read('onStayEvent', 'string', ''), on3 = r.read('onExitEvent', 'string', '');
+  if (mode === 'old') r.read('isColliding', 'bool', false);          // lu ... puis jete : le litteral false part au constructeur
+  r.warnUnread();
+  return { radius, on1, on2, on3, is_colliding: false, overlapping: [], ctx };
+}
+
+/* ---------- Cles libres et tableaux ---------- */
+function loadAssets(text, o) {
+  const ctx = mkCtx(false), bugs = o.bugs || {}; let root;
+  try { root = JSON.parse('{"assets":' + text + '}'); } catch (e) { ctx.log('e', 'JSON malforme : ' + e.message); return { out: new Map(), ctx, parseKeys: [], err: true }; }
+  const r = new JR(root, 'engine', 'engine.json', ctx, bugs), a = r.child('assets'), out = new Map();
+  a.forEachChild((key, c) => { const type = c.read('type', 'string', ''), object = c.read('object', 'string', ''); c.warnUnread(); out.set(key, { type, object }); }, { skipUnderscore: o.skip });
+  a.warnUnread(); r.warnUnread();
+  return { out, ctx, parseKeys: Object.keys(root.assets), err: false };
+}
+function loadViewports(text, o) {
+  const ctx = mkCtx(false), bugs = o.bugs || {}; let root;
+  try { root = JSON.parse('{"viewports":' + text + '}'); } catch (e) { ctx.log('e', 'JSON malforme : ' + e.message); return { out: new Map(), ctx, err: true }; }
+  const r = new JR(root, 'engine', 'engine.json', ctx, bugs), v = r.child('viewports'), out = new Map();
+  v.forEachElement((i, c) => {
+    const nom = c.read('nom', 'string', ''), largeur = c.read('largeur', 'int', 0), hauteur = c.read('hauteur', 'int', 0); c.warnUnread();
+    if (out.has(nom)) { if (o.dupGuard && !bugs.noDupGuard) ctx.log('w', '[viewports][' + i + '] nom \'' + nom + '\' deja utilise, ignore'); }   // emplace : le 1er reste, le 2e est jete
+    else out.set(nom, { nom, largeur, hauteur });
+  });
+  v.warnUnread(); r.warnUnread();
+  return { out, ctx, err: false };
+}
+/* detecteur de doublons EN AMONT du parseur (equivalent d'un consommateur SAX) */
+function scanDup(text) {
+  const dups = [], stack = []; let i = 0, line = 1, expectKey = false;
+  const str = () => { let s = ''; i++; while (i < text.length && text[i] !== '"') { if (text[i] === '\\') { s += text[i] + text[i + 1]; i += 2; } else s += text[i++]; } i++; return s; };
+  while (i < text.length) {
+    const c = text[i];
+    if (c === '\n') { line++; i++; continue; }
+    if (/\s/.test(c)) { i++; continue; }
+    if (c === '{') { stack.push({ t: 'o', keys: new Map() }); expectKey = true; i++; }
+    else if (c === '[') { stack.push({ t: 'a' }); expectKey = false; i++; }
+    else if (c === '}' || c === ']') { stack.pop(); expectKey = false; i++; }
+    else if (c === ',') { i++; const top = stack[stack.length - 1]; expectKey = !!top && top.t === 'o'; }
+    else if (c === ':') { expectKey = false; i++; }
+    else if (c === '"') {
+      const L = line, s = str(), top = stack[stack.length - 1];
+      if (top && top.t === 'o' && expectKey) { if (top.keys.has(s)) dups.push({ key: s, first: top.keys.get(s), line: L }); else top.keys.set(s, L); expectKey = false; }
+    } else i++;
+  }
+  return dups;
+}
+
+/* ---------- Suite de tests (miroir du C++) + injection de defauts ---------- */
+function runSuite(bugs) {
+  const res = [], hasLog = (ctx, re) => ctx.logs.some(x => re.test(x.m));
+  const t = (name, fn) => { let ok = false, d = ''; try { ok = !!fn(); } catch (x) { d = String(x.message || x); } res.push({ name, ok, d }); };
+  const J = o => JSON.stringify(o), base = () => clone(BASE_ENGINE);
+  const L = (o, ex) => loadEngine(J(o), Object.assign({ bugs }, ex || {}));
+  { const r = L(base());
+    t('R5·1  engine.json réel : chargé, tile_size = 64', () => r.ok && r.cfg.renderer.tileSize === 64);
+    t('R5·2  aucune « clé ignorée » sur le fichier réel', () => !hasLog(r.ctx, /cle ignoree/));
+    t('R5·3  _comment et _version jamais signalés', () => !hasLog(r.ctx, /cle ignoree '_/));
+    t('R5·4  Child() coche sa section (pas de « renderer » ignoré)', () => !hasLog(r.ctx, /cle ignoree 'renderer'/)); }
+  { const b = base(); b.renderer.tile_sise = b.renderer.tile_size; delete b.renderer.tile_size; const r = L(b);
+    t('R5·5  faute de frappe tile_sise : signalée', () => hasLog(r.ctx, /cle ignoree 'tile_sise'/));
+    t('R5·6  …et tile_size retombe sur le défaut du moteur', () => r.cfg.renderer.tileSize === DEF.renderer.tileSize); }
+  { const b = base(); b.renderer.tile_size = 'abc'; let ok = false, thrown = false;
+    try { const r = L(b); ok = r.ok === false && hasLog(r.ctx, /type invalide/); } catch (e) { thrown = true; }
+    t('R7·1  valeur mal typée : retour false + journal, aucune exception ne s’échappe', () => !thrown && ok); }
+  { const r = loadEngine('{}', { exists: false, bugs });
+    t('R7·2  fichier absent : false, défauts intacts', () => !r.ok && JSON.stringify(r.cfg) === JSON.stringify(DEF)); }
+  { const r = loadEngine('{"a":1,}', { bugs });
+    t('R7·3  JSON malformé : false, défauts intacts', () => !r.ok && JSON.stringify(r.cfg) === JSON.stringify(DEF)); }
+  { const b = base(); b.renderer.tile_size = 0; const r = L(b);
+    t('R7·4  tile_size ≤ 0 : forcé au défaut + avertissement', () => r.cfg.renderer.tileSize === DEF.renderer.tileSize && hasLog(r.ctx, /tile_size <= 0/)); }
+  { const b = base(); b.features.shadows = 1;
+    t('R7·5  [constat] échec en cours de route : état PARTIEL (renderer déjà écrasé)', () => { const r = L(b, { prop: false }); return r.ok === false && r.partial === true; });
+    t('R7·6  [correctif proposé] chargement transactionnel : jamais d’état partiel', () => { const r = L(b, { prop: true }); return r.ok === false && r.partial === false; }); }
+  { const arr = '[{"nom":"a","largeur":1,"hauteur":2},{"nom":"b","largeur":3,"hauteur":4},{"nom":"c","largeur":5,"hauteur":6}]';
+    const r = loadViewports(arr, { bugs, dupGuard: true });
+    t('A6·1  tableau de 3 viewports via Child + ForEachElement : 3 entrées', () => r.out.size === 3);
+    t('A6·2  aucune clé « 0 », « 1 », « 2 » signalée sur un tableau', () => !hasLog(r.ctx, /cle ignoree '\d'/));
+    const d = loadViewports('[{"nom":"a","largeur":1,"hauteur":2},{"nom":"a","largeur":9,"hauteur":9}]', { bugs, dupGuard: true });
+    t('A6·3  deux viewports « a » : le premier reste, le doublon est signalé', () => d.out.size === 1 && d.out.get('a').largeur === 1 && hasLog(d.ctx, /deja utilise/)); }
+  { const a = '{"g":{"type":"mesh","object":"g.obj"},"s":{"type":"scene_graph","object":"s.json"}}';
+    const r = loadAssets(a, { bugs, skip: false });
+    t('A6·4  assets à clés libres via ForEachChild : 2 entrées lues', () => r.out.size === 2);
+    t('A6·5  les clés libres comptent comme lues (aucune « cle ignoree »)', () => !hasLog(r.ctx, /cle ignoree/));
+    const c = loadAssets('{"_comment":"x","g":{"type":"mesh","object":"g.obj"}}', { bugs, skip: true });
+    t('A6·6  [correctif proposé] _comment dans assets ne produit aucun bruit', () => c.out.size === 1 && !hasLog(c.ctx, /n'est pas un objet/)); }
+  { const txt = '{"scene_test":{"object":"A"},"scene_test":{"object":"B"}}';
+    t('A6·7  doublon de clé dans le texte : le parseur n’en garde qu’un (le dernier)', () => { const p = JSON.parse(txt); return Object.keys(p).length === 1 && p.scene_test.object === 'B'; });
+    t('A6·8  un détecteur placé EN AMONT voit le doublon', () => scanDup(txt).length === 1); }
+  { const n = { radius: 2, onEnterEvent: 'a', isColliding: true }, r = parseTrigger(n, bugs.readDeadKey ? 'old' : 'new', bugs);
+    t('R22·1 Trigger : isColliding écrit dans le JSON est signalé (jamais lu)', () => hasLog(r.ctx, /cle ignoree 'isColliding'/));
+    t('R22·2 Trigger : is_colliding reste false (état dérivé)', () => r.is_colliding === false); }
+  return res;
+}
+/*ENGINE-END*/
+
+/* ====================== UI : helpers ====================== */
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const code = t => '<pre>' + esc(t.replace(/^\n/, '').replace(/\s+$/, '')) + '</pre>';
+const tag = (t, c) => '<span class="tag ' + (c || '') + '">' + t + '</span>';
+const fmt = n => Number(n).toLocaleString('fr-FR').replace(/ /g, ' ');
+const J = v => JSON.stringify(v);
+const fj = v => JSON.stringify(typeof v === 'number' ? Number(v.toPrecision(7)) : v);
+function diff(lines) {
+  return '<pre class="d">' + lines.map(l => {
+    const k = l[0], t = esc(l.slice(1)) || ' ';
+    return '<span class="' + (k === '+' ? 'add' : k === '-' ? 'del' : '') + '">' + (k === '+' ? '+ ' : k === '-' ? '− ' : '  ') + t + '</span>';
+  }).join('') + '</pre>';
+}
+const con = ctx => '<div class="con">' + (ctx.logs.length ? ctx.logs.map(x => '<span class="' + x.l + '">' + (x.l === 'e' ? '[ERREUR] ' : x.l === 'w' ? '[AVERT]  ' : '[LOG]    ') + esc(x.m) + '</span>').join('\n') : '<span class="l">(journal vide : rien à signaler)</span>') + '</div>';
+const PILL = { read: ['read', 'lue'], def: ['def', 'absente → défaut'], ign: ['ign', 'IGNORÉE'], cmt: ['cmt', 'commentaire'], sec: ['sec', 'section'] };
+function treeHtml(rows) {
+  if (!rows.length) return '<div class="tree small">(aucune clé consultée)</div>';
+  return '<div class="tree">' + rows.map(r => {
+    const d = r.comp.split('.').length - 1, p = PILL[r.state];
+    const val = r.state === 'read' || r.state === 'def' ? ' : ' + esc(fj(r.val)) : '';
+    return '<div class="row" style="padding-left:' + d * 18 + 'px"><span class="k">"' + esc(r.key) + '"' + val + '</span><span class="pill ' + p[0] + '">' + p[1] + '</span></div>';
+  }).join('') + '</div>';
+}
+const tiles = (w, h, t) => Math.ceil(w / t) * Math.ceil(h / t);
+
+/* ====================== LABO 1 : engine.json ====================== */
+const l1set = o => { $('l1txt').value = typeof o === 'string' ? o : JSON.stringify(o, null, 2); l1run(); };
+function l1run() {
+  const o = { exists: $('l1file').checked, warnAbsent: $('l1abs').checked, prop: $('l1prop').checked };
+  const r = loadEngine($('l1txt').value, o);
+  let h = '<div class="ctl"><span class="verdict ' + (r.ok ? 'ok' : 'ko') + '">LoadFromJson → ' + r.ok + '</span>' +
+    (r.ok ? '<span class="small">configuration chargée</span>' : '<span class="small">le moteur démarre avec les défauts LV3_DEFAULT_*</span>') +
+    (r.partial ? tag('⚠ état partiel : des champs ont déjà été écrasés', 'ko') : '') + '</div>';
+  h += '<div class="cols"><div><div class="lbl">Ce que le lecteur a consulté</div>' + treeHtml(r.ctx.rows) + '</div>';
+  h += '<div><div class="lbl">Valeurs finales de EngineConfig</div><div class="scroll"><table><tr><th>clé JSON</th><th>champ C++</th><th class="n">valeur</th><th>origine</th></tr>';
+  for (const [sec, jk, cf] of FIELDS) {
+    const row = r.ctx.rows.find(x => x.comp === 'engine.' + sec && x.key === jk && (x.state === 'read' || x.state === 'def'));
+    const v = r.cfg[sec][cf]; let org = '<span class="tag w">défaut (non lu)</span>';
+    if (row) org = row.state === 'def' ? '<span class="tag w">défaut</span>' : (J(row.val) !== J(v) ? '<span class="tag ko">json puis forcé</span>' : '<span class="tag ok">json</span>');
+    const same = J(v) === J(DEF[sec][cf]);
+    h += '<tr><td class="mono">' + sec + '.' + jk + '</td><td class="mono">' + cf + '</td><td class="n"' + (same ? '' : ' style="color:var(--acc)"') + '>' + esc(fj(v)) + '</td><td>' + org + '</td></tr>';
+  }
+  h += '</table></div><p class="small">Défauts utilisés par la démo : valeurs supposées (le vrai <code class="i">EngineSettings.h</code> n’est pas relu ici). En bleu : valeur différente du défaut.</p></div></div>';
+  h += '<div class="lbl">Journal</div>' + con(r.ctx);
+  $('l1out').innerHTML = h;
+}
+function l1preset(k) {
+  const b = JSON.parse(JSON.stringify(BASE_ENGINE));
+  if (k === 'reset') { } else if (k === 'typo') { b.renderer.tile_sise = b.renderer.tile_size; delete b.renderer.tile_size; }
+  else if (k === 'type') b.renderer.tile_size = 'abc'; else if (k === 'tile0') b.renderer.tile_size = 0;
+  else if (k === 'both') b.renderer.raycaster = true; else if (k === 'nosec') delete b.features;
+  else if (k === 'ren3') b.renderer = 3; else if (k === 'featnum') b.features.shadows = 1;
+  else if (k === 'bad') { l1set(JSON.stringify(b, null, 2).replace(/("depthDisplayRange": 80)\n/, '$1,\n')); return; }
+  l1set(b);
+}
+
+/* ====================== LABO 2 : assets / viewports ====================== */
+const A_DUP = '{\n  "gizmo_perspective": { "type": "mesh", "object": "camera_gizmo.obj" },\n  "gizmo_ortho": { "type": "mesh", "object": "camera_gizmo_box.obj" },\n  "scene_test": { "type": "scene_graph", "object": "SceneBasicTest.json" },\n  "scene_test": { "type": "scene_graph", "object": "SceneBasicTest.json" }\n}';
+const A_OK = '{\n  "gizmo_perspective": { "type": "mesh", "object": "camera_gizmo.obj" },\n  "gizmo_ortho": { "type": "mesh", "object": "camera_gizmo_box.obj" },\n  "scene_test": { "type": "scene_graph", "object": "SceneBasicTest.json" }\n}';
+const V_OK = '[\n  { "nom": "principal", "largeur": 1280, "hauteur": 720 },\n  { "nom": "mini", "largeur": 320, "hauteur": 180 },\n  { "nom": "gizmo", "largeur": 128, "hauteur": 128 }\n]';
+const V_DUP = '[\n  { "nom": "principal", "largeur": 1280, "hauteur": 720 },\n  { "nom": "mini", "largeur": 320, "hauteur": 180 },\n  { "nom": "mini", "largeur": 640, "hauteur": 360 }\n]';
+function mapRows(m, cols) {
+  if (!m.size) return '<p class="small">(aucune entrée)</p>';
+  return '<div class="scroll"><table><tr><th>clé</th>' + cols.map(c => '<th>' + c + '</th>').join('') + '</tr>' + [...m].map(([k, v]) => '<tr><td class="mono">' + esc(k) + '</td>' + cols.map(c => '<td class="mono">' + esc(v[c]) + '</td>').join('') + '</tr>').join('') + '</table></div>';
+}
+function l2run() {
+  const at = $('l2a').value, vt = $('l2v').value;
+  const A = loadAssets(at, { skip: $('l2skip').checked }), V = loadViewports(vt, { dupGuard: $('l2dup').checked });
+  const dups = scanDup(at);
+  let h = '<div class="lbl">assets : trois regards sur le même texte</div><div class="cols"><div class="card"><b>1 · Texte brut</b>' +
+    (dups.length ? dups.map(d => '<p class="bad" style="margin:6px 0">clé <code class="i">' + esc(d.key) + '</code> écrite deux fois (lignes ' + d.first + ' et ' + d.line + ')</p>').join('') : '<p class="good" style="margin:6px 0">aucun doublon de clé dans le texte</p>') +
+    '<p class="small">Vu par un détecteur placé <b>avant</b> le parseur.</p></div>' +
+    '<div class="card"><b>2 · Après l’analyse JSON</b><p class="mono" style="margin:6px 0">' + (A.err ? 'JSON malformé' : A.parseKeys.length + ' clé(s) : ' + esc(A.parseKeys.join(', '))) + '</p><p class="small">Vu par <code class="i">ForEachChild</code> : il n’a jamais eu accès au texte.</p></div></div>';
+  h += mapRows(A.out, ['type', 'object']) + con(A.ctx);
+  h += '<div class="lbl">viewports → map&lt;nom, ViewportStruct&gt;</div>' + mapRows(V.out, ['nom', 'largeur', 'hauteur']) + con(V.ctx);
+  $('l2out').innerHTML = h;
+}
+function l2preset(k) {
+  const a = $('l2a'), v = $('l2v');
+  if (k === 'dupkey') a.value = A_DUP.replace(/"object": "SceneBasicTest\.json" \}\n\}$/, '"object": "SceneAutre.json" }\n}');
+  else if (k === 'nodup') a.value = A_OK;
+  else if (k === 'cmt') a.value = A_OK.replace('{\n', '{\n  "_comment": "assets du moteur",\n');
+  else if (k === 'num') a.value = A_OK.replace('{\n', '{\n  "scene_vide": 3,\n');
+  else if (k === 'dupnom') v.value = V_DUP; else if (k === 'vok') v.value = V_OK;
+  else if (k === 'vobj') v.value = '{ "principal": { "largeur": 1280, "hauteur": 720 } }';
+  l2run();
+}
+
+/* ====================== AVANT / APRES ====================== */
+const DIFFS = [
+  ['Algorithme : lire un fichier JSON', [
+    ' pour chaque système qui lit du JSON :',
+    '-   pour chaque clé voulue : si contains(clé) alors v = j[clé] sinon v = défaut',
+    '-   (une clé que personne ne demande reste invisible : la faute de frappe passe)',
+    '+   r = JsonReader(j, composant, propriétaire)',
+    '+   pour chaque clé voulue : v = r.Read(clé, défaut)          // la lecture coche la clé',
+    '+   r.WarnUnread()                                             // dit toutes les clés jamais cochées',
+    ' ',
+    '-chaque fichier JSON : sa façon de lire, ou pas de lecture du tout (engine.json)',
+    '+un seul lecteur dans Core/ ; les conversions métier restent chez leur domaine',
+    '+valeur mal typée : une exception rattrapée une fois, en haut ; retour false ; défauts conservés']],
+  ['Core/JsonReader.h — extraction (R20)', [
+    '-// Scene/Serializer.cpp, namespace LibV3 : classe PRIVÉE à ce fichier',
+    '-class JsonReader { Read / ReadVector / Child / Has / WarnUnread / ReadProjectionType };',
+    '+// Core/JsonReader.h — HORS pch.h, namespace LV3, header-only',
+    '+#include "Maths/Vectorlib.h"          // Vec3f : type Core, exception assumée',
+    '+#include "../Ressources/json.hpp"',
+    '+class JsonReader { Read / ReadVector / Child / Has / WarnUnread };',
+    ' // Scene/Serializer.cpp, côté domaine :',
+    '-EProjectionType JsonReader::ReadProjectionType(const char* key);        // le lecteur connaît la Caméra',
+    '+EProjectionType ReadProjectionType(LV3::JsonReader& r, const char* key); // fonction libre du domaine']],
+  ['Core/EngineConfig.h — la structure épouse le fichier', [
+    ' struct RendererConfig  { bool rasterizer; bool raycaster; int tileSize; int maxBounces; float shadowBias; float alphaThresh; bool multithread; };',
+    '+struct ResourcesConfig { std::string path = LV3_DEFAULT_RESOURCE_PATH; };',
+    '+struct DebugConfig     { float depthDisplayRange = 80.0f; };      // annexe A5 §13.3',
+    ' struct EngineConfig {',
+    '-    std::string resourcePath = LV3_DEFAULT_RESOURCE_PATH;           // à plat',
+    '+    ResourcesConfig resources;                                      // resources.path',
+    '+    DebugConfig     debug;',
+    '-    bool LoadFromJson(const std::string& path);                     // déclarée, jamais définie, jamais appelée',
+    '+    bool LoadFromJson(const std::string& path);                     // définie ; false = défauts conservés']],
+  ['Core/EngineConfig.cpp — LoadFromJson prend corps', [
+    '-// (aucune définition)',
+    '+std::ifstream file(path);  if (!file.is_open()) { Logger::error(...); return false; }',
+    '+nlohmann::json root;  try { file >> root; } catch (const nlohmann::json::parse_error& e) { ...; return false; }',
+    '+try {',
+    '+    JsonReader r(root, "engine", path);',
+    '+    { JsonReader rr = r.Child("renderer");  renderer.tileSize = rr.Read("tile_size", LV3_DEFAULT_TILE_SIZE); ...',
+    '+      /* gardes de cohérence */  rr.WarnUnread(); }',
+    '+    { JsonReader rf = r.Child("features"); ...  rf.WarnUnread(); }',
+    '+    { JsonReader rs = r.Child("resources"); resources.path = rs.Read("path", std::string(LV3_DEFAULT_RESOURCE_PATH)); rs.WarnUnread(); }',
+    '+    if (r.Has("debug")) { JsonReader rd = r.Child("debug"); debug.depthDisplayRange = rd.Read("depthDisplayRange", 80.0f); rd.WarnUnread(); }',
+    '+    r.WarnUnread();',
+    '+} catch (const nlohmann::json::exception& e) { Logger::error(...); return false; }',
+    '+// main.cpp : EngineConfig::Get().LoadFromJson("engine.json") AVANT ResourceManager / Renderer::Init']],
+  ['Projets Visual Studio — où vit engine.json (R23) · à appliquer par Onky', [
+    ' <!-- LibraryV3.vcxproj  (ConfigurationType = StaticLibrary) -->',
+    '-<ItemGroup><None Include="engine.json" /></ItemGroup>             <!-- sans filtre, sans copie : inerte -->',
+    ' <!-- projet EXE (RefactoNouvelleLibrairieV3) -->',
+    '+<ItemGroup><Content Include="engine.json">',
+    '+  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>',
+    '+</Content></ItemGroup>',
+    '+<!-- et vérifier Débogage → Répertoire de travail : le chemin relatif doit tomber sur la copie -->']],
+  ['ParseTransform — le patron de migration (avant : forme générique de l’ancien style)', [
+    ' const json& compJson = *static_cast<const json*>(pJsonNode);        // canal void* : INCHANGÉ',
+    ' if (!compJson.is_object()) return;',
+    '+const std::string owner = EntityLabel(ctx.registry, entity);',
+    '+LV3::JsonReader r(compJson, "Transform", owner);',
+    '-if (compJson.contains("translation")) t.m_local.position = ReadVec3(compJson, "translation", Vec3f::Zero());',
+    '-if (compJson.contains("scale"))       t.m_local.scale    = ReadVec3(compJson, "scale", Vec3f::One());',
+    '+t.m_local.position = r.ReadVector("translation", Vec3f::Zero());',
+    '+t.m_local.scale    = r.ReadVector("scale",       Vec3f::One());',
+    '+const Vec3f eulerDeg = r.ReadVector("rotation", Vec3f::Zero());',
+    '+t.m_local.rotation = Quatf(eulerDeg, true);                           // degrés → quaternion',
+    '-ctx.registry.addComponent(entity, t);',
+    '+ctx.registry.addComponent(entity, std::move(t));                      // R24',
+    '+r.WarnUnread();                                                       // TOUJOURS la dernière ligne']],
+  ['ParseLight — deux défauts corrigés, un point à confirmer', [
+    '-Logger::warn("... type inconnu \'" + typeStr + "\' sur le noeud \'" + compJson.contains("type"));   // std::string + bool : NE COMPILE PAS',
+    '+Logger::warn("[Light] " + owner + " : type inconnu \'" + typeStr + "\' -> Ambient par defaut");',
+    '-const std::string typeStr = r.Read("type", "Ambient");                // T déduit = const char*',
+    '+const std::string typeStr = r.Read("type", std::string("Ambient"));   // T = std::string',
+    ' // à confirmer sur le dépôt : r.ReadVector("color", Vec3f(155)) → Vec3f::One() ? (LightComponent::m_color non relu)']],
+  ['ParseTrigger — donnée lue puis jetée, avertissement manquant', [
+    '-const bool isColliding = r.Read("isColliding", false);               // lue …',
+    ' ctx.registry.emplaceComponent<TriggerComponent>(entity, radius, /*…*/',
+    '-    false,                                                            // … mais c’est ce littéral qui part au constructeur',
+    '+    false,                                                            // état DÉRIVÉ : calculé chaque frame par TriggerSystem (R10)',
+    '     std::set<Entity>{});',
+    '+r.WarnUnread();                                                       // manquait : le trou que la migration devait fermer']],
+  ['Core/JsonReader.h — ajouts pour clés libres et tableaux', [
+    ' [[nodiscard]] JsonReader Child(const char* key)',
+    ' {',
+    '     m_seen.insert(key);',
+    '-    const nlohmann::json& sub = (it != m_j.end() && it->is_object()) ? *it : s_empty;',
+    '+    const bool ok = (it != m_j.end()) && (it->is_object() || it->is_array());',
+    '+    const nlohmann::json& sub = ok ? *it : s_empty;',
+    ' }',
+    ' void WarnUnread() const',
+    ' {',
+    '+    if (!m_j.is_object()) return;          // sur un tableau, les « clés » 0, 1, 2 seraient signalées à tort',
+    ' }',
+    '+template<typename Fn> void ForEachChild(Fn&& fn)      // objet à clés libres : fn(const std::string& key, JsonReader child)',
+    '+{ for (auto& [key, value] : m_j.items()) { m_seen.insert(key);',
+    '+    if (!value.is_object()) { Logger::warn(...); continue; }',
+    '+    fn(key, JsonReader(value, m_comp + "." + key, m_owner)); } }',
+    '+template<typename Fn> void ForEachElement(Fn&& fn)    // tableau d’objets : fn(std::size_t i, JsonReader element)',
+    '+{ if (!m_j.is_array()) { Logger::warn(...); return; }',
+    '+  std::size_t i = 0; for (const auto& value : m_j) { /* ... */ fn(i, JsonReader(value, m_comp + "[" + std::to_string(i) + "]", m_owner)); ++i; } }']],
+  ['Proposé 1 · ForEachChild ignore les clés « _ » comme WarnUnread (A6-9)', [
+    ' for (auto& [key, value] : m_j.items())',
+    ' {',
+    '     m_seen.insert(key);',
+    '+    if (key.starts_with(\'_\')) continue;                  // même convention que WarnUnread : "_comment", "_version"',
+    '     if (!value.is_object()) { Logger::warn(...); continue; }',
+    ' }']],
+  ['Proposé 2 · Child avertit quand la clé existe avec un mauvais type (A6-8)', [
+    ' const auto it = m_j.find(key);',
+    ' const bool ok = (it != m_j.end()) && (it->is_object() || it->is_array());',
+    '+if (it != m_j.end() && !ok)',
+    '+    Logger::warn("[" + m_comp + "] \'" + std::string(key) + "\' attendu comme objet, section ignoree sur " + m_owner);']],
+  ['Proposé 3 · LoadFromJson transactionnel : jamais d’état partiel (A6-7)', [
+    ' try',
+    ' {',
+    '-    JsonReader r(root, "engine", path);  renderer.… = …;  features.… = …;         // écrit dans *this au fil de l’eau',
+    '+    EngineConfig tmp = *this;                                                        // on travaille sur une copie',
+    '+    JsonReader r(root, "engine", path);  tmp.renderer.… = …;  tmp.features.… = …;',
+    '+    *this = std::move(tmp);                                                          // validé : une seule affectation',
+    ' }',
+    ' catch (const nlohmann::json::exception& e) { /* *this n’a jamais été touché */ return false; }']]
+];
+const diffsHtml = () => DIFFS.map(([t, l]) => '<div class="card"><h3 style="margin-top:0">' + esc(t) + '</h3>' + diff(l) + '</div>').join('');
+
+/* ====================== TECHNIQUE ====================== */
+const HOPK = [['tile_size', 'tile_size présent (64)'], ['tile_sise', 'tile_sise (faute de frappe)'], ['bad', 'tile_size = "abc"']];
+const HX = { i: 0, k: 0 };
+function hopHtml() {
+  const k = HOPK[HX.k][0], jk = k === 'tile_sise' ? ['rasterizer', 'tile_sise'] : ['rasterizer', 'tile_size'];
+  const i = HX.i;
+  const seen = ['rasterizer'].concat(i >= 1 ? ['tile_size'] : []);
+  const hops = [
+    'Le code demande <code class="i">rr.Read("rasterizer", true)</code>. Le lecteur écrit <code class="i">"rasterizer"</code> dans <code class="i">m_seen</code> : la clé est cochée.',
+    'Le code demande <code class="i">rr.Read("tile_size", 32)</code>. <b>Avant toute chose</b>, <code class="i">"tile_size"</code> est écrit dans <code class="i">m_seen</code>, même si la clé n’existe pas dans le fichier.',
+    k === 'tile_size' ? 'Puis <code class="i">m_j.value("tile_size", 32)</code> : la clé existe, c’est un nombre : on obtient <b>64</b>.'
+      : k === 'tile_sise' ? 'Puis <code class="i">m_j.value("tile_size", 32)</code> : la clé <code class="i">tile_size</code> n’existe pas (le fichier contient <code class="i">tile_sise</code>) : on obtient le défaut <b>32</b>, sans bruit.'
+        : 'Puis <code class="i">m_j.value("tile_size", 32)</code> : la clé existe mais c’est une chaîne : <b>exception</b> <code class="i">type_error.302</code>. Elle remonte jusqu’au <code class="i">catch</code> de <code class="i">LoadFromJson</code> : journal, <code class="i">return false</code>.',
+    k === 'bad' ? 'Fin du chemin : la lecture n’aboutit pas. Les défauts du moteur restent la référence (voir A6-7 pour l’état partiel).' : 'Le résultat est écrit dans <code class="i">renderer.tileSize</code>. La lecture est terminée.',
+    k === 'bad' ? 'Le <code class="i">WarnUnread()</code> n’est jamais atteint pour cette section : l’exception a coupé le chemin.' : 'En fin de section, <code class="i">rr.WarnUnread()</code> parcourt le JSON : toute clé absente de <code class="i">m_seen</code> est signalée.' + (k === 'tile_sise' ? ' Ici <b><code class="i">tile_sise</code> n’a jamais été demandée : signalée.</b> Mais seul ce signal prévient l’auteur : la valeur 32 a déjà été prise.' : ' Ici tout est coché : silence.')
+  ];
+  let h = '<div class="ctl"><label>Cas : <select id="hopK">' + HOPK.map((o, n) => '<option value="' + n + '"' + (n === HX.k ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></label><button class="p" id="hopBtn">Suivant</button><button id="hopRst">Recommencer</button></div>';
+  h += '<div class="lbl">Clés présentes dans le fichier</div><div class="seq">' + jk.map(x => '<span class="box' + (seen.includes(x) ? ' on' : (i >= 3 && k !== 'bad' ? ' lost' : '')) + '">' + x + '</span>').join('') + '</div>';
+  h += '<div class="lbl">m_seen (les clés cochées)</div><div class="seq">' + (seen.length ? seen.map(x => '<span class="box on">' + x + '</span>').join('') : '<span class="small">(vide)</span>') + '</div>';
+  h += '<div class="lbl">Saut ' + Math.min(i + 1, hops.length) + ' sur ' + hops.length + '</div><div class="note">' + hops[Math.min(i, hops.length - 1)] + '</div>';
+  return h;
+}
+const PL = [
+  ['Read&lt;T&gt;, Child, Has, WarnUnread', 'Non : aucun autre consommateur de JSON n’y changerait quoi que ce soit.', 'Core/JsonReader.h', 'ok'],
+  ['ReadVector (Vec3f)', 'Non, parce que Vec3f est un type Core, utilisé par au moins deux systèmes. Exception assumée au « scalaires seulement » (même critère que CoreTypes.h).', 'Core/JsonReader.h', 'ok'],
+  ['ForEachChild, ForEachElement', 'Non : ils ne connaissent aucun type métier, ils itèrent et fabriquent des sous-lecteurs.', 'Core/JsonReader.h', 'ok'],
+  ['ReadProjectionType', 'Oui : il connaît EProjectionType, un type de la Caméra. Un autre consommateur de JSON n’en a que faire.', 'Scene/Serializer.cpp, en fonction libre (R20)', 'ko'],
+  ['ReadLightType (hypothétique)', 'Oui, même raison avec ELightType : le jour où il existe, il va chez le domaine Lumière, jamais dans le lecteur.', 'fichier du domaine, fonction libre', 'ko'],
+  ['EngineConfig::LoadFromJson', 'Le code décrit le schéma de la config : il est le même pour tous les jeux qui lient la LIB.', 'Core/EngineConfig.cpp (LIB)', 'ok'],
+  ['engine.json (le fichier)', 'Oui : un autre jeu liant la même LIB aurait un autre contenu (tile_size, chemins…).', 'projet EXE (R23)', 'ko']
+];
+function plHtml(n) {
+  let h = '<div class="ctl">' + PL.map((p, i) => '<button data-pl="' + i + '"' + (i === n ? ' class="p"' : '') + '>' + p[0] + '</button>').join('') + '</div>';
+  if (n >= 0) { const p = PL[n]; h += '<div class="' + (p[3] === 'ok' ? 'good' : 'warn') + '"><b>Test de placement :</b> « si je remplaçais le graphe de scène par un autre consommateur de JSON, ce code changerait-il ? »<br>' + p[1] + '<br><b>Emplacement :</b> <code class="i">' + p[2] + '</code></div>'; }
+  return h;
+}
+const PJ = { proj: 'EXE', inc: 'Content', copy: 'PreserveNewest', wd: 'ProjectDir' };
+function pjHtml() {
+  const s = (id, v, opts) => '<label>' + id[1] + ' <select data-pj="' + id[0] + '">' + opts.map(o => '<option' + (o === v ? ' selected' : '') + '>' + o + '</option>').join('') + '</select></label>';
+  let h = '<div class="ctl">' + s(['proj', 'Projet'], PJ.proj, ['LIB', 'EXE']) + s(['inc', 'Élément'], PJ.inc, ['None', 'Content']) + s(['copy', 'Copie en sortie'], PJ.copy, ['aucune', 'PreserveNewest']) + s(['wd', 'Répertoire de travail'], PJ.wd, ['ProjectDir', 'OutDir']) + '</div>';
+  const copied = PJ.proj === 'EXE' && PJ.inc === 'Content' && PJ.copy === 'PreserveNewest';
+  const f5 = PJ.proj === 'EXE' && (PJ.wd === 'ProjectDir' || (PJ.wd === 'OutDir' && copied));
+  const dist = copied;
+  const why = PJ.proj === 'LIB' ? 'Une StaticLibrary ne produit qu’un .lib : pas de dossier d’exécution, rien n’est copié nulle part. Le fichier n’est à côté d’aucun programme qui tourne.'
+    : copied ? 'Le fichier est copié à côté de l’exécutable à chaque build s’il est plus récent : il suit le programme.'
+      : 'Le fichier reste dans le dossier du projet. Il n’est pas copié à côté de l’exécutable.';
+  h += '<div class="cols"><div class="' + (f5 ? 'good' : 'bad') + '"><b>Lancement par F5 :</b> ' + (f5 ? 'engine.json trouvé' : 'engine.json introuvable → défauts') + '</div><div class="' + (dist ? 'good' : 'bad') + '"><b>Exécutable lancé seul depuis son dossier :</b> ' + (dist ? 'trouvé' : 'introuvable → défauts') + '</div></div><p class="small">' + why + ' Règle simplifiée : par défaut Visual Studio lance le programme avec <code class="i">$(ProjectDir)</code> comme répertoire de travail.</p>';
+  return h;
+}
+function techHtml() {
+  return `
+<div class="card"><h3 style="margin-top:0">5.1 · Le chemin d’un <code class="i">Read</code></h3>
+<p>Une lecture est un petit trajet en cinq sauts. L’ordre compte : la clé est cochée <b>avant</b> la lecture, pas après, sinon une exception laisserait la clé non cochée.</p><div id="hopOut"></div></div>
+<div class="card"><h3 style="margin-top:0">5.2 · Le test de placement</h3>
+<p>Même geste que pour SDL (leçon 5) et pour <code class="i">engine.json</code> : on remplace un élément par un autre et on regarde si le fichier change. Clique chaque pièce du chantier.</p><div id="plOut"></div></div>
+<div class="card"><h3 style="margin-top:0">5.3 · Où vit <code class="i">engine.json</code> (R23)</h3>
+<p>Règle posée au début du chantier : une <b>LIB</b> décrit le schéma, un <b>EXE</b> possède les valeurs. Essaie les combinaisons.</p><div id="pjOut"></div></div>
+<div class="card"><h3 style="margin-top:0">5.4 · Le canal <code class="i">void*</code> ne bouge pas</h3>
+<p><code class="i">Serializer.hpp</code> ne doit pas exposer <code class="i">nlohmann::json</code> dans ses signatures : sinon tout fichier qui l’inclut recompile <code class="i">json.hpp</code>. Les <code class="i">Parse*</code> reçoivent donc un <code class="i">const void*</code>, converti en première ligne. La migration vers <code class="i">JsonReader</code> se fait <b>après</b> ce cast.</p>
+${code(`// Serializer.hpp : aucune trace de json.hpp
+static void ParseTransform(const void* pJsonNode, ParseContext& ctx, Entity entity);
+
+// Serializer.cpp : le cast reste la première ligne, le lecteur vient après
+const json& compJson = *static_cast<const json*>(pJsonNode);
+LV3::JsonReader r(compJson, "Transform", owner);`)}
+<div class="warn">Même risque que <code class="i">void* userData</code> du <code class="i">FragmentCallback</code> (leçon 4) : correct par convention, jamais vérifié par le type.</div></div>
+<div class="card"><h3 style="margin-top:0">5.5 · Deux pièges propres à <code class="i">JsonReader</code></h3>
+<p><b>Il garde une référence, pas une copie.</b> Le membre est <code class="i">const nlohmann::json&amp; m_j</code>. Le lecteur ne doit jamais survivre au <code class="i">json</code> qu’il regarde.</p>
+${code(`JsonReader MakeBad()
+{
+    nlohmann::json tmp = nlohmann::json::parse(R"({"a":1})");
+    return JsonReader(tmp, "x", "y");      // tmp meurt ici : le lecteur pointe dans le vide
+}`)}
+<p><b>Le lambda de <code class="i">ForEachChild</code> reçoit le sous-lecteur par valeur.</b> <code class="i">fn(key, JsonReader(...))</code> passe un temporaire : un paramètre <code class="i">JsonReader&amp;</code> ne s’y lie pas, un <code class="i">const JsonReader&amp;</code> ne peut pas appeler <code class="i">Read</code> (non const).</p>
+${code(`r.ForEachChild([&](const std::string& key, LV3::JsonReader rr)     // OK : par valeur
+{
+    const std::string type = rr.Read("type", std::string());
+    rr.WarnUnread();                                                 // un par enfant
+});
+
+r.ForEachChild([&](const std::string& key, LV3::JsonReader& rr) { });  // erreur de compilation : un temporaire ne se lie pas à &`)}</div>`;
+}
+
+/* ====================== ETAPES ====================== */
+const P = {};
+function filText() {
+  const b = JSON.parse(JSON.stringify(BASE_ENGINE));
+  if (P.typo) { b.renderer.tile_sise = b.renderer.tile_size; delete b.renderer.tile_size; }
+  if (P.badtype) b.renderer.tile_size = 'abc';
+  if (P.ren3) b.renderer = 3;
+  return JSON.stringify(b, null, 2);
+}
+function stepBox(n, title, goal, inp, codeTxt, out, scal, extra) {
+  return '<div class="step"><h3>Étape ' + n + ' · ' + title + '</h3><div class="body"><div class="lbl">Objectif</div><p>' + goal + '</p><div class="lbl">Reçoit de l’étape précédente</div><p>' + inp + '</p><div class="lbl">Code concerné</div>' + codeTxt + '<div class="lbl">Produit (calculé par la page)</div>' + out + '<div class="lbl">Scalaire / vectorisé</div><p class="small">' + scal + '</p>' + (extra || '') + '</div></div>';
+}
+const COLD = 'Sans objet : c’est du code de chargement, exécuté une fois à froid, hors du chemin chaud. La vectorisation ne s’applique pas ici.';
+function stepsHtml() {
+  const txt = filText(), S = loadEngine(txt, { exists: !P.nofile, prop: !!P.prop }), L = S.ctx.logs, secs = S.ctx.rows.filter(r => r.state === 'sec');
+  const ftop = (() => { try { return Object.keys(JSON.parse(txt)); } catch (e) { return []; } })();
+  let h = '';
+  /* 1 */
+  h += stepBox(1, 'Ouvrir et analyser le fichier',
+    'Obtenir un arbre JSON, ou sortir proprement. L’ouverture et l’analyse sont les deux seules opérations qui peuvent échouer avant de lire une valeur.',
+    'Le chemin <code class="i">"engine.json"</code>, donné par <code class="i">main.cpp</code>.',
+    code(`std::ifstream file(path);
+if (!file.is_open()) { Logger::error("... fichier introuvable : " + path); return false; }
+
+nlohmann::json root;
+try { file >> root; }
+catch (const nlohmann::json::parse_error& e) { Logger::error("... JSON malforme : " + std::string(e.what())); return false; }`),
+    P.nofile ? '<div class="bad">Fichier introuvable → <code class="i">return false</code>. Les champs gardent les défauts : le moteur démarre quand même.</div>' : '<div class="good">Fichier ouvert, analysé : un objet avec ' + ftop.length + ' clés de premier niveau (' + esc(ftop.join(', ')) + ').</div>',
+    COLD + ' Une analyse JSON vectorisée existe (la bibliothèque simdjson), mais un fichier de quelques centaines d’octets lu une fois ne justifie rien.');
+  /* 2 */
+  h += stepBox(2, 'Descendre dans une section (<code class="i">Child</code>)',
+    'Obtenir un sous-lecteur par section, qui porte son propre chemin (<code class="i">engine.renderer</code>) pour que les messages disent où est la faute.',
+    P.nofile ? 'Rien : l’étape 1 a échoué, on ne passe pas par ici.' : 'L’arbre <code class="i">root</code> et le lecteur racine <code class="i">r</code>.',
+    code(`JsonReader r(root, "engine", path);
+JsonReader rr = r.Child("renderer");     // comp = "engine.renderer"  ; coche "renderer" dans r`),
+    P.nofile ? '<p class="small">(étape non exécutée)</p>' : treeHtml(secs) + (P.ren3 ? '<div class="' + (P.prop ? 'good' : 'bad') + '"><code class="i">"renderer": 3</code> n’est pas un objet. ' + (P.prop ? 'Avec le correctif proposé, <code class="i">Child</code> le dit dans le journal.' : '<code class="i">Child</code> renvoie un objet vide <b>sans rien dire</b> : toute la section retombe sur ses défauts en silence (A6-8).') + '</div>' : ''),
+    COLD);
+  /* 3 */
+  const readRows = S.ctx.rows.filter(r => (r.state === 'read' || r.state === 'def') && r.comp !== 'engine');
+  h += stepBox(3, 'Lire les valeurs (<code class="i">Read</code>)',
+    'Obtenir chaque valeur, ou son défaut, en cochant la clé. Le type du défaut décide du type attendu.',
+    'Les sous-lecteurs de l’étape 2, un par section.',
+    code(`renderer.tileSize   = rr.Read("tile_size",   LV3_DEFAULT_TILE_SIZE);      // T = int
+renderer.shadowBias = rr.Read("shadow_bias", LV3_DEFAULT_SHADOW_BIAS);    // T = float
+resources.path      = rs.Read("path", std::string(LV3_DEFAULT_RESOURCE_PATH)); // T = std::string, JAMAIS const char*`),
+    P.nofile ? '<p class="small">(étape non exécutée)</p>' : (readRows.length ? '<div class="scroll"><table><tr><th>section</th><th>clé</th><th class="n">valeur</th><th>origine</th></tr>' + readRows.map(r => '<tr><td class="mono">' + esc(r.comp.replace('engine.', '')) + '</td><td class="mono">' + esc(r.key) + '</td><td class="n">' + esc(fj(r.val)) + '</td><td>' + (r.state === 'read' ? '<span class="tag ok">json</span>' : '<span class="tag w">défaut</span>') + '</td></tr>').join('') + '</table></div>' : '<p class="small">(aucune valeur lue)</p>') +
+      (L.some(x => /type invalide/.test(x.m)) ? '<div class="bad">Exception <code class="i">type_error.302</code> : la lecture s’arrête ici. ' + (S.partial ? '<b>Des champs de <code class="i">renderer</code> ont déjà été écrasés : l’état est partiel</b> (A6-7).' : 'Défauts intacts.') + '</div>' : ''),
+    'Scalaire : une recherche par clé dans l’arbre de nlohmann (<code class="i">std::map</code>, O(log n)). Vectorisé : sans objet pour les scalaires. <code class="i">ReadVector</code> lit trois flottants ; les ranger dans un registre SIMD (<code class="i">_mm_loadu_ps</code>) ne ferait gagner que quelques cycles, une fois par entité au chargement.');
+  /* 4 */
+  const guards = L.filter(x => /^\[EngineConfig\]/.test(x.m) || /type invalide/.test(x.m));
+  h += stepBox(4, 'Les gardes de cohérence',
+    'Une valeur correctement typée peut quand même être absurde (taille de tuile nulle) ou contradictoire (deux moteurs de rendu). Le garde-fou corrige et parle (R7).',
+    'Les valeurs lues à l’étape 3, déjà dans <code class="i">EngineConfig</code>.',
+    code(`if (renderer.rasterizer && renderer.raycaster)  Logger::warn("[EngineConfig] rasterizer ET raycaster actifs — aucun arbitrage defini");
+if (renderer.tileSize <= 0) { Logger::warn("... force a " + std::to_string(LV3_DEFAULT_TILE_SIZE)); renderer.tileSize = LV3_DEFAULT_TILE_SIZE; }
+if (features.raycast && !renderer.raycaster)    Logger::warn("[EngineConfig] features.raycast=true mais renderer.raycaster=false — sans effet");`),
+    guards.length ? con({ logs: guards }) : '<div class="good">Aucune garde déclenchée.</div>',
+    COLD + ' Les gardes de données utilisent <code class="i">Logger::warn</code>, jamais <code class="i">LV3_ASSERT</code> : une donnée d’auteur n’est pas une faute de programmeur.',
+    '<div class="note">Le vrai <code class="i">engine.json</code> déclenche déjà un avertissement : <code class="i">features.raycast</code> vaut <code class="i">true</code> alors que <code class="i">renderer.raycaster</code> vaut <code class="i">false</code>. Le fichier se contredit lui-même, et c’est maintenant visible.</div>');
+  /* 5 */
+  const unread = S.ctx.rows.filter(r => r.state === 'ign' || r.state === 'cmt');
+  h += stepBox(5, 'Signaler ce que personne n’a demandé (<code class="i">WarnUnread</code>)',
+    'Détecter la clé que le moteur ne connaît pas : faute de frappe de l’auteur, ou réglage pas encore branché.',
+    'Les ensembles <code class="i">m_seen</code> remplis par les étapes 2 et 3.',
+    code(`void WarnUnread() const
+{
+    if (!m_j.is_object()) return;                      // un tableau n'a pas de clés à vérifier
+    for (auto& [key, _] : m_j.items())
+    {
+        if (key.starts_with('_')) continue;            // "_comment", "_version" : assumé
+        if (!m_seen.contains(key))
+            Logger::warn("[" + m_comp + "] cle ignoree '" + key + "' sur " + m_owner);
+    }
+}`),
+    P.nofile ? '<p class="small">(étape non exécutée)</p>' : treeHtml(unread) + (unread.some(r => r.state === 'ign') ? '' : '<p class="small">Aucune clé ignorée. Les clés en « _ » sont des commentaires assumés.</p>'),
+    COLD,
+    '<div class="bad"><b>Contre-exemple chiffré.</b> L’auteur veut <code class="i">tile_size: 128</code> et écrit <code class="i">tile_sise</code>. Sans <code class="i">WarnUnread</code>, le moteur prend le défaut (ici 32) sans rien dire. Écran 1920×1080 : <b>' + fmt(tiles(1920, 1080, 32)) + ' tuiles</b> de 32 au lieu de <b>' + fmt(tiles(1920, 1080, 128)) + '</b> de 128, soit ' + (tiles(1920, 1080, 32) / tiles(1920, 1080, 128)).toFixed(1).replace('.', ',') + ' fois plus de tuiles à ordonnancer, et personne ne sait pourquoi le rendu a changé de profil de performance. Coche « Faute de frappe » plus haut : la ligne rouge apparaît.</div>');
+  /* 6 */
+  h += stepBox(6, 'Brancher dans le moteur et lire le résultat',
+    'Appeler le chargement au bon moment, puis consommer les valeurs par le singleton.',
+    'Un <code class="i">EngineConfig</code> rempli, ou resté sur ses défauts (<code class="i">' + (S.ok ? 'true' : 'false') + '</code>).',
+    code(`// main.cpp : AVANT ResourceManager et Renderer::Init
+if (!LV3::EngineConfig::Get().LoadFromJson("engine.json"))
+    Logger::warn("EngineConfig — defauts LV3_DEFAULT_* utilises");
+
+// ailleurs : toujours par Get(), jamais par le nom de la classe
+const std::string& base = LV3::EngineConfig::Get().resources.path;      // OK
+// LV3::EngineConfig::resources.pathMesh                                 // 2 erreurs : membre non statique, et pathMesh n'existe pas`),
+    '<div class="' + (S.ok ? 'good' : 'warn') + '"><code class="i">resources.path</code> = <code class="i">' + esc(S.cfg.resources.path) + '</code> · <code class="i">renderer.tileSize</code> = <code class="i">' + S.cfg.renderer.tileSize + '</code> · <code class="i">debug.depthDisplayRange</code> = <code class="i">' + S.cfg.debug.depthDisplayRange + '</code></div>',
+    'Scalaire : lecture d’un champ de structure. Vectorisé : sans objet. Les valeurs de <code class="i">renderer</code> nourriront ensuite des boucles vectorisées (taille de tuile), mais l’accès à la valeur est unique.',
+    '<p class="small">Pour construire un chemin de ressource, réutilise <code class="i">ResolvePath()</code> déjà présent dans <code class="i">Scene/Serializer.cpp</code> plutôt qu’une concaténation à la main.</p>');
+  /* 7 */
+  const tnodes = { 'sain': { translation: [10, 0, 0], scale: [1, 1, 1], rotation: [0, 90, 0] }, 'faute : translaton': { translaton: [10, 0, 0], scale: [1, 1, 1] }, 'rotation oubliée': { translation: [10, 0, 0], scale: [1, 1, 1] } };
+  const tk = P.tn || 'sain', tr = parseTransform(tnodes[tk], {});
+  h += stepBox(7, 'Migrer un <code class="i">Parse*</code> : le patron de <code class="i">ParseTransform</code>',
+    'Appliquer la même recette à chaque fonction de lecture de scène : propriétaire, lecteur, lectures, <code class="i">WarnUnread</code> en dernière ligne.',
+    'Un nœud JSON de composant, arrivé par le canal <code class="i">void*</code> (étape 5.4).',
+    code(`const std::string owner = EntityLabel(ctx.registry, entity);
+LV3::JsonReader r(compJson, "Transform", owner);
+
+TransformComponent t;
+t.m_local.position = r.ReadVector("translation", Vec3f::Zero());
+t.m_local.scale    = r.ReadVector("scale",       Vec3f::One());
+const Vec3f eulerDeg = r.ReadVector("rotation", Vec3f::Zero());
+t.m_local.rotation = Quatf(eulerDeg, true);        // le JSON stocke des degrés
+t.m_initialRotation = t.m_local.rotation;
+t.m_dirty = true;
+ctx.registry.addComponent(entity, std::move(t));
+r.WarnUnread();`),
+    '<div class="ctl"><label>Nœud : <select id="tnSel">' + Object.keys(tnodes).map(k => '<option' + (k === tk ? ' selected' : '') + '>' + k + '</option>').join('') + '</select></label></div><pre>' + esc(J(tnodes[tk])) + '</pre>' +
+      '<p class="mono">position ' + J(tr.t) + ' · scale ' + J(tr.s) + ' · rotation(°) ' + J(tr.rot) + '</p>' + con(tr.ctx),
+    '<b>Scalaire</b> : trois lectures de flottants par vecteur. <b>Vectorisé</b> : un <code class="i">Vec3f</code> tient dans un registre de 4 couloirs (le quatrième inutilisé) ; au chargement le gain est nul, mais le même type sera ensuite lu par les systèmes de transformation en SIMD.',
+    '<div class="warn">« Rotation oubliée » ne produit aucune alerte : une clé <b>absente</b> n’est pas une clé <b>ignorée</b>. C’est le rôle de la règle du 07/10 (A6-5) : le journal devrait dire que le défaut a été pris.</div>');
+  /* 8 */
+  const R21 = [['ParseTransform, ParseLight, ParsePlayerControl, ParseTrigger', 'oui : des valeurs avec un défaut sensé', 'JsonReader (R5)'], ['EngineConfig::LoadFromJson', 'oui', 'JsonReader (R5)'], ['ParseNode', 'non : il choisit quelle fonction appeler selon le nom du bloc', 'contrôle explicite qui parle'], ['ParseMesh, ParseHealth', 'oui (dette : encore en lecture manuelle)', 'JsonReader, à migrer']];
+  h += stepBox(8, 'Trier : ce qui passe par <code class="i">JsonReader</code> et ce qui n’y passe pas (R21)',
+    'Ne pas migrer de force une fonction qui n’a rien à protéger. R5 protège contre une clé mal orthographiée qui retombe sur un défaut ; un aiguillage entre blocs n’a pas de défaut.',
+    'Toutes les fonctions de <code class="i">Serializer.cpp</code>.',
+    code(`// ParseNode : routage structurel, inchangé
+if      (name == "transform") ParseTransform(...);
+else if (name == "light")     ParseLight(...);
+else    Logger::warn("Composant inconnu '" + name + "'");   // est DÉJÀ l'équivalent de WarnUnread, à son étage`),
+    '<div class="scroll"><table><tr><th>Fonction</th><th>Défaut sensé si la clé manque ?</th><th>Outil</th></tr>' + R21.map(r => '<tr><td>' + r[0].replace(/(Parse\w+|EngineConfig::LoadFromJson)/g, '<code class="i">$1</code>') + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>').join('') + '</table></div>',
+    COLD);
+  /* 9 */
+  const tm = P.tm || 'ancien', tt = parseTrigger({ radius: 2, onEnterEvent: 'Enter', isColliding: true }, tm === 'ancien' ? 'old' : 'new', {});
+  h += stepBox(9, 'Les défauts trouvés en migrant (<code class="i">ParseLight</code>, <code class="i">ParseTrigger</code>)',
+    'La relecture a trouvé ce que ni la compilation ni les tests n’avaient montré : un code qui ne compile pas, un type déduit à tort, une donnée lue puis jetée, un avertissement oublié.',
+    'Les fonctions migrées aux étapes 7 et 8.',
+    code(`// ParseLight : deux défauts
+Logger::warn("..." + compJson.contains("type"));        // std::string + bool : n'a pas d'operator+ → NE COMPILE PAS
+const std::string t = r.Read("type", "Ambient");          // "Ambient" est un const char* → T = const char*, pas std::string
+
+// ParseTrigger : donnée lue puis jetée
+const bool isColliding = r.Read("isColliding", false);   // la clé est COCHÉE : WarnUnread se tait
+... emplaceComponent<TriggerComponent>(entity, radius, ..., false, std::set<Entity>{});   // le littéral part, la valeur lue est perdue`),
+    '<div class="ctl"><label>Version de <code class="i">ParseTrigger</code> : <select id="tmSel"><option' + (tm === 'ancien' ? ' selected' : '') + '>ancien</option><option' + (tm === 'corrigé' ? ' selected' : '') + '>corrigé</option></select></label></div><p class="small">Le nœud contient <code class="i">"isColliding": true</code>, un état que seul <code class="i">TriggerSystem</code> doit calculer.</p><p class="mono">is_colliding final : <b>' + tt.is_colliding + '</b></p>' + con(tt.ctx) +
+      (tm === 'ancien' ? '<div class="bad">Silence total : la clé a été lue donc cochée, puis sa valeur jetée. C’est la règle R22, <code class="i">WarnUnread</code> ne peut pas voir ce trou.</div>' : '<div class="good">La clé n’est plus lue : elle est signalée. L’auteur apprend qu’il ne peut pas imposer cet état (R10).</div>'),
+    COLD,
+    '<p class="small">Autres points : <code class="i">Vec3f(155)</code> comme défaut de couleur reste à confirmer (échelle 0–255 ou 0–1 ?) et <code class="i">0.5f</code> pour la vitesse du joueur est à recouper avec l’initialiseur du composant (A6-1, A6-2). Le dépôt n’est pas relu dans ce lot.</p>');
+  /* 10 */
+  const aT = $('l2a') ? $('l2a').value : A_DUP, AA = loadAssets(aT, { skip: false }), dd = scanDup(aT);
+  h += stepBox(10, 'Clés libres : <code class="i">ForEachChild</code> (assets)',
+    'Lire un objet dont les noms de clés ne sont pas connus à l’avance (<code class="i">gizmo_perspective</code>, <code class="i">scene_test</code>…), sans perdre la traçabilité R5.',
+    'Le lecteur de la section <code class="i">assets</code>, obtenu par <code class="i">Child("assets")</code>.',
+    code(`std::unordered_map<std::string, AssetStruct> assets;
+JsonReader a = r.Child("assets");
+a.ForEachChild([&](const std::string& key, JsonReader rr)
+{
+    AssetStruct s;
+    s.type   = rr.Read("type",   std::string());
+    s.object = rr.Read("object", std::string());
+    rr.WarnUnread();
+    assets.emplace(key, std::move(s));
+});
+a.WarnUnread();`),
+    '<p class="mono">entrées lues : ' + AA.out.size + ' (' + esc([...AA.out.keys()].join(', ')) + ')</p>' + con(AA.ctx) + '<p class="small">Texte d’origine (celui du banc 3.2) : ' + (dd.length ? '<b>clé ' + esc(dd[0].key) + ' écrite deux fois</b> : ForEachChild n’en voit qu’une, voir l’étape suivante et la question de fond 8.1.' : 'aucun doublon.') + '</p>',
+    COLD + ' Alternative existante : <code class="i">NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(AssetStruct, type, object)</code> remplit la structure d’un coup, mais lève une exception dès qu’un champ manque et ne signale jamais une clé en trop.',
+    '<div class="bad"><b>Contre-exemple chiffré.</b> Trois assets déclarés, dont deux clés identiques : <b>' + AA.out.size + ' assets chargés</b> sur 4 lignes d’entrées. Aucun message dans le journal : ni <code class="i">ForEachChild</code> ni <code class="i">WarnUnread</code> n’ont reçu l’information. Seul un détecteur placé avant l’analyse la voit (banc 3.2).</div>');
+  /* 11 */
+  const VV = loadViewports($('l2v') ? $('l2v').value : V_OK, { dupGuard: true });
+  h += stepBox(11, 'Tableaux : <code class="i">Child</code> élargi et <code class="i">ForEachElement</code> (viewports)',
+    'Lire une liste ordonnée d’objets de même forme et la ranger dans une map par nom, sans perdre un élément en silence.',
+    'Le lecteur de la section <code class="i">viewports</code> : cette fois la valeur est un <b>tableau</b>.',
+    code(`std::unordered_map<std::string, ViewportStruct> mapViewports;
+JsonReader v = r.Child("viewports");               // Child accepte maintenant objet OU tableau
+v.ForEachElement([&](std::size_t i, JsonReader rr)
+{
+    ViewportStruct s;
+    s.nom     = rr.Read("nom",     std::string());
+    s.largeur = rr.Read("largeur", 0);
+    s.hauteur = rr.Read("hauteur", 0);
+    rr.WarnUnread();
+    if (mapViewports.contains(s.nom))                // emplace ne fait rien sur une clé existante : le doublon disparaîtrait
+        Logger::warn("[viewports][" + std::to_string(i) + "] nom '" + s.nom + "' deja utilise, ignore");
+    else
+        mapViewports.emplace(s.nom, std::move(s));
+});
+v.WarnUnread();                                      // gardée : sur un tableau, ne fait rien`),
+    '<p class="mono">entrées : ' + VV.out.size + ' (' + esc([...VV.out.keys()].join(', ')) + ')</p>' + con(VV.ctx),
+    COLD,
+    '<div class="warn">Ici, contrairement aux assets, les deux éléments existent en mémoire au même moment : c’est <b>notre</b> code qui les regroupe par nom, donc <b>notre</b> code peut détecter la collision. Essaie « Deux viewports de même nom » dans le banc 3.2, puis décoche le garde-fou.</div>');
+  /* 12 */
+  const N = P.setN != null ? P.setN : 64;
+  h += stepBox(12, '<code class="i">std::move</code> avant <code class="i">addComponent</code> (R24)',
+    'Prendre l’habitude de céder la variable locale au lieu de la copier, sans réévaluer à chaque composant.',
+    'Un composant local construit par un <code class="i">Parse*</code>, et <code class="i">addComponent(Entity, T value)</code> qui prend son paramètre <b>par valeur</b>.',
+    code(`TriggerComponent t;                                 // possède un std::set<Entity> et des std::string
+ctx.registry.addComponent(entity, t);              // copie profonde : un nœud alloué par élément
+ctx.registry.addComponent(entity, std::move(t));   // déplacement : les pointeurs changent de main`),
+    '<div class="ctl"><label>Éléments dans <code class="i">overlapping_entities</code> : <input type="range" id="setN" min="0" max="512" step="8" value="' + N + '"> <b class="mono" id="sNv">' + N + '</b></label></div>' +
+      '<div class="scroll"><table><tr><th></th><th class="n">allocations de nœuds</th><th class="n">nœuds recopiés</th></tr><tr><td>copie</td><td class="n" id="sA">' + N + '</td><td class="n" id="sB">' + N + '</td></tr><tr><td>déplacement</td><td class="n">0</td><td class="n">0</td></tr></table></div><p class="small">Pour un composant POD (<code class="i">CameraComponent</code> : que des scalaires), copie et déplacement produisent le même code machine : le réflexe ne coûte rien.</p>',
+    'Scalaire : la copie d’un <code class="i">std::set</code> est une boucle de pointeurs, par nature non vectorisable. Vectorisé : sans objet. La seule vraie réponse est de ne pas copier.',
+    '<div class="note">Le composant <code class="i">Trigger</code> sera revu dans l’annexe dédiée aux événements : à terme il devrait redevenir un POD. Le réflexe R24 reste valable en attendant.</div>');
+  return h;
+}
+
+/* ====================== VERIFIER ====================== */
+const BUGS = [['noSeenRead', 'Read() ne coche pas la clé'], ['noSeenChild', 'Child() ne coche pas sa section'], ['noWarnUnread', 'WarnUnread() ne fait rien'], ['noUnderscoreSkip', 'WarnUnread ne saute pas les clés « _ »'], ['noGuardNonObject', 'WarnUnread sans garde sur un tableau'], ['childObjectOnly', 'Child() refuse les tableaux'], ['noForEachSeen', 'ForEachChild ne coche pas les clés'], ['noDupGuard', 'pas de garde-fou de doublon de nom'], ['noTypeCatch', 'pas de catch sur json::exception'], ['readDeadKey', 'ParseTrigger lit isColliding puis le jette']];
+const VB = {};
+function verHtml() {
+  const bugs = {}; BUGS.forEach(b => { if (VB[b[0]]) bugs[b[0]] = true; });
+  const res = runSuite(bugs), nOk = res.filter(r => r.ok).length, active = Object.keys(bugs).length;
+  let h = '<p>Les tests sont la copie JavaScript des tests C++ du lot, faits pour tourner <b>hors moteur</b> : aucun rendu, aucune fenêtre. Injecte un défaut : un test au moins doit passer au rouge. S’il ne le fait pas, le filet a un trou.</p>';
+  h += '<div class="card"><div class="lbl">Injecter un défaut</div><div class="ctl">' + BUGS.map(b => '<label><input type="checkbox" data-vb="' + b[0] + '"' + (VB[b[0]] ? ' checked' : '') + '> ' + b[1] + '</label>').join('') + '</div>' +
+    '<div class="ctl"><span class="verdict ' + (nOk === res.length ? 'ok' : 'ko') + '">' + nOk + ' / ' + res.length + ' tests verts</span>' + (active ? (nOk < res.length ? tag('le filet a mordu', 'ok') : tag('aucun test n’a vu le défaut', 'ko')) : '') + '</div>' +
+    '<div class="scroll"><table><tr><th>Test</th><th>Résultat</th></tr>' + res.map(r => '<tr><td>' + esc(r.name) + '</td><td>' + (r.ok ? '<span class="tag ok">vert</span>' : '<span class="tag ko">rouge</span>' + (r.d ? ' <span class="small">' + esc(r.d) + '</span>' : '')) + '</td></tr>').join('') + '</table></div>' +
+    '<p class="small">Les tests marqués « constat » décrivent le comportement actuel, y compris un comportement jugé à corriger (R7·5 : état partiel). Ils passent au vert tant que le défaut existe.</p></div>';
+  h += '<h3>Filets Debug : ce qui couvre, ce qui ne couvre pas</h3><div class="scroll"><table><tr><th>Classe d’erreur</th><th>Couverte par</th><th>Reste aveugle</th></tr>' +
+    [['Clé mal orthographiée', 'WarnUnread', '—'], ['Valeur mal typée', 'catch sur json::exception, retour false', 'état partiel (A6-7)'], ['Valeur incohérente', 'gardes de LoadFromJson', 'seulement celles qu’on a pensé à écrire'], ['Valeur lue puis jetée', '—', 'WarnUnread ne la voit pas : relecture humaine (R22)'], ['Clé absente', 'défaut explicite', 'silencieuse, sauf règle du 07/10 (A6-5)'], ['Section avec le mauvais type', '—', 'Child vide sans rien dire (A6-8)'], ['Doublon de clé dans le texte', '—', 'perdu avant que le lecteur existe (A6-10)'], ['Doublon d’index dans un tableau', 'garde-fou de la map', 'seulement si on l’écrit']].map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td></tr>').join('') + '</table></div>';
+  h += '<h3>Prédictions pour le lot appairé (annexe sur les événements du Trigger)</h3><p class="small">Hypothèses à confirmer quand ce lot sera construit : rien n’est acté.</p><div class="scroll"><table><tr><th>Prédiction</th><th>Pourquoi</th></tr>' +
+    [['Une chaîne d’événement inconnue ne sera pas vue par <code class="i">WarnUnread</code>.', 'La clé <code class="i">onEnterEvent</code> est lue : elle est cochée. Seule une résolution chaîne → énumération verra que la <b>valeur</b> est inconnue.'], ['La résolution suivra le patron de <code class="i">ReadProjectionType</code>.', 'Fonction libre du domaine, avertissement, valeur de repli : R20.'], ['L’énumération d’événements aura une valeur « aucun » distincte de « inconnu ».', 'Même précaution que les sentinelles de l’annexe A5 : ne pas confondre « pas d’événement voulu » et « événement non reconnu ».'], ['<code class="i">TriggerComponent</code> redeviendra un POD.', 'Une chaîne par événement sur un composant parcouru à chaque frame viole la règle POD de la leçon 3.']].map(r => '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>').join('') + '</table></div>';
+  return h;
+}
+
+/* ====================== QUESTIONS DE FOND ====================== */
+function fondHtml() {
+  const q = (t, b) => '<details><summary>' + t + '</summary><div style="padding-top:6px">' + b + '</div></details>';
+  return [
+    q('8.1 · Pourquoi le doublon <code class="i">scene_test</code> est-il « purement ignoré » par <code class="i">ForEachChild</code> ?',
+      '<p><b>Il ne l’est pas par <code class="i">ForEachChild</code> : il a déjà disparu quand <code class="i">ForEachChild</code> reçoit la main.</b></p>' + code(`texte JSON  →  parse()  →  objet en mémoire  →  ForEachChild
+ 2 × "scene_test"      1 seul "scene_test" (le dernier)`) +
+      '<p>Un objet JSON est une table associative. Quand le parseur voit une deuxième clé de même nom dans le même objet, la nouvelle valeur écrase l’ancienne, exactement comme une deuxième insertion dans une map. Cela se passe pendant <code class="i">file &gt;&gt; root</code>, avant tout code du moteur. La RFC 8259 dit que les noms « devraient » être uniques et ne définit pas le reste ; nlohmann garde la dernière valeur.</p>' +
+      '<div class="scroll"><table><tr><th></th><th>Doublon de clé dans un objet</th><th>Doublon de <code class="i">nom</code> dans le tableau viewports</th></tr><tr><td>Où la collision a lieu</td><td>dans le parseur</td><td>dans notre code, à <code class="i">emplace</code></td></tr><tr><td>Les deux entrées existent-elles quand on peut réagir ?</td><td>non, une seule survit</td><td>oui, deux éléments distincts du tableau</td></tr><tr><td>Défense possible</td><td>seulement en amont du parseur</td><td><code class="i">if (map.contains(nom))</code></td></tr></table></div>' +
+      '<p>Aucune extension de <code class="i">JsonReader</code> ne peut corriger ça : l’information n’existe plus. Pour la capter il faut regarder le texte avant l’analyse, avec l’interface SAX de nlohmann (un consommateur d’événements qui garde un ensemble de clés par objet), ou avec un outil externe de validation. Le banc 3.2 en montre une version simplifiée. C’est plus lourd que tout ce qui a été fait ici : à décider seulement si le problème devient fréquent (A6-10).</p>'),
+    q('8.2 · Pourquoi <code class="i">ParseNode</code> ne migre-t-il pas ?',
+      '<p>R5 protège contre une clé qui retombe sur un défaut en silence. <code class="i">ParseNode</code> ne lit aucune valeur avec défaut : il choisit quel bloc de composant envoyer à quelle fonction. Son <code class="i">else { Logger::warn("Composant inconnu…") }</code> joue déjà le rôle de <code class="i">WarnUnread</code>, à son étage. Règle de tri : une lecture avec un défaut sensé passe par <code class="i">JsonReader</code> ; un choix structurel est un contrôle explicite qui parle (R21).</p>'),
+    q('8.3 · Pourquoi une donnée d’auteur ne déclenche jamais <code class="i">LV3_ASSERT</code> ?',
+      '<p>Un <code class="i">LV3_ASSERT</code> signale une faute de <b>programmeur</b> (invariant du code rompu : deux caméras avec la même priorité, par exemple). Une valeur dans un fichier JSON est une faute d’<b>auteur</b> : le moteur doit le dire, retomber sur une valeur sûre et continuer (R7 : un garde-fou corrige et parle). Planter sur une virgule oubliée dans <code class="i">engine.json</code> rendrait le moteur fragile pour rien.</p>'),
+    q('8.4 · Pourquoi <code class="i">std::move</code> en réflexe ?',
+      '<p><code class="i">addComponent</code> prend son paramètre par valeur ; <code class="i">emplaceComponent</code> transmet des arguments de constructeur bruts. Passer une lvalue à <code class="i">addComponent</code> force une copie. Sur un POD, copie et déplacement donnent le même code. Sur un composant qui possède de la mémoire, la différence est réelle. Le réflexe évite de réévaluer composant par composant, et protège le jour où un composant change de nature sans que personne ne repense à l’appel (R24).</p>'),
+    q('8.5 · Pourquoi pas la macro <code class="i">NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE</code> ?',
+      '<p>Elle est très concise et très bien pour un format rigide. Mais elle utilise <code class="i">.at()</code> en interne : un champ manquant lève une exception qui interrompt tout, et une clé en trop passe sans bruit. Notre politique est inverse : continuer avec une valeur sûre et le dire. La macro reste utilisable pour des données binaires ou des formats figés ; pour des fichiers édités à la main, <code class="i">JsonReader</code> est préférable.</p>'),
+    q('8.6 · Pourquoi <code class="i">engine.json</code> va-t-il dans l’EXE ?',
+      '<p>Test de placement : si un autre jeu liait la même <code class="i">LibraryV3.lib</code>, le contenu de <code class="i">engine.json</code> changerait-il ? Oui (taille de tuile, chemins de ressources). Une <code class="i">StaticLibrary</code> n’a pas de dossier d’exécution : l’élément <code class="i">None</code> du <code class="i">.vcxproj</code> ne copiait rien nulle part. Le fichier appartient donc au projet qui possède l’exécutable, en <code class="i">Content</code> avec copie si plus récent (R23). La section 5.3 permet de rejouer les cas.</p>')
+  ].join('');
+}
+
+/* ====================== ROADMAP ====================== */
+const ROAD = [
+  ['A6-1', 'Défaut de couleur <code class="i">Vec3f(155)</code> dans <code class="i">ParseLight</code>', 'Confirmer l’échelle de <code class="i">LightComponent::m_color</code> sur le dépôt (0–255 ou 0–1) ; proposition : <code class="i">Vec3f::One()</code>.', 'à vérifier'],
+  ['A6-2', 'Défaut <code class="i">0.5f</code> de la vitesse dans <code class="i">ParsePlayerControl</code>', 'Recouper avec l’initialiseur de <code class="i">PlayerControlComponent::m_speed</code>.', 'à vérifier'],
+  ['A6-3', '<code class="i">ParseCamera</code> sans <code class="i">std::move(c)</code>', 'Correctif trivial, cohérence avec R24.', 'à décider'],
+  ['A6-4', '<code class="i">ParseMesh</code>, <code class="i">ParseHealth</code> encore en lecture manuelle', 'Migrer vers <code class="i">JsonReader</code> (recette de l’étape 7).', 'à décider'],
+  ['A6-5', 'Clé <b>absente</b> : le lecteur collé dans cet échange n’avertit pas', 'La règle du 07/10 demande que le journal dise quand un défaut a été pris, et la dette « clés optionnelles » du Serializer propose de tester <code class="i">Has()</code> avant les clés réellement optionnelles. Vérifier sur le dépôt si <code class="i">Read</code> avertit ou non, puis trancher avec cette dette. Remet en question une décision de ce lot.', 'à vérifier puis décider'],
+  ['A6-6', 'Namespace <code class="i">LibV3</code> (Serializer) contre <code class="i">LV3</code> (le reste)', 'Incohérence connue, non traitée dans ce lot.', 'à décider'],
+  ['A6-7', '<code class="i">LoadFromJson</code> peut laisser un état partiel', 'Une exception en cours de route laisse les sections déjà lues écrasées, alors que le commentaire de l’en-tête promet « jamais un état partiel ». Correctif proposé : travailler sur une copie (diff « Proposé 3 »).', 'proposé'],
+  ['A6-8', '<code class="i">Child</code> silencieux sur une section du mauvais type', '<code class="i">"renderer": 3</code> donne une section vide sans message. Correctif proposé : avertir (diff « Proposé 2 »).', 'proposé'],
+  ['A6-9', '<code class="i">ForEachChild</code> et les clés « _ »', '<code class="i">WarnUnread</code> saute les clés commençant par « _ », pas <code class="i">ForEachChild</code> : un <code class="i">_comment</code> dans <code class="i">assets</code> produit un avertissement. Correctif proposé : même convention (diff « Proposé 1 »).', 'proposé'],
+  ['A6-10', 'Doublon de clé dans le texte JSON', 'Non détectable par le lecteur. Options : ne rien faire ; relecture/outil de validation externe ; détecteur SAX avant l’analyse. À décider si le problème se répète.', 'à décider'],
+  ['A6-11', 'Annexe A6 (markdown du projet) en retard', 'Elle ne contient pas <code class="i">ForEachChild</code>, <code class="i">ForEachElement</code>, <code class="i">Child</code> élargi, la garde de <code class="i">WarnUnread</code>, les doublons ni les points A6-7 à A6-9. Mise à jour à ta demande.', 'à ta demande'],
+  ['A6-12', 'Événements du Trigger (chaînes sur un composant chaud)', 'Reporté par Onky à une annexe dédiée ; attend le contenu de <code class="i">Core/EventNames.h</code> et la déclaration de <code class="i">TriggerComponent</code>.', 'reporté'],
+  ['A6-13', '<code class="i">engine.json</code> dans le projet EXE', 'Application du déplacement et vérification du répertoire de travail : à confirmer.', 'à confirmer'],
+  ['A6-14', 'Macro <code class="i">NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE</code> pour les assets', 'Choisir entre la macro actuelle et <code class="i">ForEachChild</code> pour <code class="i">AssetStruct</code>.', 'à décider']
+];
+const stCls = s => /proposé/.test(s) ? 'w' : /vérifier|confirmer/.test(s) ? 'w' : '';
+function roadHtml() {
+  const md = '## Décisions en attente : lot A6 (JsonReader & EngineConfig), rien n’est acté\n\n' + ROAD.map(r => '- **' + r[0] + '** ' + r[1].replace(/<[^>]+>/g, '') + ' : ' + r[2].replace(/<[^>]+>/g, '') + ' [' + r[3] + ']').join('\n');
+  return '<p>Rien n’est acté dans cette liste. Elle regroupe les écarts entre l’annexe, le dépôt et ce que cet échange a fait apparaître. Les lignes A6-5, A6-10 et A6-12 touchent des sujets d’autres lots (Serializer, événements) : elles sont notées ici sans être traitées.</p>' +
+    '<div class="scroll"><table><tr><th>N°</th><th>Point</th><th>Détail</th><th>Statut</th></tr>' + ROAD.map(r => '<tr><td class="mono">' + r[0] + '</td><td>' + r[1] + '</td><td>' + r[2] + '</td><td>' + tag(r[3], stCls(r[3])) + '</td></tr>').join('') + '</table></div>' +
+    '<h3>Bloc à coller dans la roadmap du projet</h3><div class="ctl"><button class="p" id="cpRoad">Copier le bloc</button><span class="small" id="cpMsg"></span></div><textarea id="roadMd" readonly style="min-height:150px">' + esc(md) + '</textarea>';
+}
+
+/* ====================== BRANCHEMENT ====================== */
+function renderSteps() { $('steps').innerHTML = stepsHtml(); }
+function renderHop() { $('hopOut').innerHTML = hopHtml(); }
+function renderAll() {
+  $('diffs').innerHTML = diffsHtml(); $('tech').innerHTML = techHtml();
+  renderHop(); $('plOut').innerHTML = plHtml(-1); $('pjOut').innerHTML = pjHtml();
+  renderSteps(); $('verOut').innerHTML = verHtml(); $('fondOut').innerHTML = fondHtml(); $('roadOut').innerHTML = roadHtml();
+}
+$('l1txt').value = JSON.stringify(BASE_ENGINE, null, 2); $('l2a').value = A_DUP; $('l2v').value = V_OK;
+renderAll(); l1run(); l2run(); renderSteps();
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button,input'); if (!t) return;
+  if (t.dataset.l1) l1preset(t.dataset.l1);
+  else if (t.dataset.l2) { l2preset(t.dataset.l2); renderSteps(); }
+  else if (t.dataset.pl) $('plOut').innerHTML = plHtml(+t.dataset.pl);
+  else if (t.id === 'hopBtn') { HX.i = Math.min(HX.i + 1, 4); renderHop(); }
+  else if (t.id === 'hopRst') { HX.i = 0; renderHop(); }
+  else if (t.id === 'cpRoad') {
+    const ta = $('roadMd'); const done = ok => { $('cpMsg').textContent = ok ? 'Bloc copié.' : 'Copie refusée : le texte est sélectionné, utilise Ctrl+C.'; if (!ok) { ta.focus(); ta.select(); } };
+    try { navigator.clipboard.writeText(ta.value).then(() => done(true), () => done(false)); } catch (x) { done(false); }
+  }
+  else if (t.id === 'btnExport') exportHtml();
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'l1file' || t.id === 'l1abs' || t.id === 'l1prop') l1run();
+  else if (t.id === 'l2skip' || t.id === 'l2dup') { l2run(); renderSteps(); }
+  else if (t.id === 'hopK') { HX.k = +t.value; HX.i = 0; renderHop(); }
+  else if (t.dataset.pj) { PJ[t.dataset.pj] = t.value; $('pjOut').innerHTML = pjHtml(); }
+  else if (t.dataset.p) { P[t.dataset.p] = t.checked; renderSteps(); }
+  else if (t.id === 'tnSel') { P.tn = t.value; renderSteps(); }
+  else if (t.id === 'tmSel') { P.tm = t.value; renderSteps(); }
+  else if (t.dataset.vb) { VB[t.dataset.vb] = t.checked; $('verOut').innerHTML = verHtml(); }
+  else if (t.name === 'vw') $('diffs').className = t.value;
+});
+$('l1txt').addEventListener('input', l1run);
+$('l2a').addEventListener('input', () => { l2run(); renderSteps(); });
+$('l2v').addEventListener('input', () => { l2run(); renderSteps(); });
+document.addEventListener('input', e => { if (e.target.id === 'setN') { P.setN = +e.target.value; ['sNv', 'sA', 'sB'].forEach(id => { $(id).textContent = P.setN; }); } });
+
+async function exportHtml() {
+  const msg = m => { $('expMsg').textContent = m; };
+  try {
+    const d = await (window.claude && window.claude.use ? window.claude.use('downloads') : null);
+    if (!d) { msg('Export indisponible dans cette vue.'); return; }
+    await d.save({ filename: 'Lot_A6_JsonReader_EngineConfig.html', data: SRC });
+    msg('Fichier proposé au téléchargement.');
+  } catch (e) { msg(e && e.code === 'declined' ? 'Export annulé.' : 'Export impossible (' + ((e && e.code) || 'erreur') + ').'); }
+}
+</script>
+
+</body></html>

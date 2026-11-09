@@ -131,9 +131,11 @@ namespace LV3::Tests
             cc.fb = &C.fb; cc.db = &C.db;
             for (const Tri& t : tris)
             {
-                Fill(ca, t); RasterizeTriangleT<Shader, kScalarOnly>(t.v[0], t.v[1], t.v[2], vp, ca);
-                Fill(cb, t); RasterizeTriangleT<Shader, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, cb);
-                Fill(cc, t); RasterizeTriangleT<Shader>(t.v[0], t.v[1], t.v[2], vp, cc);
+                // D-a1c : sommets NON accrochés (TNR antérieure au contrat D-a1) -> aiguillage coupé (kSmallFloatOff).
+                constexpr auto kA = EFixedLanes::Auto;
+                Fill(ca, t); RasterizeTriangleT<Shader, kScalarOnly, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, ca);
+                Fill(cb, t); RasterizeTriangleT<Shader, kSimdAlways, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cb);
+                Fill(cc, t); RasterizeTriangleT<Shader, kSimdMinBoxWidth, kA, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cc);
             }
             size_t cd = 0, dd = 0, cd2 = 0, dd2 = 0;
             bool ok = SameImage(A, B, cd, dd) & SameImage(A, C, cd2, dd2);
@@ -176,7 +178,7 @@ namespace LV3::Tests
             Target T;
             FragmentContext c{};
             c.fb = &T.fb; c.db = &T.db;
-            for (const Tri& t : tris) { Fill(c, t); RasterizeTriangleT<ShaderCount, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, c); }
+            for (const Tri& t : tris) { Fill(c, t); RasterizeTriangleT<ShaderCount, kSimdAlways, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, c); }
             size_t covered = 0, multi = 0, nanDepth = 0;
             for (int32_t y = 0; y < kH; ++y)
                 for (int32_t x = 0; x < kW; ++x)
@@ -188,7 +190,7 @@ namespace LV3::Tests
                 Target S;
                 FragmentContext cs{};
                 cs.fb = &S.fb; cs.db = &S.db;
-                for (const Tri& t : tris) { Fill(cs, t); RasterizeTriangleT<ShaderSolid, kSimdAlways>(t.v[0], t.v[1], t.v[2], vp, cs); }
+                for (const Tri& t : tris) { Fill(cs, t); RasterizeTriangleT<ShaderSolid, kSimdAlways, EFixedLanes::Auto, kSmallFloatOff>(t.v[0], t.v[1], t.v[2], vp, cs); }
                 for (int32_t y = 0; y < kH; ++y)
                     for (int32_t x = 0; x < kW; ++x) nanDepth += std::isnan(S.db.Row(y)[x]) ? 1u : 0u;
             }

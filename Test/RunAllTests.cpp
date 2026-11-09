@@ -44,6 +44,8 @@ namespace LV3::Tests
     bool Test_C3_Pixel1();
     bool Test_Da1_Fixed();          // D-a1 : aretes en virgule fixe
     bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers
+    bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image
+    bool Test_Da1d_Snap();
 
 
 
@@ -211,6 +213,27 @@ namespace LV3::Tests
         else
         {
             Logger::success("SUCCES : Test_Da1b_Bary()");
+        }
+
+        if (!Test_Da1c_SmallFloat())
+        {
+            Logger::error("ECHEC : Test_Da1c_SmallFloat()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da1c_SmallFloat()");
+        }
+
+
+        if (!Test_Da1d_Snap())
+        {
+            Logger::error("ECHEC : Test_Da1d_Snap()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da1d_Snap()");
         }
 
         // Validation avant tout démarrage moteur
