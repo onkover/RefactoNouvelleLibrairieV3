@@ -46,7 +46,7 @@ namespace LV3::Tests
     bool Test_Da1b_Bary();          // D-a1b : barycentriques tirees des E' entiers
     bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image
     bool Test_Da1d_Snap();
-
+    bool Test_Da2_Tiles();          // D-a2 : hierarchie de tuiles 8 x 8 (Abrash), meme image
 
 
 #if LV3_DEBUG    
@@ -235,6 +235,17 @@ namespace LV3::Tests
         {
             Logger::success("SUCCES : Test_Da1d_Snap()");
         }
+
+        if (!Test_Da2_Tiles())
+        {
+            Logger::error("ECHEC : Test_Da2_Tiles()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da2_Tiles()");
+        }
+
 
         // Validation avant tout démarrage moteur
         if (!Test_TopLeftRule_NoDoubleCoverage())
