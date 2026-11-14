@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>Lot D-a2 pas à pas</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -29,6 +36,7 @@ body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
 .read{max-width:80ch}
 h1,h2,h3{font-family:var(--f-head);text-wrap:balance;line-height:1.2;margin:0}
 h1{font-size:2rem} h2{font-size:1.45rem} h3{font-size:1.12rem;margin:16px 0 6px}
+h4{font-family:var(--f-head);font-size:1rem;margin:14px 0 4px;color:var(--ink,inherit)}
 p{margin:0 0 10px} ul,ol{margin:0 0 10px;padding-left:22px} li{margin-bottom:3px}
 .eyebrow{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 .lede{color:var(--mute);font-size:1.02rem}
@@ -127,24 +135,51 @@ details.code>div,details.more>div{padding:0 12px 12px}
 .alg .add{background:var(--ok-soft);color:var(--ok);display:inline-block;width:100%}
 .alg .gone{color:var(--mute);text-decoration:line-through}
 .cmp td:first-child{font-weight:600;white-space:nowrap}
+code{overflow-wrap:anywhere}
+.mapflow{display:flex;flex-direction:column;gap:4px}
+.maprow{display:flex;flex-direction:column;gap:4px}
+.maplab{font:700 .68rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.mapcells{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.mapnode{font:.8rem var(--f-body);padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer;text-align:left}
+.mapnode.hl{background:var(--warn-soft);border-color:var(--warn)}
+.mapnode.sel{outline:2px solid var(--accent);outline-offset:1px}
+.maparrow,.mapdown{color:var(--mute);font-size:.85rem}
+.mapdown{padding-left:12px}
+.amend{border:1px dashed var(--warn);border-radius:8px;padding:10px 14px;margin:12px 0;font-size:.93rem}
+.amend>b:first-child{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--warn);margin-bottom:4px}
+.ab{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:6px}
+.ab>div{border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-width:0}
+.ab>div>i{display:block;font:700 .7rem var(--f-mono);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}
+.ab>div.after{border-color:var(--ok)}
+.ab>div.after>i{color:var(--ok)}
+svg.chart text{fill:var(--fg);font:11px var(--f-mono)}
+svg.chart .ax{stroke:var(--line)}
+svg.chart .zero{stroke:var(--mute);stroke-dasharray:3 3}
+svg.chart .pred{fill:var(--accent-soft);stroke:var(--accent)}
+svg.chart .meas{fill:var(--warn)}
+svg.chart .meas.ok{fill:var(--ok)}
+svg.chart .thr{stroke:var(--warn);stroke-width:2}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 <div class="wrap">
 
 <header class="read">
-  <div class="eyebrow">Phase G · Jalon D · lot D-a2 · 10 novembre 2026</div>
+  <div class="eyebrow">Phase G · Jalon D · lot D-a2 · 10 novembre 2026 · mis à jour le 14 novembre 2026</div>
   <h1>La hiérarchie d'Abrash posée sur Giesen, pas à pas</h1>
   <p class="lede">D-a1 a rendu le test « ce pixel est-il dans le triangle ? » presque gratuit : trois additions entières et un bit de signe par bloc de 8 pixels. Il reste un défaut que Giesen ne peut pas corriger seul : il teste <b>tous</b> les blocs de la boîte englobante. Pour un grand triangle oblique, la moitié de ces blocs sont vides, et un tiers sont entièrement couverts. Ce lot ajoute au-dessus des blocs un niveau de <b>tuiles de 8 × 8 pixels</b>, jugées huit à la fois : une tuile vide est sautée d'un coup, une tuile pleine est dessinée sans un seul test.</p>
   <p class="lede">Le lot suit l'ordre habituel : d'abord pourquoi (rappel, contexte, objectif), ensuite la leçon (la méthode, sa preuve, ce qu'elle peut et ne peut pas rapporter), puis le fonctionnement dans LV3 et les décisions, enfin les étapes de code avant/après, les contre-exemples, les prédictions et la vérification.</p>
-  <p class="lede" style="font-size:.92rem">Statut : <span class="pill w">LIVRÉ · À APPLIQUER ET MESURER</span> Base : LIB <code>e7cae94</code> / EXE <code>5203980</code> (D-a1c commité). Commutateur de mesure <code>LV3_RASTER_TILES</code> (config.h, section 14) : 0 = sans hiérarchie, 16 = défaut proposé.</p>
+  <p class="lede" style="font-size:.92rem">Statut : <span class="pill o">ACCEPTÉ LE 14/11 · DÉFAUT 16 · AVEC RÉSERVES</span> (livré le 10/11, mesuré le 14/11 ; historique : <span class="pill w">LIVRÉ · À APPLIQUER ET MESURER</span>) Base : LIB <code>e7cae94</code> / EXE <code>5203980</code> (D-a1c commité). Commutateur de mesure <code>LV3_RASTER_TILES</code> (config.h, section 14) : 0 = sans hiérarchie, 16 = défaut proposé.</p>
+  <div class="note good"><b>Mise à jour du 14/11 : la mesure est faite.</b> Image identique au bit près, comptages exacts (14 scènes), asm conforme. Sur l'i7-1265U : grands triangles nettement plus rapides (V5 c96 −14 %, éventail −55 %), rooms −2,3 %, témoins sans régression. Mais les triangles tuilés moyens perdent (c24 +4 %, c48 +10 %) : le lot est accepté avec cette réserve, et la Partie V explique pourquoi, avec deux laboratoires. Les sections écrites le 10/11 et contredites par la mesure portent un encadré « Amendement » (avant / après).</div>
 </header>
 
 <section>
   <div class="sh"><span class="stepno">PLAN</span><h2>Le parcours</h2></div>
   <ol class="toc">
     <li><a href="#rappel">D'où l'on vient</a></li>
+    <li><a href="#carte">L'algorithme global du moteur, et où se place ce lot</a></li>
     <li><a href="#contexte">Le problème : 2 % des triangles, 58 % des pixels</a></li>
     <li><a href="#objectif">L'objectif fonctionnel et la règle de déclenchement</a></li>
+    <li><a href="#besoin">Le besoin, dit fonctionnellement, et les méthodes employées</a></li>
     <li><a href="#methode">La méthode d'Abrash, sans formule</a></li>
     <li><a href="#coins">Les deux coins : juger 64 pixels avec 2 nombres</a></li>
     <li><a href="#preuve">Pourquoi le test est exact (démonstration)</a></li>
@@ -152,7 +187,7 @@ details.code>div,details.more>div{padding:0 12px 12px}
     <li><a href="#compare">Giesen seul, Abrash sur Giesen, Larrabee : comparaison</a></li>
     <li><a href="#lv3">Le fonctionnement dans LV3</a></li>
     <li><a href="#decisions">Ce qui a été choisi, et pourquoi</a></li>
-    <li><a href="#algo">L'algorithme, avant et après</a></li>
+    <li><a href="#algo">L'algorithme, avant et après</a> (et <a href="#algo-detail">l'aiguillage détaillé</a>)</li>
     <li><a href="#v5">La scène V5 : des grands triangles, mesurables</a></li>
     <li><a href="#banc">Le banc hors moteur</a></li>
     <li><a href="#etapes">Les étapes, pas à pas (registres couloir par couloir)</a></li>
@@ -160,6 +195,11 @@ details.code>div,details.more>div{padding:0 12px 12px}
     <li><a href="#contre">Huit façons de rater ce lot</a></li>
     <li><a href="#predictions">Écrites avant la mesure</a></li>
     <li><a href="#verifier">Vérifier</a></li>
+    <li><a href="#feuille">Feuille de route des runs</a></li>
+    <li><a href="#labmesure">Laboratoire : prédit contre mesuré</a></li>
+    <li><a href="#labbranche">Laboratoire : pourquoi c48 perd (prédicteur de branchement)</a></li>
+    <li><a href="#placement">L'effet de placement du code</a></li>
+    <li><a href="#usage">Exemples d'utilisation</a></li>
     <li><a href="#suite">Et après : binning, Hi-Z, multithread</a></li>
     <li><a href="#resume">En résumé, ordre d'application</a></li>
   </ol>
@@ -184,6 +224,49 @@ details.code>div,details.more>div{padding:0 12px 12px}
   <p class="read">Le cours « Lot D pas à pas » du 25 octobre a présenté la méthode d'Abrash telle qu'elle est décrite pour Larrabee (tuiles 64 × 64, blocs 16 × 16 puis 4 × 4, vecteurs de 16 voies). Ce lot ne la répète pas : il la <b>transpose</b> à LV3 tel qu'il est aujourd'hui (AVX2 à 8 voies, blocs Giesen de 8 × 1, pas encore de binning), et il mesure ce qu'elle rapporte vraiment.</p>
 </section>
 
+<section id="carte">
+  <div class="sh"><span class="stepno">1b · CARTE</span><h2>L'algorithme global du moteur, et où se place ce lot</h2></div>
+  <p class="read">Le moteur commence à être dense : une vingtaine de lots ont touché la même boucle. Avant d'entrer dans D-a2, voici la boucle d'une frame en entier, de l'entrée clavier jusqu'à l'image à l'écran. La ligne surlignée est le seul endroit que ce lot modifie : un nouveau chemin dans l'aiguillage du noyau de rastérisation. Tout le reste est inchangé.</p>
+  <pre class="alg">BOUCLE PRINCIPALE — une frame (zones du profileur entre crochets)
+  [Input]          clavier, souris → commandes (caméra, horloge)                 L05, A7
+  [Animation]      horloge de simulation → transformations locales              L06
+  [WorldXform]     graphe de scène : matrices monde, drapeaux « sale »          L06, PH1C
+  [Cameras]        vue, projection, frustum de chaque caméra                    L05, A11
+  [Trigger]        volumes déclencheurs (ECS, sparse set)                       L03, PH0
+  [BuildViews]     4 viewports → liste des vues à dessiner                      A11, PH1E
+  [Clear]          ClearColor + ClearDepth, stores non temporels                A15
+  [Render]         pour chaque vue :
+     pour chaque mesh visible (frustum, LOD par taille apparente)              L05, A14
+       [RenderVerts] ÉTAGE SOMMETS : E1 → E7 en un passage, AVX2,              chantier B, 2b
+                     accrochage au 1/256 px (nombre magique)                    D-a1, D-a1d
+       ÉTAGE FACES : rejet objet, face arrière, rejet précoce,                  3b
+                     boîtes d'un pixel → chemin C3                              C3
+       pour chaque triangle survivant :
+         PRÉPARATION : E' entiers, biais top-left, aire, coefficients bary      D-a1, D-a1b
+         AIGUILLAGE DU NOYAU :
+           étendue &lt; 8 px dans les deux sens   → blocs flottants (C2)          D-a1c
+<span class="add">           boîte ≥ 16 × 16 px                    → TUILES 8 × 8, puis blocs     D-a2  ◄ CE LOT</span>
+           sinon                                 → blocs Giesen 8 × 1 (Fx32)    D-a1
+         FRAGMENTS (par bloc couvert) : barycentriques, test Z, shader,         C1, D-a1b
+                     écriture couleur et profondeur
+  [Present]        copie du framebuffer vers la fenêtre (SDL)</pre>
+  <p class="read">Le même schéma, interactif : cliquez sur un étage pour voir ce qu'il fait, les lots qui l'ont construit et sa part du temps sur rooms (run de comptage du 14/11, 4 vues).</p>
+  <div class="figrow">
+    <div class="fig">
+      <div id="mapFlow" class="mapflow" role="group" aria-label="Étages du moteur"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="calc" id="mapInfo" aria-live="polite"></div>
+      <div class="legend"><span><i style="background:var(--warn-soft);border:1px solid var(--warn)"></i>touché par D-a2</span><span><i style="background:var(--accent-soft);border:1px solid var(--accent)"></i>étage sélectionné</span></div>
+    </div>
+  </div>
+  <div class="observe" style="margin-top:12px"><b>À observer</b><ul>
+    <li>Sur rooms, Render pèse 88 % de la frame ; dans Render, l'étage sommets ne fait que 3 %. Le reste (faces, préparation, couverture, fragments) se joue triangle par triangle : c'est là que vivent les jalons C et D.</li>
+    <li>D-a2 ne touche ni la préparation, ni les fragments, ni l'étage sommets : il remplace seulement la façon de parcourir la boîte d'un grand triangle. C'est pourquoi l'image ne peut pas changer.</li>
+  </ul></div>
+</section>
+
+
 <section id="contexte">
   <div class="sh"><span class="stepno">2 · CONTEXTE</span><h2>Le problème : 2 % des triangles, 58 % des pixels</h2></div>
   <p class="read">Dans la scène rooms (4 caméras, 79 323 triangles dessinés), le simulateur sur le vrai noyau compte <b>1 685 triangles</b> dont la boîte dépasse 16 pixels dans les deux sens. C'est 2,1 % des triangles. Ils contiennent pourtant <b>3,72 millions des 5,77 millions de pixels de boîte</b> (65 %) et <b>1,28 million des 2,19 millions de pixels couverts</b> (58 %). Un mur à deux mètres, le sol du hall, les montants d'un portail : quelques triangles, la moitié de l'image.</p>
@@ -206,6 +289,10 @@ details.code>div,details.more>div{padding:0 12px 12px}
     <li>Sur « Mur proche », les tuiles pleines dominent : 8 blocs écrits sans aucun test de couverture.</li>
     <li>Sur « Moyen 20 px », presque toutes les tuiles sont partielles : la hiérarchie n'a presque rien à décider, elle ne fait qu'ajouter son propre coût. C'est pourquoi elle ne s'applique qu'au-delà d'un seuil (T* = 16 px).</li>
   </ul></div>
+  <div class="amend"><b>Amendement du 14/11, après la mesure</b>
+    <div class="ab"><div><i>Avant (10/11)</i>« Sur Moyen 20 px, presque toutes les tuiles sont partielles […] C'est pourquoi elle ne s'applique qu'au-delà d'un seuil (T* = 16 px). » Le banc plaçait le point mort entre 16 et 24 px.</div>
+    <div class="after"><i>Après (14/11)</i>Sur l'i7-1265U, des triangles tuilés de 24 et 48 px <b>perdent</b> : V5 c24 +4,3 % (séquence valide), c48 +10 à +14 %. Le point mort réel dépend du mélange de tuiles pleines et partielles, et il est plus haut que celui du banc pour ce type de triangle. rooms gagne quand même (−2,3 %), parce que ses très grands triangles compensent. Le seuil T* = 16 est conservé, sous réserve (P1, D-a2b).</div></div>
+  </div>
 </section>
 
 <section id="objectif">
@@ -219,7 +306,37 @@ details.code>div,details.more>div{padding:0 12px 12px}
   </ul>
   <div class="note bad"><b>La règle de déclenchement du plan n'est probablement plus remplie.</b> Le 25 octobre, le plan a écrit : « hiérarchie si arêtes ≥ 40 % du Render ET Covered/Tight &lt; 50 % ». Sur rooms, Covered/Tight = 2 189 889 / 5 767 961 = <b>38 %</b> : la seconde condition tient. La première ne tient plus depuis Giesen : à la dernière ablation (D-a1, 03/11), les arêtes valaient 3,00 ms sur 12,29, soit <b>24 %</b> ; le banc d'aujourd'hui les place à 14 % du temps du noyau. Giesen a fait exactement ce qu'on attendait de lui : il a rendu le test bon marché.</div>
   <p class="read"><b>Décision D0 : faire le lot quand même, en conditionnel.</b> Trois raisons. Tu as demandé de suivre le plan. La hiérarchie est le socle de deux chantiers déjà inscrits : le binning par tuiles (D2, avec la leçon L13) et un Hi-Z par tuile ; les construire sans elle reviendrait à l'écrire plus tard. Enfin, le banc montre un gain franc là où la règle ne regarde pas : sur les tuiles pleines, ce sont les fragments qui accélèrent (section 7). La règle de décision écrite plus bas protège le reste : si rooms régresse, le défaut repasse à 0.</p>
+  <div class="amend"><b>Amendement du 14/11</b>
+    <div class="ab"><div><i>Avant</i>Lot conditionnel ; règle de déclenchement « arêtes ≥ 40 % » non remplie (24 % au 03/11) ; défaut repassé à 0 si rooms régresse.</div>
+    <div class="after"><i>Après</i><b>Accepté le 14/11, défaut 16</b> : c96 −14 %, fan −55 %, rooms −2,3 % (+1,5 % dans la lecture la plus pessimiste), témoins sans régression. La règle des 40 % reste non vérifiée : le R0 (ablation) n'a pas été fait. Elle n'a pas décidé du lot (décision D0), elle reste à remesurer avant D2.</div></div>
+  </div>
 </section>
+
+<section id="besoin">
+  <div class="sh"><span class="stepno">3b · BESOIN</span><h2>Le besoin, dit fonctionnellement, et les méthodes employées</h2></div>
+  <h3>Le besoin</h3>
+  <p class="read">Un moteur de jeu dessine deux familles de triangles très différentes. Les petits (un objet lointain, une sphère détaillée, un terrain) ne couvrent que quelques pixels chacun : leur coût est un coût fixe par triangle, traité par D-a1c. Les grands (un mur à deux mètres, le sol du hall, un panneau d'interface plein écran, une porte qu'on franchit) sont peu nombreux mais couvrent la moitié de l'image. Pour eux, le coût est proportionnel à la surface de leur boîte englobante, pas à leur surface utile. Un triangle oblique remplit à peine la moitié de sa boîte : la moitié du travail est perdue avant même de dessiner un pixel.</p>
+  <p class="read">Le besoin est donc : <b>que le coût d'un grand triangle suive les pixels qu'il couvre, et non la boîte qui l'entoure</b>. Avec deux contraintes non négociables : l'image doit rester identique au bit près, et les scènes sans grands triangles ne doivent rien payer.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Situation de jeu</th><th>Triangles</th><th>Ce que la hiérarchie fait</th><th>Scène de mesure</th></tr></thead>
+    <tbody>
+      <tr><td>Couloir de FPS, mur proche</td><td>quelques triangles de 100 à 500 px</td><td>tuiles pleines écrites sans test, bords rejetés par paquets</td><td>V5 c96 / c192, rooms</td></tr>
+      <tr><td>Grille, herse, lames, feuillage en éventail</td><td>triangles longs et fins</td><td>la boîte est presque vide : rejet de 8 tuiles par instruction</td><td>V5 fan</td></tr>
+      <tr><td>Interface (HUD, menus), post-effet plein écran</td><td>2 triangles de la taille de l'écran</td><td>presque tout en tuiles pleines</td><td>(non mesuré, cas extrême de c192)</td></tr>
+      <tr><td>Dallage moyen, triangles de 20 à 50 px</td><td>beaucoup de tuiles partielles</td><td>peu à décider : la hiérarchie coûte plus qu'elle ne rapporte (mesuré)</td><td>V5 c24, c48</td></tr>
+      <tr><td>Objets lointains, terrain, sphères</td><td>moins de 16 px</td><td>rien : chemin inchangé</td><td>V1, V2, V4</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Les méthodes employées dans ce lot</h3>
+  <ul class="read">
+    <li><b>Hiérarchie d'Abrash</b> (sections 4 à 6) : juger un carré de 8 × 8 pixels par deux valeurs de chaque fonction d'arête, prises à deux coins opposés (le coin de rejet et le coin d'acceptation). Exact, pas seulement conservatif.</li>
+    <li><b>Traitement par masques de bits</b> (étape 6) : 8 tuiles jugées en un registre AVX2 donnent deux octets (rejetées, pleines) ; on ne visite que les bits à 1 avec <code>tzcnt</code> (trouver) et <code>blsr</code> (effacer).</li>
+    <li><b>Diffusion d'une voie</b> (étape 7) : <code>vpermd</code> recopie la valeur de la tuile j dans les 8 voies, sans repasser par la mémoire.</li>
+    <li><b>Deux corps de boucle spécialisés</b> (étapes 8 et 9) : tuile pleine sans test de couverture (<code>Shade8Full</code>), tuile partielle sur les blocs de Giesen avec la boîte comme 4e arête.</li>
+    <li><b>Méthode de mesure</b> (sections 17 et 18) : prédictions écrites avant les temps, comptage déterministe (R1), séquences A B B A, thermomètres internes, et, nouveauté de ce lot, détection des runs bridés et de l'effet de placement du code (section 18d).</li>
+  </ul>
+</section>
+
 
 <div class="part">Partie II · La leçon</div>
 
@@ -290,6 +407,11 @@ details.code>div,details.more>div{padding:0 12px 12px}
     <li>Sous 16 px : aucun triangle ne change de chemin. Les écarts de ±1 à 2 % sont le bruit du banc (contrôle A/A : ±3 %).</li>
     <li>Ce que la hiérarchie ne touche pas : le trafic mémoire des fragments. Un grand triangle lit et écrit 8 octets par pixel (couleur + profondeur) ; un framebuffer de 1536 × 900 fait 11 Mo, la taille du cache L3 de l'i7-1265U. C'est le terrain de D2 (binning : chaque tuile d'écran tient dans le cache), pas de D-a2.</li>
   </ul></div>
+  <div class="amend"><b>Amendement du 14/11 : le banc contre la machine réelle</b>
+    <div class="ab"><div><i>Avant : banc (Xeon, VM)</i>c96 −24 à −25 % ; c192 −28 à −33 % ; fan −64 à −66 % ; c48 −9 à −10 % ; c24 −2 à 0 % ; rooms −2 à −7 %.</div>
+    <div class="after"><i>Après : i7-1265U (Render, B/A)</i>c96 −13 à −14 % ; c192 −7 à −12 % ; fan −55 à −61 % ; <b>c48 +10 à +14 %</b> ; <b>c24 +4 %</b> ; rooms −2,3 %.</div></div>
+    <p style="margin:6px 0 0">Deux écarts de nature différente. (1) Le gain des grands triangles est divisé par ≈ 2, comme en D-a1c : dans le moteur, le noyau partage le temps avec ce que le banc ne simule pas. (2) Les triangles moyens changent de signe : le banc ne reproduit ni le prédicteur de branchement ni le comportement mémoire de la machine cible (section 18c).</p>
+  </div>
 </section>
 
 <section id="compare">
@@ -354,6 +476,15 @@ details.code>div,details.more>div{padding:0 12px 12px}
       <tr><td>D10</td><td>Compteurs <code>TrisTiled</code>, <code>Tiles8Rejected/Full/Partial</code>, <code>BlocksFull8</code> ; LaneBlocks8 = blocs <i>testés</i></td><td>Prédire et vérifier au compte près (R1), invariants R + F + P = tuiles de la boîte.</td><td></td></tr>
     </tbody>
   </table></div>
+  <div class="amend"><b>Décisions ajoutées le 14/11</b>
+    <ul style="margin:4px 0 0;padding-left:18px">
+      <li><b>D11</b> : D-a2 accepté, défaut <code>LV3_RASTER_TILES 16</code>, avec deux réserves écrites (triangles tuilés de 24-48 px en régression ; part du gain de rooms due au placement du code).</li>
+      <li><b>D12</b> : c24 obligatoire au R2 (indice du R1) ; c96 et c48 refaits dans la campagne de D-a2b, pas avant.</li>
+      <li><b>D13</b> : run écarté si RenderVerts &gt; 1,15 × la médiane de la scène ; lecture brute quand les thermomètres se contredisent et que A1 ≈ A2.</li>
+      <li><b>D14</b> : suite = D-a2b (boucle des tuiles sans branchement), puis selon le résultat D-a2c (parcours ligne par ligne) ou P1 (réglage de T*).</li>
+    </ul>
+    <p style="margin:6px 0 0">Liste complète : <code>Résultats/Decisions_Lot_Da2.md</code>.</p>
+  </div>
 </section>
 
 <section id="algo">
@@ -379,6 +510,68 @@ details.code>div,details.more>div{padding:0 12px 12px}
                    (e_k += B'_k à chaque ligne)</pre></figure>
   </div>
   <p class="read">Le corps « tester un bloc » est inchangé : c'est celui de Fx32. Ce qui change, c'est <i>quels</i> blocs on visite et <i>dans quel ordre</i>. Les deux lignes nouvelles (<code>rej</code>, <code>plein</code>) remplacent, pour un grand triangle, entre la moitié et les neuf dixièmes des blocs testés.</p>
+  <h3 id="algo-detail">Algorithme détaillé de l'apport de D-a2 : l'aiguillage du noyau, avant et après</h3>
+  <p class="read">L'algorithme ci-dessus montre la boucle des tuiles. Celui-ci montre <b>où</b> elle s'insère : l'aiguillage complet d'un triangle, de l'entrée de <code>RasterizeTriangleT</code> jusqu'au chemin choisi. En vert, ce que D-a2 ajoute ; barré, ce qu'il retire. Rien d'autre ne change : la préparation, les fragments et les deux autres chemins sont les mêmes octets (vérifié à l'asm, section 18).</p>
+  <div class="figrow even">
+    <figure><figcaption>Avant : D-a1c (commit e7cae94)</figcaption><pre class="alg">RasterizeTriangleT&lt;Shader&gt;(v0, v1, v2)
+  si sommets hors garde entière → repli flottant C2
+  SetupTriangleFx : boîte, E' entiers, biais, aire
+  si triangle vide → fin
+  si largeur boîte ≥ 3 (AVX2) :
+    si étendue &lt; 8 px (x et y)      [D-a1c]
+      → RasterizeBlocks8      (flottant C2)
+    sinon
+      → RasterizeBlocks8Fx    (Giesen, 8 × 1)
+        pour chaque ligne y de la boîte :
+          pour chaque bloc x :
+            test 3 arêtes + boîte
+            si couvert : fragments
+  sinon (boîte de 1-2 px de large)
+    → ForEachCoveredPixelFx (scalaire int64)</pre></figure>
+    <figure class="a"><figcaption>Après : D-a2 (défaut T* = 16)</figcaption><pre class="alg">RasterizeTriangleT&lt;Shader&gt;(v0, v1, v2)
+  si sommets hors garde entière → repli flottant C2
+  SetupTriangleFx : boîte, E' entiers, biais, aire
+  si triangle vide → fin
+  si largeur boîte ≥ 3 (AVX2) :
+    si étendue &lt; 8 px (x et y)      [D-a1c]
+      → RasterizeBlocks8      (flottant C2)
+<span class="add">    sinon si boîte ≥ 16 × 16 px       [D-a2]</span>
+<span class="add">      → RasterizeTiles8Fx     (hors ligne)</span>
+<span class="add">        si coins hors int32 → RasterizeBlocks8Fx</span>
+<span class="add">        pour chaque rangée de tuiles :</span>
+<span class="add">          pour chaque groupe de 8 tuiles :</span>
+<span class="add">            juger 8 tuiles (2 coins × 3 arêtes)</span>
+<span class="add">            pour chaque tuile non rejetée :</span>
+<span class="add">              pleine   → 8 blocs sans test</span>
+<span class="add">              partielle → 8 blocs testés</span>
+    sinon
+      → RasterizeBlocks8Fx    (Giesen, 8 × 1)
+  sinon (boîte de 1-2 px de large)
+<span class="add">    si boîte ≥ 16 × 16 → ForEachCoveredPixelFxTiled</span>
+    sinon → ForEachCoveredPixelFx (scalaire int64)</pre></figure>
+  </div>
+  <p class="read">La branche scalaire tuilée ne sert en pratique que lorsque <code>LV3_SIMD = 0</code> ou dans les TNR (une boîte de 1-2 px de large ne peut pas faire 16 × 16) : MSVC l'a d'ailleurs éliminée du chemin de production (asm, section 18).</p>
+  <h3>Ce que la mesure remet en question : la branche « pleine ou partielle »</h3>
+  <p class="read">La mesure du 14/11 a montré que la boucle des tuiles coûte plus cher que prévu sur les triangles moyens (c24, c48). La ligne suspecte est le <code>si pleine … sinon …</code> exécuté pour chaque tuile vivante : le processeur doit deviner le côté avant de connaître la réponse, et il se trompe d'autant plus souvent que pleines et partielles se mélangent (section 18c). Deux variantes sont proposées, <b>non appliquées</b>, à mesurer dans le lot suivant :</p>
+  <div class="figrow even">
+    <figure><figcaption>Aujourd'hui (D-a2) : une boucle, une branche par tuile</figcaption><pre class="alg">live = ~rej &amp; inBox
+tant que live ≠ 0 :
+  j = tzcnt(live) ; live = blsr(live)
+  coins de la tuile j (vpermd ×3)
+  si bit j de full :        ← imprévisible
+    8 blocs sans test
+  sinon :
+    8 blocs testés</pre></figure>
+    <figure class="a"><figcaption>Proposé D-a2b : deux boucles, aucune branche de données</figcaption><pre class="alg"><span class="add">f = full &amp; inBox</span>
+<span class="add">tant que f ≠ 0 :               ← sort une fois</span>
+<span class="add">  j = tzcnt(f) ; f = blsr(f)</span>
+<span class="add">  coins (vpermd ×3) ; 8 blocs sans test</span>
+<span class="add">p = ~rej &amp; ~full &amp; inBox</span>
+<span class="add">tant que p ≠ 0 :               ← sort une fois</span>
+<span class="add">  j = tzcnt(p) ; p = blsr(p)</span>
+<span class="add">  coins (vpermd ×3) ; 8 blocs testés</span></pre></figure>
+  </div>
+  <p class="read"><b>Variante D-a2c</b> (si D-a2b ne suffit pas) : intervertir les boucles pour retrouver l'ordre mémoire ligne par ligne de Giesen. Pour chacune des 8 lignes du groupe, parcourir les tuiles vivantes de gauche à droite. Les décisions de tuiles restent les mêmes ; seul l'ordre des écritures change (8 lignes balayées de gauche à droite au lieu de 8 colonnes de 8 lignes). Elle vise l'hypothèse H4, l'ordre des accès mémoire (section 18c).</p>
 </section>
 
 <section id="v5">
@@ -438,6 +631,9 @@ details.code>div,details.more>div{padding:0 12px 12px}
     </tbody>
   </table></div>
   <div class="note"><b>Leçon reconduite de D-a1c : un banc isolé surestime.</b> Les mêmes triangles ≥ 64 px dessinés <i>seuls</i> gagnent −31 à −33 % ; dans la scène entière, −19 à −24 %. Les tuiles, les prédicteurs de branche et les caches ne sont pas dans le même état quand un grand triangle arrive entre deux mille petits. Seule la mesure en contexte compte ; c'est elle qui fonde les prédictions.</div>
+  <div class="amend"><b>Amendement du 14/11 : ce que le banc n'a pas vu</b>
+    <p style="margin:0">Le banc a prédit au compte près tout le R1 (comptages), mais il s'est trompé de signe sur c48 et c24 (temps). Leçon inscrite au plan : <b>un banc choisit une conception, il ne la valide pas</b>. Il compte juste parce que le comptage ne dépend pas de la machine ; il chronomètre faux dès que la différence entre deux variantes tient au prédicteur de branchement, à l'ordre des accès mémoire ou à l'alignement du code, trois choses qu'une VM sur un autre processeur ne reproduit pas.</p>
+  </div>
 </section>
 
 <div class="part">Partie IV · Les étapes</div>
@@ -693,6 +889,22 @@ LV3_PROF_COUNT(EProfCounter::BlocksFull8,    tFull * 8);   // écrits SANS test
     </tbody>
   </table></div>
   <div class="note good"><b>Règle de décision, écrite avant les temps.</b> D-a2 est <b>accepté avec le défaut <code>LV3_RASTER_TILES 16</code></b> si : TNR (toutes) vertes et journaux inchangés hors D-a2 ; runs Debug sans assertion ; compteurs R1 conformes ; asm conforme ; <b>V5 c96 ≥ −8 %</b> et <b>V5 fan ≥ −25 %</b> (séquences A B B A valides : ClearDepth &lt; 5 %, |A1 − A2| &lt; 3 %) ; <b>rooms B ≤ A + 2 %</b> (8 runs A B B A A B B A) ; V1, V2 (16 runs) et V4 c12 dans ±2 %. Sinon : asm d'abord ; si rien ne l'explique, défaut 0 (code conservé, éteint à la compilation), question close jusqu'à D2.</div>
+  <div class="amend"><b>Après la mesure (14/11) : prédit contre mesuré</b>
+    <div class="tbl"><table>
+      <thead><tr><th>Scène</th><th>Prédit (Render B/A)</th><th>Mesuré</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td>R1, toutes scènes</td><td>compteurs exacts (V5 ±0,1 %)</td><td>exacts au compte près, 14 scènes</td><td>tenu</td></tr>
+        <tr><td>V5 c96</td><td>−10 à −25 %</td><td>−14,0 % brut ; −12,7 à −13,0 % normalisé</td><td>tenu (seuil −8 % tenu)</td></tr>
+        <tr><td>V5 fan</td><td>−40 à −65 %</td><td>−55 à −61 %</td><td>tenu</td></tr>
+        <tr><td>V5 c192</td><td>−12 à −30 %</td><td>−12,1 % brut ; −6,6 à −7,7 % normalisé</td><td>en dessous</td></tr>
+        <tr><td>V5 c48</td><td>−3 à −10 %</td><td><b>+10 à +14 %</b></td><td><b>réfuté</b></td></tr>
+        <tr><td>V5 c24</td><td>0 ± 3 %</td><td><b>+4,3 %</b> (valide)</td><td>réfuté (de peu)</td></tr>
+        <tr><td>rooms</td><td>0 à −4 % (révisé 0 à +3 % après c48)</td><td>−2,3 à −2,6 % brut ; +1,5 % ÷ RenderVerts</td><td>tenu ; révision réfutée du bon côté</td></tr>
+        <tr><td>V2</td><td>0 ± 2 %</td><td>mode rapide −2,6 / +1,4 / −0,4 %</td><td>tenu</td></tr>
+        <tr><td>V1, V4 c12</td><td>0 ± 2 %</td><td>−6,0 % et −2,3 % brut (placement du code)</td><td>anomalie expliquée</td></tr>
+      </tbody>
+    </table></div>
+  </div>
 </section>
 
 <section id="verifier">
@@ -719,19 +931,423 @@ LV3_PROF_COUNT(EProfCounter::BlocksFull8,    tFull * 8);   // écrits SANS test
       <tr><td>FMA, appels</td><td>0 vfmadd ; call seulement dans le repli</td><td>0 FMA ; 1 call (repli, copie d'EdgeSetupFx de 104 o : point P4)</td></tr>
     </tbody>
   </table></div>
-  <p class="read"><b>Observation hors D-a2</b> : la lambda <code>Edge</code> de <code>SetupTriangleFx</code> n'est inlinée nulle part (3 appels par triangle, 6 push chacun). Elle existe depuis D-a1 : c'est probablement antérieur. Le listing A (<code>LV3_RASTER_TILES 0</code>) le confirmera ; si c'est le cas, piste P5 : en faire une fonction <code>LV3_FORCEINLINE</code>.</p>
+  <h3>Reçu le 14/11 (2) : listing A (<code>LV3_RASTER_TILES 0</code>), comparaison A / B close</h3>
+  <div class="note good"><b>Asm conforme.</b> D-a2 n'ajoute au noyau que son aiguillage : 13 instructions, 16 octets de cadre, aucun registre sauvegardé en plus. Les deux boucles payées par tous les triangles Giesen sont identiques instruction pour instruction.</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Fonction</th><th>A (tiles=0)</th><th>B (tiles=16)</th><th>Lecture</th></tr></thead>
+    <tbody>
+      <tr><td>RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</td><td class="n">513</td><td class="n">513</td><td>0 différence (étiquettes normalisées) : décision D6 tenue</td></tr>
+      <tr><td>RasterizeBlocks8&lt;ShaderSolid&gt;</td><td class="n">185</td><td class="n">185</td><td>0 différence</td></tr>
+      <tr><td>RasterizeTriangleT&lt;ShaderSolid,3,0,8,·&gt;</td><td class="n">702 · cadre 640 o</td><td class="n">712 · cadre 656 o</td><td>Même 7 push, mêmes xmm6-13 sauvegardés, même cookie /GS. Bloc ajouté : <code>sub, cmp, setge, cmp, setge, test, je … lea, call RasterizeTiles8Fx, jmp</code> = <code>IsTiledTri</code> + appel. Le reste des 544 lignes « différentes » est du renommage (xmm8 ↔ xmm9, temporaires <code>s$133</code> → <code>s$134</code>) et un réordonnancement des <code>cmov</code> : même calcul.</td></tr>
+      <tr><td>Lambda <code>Edge</code> de SetupTriangleFx</td><td>hors ligne</td><td>hors ligne</td><td>Présente dans A : <b>antérieure à D-a2</b>. Piste <b>P5 confirmée</b> (fonction <code>LV3_FORCEINLINE</code>), lot séparé, hors décision D-a2.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read">Pourquoi un compte d'instructions identique suffit-il pour RasterizeBlocks8Fx ? Parce que ce n'est pas un compte : la comparaison est faite <b>ligne à ligne</b> après avoir neutralisé les numéros d'étiquettes. Si MSVC avait déplacé une seule constante sur la pile, ou changé un registre dans la boucle, la ligne aurait différé. Leçon : sur un aiguillage <i>en amont</i> d'une boucle chaude, l'asm doit prouver que la boucle n'a pas bougé, sinon un écart de temps sur V2 (aucun triangle tuilé) serait ininterprétable.</p>
+
+  <h3>Reçu le 14/11 (3) : R1, binaire B_stats — CONFORME, R1 clos</h3>
+  <div class="note good"><b>Les 6 scènes prédites sont exactes au compte près</b>, y compris les cinq V5 pour lesquelles j'avais prévu une tolérance de ±0,1 %. Les 14 en-têtes portent <code>config=Release;rasterstats=1;tiles=16;affinity=4;asserts_lib=0</code>. Tous les invariants sont tenus, dans les 14 summaries.</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>LaneBlocks8</th><th>TrisTiled</th><th>Tiles8 R / F / P</th><th>BlocksFull8</th><th>Prédiction</th></tr></thead>
+    <tbody>
+      <tr><td>rooms</td><td class="n">471 830</td><td class="n">1 685</td><td class="n">31 468 / 10 931 / 19 890</td><td class="n">87 448</td><td>exacte</td></tr>
+      <tr><td>V5 c24</td><td class="n">301 153</td><td class="n">4 683</td><td class="n">12 162 / 2 036 / 41 390</td><td class="n">16 288</td><td>exacte</td></tr>
+      <tr><td>V5 c48</td><td class="n">190 954</td><td class="n">1 298</td><td class="n">19 761 / 9 101 / 24 640</td><td class="n">72 808</td><td>exacte</td></tr>
+      <tr><td>V5 c96</td><td class="n">101 493</td><td class="n">354</td><td class="n">22 715 / 15 178 / 12 391</td><td class="n">121 424</td><td>exacte</td></tr>
+      <tr><td>V5 c192</td><td class="n">58 493</td><td class="n">136</td><td class="n">26 565 / 17 920 / 7 652</td><td class="n">143 360</td><td>exacte</td></tr>
+      <tr><td>V5 fan</td><td class="n">689 272</td><td class="n">1 408</td><td class="n">1 107 881 / 0 / 85 797</td><td class="n">0</td><td>exacte (Tight 73 887 282)</td></tr>
+      <tr><td>V1, V2, V3, V4 c3 / c5 / c7 / c12 / mix</td><td colspan="4">TrisTiled = Tiles8* = BlocksFull8 = 0 ; compteurs communs identiques au R1 de D-a1c (V2 : 5 036 / 12 / 126 928 / 4 920 / 62 808 ; V1 : 248 523 / 229 751 / TrisPix1 18 772 ; V4 : classes W et TrisSmallFloat identiques)</td><td>exacte</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="read">
+    <li><b>Invariants D-a2</b> : BlocksFull8 = 8 × Tiles8Full partout ; TrisTiled ≤ TrisSimd8 − TrisSmallFloat ; TrisTiled ≤ TrisBoxW17plus (rooms 1 685 ≤ 7 074 ; fan 1 408 ≤ 1 424) ; fan Tiles8Full = 0.</li>
+    <li><b>Invariants hérités</b> : Σ TrisCov + Early = Rasterized ; W3-4 + W5-8 + W9-16 + W17+ = TrisSimd8 (14 scènes).</li>
+    <li><b>Pourquoi V5 tombe juste malgré la projection float du moteur</b> : les sommets sont accrochés au 1/256 px. Un écart float / double de quelques 10⁻⁵ px (float32 sur des coordonnées de l'ordre de 1 000 px) ne change l'accrochage que si le sommet tombe à moins de cet écart d'une frontière d'arrondi de la grille, ce qui n'est arrivé pour aucun sommet des cinq V5. L'accrochage rend le comptage <b>insensible</b> au petit bruit de projection.</li>
+    <li><b>bench_V_V3</b> (même géométrie que rooms, sans instances) : mêmes compteurs raster que rooms ; seule différence, TrisPix1 0 au lieu de 1 865 (FacesInside = 0 ferme le chemin C3), ces triangles rejoignent TrisBoxW1 (27 978 = 26 113 + 1 865). Cohérent.</li>
+    <li><b>A_stats sur V5 (reçu ensuite)</b> : en-têtes <code>tiles=0</code> ; les 23 compteurs communs sont identiques à B_stats dans les cinq scènes ; LaneBlocks8(A) exacts (389 646, 406 650, 400 602, 405 857, 9 347 022).</li>
+  </ul>
+  <div class="tbl"><table>
+    <thead><tr><th>V5</th><th>LaneBlocks8 A → B</th><th>Blocs testés</th><th>A − B − BlocksFull8 ≤ 8 × Rejected</th><th>Voies évaluées A / B (avec les blocs pleins)</th></tr></thead>
+    <tbody>
+      <tr><td>c24</td><td class="n">389 646 → 301 153</td><td class="n">−22,7 %</td><td class="n">72 205 ≤ 97 296</td><td class="n">×1,23</td></tr>
+      <tr><td>c48</td><td class="n">406 650 → 190 954</td><td class="n">−53,0 %</td><td class="n">142 888 ≤ 158 088</td><td class="n">×1,54</td></tr>
+      <tr><td>c96</td><td class="n">400 602 → 101 493</td><td class="n">−74,7 %</td><td class="n">177 685 ≤ 181 720</td><td class="n">×1,80</td></tr>
+      <tr><td>c192</td><td class="n">405 857 → 58 493</td><td class="n">−85,6 %</td><td class="n">204 004 ≤ 212 520</td><td class="n">×2,01</td></tr>
+      <tr><td>fan</td><td class="n">9 347 022 → 689 272</td><td class="n">−92,6 %</td><td class="n">8 657 750 ≤ 8 863 048</td><td class="n">×13,56</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="read">
+    <li><b>Lecture de la dernière colonne</b> : un bloc plein n'est plus <i>testé</i> mais il est encore <i>écrit</i> (Shade8Full). Le rapport A / (B + BlocksFull8) mesure donc le travail de couverture retiré, pas le travail de fragments : c'est pourquoi c192 (×2,01) gagnera bien moins que ×2. Le fan (×13,56) est l'inverse : presque tout le travail de A était du test de blocs vides.</li>
+    <li><b>Point à surveiller au R2</b> : les temps des runs de comptage ne sont pas recevables (instrumentation, runs non appairés), mais ils donnent un indice. B est devant sur c96 (−13 %), c192 (−13 %) et fan (−56 %), et derrière sur c24 (+5 %) et c48 (+14 %, run B avec ClearDepth +9 % : machine plus lente). c24 et c48 sont le régime « beaucoup de tuiles partielles, peu de pleines », celui du point mort. <b>c24 passe donc de facultatif à obligatoire au R2</b>, et c48 sera lu avec soin.</li>
+  </ul>
+  <h3>Reçu le 14/11 (4) : R2, première partie (V5 c96, fan, c48)</h3>
+  <div class="note bad"><b>Deux seuils tenus, une prédiction réfutée.</b> c96 et fan gagnent nettement, dans toutes les lectures. <b>c48 régresse de +10 à +14 %</b> dans toutes les lectures, alors que le banc prédisait −3 à −10 %. Les trois séquences sont formellement non valides (machine qui dérive), mais les verdicts c96 et fan résistent à la lecture la plus défavorable ; celui de c48 aussi.</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Render A1 / B1 / B2 / A2 (µs)</th><th>Brut</th><th>÷ ClearDepth</th><th>÷ Clear</th><th>Pire / meilleure paire</th><th>Validité</th><th>Seuil</th></tr></thead>
+    <tbody>
+      <tr><td>V5 c96</td><td class="n">2 250,1 / 2 031,2 / 2 038,8 / 2 484,4</td><td class="n"><b>−14,0 %</b></td><td class="n">−12,7 %</td><td class="n">−13,0 %</td><td class="n">−9,4 % / −18,2 %</td><td>non : ClearDepth 10,8 %, |A1−A2| 10,4 % ; mais A1 et A2 normalisés à 0,4 % près (la dérive est toute dans le thermomètre)</td><td>≤ −8 % : <b>tenu</b></td></tr>
+      <tr><td>V5 fan</td><td class="n">12 270,0 / 5 292,2 / 5 873,0 / 12 681,2</td><td class="n"><b>−55,3 %</b></td><td class="n">−58,9 %</td><td class="n">−60,7 %</td><td class="n">−52,1 % / −58,3 %</td><td>non : ClearDepth 19,6 % (B2 lent), |A1−A2| 3,4 %</td><td>≤ −25 % : <b>tenu</b></td></tr>
+      <tr><td>V5 c48</td><td class="n">1 893,4 / 2 216,8 / 2 177,9 / 2 089,2</td><td class="n"><b>+10,3 %</b></td><td class="n">+14,3 %</td><td class="n">+13,6 %</td><td class="n">+17,1 % / +4,2 %</td><td>non : ClearDepth 7,1 %, |A1−A2| 10,3 % (non expliqué par le thermomètre)</td><td>pas de seuil ; prédit −3 à −10 % : <b>réfuté</b></td></tr>
+    </tbody>
+  </table></div>
+  <p class="read">Compteurs PROFILE identiques entre A et B dans les 12 runs ; en-têtes <code>tiles=0</code> / <code>tiles=16</code> conformes. Les runs de comptage du R1 donnaient déjà le même signe (c48 +14 %, c24 +5 %) : deux observations indépendantes.</p>
+  <h4>Pourquoi c48 perd-il ? Le surcoût, ramené à l'unité</h4>
+  <p class="read">Surcoût net de B sur c48 : +206 µs par frame. Ramené aux 1 298 triangles tuilés : <b>159 ns par triangle</b> (≈ 700 cycles). Ramené aux 33 741 tuiles vivantes (pleines + partielles ; les tuiles rejetées ne passent jamais par la boucle par tuile) : <b>6,1 ns par tuile</b> (≈ 27 cycles, l'ordre de grandeur d'une prédiction de branchement ratée sur ce cœur). Trois hypothèses, à départager :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Hypothèse</th><th>Mécanisme</th><th>Prédiction c24 (4 683 tris, 43 426 tuiles vivantes dont 95 % partielles)</th><th>Prédiction rooms (1 685 tris, 30 821 tuiles vivantes dont 35 % pleines)</th></tr></thead>
+    <tbody>
+      <tr><td><b>H1</b> coût fixe par triangle</td><td>prologue de RasterizeTiles8Fx (7 push, 10 xmm, cadre 1 008 o, coins repliés en scalaire + <code>vpinsrd</code>)</td><td class="n">≈ +745 µs (≈ +29 %)</td><td class="n">≈ +270 µs (≈ +3 %)</td></tr>
+      <tr><td><b>H2</b> coût fixe par tuile</td><td><code>tzcnt</code>, <code>blsr</code>, 3 <code>vpermd</code>, BeginRow (2 <code>imul</code>) à chaque tuile ; parcours 8 × 8 au lieu de lignes entières</td><td class="n">≈ +265 µs (≈ +10 %)</td><td class="n">≈ +190 µs (≈ +2 %)</td></tr>
+      <tr><td><b>H3</b> branchement imprévisible</td><td><code>if ((full &gt;&gt; j) &amp; 1)</code> dans la boucle des tuiles vivantes : pleine ou partielle, selon les données. c48 : 27 % pleines, 73 % partielles, motif changeant d'un triangle à l'autre</td><td class="n">faible (≈ 0 à +5 %) : 95 % partielles, branche presque toujours prise du même côté</td><td class="n">risque comparable à c48 (mélange 35 / 65)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read"><b>c24 départage</b> : +25 à +30 % ⇒ H1 ; ≈ +10 % ⇒ H2 ; ≈ 0 à +5 % ⇒ H3. <b>Prédiction rooms révisée, écrite avant les temps</b> : 0 à +3 % (au lieu de 0 à −4 %) ; le seuil « rooms ≤ +2 % » est en danger. Le banc (Xeon, VM) ne voyait pas ce coût : sur ce processeur, la boucle de A traverse les blocs vides très vite, si bien que rejeter des tuiles rapporte moins que prévu, et le moindre surcoût par tuile se voit.</p>
+  <p class="read"><b>Suite</b> : (1) finir le R2 tel quel (c24, rooms, V2, V1, V4 c12) : c'est la base de comparaison ; (2) refaire c96 et c48 en A B B A en fin de séance pour avoir des séquences valides (fan : verdict hors d'atteinte de toute dérive) ; (3) laisser 60 s entre deux runs, toujours la même pause, pour égaliser l'état thermique. Si H3 est confirmé, une variante sans branchement est prête à être écrite : deux boucles sur les masques (<code>full</code> puis <code>live &amp; ~full</code>), chacune ne sortant qu'en fin de masque.</p>
+  <h3>Reçu le 14/11 (5) : R2, témoin V2 (16 runs)</h3>
+  <div class="note good"><b>Témoin V2 conforme : aucune régression visible.</b> Dans le mode rapide de V2, la lecture la plus propre, B − A vaut −2,6 % en brut, +1,4 % divisé par ClearDepth et −0,4 % divisé par RenderVerts. Aucune lecture cohérente ne montre B plus lent de plus de 2 %. C'est l'attendu : V2 n'a aucun triangle tuilé et la boucle Giesen est identique à l'octet près dans les deux binaires.</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Mode (classé par Render / ClearDepth)</th><th>Runs A</th><th>Runs B</th><th>Brut</th><th>÷ ClearDepth</th><th>÷ RenderVerts</th></tr></thead>
+    <tbody>
+      <tr><td>rapide (≈ 2,9 à 3,1)</td><td>s1 A2 ; s2 A1, A3, A4</td><td>s1 B1, B3 ; s2 B4</td><td class="n">−2,6 %</td><td class="n">+1,4 %</td><td class="n">−0,4 %</td></tr>
+      <tr><td>lent (≈ 3,3 à 3,6)</td><td>s1 A1, A4</td><td>s1 B2, B4 ; s2 B1, B2, B3</td><td class="n">+13,6 % (mélange d'états machine)</td><td class="n">−1,9 %</td><td class="n">−8,6 %</td></tr>
+      <tr><td>machine bridée (≈ 5,0)</td><td>s1 A3 ; s2 A2</td><td>aucun</td><td colspan="3">écartés : tout le frame ×2 (RenderVerts 29 µs contre 13, Input 20 contre 11, overhead_ns 65-76)</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="read">
+    <li><b>Les 4 séquences A B B A sont non valides</b> (ClearDepth de 10 % à 62 %). Dans deux runs, toute la machine tourne à moitié de sa fréquence : le portable a été bridé (limite de puissance ou thermique d'un processeur U de 15 W).</li>
+    <li><b>Un détecteur de run bridé</b> : RenderVerts est un calcul pur, sensible à la fréquence. Dorénavant, un run dont RenderVerts dépasse 1,3 × la médiane des runs de la même scène est écarté et refait aussitôt. Render / RenderVerts reste stable dans les runs bridés (≈ 55, comme les autres) : c'est bien la fréquence qui a chuté, pas le code.</li>
+    <li><b>À vérifier avant de continuer</b> : chargeur branché, mode d'alimentation « performances optimales », économiseur de batterie et « mode efficacité » désactivés, portable posé sur une surface dure, pause fixe de 60 s entre deux runs.</li>
+  </ul>
+  <h3>Reçu le 14/11 (6) : R2, rooms (8 runs)</h3>
+  <div class="note good"><b>rooms : seuil tenu, B plus rapide de 2,3 à 2,6 %.</b> Les 4 runs B (9 493 à 9 549 µs) sont tous plus rapides que les 3 runs A propres (9 722 à 9 777 µs). Même la paire la plus défavorable donne −1,8 %. Ma prédiction révisée après c48 (0 à +3 %) est réfutée, du bon côté ; la prédiction d'origine (0 à −4 %) tient, tout comme le banc (médiane −3 %).</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Lecture</th><th>Brut</th><th>÷ ClearDepth</th><th>÷ RenderVerts</th><th>÷ Clear</th><th>Validité</th></tr></thead>
+    <tbody>
+      <tr><td>A B B A n° 1 : 9 776,7 / 9 493,4 / 9 494,1 / 9 721,8</td><td class="n"><b>−2,6 %</b></td><td class="n">−7,1 %</td><td class="n">+2,5 %</td><td class="n">−8,3 %</td><td>formellement non valide (ClearDepth 9,3 %, dû au seul A1 à 175,7) ; en substance propre : |A1 − A2| = 0,6 %, RenderVerts stable à ±4 %</td></tr>
+      <tr><td>A B B A n° 2 : 9 728,7 / 9 548,8 / 9 544,2 / 10 810,9</td><td class="n">−7,0 %</td><td class="n">+0,1 %</td><td class="n">+6,3 %</td><td class="n">+2,8 %</td><td>non valide : A4 perturbé (RenderVerts ×1,27, ClearDepth +15 %, un arrêt de 43 ms dans Input)</td></tr>
+      <tr><td>7 runs sans A4</td><td class="n"><b>−2,3 %</b></td><td class="n">−5,3 %</td><td class="n">+1,5 %</td><td class="n">−6,0 %</td><td>pire paire −1,8 %</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="read">
+    <li><b>Pourquoi lire le brut ici, et pas les rapports ?</b> La règle dit de normaliser quand les deux thermomètres bougent dans le même sens que Render. Ici, ils se contredisent (ClearDepth donne −7 %, RenderVerts +2,5 %), alors que A1 et A2 ne diffèrent que de 0,6 % : il n'y a pas eu de dérive pendant la séquence. Diviser par un thermomètre n'ajouterait que son propre bruit (RenderVerts : p95 = 1,3 × la médiane).</li>
+    <li><b>Règle de run bridé resserrée</b> : A4 passe sous le seuil de 1,3 (×1,27) alors qu'il est clairement perturbé. Nouveau seuil : RenderVerts &gt; 1,15 × la médiane de la scène (scènes où RenderVerts ≥ 10 µs), sinon ClearDepth &gt; 1,15 × la médiane.</li>
+    <li><b>Ce que rooms dit des hypothèses de c48</b> : un coût net de +3 % (H1) ou de +2 % (H2) n'apparaît pas. Mais rooms additionne des gains (grands triangles : arêtes 374 → 161 µs au banc) et des surcoûts : il ne départage pas. <b>c24 reste le test décisif.</b></li>
+  </ul>
+  <h3>Reçu le 14/11 (7) : R2, fin (c24, c192, V1, V4 c12) et décision</h3>
+  <p class="read">Remarque : les 4 summaries de c48 renvoyés sont identiques au chiffre près à ceux de la partie 1 (même fichiers) : c48 n'a pas encore été refait.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Render A1 / B1 / B2 / A2 (µs)</th><th>Brut</th><th>÷ ClearDepth</th><th>÷ Clear</th><th>RenderVerts B/A</th><th>Validité</th><th>Lecture</th></tr></thead>
+    <tbody>
+      <tr><td><b>V5 c24</b></td><td class="n">2 557,2 / 2 694,3 / 2 710,6 / 2 624,0</td><td class="n"><b>+4,3 %</b></td><td class="n">+3,2 %</td><td class="n">+4,2 %</td><td class="n">−3,7 %</td><td><b>valide</b> (ClearDepth 3,7 %, |A1−A2| 2,6 %)</td><td>régression dans toutes les paires (+2,7 à +6,0 %)</td></tr>
+      <tr><td>V5 c192</td><td class="n">2 363,6 / 2 029,1 / 1 981,5 / 2 198,7</td><td class="n">−12,1 %</td><td class="n">−6,6 %</td><td class="n">−7,7 %</td><td>(trop petit)</td><td>non (ClearDepth 10,3 %) ; A1/A2 normalisés à 0,7 %</td><td>−6,6 à −7,7 % ; prédit −12 à −30 % : gain plus faible</td></tr>
+      <tr><td>V1 (témoin)</td><td class="n">971,4 / 914,8 / 906,1 / 965,0</td><td class="n"><b>−6,0 %</b></td><td class="n">−7,8 %</td><td class="n">−8,5 %</td><td class="n">−5,2 %</td><td><b>valide</b> (ClearDepth 4,3 %, |A1−A2| 0,7 %)</td><td>hors ±2 % du bon côté ; ÷ RenderVerts : −0,8 %</td></tr>
+      <tr><td>V4 c12 (témoin)</td><td class="n">1 698,5 / 1 698,4 / 1 669,0 / 1 748,7</td><td class="n">−2,3 %</td><td class="n">−4,2 %</td><td class="n">−4,5 %</td><td>(trop petit)</td><td>limite (ClearDepth 5,0 %, |A1−A2| 3,0 %)</td><td>juste hors ±2 %, du bon côté ; pire paire 0,0 %</td></tr>
+    </tbody>
+  </table></div>
+  <h4>c24 tranche entre les hypothèses</h4>
+  <p class="read">Surcoût de c24 : +112 µs, soit <b>24 ns par triangle tuilé</b> (contre 159 sur c48) et <b>2,6 ns par tuile vivante</b> (contre 6,1). <b>H1</b> (coût fixe par triangle, prédit +29 %) est <b>réfutée</b> : le coût par triangle varie d'un facteur 7 entre les deux scènes. <b>H3</b> (branchement imprévisible, prédit 0 à +5 %) est <b>compatible</b> : le coût par tuile baisse quand la branche devient prévisible (c24 : 95 % de tuiles partielles ; c48 : 73 %). <b>H2</b> (coût fixe par tuile, prédit +10 %) n'explique pas à lui seul l'écart 2,6 / 6,1 ns, mais peut fournir le socle de ≈ 2 ns. Le test décisif est la variante sans branchement.</p>
+  <h4>Les témoins hors ±2 %, du bon côté : l'effet de placement du code</h4>
+  <p class="read">V1 n'a aucun triangle tuilé, et sa séquence est valide. Pourtant B y est plus rapide de 6 %. Indice décisif : <b>RenderVerts</b>, l'étage sommets que D-a2 ne touche pas, est lui aussi plus rapide dans B, et de façon systématique : rooms −3,8 %, V1 −5,2 %, c24 −3,7 %, V2 (mode rapide) −2,5 %. Une variation de fréquence serait aléatoire d'une séquence à l'autre ; ici, c'est toujours B. C'est la signature d'un <b>effet de placement</b> : la fonction <code>RasterizeTiles8Fx</code>, instanciée dans RenderSystem.cpp, décale l'adresse du code qui la suit, et l'alignement des boucles chaudes change (ici, par chance, en faveur de B). Divisé par RenderVerts, V1 donne −0,8 % : dans ±2 %.</p>
+  <p class="read"><b>Conséquence pour rooms</b> : le gain brut (−2,3 à −2,6 %) contient peut-être une part de placement. Divisé par RenderVerts, rooms donne +1,5 % : le seuil « ≤ +2 % » tient <b>même dans cette lecture, la plus pessimiste</b>.</p>
+  <h4>Bilan et décision selon la règle écrite avant les temps</h4>
+  <div class="tbl"><table>
+    <thead><tr><th>Critère</th><th>Mesuré</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>TNR, Debug, R1, asm</td><td>conformes (R1 au compte près)</td><td>tenu</td></tr>
+      <tr><td>V5 c96 ≤ −8 %</td><td>−14,0 % brut, −12,7 à −13,0 % normalisé, pire paire −9,4 %</td><td>tenu</td></tr>
+      <tr><td>V5 fan ≤ −25 %</td><td>−55 à −61 %</td><td>tenu</td></tr>
+      <tr><td>rooms ≤ +2 %</td><td>−2,3 % brut ; +1,5 % ÷ RenderVerts</td><td>tenu</td></tr>
+      <tr><td>V2 ±2 %</td><td>mode rapide −2,6 / +1,4 / −0,4 %</td><td>tenu</td></tr>
+      <tr><td>V1, V4 c12 ±2 %</td><td>−6,0 % et −2,3 % brut, du bon côté ; V1 ÷ RenderVerts −0,8 %</td><td>anomalie expliquée (placement)</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note good"><b>Décision proposée : D-a2 ACCEPTÉ, défaut <code>LV3_RASTER_TILES 16</code></b>, avec deux réserves écrites : (1) les triangles tuilés de 24 à 48 px régressent sur ce processeur (c24 +4 %, c48 +10 à +14 %) ; (2) une part du gain de rooms peut venir du placement du code. Suite : <b>D-a2b</b>, boucle des tuiles sans branchement (deux masques <code>full</code> puis <code>live &amp; ~full</code>), mesurée en A / B / B′ sur c24, c48, c96, rooms et V1 ; puis P1 (réglage de T*) si c48 perd encore.</div>
+  <p class="read"><b>Leçon de méthode</b> : le banc sur VM surestime les gains d'un facteur ≈ 2 (c96 −25 → −13 %, c192 −30 → −7 %, comme en D-a1c), et il ne voit pas les coûts liés au prédicteur de branchement du processeur réel (c48 −10 → +10 %). Un banc choisit une conception ; seul le lot A/B sur la machine cible décide.</p>
+  <h3>Protocole détaillé R0 / R1 / R2 (rien à oublier)</h3>
+  <div class="note bad"><b>Les trois pièges classiques</b> : (1) un binaire construit par <i>Build</i> au lieu de <i>Rebuild</i> après le changement de config.h (une partie des .obj garde l'ancienne valeur : l'en-tête dit <code>tiles=16</code> mais le noyau peut être mixte) ; (2) un temps lu dans un run <code>rasterstats=1</code> ; (3) un summary écrasé par le run suivant parce qu'il n'a pas été renommé.</div>
+  <h4>0. Préparation, une seule fois</h4>
+  <div class="tbl"><table>
+    <thead><tr><th>Binaire (Release, Rebuild LIB puis EXE)</th><th>Macros (le reste identique : PROFILE 1, SIMD 1, FIXED 1, SMALL_FLOAT 8)</th><th>En-tête attendu</th><th>Sert à</th></tr></thead>
+    <tbody>
+      <tr><td><b>A</b></td><td>TILES 0, RASTER_STATS 0</td><td><code>config=Release;ablation=none;rasterstats=0;simd=1;fixed=1;smallfp=8;tiles=0;asserts_lib=0</code></td><td>R2 (et N de R0)</td></tr>
+      <tr><td><b>B</b></td><td>TILES 16, RASTER_STATS 0</td><td>idem avec <code>tiles=16</code></td><td>R2</td></tr>
+      <tr><td><b>B_stats</b></td><td>TILES 16, RASTER_STATS 1</td><td><code>rasterstats=1;tiles=16</code></td><td>R1</td></tr>
+      <tr><td><b>A_stats</b> (recommandé)</td><td>TILES 0, RASTER_STATS 1</td><td><code>rasterstats=1;tiles=0</code></td><td>R1 : référence V5 (scène nouvelle) et invariant de rejet</td></tr>
+      <tr><td><b>A_E, A_S, A_M</b> (R0)</td><td>TILES 0 + ABLATION_PIXELS 2 / ABLATION_PIXELS 1 / ABLATION_RASTER 1</td><td><code>ablation=pixels_edges</code> / <code>pixels_setup</code> / <code>raster</code></td><td>R0</td></tr>
+    </tbody>
+  </table></div>
+  <ul class="read">
+    <li>Un dossier par binaire, avec l'exe, les dll, <code>config.json</code>, <code>engine.json</code> et <code>assets/</code> <b>identiques</b> (scène V5 copiée dans <code>assets/Meshes</code> et <code>assets/GraphScene</code> de chaque dossier). Seul <code>scene_graph.object</code> de config.json change d'une scène à l'autre, de la même façon dans tous les dossiers.</li>
+    <li>Machine : secteur, mode « performances », applications fermées, veille désactivée, une seule séance sans pause. Lancement <code>start "" /wait /affinity 4 …</code> : l'en-tête doit dire <code>affinity=4</code>.</li>
+    <li>Renommer chaque summary <b>aussitôt</b> : <code>R2_c96_A1_summary.csv</code>, <code>R2_c96_B1_…</code>, <code>R1_fan_Bstats_…</code>, <code>R0_rooms_E1_…</code>.</li>
+    <li>Lire la <b>1ʳᵉ ligne</b> de chaque summary avant de passer au run suivant (scène, ablation, rasterstats, tiles, affinity, asserts_lib).</li>
+  </ul>
+  <h4>R0 (facultatif) : la part des arêtes aujourd'hui</h4>
+  <ul class="read">
+    <li><b>Question</b> : la règle de déclenchement « arêtes ≥ 40 % du Render » est-elle remplie sur rooms ? (24 % le 03/11, avant D-a1b et D-a1c.)</li>
+    <li><b>Binaires</b> : A (= N), A_E, A_S, A_M. <b>Scène</b> : <code>bench_V_V3_rooms.json</code>.</li>
+    <li><b>Séquence entrelacée</b>, une séance : <code>N E S M M S E N</code> (8 runs).</li>
+    <li><b>Validité</b> : pour chaque mode, ses deux passages ont un ClearDepth à moins de 5 % <i>l'un de l'autre</i> (jamais entre modes : le témoin change avec le mode) et un Render à moins de 3 %.</li>
+    <li><b>Calcul</b> (médianes Render, moyenne des deux passages de chaque mode) : préparation = S − M ; arêtes = E − S ; fragments = N − E ; part des arêtes = (E − S) / N.</li>
+    <li><b>Prédiction</b> : arêtes ≈ 18 à 25 % de N, donc règle toujours non remplie (D0 inchangée). Bonus possible dans la même séance : B, B_E, B_S, B_M ; attendu : S − M identique à A (contrôle, la préparation n'a pas changé), E − S en baisse, N − E en légère baisse (tuiles pleines).</li>
+  </ul>
+  <h4>R1 : comptage (un run par scène suffit, les compteurs sont déterministes)</h4>
+  <ul class="read">
+    <li><b>B_stats</b> sur 9 scènes : V5 c24, c48, c96, c192, fan, rooms, V2, V1, V4 c12 (c3 facultatif). <b>A_stats</b> sur les 5 V5 : aucune référence R1 n'existe pour cette scène nouvelle.</li>
+    <li><b>Exactitude attendue</b> : rooms, V2, V1, V4 au compte près (le banc les a reproduits). V5 : TrisRasterized et TrisSimd8 exacts ; pixels, blocs et tuiles à ±0,1 % ; TrisTiled à ±0,5 % (projection float du moteur contre double du banc : un triangle au seuil de 16 px peut basculer).</li>
+    <li><b>Invariants à vérifier dans chaque summary</b> (exacts, sans tolérance) : <code>BlocksFull8 = 8 × Tiles8Full</code> ; <code>TrisTiled ≤ TrisSimd8 − TrisSmallFloat</code> ; V1, V2, V4 : TrisTiled = Tiles8* = BlocksFull8 = 0 et LaneBlocks8 égal au R1 de D-a1c ; fan : Tiles8Full = 0.</li>
+    <li><b>Invariants A_stats / B_stats</b> : tous les compteurs communs identiques (Rasterized, Early, Tight, Covered, DepthPassed, TrisSimd8, TrisSmallFloat, TrisFixedWide, TrisPix1, classes W) ; <code>LaneBlocks8(A) − LaneBlocks8(B) − BlocksFull8 ≤ 8 × Tiles8Rejected</code>. Marges prédites : rooms 231 157 ≤ 251 744 ; c24 72 205 ≤ 97 296 ; c48 142 888 ≤ 158 088 ; c96 177 685 ≤ 181 720 ; c192 204 004 ≤ 212 520 ; fan 8 657 750 ≤ 8 863 048.</li>
+  </ul>
+  <h4>R2 : temps (A contre B)</h4>
+  <ul class="read">
+    <li><b>Ordre de la séance</b> : V5 c96 <code>A B B A</code> → fan <code>A B B A</code> → c48 <code>A B B A</code> → c24 <code>A B B A</code> (obligatoire depuis le R1) → rooms <code>A B B A A B B A</code> → V2 <code>A B B A A B B A</code> × 2 → V1 <code>A B B A</code> → V4 c12 <code>A B B A</code> → (c192 <code>A B B A</code> si le temps le permet). 48 runs (52 avec c192).</li>
+    <li><b>À lire dans chaque summary</b> : Render (critère), RenderVerts et Clear (thermomètres), ClearDepth (témoin), FRAME ; compteurs actifs avec PROFILE 1 (TrisRasterized, TrisEarlyRejected, FacesSubmitted…) identiques entre A et B.</li>
+    <li><b>Validité d'une séquence</b> : ClearDepth à moins de 5 % sur les 4 runs et |A1 − A2| &lt; 3 % sur Render. Sinon refaire la séquence <i>entière</i> tout de suite et m'envoyer les deux (on ne trie pas les runs).</li>
+    <li><b>Thermomètres</b> : RenderVerts (calcul, sensible à la fréquence) et Clear (mémoire) doivent rester à ±3 % entre A et B : leur code est identique. Si les deux bougent dans le même sens que Render, on normalise ; s'ils divergent entre eux, pas de conclusion.</li>
+    <li><b>Calcul</b> : Δ = (B1 + B2) / (A1 + A2) − 1 sur les médianes Render de chaque A B B A ; rooms : les deux A B B A valides, moyennés ; V2 (bimodal) : classer chaque run dans son mode, comparer A et B dans un même mode, au moins deux runs de chaque côté.</li>
+    <li><b>Seuils</b> (règle de la section 17) : c96 ≤ −8 %, fan ≤ −25 %, rooms ≤ +2 %, V1 / V2 / V4 c12 dans ±2 %. Prédictions : c96 −10 à −25 %, fan −40 à −65 %, c48 −3 à −10 %, rooms 0 à −4 %, témoins 0 ± 2 %.</li>
+  </ul>
+  <h4>À me renvoyer</h4>
+  <p class="read">Tous les summaries renommés (R0 : 8 ou 16 ; R1 : 9 + 5 ; R2 : 44 à 52), même les séquences invalides, et toute anomalie (assertion, artefact visuel, avertissement). Après la décision : commit, <b>scène V5 comprise</b> (5 .obj/.mtl, 5 .json, générateur).</p>
+  <h3 id="feuille">Feuille de route des runs : qui est un binaire, qui est une scène</h3>
+  <div class="note good"><b>Deux choses différentes à ne pas confondre.</b> Un <b>binaire</b> (A, B, B_stats, A_stats, A_E, A_S, A_M) est un exécutable compilé avec certaines macros de config.h : il fixe <i>le code</i> qui tourne. Une <b>scène</b> (rooms, V1, V2, V4 c12, V5 c96…) est un fichier JSON choisi dans <code>config.json</code> (<code>"scene_graph": { "object": "bench_V_V2.json" }</code>) : elle fixe <i>ce qu'on dessine</i>. V1, V2 et V4 c12 sont donc des <b>scènes</b> que l'on fait tourner avec les binaires A et B. N, E, S, M sont des <b>binaires</b> que l'on fait tourner sur la scène rooms.</div>
+  <h4>Les quatre binaires de l'ablation (R0)</h4>
+  <p class="read">Chaque binaire coupe le rastériseur un peu plus tôt que le précédent. L'image est fausse (sauf N), seul le temps compte. En soustrayant deux temps voisins, on obtient le coût d'un seul étage.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Lettre</th><th>Binaire</th><th>Macro dans config.h</th><th>Ce qui tourne</th><th><code>ablation=</code></th></tr></thead>
+    <tbody>
+      <tr><td><b>N</b> (normal)</td><td>A</td><td>aucune (TILES 0)</td><td>tout : préparation, arêtes, fragments (bary, Z, couleur)</td><td><code>none</code></td></tr>
+      <tr><td><b>E</b> (edges)</td><td>A_E</td><td><code>LV3_ABLATION_PIXELS 2</code></td><td>préparation + boucle d'arêtes complète, <b>aucun fragment</b></td><td><code>pixels_edges</code></td></tr>
+      <tr><td><b>S</b> (setup)</td><td>A_S</td><td><code>LV3_ABLATION_PIXELS 1</code></td><td>appels + préparation du triangle, <b>aucun pixel</b></td><td><code>pixels_setup</code></td></tr>
+      <tr><td><b>M</b> (moins le raster)</td><td>A_M</td><td><code>LV3_ABLATION_RASTER 1</code></td><td>tout le moteur sauf DrawTriangle (débranché)</td><td><code>raster</code></td></tr>
+    </tbody>
+  </table></div>
+  <pre class="alg">Render(N) = [reste du moteur] + [préparation] + [arêtes] + [fragments]
+Render(E) = [reste du moteur] + [préparation] + [arêtes]
+Render(S) = [reste du moteur] + [préparation]
+Render(M) = [reste du moteur]
+
+préparation = S − M     arêtes = E − S     fragments = N − E     part des arêtes = (E − S) / N</pre>
+  <p class="read">Pour fabriquer A_E : dans config.h, mettre <code>LV3_ABLATION_PIXELS</code> à 2 (TILES 0), <b>Rebuild</b>, copier l'exe dans le dossier A_E, remettre 0. Idem pour A_S (1) et A_M (<code>LV3_ABLATION_RASTER 1</code>). N n'a pas besoin d'un binaire à lui : c'est A.</p>
+  <h4>Pourquoi l'ordre N E S M M S E N ? (même idée que A B B A)</h4>
+  <p class="read">La machine dérive pendant la séance (température, fréquence). La séquence est un <b>miroir</b> : chaque mode passe une fois au début et une fois à la fin, à des positions symétriques autour du milieu (N en 1 et 8, E en 2 et 7, S en 3 et 6, M en 4 et 5). La moyenne de ses deux passages tombe donc pour <b>tous</b> les modes au même instant (position 4,5) : une dérive linéaire les gonfle tous du même facteur, et les rapports (la part des arêtes) restent justes. Avec un ordre groupé (N N E E S S M M), M est mesuré six runs après N : la dérive se retrouve dans les paliers. Essaie, avec des temps <b>fictifs</b> (N 3000, E 2400, S 1800, M 1500 µs ; vraie part des arêtes 20 %) :</p>
+  <div class="fig">
+    <div class="figctl"><span>Ordre :</span><span class="seg" id="segOrd"><button type="button" aria-pressed="true" data-v="NESMMSEN">N E S M M S E N</button><button type="button" aria-pressed="false" data-v="NNEESSMM">N N E E S S M M (groupé)</button><button type="button" aria-pressed="false" data-v="NESM">N E S M (une fois)</button></span></div>
+    <div class="figctl"><label for="drift">Dérive par run : <b id="driftV">+1,0 %</b></label><input type="range" id="drift" min="-2" max="3" step="0.25" value="1" style="flex:1;min-width:160px"></div>
+    <div class="tbl"><table id="tabDrift"></table></div>
+    <div class="calc" id="calcDrift"></div>
+  </div>
+  <h4>La feuille de route complète, run par run</h4>
+  <p class="read">Pour chaque ligne : régler la scène dans <code>config.json</code> du dossier (le même réglage dans tous les dossiers), lancer <code>start "" /wait /affinity 4 RefactoNouvelleLibrairieV3.exe …</code> depuis le dossier du binaire, vérifier l'en-tête, renommer le summary comme indiqué. Les cases cochées restent cochées dans ton navigateur.</p>
+  <div class="figctl"><span>Filtrer :</span><span class="seg" id="segRun"><button type="button" aria-pressed="true" data-v="all">Tout</button><button type="button" aria-pressed="false" data-v="R0">R0</button><button type="button" aria-pressed="false" data-v="R1">R1</button><button type="button" aria-pressed="false" data-v="R2">R2</button></span><span id="runCount" style="color:var(--mute)"></span></div>
+  <div class="tbl"><table id="tabRuns"></table></div>
+  <script>
+  (function(){
+    const fr=(x,d=1)=>x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+    const T={N:3000,E:2400,S:1800,M:1500};
+    let ord='NESMMSEN';
+    function drift(){
+      const d=parseFloat(document.getElementById('drift').value)/100;
+      document.getElementById('driftV').textContent=(d>=0?'+':'')+fr(d*100)+' %';
+      const pos={N:[],E:[],S:[],M:[]};
+      [...ord].forEach((m,i)=>pos[m].push(i+1));
+      const meas={};
+      let rows='<thead><tr><th>Mode</th><th>Positions</th><th>Centre</th><th>Vrai (µs)</th><th>Mesuré, moyenne (µs)</th></tr></thead><tbody>';
+      for(const m of 'NESM'){
+        const p=pos[m]; const v=p.map(k=>T[m]*(1+d*(k-1)));
+        meas[m]=v.reduce((a,b)=>a+b,0)/v.length;
+        const c=p.reduce((a,b)=>a+b,0)/p.length;
+        rows+=`<tr><td><b>${m}</b></td><td>${p.join(', ')}</td><td class="n">${fr(c)}</td><td class="n">${T[m]}</td><td class="n">${fr(meas[m])}</td></tr>`;
+      }
+      document.getElementById('tabDrift').innerHTML=rows+'</tbody>';
+      const prepV=T.S-T.M, edgV=T.E-T.S, fragV=T.N-T.E;
+      const prep=meas.S-meas.M, edg=meas.E-meas.S, frag=meas.N-meas.E, part=edg/meas.N*100;
+      const e=(a,b)=>{const r=(a/b-1)*100;return (r>=0?'+':'')+fr(r)+' %';};
+      const ok=Math.abs(part-20)<0.05;
+      document.getElementById('calcDrift').innerHTML=
+        `préparation S − M = ${fr(prep)} µs (vrai ${prepV}, écart ${e(prep,prepV)})<br>`+
+        `arêtes E − S = ${fr(edg)} µs (vrai ${edgV}, écart ${e(edg,edgV)})<br>`+
+        `fragments N − E = ${fr(frag)} µs (vrai ${fragV}, écart ${e(frag,fragV)})<br>`+
+        `<b>part des arêtes (E − S) / N = ${fr(part,2)} %</b> (vrai 20,00 %) → `+
+        (ok?'<span style="color:var(--ok)">juste : la dérive gonfle tous les modes du même facteur, le rapport ne bouge pas.</span>'
+           :'<span style="color:var(--warn)">faussé : les modes ne sont pas mesurés au même instant moyen, la dérive entre dans les paliers.</span>');
+    }
+    document.getElementById('drift').addEventListener('input',drift);
+    document.querySelectorAll('#segOrd button').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll('#segOrd button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true'); ord=b.dataset.v; drift();}));
+    drift();
+
+    const H={A:'ablation=none;rasterstats=0;tiles=0',B:'ablation=none;rasterstats=0;tiles=16',
+      B_stats:'rasterstats=1;tiles=16',A_stats:'rasterstats=1;tiles=0',
+      A_E:'ablation=pixels_edges;tiles=0',A_S:'ablation=pixels_setup;tiles=0',A_M:'ablation=raster;tiles=0'};
+    const SC={rooms:'bench_V_V3_rooms.json',V1:'bench_V_V1.json',V2:'bench_V_V2.json','V4 c12':'bench_V_V4_c12.json',
+      'V5 c24':'bench_V_V5_c24.json','V5 c48':'bench_V_V5_c48.json','V5 c96':'bench_V_V5_c96.json','V5 c192':'bench_V_V5_c192.json','V5 fan':'bench_V_V5_fan.json'};
+    const runs=[];
+    const short=s=>s.replace('V5 ','').replace(' ','');
+    // R0
+    const r0={N:'A',E:'A_E',S:'A_S',M:'A_M'}, cnt0={N:0,E:0,S:0,M:0};
+    for(const m of 'NESMMSEN'){cnt0[m]++;runs.push({g:'R0',bin:r0[m],sc:'rooms',name:`R0_rooms_${m}${cnt0[m]}`,opt:true});}
+    // R1
+    for(const s of ['V5 c24','V5 c48','V5 c96','V5 c192','V5 fan','rooms','V2','V1','V4 c12'])runs.push({g:'R1',bin:'B_stats',sc:s,name:`R1_${short(s)}_Bstats`});
+    for(const s of ['V5 c24','V5 c48','V5 c96','V5 c192','V5 fan'])runs.push({g:'R1',bin:'A_stats',sc:s,name:`R1_${short(s)}_Astats`,rec:true});
+    // R2
+    const seq=(s,pat,opt)=>{const c={A:0,B:0};for(const x of pat){c[x]++;runs.push({g:'R2',bin:x,sc:s,name:`R2_${short(s)}_${x}${c[x]}`,opt});}};
+    seq('V5 c96','ABBA');seq('V5 fan','ABBA');seq('V5 c48','ABBA');seq('V5 c24','ABBA');seq('rooms','ABBAABBA');seq('V2','ABBAABBAABBAABBA');
+    seq('V1','ABBA');seq('V4 c12','ABBA');seq('V5 c192','ABBA',true);
+    let filt='all';
+    const store=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v);}catch(e){return null;}};
+    function drawRuns(){
+      const list=runs.filter(r=>filt==='all'||r.g===filt);
+      let h='<thead><tr><th>✓</th><th>N°</th><th>Lot</th><th>Binaire (dossier)</th><th>Scène (config.json)</th><th>En-tête à vérifier</th><th>Renommer en</th></tr></thead><tbody>';
+      let prevSc='';
+      list.forEach((r,i)=>{
+        const id='run_'+r.name; const chk=store(id)==='1'?'checked':'';
+        const tag=r.opt?' <span style="color:var(--mute)">(facultatif)</span>':r.rec?' <span style="color:var(--mute)">(recommandé)</span>':'';
+        const sep=(r.sc!==prevSc)?' style="border-top:2px solid var(--line)"':''; prevSc=r.sc;
+        h+=`<tr${sep}><td><input type="checkbox" data-k="${id}" ${chk}></td><td class="n">${i+1}</td><td>${r.g}${tag}</td><td><b>${r.bin}</b></td><td>${r.sc}<br><code>${SC[r.sc]}</code></td><td><code>${H[r.bin]}</code></td><td><code>${r.name}_summary.csv</code></td></tr>`;
+      });
+      document.getElementById('tabRuns').innerHTML=h+'</tbody>';
+      const mand=list.filter(r=>!r.opt&&!r.rec).length;
+      document.getElementById('runCount').textContent=`${list.length} runs (${mand} obligatoires)`;
+      document.querySelectorAll('#tabRuns input').forEach(c=>c.addEventListener('change',()=>store(c.dataset.k,c.checked?'1':'0')));
+    }
+    document.querySelectorAll('#segRun button').forEach(b=>b.addEventListener('click',()=>{
+      document.querySelectorAll('#segRun button').forEach(x=>x.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true'); filt=b.dataset.v; drawRuns();}));
+    drawRuns();
+  })();
+  </script>
+  <h4>Pourquoi V1, V2 et V4 c12 dans R2 ? Les témoins</h4>
+  <p class="read">Ces trois scènes n'ont <b>aucun</b> triangle tuilé (TrisTiled = 0 au R1) : B y exécute exactement les mêmes boucles que A, plus l'aiguillage de 13 instructions par triangle. Elles répondent à la question « D-a2 coûte-t-il quelque chose aux scènes qu'il n'aide pas ? ». Attendu : B = A à ±2 %. V2 a 16 runs (deux fois A B B A A B B A) parce qu'il est bimodal : il saute d'un mode rapide à un mode lent d'un run à l'autre, à code identique, et il faut au moins deux runs de chaque côté dans le même mode pour comparer.</p>
   <h3>À faire chez toi, dans l'ordre</h3>
   <ul class="check" id="checks">
-    <li><input type="checkbox" id="ck1"><label for="ck1"><b>Compiler</b> Debug et Release, LIB et EXE (aucun avertissement nouveau).</label></li>
-    <li><input type="checkbox" id="ck2"><label for="ck2"><b>TNR Debug</b> : toutes vertes ; journal D-a2 attendu : <code>vue 333x211 : 6600 triangles, 104347 tuiles (55450 rejetees, 10768 pleines), erreurs de verdict 0</code> ; <code>211x151 : 46273 (24619, 4668)</code> ; <code>75x190 : 23353 (12195, 2580)</code> ; <code>contre-exemple : 58399</code> ; <code>lointains : 327 triangles, 319 replis</code>. Journaux C1, C2, D-a1, D-a1b, D-a1c inchangés.</label></li>
-    <li><input type="checkbox" id="ck3"><label for="ck3"><b>Run Debug</b> de rooms, V5 c96 et V5 fan : aucune assertion (les deux filets D-a2 restent silencieux), aucun défaut visible.</label></li>
-    <li><input type="checkbox" id="ck4"><label for="ck4"><b>Asm Release</b> (<code>/FAs</code> sur RenderSystem.cpp). Dans <code>RasterizeTriangleT&lt;ShaderSolid,3,0,8,16&gt;</code> : après les 2 <code>cmp … 2048</code> de D-a1c, 2 <code>cmp</code> largeur/hauteur contre 16 et <code>call RasterizeTiles8Fx&lt;ShaderSolid&gt;</code> ; prologue de même taille qu'en A. Dans <code>RasterizeTiles8Fx</code> : <code>vpermd</code> ×3 par tuile, <code>tzcnt</code> + <code>blsr</code>, 2 <code>vmovmskps</code> par groupe, dans la branche pleine un <code>vmovups</code> (lecture Z) et aucun <code>vmaskmovps</code> en lecture, 0 <code>vfmadd</code>, <code>call RasterizeBlocks8Fx</code> seulement dans le repli. <code>RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</code> : même nombre d'instructions qu'en A.</label></li>
+    <li><input type="checkbox" id="ck1" checked><label for="ck1"><b>Compiler</b> Debug et Release, LIB et EXE (aucun avertissement nouveau).</label></li>
+    <li><input type="checkbox" id="ck2" checked><label for="ck2"><b>TNR Debug</b> : toutes vertes ; journal D-a2 attendu : <code>vue 333x211 : 6600 triangles, 104347 tuiles (55450 rejetees, 10768 pleines), erreurs de verdict 0</code> ; <code>211x151 : 46273 (24619, 4668)</code> ; <code>75x190 : 23353 (12195, 2580)</code> ; <code>contre-exemple : 58399</code> ; <code>lointains : 327 triangles, 319 replis</code>. Journaux C1, C2, D-a1, D-a1b, D-a1c inchangés.</label></li>
+    <li><input type="checkbox" id="ck3" checked><label for="ck3"><b>Run Debug</b> de rooms, V5 c96 et V5 fan : aucune assertion (les deux filets D-a2 restent silencieux), aucun défaut visible.</label></li>
+    <li><input type="checkbox" id="ck4" checked><label for="ck4"><b>Asm Release</b> (fait le 14/11, A et B conformes) (<code>/FAs</code> sur RenderSystem.cpp). Dans <code>RasterizeTriangleT&lt;ShaderSolid,3,0,8,16&gt;</code> : après les 2 <code>cmp … 2048</code> de D-a1c, 2 <code>cmp</code> largeur/hauteur contre 16 et <code>call RasterizeTiles8Fx&lt;ShaderSolid&gt;</code> ; prologue de même taille qu'en A. Dans <code>RasterizeTiles8Fx</code> : <code>vpermd</code> ×3 par tuile, <code>tzcnt</code> + <code>blsr</code>, 2 <code>vmovmskps</code> par groupe, dans la branche pleine un <code>vmovups</code> (lecture Z) et aucun <code>vmaskmovps</code> en lecture, 0 <code>vfmadd</code>, <code>call RasterizeBlocks8Fx</code> seulement dans le repli. <code>RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</code> : même nombre d'instructions qu'en A.</label></li>
     <li><input type="checkbox" id="ck5"><label for="ck5"><b>R0 (facultatif)</b> : ablation N E S M sur rooms avec le binaire A, pour remettre à jour la règle « arêtes ≥ 40 % ».</label></li>
-    <li><input type="checkbox" id="ck6"><label for="ck6"><b>R1</b> (B_stats, affinity 4) : V5 ×5, rooms, V2, V1, V4 c12 ; en-tête <code>tiles=16</code> ; compteurs et invariants de la section 17.</label></li>
-    <li><input type="checkbox" id="ck7"><label for="ck7"><b>R2</b> (A = TILES 0, B = 16, affinity 4, rasterstats 0) : V5 c96, fan, c48 en A B B A ; rooms A B B A A B B A ; V2 A B B A A B B A × 2 ; V1 et V4 c12 en A B B A (c24 et c192 si le temps le permet). Me renvoyer les summaries.</label></li>
+    <li><input type="checkbox" id="ck6" checked><label for="ck6"><b>R1</b> (fait le 14/11, conforme au compte près) (B_stats, affinity 4) : V5 ×5, rooms, V2, V1, V4 c12 ; en-tête <code>tiles=16</code> ; compteurs et invariants de la section 17 ; A_stats sur les 5 V5 (recommandé).</label></li>
+    <li><input type="checkbox" id="ck7" checked><label for="ck7"><b>R2</b> (fait le 14/11 ; c96 et c48 restent à refaire avec D-a2b) (A = TILES 0, B = 16, affinity 4, rasterstats 0) : V5 c96, fan, c48 en A B B A ; rooms A B B A A B B A ; V2 A B B A A B B A × 2 ; V1 et V4 c12 en A B B A (c24 et c192 si le temps le permet). Me renvoyer les summaries.</label></li>
     <li><input type="checkbox" id="ck8"><label for="ck8"><b>Décision</b> selon la règle de la section 17, puis commit (LIB : config.h, Profiler.h/.cpp, Rasterizer.h, PixelStage8.h, FrameBuffer.h, Fragment.h ; EXE : Test_Da2_Tiles.cpp, RunAllTests.cpp, vcxproj et filters, scène V5).</label></li>
   </ul>
 </section>
+
+<div class="part">Partie V · Ce que la mesure a appris</div>
+
+<section id="labmesure">
+  <div class="sh"><span class="stepno">18b · LABO</span><h2>Laboratoire des résultats : prédit contre mesuré, scène par scène</h2></div>
+  <p class="read">Chaque ligne est une scène. La bande bleue est la prédiction écrite avant les temps (banc) ; le point est la mesure du 14/11 sur l'i7-1265U, dans la lecture choisie. Le trait orange est le seuil de la règle de décision, quand il y en a un. Changez de lecture : un résultat solide ne change pas de côté selon le thermomètre ; un résultat fragile, si.</p>
+  <div class="fig">
+    <div class="figctl"><span>Lecture :</span><span class="seg" id="segRead"><button type="button" aria-pressed="true" data-v="0">brut</button><button type="button" aria-pressed="false" data-v="1">÷ ClearDepth</button><button type="button" aria-pressed="false" data-v="2">÷ Clear</button><button type="button" aria-pressed="false" data-v="3">÷ RenderVerts</button></span>
+    <span>Échelle :</span><span class="seg" id="segZoom"><button type="button" aria-pressed="true" data-v="w">−70 à +20 %</button><button type="button" aria-pressed="false" data-v="z">zoom −16 à +16 %</button></span></div>
+    <svg class="chart" id="chartR" viewBox="0 0 760 330" role="img" aria-label="Écart de Render B contre A par scène, prédit et mesuré"></svg>
+    <div class="calc" id="chartInfo"></div>
+  </div>
+  <div class="observe" style="margin-top:12px"><b>À observer</b><ul>
+    <li>c96, fan et rooms restent du même côté dans toutes les lectures : ce sont des résultats solides. Le seuil de c96 (−8 %) tient même dans la lecture la moins favorable.</li>
+    <li>c48 et c24 sont à droite de zéro dans toutes les lectures : la régression est réelle, et hors de la bande prédite.</li>
+    <li>En lecture ÷ RenderVerts, les témoins V1 et V2 reviennent dans ±2 % : leur avance en brut vient du placement du code (section 18d). rooms y passe à +1,5 % : c'est la lecture la plus pessimiste, et le seuil (+2 %) tient encore.</li>
+    <li>Une valeur absente signifie que la zone thermomètre est trop petite pour servir (RenderVerts de 1 à 7 µs sur V5 et c12) ou n'a pas été calculée.</li>
+  </ul></div>
+</section>
+
+<section id="labbranche">
+  <div class="sh"><span class="stepno">18c · LABO</span><h2>Pourquoi c48 perd : le prédicteur de branchement, et ce qu'il n'explique pas</h2></div>
+  <div class="read">
+  <p><b>La question.</b> Sur c48, B coûte 206 µs de plus que A, soit 6,1 ns par tuile vivante ; sur c24, 2,6 ns. Le coût par triangle varie d'un facteur 7 entre les deux scènes : l'hypothèse H1 (prologue de <code>RasterizeTiles8Fx</code>, coût fixe par triangle) est réfutée. Restent trois suspects, tous par tuile :</p>
+  <ul>
+    <li><b>H2, la mise en route d'une tuile</b> : <code>tzcnt</code>, <code>blsr</code>, 3 <code>vpermd</code>, BeginRow (2 multiplications). Un socle fixe, le même partout.</li>
+    <li><b>H3, la branche « pleine ou partielle »</b> : le processeur exécute en avance le côté qu'il devine. S'il s'est trompé, il jette ce travail et recommence : environ 17 cycles perdus sur ce cœur, soit ≈ 3,9 ns à 4,4 GHz.</li>
+    <li><b>H4, l'ordre des accès mémoire</b> : Giesen écrit la boîte ligne par ligne (le préchargeur matériel suit un flux continu) ; les tuiles écrivent 8 lignes de 32 octets, puis passent à la tuile voisine. Sur V5, chaque pixel de l'écran est écrit une fois par frame (11 Mo de couleur et de profondeur) : le trafic mémoire domine.</li>
+  </ul>
+  <p><b>Le laboratoire</b> simule H3 : une suite de tuiles vivantes, pleines avec la probabilité p, et le prédicteur le plus simple (un compteur saturant à 2 bits, qui suit la tendance récente). Les vrais prédicteurs sont plus fins, mais aucun ne devine une suite au hasard.</p>
+  </div>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="cBr" width="760" height="150" aria-label="Suite de tuiles pleines et partielles, et erreurs du prédicteur"></canvas>
+      <div class="figcap"><b>Figure 18c.</b> 120 tuiles vivantes consécutives. Ligne du haut : vert = pleine, gris = partielle. Ligne du bas : ce que le prédicteur a deviné ; une croix orange marque chaque erreur (≈ 17 cycles jetés). Avec la variante D-a2b (deux boucles), la ligne du bas disparaît : il ne reste qu'une sortie de boucle par groupe.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Scène :</span><span class="seg" id="segBrP"></span></div>
+      <div class="figctl"><label for="brP">Part de tuiles pleines p : <b id="brPv"></b></label><input type="range" id="brP" min="0" max="1" step="0.01" value="0.27" style="flex:1;min-width:140px"></div>
+      <div class="figctl"><span>Motif :</span><span class="seg" id="segBrM"><button type="button" aria-pressed="true" data-v="r">au hasard</button><button type="button" aria-pressed="false" data-v="g">groupé (les pleines se suivent)</button></span></div>
+      <div class="figctl"><label for="brC">Pénalité : <b id="brCv"></b> cycles</label><input type="range" id="brC" min="10" max="30" step="1" value="17" style="flex:1;min-width:140px"></div>
+      <div class="kpis" id="kpiBr"></div>
+      <div class="calc" id="calcBr"></div>
+    </div>
+  </div>
+  <div class="observe" style="margin-top:12px"><b>À observer</b><ul>
+    <li>c24 (p = 0,05) : le prédicteur ne se trompe presque jamais, la branche coûte ≈ 0,2 ns par tuile.</li>
+    <li>c48 (p = 0,27) au hasard : un tiers d'erreurs, ≈ 1,3 ns par tuile. L'écart prédit entre c48 et c24 est ≈ 1,1 ns ; l'écart mesuré est 3,5 ns. <b>H3 explique au mieux un tiers de la perte</b>, même dans le pire motif.</li>
+    <li>Conclusion honnête : D-a2b (sans branche) doit être mesuré, mais il ne suffira probablement pas. La part restante pointe vers H2 et H4. C'est pourquoi la campagne suivante mesure B′ (sans branche) et, si besoin, B″ (D-a2c, ordre ligne par ligne).</li>
+  </ul></div>
+</section>
+
+<section id="placement">
+  <div class="sh"><span class="stepno">18d · PLACEMENT</span><h2>L'effet de placement du code : quand un code inchangé change de vitesse</h2></div>
+  <div class="read">
+  <p><b>Le constat.</b> V1 n'a aucun triangle tuilé ; sa séquence A B B A est valide ; pourtant B y est plus rapide de 6 %. Plus troublant : RenderVerts, l'étage sommets, dont le source n'a pas changé d'un caractère, est lui aussi plus rapide dans B, et dans toutes les scènes où il est mesurable.</p>
+  </div>
+  <div class="bars" id="barsPl"></div>
+  <div class="read">
+  <p><b>L'explication.</b> Le processeur ne lit pas le code ligne par ligne : il charge des paquets de 32 ou 64 octets, et décode les boucles chaudes dans un petit cache d'instructions décodées. Une boucle dont le début tombe en travers d'une frontière de 64 octets, ou deux branches qui se partagent la même entrée du prédicteur, peuvent coûter quelques pour cent. Or <code>RasterizeTiles8Fx</code> est instanciée dans RenderSystem.cpp : son code (quelques kilo-octets) s’insère dans l'objet et décale l'adresse de tout ce qui le suit dans l'exécutable. Le source de l'étage sommets est identique, mais il n'est plus au même endroit : ses boucles ne tombent plus sur les mêmes frontières.</p>
+  <p><b>Pourquoi ce n'est pas la fréquence.</b> Une variation de fréquence est aléatoire d'une séquence à l'autre et touche A comme B. Ici, c'est toujours B, dans cinq séquences indépendantes, de −2,5 à −5,2 %. Un effet systématique et lié au binaire, c'est la signature du placement.</p>
+  <p><b>Ce que ça change.</b> Le placement peut jouer dans les deux sens, et il change à chaque modification du code. Il faut donc lire chaque résultat avec ce bruit en tête : sur les témoins, l'écart est entièrement du placement ; sur rooms, une part du −2,3 % peut l'être aussi (÷ RenderVerts donne +1,5 %). Sur c96 et fan, les gains (−14 %, −55 %) sont bien au-delà.</p>
+  </div>
+  <div class="note bad"><b>Dette de méthode, inscrite au plan</b> : nous n'avons aucun contrôle de l'alignement des boucles chaudes. Pistes à décider : comparer les fichiers <code>/MAP</code> de A et B (adresses des fonctions modulo 64) ; isoler le noyau dans son propre .cpp pour que l'étage sommets ne bouge plus quand le noyau change.</div>
+</section>
+
+<section id="usage">
+  <div class="sh"><span class="stepno">18e · UTILISATION</span><h2>Exemples d'utilisation</h2></div>
+  <h3>1. Régler ou couper la hiérarchie</h3>
+  <p class="read">Tout se fait à la compilation, dans <code>Core/config.h</code>, section 14. Il n'y a aucun appel à ajouter : <code>RasterizeTriangleT</code> aiguille seul.</p>
+  <pre class="alg">#define LV3_RASTER_TILES 16   // défaut : tuiles pour les boîtes ≥ 16 × 16 px
+#define LV3_RASTER_TILES 0    // coupé : blocs Giesen partout (binaire A des mesures)
+#define LV3_RASTER_TILES 32   // seuil plus haut : seuls les triangles ≥ 32 × 32 px (essai P1)
+#define LV3_RASTER_TILES 7    // refusé : #error (une tuile fait 8 px, en dessous ça n'a pas de sens)</pre>
+  <p class="read">Après tout changement : <b>Rebuild</b> (et non Build), puis vérifier <code>tiles=</code> dans la première ligne du summary.</p>
+  <h3>2. Savoir si une scène va gagner, avant de chronométrer</h3>
+  <p class="read">Un run de comptage (<code>LV3_RASTER_STATS 1</code>) donne les tuiles rejetées (R), pleines (F) et partielles (P). Le mélange suffit à prévoir le sens du résultat sur cette machine :</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>R / F / P</th><th>Rejetées</th><th>Pleines parmi les vivantes</th><th>Mesuré (Render)</th></tr></thead>
+    <tbody>
+      <tr><td>V5 fan</td><td class="n">1 107 881 / 0 / 85 797</td><td class="n">93 %</td><td class="n">0 %</td><td class="n">−55 %</td></tr>
+      <tr><td>V5 c192</td><td class="n">26 565 / 17 920 / 7 652</td><td class="n">51 %</td><td class="n">70 %</td><td class="n">−7 à −12 %</td></tr>
+      <tr><td>V5 c96</td><td class="n">22 715 / 15 178 / 12 391</td><td class="n">45 %</td><td class="n">55 %</td><td class="n">−14 %</td></tr>
+      <tr><td>rooms</td><td class="n">31 468 / 10 931 / 19 890</td><td class="n">51 %</td><td class="n">35 %</td><td class="n">−2,3 %</td></tr>
+      <tr><td>V5 c48</td><td class="n">19 761 / 9 101 / 24 640</td><td class="n">37 %</td><td class="n">27 %</td><td class="n">+10 %</td></tr>
+      <tr><td>V5 c24</td><td class="n">12 162 / 2 036 / 41 390</td><td class="n">22 %</td><td class="n">5 %</td><td class="n">+4 %</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read">Lecture : la hiérarchie paie quand beaucoup de tuiles sont <b>rejetées</b> (fan) ou <b>pleines</b> (c96, c192). Quand les tuiles vivantes sont surtout partielles et que peu sont rejetées (c24, c48), elle ajoute son coût sans rien économiser. rooms est entre les deux : ses très grands triangles compensent.</p>
+  <h3>3. Écrire un nouveau shader</h3>
+  <p class="read">Un shader qui fournit <code>Shade8</code> profite des tuiles sans rien faire : une tuile pleine appelle <code>Shade8</code> avec un masque « tout couvert » (même mémoire finale). Fournir en plus <code>Shade8Full</code> est une optimisation facultative : la lecture de la profondeur devient une lecture simple au lieu d'une lecture masquée.</p>
+  <pre class="alg">struct ShaderFlatRed {
+    static constexpr bool kHasShade8 = true;
+    // Obligatoire (C2) : 8 voies, masque de couverture.
+    static LV3_FORCEINLINE uint32_t Shade8(const Uniforms8&amp; u, __m256 b0, __m256 b1, __m256 b2,
+                                           float* depth, uint32_t* pixel, __m256 cover) noexcept {
+        const __m256 pass = DepthTestAndSet8(depth, InterpolateDepth8(u, b0, b1, b2), cover);
+        _mm256_maskstore_epi32(reinterpret_cast&lt;int*&gt;(pixel), _mm256_castps_si256(pass),
+                               _mm256_set1_epi32(int(0xFFFF0000u)));        // rouge opaque (ARGB)
+        return uint32_t(_mm256_movemask_ps(pass));
+    }
+    // Facultatif (D-a2) : bloc d'une tuile pleine, les 8 voies sont couvertes.
+    static LV3_FORCEINLINE uint32_t Shade8Full(const Uniforms8&amp; u, __m256 b0, __m256 b1, __m256 b2,
+                                               float* depth, uint32_t* pixel) noexcept {
+        const __m256 z    = InterpolateDepth8(u, b0, b1, b2);
+        const __m256 pass = _mm256_cmp_ps(z, _mm256_loadu_ps(depth), _CMP_NLE_UQ);   // même prédicat
+        _mm256_maskstore_ps(depth, _mm256_castps_si256(pass), z);
+        _mm256_maskstore_epi32(reinterpret_cast&lt;int*&gt;(pixel), _mm256_castps_si256(pass),
+                               _mm256_set1_epi32(int(0xFFFF0000u)));
+        return uint32_t(_mm256_movemask_ps(pass));
+    }
+};</pre>
+  <p class="read">Règle à respecter : <code>Shade8Full</code> doit produire exactement la même mémoire que <code>Shade8(…, cover = tout)</code>. Même prédicat de profondeur (<code>_CMP_NLE_UQ</code>, NaN compris), mêmes écritures masquées par le seul test Z. Une TNR qui compare tuiles et blocs (comme <code>Test_Da2_Tiles</code>) le vérifie.</p>
+  <h3>4. Choisir une scène pour sa mesure</h3>
+  <p class="read">Pour un lot qui touche la couverture des grands triangles, mesurer au moins une scène de chaque régime : beaucoup de rejet (fan), beaucoup de pleines (c96 ou c192), beaucoup de partielles (c24 ou c48), une scène réelle (rooms) et un témoin sans grands triangles (V2). Une seule scène favorable, comme c96, aurait caché la régression de c48.</p>
+</section>
+
 
 <section id="suite">
   <div class="sh"><span class="stepno">19 · LA SUITE</span><h2>Et après : binning, Hi-Z, multithread</h2></div>
@@ -754,6 +1370,7 @@ LV3_PROF_COUNT(EProfCounter::BlocksFull8,    tFull * 8);   // écrits SANS test
     <li>Étape 12 : copier la scène V5 (assets/Meshes, assets/GraphScene).</li>
     <li>Compiler, TNR Debug, run Debug, asm, R1, R2 selon la section 18, et m'envoyer les summaries.</li>
     <li>Selon la règle : commit D-a2 (défaut 16) ou défaut 0 et question close.</li>
+    <li><b>Fait le 14/11</b> : TNR, Debug, asm A et B, R1 (exact), R2 → <b>accepté, défaut 16, avec réserves</b>. Reste : commit (scène V5 comprise), puis lot D-a2b (A / B / B′ sur c24, c48, c96, rooms, V1).</li>
   </ol>
   <p class="read" style="color:var(--mute);font-size:.88rem">Sources : M. Abrash, <a href="https://jacobfilipp.com/DrDobbs/articles/DDJ/2009/0905/0905ma01/0905ma01.html">Rasterization on Larrabee</a>, Dr. Dobb's, mai 2009 ; <a href="https://gamedeveloper.com/programming/sponsored-feature-rasterization-on-larrabee----adaptive-rasterization-helps-boost-efficiency">Adaptive rasterization helps boost efficiency</a>, Game Developer ; F. Giesen, <a href="https://fgiesen.wordpress.com/2011/07/06/a-trip-through-the-graphics-pipeline-2011-part-6/">A trip through the Graphics Pipeline 2011, part 6</a> et <a href="https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/">Optimizing the basic rasterizer</a> ; J. Hasselgren, M. Andersson, T. Akenine-Möller, <a href="https://diglib.eg.org/handle/10.2312/hpg20161189">Masked Software Occlusion Culling</a>, HPG 2016.</p>
 </section>
@@ -1235,5 +1852,149 @@ try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change
 new MutationObserver(all).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 })();
 </script>
+<script>
+(function(){
+  const N=[
+   {id:'input',t:'Input',d:'Lit clavier et souris, pilote caméra et horloge.',l:'L05, A7 (zoom dolly)',z:'Input ≈ 10 µs',top:1},
+   {id:'scene',t:'Animation + WorldXform',d:'Horloge de simulation, transformations locales puis monde par le graphe de scène (drapeaux sale).',l:'L06, PH1C, PH1D',z:'≈ 2 µs',top:1},
+   {id:'cam',t:'Cameras + BuildViews',d:'Vue, projection, frustum ; 4 viewports découplés des caméras.',l:'L05, A11, PH1E',z:'≈ 6 µs',top:1},
+   {id:'clear',t:'Clear',d:'Efface couleur et profondeur avec des stores non temporels (contournent le cache).',l:'A15',z:'Clear 309 µs (3,2 %)',top:1},
+   {id:'verts',t:'Étage sommets',d:'Transforme chaque sommet de E1 (objet) à E7 (écran) en un passage AVX2, puis accroche x et y au 1/256 px (contrat de Giesen).',l:'Chantier B (B0-B5), 2b, D-a1, D-a1d',z:'RenderVerts 254 µs (2,7 %)'},
+   {id:'faces',t:'Étage faces',d:'Rejette les triangles hors champ ou de dos, rejet précoce 3b (aucun centre de pixel couvert), boîtes d\'un pixel vers le chemin C3.',l:'3b, C3, PH4CH3b',z:'176 038 triangles → 96 715 rejetés tôt, 1 865 en C3'},
+   {id:'setup',t:'Préparation du triangle',d:'Fonctions d\'arête entières E\' = A\'x + B\'y + C\', biais top-left, aire, coefficients des barycentriques.',l:'D-a1, D-a1b',z:'77 458 triangles dans le noyau'},
+   {id:'small',t:'Chemin petits triangles',d:'Étendue < 8 px dans les deux sens : blocs flottants de C2, exacts sur sommets accrochés.',l:'D-a1c (C2)',z:'17 406 triangles'},
+   {id:'tiles',t:'Chemin tuiles 8 × 8',d:'Boîte ≥ 16 × 16 px : 8 tuiles jugées par registre ; tuile vide sautée, pleine écrite sans test, partielle descendue en blocs. CE LOT.',l:'D-a2',z:'1 685 triangles ; tuiles : 31 468 rejetées, 10 931 pleines, 19 890 partielles',hl:1},
+   {id:'giesen',t:'Chemin blocs Giesen',d:'Les autres : la boîte parcourue ligne par ligne, bloc de 8 × 1 par bloc, E\' avancés par additions.',l:'D-a1',z:'17 171 triangles en AVX2 + 41 196 boîtes étroites (1-2 px) en scalaire'},
+   {id:'frag',t:'Fragments',d:'Par bloc couvert : barycentriques depuis les E\', profondeur, test Z, shader résolu à la compilation, écritures masquées.',l:'C1, C2, D-a1b ; Shade8Full (D-a2)',z:'2 189 889 pixels couverts, 1 611 624 écrits',hl:1},
+   {id:'present',t:'Present',d:'Copie du framebuffer vers la fenêtre SDL.',l:'—',z:'Present 738 µs (7,7 %)',top:1}
+  ];
+  const box=document.getElementById('mapFlow'), info=document.getElementById('mapInfo');
+  if(!box) return;
+  const rows=[['input','scene','cam','clear'],['verts','faces','setup'],['small','tiles','giesen'],['frag'],['present']];
+  const lab=['Frame (hors Render)','Render : étages par mesh','Render : aiguillage du noyau','Render : par bloc couvert','Fin de frame'];
+  let sel='tiles';
+  function draw(){
+    box.innerHTML=rows.map((r,i)=>'<div class="maprow"><span class="maplab">'+lab[i]+'</span><div class="mapcells">'+r.map(id=>{const n=N.find(x=>x.id===id);return '<button type="button" class="mapnode'+(n.hl?' hl':'')+(sel===id?' sel':'')+'" data-id="'+id+'" aria-pressed="'+(sel===id)+'">'+n.t+'</button>';}).join('<span class="maparrow" aria-hidden="true">→</span>')+'</div></div>').join('<div class="mapdown" aria-hidden="true">↓</div>');
+    const n=N.find(x=>x.id===sel);
+    info.textContent=n.t+'\n\n'+n.d+'\n\nLots : '+n.l+'\nSur rooms : '+n.z+(n.hl?'\n\n→ modifié par D-a2':'');
+    box.querySelectorAll('.mapnode').forEach(b=>b.addEventListener('click',()=>{sel=b.dataset.id;draw();}));
+  }
+  draw();
+})();
+</script>
 
-</body></html>
+<script>
+(function(){
+  const fr=(x,d=1)=>(x>0?'+':x<0?'−':'')+Math.abs(x).toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  // ---------- 18b : prédit contre mesuré ----------
+  const S=[
+    {n:'V5 fan',p:[-65,-40],m:[-55.3,-58.9,-60.7,null],t:-25,tl:'≤ −25 %'},
+    {n:'V5 c192',p:[-30,-12],m:[-12.1,-6.6,-7.7,null]},
+    {n:'V5 c96',p:[-25,-10],m:[-14.0,-12.7,-13.0,null],t:-8,tl:'≤ −8 %'},
+    {n:'rooms',p:[-4,0],m:[-2.3,-5.3,-6.0,1.5],t:2,tl:'≤ +2 %'},
+    {n:'V5 c48',p:[-10,-3],m:[10.3,14.3,13.6,null]},
+    {n:'V5 c24',p:[-3,3],m:[4.3,3.2,4.2,8.4]},
+    {n:'V2 (rapide)',p:[-2,2],m:[-2.6,1.4,null,-0.4],t:[-2,2],tl:'±2 %'},
+    {n:'V1',p:[-2,2],m:[-6.0,-7.8,-8.5,-0.8],t:[-2,2],tl:'±2 %'},
+    {n:'V4 c12',p:[-2,2],m:[-2.3,-4.2,-4.5,null],t:[-2,2],tl:'±2 %'}
+  ];
+  const RL=['brut','÷ ClearDepth','÷ Clear','÷ RenderVerts'];
+  let rd=0, zoom='w';
+  const svg=document.getElementById('chartR'), info=document.getElementById('chartInfo');
+  function chart(){
+    if(!svg) return;
+    const lo=zoom==='w'?-70:-16, hi=zoom==='w'?20:16, x0=120, x1=740, W=x1-x0;
+    const X=v=>x0+(Math.max(lo,Math.min(hi,v))-lo)/(hi-lo)*W;
+    let h='';
+    const step=zoom==='w'?10:4;
+    for(let v=Math.ceil(lo/step)*step; v<=hi; v+=step){ h+=`<line class="ax" x1="${X(v)}" y1="18" x2="${X(v)}" y2="${18+S.length*33}"/><text x="${X(v)}" y="12" text-anchor="middle">${v>0?'+':''}${v}</text>`; }
+    h+=`<line class="zero" x1="${X(0)}" y1="18" x2="${X(0)}" y2="${18+S.length*33}"/>`;
+    const lines=[];
+    S.forEach((s,i)=>{
+      const y=18+i*33+16;
+      h+=`<text x="4" y="${y+4}">${s.n}</text>`;
+      h+=`<rect class="pred" x="${X(s.p[0])}" y="${y-7}" width="${Math.max(2,X(s.p[1])-X(s.p[0]))}" height="14" rx="3"/>`;
+      if(s.t!==undefined){ (Array.isArray(s.t)?s.t:[s.t]).forEach(t=>{ h+=`<line class="thr" x1="${X(t)}" y1="${y-11}" x2="${X(t)}" y2="${y+11}"/>`; }); }
+      const v=s.m[rd];
+      if(v===null){ h+=`<text x="${X(hi)-4}" y="${y+4}" text-anchor="end" style="fill:var(--mute)">n/d</text>`; lines.push(`${s.n.padEnd(12)} prédit ${fr(s.p[0],0)} à ${fr(s.p[1],0)} %   mesuré (${RL[rd]}) : n/d`); }
+      else{
+        const inPred=v>=s.p[0]&&v<=s.p[1];
+        let ok=true; if(s.t!==undefined){ ok=Array.isArray(s.t)? (v>=s.t[0]&&v<=s.t[1]) : (s.t<0? v<=s.t : v<=s.t); }
+        const clip=v<lo||v>hi;
+        h+=`<circle class="meas${(ok&&(s.t!==undefined||inPred))?' ok':''}" cx="${X(v)}" cy="${y}" r="6"/>`;
+        h+=`<text x="${X(v)+(v<0?-10:10)}" y="${y-9}" text-anchor="${v<0?'end':'start'}">${fr(v)} %${clip?' (hors échelle)':''}</text>`;
+        lines.push(`${s.n.padEnd(12)} prédit ${fr(s.p[0],0)} à ${fr(s.p[1],0)} %   mesuré (${RL[rd]}) ${fr(v)} %   ${inPred?'dans la prédiction':'HORS prédiction'}${s.t!==undefined?('   seuil '+s.tl+' : '+(ok?'tenu':'NON tenu')):''}`);
+      }
+    });
+    svg.setAttribute('viewBox',`0 0 760 ${30+S.length*33}`);
+    svg.innerHTML=h;
+    info.textContent=lines.join('\n');
+  }
+  function seg(id,cb){ document.querySelectorAll('#'+id+' button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#'+id+' button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');cb(b.dataset.v);})); }
+  seg('segRead',v=>{rd=+v;chart();}); seg('segZoom',v=>{zoom=v;chart();}); chart();
+
+  // ---------- 18c : prédicteur de branchement ----------
+  const F=(x,d)=>x.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d});
+  const PR=[['c24',0.047],['rooms',0.355],['c48',0.27],['c96',0.55],['c192',0.70]];
+  const sp=document.getElementById('segBrP');
+  if(sp){ sp.innerHTML=PR.map(p=>`<button type="button" aria-pressed="${p[0]==='c48'}" data-v="${p[1]}">${p[0]}</button>`).join(''); }
+  let mode='r';
+  function rng(seed){ let s=seed>>>0; return ()=>{ s=(s*1664525+1013904223)>>>0; return s/4294967296; }; }
+  function run(p,N,seed){
+    const r=rng(seed); let c=1, prev=r()<p, mis=0; const seq=[];
+    for(let i=0;i<N;i++){
+      let x; if(mode==='r') x=r()<p; else x = r()<0.8 ? prev : (r()<p);
+      const pred=c>=2; if(pred!==x) mis++;
+      if(i<120) seq.push([x,pred]);
+      c = x? Math.min(3,c+1) : Math.max(0,c-1); prev=x;
+    }
+    return {rate:mis/N, seq};
+  }
+  const cv=document.getElementById('cBr');
+  function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'; }
+  function br(){
+    if(!cv) return;
+    const p=parseFloat(document.getElementById('brP').value), cyc=+document.getElementById('brC').value, ghz=4.4;
+    document.getElementById('brPv').textContent=p.toLocaleString('fr-FR',{minimumFractionDigits:2});
+    document.getElementById('brCv').textContent=cyc;
+    const R=run(p,40000,7), r24=run(0.047,40000,7).rate;
+    const ns=R.rate*cyc/ghz, ns24=r24*cyc/ghz;
+    const g=cv.getContext('2d'); const W=cv.width, H=cv.height, cw=W/120;
+    g.clearRect(0,0,W,H);
+    const cF=css('--full'), cP=css('--cell'), cW=css('--warn'), cM=css('--mute');
+    R.seq.forEach((t,i)=>{
+      g.fillStyle=t[0]?cF:cP; g.fillRect(i*cw+1,20,cw-2,40);
+      g.fillStyle=t[1]?cF:cP; g.globalAlpha=0.55; g.fillRect(i*cw+1,85,cw-2,40); g.globalAlpha=1;
+      if(t[0]!==t[1]){ g.strokeStyle=cW; g.lineWidth=2; g.beginPath(); g.moveTo(i*cw+2,88); g.lineTo(i*cw+cw-2,122); g.moveTo(i*cw+cw-2,88); g.lineTo(i*cw+2,122); g.stroke(); }
+    });
+    g.fillStyle=cM; g.font='12px monospace'; g.fillText('tuiles (vert = pleine)',4,14); g.fillText('prédiction (croix = erreur)',4,80);
+    const k=(l,v,c)=>`<div class="kpi ${c||''}"><b>${v}</b><span>${l}</span></div>`;
+    document.getElementById('kpiBr').innerHTML=
+      k('erreurs / 100 tuiles (une boucle)',(R.rate*100).toLocaleString('fr-FR',{maximumFractionDigits:1}),'w')+
+      k('coût de la branche par tuile',ns.toLocaleString('fr-FR',{maximumFractionDigits:2})+' ns','w')+
+      k('D-a2b : erreurs de données','0','o')+
+      k('mesuré c48 − c24 par tuile','3,5 ns');
+    document.getElementById('calcBr').textContent=
+      `p = ${F(p,2)}, motif ${mode==='r'?'au hasard':'groupé'} : ${F(R.rate*100,1)} % d'erreurs\n`+
+      `× ${cyc} cycles ÷ 4,4 GHz = ${F(ns,2)} ns par tuile vivante\n`+
+      `même calcul à p = 0,05 (c24) : ${F(ns24,2)} ns\n`+
+      `écart expliqué par H3 : ${F(ns-ns24,2)} ns sur 3,5 ns mesurés (${Math.round((ns-ns24)/3.5*100)} %)`;
+  }
+  ['brP','brC'].forEach(id=>{const e=document.getElementById(id); if(e) e.addEventListener('input',br);});
+  seg('segBrM',v=>{mode=v;br();});
+  seg('segBrP',v=>{document.getElementById('brP').value=v;br();});
+  br();
+  new MutationObserver(br).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+  if(window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change',br);
+
+  // ---------- 18d : placement ----------
+  const PL=[['rooms',-3.8],['V1',-5.2],['V5 c24',-3.7],['V2 rapide',-2.5],['V4 c12',0.7]];
+  const bp=document.getElementById('barsPl');
+  if(bp) bp.innerHTML=PL.map(([n,v])=>`<div class="bar"><span class="lab">${n}</span><span class="track"><i style="width:${Math.abs(v)/6*100}%;background:${v<0?'var(--ok)':'var(--mute)'}"></i></span><span>${fr(v)} %</span></div>`).join('')+
+    '<div class="figcap"><b>Figure 18d.</b> RenderVerts, B contre A (code source identique). V4 c12 : zone de 7 µs, sous la résolution utile (100 ns = 1,4 %).</div>';
+})();
+</script>
+
+
+</body>
+</html>
