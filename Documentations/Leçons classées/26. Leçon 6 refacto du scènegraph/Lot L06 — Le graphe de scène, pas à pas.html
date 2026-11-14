@@ -1,0 +1,1499 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot L06 — Le graphe de scène, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : gabarit de la série « Lot … pas à pas » (A5, A7, A9, A10, PH0) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes, laboratoires interactifs. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --root:#8a5a2b; --planet:#2563a8; --moon:#6b7c93; --cam:#2f6b46; --lost:#9a3024;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --root:#d9a066; --planet:#6aa8ec; --moon:#9aa7b8; --cam:#7fc49a; --lost:#e38a7c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --root:#d9a066; --planet:#6aa8ec; --moon:#9aa7b8; --cam:#7fc49a; --lost:#e38a7c;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line);
+  padding-block:10px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h1{font-size:26px; line-height:1.2; margin:6px 0 8px; text-wrap:balance}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+td.num, .num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 11px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl .grp{display:flex; gap:6px; flex-wrap:wrap; align-items:center}
+.ctl .gl{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.out{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; white-space:pre-wrap; overflow-x:auto; margin:8px 0}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:18px; font-variant-numeric:tabular-nums}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.lab{display:grid; grid-template-columns:1fr; gap:10px}
+@media(min-width:820px){ .lab{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)} }
+.lab>div{min-width:0}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.panes{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
+.pane{flex:1 1 220px; min-width:0; border:2px solid var(--line); border-radius:8px; padding:10px 12px; background:var(--surface)}
+.pane.p0{border-color:var(--planet)} .pane.p1{border-color:var(--cam)}
+.pane .k{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.pane .v{font-family:var(--mono); font-size:15px}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header>
+  <div class="t">Lot L06 — Le graphe de scène, pas à pas</div>
+  <div class="s">LibraryV3 · Audit pré-leçon 06 + leçon 06 séances 1, 2a, 2b (bugs 40 à 51) · création (aucun artefact n’existait) · relu contre le dépôt LIB <code>e7cae94</code> / EXE <code>5203980</code> du 09/11/2026</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#lab">Laboratoire du graphe</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<h1>Le graphe de scène : correct d’abord, rapide ensuite</h1>
+<p class="lede">Ce lot reconstruit la leçon 06 telle qu’elle s’est déroulée : un audit des deux dépôts, puis trois séances qui ont rendu le graphe de scène <b>correct</b> (séance 1), lui ont appris à <b>choisir ses caméras</b> sans les connaître par leur nom (séance 2a) et lui ont donné ses <b>verbes de mutation</b> (séance 2b). La partie « rapide » (traversée aplatie, constat A3) a été différée à la campagne de mesure : elle est présentée ici comme une décision en attente.</p>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p>Au 1ᵉʳ septembre 2026, le moteur savait projeter, rasteriser, cadrer une caméra et charger une scène. Il ne savait pas faire tourner <b>la</b> scène du projet : <code>solar_system.json</code>. Onky utilisait <code>SceneBasicTest.json</code> à la place, « mais ce n’est pas le but ». La leçon 06 avait donc un fil rouge très concret : remettre le système solaire en service.</p>
+
+<p>L’audit a montré que la panne avait <b>deux causes, et aucune dans le graphe lui-même</b> : <code>main.cpp</code> cherchait une caméra nommée <code>"Top_Camera"</code> que la scène ne contient pas (bug 46), et <code>ParseMesh</code> calculait un chemin résolu puis chargeait l’autre (bug 42). Mais en lisant le code du graphe pour le vérifier, l’audit a trouvé pire : un chargeur qui <b>perd des nœuds selon l’ordre des lignes du fichier</b>, sans un message.</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « La scène s’affiche avec <code>SceneBasicTest</code>, donc le graphe marche. » <b>Non.</b> Le même chargeur, lancé sur le système solaire avec les nœuds simplement réordonnés (enfants avant parents), perd <b>3 nœuds sur 13</b> : la Lune, Phobos et Deimos. Le journal annonce pourtant « Construction de la scène terminée avec succès ». Un test qui passe sur un seul ordre de données ne prouve rien sur les autres. Le <a href="#lab">laboratoire</a> rejoue ce cas.
+</div>
+
+<p>Ce lot est aussi le premier où le graphe <b>change pendant le jeu</b> : un vaisseau qui s’arrime à une station devient son enfant, une planète détruite emporte ses lunes. Sans ces verbes, le graphe était une photo prise au chargement.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que L06 en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L01</b> — Config, enums, PCH</td><td><code>enum class</code> obligatoire, liste close dans un header de système</td><td><code>ECameraCategory</code> (séance 2a) suit cette règle.</td></tr>
+<tr><td><b>L02</b> — Mathématiques</td><td>Row-major, vecteur-ligne, S·R·T, <b>monde = local · parent</b></td><td>La formule de <code>PropagateWorld</code>, et celle de <code>keepWorld</code> : L′ = W · W<sub>parent</sub>⁻¹.</td></tr>
+<tr><td><b>L03</b> — ECS, SparseSet</td><td>Entité en ticket daté (F1), <code>SparseSet::Add</code>, <code>emplaceComponent</code>, <code>DestroyEntity</code></td><td><code>Add</code> <b>écrase</b> si le composant existe : c’est la mécanique du bug 40. <code>DestroyEntity</code> ignore la hiérarchie : c’est le constat A2.</td></tr>
+<tr><td><b>L04</b> — Rasterizer</td><td>Le pipeline de rendu par vue</td><td>Inchangé ici : le lot ne touche aucune boucle de pixels.</td></tr>
+<tr><td><b>L05</b> — Caméra, frustum</td><td>La caméra est une entité ordinaire (Transform + lentille) ; <code>BuildViewData</code></td><td>Le choix « quelle caméra rend où » sort du code par nom (séance 2a).</td></tr>
+<tr><td><b>A5</b> — Gizmos de caméra</td><td><code>SpawnCameraGizmos</code> : le gizmo est <b>enfant</b> de sa caméra ; <code>Test_GizmoMatchesFrustum</code></td><td>Premier utilisateur de la hiérarchie hors Serializer ; le test produit le faux positif du bug 50.</td></tr>
+<tr><td><b>A6</b> — JsonReader</td><td><code>Read</code>, <code>ReadVector</code>, <code>Child</code>, <code>WarnUnread</code></td><td>Le premier Transform partiel de la scène (<code>Sun_Danger_Zone</code>, un <code>scale</code> seul) fait planter <code>ReadVector</code> (bug 48).</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ, lu dans le code (dépôt LIB <code>8b4498f</code>, 01/09/2026).</b> <code>HierarchyComponent { m_parent, m_children, m_isRoot }</code> ; un seul verbe, <code>linkChildToParent</code>, défini <b>deux fois</b> (<code>Hierarchy.cpp</code> et un <code>SceneGraph.cpp</code> mort, retiré du projet mais encore inclus par <code>main.cpp</code>) ; <code>ParseHierarchy</code> résout les parents par <code>entityMap[parentId]</code> ; <code>WorldTransformSystem</code> descend depuis les entités <code>m_isRoot == true</code> ; <code>main.cpp</code> choisit ses caméras par <code>FindCameraByName("FPS_Camera")</code> et <code>"Top_Camera"</code> ; <code>deltaTime = 0.5f</code> fixe.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce qu’est un graphe de scène, côté joueur</h3>
+<p>Le joueur voit la Lune tourner autour de la Terre, qui tourne autour du Soleil. Personne n’a écrit la trajectoire de la Lune en coordonnées monde : on a écrit « la Lune est à 2 unités de la Terre » et « la Terre est à 15 unités du Soleil ». Le graphe compose ces deux phrases. C’est tout son métier : <b>chaque nœud décrit sa position dans le repère de son parent</b>, et le moteur en déduit la position monde de tous les nœuds, à chaque frame.</p>
+
+<h3>Les quatre objectifs du lot</h3>
+<ol>
+<li><b>Un graphe correct quel que soit l’ordre du fichier</b> : le chargeur est invariant par permutation des nœuds, refuse les parents inconnus, les doublons et les cycles en nommant le coupable (séance 1).</li>
+<li><b>Une seule définition de « racine »</b> : dérivée du parent, plus stockée à côté (séance 1, constat A1).</li>
+<li><b>La scène dit quelles caméras existent, l’utilisateur choisit celle qu’il regarde</b> : plus aucun nom de caméra dans le code (séance 2a, bug 46).</li>
+<li><b>Un graphe qui vit</b> : ré-parenter, détacher, détruire un sous-arbre, sans jamais briser la symétrie parent ↔ enfants (séance 2b, constat A2).</li>
+</ol>
+<p>Critère de sortie de la leçon, fixé dès l’audit : <code>solar_system.json</code>, l’original, charge, s’affiche et orbite en temps réel.</p>
+
+<h3>Les décisions prises, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Ordre du JSON</td><td>exiger « parents d’abord » · rendre le chargeur indépendant de l’ordre</td><td>indépendant (R26)</td><td>Une donnée d’entrée ne porte pas un invariant que le code peut garantir.</td></tr>
+<tr><td>Parent introuvable</td><td>racine avec avertissement · échec du chargement</td><td>échec (<code>return false</code>)</td><td>Une hiérarchie est structurelle : chargée fausse, elle est fausse partout. Une valeur mal typée, elle, se dégrade en défaut (R7).</td></tr>
+<tr><td>Racine</td><td>booléen <code>m_isRoot</code> · déduite de <code>m_parent</code></td><td>déduite (R27)</td><td>Un fait dérivable stocké est un deuxième témoin qui finira par mentir.</td></tr>
+<tr><td>Forme de <code>IsRoot</code></td><td>méthode du composant · fonction libre</td><td>deux fonctions libres</td><td>Un composant reste une donnée pure. <code>IsRoot(h)</code> dans <code>Component.hpp</code>, <code>IsRoot(registry, e)</code> dans <code>Hierarchy.hpp</code> : <code>Component.hpp</code> ne peut pas connaître <code>Registry</code> (inclusion circulaire).</td></tr>
+<tr><td>Entité sans <code>HierarchyComponent</code></td><td>jamais propagée · racine solitaire</td><td>racine (monde = local)</td><td>Sinon sa matrice monde reste l’identité, en silence.</td></tr>
+<tr><td>Qui choisit la caméra</td><td>noms en dur · tout dans le JSON (façon Unity) · scène + application</td><td>la scène déclare <b>qui</b> et dans quel <b>ordre</b>, l’application dit <b>où</b> et <b>comment</b></td><td>Le découpage de la fenêtre appartient à l’EXE (test de placement L05). Un nom de nœud est une donnée d’auteur libre, jamais un contrat.</td></tr>
+<tr><td>Mémoriser la sélection</td><td>muter <code>m_isActive</code> · état de l’application</td><td>état de l’application (R30)</td><td>Sinon le prochain <code>Save()</code> sérialise la session de l’utilisateur comme donnée d’auteur.</td></tr>
+<tr><td>Distinguer jeu / debug</td><td>déduit des contrôleurs · champ <code>category</code></td><td><code>"category": "gameplay" | "debug"</code></td><td>Liste close vérifiée au chargement ; une caméra debug pilotable reste possible.</td></tr>
+<tr><td>Politique de destruction</td><td>orphelins rattachés au grand-parent · cascade</td><td>cascade (comme Unity)</td><td>Une lune sans planète n’a pas de sens ; sauver un enfant reste possible par un <code>Detach</code> explicite avant.</td></tr>
+<tr><td><code>SetParent</code> et le monde</td><td>local conservé · monde conservé (<code>keepWorld</code>)</td><td>local conservé, <code>keepWorld</code> réservé et <b>refusé bruyamment</b></td><td>Le calcul exige une décomposition matrice → TRS et un verdict sur le scale non uniforme : chantier à part (voir <a href="#amend">AM9</a>).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>La chaîne complète, du fichier de scène à l’image, telle que <code>main.cpp</code> l’exécute aujourd’hui (ordre S13). <b>Les cases en surbrillance sont celles que ce lot a créées ou modifiées.</b> Il intervient au chargement (résolution et validation de la hiérarchie), au début de chaque frame (temps réel), dans la cuisson des matrices (définition de la racine), dans le choix des caméras, dans les tests, et par une API transverse appelée par le jeu.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 690" role="img" aria-label="Chaîne complète du moteur, du chargement de la scène au rendu, avec les étages touchés par le lot L06 en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+  .lnh{stroke:var(--hl-line); stroke-width:1.6; fill:none; stroke-dasharray:4 3}
+</style>
+<text class="ph" x="16" y="20">1 · CHARGEMENT DE LA SCÈNE (une fois) — SceneSerializer::LoadSceneGraph</text>
+<rect class="bx" x="16" y="30" width="200" height="56" rx="8"/>
+<text class="lb" x="28" y="51">Passe 1 : nœuds</text><text class="sb" x="28" y="68">id unique (40·4b), Parse*</text>
+<rect class="bxh" x="232" y="30" width="200" height="56" rx="8"/>
+<text class="lb" x="244" y="51">Passe 2 : parents</text><text class="sb" x="244" y="68">find() (41) → link (40)</text>
+<rect class="bx" x="448" y="30" width="200" height="56" rx="8"/>
+<text class="lb" x="460" y="51">Références différées</text><text class="sb" x="460" y="68">CameraFollow.target</text>
+<rect class="bxh" x="664" y="30" width="220" height="56" rx="8"/>
+<text class="lb" x="676" y="51">ValidateHierarchy</text><text class="sb" x="676" y="68">cycle → nommé (voir L6-1)</text>
+<line class="ln" x1="216" y1="58" x2="228" y2="58" marker-end="url(#ar)"/>
+<line class="ln" x1="432" y1="58" x2="444" y2="58" marker-end="url(#ar)"/>
+<line class="ln" x1="648" y1="58" x2="660" y2="58" marker-end="url(#ar)"/>
+<rect class="bxh" x="232" y="96" width="416" height="38" rx="8"/>
+<text class="lb" x="244" y="120">JsonReader : ReadVector find() (48) · Read type invalide (49)</text>
+
+<text class="ph" x="16" y="168">2 · UNE FRAME (ordre S13 de main.cpp)</text>
+<rect class="bxh" x="16" y="178" width="164" height="56" rx="8"/>
+<text class="lb" x="28" y="199">realDt mesuré</text><text class="sb" x="28" y="216">clamp, horloge (44)</text>
+<rect class="bxh" x="196" y="178" width="164" height="56" rx="8"/>
+<text class="lb" x="208" y="199">Input → Player</text><text class="sb" x="208" y="216">lit l’input (45)</text>
+<rect class="bx" x="376" y="178" width="148" height="56" rx="8"/>
+<text class="lb" x="388" y="199">Animation</text><text class="sb" x="388" y="216">simDt, m_local</text>
+<rect class="bxh" x="540" y="178" width="164" height="56" rx="8"/>
+<text class="lb" x="552" y="199">Cuisson n°1</text><text class="sb" x="552" y="216">racines = IsRoot (A1)</text>
+<rect class="bx" x="720" y="178" width="164" height="56" rx="8"/>
+<text class="lb" x="732" y="199">Contrôleurs caméra</text><text class="sb" x="732" y="216">FPS, Follow, Zoom</text>
+<line class="ln" x1="180" y1="206" x2="192" y2="206" marker-end="url(#ar)"/>
+<line class="ln" x1="360" y1="206" x2="372" y2="206" marker-end="url(#ar)"/>
+<line class="ln" x1="524" y1="206" x2="536" y2="206" marker-end="url(#ar)"/>
+<line class="ln" x1="704" y1="206" x2="716" y2="206" marker-end="url(#ar)"/>
+<path class="ln" d="M802 234 L802 252 L98 252 L98 264" marker-end="url(#ar)"/>
+
+<rect class="bxh" x="16" y="268" width="244" height="70" rx="8"/>
+<text class="lb" x="28" y="289">Sélection des caméras (46)</text>
+<text class="sb" x="28" y="306">CollectActiveCameras(cat.)</text>
+<text class="sb" x="28" y="321">NextCamera · Panel · F2-F9</text>
+<rect class="bx" x="276" y="268" width="184" height="70" rx="8"/>
+<text class="lb" x="288" y="289">BuildCameraBindings</text>
+<text class="sb" x="288" y="306">ELayout : Single,</text>
+<text class="sb" x="288" y="321">MainSide, Quad</text>
+<rect class="bx" x="476" y="268" width="184" height="70" rx="8"/>
+<text class="lb" x="488" y="289">CameraGizmoSystem</text>
+<text class="sb" x="488" y="306">gizmo = ENFANT</text>
+<text class="sb" x="488" y="321">de sa caméra</text>
+<rect class="bx" x="676" y="268" width="208" height="70" rx="8"/>
+<text class="lb" x="688" y="289">Cuisson n°2, ciblée</text>
+<text class="sb" x="688" y="306">World(registry, roots)</text>
+<text class="sb" x="688" y="321">IsRoot asserté</text>
+<line class="ln" x1="260" y1="303" x2="272" y2="303" marker-end="url(#ar)"/>
+<line class="ln" x1="460" y1="303" x2="472" y2="303" marker-end="url(#ar)"/>
+<line class="ln" x1="660" y1="303" x2="672" y2="303" marker-end="url(#ar)"/>
+<path class="ln" d="M780 338 L780 356 L98 356 L98 368" marker-end="url(#ar)"/>
+
+<rect class="bx" x="16" y="372" width="164" height="56" rx="8"/>
+<text class="lb" x="28" y="393">TriggerSystem</text><text class="sb" x="28" y="410">lit m_worldMatrix</text>
+<rect class="bx" x="196" y="372" width="164" height="56" rx="8"/>
+<text class="lb" x="208" y="393">BuildViewData × N</text><text class="sb" x="208" y="410">inverseRigid(world)</text>
+<rect class="bxh" x="376" y="372" width="244" height="56" rx="8"/>
+<text class="lb" x="388" y="393">Tests (filets)</text><text class="sb" x="388" y="410">GizmoMatchesFrustum : 3 verdicts (50)</text>
+<rect class="bx" x="636" y="372" width="248" height="56" rx="8"/>
+<text class="lb" x="648" y="393">RenderView × N</text><text class="sb" x="648" y="410">sommets → pixels (inchangé)</text>
+<line class="ln" x1="180" y1="400" x2="192" y2="400" marker-end="url(#ar)"/>
+<line class="ln" x1="360" y1="400" x2="372" y2="400" marker-end="url(#ar)"/>
+<line class="ln" x1="620" y1="400" x2="632" y2="400" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="466">TRANSVERSE · L’API DU GRAPHE (Hierarchy.cpp), seul module qui écrit m_parent / m_children</text>
+<rect class="bxh" x="16" y="476" width="200" height="62" rx="8"/>
+<text class="lb" x="28" y="497">linkChildToParent</text><text class="sb" x="28" y="514">construction (Serializer,</text><text class="sb" x="28" y="528">SpawnCameraGizmos)</text>
+<rect class="bxh" x="232" y="476" width="200" height="62" rx="8"/>
+<text class="lb" x="244" y="497">SetParent</text><text class="sb" x="244" y="514">mutation, anti-cycle</text><text class="sb" x="244" y="528">keepWorld refusé</text>
+<rect class="bxh" x="448" y="476" width="200" height="62" rx="8"/>
+<text class="lb" x="460" y="497">Detach</text><text class="sb" x="460" y="514">devient racine</text><text class="sb" x="460" y="528">swap-erase chez le parent</text>
+<rect class="bxh" x="664" y="476" width="220" height="62" rx="8"/>
+<text class="lb" x="676" y="497">DestroyHierarchy</text><text class="sb" x="676" y="514">collecter, détacher,</text><text class="sb" x="676" y="528">dénouer, détruire</text>
+<path class="lnh" d="M332 86 L332 92"/>
+<path class="lnh" d="M116 476 L116 446 L332 446 L332 134"/>
+<rect class="bx" x="16" y="560" width="868" height="40" rx="8"/>
+<text class="lb" x="28" y="585">Registry::DestroyEntity refuse une entité encore liée (HasOutgoingLinks, bug 53) : la seule porte de sortie d’un nœud lié est l’API ci-dessus.</text>
+<rect class="bx" x="16" y="616" width="868" height="56" rx="8"/>
+<text class="lb" x="28" y="638">Ce que le lot NE touche pas : étage sommets, rasterisation, LOD, culling, Z-buffer.</text>
+<text class="sb" x="28" y="658">La seule boucle de calcul du graphe est PropagateWorld (produit de matrices 4×4 par nœud) : pendant vectorisé à l’étape 9.</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Séance</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Scene/SceneGraph.cpp/.hpp</code></td><td>LIB</td><td>1</td><td><span class="pill bad">supprimé</span> fichier mort, seconde définition de <code>linkChildToParent</code> (bug 47)</td></tr>
+<tr><td><code>Scene/Hierarchy.cpp/.hpp</code></td><td>LIB</td><td>1, 2b</td><td><span class="pill warn">réécrit</span> <code>AttachToParent</code> (static), <code>linkChildToParent</code>, <code>ValidateHierarchy</code>, <code>Detach</code>, <code>IsDescendantOf</code>, <code>SetParent</code>, <code>CollectSubtree</code>, <code>DestroyHierarchy</code>, <code>IsRoot(registry, e)</code></td></tr>
+<tr><td><code>Scene/Components/Component.hpp</code></td><td>LIB</td><td>1, 2a</td><td><span class="pill warn">modifié</span> <code>m_isRoot</code> retiré, <code>IsRoot(h)</code> libre ; <code>CameraComponent::m_category</code></td></tr>
+<tr><td><code>Scene/SceneTypes.h</code></td><td>LIB</td><td>2a</td><td><span class="pill ok">ajout</span> <code>enum class ECameraCategory : uint8_t { Gameplay, Debug }</code></td></tr>
+<tr><td><code>Scene/Serializer.cpp/.hpp</code></td><td>LIB</td><td>1, 2a</td><td><span class="pill warn">modifié</span> <code>find()</code>, id dupliqué, <code>fullPath</code> (42), <code>isColliding</code> retiré (51), élection retirée de <code>ParseCamera</code> (46, 43), <code>ReadCameraCategory</code></td></tr>
+<tr><td><code>Core/JsonReader.h</code></td><td>LIB</td><td>1</td><td><span class="pill bad">bugs corrigés</span> <code>ReadVector</code> (48), <code>Read</code> type invalide (49), <code>Child</code>, <code>ForEachChild</code></td></tr>
+<tr><td><code>Scene/System.cpp/.hpp</code></td><td>LIB</td><td>1, 2a</td><td><span class="pill warn">modifié</span> <code>WorldTransformSystem</code> (racines + solitaires), <code>DebugDisplaySystem</code>, <code>CollectActiveCameras</code>, <code>NextCamera</code> ; <code>FindActiveCamera</code> et <code>FindCameraByName</code> retirées</td></tr>
+<tr><td><code>Test/TestAffichageGizmoCamera.cpp/.h</code></td><td>EXE</td><td>1</td><td><span class="pill warn">modifié</span> le test rend <code>checked</code> au lieu d’asserter (50)</td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>1, 2a</td><td><span class="pill warn">modifié</span> include fantôme retiré, garde de vacuité déplacé, <code>Panel</code>, touches F2-F5, élection par frame</td></tr>
+<tr><td><code>assets/GraphScene/*.json</code></td><td>EXE</td><td>1, 2a</td><td><span class="pill ok">ajout</span> <code>solar_system_shuffled.json</code> (TNR) ; chemins <code>assets/Meshes/</code> ; <code>category</code> et vues debug</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+<p>Cinq fonctionnements sont remis en question. Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · Charger la hiérarchie (passe 2)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — dépend de l’ordre, devine les parents</div>
+<pre><code>pour chaque nœud N du JSON :
+  si N a "parent" :
+<span class="hl">    p ← entityMap[parentId]       // insère Entity(0) si absent</span>
+    // linkChildToParent(N, p) :
+<span class="hl">    addComponent(N, {p, [], false}) // ÉCRASE : enfants de N perdus</span>
+    si p n'a pas de Hierarchy :
+<span class="hl">      addComponent(p, {∅, [], true}) // « racine », même si p a un parent à venir</span>
+    p.children.push(N)
+  sinon :
+    si N n'a pas de Hierarchy : addComponent(N, {∅, [], true})
+<span class="hl">// aucun contrôle : doublon d'id, cycle, auto-parent</span></code></pre></div>
+<div class="ap"><div class="t">Après — invariant par permutation, refuse ce qui est faux</div>
+<pre><code><span class="hl">passe 1 : id déjà vu → erreur, scène refusée</span>
+pour chaque lien (N, parentId) :
+<span class="hl">  it ← entityMap.find(parentId)</span>
+<span class="hl">  si absent : erreur nommant parent et enfant → false</span>
+  // linkChildToParent → AttachToParent :
+<span class="hl">  si N a déjà un Hierarchy : N.parent ← p   // ses enfants restent</span>
+  sinon : addComponent(N, {p, []})
+<span class="hl">  si p n'a pas de Hierarchy : addComponent(p, {∅, []})</span>
+  p.children.push(N)
+<span class="hl">ValidateHierarchy : chaque nœud atteint une racine en ≤ N pas</span></code></pre></div>
+</div>
+
+<h3>B · Ce qu’est une racine, et qui est propagé</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>struct HierarchyComponent {
+  Entity m_parent; vector&lt;Entity&gt; m_children;
+<span class="hl">  bool m_isRoot;              // second témoin du même fait</span>
+};
+WorldTransformSystem :
+<span class="hl">  pour chaque Hierarchy h : si h.m_isRoot → propager</span>
+<span class="hl">  // Transform sans Hierarchy : jamais propagé (monde = identité)</span></code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>struct HierarchyComponent { Entity m_parent; vector&lt;Entity&gt; m_children; };
+<span class="hl">IsRoot(h)          = h.m_parent == NULL_ENTITY</span>
+<span class="hl">IsRoot(registry, e)= !TryGet&lt;Hierarchy&gt;(e) || IsRoot(*h)</span>
+WorldTransformSystem :
+<span class="hl">  1. pour chaque Hierarchy h : si IsRoot(h) → propager</span>
+<span class="hl">  2. pour chaque Transform sans Hierarchy : monde ← local</span></code></pre></div>
+</div>
+
+<h3>C · Choisir les caméras</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — trois vérités, des prénoms</div>
+<pre><code><span class="hl">LoadSceneGraph(…, out_activeCamera)   // élection n°1, au chargement</span>
+<span class="hl">FindActiveCamera()                    // élection n°2, autre départage</span>
+<span class="hl">camActive   ← FindCameraByName("FPS_Camera")  // n°3, par nom</span>
+<span class="hl">camOverview ← FindCameraByName("Top_Camera")  // absent → assert</span>
+slots ← { {camActive, Solid}, {camOverview, Wireframe} }  // figé</code></pre></div>
+<div class="ap"><div class="t">Après — la scène propose, l’utilisateur choisit</div>
+<pre><code>JSON : active (éligible) · priority (ordre) · <span class="hl">category (gameplay | debug)</span>
+<span class="hl">CollectActiveCameras(cat) : actives de la catégorie, triées</span>
+<span class="hl">NextCamera(cat, courante) : la suivante en boucle, ou la 1re si périmée</span>
+<span class="hl">Panel { camera, mode }    : état de SESSION, dans l'EXE (R30)</span>
+par frame : touches F2-F5 → cycle ; sélection morte → ré-élection
+layout ← nombre de panneaux pourvus (Single / MainSide)</code></pre></div>
+</div>
+
+<h3>D · Les verbes du graphe</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — un seul verbe, la construction</div>
+<pre><code>linkChildToParent(enfant, parent)
+<span class="hl">// ré-parenter : aucun moyen (ou un push_back à la main → enfant dans 2 listes)</span>
+<span class="hl">// détacher    : aucun moyen</span>
+<span class="hl">registry.DestroyEntity(planète)   // ses lunes : figées, handle périmé chez le parent</span></code></pre></div>
+<div class="ap"><div class="t">Après — quatre portes, un seul geste d’attache</div>
+<pre><code><span class="hl">static AttachToParent(enfant, parent)    // le geste, privé</span>
+linkChildToParent : contrat « enfant vierge » → AttachToParent
+<span class="hl">SetParent(e, p, keepWorld=false) : refus si e==p ou cycle ; Detach ; Attach</span>
+<span class="hl">Detach(e)  : swap-erase chez le parent, e.parent ← ∅</span>
+<span class="hl">DestroyHierarchy(r) : collecter, détacher, (dénouer, bug 53), détruire</span></code></pre></div>
+</div>
+
+<h3>E · Le temps de la boucle</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code><span class="hl">float deltaTime = 0.5f;               // temps imaginaire</span>
+<span class="hl">PlayerInputSystem(registry, deltaTime) // avant l'input, ne lit rien</span>
+input ← BuildInputState()</code></pre></div>
+<div class="ap"><div class="t">Après (forme finale du dépôt, discussion D)</div>
+<pre><code><span class="hl">realDt ← compteur haute résolution, min(realDt, 0.1)</span>
+<span class="hl">simDt  ← SimulationClock.Advance(realDt)   // pause, échelle (S10)</span>
+input  ← BuildInputState()
+<span class="hl">PlayerInputSystem(registry, input, realDt) // lit l'input, lève m_dirty</span>
+AnimationSystem(registry, simDt)</code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="lab">
+<h2>1 · Laboratoire du graphe — le système solaire, rejoué</h2>
+
+<p>Ce laboratoire refait, en JavaScript, exactement ce que fait le moteur : les deux passes du chargeur, la propagation <code>monde = local · parent</code>, et les verbes de la séance 2b. Les nœuds, translations et échelles sont ceux de <code>solar_system.json</code> (vue de dessus, plan XZ). Choisis un ordre de fichier et une version du code, puis applique des mutations.</p>
+
+<div class="ctl">
+  <div class="grp"><span class="gl">Fichier</span>
+    <label for="gOrder"><select id="gOrder"><option value="orig">solar_system.json (parents d’abord)</option><option value="shuf" selected>solar_system_shuffled.json (enfants d’abord)</option></select></label></div>
+  <div class="grp"><span class="gl">Code</span>
+    <label for="gAlgo"><select id="gAlgo"><option value="old">avant la séance 1 (8b4498f)</option><option value="new" selected>après la séance 1</option></select></label></div>
+  <label><input type="checkbox" id="gTypo"> Saboteur : <code>"parent": "Erath"</code> sur Moon</label>
+  <label for="gTime">Temps : <input type="range" id="gTime" min="0" max="12" step="0.05" value="0"> <span id="gTimeV" class="pill num">0,00 s</span></label>
+  <button type="button" id="gPlay">Lecture</button>
+</div>
+<div class="ctl">
+  <div class="grp"><span class="gl">Mutations (séance 2b)</span>
+    <button type="button" data-m="moonMars">SetParent(Moon, Mars)</button>
+    <button type="button" data-m="shipStar">SetParent(Player_Ship, Sun-etoile)</button>
+    <button type="button" data-m="cycle">SetParent(Sun-Pivot, Moon)</button>
+    <button type="button" data-m="detachMoon">Detach(Moon)</button>
+    <button type="button" data-m="destroyMars">DestroyHierarchy(Mars)</button>
+    <button type="button" data-m="wrongDoor">DestroyEntity(Mars) direct</button>
+    <button type="button" data-m="reset">Recharger</button>
+  </div>
+  <label><input type="checkbox" id="gKeep"> Aperçu <code>keepWorld = true</code> (non implémenté dans le moteur)</label>
+</div>
+
+<div class="lab">
+  <div>
+    <div class="out" id="gTree" aria-live="polite" style="margin-top:0"></div>
+  </div>
+  <div>
+    <div class="sv" style="margin-top:0"><svg id="gMap" viewBox="0 0 520 380" role="img" aria-label="Vue de dessus des positions monde calculées"></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--root)"></i>racine</span>
+      <span><i style="background:var(--planet)"></i>propagé</span>
+      <span><i style="background:var(--lost)"></i>jamais propagé (monde = identité, figé à l’origine)</span>
+      <span><i style="background:var(--cam)"></i>caméra (hors champ si loin)</span>
+    </div>
+  </div>
+</div>
+<div class="stats" id="gStats"></div>
+<div class="out" id="gLog"></div>
+
+<div class="note">
+<b>Trois choses à observer.</b> (1) Fichier mélangé + code d’avant : 10 lignes dans l’arbre au lieu de 13, et trois points rouges empilés à l’origine. Passe au code d’après : les 13 nœuds reviennent, à l’identique du fichier original. (2) Coche le saboteur avec le code d’avant : sur le fichier original, la Lune est adoptée par <code>Sun-Pivot</code> (l’entité d’index 0) ; sur le fichier mélangé, l’index 0 est la Lune elle-même, qui devient <b>son propre parent</b> et disparaît. Avec le code d’après, le chargement échoue et nomme les deux. (3) <code>SetParent(Player_Ship, Sun-etoile)</code> : le vaisseau, local (8, 0) inchangé, saute de 8 à 40 unités du Soleil, parce que <code>Sun-etoile</code> a une échelle 5. Coche l’aperçu <code>keepWorld</code> pour voir le local qu’il aurait fallu écrire.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<p>Six mécanismes portent tout le lot. Aucun n’est une technique nommée de la littérature : ce sont des propriétés du C++, de l’ECS et de la géométrie qu’il faut connaître précisément, parce qu’elles échouent en silence.</p>
+
+<h3 id="t-write">2.1 · Les trois verbes d’écriture d’un stockage ECS</h3>
+<p>Un stockage de composants peut recevoir trois sortes d’écriture. Elles n’ont pas le même contrat, et EnTT leur donne trois noms :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Verbe</th><th>Si absent</th><th>Si présent</th><th>EnTT</th><th>LibraryV3</th></tr></thead>
+<tbody>
+<tr><td>créer</td><td>construit</td><td><b>erreur</b> (assert)</td><td><code>emplace</code></td><td><code>emplaceComponent</code> ✔</td></tr>
+<tr><td>créer ou remplacer</td><td>construit</td><td>remplace tout</td><td><code>emplace_or_replace</code></td><td><code>addComponent</code> — <b>sous le nom de « créer »</b></td></tr>
+<tr><td>modifier</td><td><b>erreur</b></td><td>mute en place</td><td><code>patch</code> / <code>replace</code></td><td><code>TryGet</code> + écriture d’un champ</td></tr>
+</tbody>
+</table>
+</div>
+<p><code>linkChildToParent</code> voulait « modifier le parent de l’enfant ». Il a appelé « créer ou remplacer », et a remplacé la liste <code>m_children</code> que la ligne d’un enfant précédent venait de remplir. Le correctif ne touche pas <code>addComponent</code> : il fait choisir à l’appelant le bon verbe (<code>TryGet</code> puis écriture du seul champ <code>m_parent</code>). Le renommage <code>addOrReplaceComponent</code> avait été proposé en P2 ; il n’a pas été fait (roadmap L6-8).</p>
+
+<h3 id="t-r28">2.2 · <code>operator[]</code> n’est jamais une recherche (R28)</h3>
+<p>Deux bugs du lot (41 et 48) viennent du même réflexe : écrire <code>conteneur[clé]</code> pour <b>lire</b>. Selon le conteneur, <code>[]</code> insère ou exige ; il ne cherche jamais. Choisis un cas :</p>
+<div class="ctl">
+  <label for="r28c">Conteneur : <select id="r28c">
+    <option value="umap">std::unordered_map&lt;string, Entity&gt;</option>
+    <option value="jnc">nlohmann::json (non const)</option>
+    <option value="jc">const nlohmann::json&amp; (cas de JsonReader)</option>
+  </select></label>
+  <label for="r28k">Clé : <select id="r28k"><option value="abs">absente ("Erath", "translation")</option><option value="pre">présente</option></select></label>
+  <label for="r28o">Accès : <select id="r28o"><option value="br">c[clé]</option><option value="find">c.find(clé)</option><option value="at">c.at(clé)</option></select></label>
+</div>
+<div class="out" id="r28out"></div>
+<div class="rule"><b>R28.</b> Toute recherche dont l’absence est une erreur s’écrit <code>find()</code> suivi d’un diagnostic qui nomme la clé. <code>.at()</code> est réservé aux cas où l’absence est un bug interne (exception), jamais une donnée d’auteur mal formée.</div>
+
+<h3 id="t-root">2.3 · Une racine se déduit, elle ne se stocke pas (R27)</h3>
+<p>Avec <code>m_isRoot</code>, le composant portait deux témoins du même fait : « je n’ai pas de parent ». Le bug 40 fabriquait déjà des états où ils divergent : <code>Earth</code> recevait <code>{∅, [Moon], true}</code> (créée comme parent de la Lune) puis <code>{Sun-Pivot, [], false}</code>. Dans l’autre sens d’écrasement, on aurait eu un nœud <b>racine et enfant à la fois</b>, propagé deux fois par frame.</p>
+<p>Les deux surcharges vivent dans deux fichiers parce que les dépendances l’imposent :</p>
+<pre><code>// Component.hpp — ne connaît que la donnée ; Registry.hpp inclut ce fichier,
+// donc ce fichier ne peut JAMAIS mentionner Registry (inclusion circulaire).
+[[nodiscard]] constexpr bool IsRoot(const HierarchyComponent&amp; h) noexcept
+{ return h.m_parent == NULL_ENTITY; }
+
+// Hierarchy.hpp — a le droit d'inclure Registry.hpp ; loge la CONVENTION A1 :
+// pas de HierarchyComponent = racine. Délègue : la règle n'est écrite qu'une fois.
+[[nodiscard]] inline bool IsRoot(const Registry&amp; registry, Entity e)
+{
+    const HierarchyComponent* h = registry.TryGet&lt;HierarchyComponent&gt;(e);
+    return !h || IsRoot(*h);
+}</code></pre>
+<p>Règle de choix : tu tiens le composant (boucle <code>ViewGroup&lt;HierarchyComponent&gt;</code>) → <code>IsRoot(h)</code>, aucune recherche. Tu ne tiens qu’une entité (callback <code>ForEachAlive</code>) → <code>IsRoot(registry, e)</code>, une seule recherche (contre deux pour <code>hasComponent</code> + <code>getComponent</code>).</p>
+
+<h3 id="t-cam">2.4 · Élection, sélection, candidature</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Concept</th><th>Question</th><th>Quand</th><th>Propriétaire</th><th>Support</th></tr></thead>
+<tbody>
+<tr><td><b>Candidature</b></td><td>quelles caméras proposer à quel panneau ?</td><td>chargement</td><td>scène</td><td><code>category</code> (JSON) → <code>ECameraCategory</code></td></tr>
+<tr><td><b>Élection</b></td><td>laquelle au démarrage ?</td><td>chaque frame (requête)</td><td>scène</td><td><code>active</code> = éligible, <code>priority</code> = ordre</td></tr>
+<tr><td><b>Sélection</b></td><td>laquelle maintenant ?</td><td>exécution</td><td>utilisateur, via l’EXE</td><td><code>Panel { camera, mode }</code></td></tr>
+</tbody>
+</table>
+</div>
+<p><code>NextCamera</code> est <b>auto-cicatrisant</b> : si la caméra courante n’est plus dans la liste (désactivée, détruite), il rend la première. Un panneau ne reste jamais pointé sur une caméra morte. Essaie dans le laboratoire suivant : désactive la caméra affichée.</p>
+
+<div class="ctl">
+  <div class="grp"><span class="gl">Touches</span>
+    <button type="button" data-k="F2">F2 caméra jeu</button>
+    <button type="button" data-k="F3">F3 mode jeu</button>
+    <button type="button" data-k="F4">F4 caméra debug</button>
+    <button type="button" data-k="F5">F5 mode debug</button>
+  </div>
+  <label><input type="checkbox" id="cMut"> Contre-exemple : mémoriser la sélection en mutant <code>m_isActive</code></label>
+  <button type="button" id="cSave">Simuler <code>Save()</code> de la scène</button>
+  <button type="button" id="cReset">Recharger</button>
+</div>
+<div class="scroll"><table id="cTable"></table></div>
+<div class="panes" id="cPanes"></div>
+<div class="out" id="cLog"></div>
+
+<h3 id="t-verbs">2.5 · L’invariant parent ↔ enfants, et l’ordre collecter, détacher, détruire</h3>
+<p>Deux champs portent une seule relation : <code>child.m_parent == p</code> si et seulement si <code>child ∈ p.m_children</code>. Un invariant à deux champs ne survit que derrière une API. Depuis la séance 2b, <b><code>m_parent</code> et <code>m_children</code> ne sont écrits que dans <code>Hierarchy.cpp</code></b> ; <code>AttachToParent</code> est <code>static</code>, donc invisible pour l’éditeur de liens hors de ce fichier.</p>
+<p><code>DestroyHierarchy</code> procède en trois temps, et l’ordre est le cœur :</p>
+<ol>
+<li><b>Collecter</b> le sous-arbre (pré-ordre) <b>avant</b> toute destruction : <code>DestroyEntity</code> retire des composants par échange avec le dernier élément du tableau dense ; détruire en parcourant les listes qu’on lit, c’est lire un tableau qui bouge.</li>
+<li><b>Détacher</b> la racine du sous-arbre, pour que le parent survivant n’ait jamais, même un instant, un handle mort dans sa liste.</li>
+<li><b>Détruire</b> chaque entité collectée.</li>
+</ol>
+<p>Le dépôt a depuis ajouté un temps entre 2 et 3 (bug 53, <a href="#amend">AM4</a>) : <b>dénouer</b> tout le sous-arbre, pour que <code>DestroyEntity</code> puisse refuser toute entité encore liée.</p>
+
+<h3 id="t-keep">2.6 · Changer de parent : la recette ou le résultat</h3>
+<p>Un <code>m_local</code> n’est pas une position : c’est une position <b>exprimée dans la langue du parent</b>, et cette langue contient sa translation, sa rotation et son échelle. Changer de parent sans traduire, c’est garder les mots en changeant de langue.</p>
+<ul>
+<li><b>local conservé</b> (ce que fait <code>SetParent</code> aujourd’hui) : garde la recette, l’objet saute. Juste pour instancier un objet sous un parent.</li>
+<li><b>monde conservé</b> (<code>keepWorld</code>, Unity : <code>worldPositionStays = true</code> par défaut) : garde le résultat, réécrit la recette. Juste pour un arrimage.</li>
+</ul>
+<p>Dans la convention du moteur (vecteur-ligne, enfant à gauche) : W<sub>enfant</sub> = L · W<sub>parent</sub>, donc pour garder W : <b>L′ = W<sub>enfant</sub> · W<sub>nouveauParent</sub>⁻¹</b>. Le piège est la soustraction de positions, qui n’est juste que si le nouveau parent n’est ni tourné ni mis à l’échelle :</p>
+<div class="ctl">
+  <label for="kPx">Station x : <input type="range" id="kPx" min="-40" max="60" step="1" value="50"> <span id="kPxV" class="pill num"></span></label>
+  <label for="kPz">z : <input type="range" id="kPz" min="-40" max="40" step="1" value="20"> <span id="kPzV" class="pill num"></span></label>
+  <label for="kRot">Rotation Y : <input type="range" id="kRot" min="-180" max="180" step="5" value="90"> <span id="kRotV" class="pill num"></span></label>
+  <label for="kS">Échelle : <input type="range" id="kS" min="0.25" max="5" step="0.25" value="1"> <span id="kSV" class="pill num"></span></label>
+</div>
+<div class="lab">
+  <div><div class="sv" style="margin:0"><svg id="kMap" viewBox="0 0 420 300" role="img" aria-label="Arrimage du vaisseau à une station : trois façons de recalculer le local"></svg></div></div>
+  <div><div class="out" id="kOut" style="margin:0"></div></div>
+</div>
+<p class="small">Le vaisseau est en (8, 0) monde, enfant de <code>Sun-Pivot</code> (identité). Rotation autour de Y en main droite : x′ = x·cos θ + z·sin θ, z′ = −x·sin θ + z·cos θ. Calcul en double précision côté navigateur : les écarts affichés sont géométriques, pas des arrondis.</p>
+<p>Ce qui a fait différer <code>keepWorld</code> : L′ sort en <b>matrice</b>, et <code>m_local</code> est un TRS. Il faut décomposer (ligne 3 = translation, normes des lignes 0 à 2 = échelle, lignes normalisées → quaternion par la méthode de Shepperd). Et si le nouveau parent a une échelle <b>non uniforme</b> et une rotation, son inverse introduit du cisaillement qu’aucun TRS ne représente : il faudra refuser, approcher avec avertissement, ou interdire l’échelle non uniforme sur les nœuds internes. Le paramètre existe déjà, mais <b>refuse bruyamment</b> (<code>Logger::error</code> + <code>return false</code>, aucune mutation) : un paramètre accepté puis ignoré mentirait à l’appelant.</p>
+
+<h3 id="t-dod">2.7 · Ce qui reste lent, et pourquoi on attend (constat A3)</h3>
+<p><code>LocalTransformSystem</code> parcourt le tableau dense des transforms : c’est le modèle. <code>WorldTransformSystem</code>, lui, descend par récursion : à chaque nœud, deux <code>TryGet</code> (saut sparse → dense) et la lecture d’un <code>std::vector&lt;Entity&gt;</code> alloué ailleurs. Les accès mémoire sont aléatoires, et la récursion interdit la vectorisation et le découpage en threads.</p>
+<div class="ab">
+<div class="av"><div class="t">Aujourd’hui — récursion, accès dispersés</div>
+<pre><code>PropagateWorld(e, parentW):
+  tr ← TryGet&lt;Transform&gt;(e)         // saut 1
+  si tr : tr.world ← tr.local · parentW
+  h ← TryGet&lt;Hierarchy&gt;(e)          // saut 2
+  pour c dans h.children : PropagateWorld(c, …)</code></pre></div>
+<div class="pr"><div class="t">Proposé (A3) — ordre aplati, non décidé</div>
+<pre><code>// order[] trié parents d'abord (tri topologique),
+// recalculé à chaque mutation du graphe
+pour i de 0 à n−1 :
+  s ← order[i].self ; p ← order[i].parent  // indices denses
+  world[s] ← (p == AUCUN) ? local[s]
+                          : local[s] · world[p]   // p &lt; i : déjà calculé</code></pre></div>
+</div>
+<div class="bad"><b>Contre-exemple.</b> Remplacer la récursion par une pile explicite. Le risque de débordement de pile disparaît, les accès aléatoires restent : le problème n’était pas la pile d’appels, c’était la localité.</div>
+<p>Décision du carnet de route : A3 attend les chiffres de la campagne de mesure (phase 4). On ne paie pas 2 à 3 séances pour un système dont on ne connaît pas le coût. Le pendant vectorisé du produit de matrices, seule boucle de calcul du graphe, est donné à l’<a href="#e9">étape 9</a>.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes</h2>
+<p>Chaque étape donne son objectif, ce qu’elle reçoit de l’étape précédente, le code avant / après, et ce qu’elle produit. Le code est celui de la leçon ; quand le dépôt a évolué depuis, l’écart est signalé et renvoyé aux <a href="#amend">amendements</a>.</p>
+
+<div class="step" id="e1"><div class="h"><span class="n">Étape 1</span> Purger le mort (bug 47)</div><div class="b">
+<p><b>Objectif.</b> Qu’il n’existe qu’une version de chaque fonction, et qu’un fichier présent dans le dépôt soit dans le build. Sans cela, tout audit risque de lire la mauvaise copie.</p>
+<div class="io"><div><h5>Reçoit</h5>Le dépôt du 01/09 : <code>SceneGraph.cpp</code> hors <code>.vcxproj</code>, ne compilerait pas (<code>pWorld</code> inexistant), <code>#endif</code> dans le namespace, seconde définition de <code>linkChildToParent</code> ; ≈ 200 lignes commentées ailleurs.</div><div><h5>Produit</h5>Une seule définition de <code>linkChildToParent</code> ; <code>main.cpp</code> n’inclut plus que ce qui existe.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>// main.cpp
+#include "Scene/SceneGraph.hpp"   // fichier hors build
+// Hierarchy.hpp : 25 lignes de linkChildToParent en commentaire
+// Serializer.cpp : ancien ParseTrigger, ancien ParseHierarchy commentés</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>git rm Scene/SceneGraph.cpp Scene/SceneGraph.hpp
+// main.cpp : include retiré
+// compiler ICI, avant de purger les commentaires :
+// une casse éventuelle se voit isolément</code></pre></div>
+</div>
+<div class="rule"><b>R29.</b> Un fichier est dans le build, ou il n’est pas dans le dépôt. Git est la mémoire du projet.</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (hygiène de dépôt).</p>
+</div></div>
+
+<div class="step" id="e2"><div class="h"><span class="n">Étape 2</span> Attacher sans écraser (bug 40)</div><div class="b">
+<p><b>Objectif.</b> Que l’attache d’un enfant ne détruise jamais ce que cet enfant sait déjà de ses propres enfants. Conséquence : le résultat ne dépend plus de l’ordre des nœuds dans le fichier.</p>
+<div class="io"><div><h5>Reçoit</h5>Une seule définition de <code>linkChildToParent</code> (étape 1) et le TNR <code>solar_system_shuffled.json</code> : mêmes 13 nœuds, enfants déclarés avant leurs parents, <code>Sun-Pivot</code> en dernier.</div><div><h5>Produit</h5>Un arbre identique à celui du fichier original : 13 nœuds, Moon sous Earth, Phobos et Deimos sous Mars.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>void linkChildToParent(Registry&amp; registry, Entity child, Entity parent)
+{
+<span class="hl">    registry.addComponent(child, HierarchyComponent{ parent, {}, false });</span>
+    if (!registry.hasComponent&lt;HierarchyComponent&gt;(parent))
+        registry.addComponent(parent, HierarchyComponent{ NULL_ENTITY, {}, true });
+    registry.getComponent&lt;HierarchyComponent&gt;(parent).m_children.push_back(child);
+}</code></pre></div>
+<div class="ap"><div class="t">Après (forme finale, séance 2b)</div><pre><code>static void AttachToParent(Registry&amp; registry, Entity child, Entity parent)
+{
+<span class="hl">    if (HierarchyComponent* hc = registry.TryGet&lt;HierarchyComponent&gt;(child))</span>
+<span class="hl">        hc-&gt;m_parent = parent;          // ses enfants restent</span>
+    else
+        registry.addComponent(child, HierarchyComponent{ parent, {} });
+    if (!registry.hasComponent&lt;HierarchyComponent&gt;(parent))
+        registry.addComponent(parent, HierarchyComponent{ NULL_ENTITY, {} });
+    registry.getComponent&lt;HierarchyComponent&gt;(parent).m_children.push_back(child);
+}
+void linkChildToParent(Registry&amp; registry, Entity child, Entity parent)
+{
+    LV3_ASSERT(child != parent &amp;&amp; child != NULL_ENTITY &amp;&amp; parent != NULL_ENTITY);
+    const HierarchyComponent* hc = registry.TryGet&lt;HierarchyComponent&gt;(child);
+    LV3_ASSERT((!hc || hc-&gt;m_parent == NULL_ENTITY)
+        &amp;&amp; "Construction : cet enfant a déjà un parent — utiliser SetParent");
+    AttachToParent(registry, child, parent);
+}</code></pre></div>
+</div>
+<p>Le second assert est une <b>déclaration de périmètre</b> : <code>linkChildToParent</code> construit, il ne déménage pas. Accepter les deux usages sans retirer l’enfant de l’ancienne liste le mettrait dans deux <code>m_children</code>, propagé deux fois par frame.</p>
+<div class="warn"><b>Écart avec le dépôt (roadmap L6-3).</b> Le dépôt entoure ce second assert de <code>#ifdef _DEBUG</code>. <code>LV3_ASSERT</code> est déjà vide quand les filets sont éteints ; le <code>#ifdef _DEBUG</code> le retire aussi en <code>RelWithAsserts</code>, où il devrait vivre (règle PH0.c : un filet vit sous <code>LV3_ASSERTS_ENABLED</code>).</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (code de chargement, une fois par nœud).</p>
+</div></div>
+
+<div class="step" id="e3"><div class="h"><span class="n">Étape 3</span> Trouver le parent, ou refuser (bug 41)</div><div class="b">
+<p><b>Objectif.</b> Qu’une faute de frappe dans <code>"parent"</code> arrête le chargement avec un message qui nomme le parent et l’enfant, au lieu de parenter l’objet au premier nœud de la scène.</p>
+<div class="io"><div><h5>Reçoit</h5>L’attache correcte (étape 2), qui suppose un parent valide.</div><div><h5>Produit</h5>Saboteur <code>"Erath"</code> : « parent 'Erath' introuvable pour 'Moon' », chargement refusé, ressources libérées.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>Entity childEntity  = ctx.entityMap[childId];
+<span class="hl">Entity parentEntity = ctx.entityMap[parentId];  // insère Entity(0)</span>
+linkChildToParent(ctx.registry, childEntity, parentEntity);</code></pre></div>
+<div class="ap"><div class="t">Après (séance 1)</div><pre><code>const auto itChild  = ctx.entityMap.find(childId);
+const auto itParent = ctx.entityMap.find(parentId);
+LV3_ASSERT(itChild != ctx.entityMap.end());   // créé en passe 1
+<span class="hl">if (itParent == ctx.entityMap.end())</span>
+<span class="hl">{</span>
+<span class="hl">    Logger::error("ParseHierarchy — parent '" + parentId</span>
+<span class="hl">                + "' introuvable pour '" + childId + "'");</span>
+<span class="hl">    return false;   // un graphe faux ne se charge pas « presque bien »</span>
+<span class="hl">}</span>
+linkChildToParent(ctx.registry, itChild-&gt;second, itParent-&gt;second);</code></pre></div>
+</div>
+<p>Pourquoi échouer ici, alors qu’un composant inconnu ne fait qu’avertir ? Ignorer un composant laisse la scène cohérente ; ignorer un lien parent-enfant la laisse <b>fausse</b>. Deux natures de données, deux politiques.</p>
+<div class="note"><b>Évolution du dépôt (<a href="#amend">AM3</a>).</b> La passe 2 ne relit plus le JSON : <code>ParseNode</code> mémorise <code>(enfant, parentId)</code> dans <code>ctx.pendingParents</code>, <code>ResolveParents</code> fait le même <code>find</code>. <code>"parent": null</code> est accepté comme racine explicite (règle des trois formes du 07/10).</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet.</p>
+</div></div>
+
+<div class="step" id="e4"><div class="h"><span class="n">Étape 4</span> Doublons et cycles</div><div class="b">
+<p><b>Objectif.</b> Fermer les deux autres façons de charger un graphe faux sans bruit : deux nœuds de même <code>id</code>, et un cycle (A parent de B, B parent de A), qui n’a pas de racine et n’est donc jamais propagé.</p>
+<div class="io"><div><h5>Reçoit</h5>Des liens tous résolus (étape 3). <code>linkChildToParent</code> n’empêche pas les cycles : au moment de chaque lien, ni A ni B n’a encore de parent.</div><div><h5>Produit</h5>Erreur nommée « id dupliqué » en passe 1 ; erreur nommée « cycle détecté depuis … » en fin de chargement.</div></div>
+<pre><code>// Passe 1
+if (ctx.entityMap.contains(id))
+{ Logger::error("LoadSceneGraph — id dupliqué : '" + id + "'"); return false; }
+
+// Fin de chargement — O(N · profondeur), payé une fois
+bool ValidateHierarchy(Registry&amp; registry)
+{
+    const std::uint32_t maxSteps = registry.GetAliveCount();
+    for (auto&amp;&amp; [entity, hc] : registry.ViewGroup&lt;HierarchyComponent&gt;())
+    {
+        Entity cursor = entity; std::uint32_t steps = 0;
+        while (true)
+        {
+            const HierarchyComponent* h = registry.TryGet&lt;HierarchyComponent&gt;(cursor);
+            if (!h || h-&gt;m_parent == NULL_ENTITY) break;     // racine atteinte
+            cursor = h-&gt;m_parent;
+            if (++steps &gt; maxSteps)
+            { Logger::error("ValidateHierarchy — cycle détecté depuis '" + EntityLabel(registry, entity) + "'"); return false; }
+        }
+    }
+    return true;
+}</code></pre>
+<div class="bad"><b>Bug relevé dans le dépôt (roadmap L6-1).</b> <code>LoadSceneGraph</code> appelle <code>ValidateHierarchy(registry);</code> <b>sans lire son résultat</b>. Un cycle est journalisé, puis la scène est déclarée « construite avec succès ». Correctif proposé : <code>[[nodiscard]]</code> sur la fonction et <code>if (!ValidateHierarchy(registry)) return false;</code>.</div>
+<p><b>Contre-exemple.</b> Mettre ce contrôle dans <code>WorldTransformSystem</code> « pour être sûr à chaque frame ». Un invariant d’entrée se vérifie à l’entrée ; la boucle chaude n’héberge que les invariants qui peuvent se dégrader pendant l’exécution (frontière avec <code>CheckSceneInvariants</code>).</p>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (remontée de pointeurs, dépendante, une fois au chargement).</p>
+</div></div>
+
+<div class="step" id="e5"><div class="h"><span class="n">Étape 5</span> Charger le chemin qu’on a résolu (bug 42)</div><div class="b">
+<p><b>Objectif.</b> Que le chargement d’un mesh ne dépende pas du répertoire courant. Cause n°2 de la panne du système solaire.</p>
+<div class="io"><div><h5>Reçoit</h5>Les <code>"model"</code> de la scène, relatifs au fichier de scène.</div><div><h5>Produit</h5>Des meshes chargés quel que soit le répertoire de lancement ; chemins des scènes corrigés en <code>assets/Meshes/</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>const std::string fullPath = ResolvePath(ctx.baseDir, modelPath);
+<span class="hl">auto meshResult = ctx.pRM.LoadMeshChecked(modelPath, opts);</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>const std::string fullPath = ResolvePath(ctx.baseDir, modelPath);
+<span class="hl">auto meshResult = ctx.pRM.LoadMeshChecked(fullPath, opts);</span></code></pre></div>
+</div>
+<p>Une variable calculée puis jamais lue (R18). Elle a survécu parce que <code>SceneBasicTest.json</code> utilisait des chemins qui marchaient <b>par accident</b> depuis le répertoire de Visual Studio. Un chemin relatif qui marche est un chemin qui marche depuis quelque part ; tant qu’on ne sait pas dire d’où, il a de la chance.</p>
+<p class="small"><b>Pendant vectorisé :</b> sans objet.</p>
+</div></div>
+
+<div class="step" id="e6"><div class="h"><span class="n">Étape 6</span> Le lecteur JSON ne plante plus sur une donnée valide (bugs 48, 49)</div><div class="b">
+<p><b>Objectif.</b> Un Transform partiel est légitime (R7 : défauts qui parlent) ; une valeur mal typée est une faute d’auteur qui se dégrade en défaut. Aucune des deux ne doit tuer le programme.</p>
+<div class="io"><div><h5>Reçoit</h5>Le TNR mélangé (étape 2) qui charge enfin <code>Sun_Danger_Zone</code> : <code>"Transform": { "scale": [5,5,5] }</code>, sans <code>translation</code>.</div><div><h5>Produit</h5><code>Sun_Danger_Zone</code> chargé (position 0, rotation identité, échelle 5) ; saboteur <code>"radius": "grand"</code> → avertissement nommant la clé, rayon 1.0, scène complète.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>Vec3f ReadVector(const char* key, const Vec3f&amp; def)
+{
+    m_seen.insert(key);
+<span class="hl">    const nlohmann::json&amp; a = m_j[key];  // json CONST : clé absente = assert/UB</span>
+    …
+}
+template&lt;typename T&gt; T Read(const char* key, T def)
+{
+    m_seen.insert(key);
+    if (!Has(key)) Logger::warn(…);
+<span class="hl">    return m_j.value(key, def);  // "fov": "45" → type_error.302 → terminate()</span>
+}</code></pre></div>
+<div class="ap"><div class="t">Après (séance 1)</div><pre><code>Vec3f ReadVector(const char* key, const Vec3f&amp; def)
+{
+    m_seen.insert(key);
+<span class="hl">    const auto it = m_j.find(key);</span>
+<span class="hl">    if (it == m_j.end()) return def;</span>
+    const nlohmann::json&amp; a = *it;
+    if (!a.is_array() || a.size() &lt; 3) return def;
+    …
+}
+template&lt;typename T&gt; T Read(const char* key, T def)
+{
+    m_seen.insert(key);
+    if (!Has(key)) { Logger::warn(…); return def; }
+<span class="hl">    try { return m_j.value(key, def); }</span>
+<span class="hl">    catch (const nlohmann::json::type_error&amp;)</span>
+<span class="hl">    { Logger::warn("… '" + key + "' de type invalide … défaut utilisé"); return def; }</span>
+}</code></pre></div>
+</div>
+<p>Le filet est posé <b>dans <code>Read()</code></b>, pas autour de <code>LoadSceneGraph</code> : un <code>catch</code> global avorterait la scène entière pour une clé mal typée. Même passe : <code>ForEachChild</code> gagne la garde <code>is_object()</code> que <code>ForEachElement</code> avait déjà ; <code>Child()</code> avertit quand une clé est présente mais n’est ni un objet ni un tableau.</p>
+<div class="note"><b>Évolution du dépôt.</b> <code>Read</code> utilise aujourd’hui <code>find</code> + <code>get&lt;T&gt;()</code>, et distingue clé absente (avertissement, défaut pris) et <code>null</code> (délégation explicite, information). Voir <a href="#amend">AM2</a>.</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (chargement).</p>
+</div></div>
+
+<div class="step" id="e7"><div class="h"><span class="n">Étape 7</span> Un test a trois verdicts (bug 50)</div><div class="b">
+<p><b>Objectif.</b> Qu’une scène sans gizmo ne fasse plus échouer <code>Test_GizmoMatchesFrustum</code>, sans perdre la protection contre un test qui ne vérifierait plus rien.</p>
+<div class="io"><div><h5>Reçoit</h5>Le système solaire, dont les caméras ne déclarent pas de <code>gizmo</code> : <code>checked == 0</code>, <code>LV3_ASSERT(checked &gt; 0)</code> échoue.</div><div><h5>Produit</h5>Le test rend <code>checked</code> ; <code>main.cpp</code> exige <code>checked &gt; 0</code> seulement si la scène a déclaré des gizmos.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>void Test_GizmoMatchesFrustum(…)
+{
+    …
+<span class="hl">    LV3_ASSERT(checked &gt; 0);   // « sans objet » traité comme « cassé »</span>
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>size_t Test_GizmoMatchesFrustum(…)
+{
+    …
+    if (checked == 0) Logger::info("[TNR] … sans objet");
+<span class="hl">    return checked;</span>
+}
+// main.cpp : le garde DÉMÉNAGE, il ne meurt pas
+<span class="hl">LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);</span></code></pre></div>
+</div>
+<p>La présence de sujets à tester est une précondition de l’appelant, pas une découverte du test. Contre-exemple : supprimer l’assert sans le déplacer. Un renommage de composant viderait le <code>ViewGroup</code> et le test resterait vert pour toujours.</p>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (test).</p>
+</div></div>
+
+<div class="step" id="e8"><div class="h"><span class="n">Étape 8</span> La racine se déduit (constat A1)</div><div class="b">
+<p><b>Objectif.</b> Une seule définition de « racine », et aucune entité à Transform laissée hors de la propagation.</p>
+<div class="io"><div><h5>Reçoit</h5>Un graphe correct (étapes 2 à 4), dont le booléen <code>m_isRoot</code> est devenu redondant avec <code>m_parent</code>.</div><div><h5>Produit</h5><code>IsRoot(h)</code> et <code>IsRoot(registry, e)</code> ; <code>WorldTransformSystem</code> en deux passes ; <code>grep m_isRoot</code> vide.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>for (auto&amp;&amp; [entity, hierarchy] : registry.ViewGroup&lt;HierarchyComponent&gt;())
+<span class="hl">    if (hierarchy.m_isRoot)</span>
+        PropagateWorld(registry, entity, identity);
+<span class="hl">// Transform sans Hierarchy : monde = identité, en silence</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>for (auto&amp;&amp; [entity, hierarchy] : registry.ViewGroup&lt;HierarchyComponent&gt;())
+<span class="hl">    if (IsRoot(hierarchy))</span>
+        PropagateWorld(registry, entity, identity);
+<span class="hl">auto&amp; transforms = pool-&gt;GetDenseData();</span>
+<span class="hl">auto&amp; entities   = pool-&gt;GetDenseEntities();</span>
+<span class="hl">for (size_t i = 0; i &lt; transforms.size(); ++i)</span>
+<span class="hl">    if (!registry.hasComponent&lt;HierarchyComponent&gt;(entities[i]))</span>
+<span class="hl">        transforms[i].m_worldMatrix = transforms[i].m_localMatrix;</span></code></pre></div>
+</div>
+<p>Dans <code>DebugDisplaySystem</code>, <code>!hasComponent || getComponent().m_isRoot</code> devient <code>IsRoot(registry, entity)</code> : une recherche au lieu de deux, et la convention a un seul foyer.</p>
+<p class="small"><b>Pendant vectorisé :</b> la passe des solitaires est une copie de 64 octets par élément, déjà limitée par la mémoire ; aucun gain attendu à la vectoriser à la main (le compilateur produit des <code>vmovups</code>).</p>
+</div></div>
+
+<div class="step" id="e9"><div class="h"><span class="n">Étape 9</span> La boucle de calcul du graphe : <code>local · parentWorld</code></div><div class="b">
+<p><b>Objectif.</b> Connaître exactement le calcul que <code>PropagateWorld</code> fait par nœud, et son pendant vectorisé, pour le jour où A3 sera décidé. Ce code n’a pas été modifié par le lot.</p>
+<div class="io"><div><h5>Reçoit</h5><code>m_localMatrix</code> (cuite par <code>LocalTransformSystem</code>) et la matrice monde du parent, déjà calculée (descente depuis les racines).</div><div><h5>Produit</h5><code>m_worldMatrix</code> du nœud : ligne i = Σ<sub>k</sub> local[i][k] · parent.ligne[k].</div></div>
+<div class="ab">
+<div class="pr"><div class="t">Scalaire (row-major, vecteur-ligne)</div><pre><code>// r = a · b : chaque LIGNE de r est une combinaison
+// des 4 lignes de b, pondérée par la ligne de a.
+// Ordre d'addition figé : ((k0 + k1) + k2) + k3.
+for (int i = 0; i &lt; 4; ++i)
+    for (int j = 0; j &lt; 4; ++j)
+        r[i][j] = ((a[i][0] * b[0][j]
+                  + a[i][1] * b[1][j])
+                  + a[i][2] * b[2][j])
+                  + a[i][3] * b[3][j];
+// 64 mul + 48 add, scalaires</code></pre></div>
+<div class="pr"><div class="t">Vectorisé (SSE, une ligne par registre)</div><pre><code>#include &lt;immintrin.h&gt;
+// b est row-major : chaque ligne b[k] = 4 floats contigus.
+const __m128 b0 = _mm_loadu_ps(b[0]);   // b0 = [b00 b01 b02 b03]
+const __m128 b1 = _mm_loadu_ps(b[1]);
+const __m128 b2 = _mm_loadu_ps(b[2]);
+const __m128 b3 = _mm_loadu_ps(b[3]);
+for (int i = 0; i &lt; 4; ++i)
+{
+    // diffuse a[i][k] dans les 4 couloirs, multiplie la ligne b[k]
+    __m128 r = _mm_mul_ps(_mm_set1_ps(a[i][0]), b0);          // k0
+    r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(a[i][1]), b1));  // + k1
+    r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(a[i][2]), b2));  // + k2
+    r = _mm_add_ps(r, _mm_mul_ps(_mm_set1_ps(a[i][3]), b3));  // + k3
+    _mm_storeu_ps(out[i], r);   // ligne i de r, 4 couloirs = 4 colonnes j
+}
+// 16 mul + 12 add vectoriels ; mêmes opérations que le
+// scalaire, même ordre → résultat identique au bit (sans FMA).</code></pre></div>
+</div>
+<p><b>Variante AVX2 (deux lignes par registre 256 bits).</b> Le couloir bas porte la ligne i, le haut la ligne i+1 ; on duplique chaque ligne de b dans les deux moitiés :</p>
+<pre><code>const __m256 B0 = _mm256_broadcast_ps(reinterpret_cast&lt;const __m128*&gt;(b[0]));  // [b0 | b0]
+// … B1, B2, B3 de même
+for (int i = 0; i &lt; 4; i += 2)
+{
+    // a[i][k] dans la moitié basse, a[i+1][k] dans la haute
+    __m256 r = _mm256_mul_ps(_mm256_set_m128(_mm_set1_ps(a[i+1][0]), _mm_set1_ps(a[i][0])), B0);
+    r = _mm256_add_ps(r, _mm256_mul_ps(_mm256_set_m128(_mm_set1_ps(a[i+1][1]), _mm_set1_ps(a[i][1])), B1));
+    r = _mm256_add_ps(r, _mm256_mul_ps(_mm256_set_m128(_mm_set1_ps(a[i+1][2]), _mm_set1_ps(a[i][2])), B2));
+    r = _mm256_add_ps(r, _mm256_mul_ps(_mm256_set_m128(_mm_set1_ps(a[i+1][3]), _mm_set1_ps(a[i][3])), B3));
+    _mm256_storeu_ps(out[i], r);   // écrit les lignes i et i+1 (8 floats contigus)
+}</code></pre>
+<div class="warn"><b>Ne pas l’adopter tel quel.</b> L’égalité au bit vaut contre la boucle scalaire ci-dessus ; elle est à vérifier contre <code>Matrix44::multiply</code> du dépôt (ordre d’addition réel) par une TNR avant toute substitution. Pas de FMA (règle de bit-exactitude du projet). Et le gain réel de A3 viendra de la localité (ordre aplati), pas de ces 28 instructions : sans l’aplatissement, chaque produit attend deux <code>TryGet</code>.</div>
+</div></div>
+
+<div class="step" id="e10"><div class="h"><span class="n">Étape 10</span> Les caméras sans prénom (bugs 46, 43)</div><div class="b">
+<p><b>Objectif.</b> Plus aucun nom de caméra dans le code ; la scène propose, l’utilisateur choisit, la sélection survit à la disparition d’une caméra. Cause n°1 de la panne du système solaire.</p>
+<div class="io"><div><h5>Reçoit</h5>Des scènes dont les caméras portent <code>active</code> et <code>priority</code> (lus depuis le bug 26).</div><div><h5>Produit</h5><code>solar_system.json</code> original affiché : FPS à gauche (Solid), Overview à droite (Wireframe) ; F2-F5 cyclent ; <code>grep "Top_Camera"</code> vide.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant (main.cpp et ParseCamera)</div><pre><code><span class="hl">const Entity camActive   = FindCameraByName(registry, "FPS_Camera");</span>
+<span class="hl">const Entity camOverview = FindCameraByName(registry, "Top_Camera");</span>
+// ParseCamera :
+ctx.registry.addComponent(entity, std::move(c));
+<span class="hl">if (c.m_isActive)   // lu APRÈS le move (bug 43)</span>
+<span class="hl">    … out_activeCamera = entity;</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>// SceneTypes.h
+enum class ECameraCategory : uint8_t { Gameplay, Debug };
+// ParseCamera : plus d'élection
+c.m_category = ReadCameraCategory(r, "category");
+ctx.registry.addComponent(entity, std::move(c));
+// System.cpp
+size_t CollectActiveCameras(Registry&amp;, ECameraCategory, Entity* out, size_t cap);
+Entity NextCamera(Registry&amp;, ECameraCategory, Entity current);
+// main.cpp, par frame
+if (g_cycleCam[p]) panels[p].camera = NextCamera(registry, cat, panels[p].camera);
+<span class="hl">if (!cam || !cam-&gt;m_isActive || cam-&gt;m_category != cat)</span>
+<span class="hl">    panels[p].camera = NextCamera(registry, cat, NULL_ENTITY);  // ré-élection</span></code></pre></div>
+</div>
+<p>Le bug 43 meurt en effet de bord : le bloc qui lisait après le <code>std::move</code> n’a plus de raison d’exister. Quand une correction d’hygiène s’évapore parce que le code fautif n’a plus de rôle, c’est qu’on a corrigé au bon étage.</p>
+<div class="note"><b>Évolution du dépôt (<a href="#amend">AM7</a>).</b> <code>Panel</code> a perdu son champ <code>category</code> : le slot 0 est toujours gameplay, les slots 1 à n debug ; jusqu’à 4 vues (layout <code>Quad</code>), anti-collision entre slots debug, touches F2 à F9 (annexe A11).</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (≤ <code>LV3_MAX_CAMERA</code> caméras, tri par insertion sur la pile).</p>
+</div></div>
+
+<div class="step" id="e11"><div class="h"><span class="n">Étape 11</span> Les verbes : <code>Detach</code>, <code>SetParent</code>, <code>DestroyHierarchy</code> (constat A2)</div><div class="b">
+<p><b>Objectif.</b> Que le graphe puisse changer pendant le jeu sans jamais briser l’invariant parent ↔ enfants, et qu’une mutation refusée laisse le graphe exactement comme elle l’a trouvé.</p>
+<div class="io"><div><h5>Reçoit</h5><code>AttachToParent</code> (étape 2), la convention « sans parent = racine » (étape 8).</div><div><h5>Produit</h5>Quatre portes publiques ; <code>m_children</code> écrit uniquement dans <code>Hierarchy.cpp</code>.</div></div>
+<pre><code>void Detach(Registry&amp; registry, Entity child)
+{
+    HierarchyComponent* hc = registry.TryGet&lt;HierarchyComponent&gt;(child);
+    if (!hc || hc-&gt;m_parent == NULL_ENTITY) return;            // détacher une racine : no-op
+    if (HierarchyComponent* ph = registry.TryGet&lt;HierarchyComponent&gt;(hc-&gt;m_parent))
+    {
+        auto&amp; kids = ph-&gt;m_children;
+        const auto it = std::find(kids.begin(), kids.end(), child);
+        LV3_ASSERT(it != kids.end() &amp;&amp; "Invariant parent&lt;-&gt;children brisé : écriture directe quelque part");
+        if (it != kids.end()) { *it = kids.back(); kids.pop_back(); }   // swap-erase
+    }
+    hc-&gt;m_parent = NULL_ENTITY;
+}
+
+bool SetParent(Registry&amp; registry, Entity child, Entity newParent, bool keepWorld)
+{
+    if (keepWorld)  { Logger::error("SetParent — keepWorld : pas encore implémenté"); return false; }
+    if (child == newParent) { Logger::error("SetParent — propre parent"); return false; }
+    if (newParent != NULL_ENTITY &amp;&amp; IsDescendantOf(registry, newParent, child))
+    { Logger::error("SetParent — cycle refusé"); return false; }
+    Detach(registry, child);
+    if (newParent != NULL_ENTITY) AttachToParent(registry, child, newParent);
+    return true;
+}
+
+void DestroyHierarchy(Registry&amp; registry, Entity root)
+{
+    std::vector&lt;Entity&gt; subtree;
+    CollectSubtree(registry, root, subtree);   // 1. collecter (pré-ordre, root inclus)
+    Detach(registry, root);                    // 2. le parent survivant oublie le mort
+    // (dépôt, bug 53) 2b. dénouer : m_parent ← ∅, m_children.clear() sur tout le sous-arbre
+    for (Entity e : subtree)
+        registry.DestroyEntity(e);             // 3. chaque storage nettoie sa part
+}</code></pre>
+<p><b>Pourquoi <code>linkChildToParent</code> délègue à <code>AttachToParent</code> et pas à <code>SetParent</code>.</b> On délègue vers le bas (le geste nu), jamais vers le haut (le geste + les gardes d’un autre contrat) : la construction paierait sinon un <code>Detach</code> et une remontée O(profondeur) par nœud chargé, pour des garanties qu’elle possède déjà.</p>
+<p><b>Pourquoi le swap-erase.</b> <code>erase(it)</code> décalerait le vecteur pour préserver un ordre des frères dont personne ne dépend. Si un jour quelque chose en dépend (ordre de dessin d’une interface), ce sera une décision explicite.</p>
+<div class="warn"><b>Points relevés dans le dépôt</b> (déjà au carnet de route, phase 2) : <code>IsDescendantOf</code> n’a pas de compteur de pas (boucle infinie sur un graphe déjà cyclique, que le bug L6-1 laisse passer) ; <code>CollectSubtree</code> et <code>IsDescendantOf</code> ont une liaison externe sans déclaration dans <code>Hierarchy.hpp</code>.</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet (mutations ponctuelles ; <code>std::find</code> sur une liste de frères de quelques éléments).</p>
+</div></div>
+
+<div class="step" id="e12"><div class="h"><span class="n">Étape 12</span> Le temps réel dans la boucle (bugs 44, 45)</div><div class="b">
+<p><b>Objectif.</b> Que les vitesses et le lissage de caméra, écrits en unités par seconde, reçoivent des secondes réelles ; que le vaisseau réponde au clavier au lieu de dériver.</p>
+<div class="io"><div><h5>Reçoit</h5><code>deltaTime = 0.5f</code> fixe ; <code>PlayerInputSystem</code> appelé avant <code>BuildInputState()</code>, sans input.</div><div><h5>Produit</h5><code>realDt</code> mesuré et borné, <code>simDt</code> de <code>SimulationClock</code>, vaisseau piloté au clavier.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code><span class="hl">float deltaTime = 0.5f;</span>
+while (g_running) {
+<span class="hl">    PlayerInputSystem(registry, deltaTime);</span>
+    LV3::InputState input = BuildInputState();
+    AnimationSystem(registry, deltaTime);</code></pre></div>
+<div class="ap"><div class="t">Après (dépôt, discussion D)</div><pre><code>const Uint64 now = SDL_GetPerformanceCounter();
+float realDt = float((now - prev) / freq); prev = now;
+<span class="hl">realDt = std::min(realDt, 0.1f);           // un point d'arrêt ne téléporte pas</span>
+<span class="hl">const float simDt = _clock.Advance(realDt);  // pause, échelle (S10)</span>
+input = BuildInputState();
+<span class="hl">PlayerInputSystem(registry, input, realDt); // + m_dirty levé (bug 58)</span>
+AnimationSystem(registry, simDt);</code></pre></div>
+</div>
+<div class="bad"><b>Bug relevé dans le dépôt (roadmap L6-2).</b> <code>main.cpp</code> appelle aujourd’hui <code>PlayerInputSystem(registry, input, realDt)</code> <b>deux fois par frame</b> : une fois dans le bloc mesuré <code>Input</code>, une fois juste après (avec le <code>if (bench) input = {}</code> dupliqué). Le vaisseau se déplace donc à deux fois la vitesse écrite dans <code>PlayerControl.speed</code>. Effet nul en mode banc (input vidé). Correctif proposé : supprimer le second appel et le second <code>if (bench)</code>.</div>
+<p class="small"><b>Pendant vectorisé :</b> sans objet.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Ce qu’il ne faut pas faire</th><th>Résultat mesuré ou calculé</th></tr></thead>
+<tbody>
+<tr><td>Écraser le <code>HierarchyComponent</code> de l’enfant (code d’avant) sur le fichier mélangé</td><td class="num">13 nœuds chargés, <b>10</b> dans l’arbre ; Moon, Phobos, Deimos figés à (0, 0, 0)</td></tr>
+<tr><td><code>entityMap["Erath"]</code>, fichier original</td><td>Moon parentée à <code>Sun-Pivot</code> (index 0) : monde (2, 0) au lieu de (17, 0), sans message</td></tr>
+<tr><td><code>entityMap["Erath"]</code>, fichier mélangé</td><td>index 0 = Moon : Moon devient <b>son propre parent</b>, n’est plus jamais propagée</td></tr>
+<tr><td>Garder <code>m_isRoot</code> à côté de <code>m_parent</code></td><td>pendant le chargement mélangé, Earth est à la fois « racine » (créée comme parent de Moon) et enfant à venir de Sun-Pivot</td></tr>
+<tr><td><code>SetParent(Player_Ship, Sun-etoile)</code> en gardant le local</td><td class="num">saut de 8 à <b>40</b> unités du Soleil (échelle 5 du parent)</td></tr>
+<tr><td>keepWorld « naïf » : local = position monde − position du parent, station à (50, 0, 20) tournée de 90°</td><td class="num">vaisseau replacé à (30, 0, 62) au lieu de (8, 0, 0) : <b>65,8 unités</b> d’erreur (laboratoire 2.6)</td></tr>
+<tr><td>Mémoriser la sélection en mutant <code>m_isActive</code> puis sauver</td><td>la scène redémarre sur la dernière vue utilisée ; une caméra désactivée par le cycle sort de la liste des candidates (laboratoire 2.4)</td></tr>
+<tr><td>Une élection par nom, trois élections au total</td><td>sur une égalité de priorité, <code>ParseCamera</code> (<code>&gt;=</code>, ordre du fichier) et <code>FindActiveCamera</code> (<code>&gt;</code>, ordre dense) élisaient deux caméras différentes (lot L04-C)</td></tr>
+<tr><td><code>Test_GizmoMatchesFrustum</code> avec <code>LV3_ASSERT(checked &gt; 0)</code></td><td>arrêt Debug sur toute scène sans gizmo, dont le système solaire</td></tr>
+<tr><td><code>dt = 0.5 s</code> fixe à 60 images/s</td><td class="num">animation 30 fois trop rapide ; lissage <code>1 − e<sup>−5·0,5</sup> = 0,918</code> par frame au lieu de <code>0,080</code> : la caméra saute au lieu de glisser</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+<h3>Arrimer un vaisseau à une station (le saut est assumé tant que keepWorld n’existe pas)</h3>
+<pre><code>// Le vaisseau garde son local : poser d'abord le local voulu DANS LE REPÈRE de la station.
+auto&amp; tr = registry.getComponent&lt;TransformComponent&gt;(ship);
+tr.m_local.position = Vec3f(0.0f, 0.0f, -3.0f);   // 3 unités devant le sas
+tr.m_dirty = true;                                 // R11bis : l'auteur de m_local lève le drapeau
+if (!SetParent(registry, ship, station, false))
+    Logger::warn("Arrimage refusé");               // cycle, ou ship == station</code></pre>
+<h3>Éjecter un missile de son lanceur</h3>
+<pre><code>Detach(registry, missile);   // devient racine ; son local est relu comme monde à la prochaine cuisson
+// Pour qu'il ne saute pas : copier d'abord sa position monde dans son local
+// (exact ici seulement parce que la nouvelle « parenté » est l'identité).</code></pre>
+<h3>Détruire une planète, mais sauver une de ses lunes</h3>
+<pre><code>Detach(registry, moon);                  // la lune devient racine AVANT la cascade
+DestroyHierarchy(registry, planet);      // planète + autres lunes + leurs gizmos
+// registry.DestroyEntity(planet) directement : refusé (HasOutgoingLinks, bug 53)</code></pre>
+<h3>Ajouter une vue de debug, sans toucher au code</h3>
+<pre><code>{ "id": "Top_View",
+  "components": {
+    "Transform": { "translation": [0, 120, 0], "rotation": [-90, 0, 0] },
+    "Camera": { "projection": "perspective", "fov": 60.0, "near": 1.0, "far": 500.0,
+                "active": true, "priority": 5, "category": "debug" } } }</code></pre>
+<p class="small">Validé par Onky en séance 2a (« Tout fonctionne ») : Top, Side et Bottom regardent bien la scène depuis le dessus, le côté et le dessous ; la convention d’Euler du moteur et celle de la leçon sont d’accord.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que les lots suivants ont changé</h2>
+<p>Le dépôt du 09/11 a été relu fonction par fonction. Chaque écart entre la leçon et le code d’aujourd’hui est noté avec sa raison. Aucun n’invalide le fond de la leçon ; plusieurs l’ont renforcé.</p>
+
+<div class="amend"><div class="h">AM1 · Entité : 24/8 bits → 16/16 (bug 54)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon (audit du 01/09)</div><pre><code>24 bits d'index, 8 de génération
+ABA possible au 256ᵉ recyclage d'un slot</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>16 bits d'index (65 536 entités), 16 de génération
+ABA repoussé à 65 536 recyclages (choix d'Onky)</code></pre></div>
+</div><p class="small">Sans effet sur les verbes du graphe : ils manipulent des <code>Entity</code> opaques.</p></div></div>
+
+<div class="amend"><div class="h">AM2 · Clé absente : information → avertissement (règle du 07/10)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon (bug 51)</div><pre><code>clé absente + défaut = info (« 30 faux cris »)
+type invalide = warn ; structure fausse = error</code></pre></div>
+<div class="ap"><div class="t">Dépôt (A17, décision d'Onky)</div><pre><code>valeur exacte → silence
+clé absente   → AVERTISSEMENT + défaut annoncé
+null          → délégation explicite : info</code></pre></div>
+</div><p class="small">La leçon voulait un journal lisible ; la règle du 07/10 garde le bruit mais donne à l’auteur un moyen propre de le faire taire : écrire <code>null</code>. La rétrogradation de la séance 1 est donc remplacée.</p></div></div>
+
+<div class="amend"><div class="h">AM3 · Passe 2 : <code>ParseHierarchy</code> → <code>ResolveParents</code> (A17)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon</div><pre><code>passe 2 relit chaque nœud JSON, find(parentId)</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>passe 1 : ParseNode note (enfant, parentId) dans pendingParents
+passe 2 : aucune lecture JSON, find() + linkChildToParent</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM4 · <code>DestroyHierarchy</code> dénoue avant de détruire (bug 53, R35)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon (séance 2b)</div><pre><code>collecter → détacher → détruire
+DestroyEntity(e) direct reste possible :
+sous-arbre orphelin figé</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>collecter → détacher → DÉNOUER (parent ∅, children vidés) → détruire
+DestroyEntity : LV3_ASSERT(!HasOutgoingLinks(e)) + refus en Release
+HasOutgoingLinks défini dans Hierarchy.cpp (Registry n'apprend rien)</code></pre></div>
+</div><p class="small">Une précondition naïve par entité aurait cassé <code>DestroyHierarchy</code> : chaque nœud interne est encore lié au moment de sa destruction. D’où la passe de dénouement.</p></div></div>
+
+<div class="amend"><div class="h">AM5 · <code>PropagateWorld</code> : un nœud sans Transform transmet (bug 57)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon</div><pre><code>tr ← TryGet&lt;Transform&gt;(e) ; si !tr : return   // coupe le sous-arbre</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>world ← parentWorld
+si tr : tr.world ← tr.local · parentWorld ; world ← tr.world
+récursion vers les enfants : inconditionnelle</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM6 · Une cuisson par frame → deux (bug 65, S13)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon</div><pre><code>contrôleurs → Local → World → vues</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>Player, Animation → cuisson n°1 complète
+→ contrôleurs caméra → sélection → gizmos
+→ cuisson n°2 ciblée : WorldTransformSystem(registry, roots)
+  (LV3_ASSERT(IsRoot(registry, e)) sur chaque racine)</code></pre></div>
+</div><p class="small">La surcharge <code>IsRoot(registry, e)</code> de la séance 1 est devenue la précondition de la cuisson ciblée.</p></div></div>
+
+<div class="amend"><div class="h">AM7 · Deux panneaux → jusqu’à quatre (annexe A11)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon (séance 2a)</div><pre><code>Panel { category, camera, mode } panels[2]
+F2-F5 ; layout Single ou MainSide</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>Panel { camera, mode } panels[kMaxCamerasHard]
+slot 0 = gameplay, slots 1..n = debug (catégorie par POSITION)
+viewport.maxViewport (engine.json) ; Quad ; 3 → 2
+anti-collision entre slots debug ; F2-F9
+aucune caméra gameplay → arrêt (la leçon donnait un panneau debug seul)</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM8 · <code>dt</code> : <code>SimulationClock</code> et doctrine du temps (S10)</div><div class="b"><p>La leçon prévoyait un seul <code>dt</code> réel. Le dépôt sépare <code>realDt</code> (joueur, caméras : répondent même en pause) et <code>simDt</code> (orbites : suivent la pause et l’échelle de temps). Voir étape 12 et le bug L6-2.</p></div></div>
+
+<div class="amend"><div class="h">AM9 · « Annexe A8 » pour <code>keepWorld</code> : collision de nom</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Leçon (séance 2b)</div><pre><code>keepWorld → « Annexe A8 », juste après la séance</code></pre></div>
+<div class="ap"><div class="t">Projet</div><pre><code>A8 = « le drapeau dirty volé par le debug » (R11bis)
+keepWorld : rattaché au chantier A3, avec une RÈGLE
+D'ORDONNANCEMENT (quand une mutation est légale dans la frame)</code></pre></div>
+</div><p class="small">Le commentaire de <code>SetParent</code> cite toujours « Annexe A8 » (carnet de route, phase 2). Point L6-6.</p></div></div>
+
+<div class="amend"><div class="h">AM10 · Numérotation des bugs</div><div class="b"><p>L’audit a numéroté 40 à 51 ; l’annexe A9 avait émis 32 à 35 en parallèle. Le carnet de route a établi la reprise à 52 (prochain libre : 67). Les points nouveaux de ce lot sont notés <b>L6-x</b> en attendant un numéro de l’autorité unique.</p></div></div>
+
+<div class="amend"><div class="h">AM11 · A3 (traversée aplatie) : après la mesure</div><div class="b"><p>L’audit la plaçait en P2 de la leçon 06, « climax DOD ». Le carnet de route l’a différée : la campagne de mesure (phase 4) dira si <code>WorldTransformSystem</code> mérite 2 à 3 séances. Décision juste : le système solaire compte quelques dizaines de nœuds hiérarchisés.</p></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+<h3>Tests de la leçon (tous validés par Onky, 02/09 → 09/09)</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Test</th><th>Attendu</th><th>Obtenu</th></tr></thead>
+<tbody>
+<tr><td>TNR <code>solar_system_shuffled.json</code></td><td>13 lignes, même arbre que l’original (ordre des frères libre)</td><td><span class="pill ok">13 lignes</span> FPS, Follow, Top, Sun-Pivot ; lunes en place</td></tr>
+<tr><td>Saboteur <code>"parent": "Erath"</code></td><td>échec nommé, arrêt propre</td><td><span class="pill ok">conforme</span> « parent 'Erath' introuvable pour 'Moon' », 2 meshes libérés</td></tr>
+<tr><td>Saboteur <code>"radius": "grand"</code></td><td>avertissement, rayon 1.0, scène complète</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td>Transform partiel (<code>Sun_Danger_Zone</code>)</td><td>chargé avec défauts</td><td><span class="pill ok">conforme</span></td></tr>
+<tr><td><code>grep "FPS_Camera\|Top_Camera"</code> dans le code</td><td>vide</td><td><span class="pill ok">vide</span></td></tr>
+<tr><td>F2 / F4 / F3 / F5, vues Top, Side, Bottom</td><td>cycles, gizmo doré visible dans les vues debug</td><td><span class="pill ok">« Tout fonctionne »</span></td></tr>
+<tr><td>Mutations de la séance 2b</td><td>Moon sous Mars ; cycle refusé ; Detach ; Mars + 2 lunes détruites (AliveCount −3), frame suivante sans assert</td><td><span class="pill ok">appliqué</span> (dépôt)</td></tr>
+</tbody>
+</table>
+</div>
+<h3>Vérifications nouvelles, issues de la relecture du dépôt</h3>
+<ol>
+<li><b>L6-1 :</b> écrire une scène à cycle (<code>A.parent = B</code>, <code>B.parent = A</code>). Attendu après correctif : chargement refusé. Aujourd’hui : « cycle détecté » puis « terminée avec succès », A et B jamais propagés. Après correctif, tester aussi <code>SetParent</code> dans une scène saine (l’<code>IsDescendantOf</code> sans compteur ne boucle que sur un graphe déjà cyclique).</li>
+<li><b>L6-2 :</b> chronométrer le vaisseau sur 10 unités avec <code>speed</code> connu. Prédiction : temps mesuré = moitié du temps attendu tant que le double appel existe.</li>
+<li><b>L6-3 :</b> en <code>RelWithAsserts</code>, appeler <code>linkChildToParent</code> sur un enfant déjà parenté. Prédiction : aucun arrêt aujourd’hui (assert sous <code>_DEBUG</code>), arrêt après correctif.</li>
+<li><b>Grep d’exclusivité :</b> <code>m_children</code> n’est écrit que dans <code>Hierarchy.cpp</code>. Vérifié le 12/11 : hors de ce fichier, uniquement des lectures (<code>System.cpp:118</code>, <code>System.cpp:731</code>).</li>
+<li><b>Grep <code>m_isRoot</code> :</b> une seule occurrence, en commentaire dans <code>Component.hpp</code> (hygiène, L6-5).</li>
+</ol>
+<h3>Proposé : comparer des arbres en code</h3>
+<p>La clôture de la séance 1 a coûté trois allers-retours pour une ligne absente d’un copier-coller. Une TNR qui écrit les arêtes <code>parent → enfant</code> triées pour les deux fichiers et les compare aurait rendu le verdict en une exécution (roadmap L6-14).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — décisions en attente (rien n’est acté)</h2>
+<p>Inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « lot L06 ». Les décisions prises pendant l’échange sont consignées dans <code>Résultats/Résultats_Lot_L06_Graphe_de_scene.md</code>.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>L6-1</td><td><code>ValidateHierarchy</code> appelé sans lire son résultat dans <code>LoadSceneGraph</code></td><td><span class="pill bad">bug</span></td><td><code>[[nodiscard]]</code> + <code>return false</code></td></tr>
+<tr><td>L6-2</td><td><code>PlayerInputSystem</code> appelé deux fois par frame dans <code>main.cpp</code></td><td><span class="pill bad">bug</span></td><td>supprimer le second appel et le second <code>if (bench)</code></td></tr>
+<tr><td>L6-3</td><td>Assert de construction de <code>linkChildToParent</code> sous <code>#ifdef _DEBUG</code></td><td><span class="pill warn">dette</span></td><td>retirer le <code>#ifdef</code> (PH0.c)</td></tr>
+<tr><td>L6-4</td><td><code>IsDescendantOf</code> sans compteur ; liaison externe de <code>CollectSubtree</code> / <code>IsDescendantOf</code></td><td><span class="pill warn">dette</span></td><td>déjà au carnet (phase 2) ; à traiter avec L6-1</td></tr>
+<tr><td>L6-5</td><td>Code commenté : <code>m_isRoot</code>, ancien <code>DestroyHierarchy</code>, <code>FindActiveCamera</code>, <code>FindCameraByName</code>, <code>panels[2]</code>, ancien <code>PlayerInputSystem</code>, ancien <code>Read</code> ; <code>Scene/Nouveau Document texte.txt</code></td><td><span class="pill">hygiène</span></td><td>purge (R29)</td></tr>
+<tr><td>L6-6</td><td>Commentaire de <code>SetParent</code> : « Annexe A8 »</td><td><span class="pill">doc</span></td><td>renvoyer au chantier A3 / règle d’ordonnancement</td></tr>
+<tr><td>L6-7</td><td><code>keepWorld</code> : décomposition TRS, échelle non uniforme, ordonnancement</td><td><span class="pill">évolution</span></td><td>quand un besoin de gameplay l’exige</td></tr>
+<tr><td>L6-8</td><td><code>addComponent</code> remplace en silence sous un nom de création</td><td><span class="pill warn">dette</span></td><td>renommer <code>addOrReplaceComponent</code>, ou asserter</td></tr>
+<tr><td>L6-9</td><td><code>CollectSubtree</code> récursif + <code>std::vector</code> alloué à chaque destruction</td><td><span class="pill">à surveiller</span></td><td>acceptable hors frame ; à revoir si détruire devient fréquent (projectiles)</td></tr>
+<tr><td>L6-10</td><td>A3 : ordre aplati, dirty par sous-arbre, split chaud/froid de <code>TransformComponent</code></td><td><span class="pill">évolution</span></td><td>après la campagne de mesure</td></tr>
+<tr><td>L6-11</td><td>Échelle non uniforme en cascade et normales (agenda §5.1 point 4)</td><td><span class="pill">jamais traité</span></td><td>avant l’éclairage (L09/L10), avec L2-8</td></tr>
+<tr><td>L6-12</td><td>Les commandes suivent-elles la caméra affichée ? (FPS écoute la souris même quand Follow est montrée)</td><td><span class="pill">évolution</span></td><td>avec l’interface (L07)</td></tr>
+<tr><td>L6-13</td><td>Sélection par cases à cocher (demande d’Onky, séance 2a)</td><td><span class="pill">évolution</span></td><td>vue de <code>panels[]</code>, avec L07</td></tr>
+<tr><td>L6-14</td><td>TNR de comparaison d’arbres (arêtes triées)</td><td><span class="pill">proposé</span></td><td>écrire ou non</td></tr>
+<tr><td>L6-15</td><td><code>CollectActiveCameras</code> avertit « priorités égales » à chaque appel ; appelée chaque frame</td><td><span class="pill warn">dette</span></td><td>avertir une fois au chargement</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>Lot L06 · reconstruit le 12/11/2026 depuis l’échange du 01/09 au 09/09/2026 (audit pré-leçon 06, séances 1, 2a, 2b) et le dépôt du 09/11/2026. Règles de l’échange : R25 à R30. Laboratoires calculés dans le navigateur ; aucune donnée externe.</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (v, d=2) => (Math.abs(v) < 5e-10 ? 0 : v).toFixed(d).replace('.', ',');
+
+/* ═══ Laboratoire du graphe ═══ */
+const NODES = [
+  {id:'Sun-Pivot',      parent:null,        x:0,   z:0,   s:1,    orbit:0,   kind:'pivot'},
+  {id:'Sun-etoile',     parent:'Sun-Pivot', x:0,   z:0,   s:5,    orbit:0,   kind:'body'},
+  {id:'Earth',          parent:'Sun-Pivot', x:15,  z:0,   s:1,    orbit:1.0, kind:'body'},
+  {id:'Moon',           parent:'Earth',     x:2,   z:0,   s:0.27, orbit:12,  kind:'moon'},
+  {id:'Mars',           parent:'Sun-Pivot', x:25,  z:0,   s:0.53, orbit:0.8, kind:'body'},
+  {id:'Phobos',         parent:'Mars',      x:1.2, z:0,   s:0.1,  orbit:30,  kind:'moon'},
+  {id:'Deimos',         parent:'Mars',      x:-1.8,z:0,   s:0.08, orbit:20,  kind:'moon'},
+  {id:'FPS_Camera',     parent:null,        x:0,   z:40,  s:1,    orbit:0,   kind:'cam'},
+  {id:'Follow_Camera',  parent:null,        x:0,   z:0,   s:1,    orbit:0,   kind:'cam'},
+  {id:'Sun_Danger_Zone',parent:'Sun-Pivot', x:0,   z:0,   s:5,    orbit:0,   kind:'zone'},
+  {id:'Sun-Danger-zone',parent:'Sun-Pivot', x:0,   z:0,   s:1,    orbit:0,   kind:'zone'},
+  {id:'Player_Ship',    parent:'Sun-Pivot', x:8,   z:0,   s:1,    orbit:2.5, kind:'ship'},
+  {id:'Overview_Camera',parent:null,        x:0,   z:120, s:1,    orbit:0,   kind:'cam'}
+];
+const SHUF = ['Moon','Phobos','Deimos','Earth','Mars','Sun-etoile','Sun_Danger_Zone','Sun-Danger-zone','Player_Ship','FPS_Camera','Follow_Camera','Overview_Camera','Sun-Pivot'];
+const byId = Object.fromEntries(NODES.map(n => [n.id, n]));
+let G = null, mutLog = [], playing = false, raf = 0;
+
+function load(){
+  const order = $('gOrder').value === 'orig' ? NODES.map(n => n.id) : SHUF;
+  const algo = $('gAlgo').value, typo = $('gTypo').checked;
+  const log = [];
+  const ents = order.map((id, i) => {
+    const n = byId[id];
+    return {id, idx:i, alive:true, parentId:(typo && id === 'Moon') ? 'Erath' : n.parent,
+            x:n.x, z:n.z, s:n.s, rot:0, R:Math.hypot(n.x, n.z), orbit:n.orbit, kind:n.kind};
+  });
+  const map = Object.fromEntries(ents.map(e => [e.id, e.idx]));
+  const HC = {};
+  log.push('Passe 1 : ' + ents.length + ' entités créées, dans l’ordre du fichier.');
+  let failed = null;
+  for (const e of ents){
+    if (failed) break;
+    if (e.parentId){
+      let p;
+      if (algo === 'old'){
+        if (!(e.parentId in map)){ map[e.parentId] = 0; log.push('entityMap["' + e.parentId + '"] insère Entity(0) = ' + ents[0].id + ', sans message.'); }
+        p = map[e.parentId];
+        const had = HC[e.idx];
+        if (had && had.children.length) log.push('addComponent(' + e.id + ') ÉCRASE : enfants perdus [' + had.children.map(c => ents[c].id).join(', ') + '].');
+        HC[e.idx] = {parent:p, children:[], isRoot:false};
+        if (!HC[p]) HC[p] = {parent:null, children:[], isRoot:true};
+        HC[p].children.push(e.idx);
+      } else {
+        if (!(e.parentId in map)){ failed = 'ResolveParents — parent \'' + e.parentId + '\' introuvable pour \'' + e.id + '\' → scène refusée.'; break; }
+        p = map[e.parentId];
+        if (p === e.idx){ failed = 'LV3_ASSERT : child != parent'; break; }
+        if (HC[e.idx]) HC[e.idx].parent = p; else HC[e.idx] = {parent:p, children:[]};
+        if (!HC[p]) HC[p] = {parent:null, children:[]};
+        HC[p].children.push(e.idx);
+      }
+    } else if (algo === 'old'){
+      if (!HC[e.idx]) HC[e.idx] = {parent:null, children:[], isRoot:true};
+    }
+  }
+  if (!failed && algo === 'new'){
+    for (const k in HC){ let c = +k, st = 0; while (HC[c] && HC[c].parent !== null){ c = HC[c].parent; if (++st > ents.length){ failed = 'ValidateHierarchy — cycle détecté depuis \'' + ents[k].id + '\''; break; } } if (failed) break; }
+  }
+  if (failed) log.push(failed);
+  else log.push(algo === 'old' ? 'Journal : « Construction de la scène terminée avec succès. »' : 'Passe 2 : liens résolus par find(), ValidateHierarchy OK.');
+  G = {ents, HC, algo, failed, log};
+  mutLog = [];
+}
+
+function worldOf(){
+  const {ents, HC, algo} = G;
+  const t = +$('gTime').value;
+  const W = {}, visited = new Set();
+  const loc = e => {
+    if (e.orbit && e.R > 0){ const a = e.orbit * t; return {x:e.R*Math.cos(a), z:e.R*Math.sin(a), s:e.s, rot:e.rot}; }
+    return {x:e.x, z:e.z, s:e.s, rot:e.rot};
+  };
+  function prop(i, P){
+    if (visited.has(i)) return; visited.add(i);
+    const e = ents[i]; if (!e.alive) return;
+    const L = loc(e);
+    const c = Math.cos(P.rot), s = Math.sin(P.rot);
+    const lx = L.x * P.s, lz = L.z * P.s;
+    W[i] = {x: lx*c + lz*s + P.x, z: -lx*s + lz*c + P.z, s: L.s*P.s, rot: L.rot + P.rot};
+    const h = HC[i]; if (h) for (const ch of h.children) prop(ch, W[i]);
+  }
+  const I = {x:0, z:0, s:1, rot:0};
+  if (algo === 'old'){ for (const k in HC) if (HC[k].isRoot) prop(+k, I); }
+  else {
+    for (const k in HC) if (HC[k].parent === null) prop(+k, I);
+    ents.forEach((e, i) => { if (!HC[i] && e.alive) prop(i, I); });
+  }
+  return {W, visited};
+}
+
+function treeText(W){
+  const {ents, HC, algo} = G; const lines = []; const seen = new Set();
+  function rec(i, d){
+    if (seen.has(i) || !ents[i].alive) return; seen.add(i);
+    const w = W[i];
+    lines.push('  '.repeat(d) + ' - ' + ents[i].id + (w ? ' [Pos : ' + fmt(w.x,1) + ', 0, ' + fmt(w.z,1) + ']' : ' [jamais propagé]'));
+    const h = HC[i]; if (h) for (const c of h.children) rec(c, d+1);
+  }
+  ents.forEach((e, i) => {
+    if (!e.alive) return;
+    const h = HC[i];
+    const isRoot = algo === 'old' ? (!h || h.isRoot) : (!h || h.parent === null);
+    if (isRoot) rec(i, 0);
+  });
+  return lines;
+}
+
+function draw(){
+  const alive = G.ents.filter(e => e.alive).length;
+  if (G.failed){
+    $('gTree').textContent = 'Chargement refusé.\n' + G.failed;
+    $('gMap').innerHTML = '<text x="260" y="190" text-anchor="middle" fill="' + css('--bad') + '" style="font:600 14px var(--sans)">Aucune scène : le chargeur a refusé le graphe.</text>';
+    $('gStats').innerHTML = stat('Entités vivantes', 0) + stat('Lignes de l’arbre', 0, 'bad');
+    $('gLog').textContent = G.log.concat(mutLog).join('\n');
+    return;
+  }
+  const {W, visited} = worldOf();
+  const lines = treeText(W);
+  $('gTree').textContent = 'Structure finale du Scene Graph :\n' + lines.join('\n');
+  const lost = G.ents.filter((e, i) => e.alive && !visited.has(i)).length;
+  $('gStats').innerHTML = stat('Entités vivantes', alive) + stat('Lignes de l’arbre', lines.length, lines.length === alive ? 'ok' : 'bad') + stat('Jamais propagées', lost, lost ? 'bad' : 'ok') + stat('Code', G.algo === 'old' ? 'avant' : 'après');
+  // map
+  const cx = 260, cy = 190, k = 6.2;
+  let svg = '';
+  svg += '<line x1="20" y1="' + cy + '" x2="500" y2="' + cy + '" stroke="' + css('--line') + '"/><line x1="' + cx + '" y1="15" x2="' + cx + '" y2="365" stroke="' + css('--line') + '"/>';
+  svg += '<text x="500" y="' + (cy-6) + '" text-anchor="end" fill="' + css('--ink3') + '" style="font:11px var(--mono)">+X</text><text x="' + (cx+6) + '" y="372" fill="' + css('--ink3') + '" style="font:11px var(--mono)">+Z</text>';
+  for (const r of [10,20,30]) svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r*k) + '" fill="none" stroke="' + css('--line') + '" stroke-dasharray="2 4"/><text x="' + (cx + r*k + 3) + '" y="' + (cy - 4) + '" fill="' + css('--ink3') + '" style="font:10px var(--mono)">' + r + '</text>';
+  G.ents.forEach((e, i) => {
+    if (!e.alive || e.kind === 'zone') return;
+    const w = W[i] || {x:0, z:0, s:1};
+    const isLost = !visited.has(i);
+    const h = G.HC[i];
+    const root = G.algo === 'old' ? (h && h.isRoot) : (!h || h.parent === null);
+    let col = isLost ? css('--lost') : e.kind === 'cam' ? css('--cam') : root ? css('--root') : css('--planet');
+    let px = cx + w.x * k, py = cy + w.z * k;
+    let off = '';
+    if (px < 14 || px > 506 || py < 14 || py > 366){ px = Math.max(14, Math.min(506, px)); py = Math.max(14, Math.min(366, py)); off = ' ↗'; }
+    const r = e.kind === 'pivot' ? 4 : e.kind === 'cam' ? 4 : Math.max(3, Math.min(14, 2.2 * Math.sqrt(w.s) * 2));
+    svg += e.kind === 'cam' ? '<rect x="' + (px-4) + '" y="' + (py-4) + '" width="8" height="8" fill="' + col + '"/>' : '<circle cx="' + px + '" cy="' + py + '" r="' + r + '" fill="' + col + '" fill-opacity="' + (e.id === 'Sun-etoile' ? 0.35 : 0.9) + '"/>';
+    const showLbl = ['Earth','Mars','Moon','Player_Ship','Phobos','Sun-Pivot','FPS_Camera'].includes(e.id) || isLost;
+    if (showLbl) svg += '<text x="' + (px + 7) + '" y="' + (py - 6 - (e.id === 'Phobos' ? 8 : 0) - (isLost ? 10 * ['Moon','Phobos','Deimos'].indexOf(e.id) : 0)) + '" fill="' + col + '" style="font:600 11px var(--sans)">' + e.id + off + '</text>';
+  });
+  $('gMap').innerHTML = svg;
+  $('gLog').textContent = G.log.concat(mutLog).join('\n');
+}
+const stat = (k, v, cls='') => '<div><div class="k">' + k + '</div><div class="v ' + cls + '">' + v + '</div></div>';
+
+function idx(id){ return G.ents.findIndex(e => e.id === id); }
+function isDesc(node, anc){ let c = node, st = 0; while (G.HC[c] && G.HC[c].parent !== null){ if (G.HC[c].parent === anc) return true; c = G.HC[c].parent; if (++st > 64) return false; } return false; }
+function detach(ch){ const h = G.HC[ch]; if (!h || h.parent === null) return; const ph = G.HC[h.parent]; if (ph){ const j = ph.children.indexOf(ch); if (j >= 0){ ph.children[j] = ph.children[ph.children.length-1]; ph.children.pop(); } } h.parent = null; }
+function attach(ch, p){ if (G.HC[ch]) G.HC[ch].parent = p; else G.HC[ch] = {parent:p, children:[]}; if (!G.HC[p]) G.HC[p] = {parent:null, children:[]}; G.HC[p].children.push(ch); }
+function keepWorldPreview(ch, p){
+  const {W} = worldOf(); const w = W[ch], P = W[p]; if (!w || !P) return '';
+  const dx = w.x - P.x, dz = w.z - P.z, c = Math.cos(-P.rot), s = Math.sin(-P.rot);
+  const lx = (dx*c + dz*s) / P.s, lz = (-dx*s + dz*c) / P.s;
+  return '  keepWorld (aperçu) : L′ = W · Wparent⁻¹ = (' + fmt(lx) + ', 0, ' + fmt(lz) + '), échelle ' + fmt(w.s / P.s, 3) + ' → monde inchangé (' + fmt(w.x) + ', ' + fmt(w.z) + ').';
+}
+function setParent(ch, p){
+  const a = G.ents[ch].id, b = G.ents[p].id;
+  if (ch === p){ mutLog.push('SetParent(' + a + ', ' + b + ') : refusé, propre parent.'); return; }
+  if (isDesc(p, ch)){ mutLog.push('SetParent(' + a + ', ' + b + ') : refusé — cycle : ' + b + ' est un descendant de ' + a + '. Graphe inchangé.'); return; }
+  const before = worldOf().W[ch];
+  const prev = keepWorldPreview(ch, p);
+  detach(ch); attach(ch, p);
+  const after = worldOf().W[ch];
+  mutLog.push('SetParent(' + a + ', ' + b + ', false) : local conservé. Monde (' + fmt(before.x) + ', ' + fmt(before.z) + ') → (' + fmt(after.x) + ', ' + fmt(after.z) + ') : saut de ' + fmt(Math.hypot(after.x-before.x, after.z-before.z)) + ' unités.');
+  if ($('gKeep').checked && prev) mutLog.push(prev);
+}
+function mutate(m){
+  if (m === 'reset'){ load(); draw(); return; }
+  if (G.failed){ mutLog.push('Scène non chargée : aucune mutation possible.'); draw(); return; }
+  if (G.algo === 'old'){ mutLog.push('Le code d’avant la séance 2b n’a pas de verbes : seul linkChildToParent existe. Passe au code d’après.'); draw(); return; }
+  const need = ids => ids.every(id => { const i = idx(id); return i >= 0 && G.ents[i].alive; });
+  if (m === 'moonMars'){ if (need(['Moon','Mars'])) setParent(idx('Moon'), idx('Mars')); else mutLog.push('Moon ou Mars n’existe plus.'); }
+  if (m === 'shipStar'){ if (need(['Player_Ship','Sun-etoile'])) setParent(idx('Player_Ship'), idx('Sun-etoile')); }
+  if (m === 'cycle'){ if (need(['Sun-Pivot','Moon'])) setParent(idx('Sun-Pivot'), idx('Moon')); }
+  if (m === 'detachMoon'){ if (need(['Moon'])){ const i = idx('Moon'); const before = worldOf().W[i]; detach(i); const after = worldOf().W[i]; mutLog.push('Detach(Moon) : racine. Son local est relu comme monde : (' + fmt(before.x) + ', ' + fmt(before.z) + ') → (' + fmt(after.x) + ', ' + fmt(after.z) + ').'); } }
+  if (m === 'destroyMars' || m === 'wrongDoor'){
+    if (!need(['Mars'])){ mutLog.push('Mars n’existe plus.'); }
+    else if (m === 'wrongDoor'){
+      const h = G.HC[idx('Mars')];
+      mutLog.push('registry.DestroyEntity(Mars) : LV3_ASSERT(!HasOutgoingLinks) — Mars a un parent et ' + h.children.length + ' enfant(s). Refusé (Release : retour silencieux). Passer par DestroyHierarchy.');
+    } else {
+      const sub = []; (function col(i){ sub.push(i); const h = G.HC[i]; if (h) for (const c of h.children) col(c); })(idx('Mars'));
+      const before = G.ents.filter(e => e.alive).length;
+      detach(idx('Mars'));
+      for (const i of sub){ if (G.HC[i]){ G.HC[i].parent = null; G.HC[i].children = []; } }
+      for (const i of sub){ G.ents[i].alive = false; delete G.HC[i]; }
+      const after = G.ents.filter(e => e.alive).length;
+      mutLog.push('DestroyHierarchy(Mars) : collecter [' + sub.map(i => G.ents[i].id).join(', ') + '], détacher, dénouer, détruire. AliveCount ' + before + ' → ' + after + '.');
+    }
+  }
+  draw();
+}
+
+['gOrder','gAlgo','gTypo'].forEach(id => $(id).addEventListener('change', () => { load(); draw(); }));
+$('gTime').addEventListener('input', () => { $('gTimeV').textContent = fmt(+$('gTime').value) + ' s'; draw(); });
+document.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => mutate(b.dataset.m)));
+$('gPlay').addEventListener('click', () => {
+  playing = !playing; $('gPlay').textContent = playing ? 'Pause' : 'Lecture';
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches && playing){ playing = false; $('gPlay').textContent = 'Lecture'; return; }
+  let last = performance.now();
+  const tick = now => { if (!playing) return; const s = $('gTime'); let v = +s.value + (now - last) / 1000 * 0.5; last = now; if (v > +s.max) v = 0; s.value = v; $('gTimeV').textContent = fmt(v) + ' s'; draw(); raf = requestAnimationFrame(tick); };
+  if (playing) raf = requestAnimationFrame(tick); else cancelAnimationFrame(raf);
+});
+$('gTimeV').textContent = '0,00 s';
+load(); draw();
+
+/* ═══ R28 ═══ */
+function r28(){
+  const c = $('r28c').value, k = $('r28k').value, o = $('r28o').value, abs = k === 'abs';
+  const T = {
+    umap:{ br: abs ? 'INSÈRE {"Erath", Entity{}} et rend Entity(0) : la première entité vivante.\nLa map grossit. Aucun message. (bug 41)' : 'Rend la valeur. Correct, mais rien dans le texte ne dit « lecture » : le jour où la clé manque, c’est une insertion.',
+           find: abs ? 'Rend end(). Le code peut nommer la clé et refuser : « parent \'Erath\' introuvable pour \'Moon\' ».' : 'Rend un itérateur sur la paire. Correct.',
+           at: abs ? 'Lève std::out_of_range. Juste pour une absence qui serait un bug interne ; pas pour une donnée d’auteur.' : 'Rend la valeur.' },
+    jnc:{ br: abs ? 'INSÈRE "translation": null dans le document et rend ce null.\nLe JSON lu contient désormais une clé que l’auteur n’a jamais écrite.' : 'Rend la valeur.',
+          find: abs ? 'Rend end(). Défaut + message.' : 'Rend un itérateur sur la valeur.',
+          at: abs ? 'Lève out_of_range (json::exception).' : 'Rend la valeur.' },
+    jc:{ br: abs ? 'JSON_ASSERT(it != end()) : arrêt en Debug, COMPORTEMENT INDÉFINI en Release.\nC’est le plantage de Sun_Danger_Zone (bug 48) : le premier Transform sans "translation".' : 'Rend la valeur. Le chemin « clé absente » n’a jamais été exécuté tant que toutes les scènes écrivaient des Transform complets.',
+         find: abs ? 'Rend end(). ReadVector rend le défaut (0,0,0). Corrigé en séance 1.' : 'Rend un itérateur ; ReadVector contrôle ensuite tableau, taille 3 et types.',
+         at: abs ? 'Lève out_of_range : sans try, terminate().' : 'Rend la valeur.' }
+  };
+  const verdict = (o === 'find') ? '✔ forme recommandée (R28)' : (o === 'br' && abs) ? '✘ à proscrire pour une lecture' : (o === 'at' && abs) ? '△ seulement si l’absence est un bug interne' : '△ correct ici, piège ailleurs';
+  $('r28out').textContent = T[c][o] + '\n\n' + verdict;
+}
+['r28c','r28k','r28o'].forEach(id => $(id).addEventListener('change', r28)); r28();
+
+/* ═══ Caméras ═══ */
+const CAMS0 = [
+  {id:'FPS_Camera', cat:'gameplay', active:true, prio:10},
+  {id:'Follow_Camera', cat:'gameplay', active:true, prio:5},
+  {id:'Overview_Camera', cat:'debug', active:true, prio:0},
+  {id:'Top_View', cat:'debug', active:true, prio:5},
+  {id:'Side_View', cat:'debug', active:true, prio:4},
+  {id:'Bottom_View', cat:'debug', active:true, prio:3}
+];
+let CAMS, panels, clog;
+const MODES = ['Solid','Wireframe','Depth'];
+function cReset(){ CAMS = CAMS0.map((c, i) => ({...c, idx:i})); panels = [{cat:'gameplay', cam:null, mode:'Solid'}, {cat:'debug', cam:null, mode:'Wireframe'}]; clog = ['Scène chargée. Élection initiale : la caméra active de plus haute priorité de chaque catégorie.']; cFrame(); }
+function collect(cat){ return CAMS.filter(c => c.active && c.cat === cat).sort((a, b) => b.prio - a.prio || a.idx - b.idx); }
+function next(cat, cur){ const l = collect(cat); if (!l.length) return null; const i = l.findIndex(c => c.id === cur); return i >= 0 ? l[(i+1) % l.length].id : l[0].id; }
+function cFrame(){
+  for (const p of panels){
+    const c = CAMS.find(x => x.id === p.cam);
+    if (!c || !c.active || c.cat !== p.cat){ const n = next(p.cat, null); if (p.cam && n !== p.cam) clog.push('Ré-élection (' + p.cat + ') : ' + (p.cam || '∅') + ' n’est plus éligible → ' + (n || '∅') + '.'); p.cam = n; }
+  }
+  cDraw();
+}
+function cDraw(){
+  let h = '<thead><tr><th>Caméra</th><th>category</th><th>priority</th><th>active (éligible)</th></tr></thead><tbody>';
+  CAMS.forEach((c, i) => { h += '<tr><td><code>' + c.id + '</code></td><td>' + c.cat + '</td><td class="num">' + c.prio + '</td><td><label><input type="checkbox" id="cAct' + i + '" data-ci="' + i + '"' + (c.active ? ' checked' : '') + '> ' + (c.active ? 'oui' : 'non') + '</label></td></tr>'; });
+  $('cTable').innerHTML = h + '</tbody>';
+  $('cTable').querySelectorAll('[data-ci]').forEach(cb => cb.addEventListener('change', () => { const c = CAMS[+cb.dataset.ci]; c.active = cb.checked; clog.push((c.active ? 'Activée' : 'Désactivée') + ' : ' + c.id + '.'); cFrame(); }));
+  const pane = (p, i) => p.cam ? '<div class="pane p' + i + '"><div class="k">Panneau ' + (i ? 'droit · debug' : 'gauche · jeu') + '</div><div class="v">' + p.cam + '</div><div class="small">mode ' + p.mode + '</div></div>' : '';
+  const n = panels.filter(p => p.cam).length;
+  $('cPanes').innerHTML = (n ? pane(panels[0], 0) + pane(panels[1], 1) : '<div class="pane"><div class="v">Aucune caméra : arrêt propre.</div></div>') + '<div class="pane"><div class="k">Layout</div><div class="v">' + (n === 2 ? 'MainSide' : n === 1 ? 'Single' : '—') + '</div><div class="small">' + n + ' panneau(x) pourvu(s)</div></div>';
+  $('cLog').textContent = clog.slice(-8).join('\n');
+}
+function key(k){
+  const p = (k === 'F2' || k === 'F3') ? panels[0] : panels[1];
+  if (k === 'F2' || k === 'F4'){
+    const old = p.cam, n = next(p.cat, old);
+    if ($('cMut').checked && old && n && n !== old){
+      CAMS.find(c => c.id === old).active = false; CAMS.find(c => c.id === n).active = true;
+      clog.push(k + ' (contre-exemple) : m_isActive de ' + old + ' ← false. ' + old + ' sort des candidates : le cycle ne pourra plus y revenir.');
+    } else clog.push(k + ' : ' + (old || '∅') + ' → ' + (n || '∅') + ' (état de session, aucun composant modifié).');
+    p.cam = n;
+  } else { const i = MODES.indexOf(p.mode); p.mode = MODES[(i+1) % 3]; clog.push(k + ' : mode ' + p.mode + '.'); }
+  cFrame();
+}
+document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => key(b.dataset.k)));
+$('cReset').addEventListener('click', cReset);
+$('cSave').addEventListener('click', () => {
+  const changed = CAMS.filter((c, i) => c.active !== CAMS0[i].active);
+  clog.push('Save() → ' + CAMS.map(c => c.id + '.active=' + c.active).join(', '));
+  clog.push(changed.length ? '✘ ' + changed.length + ' valeur(s) d’auteur réécrite(s) par la session : ' + changed.map(c => c.id).join(', ') + '. Rechargée, la scène démarre ailleurs (R30).' : '✔ Le fichier sauvé est identique à celui de l’auteur : la sélection vit dans l’EXE.');
+  cDraw();
+});
+cReset();
+
+/* ═══ keepWorld ═══ */
+function kDraw(){
+  const Px = +$('kPx').value, Pz = +$('kPz').value, th = +$('kRot').value * Math.PI / 180, S = +$('kS').value;
+  $('kPxV').textContent = Px; $('kPzV').textContent = Pz; $('kRotV').textContent = $('kRot').value + '°'; $('kSV').textContent = fmt(S);
+  const Wx = 8, Wz = 0, c = Math.cos(th), s = Math.sin(th);
+  const fwd = (lx, lz) => { const x = lx*S, z = lz*S; return {x: x*c + z*s + Px, z: -x*s + z*c + Pz}; };
+  const A = fwd(8, 0);                         // local conservé
+  const B = fwd(Wx - Px, Wz - Pz);             // soustraction naïve
+  const dx = Wx - Px, dz = Wz - Pz;            // inverse complète : R⁻¹ puis /S
+  const lx = (dx*c - dz*s) / S, lz = (dx*s + dz*c) / S;
+  const C = fwd(lx, lz);
+  const e = p => Math.hypot(p.x - Wx, p.z - Wz);
+  $('kOut').textContent =
+    'Vaisseau, monde avant : (8,00 ; 0,00)\n\n' +
+    '1. Local conservé (SetParent, keepWorld=false)\n   local (8 ; 0) → monde (' + fmt(A.x) + ' ; ' + fmt(A.z) + ')   saut ' + fmt(e(A)) + '\n\n' +
+    '2. Naïf : local = W − Pstation = (' + fmt(Wx-Px) + ' ; ' + fmt(Wz-Pz) + ')\n   → monde (' + fmt(B.x) + ' ; ' + fmt(B.z) + ')   erreur ' + fmt(e(B)) + (e(B) < 1e-9 ? '  (juste : ni rotation ni échelle)' : '') + '\n\n' +
+    '3. Exact : L′ = W · Wstation⁻¹ = (' + fmt(lx) + ' ; ' + fmt(lz) + ')\n   → monde (' + fmt(C.x) + ' ; ' + fmt(C.z) + ')   erreur ' + fmt(e(C));
+  const ox = 140, oz = 150, k = 2.2;
+  const P = (x, z) => [ox + x*k, oz + z*k];
+  const pt = (p, col, lbl, dy) => { const [x, y] = P(p.x, p.z); return '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + col + '"/><text x="' + (x+7) + '" y="' + (y + dy) + '" fill="' + col + '" style="font:600 11px var(--sans)">' + lbl + '</text>'; };
+  const [sx, sy] = P(Px, Pz);
+  const ax = [Math.cos(th), -Math.sin(th)];
+  let svg = '<line x1="10" y1="' + oz + '" x2="410" y2="' + oz + '" stroke="' + css('--line') + '"/><line x1="' + ox + '" y1="10" x2="' + ox + '" y2="290" stroke="' + css('--line') + '"/>';
+  svg += '<rect x="' + (sx-8) + '" y="' + (sy-8) + '" width="16" height="16" fill="none" stroke="' + css('--accent') + '" stroke-width="2" transform="rotate(' + (-$('kRot').value) + ' ' + sx + ' ' + sy + ')"/>';
+  svg += '<line x1="' + sx + '" y1="' + sy + '" x2="' + (sx + ax[0]*24) + '" y2="' + (sy + ax[1]*24) + '" stroke="' + css('--accent') + '" stroke-width="2"/><text x="' + (sx+10) + '" y="' + (sy+22) + '" fill="' + css('--accent') + '" style="font:600 11px var(--sans)">Station</text>';
+  svg += pt({x:8, z:0}, css('--ok'), '3. exact = avant', -8) + pt(A, css('--warn'), '1. local conservé', -8) + pt(B, css('--bad'), '2. naïf', 14);
+  $('kMap').innerHTML = svg;
+}
+['kPx','kPz','kRot','kS'].forEach(id => $(id).addEventListener('input', kDraw)); kDraw();
+
+/* re-render on theme change */
+const mq = matchMedia('(prefers-color-scheme: dark)');
+const rerender = () => { draw(); kDraw(); };
+if (mq.addEventListener) mq.addEventListener('change', rerender);
+new MutationObserver(rerender).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+})();
+</script>
+
+</body></html>

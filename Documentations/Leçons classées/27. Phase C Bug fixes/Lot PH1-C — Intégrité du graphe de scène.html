@@ -1,0 +1,1933 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style></head><body>
+<title>Lot PH1-C — Intégrité du graphe de scène</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --zone:#b5651d; --probe:#2563a8; --belt:#7a7466;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --zone:#e09a55; --probe:#6aa8ec; --belt:#9a9384;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --zone:#e09a55; --probe:#6aa8ec; --belt:#9a9384;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h1{font-size:26px; line-height:1.2; margin:6px 0 8px; text-wrap:balance}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+td.num, .num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:160px}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.out{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; white-space:pre-wrap; overflow-x:auto}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:18px; font-variant-numeric:tabular-nums}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+/* Ajouts PH1-C : nœuds du graphe (organisation, orphelin gelé, mort), laboratoires. */
+:root{ --org:#6b5ea8; --org-bg:#ece9f6; --frozen:#b4361f; --dead:#9b958d; --cam:#2563a8; --live:#2f6b46; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --org:#ab9ce8; --org-bg:#25223a; --frozen:#f08a73; --dead:#6c6862; --cam:#6aa8ec; --live:#7fc49a; } }
+:root[data-theme="dark"]{ --org:#ab9ce8; --org-bg:#25223a; --frozen:#f08a73; --dead:#6c6862; --cam:#6aa8ec; --live:#7fc49a; }
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.tree{font-family:var(--mono); font-size:12.5px; background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px 12px; white-space:pre; overflow-x:auto; line-height:1.7}
+.tree .alive{color:var(--live)} .tree .org{color:var(--org)} .tree .frozen{color:var(--frozen); font-weight:600} .tree .dead{color:var(--dead); text-decoration:line-through} .tree .stale{color:var(--frozen)}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.bits{display:grid; grid-template-columns:repeat(32,1fr); gap:1px; margin:8px 0; min-width:520px}
+.bits span{font-family:var(--mono); font-size:10.5px; text-align:center; padding:3px 0; border-radius:2px}
+.bits .g{background:var(--org-bg); color:var(--org)} .bits .x{background:var(--accent-bg); color:var(--accent)}
+.tt td.y{background:var(--ok-bg); color:var(--ok)} .tt td.n{background:var(--bad-bg); color:var(--bad)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+.halt{border:2px solid var(--bad); background:var(--bad-bg); color:var(--bad); padding:8px 12px; border-radius:8px; font-size:13.5px; margin:8px 0}
+</style>
+
+<header>
+  <div class="t">Lot PH1-C — Intégrité du graphe de scène, pas à pas</div>
+  <div class="s">LibraryV3 · phase 1 du carnet de route, discussion C · bugs 53, 57, 54, 59 · création (aucun artefact n’existait)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#intro">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">Le lot PH0 avait rendu la mesure possible. Avant de mesurer, le carnet de route listait douze bugs qui ne cassaient pas la mesure, mais qui empêchaient de croire ses résultats. Ce lot traite les quatre qui touchent au graphe de scène et à l’identité des entités sur laquelle il repose.</p>
+
+<p>Le carnet avait regroupé ces douze bugs en discussions. La <b>discussion C</b> réunissait quatre défauts du même sujet :</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Bug</th><th>Le défaut</th><th>Ce qu’on verrait à l’écran</th><th>Gravité au carnet</th></tr></thead>
+<tbody>
+<tr><td><b>53</b></td><td><code>DestroyEntity</code> reste appelable sur un nœud encore lié à un parent ou à des enfants</td><td>Une lune qui s’arrête net dans l’espace pendant que sa planète continue de tourner</td><td>●●●</td></tr>
+<tr><td><b>57</b></td><td><code>PropagateWorld</code> : un nœud sans <code>TransformComponent</code> coupe la propagation vers tous ses descendants</td><td>Tout un sous-arbre dessiné à l’origine du monde, au centre du Soleil</td><td>●●●</td></tr>
+<tr><td><b>54</b></td><td>Génération sur 8 bits et recyclage LIFO des index : un vieux handle redevient valide après 256 recyclages du même slot</td><td>Rien de visible : un système écrit dans la mauvaise entité</td><td>●●</td></tr>
+<tr><td><b>59</b></td><td><code>DebugDisplaySystemRecursive</code> : une garde mal écrite (loi de De Morgan) laisse passer un composant absent</td><td>Le dump de debug s’arrête sur une assertion au premier nœud incomplet</td><td>●●</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Pourquoi C avant D</h3>
+<p>Le carnet proposait l’ordre <b>C → D → E → G</b>. La discussion D portait sur la boucle principale : ordre des systèmes, entrées, temps réel et temps simulé. Ses symptômes sont du même genre que ceux de C : un objet qui ne bouge pas, ou qui bouge avec une frame de retard. Si un sous-arbre est déjà gelé par le bug 53, on ne peut plus distinguer « mauvais ordre des systèmes » de « lien mort dans le graphe ».</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « On corrige d’abord la boucle (D), le graphe ensuite. » <b>Non.</b> La discussion D a effectivement rencontré une caméra de suivi qui ne respectait pas son décalage (bug 65, une frame de retard de cuisson). Avec un orphelin gelé dans la scène, ce symptôme aurait eu deux causes possibles, superposées, sans moyen de les séparer à l’écran. On assainit d’abord la structure de données, puis on diagnostique le comportement qui la lit.
+</div>
+
+<p class="small">Une chose à savoir dès le départ, vérifiée sur le dépôt : <b>aucun des quatre bugs ne se produisait dans les scènes d’aujourd’hui.</b> Aucun système ne détruit d’entité en cours de jeu (53, 54), et aucun nœud des 20 fichiers de scène du dépôt n’est dépourvu de <code>Transform</code> (57, 59). Ce lot est préventif. Il supprime des pièges avant que les leçons suivantes (projectiles, particules, éditeur, nœuds de regroupement) ne marchent dessus.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Ce lot s’appuie sur cinq lots antérieurs. Chacun a posé une pièce que les quatre bugs mettent en cause.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH1-C en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L03</b> — ECS, SparseSet &amp; ResourceManager</td><td>L’entité devient un « ticket daté » : 24 bits d’index, 8 bits de génération, dans un <code>uint32_t</code>. <code>DestroyEntity</code> prévient chaque stockage puis incrémente la génération ; l’index part dans une liste libre LIFO.</td><td>Le découpage 24/8 est la cause du bug 54. La destruction générique, sans notion de parent ni d’enfant, est la porte du bug 53.</td></tr>
+<tr><td><b>Audit pré-L06</b></td><td>Constat A2 : « le graphe n’a qu’un verbe : construire ». Pas de cascade sur <code>DestroyEntity</code>. Décision cible : la cascade appartient au module Scene, <b>pas</b> au Registry (R20 : mécanisme générique contre politique de domaine).</td><td>Le principe qui guide le correctif de 53 : le <code>Registry</code> ne doit rien apprendre de la hiérarchie.</td></tr>
+<tr><td><b>L06</b> — le graphe de scène</td><td>Les verbes <code>linkChildToParent</code>, <code>SetParent</code>, <code>Detach</code>, <code>DestroyHierarchy</code> ; racine ≡ <code>m_parent == NULL_ENTITY</code> (R27) ; convention A1 (Transform sans hiérarchie = racine) ; <code>WorldTransformSystem</code> en deux passes, récursion <code>PropagateWorld</code>.</td><td><code>DestroyHierarchy</code> existait et fonctionnait. Le bug 53 vient de ce qu’elle n’était pas la seule porte. <code>PropagateWorld</code> porte le bug 57.</td></tr>
+<tr><td><b>A10</b> — build portable</td><td><code>LV3_ASSERT</code> affranchi de <code>assert</code> : en échec, <code>AssertFailed</code> écrit sur <code>stderr</code>, casse dans le débogueur puis appelle <code>abort()</code> ; éteint, il devient <code>(void)sizeof(…)</code>, compilé mais jamais évalué.</td><td>Cette double nature décide de la forme du garde-fou de 53 : une assertion seule ne protège rien en Release.</td></tr>
+<tr><td><b>PH0</b> — clôture de la phase 0</td><td>Configuration <code>RelWithAsserts</code> ; règle proposée PH0.c : un filet vit sous <code>LV3_ASSERTS_ENABLED</code>, un outil sous <code>LV3_DEBUG</code>.</td><td><code>DebugDisplaySystem</code> (bug 59) est un outil : il n’est appelé qu’en Debug, sous <code>LV3_VERBOSE_LOG</code>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ, lu dans le dépôt le 16/09 et non supposé.</b> Le carnet décrivait le correctif de 53 comme « validé », mais le code n’en contenait aucune ligne : <code>DestroyHierarchy</code> n’appelait que <code>Detach(root)</code>, <code>HasOutgoingLinks</code> n’existait nulle part. <code>PropagateWorld</code> commençait par <code>if (!tr) return;</code>. <code>Entity.hpp</code> découpait en 24/8. <code>DebugDisplaySystemRecursive</code> testait <code>!hasTransform &amp;&amp; !hasName</code>. Un seul appel à <code>DestroyEntity</code> existait dans les deux dépôts : celui de <code>DestroyHierarchy</code>.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que fait le graphe de scène, côté jeu</h3>
+<p>Un graphe de scène dit « cet objet suit celui-là ». La Lune suit la Terre, la Terre suit son ancre orbitale, le gizmo d’une caméra suit sa caméra. Chaque objet ne connaît que sa position <b>relative</b> à son parent (sa matrice locale) ; le moteur calcule à chaque frame sa position <b>absolue</b> (sa matrice monde) en composant les matrices de la racine jusqu’à lui : <code>monde = local · monde_du_parent</code>.</p>
+
+<p>Pour que ce calcul reste juste, deux choses doivent être vraies en permanence :</p>
+<ul>
+<li><b>Les liens sont cohérents des deux côtés.</b> Si B a A pour parent, A a B dans sa liste d’enfants, et réciproquement. Un lien qui pointe vers une entité morte est un lien cassé.</li>
+<li><b>La descente atteint tout le monde.</b> Chaque nœud vivant est visité une fois par frame, depuis une racine. Un nœud qu’aucune descente n’atteint garde sa matrice monde pour toujours.</li>
+</ul>
+<p>Et parce que les liens sont des handles d’entité, une troisième condition s’ajoute : <b>un handle périmé doit se savoir périmé.</b> C’est le rôle de la génération dans le ticket daté.</p>
+
+<h3>Les quatre objectifs du lot</h3>
+<ol>
+<li><b>Aucune porte de service.</b> On ne peut plus détruire un nœud lié sans le délier : la bonne porte (<code>DestroyHierarchy</code>) délie avant de détruire, la mauvaise (<code>DestroyEntity</code> direct) refuse (53).</li>
+<li><b>Un nœud incomplet ne coupe jamais sa descendance.</b> Ne pas pouvoir faire sa propre part (calculer sa matrice, s’afficher) n’empêche pas de transmettre aux enfants (57, 59).</li>
+<li><b>Un handle périmé se sait périmé longtemps.</b> 65 536 recyclages d’un même slot au lieu de 256 avant qu’un vieux ticket redevienne valide (54).</li>
+<li><b>Chaque correctif est prouvé par un test</b>, dont deux sont devenus des tests de non-régression permanents (<code>test_hierarchy</code>, <code>test54_Recyclage</code>).</li>
+</ol>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Où vit la question « ce nœud est-il lié ? »</td><td>dans <code>Registry</code> · dans <code>Hierarchy</code>, avec <code>#include</code> · dans <code>Hierarchy</code>, déclarée en avance dans <code>Registry.hpp</code></td><td>déclaration avancée</td><td>Le <code>Registry</code> peut poser la question sans connaître la forme de <code>HierarchyComponent</code> (R20, audit A2), et sans inclure <code>Hierarchy.hpp</code>, qui l’inclut déjà (étape 5).</td></tr>
+<tr><td>Forme du garde-fou dans <code>DestroyEntity</code></td><td><code>LV3_ASSERT</code> seule · assertion + <code>if … return</code></td><td>les deux</td><td>En Release, <code>LV3_ASSERT</code> n’évalue rien. Sans le <code>if</code>, la mauvaise porte resterait ouverte dans la configuration livrée (étape 5).</td></tr>
+<tr><td>Quand délier dans <code>DestroyHierarchy</code></td><td>pendant la destruction · avant, nœud par nœud · avant, tout le sous-arbre</td><td>tout le sous-arbre, avant</td><td>Au moment de sa destruction, chaque nœud interne est encore lié à ses enfants : la précondition se déclencherait sur la bonne porte (étape 3).</td></tr>
+<tr><td><code>PropagateWorld</code> sans Transform</td><td>retirer la garde · dupliquer la récursion · un monde par défaut</td><td>monde par défaut = celui du parent</td><td>Un seul site de récursion ; le nœud se comporte comme une matrice locale identité (étape 7).</td></tr>
+<tr><td>Découpage du ticket</td><td>12/20 · 16/16 · quarantaine d’index · statu quo</td><td>16/16 (choix d’Onky)</td><td>Marge ×16 au-dessus de <code>LV3_MAX_ENTITIES</code> = 4096 sans graver ce chiffre dans le format binaire (étape 8).</td></tr>
+<tr><td>Garde de <code>DebugDisplaySystemRecursive</code></td><td>inverser l’opérateur · séparer impression et récursion</td><td>séparer, avec une ligne de substitution</td><td>L’inversion seule réintroduit le défaut de 57 ; la ligne de substitution garde l’arbre lisible (étape 10).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>Voici la chaîne complète du moteur, du chargement de la scène jusqu’à l’image, telle que <code>main.cpp</code> l’exécute aujourd’hui. <b>Les cases en surbrillance sont celles que ce lot touche.</b> Le lot ne modifie aucun étage de rendu. Il intervient sur le socle (le <code>Registry</code> et le format du ticket), sur les verbes de la hiérarchie, sur la propagation des matrices et sur un outil de debug.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 700" role="img" aria-label="Chaîne complète du moteur avec les étages touchés par le lot PH1-C en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+  .lnh{stroke:var(--hl-line); stroke-width:1.6; fill:none; stroke-dasharray:4 3}
+  .tg{fill:var(--accent); font:700 11px var(--mono)}
+</style>
+
+<!-- socle -->
+<text class="ph" x="16" y="20">SOCLE · L’IDENTITÉ DES ENTITÉS (lu par tout le reste)</text>
+<rect class="bxh" x="16" y="30" width="270" height="62" rx="8"/>
+<text class="lb" x="28" y="51">Entity : ticket daté (54)</text>
+<text class="sb" x="28" y="68">[génération 16 | index 16]</text>
+<text class="sb" x="28" y="83">NULL_ENTITY = 0xFFFFFFFF</text>
+<rect class="bxh" x="306" y="30" width="290" height="62" rx="8"/>
+<text class="lb" x="318" y="51">Registry (53, 54)</text>
+<text class="sb" x="318" y="68">CreateEntity · IsAlive · DestroyEntity</text>
+<text class="sb" x="318" y="83">liste libre LIFO · m_Generations u16</text>
+<rect class="bx" x="616" y="30" width="268" height="62" rx="8"/>
+<text class="lb" x="628" y="51">SparseSet&lt;T&gt;</text>
+<text class="sb" x="628" y="68">Contains : handle COMPLET</text>
+<text class="sb" x="628" y="83">TryGet refuse un ticket périmé</text>
+<line class="ln" x1="286" y1="61" x2="302" y2="61" marker-end="url(#ar)"/>
+<line class="ln" x1="596" y1="61" x2="612" y2="61" marker-end="url(#ar)"/>
+
+<!-- chargement -->
+<text class="ph" x="16" y="124">1 · CHARGEMENT DE LA SCÈNE (une fois)</text>
+<rect class="bx" x="16" y="134" width="200" height="54" rx="8"/>
+<text class="lb" x="28" y="155">Passe 1 : ParseNode</text><text class="sb" x="28" y="172">CreateEntity, Parse*</text>
+<rect class="bx" x="232" y="134" width="200" height="54" rx="8"/>
+<text class="lb" x="244" y="155">Transform facultatif</text><text class="sb" x="244" y="172">nœud d’organisation possible</text>
+<rect class="bx" x="448" y="134" width="210" height="54" rx="8"/>
+<text class="lb" x="460" y="155">Passe 2 : ResolveParents</text><text class="sb" x="460" y="172">linkChildToParent</text>
+<rect class="bx" x="674" y="134" width="210" height="54" rx="8"/>
+<text class="lb" x="686" y="155">ValidateHierarchy</text><text class="sb" x="686" y="172">cycles (résultat ignoré, L6-1)</text>
+<line class="ln" x1="216" y1="161" x2="228" y2="161" marker-end="url(#ar)"/>
+<line class="ln" x1="432" y1="161" x2="444" y2="161" marker-end="url(#ar)"/>
+<line class="ln" x1="658" y1="161" x2="670" y2="161" marker-end="url(#ar)"/>
+
+<!-- verbes -->
+<text class="ph" x="16" y="220">LES VERBES DE LA HIÉRARCHIE (Hierarchy.cpp, seul à écrire m_parent / m_children)</text>
+<rect class="bx" x="16" y="230" width="160" height="54" rx="8"/>
+<text class="lb" x="28" y="251">linkChildToParent</text><text class="sb" x="28" y="268">construction</text>
+<rect class="bx" x="190" y="230" width="150" height="54" rx="8"/>
+<text class="lb" x="202" y="251">SetParent</text><text class="sb" x="202" y="268">mutation, anti-cycle</text>
+<rect class="bx" x="354" y="230" width="130" height="54" rx="8"/>
+<text class="lb" x="366" y="251">Detach</text><text class="sb" x="366" y="268">devient racine</text>
+<rect class="bxh" x="498" y="230" width="196" height="54" rx="8"/>
+<text class="lb" x="510" y="251">DestroyHierarchy (53)</text><text class="sb" x="510" y="268">collecte · dénoue · détruit</text>
+<rect class="bxh" x="708" y="230" width="176" height="54" rx="8"/>
+<text class="lb" x="720" y="251">HasOutgoingLinks (53)</text><text class="sb" x="720" y="268">question du Registry</text>
+<path class="lnh" d="M720 230 L720 214 L666 214 L666 110 L560 110 L560 96"/>
+<text class="sb" x="672" y="208">déclarée en avance dans Registry.hpp</text>
+<line class="ln" x1="596" y1="284" x2="596" y2="300"/>
+<text class="sb" x="606" y="298">puis DestroyEntity, nœuds déliés</text>
+
+<!-- frame -->
+<text class="ph" x="16" y="330">2 · UNE FRAME (ordre canonique S13)</text>
+<rect class="bx" x="16" y="340" width="150" height="54" rx="8"/>
+<text class="lb" x="28" y="361">Input + horloge</text><text class="sb" x="28" y="378">realDt / simDt</text>
+<rect class="bx" x="180" y="340" width="150" height="54" rx="8"/>
+<text class="lb" x="192" y="361">Player, Animation</text><text class="sb" x="192" y="378">écrivent m_local</text>
+<rect class="bxh" x="344" y="340" width="196" height="54" rx="8"/>
+<text class="lb" x="356" y="361">Cuisson n°1 (57)</text><text class="sb" x="356" y="378">Local + World complet</text>
+<rect class="bx" x="554" y="340" width="140" height="54" rx="8"/>
+<text class="lb" x="566" y="361">Caméras</text><text class="sb" x="566" y="378">FPS, Follow, gizmos</text>
+<rect class="bxh" x="708" y="340" width="176" height="54" rx="8"/>
+<text class="lb" x="720" y="361">Cuisson n°2 (57)</text><text class="sb" x="720" y="378">ciblée, racines caméra</text>
+<line class="ln" x1="166" y1="367" x2="176" y2="367" marker-end="url(#ar)"/>
+<line class="ln" x1="330" y1="367" x2="340" y2="367" marker-end="url(#ar)"/>
+<line class="ln" x1="540" y1="367" x2="550" y2="367" marker-end="url(#ar)"/>
+<line class="ln" x1="694" y1="367" x2="704" y2="367" marker-end="url(#ar)"/>
+
+<rect class="bxh" x="230" y="414" width="440" height="64" rx="8"/>
+<text class="lb" x="242" y="435">PropagateWorld(e, mondeParent) — récursive (57)</text>
+<text class="sb" x="242" y="452">monde ← mondeParent ; si Transform : monde ← local · mondeParent</text>
+<text class="sb" x="242" y="467">pour chaque enfant : PropagateWorld(enfant, monde)</text>
+<path class="lnh" d="M442 394 L442 414"/>
+<path class="lnh" d="M796 394 L796 446 L670 446"/>
+
+<path class="ln" d="M796 394 L796 404 L860 404 L860 500 L96 500 L96 512" marker-end="url(#ar)"/>
+<rect class="bx" x="16" y="516" width="160" height="54" rx="8"/>
+<text class="lb" x="28" y="537">TriggerSystem</text><text class="sb" x="28" y="554">lit m_worldMatrix</text>
+<rect class="bx" x="190" y="516" width="160" height="54" rx="8"/>
+<text class="lb" x="202" y="537">BuildViewData × N</text><text class="sb" x="202" y="554">matrices de vue</text>
+<rect class="bx" x="364" y="516" width="160" height="54" rx="8"/>
+<text class="lb" x="376" y="537">Invariants</text><text class="sb" x="376" y="554">CheckSceneInvariants</text>
+<rect class="bxh" x="538" y="516" width="196" height="54" rx="8"/>
+<text class="lb" x="550" y="537">DebugDisplaySystem (59)</text><text class="sb" x="550" y="554">Debug + VERBOSE_LOG</text>
+<rect class="bx" x="748" y="516" width="136" height="54" rx="8"/>
+<text class="lb" x="760" y="537">RenderView × N</text><text class="sb" x="760" y="554">sommets → pixels</text>
+<line class="ln" x1="176" y1="543" x2="186" y2="543" marker-end="url(#ar)"/>
+<line class="ln" x1="350" y1="543" x2="360" y2="543" marker-end="url(#ar)"/>
+<line class="ln" x1="524" y1="543" x2="534" y2="543" marker-end="url(#ar)"/>
+<line class="ln" x1="734" y1="543" x2="744" y2="543" marker-end="url(#ar)"/>
+
+<!-- futur -->
+<text class="ph" x="16" y="604">3 · GAMEPLAY À VENIR (aucun appel aujourd’hui)</text>
+<rect class="bx" x="16" y="614" width="420" height="62" rx="8"/>
+<text class="lb" x="28" y="635">Projectiles, particules, éditeur : destruction en jeu</text>
+<text class="sb" x="28" y="652">DestroyHierarchy → recyclage d’index → génération</text>
+<text class="sb" x="28" y="667">c’est là que 53 et 54 auraient frappé</text>
+<rect class="bx" x="452" y="614" width="432" height="62" rx="8"/>
+<text class="lb" x="464" y="635">Ce que le lot NE touche pas</text>
+<text class="sb" x="464" y="652">étage sommets, faces, pixels, LOD, culling, Clear,</text>
+<text class="sb" x="464" y="667">TriggerSystem, caméras, SimulationClock</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Bug</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Scene/Hierarchy.cpp</code></td><td>LIB</td><td>53</td><td><span class="pill warn">modifié</span> <code>DestroyHierarchy</code> : passe de dénouage entre la collecte et la destruction ; <span class="pill ok">ajout</span> <code>HasOutgoingLinks</code></td></tr>
+<tr><td><code>Scene/Hierarchy.hpp</code></td><td>LIB</td><td>53</td><td><span class="pill ok">ajout</span> déclaration publique de <code>HasOutgoingLinks</code></td></tr>
+<tr><td><code>Scene/Registry.hpp</code></td><td>LIB</td><td>53, 54</td><td><span class="pill ok">ajout</span> déclaration avancée de <code>HasOutgoingLinks</code> ; <span class="pill warn">modifié</span> <code>DestroyEntity</code> (assertion + refus) ; <code>m_Generations</code> en <code>uint16_t</code> ; textes de l’assertion de capacité et du bouclage</td></tr>
+<tr><td><code>Scene/Entity.hpp</code></td><td>LIB</td><td>54</td><td><span class="pill warn">modifié</span> <code>ENTITY_INDEX_BITS = 16</code>, <code>EntityGeneration</code> et <code>MakeEntity</code> en <code>uint16_t</code>, trois <code>static_assert</code>, commentaire d’en-tête</td></tr>
+<tr><td><code>Scene/System.cpp</code></td><td>LIB</td><td>57, 59</td><td><span class="pill warn">réécrit</span> <code>PropagateWorld</code> ; <code>DebugDisplaySystemRecursive</code></td></tr>
+<tr><td><code>Test/TestHierarchy.cpp</code></td><td>EXE</td><td>53</td><td><span class="pill ok">nouveau</span> <code>test_hierarchy()</code>, ex-« Test 0 », appelé par <code>RunAllTests</code></td></tr>
+<tr><td><code>Test/Test54_Recyclage.cpp</code></td><td>EXE</td><td>54</td><td><span class="pill ok">nouveau</span> <code>test54_Recyclage()</code> (tests A et B), appelé par <code>RunAllTests</code></td></tr>
+<tr><td><code>Scene/DebugGizmos.cpp</code></td><td>LIB</td><td>53</td><td><span class="pill">temporaire</span> blocs de test 1, 1bis, 2 et 4 dans <code>SpawnCameraGizmos</code>, retirés après validation (vérifié : absents du dépôt)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Quatre fonctionnements sont remis en question. Pour chacun, l’algorithme d’avant et celui d’après. Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · Détruire un sous-arbre (53)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — deux portes, une seule délie</div>
+<pre><code>DestroyHierarchy(root) :                // la bonne porte
+    sous_arbre ← CollectSubtree(root)    // pré-ordre, root inclus
+    Detach(root)                         // le parent de root l'oublie
+<span class="hl">    // les liens INTERNES restent en place</span>
+    pour e dans sous_arbre :
+        DestroyEntity(e)
+
+DestroyEntity(e) :                       // la porte de service
+    assert(IsAlive(e)) ; si mort : retour
+<span class="hl">    // aucune question sur la hiérarchie</span>
+    prévenir chaque stockage ; ++génération ; libérer l'index
+
+<span class="hl">// DestroyEntity(Terre) appelé directement :</span>
+<span class="hl">//   Lune.m_parent = ancien ticket de Terre (périmé)</span>
+<span class="hl">//   → Lune n'est plus racine, plus personne ne descend vers elle</span>
+<span class="hl">//   → sa matrice monde est gelée, sans assert ni journal</span></code></pre></div>
+<div class="ap"><div class="t">Après — la bonne porte délie, l’autre refuse</div>
+<pre><code>DestroyHierarchy(root) :
+    sous_arbre ← CollectSubtree(root)
+    Detach(root)
+<span class="hl">    pour e dans sous_arbre :             // DÉNOUER d'abord</span>
+<span class="hl">        e.m_parent ← NULL_ENTITY</span>
+<span class="hl">        e.m_children.clear()</span>
+    pour e dans sous_arbre :             // DÉTRUIRE ensuite
+        DestroyEntity(e)                 // plus aucun lien : accepté
+
+DestroyEntity(e) :
+    assert(IsAlive(e)) ; si mort : retour
+<span class="hl">    assert(!HasOutgoingLinks(e))         // Debug, RelWithAsserts : abort</span>
+<span class="hl">    si HasOutgoingLinks(e) : retour      // Release : refus silencieux</span>
+    prévenir chaque stockage ; ++génération ; libérer l'index
+
+<span class="hl">HasOutgoingLinks(e) :                    // Hierarchy.cpp</span>
+<span class="hl">    h ← TryGet&lt;Hierarchy&gt;(e) ; si absent : faux</span>
+<span class="hl">    vrai si h.m_parent ≠ NULL_ENTITY ou h.m_children non vide</span></code></pre></div>
+</div>
+
+<h3>B · Propager les matrices monde (57)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — un seul <code>return</code> pour deux questions</div>
+<pre><code>PropagateWorld(e, mondeParent) :
+    tr ← TryGet&lt;Transform&gt;(e)
+<span class="hl">    si tr absent : retour                // « rien à écrire » ET « ne descends pas »</span>
+    tr.monde ← tr.local · mondeParent
+    monde ← tr.monde                      // copie avant de récurser
+    pour chaque enfant c :
+        PropagateWorld(c, monde)</code></pre></div>
+<div class="ap"><div class="t">Après — deux questions, deux réponses</div>
+<pre><code>PropagateWorld(e, mondeParent) :
+<span class="hl">    monde ← mondeParent                  // par défaut : transmet tel quel</span>
+<span class="hl">    si tr ← TryGet&lt;Transform&gt;(e) :       // « ai-je une part à calculer ? »</span>
+        tr.monde ← tr.local · mondeParent
+        monde ← tr.monde
+<span class="hl">    pour chaque enfant c :               // « dois-je descendre ? » : toujours</span>
+        PropagateWorld(c, monde)</code></pre></div>
+</div>
+
+<h3>C · Le ticket daté (54)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — 24 bits d’index, 8 de génération</div>
+<pre><code>Entity = [ génération : 8 | index : 24 ]
+<span class="hl">entités simultanées  : 16 777 215</span>
+<span class="hl">générations par slot : 256 avant bouclage</span>
+m_Generations : vector&lt;uint8_t&gt;
+
+DestroyEntity : ++m_Generations[idx]   // 255 → 0
+CreateEntity  : idx ← liste_libre.back()   // LIFO
+<span class="hl">// 1 recyclage par frame sur un slot à 60 i/s :</span>
+<span class="hl">// un vieux ticket redevient valide après 4,3 s</span></code></pre></div>
+<div class="ap"><div class="t">Après — 16 / 16</div>
+<pre><code>Entity = [ génération : 16 | index : 16 ]
+<span class="hl">entités simultanées  : 65 535 (index 0xFFFF réservé)</span>
+<span class="hl">générations par slot : 65 536 avant bouclage</span>
+<span class="hl">m_Generations : vector&lt;uint16_t&gt;</span>
+
+DestroyEntity : ++m_Generations[idx]   // 65535 → 0
+CreateEntity  : idx ← liste_libre.back()   // LIFO, inchangé
+<span class="hl">// même rythme : bouclage après 18 min 12 s</span></code></pre></div>
+</div>
+
+<h3>D · Le dump de debug (59)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — la garde laisse passer un composant absent</div>
+<pre><code>DebugDisplaySystemRecursive(e, profondeur) :
+<span class="hl">    si !aTransform ET !aNom : retour     // ne refuse que si LES DEUX manquent</span>
+    indenter
+<span class="hl">    transform ← getComponent&lt;Transform&gt;(e)   // peut manquer</span>
+<span class="hl">    nom       ← getComponent&lt;Name&gt;(e)        // peut manquer</span>
+    afficher nom, position locale, position monde
+    pour chaque enfant : récursion(profondeur + 1)</code></pre></div>
+<div class="ap"><div class="t">Après — imprimer et descendre sont séparés</div>
+<pre><code>DebugDisplaySystemRecursive(e, profondeur) :
+    aT ← hasComponent&lt;Transform&gt;(e) ; aN ← hasComponent&lt;Name&gt;(e)
+    indenter
+<span class="hl">    si aT ET aN :                        // imprimer : seulement si complet</span>
+        afficher nom, position locale, position monde
+<span class="hl">    sinon :</span>
+<span class="hl">        afficher « [noeud sans Nom ou Transform] »   // ligne de substitution</span>
+<span class="hl">    pour chaque enfant : récursion(profondeur + 1)   // descendre : toujours</span></code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="intro">
+<h2>1 · Laboratoires — voir les bugs avant le code</h2>
+
+<h3>1.1 · Le graphe de scène, en vrai : destructions, nœud d’organisation, dump</h3>
+<p>Une petite scène de six entités, calculée comme le moteur la calcule : matrices locales, puis <code>WorldTransformSystem</code> en deux passes (racines hiérarchisées, puis entités sans hiérarchie), produit <code>local · mondeParent</code> en float32 (chaque opération arrondie comme sur le CPU). Le plan est ramené à XZ (vue de dessus, matrices 3 × 3) ; l’ordre des produits est celui du moteur.</p>
+<p><b>Groupe-Terre</b> est un nœud d’organisation : un nom, une place dans l’arbre, aucun <code>Transform</code>. Le format JSON l’autorise (le <code>Transform</code> est facultatif dans <code>ParseNode</code>), même si aucune scène du dépôt n’en contient aujourd’hui.</p>
+
+<div class="ctl">
+  <label for="lgCfg">Configuration :
+    <select id="lgCfg">
+      <option value="debug" selected>Debug</option>
+      <option value="rwa">RelWithAsserts</option>
+      <option value="release">Release</option>
+    </select>
+  </label>
+  <label for="lgFix53">Bug 53 :
+    <select id="lgFix53">
+      <option value="none">dépôt du 16/09 (aucun garde)</option>
+      <option value="naive">précondition seule (contre-exemple, étape 3)</option>
+      <option value="full" selected>dénouer + précondition (retenu)</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="lgFix57" checked> Correctif 57</label>
+  <label><input type="checkbox" id="lgFix59" checked> Correctif 59</label>
+  <label><input type="checkbox" id="lgOrg" checked> Groupe-Terre sans Transform</label>
+  <label><input type="checkbox" id="lgRootOrg"> Soleil sans Transform (amendement AM6)</label>
+</div>
+<div class="ctl">
+  <label for="lgT">Temps simulé : <input type="range" id="lgT" min="0" max="60" value="5" step="0.05"> <span id="lgTV" class="pill num">5,00 s</span></label>
+  <button type="button" id="lgPlay">Lecture</button>
+  <button type="button" id="lgBad">DestroyEntity(Terre) — mauvaise porte</button>
+  <button type="button" id="lgGood">DestroyHierarchy(Terre) — bonne porte</button>
+  <button type="button" id="lgRm">removeComponent&lt;Hierarchy&gt;(Terre) — 2ᵉ porte</button>
+  <button type="button" id="lgDump">Dump DebugDisplaySystem</button>
+  <button type="button" id="lgReset">Recharger la scène</button>
+</div>
+<div id="lgHalt"></div>
+<div class="lab">
+  <div><canvas id="lgCanvas" width="640" height="420" aria-label="Vue de dessus de la scène du laboratoire"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--live)"></i>matrice monde écrite à cette frame</span>
+      <span><i style="background:var(--frozen)"></i>gelée : vivante, plus jamais visitée</span>
+      <span><i style="background:var(--org)"></i>nœud sans Transform (pas de position propre)</span>
+      <span><i style="background:var(--dead)"></i>détruite</span>
+    </div>
+  </div>
+  <div><div class="tree" id="lgTree"></div></div>
+</div>
+<div class="scroll"><table id="lgTable"></table></div>
+<h4>Console</h4>
+<div class="console" id="lgLog" aria-live="polite"></div>
+
+<div class="note">
+<b>Ce qu’il faut essayer, dans l’ordre.</b> (1) Bug 53 sur « dépôt du 16/09 », lecture, puis la mauvaise porte : la Lune s’arrête et reste en rouge, le compteur d’entités vivantes ne bouge que de 1. (2) Recharger, passer en « précondition seule », la bonne porte : en Debug, arrêt sur la Terre ; en Release, rien n’est détruit mais la Terre a été détachée, elle saute à sa position locale (étape 3). (3) « Retenu » : la mauvaise porte arrête le programme en Debug et ne fait rien en Release ; la bonne porte détruit Terre et Lune. (4) Décocher le correctif 57 : Terre et Lune restent à l’origine, au centre du Soleil. (5) Décocher le correctif 59 et lancer le dump. (6) La 2ᵉ porte : aucun garde ne la ferme, même avec tous les correctifs (amendement AM7).
+</div>
+
+<h3>1.2 · Le ticket daté : quand un vieux handle redevient-il valide ?</h3>
+<p>Un slot d’index 7 est recyclé n fois. Le premier ticket émis pour ce slot (génération 0) a été gardé quelque part, par un système ou un rappel. <code>IsAlive</code> compare sa génération à celle du slot. Le calcul ci-dessous suit exactement <code>MakeEntity</code>, <code>EntityGeneration</code> et <code>IsAlive</code> pour les deux découpages.</p>
+<div class="ctl">
+  <label for="tkSplit">Découpage :
+    <select id="tkSplit">
+      <option value="8">24 bits d’index / 8 de génération (avant)</option>
+      <option value="16" selected>16 / 16 (après)</option>
+    </select>
+  </label>
+  <label for="tkN">Recyclages du slot n : <input type="range" id="tkN" min="0" max="70000" value="256" step="1"> <input type="number" id="tkNn" min="0" max="70000" value="256" style="width:6.5em"></label>
+</div>
+<div class="scroll">
+<div class="small">Ticket gardé (génération 0)</div><div class="bits" id="tkBitsOld"></div>
+<div class="small">Ticket courant du slot (génération n mod 2<sup>b</sup>)</div><div class="bits" id="tkBitsCur"></div>
+</div>
+<div class="stats" id="tkStats"></div>
+
+<h4>Combien de temps avant le bouclage, selon la liste libre</h4>
+<div class="ctl">
+  <label for="tkK">Un système crée puis détruit k entités par frame, k = <input type="range" id="tkK" min="1" max="512" value="8" step="1"> <span id="tkKV" class="pill num">8</span></label>
+  <label for="tkF">Slots libres dans la liste F = <input type="range" id="tkF" min="1" max="4096" value="4096" step="1"> <span id="tkFV" class="pill num">4096</span></label>
+  <span class="small">60 frames par seconde</span>
+</div>
+<div class="scroll"><table id="tkTable"></table></div>
+<p class="small">LIFO (le dépôt) : les k entités détruites à la fin d’une frame sont les k premières reprises à la frame suivante, donc chaque slot chaud est recyclé une fois par frame, quel que soit k. FIFO : un slot libéré attend que les F − 1 autres soient repris avant de revenir ; chaque slot est recyclé 60·k / F fois par seconde. C’est l’idée de l’option « quarantaine d’index » écartée à l’étape 8.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<p>Cinq mécanismes portent tout le lot. Aucun n’est une technique nommée de la littérature : ce sont des propriétés du C++, de l’édition de liens et d’un ECS à handles versionnés, qu’il faut connaître exactement parce qu’elles échouent en silence quand on les connaît à moitié.</p>
+
+<h3 id="t-owner">2.1 · Qui garde un invariant à deux champs, et qui détruit</h3>
+<p>Le lien parent ↔ enfant est écrit à deux endroits : <code>m_parent</code> chez l’enfant, <code>m_children</code> chez le parent. C’est un <b>invariant à deux champs</b> : l’un sans l’autre est faux. La leçon 06 a donné à <code>Hierarchy.cpp</code> le monopole de ces écritures (décision D-L6-12) : <code>AttachToParent</code> est <code>static</code>, et seuls <code>linkChildToParent</code>, <code>SetParent</code>, <code>Detach</code> et <code>DestroyHierarchy</code> touchent aux deux champs.</p>
+<p>Mais la destruction, elle, appartient au <code>Registry</code>, qui est générique : il prévient chaque stockage (<code>OnEntityDestroyed</code>), et le stockage des <code>HierarchyComponent</code> retire le composant <b>du mort</b>. Il ne sait pas que ce composant désigne d’autres entités, ni que ces autres entités le désignent. La conséquence est mécanique : <code>DestroyEntity</code> sur un nœud lié brise l’invariant chez ses voisins, qui gardent un handle périmé.</p>
+
+<p>Il faut donc que <code>DestroyEntity</code> refuse un nœud lié, sans que le <code>Registry</code> connaisse la hiérarchie (constat A2 de l’audit, règle R20). Quatre façons de faire :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Option</th><th>Mécanisme</th><th>Coût</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>a</td><td><code>Registry.hpp</code> inclut <code>Hierarchy.hpp</code> et lit <code>HierarchyComponent</code></td><td>Cycle d’inclusion (<code>Hierarchy.hpp</code> inclut déjà <code>Registry.hpp</code>) ; la couche générique apprend la politique du domaine</td><td><span class="pill bad">rejeté</span></td></tr>
+<tr><td>b</td><td>Un rappel enregistré dans le <code>Registry</code> (<code>std::function&lt;bool(Entity)&gt; m_canDestroy</code>), posé au démarrage par le module Scene</td><td>Appel indirect à chaque destruction ; un oubli d’enregistrement désactive le garde sans erreur ; ordre d’initialisation à gérer</td><td><span class="pill warn">écarté</span></td></tr>
+<tr><td>c</td><td>Une politique par type de composant (trait <code>OnBeforeDestroy</code> appelé par chaque <code>SparseSet</code>)</td><td>Mécanique de templates pour un seul cas ; le stockage d’un composant ne sait pas plus que le <code>Registry</code> qui pointe vers lui</td><td><span class="pill warn">écarté</span></td></tr>
+<tr><td>d</td><td>Une fonction libre, <b>déclarée</b> dans <code>Registry.hpp</code>, <b>définie</b> dans <code>Hierarchy.cpp</code></td><td>Aucun : appel direct, résolu par l’éditeur de liens ; un <code>TryGet</code> par destruction</td><td><span class="pill ok">retenu</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p><b>Comment marche une déclaration avancée.</b> Le compilateur traite chaque fichier <code>.cpp</code> seul. Pour compiler un appel, il lui suffit de connaître la <b>signature</b> de la fonction appelée : <code>bool HasOutgoingLinks(const Registry&amp;, Entity)</code>. Il émet alors un appel vers un symbole qu’il ne connaît pas encore. C’est l’éditeur de liens qui, en assemblant les fichiers objets de la bibliothèque, trouve la définition dans <code>Hierarchy.obj</code> et branche l’appel dessus. Le <code>Registry</code> ne voit qu’un nom et deux types ; il n’a aucune idée de ce qu’il y a derrière. Le paramètre <code>const Registry&amp;</code> n’exige qu’une déclaration de classe (<code>class Registry;</code>) : une référence n’a pas besoin de la taille du type.</p>
+<pre><code>// Registry.hpp — la couche générique ne connaît que la QUESTION
+namespace LV3
+{
+    class Registry;
+    [[nodiscard]] bool HasOutgoingLinks(const Registry&amp; registry, Entity e);   // définie dans Hierarchy.cpp
+    class Registry { … void DestroyEntity(Entity e) { … HasOutgoingLinks(*this, e) … } … };
+}
+
+// Hierarchy.cpp — le module du domaine connaît la RÉPONSE
+bool HasOutgoingLinks(const Registry&amp; registry, Entity e)
+{
+    const HierarchyComponent* h = registry.TryGet&lt;HierarchyComponent&gt;(e);
+    if (!h) return false;
+    return h-&gt;m_parent != NULL_ENTITY || !h-&gt;m_children.empty();
+}</code></pre>
+<div class="warn"><b>Le prix caché.</b> La dépendance existe toujours, elle a seulement changé de nature : de l’inclusion (visible, à la compilation) à l’édition de liens (invisible jusqu’au lien). Un projet de test qui inclurait <code>Registry.hpp</code> sans lier <code>Hierarchy.cpp</code> échouerait en <code>LNK2019</code> (symbole externe non résolu). Ici la LIB contient les deux fichiers, donc rien ne casse ; le commentaire au-dessus de la déclaration le dit, et c’est sa seule protection.</div>
+
+<h3 id="t-assert">2.2 · Une assertion ne protège rien en Release</h3>
+<p><code>LV3_ASSERT</code> (A10) a deux natures selon <code>LV3_ASSERTS_ENABLED</code> :</p>
+<pre><code>#if LV3_ASSERTS_ENABLED
+    #define LV3_ASSERT(...) do { if (!(__VA_ARGS__)) LV3::AssertFailed(#__VA_ARGS__, __FILE__, __LINE__); } while (0)
+#else
+    #define LV3_ASSERT(...) ((void)sizeof(!(__VA_ARGS__)))     // compilé, vérifié par le compilateur, jamais ÉVALUÉ
+#endif
+
+[[noreturn]] inline void AssertFailed(const char* expr, const char* file, int line)
+{
+    std::fprintf(stderr, "\n[LV3_ASSERT] %s\n  %s:%d\n", expr, file, line);
+    std::fflush(stderr);
+    __debugbreak();     // sous MSVC : s'arrête dans le débogueur, à la bonne ligne
+    std::abort();       // puis termine le processus
+}</code></pre>
+<p>Une assertion qui échoue <b>arrête le programme</b> : ce n’est pas un journal. Et éteinte, elle ne fait <b>rien</b>, pas même évaluer son expression. Pour un garde-fou qui doit aussi protéger la configuration livrée, il faut donc les deux :</p>
+<div class="scroll">
+<table class="tt">
+<thead><tr><th>Configuration</th><th><code>LV3_ASSERT(!HasOutgoingLinks(*this, e))</code></th><th><code>if (HasOutgoingLinks(*this, e)) return;</code></th><th>Effet de la mauvaise porte</th></tr></thead>
+<tbody>
+<tr><td>Debug</td><td class="y">évaluée → abort</td><td>jamais atteint</td><td>arrêt dans le débogueur, message et ligne de <code>Registry.hpp</code></td></tr>
+<tr><td>RelWithAsserts</td><td class="y">évaluée → abort</td><td>jamais atteint</td><td>arrêt du processus, message sur <code>stderr</code></td></tr>
+<tr><td>Release</td><td class="n">jamais évaluée</td><td class="y">refus</td><td>rien n’est détruit, rien n’est journalisé (amendement AM8)</td></tr>
+</tbody>
+</table>
+</div>
+<p>C’est le même patron que <code>IsAlive</code> deux lignes plus haut dans <code>DestroyEntity</code>, et il a essaimé : <code>RenderSystem.cpp</code> protège la capacité de <code>ClipSpaceBuffer</code> par <code>LV3_ASSERT(nVerts &lt;= Capacity()); if (nVerts &gt; Capacity()) continue;</code>, avec un commentaire qui renvoie au bug 53.</p>
+<div class="rule"><b>Règle proposée PH1C.b (non actée).</b> Un garde-fou qui doit protéger la configuration livrée s’écrit en deux lignes : <code>LV3_ASSERT(condition)</code> pour arrêter et localiser en Debug et <code>RelWithAsserts</code>, puis <code>if (!condition) { repli; }</code> pour la Release. Une assertion seule est un filet de développement, jamais une protection. L’expression d’une assertion n’a jamais d’effet de bord.</div>
+
+<h3 id="t-descent">2.3 · Séparer « ma part » de « la descente »</h3>
+<p>Une récursion sur un arbre répond à chaque nœud à deux questions : <b>ai-je quelque chose à faire ?</b> et <b>dois-je descendre vers mes enfants ?</b> Les bugs 57 et 59 ont la même forme : un seul <code>return</code> précoce répond « non » aux deux à la fois, alors que seule la première dépend du nœud.</p>
+<p>Dans Unity, la question ne se pose pas : chaque <code>GameObject</code> porte un <code>Transform</code>, et la hiérarchie <b>est</b> celle des <code>Transform</code> (<code>transform.parent</code>). Dans LV3, la règle S4 sépare la hiérarchie (<code>HierarchyComponent</code>) de la transformation (<code>TransformComponent</code>) : un nœud peut avoir l’une sans l’autre, et le moteur doit dire ce que cela signifie. Deux sens possibles :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Sens d’un nœud sans Transform</th><th>Ce que deviennent ses enfants</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td><b>Transparent</b> : il se comporte comme une matrice locale identité</td><td>Ils héritent du monde du parent du nœud, comme s’il n’était pas là</td><td><span class="pill ok">retenu</span> : un dossier de regroupement ne déplace rien</td></tr>
+<tr><td><b>Opaque</b> : il coupe l’héritage</td><td>Ils deviennent des racines de fait (monde = local)</td><td><span class="pill bad">rejeté</span> : changer l’organisation de l’arbre déplacerait les objets</td></tr>
+<tr><td>(dépôt du 16/09) le <code>return</code></td><td>Ni l’un ni l’autre : jamais visités, matrice monde figée</td><td><span class="pill bad">bug 57</span></td></tr>
+</tbody>
+</table>
+</div>
+<p>Le correctif de 57 écrit le sens transparent en une ligne : <code>Matrix44f world = parentWorld;</code> avant le test. Le correctif de 59 applique la même séparation au dump. En relisant le dépôt pour ce lot, une <b>troisième</b> occurrence est apparue : <code>DebugDisplaySystem</code> ne lance la récursion que depuis une racine <b>qui a un Transform</b>. Un arbre dont la racine est un nœud d’organisation n’est pas affiché du tout (amendement AM6). Le carnet disait : « à formaliser si le patron réapparaît une troisième fois ».</p>
+<div class="rule"><b>Règle proposée PH1C.a (non actée).</b> Dans une traversée de hiérarchie, la décision de traiter un nœud et la décision de descendre vers ses enfants sont indépendantes. L’absence d’un composant empêche de traiter ce nœud, jamais d’atteindre ses descendants. Un nœud sans <code>Transform</code> est transparent : il transmet le monde de son parent.</div>
+
+<h3 id="t-ticket">2.4 · Le ticket daté : ce que la génération garantit, et jusqu’où</h3>
+<p>Un <code>Entity</code> est un <code>uint32_t</code> qui porte deux champs : l’<b>index</b> (le slot dans les tableaux du <code>Registry</code>) et la <b>génération</b> (l’époque du slot, incrémentée à chaque destruction). Un handle est valide si sa génération est celle du slot. Trois propriétés en découlent :</p>
+<ul>
+<li><b><code>TryGet</code> refuse un ticket périmé, tant que la génération n’a pas bouclé.</b> <code>SparseSet::Contains</code> compare le handle <b>complet</b> : <code>m_Entities[dense] == entity</code>. Un ticket d’une autre génération, même au bon index, n’y est pas égal. C’est pour cela que le gizmo d’une caméra détruite ne plante pas : <code>CameraGizmoSystem</code> fait <code>TryGet</code> sur <code>m_owner</code> et passe son tour (bug 53 bis).</li>
+<li><b>Le bouclage est inévitable</b> avec un champ de largeur fixe. Après 2<sup>b</sup> recyclages du même slot, la génération revient à sa valeur de départ et un ticket gardé depuis l’origine redevient valide : c’est le problème <b>ABA</b> (la valeur est passée de A à B puis revenue à A ; qui ne regarde que la valeur ne voit rien). Le découpage ne l’élimine pas, il fixe la distance.</li>
+<li><b>Le recyclage LIFO concentre l’usure.</b> La liste libre rend le dernier index libéré (il est encore chaud dans le cache). Un système qui crée et détruit des entités à chaque frame recycle donc toujours les mêmes slots, une fois par frame chacun. À 60 i/s, 256 recyclages durent 4,3 secondes.</li>
+</ul>
+<div class="scroll">
+<table>
+<thead><tr><th>Découpage</th><th>Entités simultanées</th><th>Recyclages d’un slot avant bouclage</th><th>Temps avant bouclage (LIFO, 1 recyclage par frame, 60 i/s)</th></tr></thead>
+<tbody>
+<tr><td>24 / 8 (L03)</td><td class="num">16 777 215</td><td class="num">256</td><td class="num">4,3 s</td></tr>
+<tr><td>20 / 12 (EnTT)</td><td class="num">1 048 575</td><td class="num">4 096</td><td class="num">68 s</td></tr>
+<tr><td><b>16 / 16 (retenu)</b></td><td class="num">65 535</td><td class="num">65 536</td><td class="num">18 min 12 s</td></tr>
+<tr><td>12 / 20</td><td class="num">4 095</td><td class="num">1 048 576</td><td class="num">4 h 51 min</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Entités simultanées = 2<sup>bits d’index</sup> − 1 : <code>NULL_ENTITY = 0xFFFFFFFF</code> a tous ses bits à 1, et <code>CreateEntity</code> refuse l’index dont tous les bits sont à 1 (<code>LV3_ASSERT(idx &lt; ENTITY_INDEX_MASK)</code>), pour qu’aucun ticket émis ne puisse valoir <code>NULL_ENTITY</code>. D’où 65 535 et non 65 536 (amendement AM2). La colonne EnTT reprend le découpage cité dans le commentaire d’origine de <code>Entity.hpp</code>.</p>
+
+<h3 id="t-demorgan">2.5 · La loi de De Morgan, appliquée à une garde</h3>
+<p>La garde voulait dire « s’il manque l’un des deux composants, ne rien faire ». La négation de « a les deux » (<code>T ∧ N</code>) est <code>¬T ∨ ¬N</code> : il suffit qu’un seul manque. Le code avait écrit <code>¬T ∧ ¬N</code>, qui est la négation de « a au moins un des deux ». Voici les quatre cas, avec ce que le moteur fait réellement ensuite :</p>
+<div class="scroll">
+<table class="tt">
+<thead><tr><th>Transform</th><th>Name</th><th>Garde du dépôt <code>!T &amp;&amp; !N</code></th><th>Suite (dépôt du 16/09)</th><th>Après correctif</th></tr></thead>
+<tbody>
+<tr><td>oui</td><td>oui</td><td>passe</td><td class="y">ligne affichée, descente</td><td class="y">ligne affichée, descente</td></tr>
+<tr><td>oui</td><td>non</td><td class="n">passe</td><td class="n"><code>getComponent&lt;NameComponent&gt;</code> → <code>LV3_ASSERT(Contains(entity))</code> dans <code>SparseSet::Get</code> → abort</td><td class="y">substitution, descente</td></tr>
+<tr><td>non</td><td>oui</td><td class="n">passe</td><td class="n"><code>getComponent&lt;TransformComponent&gt;</code> → même assertion → abort</td><td class="y">substitution, descente</td></tr>
+<tr><td>non</td><td>non</td><td>retour</td><td class="n">pas de ligne, <b>pas de descente</b> : sous-arbre muet</td><td class="y">substitution, descente</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Le troisième cas est celui d’un nœud d’organisation venu du JSON : <code>ParseNode</code> donne toujours un <code>NameComponent</code> (l’<code>id</code>), et le <code>Transform</code> est facultatif. Le quatrième cas est celui d’un handle périmé resté dans une liste d’enfants : <code>Contains</code> le refuse pour les deux composants.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes</h2>
+<p>Douze étapes, dans l’ordre de l’échange : 53, puis 57, puis 54, puis 59, chaque bug validé par Onky avant le suivant. Chaque étape dit son objectif, ce qu’elle reprend de l’étape précédente, le code avant/après par fichier, et ce qu’elle produit. Aucune étape ne contient de boucle de calcul vectorisable : le pendant vectorisé est sans objet, et c’est dit à chaque fois avec la raison.</p>
+
+<!-- E1 -->
+<div class="step" id="e1">
+<div class="h"><span class="n">Étape 1</span> Relire le dépôt avant de croire le carnet</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Partir du code réel. Le carnet décrivait le correctif de 53 comme « validé » ; il fallait savoir s’il était écrit.</div>
+<div><h5>Entrée</h5><code>Registry.hpp</code>, <code>Hierarchy.cpp/.hpp</code>, <code>System.cpp</code>, <code>Entity.hpp</code> du dépôt LIB, lus en entier ; recherche de tous les appels à <code>DestroyEntity(</code> dans les deux dépôts.</div>
+</div>
+<pre><code>// Constat du 16/09 (extraits du dépôt)
+void DestroyHierarchy(Registry&amp; registry, Entity root)
+{
+    std::vector&lt;Entity&gt; subtree;
+    CollectSubtree(registry, root, subtree);   // pré-ordre, root inclus
+    Detach(registry, root);                    // seul lien défait
+    for (Entity e : subtree)
+        registry.DestroyEntity(e);
+}
+// HasOutgoingLinks : 0 occurrence dans les deux dépôts
+// DestroyEntity(   : 1 seul appel, celui ci-dessus</code></pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>« Validé » voulait dire « conçu et accepté », pas « écrit ». Les quatre bugs sont présents tels que le carnet les décrit. Et ils sont latents : un seul appel de destruction, aucun nœud sans <code>Transform</code> dans les scènes. C’est le défaut R29 (« le dépôt et le build doivent dire la même chose »), cette fois entre le dépôt et le carnet.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : étape de lecture.</div>
+</div>
+</div>
+</div>
+
+<!-- E2 -->
+<div class="step" id="e2">
+<div class="h"><span class="n">Étape 2</span> Bug 53 — tracer le gel, sur un cas concret</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Montrer comment un appel direct à <code>DestroyEntity</code> produit un objet gelé, pas seulement l’affirmer.</div>
+<div><h5>Entrée (étape 1)</h5>Le code de <code>DestroyEntity</code> (aucune question sur la hiérarchie) et celui de <code>WorldTransformSystem</code> (passe 1 : racines hiérarchisées ; passe 2 : entités sans hiérarchie).</div>
+</div>
+<p>Trace sur une caméra et son gizmo (<code>SpawnCameraGizmos</code> fait <code>linkChildToParent(registry, g, camEntity)</code>). Handles sur 24/8 tels qu’au 16/09, caméra en index 4, gizmo en index 9 :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Moment</th><th>Caméra (idx 4)</th><th>Gizmo (idx 9)</th><th>Ce que voit <code>WorldTransformSystem</code></th></tr></thead>
+<tbody>
+<tr><td>Avant</td><td>vivante, ticket <code>0x00000004</code>, <code>m_children = [gizmo]</code></td><td><code>m_parent = 0x00000004</code></td><td>passe 1 : la caméra est racine, descente jusqu’au gizmo</td></tr>
+<tr><td><code>DestroyEntity(cam)</code></td><td>composants retirés, génération 0 → 1, index 4 libéré</td><td><code>m_parent = 0x00000004</code> <b>(périmé)</b></td><td>—</td></tr>
+<tr><td>Frame suivante</td><td>morte</td><td><code>IsRoot</code> faux (parent ≠ <code>NULL_ENTITY</code>)</td><td>passe 1 : pas une racine ; passe 2 : a un <code>HierarchyComponent</code> → <b>jamais visité</b></td></tr>
+<tr><td>Toutes les frames</td><td>—</td><td><code>m_worldMatrix</code> figée</td><td>aucun assert, aucun journal</td></tr>
+</tbody>
+</table>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Le défaut n’est pas dans <code>DestroyHierarchy</code>, qui est juste. Il est dans son <b>exclusivité</b> : la porte de service reste ouverte, et rien dans les deux signatures ne dit laquelle prendre. Un futur système (éditeur, projectiles) la prendra.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : diagnostic.</div>
+</div>
+</div>
+</div>
+
+<!-- E3 -->
+<div class="step" id="e3">
+<div class="h"><span class="n">Étape 3</span> Le contre-exemple : la précondition seule casse la bonne porte</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Vérifier que le correctif intuitif, « <code>DestroyEntity</code> refuse un nœud lié », suffit. Il ne suffit pas.</div>
+<div><h5>Entrée (étape 2)</h5>La porte à fermer : <code>DestroyEntity</code> sur un nœud lié.</div>
+</div>
+<pre><code>// CONTRE-EXEMPLE — précondition ajoutée, DestroyHierarchy inchangée
+void DestroyEntity(Entity e)
+{
+    LV3_ASSERT(IsAlive(e)); if (!IsAlive(e)) return;
+<span class="hl">    LV3_ASSERT(!HasOutgoingLinks(*this, e));   // naïf</span>
+    …
+}</code></pre>
+<p>Trace de <code>DestroyHierarchy(cam)</code> : <code>CollectSubtree</code> rend <code>[cam, gizmo]</code> ; <code>Detach(cam)</code> ne fait rien (la caméra est racine) ; premier tour de boucle, <code>DestroyEntity(cam)</code> : <code>cam.m_children</code> vaut encore <code>[gizmo]</code>, la précondition échoue. La bonne porte s’arrête sur son premier nœud interne. C’est ce que le carnet résumait par « chaque nœud interne est encore lié au moment de sa destruction (R35) ». En Release, avec le <code>if</code>, c’est pire et silencieux : rien n’est détruit, mais la racine a été détachée de son parent (essai 2 du laboratoire 1.1).</p>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Le dénouage doit précéder toute destruction, et porter sur <b>tout</b> le sous-arbre, pas seulement sur la racine.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E4 -->
+<div class="step" id="e4">
+<div class="h"><span class="n">Étape 4</span> Bug 53, première moitié : dénouer avant de détruire</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Qu’au moment où <code>DestroyHierarchy</code> appelle <code>DestroyEntity</code>, plus aucun nœud du sous-arbre n’ait de lien.</div>
+<div><h5>Entrée (étape 3)</h5>La liste <code>subtree</code> est déjà collectée avant toute mutation (<code>DestroyEntity</code> retire par swap-and-pop : on ne détruit jamais en itérant les listes qu’on lit).</div>
+</div>
+<h4>Scene/Hierarchy.cpp — DestroyHierarchy</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>void DestroyHierarchy(Registry&amp; registry, Entity root)
+{
+    std::vector&lt;Entity&gt; subtree;
+    CollectSubtree(registry, root, subtree);
+    Detach(registry, root);
+
+    for (Entity e : subtree)
+        registry.DestroyEntity(e);
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>void DestroyHierarchy(Registry&amp; registry, Entity root)
+{
+    std::vector&lt;Entity&gt; subtree;
+    CollectSubtree(registry, root, subtree);
+    Detach(registry, root);
+<span class="hl">    // Dénoue tout le sous-arbre AVANT toute destruction.</span>
+<span class="hl">    for (Entity e : subtree)</span>
+<span class="hl">        if (HierarchyComponent* h = registry.TryGet&lt;HierarchyComponent&gt;(e))</span>
+<span class="hl">        {</span>
+<span class="hl">            h-&gt;m_parent = NULL_ENTITY;</span>
+<span class="hl">            h-&gt;m_children.clear();</span>
+<span class="hl">        }</span>
+    for (Entity e : subtree)
+        registry.DestroyEntity(e);
+}</code></pre></div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5><code>Detach(root)</code> défait le seul lien qui sort du sous-arbre (vers le parent de la racine) ; la nouvelle passe défait tous ceux de l’intérieur. Aucun nœud détruit ne laisse de lien vers lui, ni chez un survivant, ni chez un autre mort.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : parcours de liste avec accès dispersés par <code>TryGet</code>, hors frame.</div>
+</div>
+</div>
+</div>
+
+<!-- E5 -->
+<div class="step" id="e5">
+<div class="h"><span class="n">Étape 5</span> Bug 53, seconde moitié : fermer la porte de service</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que <code>DestroyEntity</code> refuse un nœud lié dans toutes les configurations, sans que le <code>Registry</code> connaisse la hiérarchie.</div>
+<div><h5>Entrée (étape 4)</h5>Le dénouage garantit que la bonne porte ne présente jamais de nœud lié : la précondition peut être stricte.</div>
+</div>
+<h4>Scene/Hierarchy.cpp et Hierarchy.hpp — la réponse</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>// (n'existe pas)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">// Hierarchy.hpp</span>
+<span class="hl">[[nodiscard]] bool HasOutgoingLinks(const Registry&amp; registry, Entity e);</span>
+
+<span class="hl">// Hierarchy.cpp</span>
+<span class="hl">bool HasOutgoingLinks(const Registry&amp; registry, Entity e)</span>
+<span class="hl">{</span>
+<span class="hl">    const HierarchyComponent* h = registry.TryGet&lt;HierarchyComponent&gt;(e);</span>
+<span class="hl">    if (!h) return false;</span>
+<span class="hl">    return h-&gt;m_parent != NULL_ENTITY || !h-&gt;m_children.empty();</span>
+<span class="hl">}</span></code></pre></div>
+</div>
+<h4>Scene/Registry.hpp — la question</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>namespace LV3
+{
+    class ComponentTypeManager { … };
+    class Registry
+    {
+        void DestroyEntity(Entity e)
+        {
+            LV3_ASSERT(IsAlive(e) &amp;&amp; "…");
+            if (!IsAlive(e))
+                return;
+
+            for (auto&amp; storage : m_Storages)
+                …</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>namespace LV3
+{
+<span class="hl">    class Registry;</span>
+<span class="hl">    // Déclarée ici, définie dans Hierarchy.cpp.</span>
+<span class="hl">    [[nodiscard]] bool HasOutgoingLinks(const Registry&amp; registry, Entity e);</span>
+    class ComponentTypeManager { … };
+    class Registry
+    {
+        void DestroyEntity(Entity e)
+        {
+            LV3_ASSERT(IsAlive(e) &amp;&amp; "…");
+            if (!IsAlive(e))
+                return;
+<span class="hl">            LV3_ASSERT(!HasOutgoingLinks(*this, e) &amp;&amp; "DestroyEntity : entité encore</span>
+<span class="hl">                liée dans la hiérarchie — passer par DestroyHierarchy, ou Detach() d'abord");</span>
+<span class="hl">            if (HasOutgoingLinks(*this, e))</span>
+<span class="hl">                return;     // garde-fou silencieux en Release</span>
+            for (auto&amp; storage : m_Storages)
+                …</code></pre></div>
+</div>
+<div class="warn"><b>Une correction en cours d’échange.</b> La première proposition ne contenait que l’assertion. En lisant <code>Core/config.h</code> pour écrire les tests, Claude a constaté qu’éteinte, <code>LV3_ASSERT</code> se réduit à <code>(void)sizeof(…)</code> : la mauvaise porte serait restée ouverte en Release. Le <code>if … return</code> a été ajouté avant que le code ne soit appliqué (§2.2).</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Debug et <code>RelWithAsserts</code> : la mauvaise porte arrête le programme sur la ligne fautive. Release : elle ne fait rien. La bonne porte passe dans les trois.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : un test par destruction.</div>
+</div>
+</div>
+</div>
+
+<!-- E6 -->
+<div class="step" id="e6">
+<div class="h"><span class="n">Étape 6</span> Valider 53 : cinq tests, deux portes, trois configurations</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Prouver les deux moitiés : la mauvaise porte est fermée, la bonne reste ouverte et ne laisse aucun fantôme.</div>
+<div><h5>Entrée (étapes 4 et 5)</h5>Les deux correctifs appliqués. Le point d’insertion le plus sûr : <code>SpawnCameraGizmos</code>, juste après <code>linkChildToParent(registry, g, camEntity)</code>, où les deux handles sont en portée.</div>
+</div>
+<div class="scroll">
+<table>
+<thead><tr><th>Test</th><th>Configuration</th><th>Action</th><th>Attendu</th><th>Obtenu</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>Debug</td><td><code>Registry</code> jetable : <code>linkChildToParent(b, a)</code>, puis <code>Detach(b)</code></td><td><code>HasOutgoingLinks</code> 1 / 1, puis 0 / 0</td><td><span class="pill ok">OK</span></td></tr>
+<tr><td>1</td><td>Debug, RelWithAsserts</td><td><code>registry.DestroyEntity(camEntity)</code> direct</td><td>arrêt avant la boucle de rendu ; <code>[LV3_ASSERT] !HasOutgoingLinks(*this, e) &amp;&amp; …</code></td><td><span class="pill ok">OK</span></td></tr>
+<tr><td>1bis</td><td>Release</td><td>même appel</td><td>pas de crash ; <code>IsAlive(camEntity)</code> = 1 après l’appel</td><td><span class="pill ok">OK</span></td></tr>
+<tr><td>2</td><td>Debug</td><td><code>DestroyHierarchy(registry, camEntity)</code></td><td>aucun assert ; <code>GetAliveCount</code> −2 (caméra + gizmo)</td><td><span class="pill ok">OK</span></td></tr>
+<tr><td>3</td><td>Debug, RelWithAsserts</td><td>les deux scènes v1compat, sans code de test</td><td>aucun assert, rendu inchangé</td><td><span class="pill ok">OK</span></td></tr>
+<tr><td>4</td><td>Debug, <code>LV3_DUMP_HIERARCHY=1</code></td><td>test 2, puis lecture du dump</td><td>ni la caméra ni <code>__gizmo(…)</code> dans les frames suivantes</td><td><span class="pill ok">OK</span></td></tr>
+</tbody>
+</table>
+</div>
+<pre><code>// TEST 1 / 1bis — inséré temporairement dans SpawnCameraGizmos, puis retiré
+static bool s_test1Done = false;
+if (!s_test1Done)
+{
+    s_test1Done = true;
+    Logger::info("[Test1] cible=" + EntityLabel(registry, camEntity)
+        + "  IsAlive avant=" + std::to_string(registry.IsAlive(camEntity)));
+    registry.DestroyEntity(camEntity);      // la mauvaise porte, volontairement
+    // Debug / RelWithAsserts : jamais atteint (abort dans DestroyEntity)
+    Logger::info("[Test1bis] IsAlive apres=" + std::to_string(registry.IsAlive(camEntity)));   // Release : 1
+}</code></pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Bug 53 clos le 17/09 (« Les tests sont OK »). Le test 0 est devenu permanent : <code>Test/TestHierarchy.cpp</code>, <code>test_hierarchy()</code>, premier test de <code>RunAllTests</code>. Les tests 1 à 4 ont été retirés (vérifié : absents du dépôt).</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E7 -->
+<div class="step" id="e7">
+<div class="h"><span class="n">Étape 7</span> Bug 57 — un nœud sans Transform ne coupe plus sa descendance</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que tout descendant vivant d’une racine soit visité, qu’il y ait ou non des nœuds sans <code>Transform</code> sur le chemin.</div>
+<div><h5>Entrée (étape 6)</h5>Un graphe dont les liens sont désormais toujours cohérents (53). Reste à garantir que la descente les suit tous.</div>
+</div>
+<h4>Scene/System.cpp — PropagateWorld</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>void PropagateWorld(Registry&amp; reg, Entity e, const Matrix44f&amp; parentWorld)
+{
+    TransformComponent* tr = reg.TryGet&lt;TransformComponent&gt;(e);
+<span class="hl">    if (!tr) return;</span>
+
+    tr-&gt;m_worldMatrix = tr-&gt;m_localMatrix * parentWorld;
+    const Matrix44f world = tr-&gt;m_worldMatrix;
+
+    if (const HierarchyComponent* h = reg.TryGet&lt;HierarchyComponent&gt;(e))
+        for (Entity child : h-&gt;m_children)
+            PropagateWorld(reg, child, world);
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>void PropagateWorld(Registry&amp; reg, Entity e, const Matrix44f&amp; parentWorld)
+{
+<span class="hl">    Matrix44f world = parentWorld;     // nœud transparent par défaut</span>
+<span class="hl">    if (TransformComponent* tr = reg.TryGet&lt;TransformComponent&gt;(e))</span>
+<span class="hl">    {</span>
+        tr-&gt;m_worldMatrix = tr-&gt;m_localMatrix * parentWorld;
+<span class="hl">        world = tr-&gt;m_worldMatrix;     // copie avant de récurser</span>
+<span class="hl">    }</span>
+    if (const HierarchyComponent* h = reg.TryGet&lt;HierarchyComponent&gt;(e))
+        for (Entity child : h-&gt;m_children)
+            PropagateWorld(reg, child, world);
+}</code></pre></div>
+</div>
+<div class="bad"><b>Contre-exemples écartés.</b> (1) Retirer la garde : <code>tr-&gt;m_worldMatrix</code> sur un pointeur nul. (2) Dupliquer la boucle de récursion dans la branche <code>if (!tr)</code> avec <code>parentWorld</code> : correct, mais deux copies d’une même boucle, avec deux matrices différentes qui ne sont égales que par construction ; le jour où l’on ajoute un traitement par enfant, rien ne rappelle la seconde copie.</div>
+<p><b>Calcul réel, en float32</b> (scène du laboratoire, t tel que l’ancre du Soleil a tourné de 30° et la Terre de 45° sur elle-même ; Groupe-Terre sans Transform entre les deux) :</p>
+<div class="io">
+<div><h5>Avant (dépôt du 16/09)</h5><code>PropagateWorld(Groupe-Terre)</code> : <code>TryGet</code> rend nul → retour. Terre et Lune gardent leur matrice monde d’initialisation, l’identité : position <b>(0 ; 0)</b>, au centre du Soleil, à toutes les frames.</div>
+<div><h5>Après</h5>Groupe-Terre transmet le monde du Soleil. Terre : local = R(45°) · T(10 ; 0), monde = local · R(30°), position <b>(8,660254 ; 5)</b>. Lune : local = T(2,5 ; 0), monde = local · monde(Terre), position <b>(9,307301 ; 7,4148145)</b>. Valeurs float32 exactes, chaque produit et chaque somme arrondis.</div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Le comportement des nœuds qui ont un <code>Transform</code> est identique au bit près (même produit, même ordre) ; seul change le chemin des nœuds sans <code>Transform</code>, qui ne faisait rien d’utile. Validé le 17/09 (« Cela compile et fonctionne avec les scènes de test »). La cuisson ciblée de la discussion D (<code>WorldTransformSystem(registry, roots)</code>) réutilise cette même fonction.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet dans ce lot. Le produit 4 × 4 <code>local · parentWorld</code> en SSE / AVX2 et l’ordre de traversée aplati appartiennent au chantier A3 (lot L06, étape 9, point L6-10), après la campagne de mesure.</div>
+</div>
+</div>
+</div>
+
+<!-- E8 -->
+<div class="step" id="e8">
+<div class="h"><span class="n">Étape 8</span> Bug 54 — poser le compromis, laisser Onky trancher</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Repousser le bouclage de la génération sans choisir seul un plafond d’entités qui engage tout le moteur.</div>
+<div><h5>Entrée</h5><code>Entity.hpp</code> (24/8, compromis déjà écrit en commentaire : « augmenter le nombre de générations réduit le risque mais réduit le nombre d’entités ») ; <code>EngineSettings.h</code> : <code>LV3_MAX_ENTITIES 4096</code>, référencé nulle part dans <code>Scene/</code>.</div>
+</div>
+<div class="scroll">
+<table>
+<thead><tr><th>Option proposée</th><th>Entités</th><th>Générations</th><th>Ce qu’elle engage</th></tr></thead>
+<tbody>
+<tr><td>12 / 20, aligné sur <code>LV3_MAX_ENTITIES</code></td><td class="num">4 095</td><td class="num">1 048 576</td><td>Fait d’un chiffre jamais branché une contrainte gravée dans le format binaire</td></tr>
+<tr><td><b>16 / 16</b></td><td class="num">65 535</td><td class="num">65 536</td><td>Marge ×16 au-dessus du budget déclaré, sans le graver</td></tr>
+<tr><td>Quarantaine d’index (format inchangé)</td><td class="num">16 777 215</td><td class="num">256</td><td>Recycler en FIFO ou après K frames : répartit l’usure, perd la localité cache du LIFO</td></tr>
+<tr><td>Statu quo documenté</td><td class="num">16 777 215</td><td class="num">256</td><td>Dette assumée jusqu’au premier système à fort renouvellement</td></tr>
+</tbody>
+</table>
+</div>
+<h4>Scene/Entity.hpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>inline constexpr std::uint32_t ENTITY_INDEX_BITS = <span class="hl">24u</span>;
+inline constexpr std::uint32_t ENTITY_INDEX_MASK = (1u &lt;&lt; ENTITY_INDEX_BITS) - 1u; <span class="hl">// 0x00FFFFFF</span>
+
+[[nodiscard]] constexpr <span class="hl">std::uint8_t</span> EntityGeneration(Entity e) noexcept
+{ return static_cast&lt;<span class="hl">std::uint8_t</span>&gt;(e &gt;&gt; ENTITY_INDEX_BITS); }
+
+[[nodiscard]] constexpr Entity MakeEntity(std::uint32_t index, <span class="hl">std::uint8_t</span> generation) noexcept
+{ return (static_cast&lt;Entity&gt;(generation) &lt;&lt; ENTITY_INDEX_BITS) | (index &amp; ENTITY_INDEX_MASK); }
+
+static_assert(MakeEntity(2u, 1u) == <span class="hl">0x01000002u</span>);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>inline constexpr std::uint32_t ENTITY_INDEX_BITS = <span class="hl">16u</span>;
+inline constexpr std::uint32_t ENTITY_INDEX_MASK = (1u &lt;&lt; ENTITY_INDEX_BITS) - 1u; <span class="hl">// 0x0000FFFF</span>
+
+[[nodiscard]] constexpr <span class="hl">std::uint16_t</span> EntityGeneration(Entity e) noexcept
+{ return static_cast&lt;<span class="hl">std::uint16_t</span>&gt;(e &gt;&gt; ENTITY_INDEX_BITS); }
+
+[[nodiscard]] constexpr Entity MakeEntity(std::uint32_t index, <span class="hl">std::uint16_t</span> generation) noexcept
+{ return (static_cast&lt;Entity&gt;(generation) &lt;&lt; ENTITY_INDEX_BITS) | (index &amp; ENTITY_INDEX_MASK); }
+
+static_assert(MakeEntity(2u, 1u) == <span class="hl">0x00010002u</span>);</code></pre></div>
+</div>
+<h4>Scene/Registry.hpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>LV3_ASSERT(idx &lt; ENTITY_INDEX_MASK &amp;&amp; "Capacité d'entités épuisée <span class="hl">(16,7 M)</span> …");
+…
+++m_Generations[idx];    <span class="hl">// uint8_t : le wrap 255→0 est volontaire</span>
+…
+std::vector&lt;<span class="hl">std::uint8_t</span>&gt;  m_Generations;</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>LV3_ASSERT(idx &lt; ENTITY_INDEX_MASK &amp;&amp; "Capacité d'entités épuisée <span class="hl">(65 536)</span> …");
+…
+++m_Generations[idx];    <span class="hl">// uint16_t : le wrap 65535→0 est volontaire</span>
+…
+std::vector&lt;<span class="hl">std::uint16_t</span>&gt; m_Generations;</code></pre></div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Deux fichiers seulement : tout le code passe par <code>EntityIndex</code>, <code>EntityGeneration</code>, <code>MakeEntity</code> et <code>ENTITY_INDEX_MASK</code>. <code>NULL_ENTITY = 0xFFFFFFFF</code> reste valable sans modification. Aucune scène JSON n’est invalidée : le <code>Serializer</code> reconstruit les entités par nom, aucun handle brut n’est écrit sur disque. (Le message « 65 536 » de l’assertion est inexact d’une unité : amendement AM2.)</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : arithmétique de bits par entité, hors boucle chaude.</div>
+</div>
+</div>
+</div>
+
+<!-- E9 -->
+<div class="step" id="e9">
+<div class="h"><span class="n">Étape 9</span> Bug 54 — vérifier qu’aucun code ne supposait 8 bits, puis provoquer le recyclage</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Prouver que le repack est isolé, puis que le seuil a bien bougé, dans les deux sens.</div>
+<div><h5>Entrée (étape 8)</h5>Le nouveau format compile. Aucune scène ne recycle un slot des milliers de fois : il faut le provoquer.</div>
+</div>
+<p>La recherche de <code>uint8_t</code> faite par Onky dans la solution a trouvé <code>FaceFlag</code> (<code>Core/Types.h</code>, <code>Geometry/FaceView.h</code>) et la quantification couleur de <code>Rendering/Fragment.cpp</code> : sans rapport avec l’entité. Puis deux tests, sur un <code>Registry</code> jetable, devenus permanents (<code>Test/Test54_Recyclage.cpp</code>, appelé par <code>RunAllTests</code>) :</p>
+<pre><code>// Test A : l'ancien seuil (256) est désormais sans danger
+Registry r;
+Entity old = r.CreateEntity();                 // idx 0, génération 0
+r.DestroyEntity(old);                          // génération 1
+for (int i = 1; i &lt; 300; ++i)                  // 299 recyclages de plus, toujours le même slot (LIFO, seul libre)
+    r.DestroyEntity(r.CreateEntity());
+// IsAlive(old) attendu : 0      (génération du slot = 300)
+
+// Test B : la limite existe toujours, à 65 536
+for (int i = 1; i &lt; 65536; ++i) …              // 65 536 destructions au total
+// IsAlive(old) attendu : 1      (génération du slot = 65 536 mod 65 536 = 0 : ABA)</code></pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>A rend 0, B rend 1 (« C’est bon »). B est un test de <b>lucidité</b> : il doit afficher 1. Vouloir le faire passer à 0 reviendrait à prétendre qu’un compteur de largeur fixe élimine l’ABA. Bug 54 clos le 17/09.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E10 -->
+<div class="step" id="e10">
+<div class="h"><span class="n">Étape 10</span> Bug 59 — séparer l’impression de la descente</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que le dump n’accède jamais à un composant absent, et qu’il montre toute la descendance, nœuds incomplets compris.</div>
+<div><h5>Entrée (étape 7)</h5>Le principe établi pour 57 : « ma part » et « la descente » sont deux décisions.</div>
+</div>
+<h4>Scene/System.cpp — DebugDisplaySystemRecursive</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>void DebugDisplaySystemRecursive(Registry&amp; registry, Entity entity, int ident)
+{
+<span class="hl">    if (!registry.hasComponent&lt;TransformComponent&gt;(entity)</span>
+<span class="hl">        &amp;&amp; !registry.hasComponent&lt;NameComponent&gt;(entity))</span>
+<span class="hl">        return;</span>
+    for (int i = 0; i &lt; ident; i++) std::cout &lt;&lt; "  ";
+<span class="hl">    auto&amp; transform = registry.getComponent&lt;TransformComponent&gt;(entity);</span>
+<span class="hl">    auto&amp; name      = registry.getComponent&lt;NameComponent&gt;(entity);</span>
+    … std::cout &lt;&lt; " - " &lt;&lt; name.m_id &lt;&lt; Local(…) &lt;&lt; World(…);
+    if (registry.hasComponent&lt;HierarchyComponent&gt;(entity))
+        for (Entity child : …m_children)
+            DebugDisplaySystemRecursive(registry, child, ident + 1);
+}</code></pre></div>
+<div class="ap"><div class="t">Après (dépôt)</div><pre><code>void DebugDisplaySystemRecursive(Registry&amp; registry, Entity entity, int ident)
+{
+<span class="hl">    const bool hasTransform = registry.hasComponent&lt;TransformComponent&gt;(entity);</span>
+<span class="hl">    const bool hasName      = registry.hasComponent&lt;NameComponent&gt;(entity);</span>
+    for (int i = 0; i &lt; ident; i++) std::cout &lt;&lt; "  ";
+<span class="hl">    if (hasTransform &amp;&amp; hasName)</span>
+    {
+        auto&amp; transform = registry.getComponent&lt;TransformComponent&gt;(entity);
+        auto&amp; name      = registry.getComponent&lt;NameComponent&gt;(entity);
+        … std::cout &lt;&lt; " - " &lt;&lt; name.m_id &lt;&lt; Local(…) &lt;&lt; World(…);
+    }
+<span class="hl">    else</span>
+<span class="hl">        std::cout &lt;&lt; "\033[31m= - [noeud sans Nom ou Transform]\033[0m" &lt;&lt; std::endl;</span>
+<span class="hl">    if (registry.hasComponent&lt;HierarchyComponent&gt;(entity))   // inconditionnel</span>
+        for (Entity child : …m_children)
+            DebugDisplaySystemRecursive(registry, child, ident + 1);
+}</code></pre></div>
+</div>
+<div class="bad"><b>Contre-exemple écarté.</b> Remplacer <code>&amp;&amp;</code> par <code>||</code> dans la garde : c’est la négation correcte, l’accès au composant absent disparaît, mais le <code>return</code> coupe encore la descente. Un nœud d’organisation ferait taire tout son sous-arbre : l’anti-patron de 57, déplacé dans l’outil de debug.</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Claude proposait d’abord un « trou » visuel (pas de ligne pour le nœud incomplet) ; Onky a préféré une ligne de substitution (« <code>[nœud sans nom]</code> c’est plus compréhensible »). Dans le dépôt, Onky l’a écrite <code>[noeud sans Nom ou Transform]</code>, en rouge : plus exacte, puisque les deux manques sont possibles (amendement AM4).</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : sortie console.</div>
+</div>
+</div>
+</div>
+
+<!-- E11 -->
+<div class="step" id="e11">
+<div class="h"><span class="n">Étape 11</span> Tester un nœud sans nom, sans abîmer une scène</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Exercer la branche de substitution. Onky : « sûrement pas en supprimant l’id d’un nœud ».</div>
+<div><h5>Entrée (étape 10)</h5>Supprimer l’<code>id</code> d’un nœud JSON testerait le chemin d’erreur du chargeur (D-L6-2 : un nœud sans <code>id</code> ou un parent introuvable font échouer le chargement), pas le dump. Le cas réel est un nœud qui n’a jamais eu de <code>Transform</code>.</div>
+</div>
+<pre><code>// TEST 59 — construit en mémoire, sans JSON ; inséré temporairement au début de main()
+Registry r;
+Entity root  = r.CreateEntity();
+r.addComponent(root, NameComponent{ "Root" });
+r.addComponent(root, TransformComponent{});
+
+Entity group = r.CreateEntity();               // HierarchyComponent seul : ni Transform, ni Name
+linkChildToParent(r, group, root);
+
+Entity leaf  = r.CreateEntity();
+r.addComponent(leaf, NameComponent{ "Leaf" });
+r.addComponent(leaf, TransformComponent{});
+linkChildToParent(r, leaf, group);
+
+DebugDisplaySystem(r);</code></pre>
+<p class="small">Sortie attendue, reconstituée d’après les <code>std::cout</code> de la fonction (codes de couleur ANSI omis) :</p>
+<pre class="out"> - Root	Local(0, 0, 0)    	World(0, 0, 0)
+  = - [noeud sans Nom ou Transform]
+     - Leaf	Local(0, 0, 0)    	World(0, 0, 0)</pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>La feuille s’affiche sous le nœud incomplet : la descente n’est plus coupée (« C’est bon, cela fonctionne »). Le test n’a pas été rendu permanent (point PH1C-9). Bug 59 clos le 17/09, et avec lui la discussion C.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E12 -->
+<div class="step" id="e12">
+<div class="h"><span class="n">Étape 12</span> Consigner : le carnet de route</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que le carnet dise ce que le dépôt contient, pour ne plus reproduire l’écart de l’étape 1.</div>
+<div><h5>Entrée</h5>Les quatre bugs validés.</div>
+</div>
+<p>Tableau de la phase 1 : 53, 57, 59 et 54 marqués <i>(corrigé)</i>, 54 avec <i>repack 16/16</i>. Notes : une entrée fermée par bug, avec le correctif réellement appliqué et les tests qui l’ont validé ; le fil conducteur entre 57 et 59, « à formaliser s’il réapparaît une troisième fois ». Discussion C marquée <b>CLOS</b> ; ordre de la suite D → E → G.</p>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Discussion C close le 17/09/2026. Ce lot, reconstruit le 12/11, ajoute ce que le dépôt de novembre révèle (section 6).</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+<p>Ce qu’il ne faut pas faire, avec le chiffre qui le prouve. Chaque ligne renvoie à l’étape où le cas a été rencontré ou écarté. Les chiffres de scène se refont dans le laboratoire 1.1.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Ce qu’il ne faut pas faire</th><th>Le chiffre</th><th>Étape</th></tr></thead>
+<tbody>
+<tr><td>CE1</td><td>Laisser <code>DestroyEntity</code> accepter un nœud lié</td><td class="num">Scène du laboratoire : 1 entité détruite au lieu de 2 ; la Lune vivante, jamais revisitée, matrice monde figée à toutes les frames suivantes ; 0 assert, 0 ligne de journal</td><td><a href="#e2">2</a></td></tr>
+<tr><td>CE2</td><td>Ajouter la précondition sans dénouer d’abord</td><td class="num"><code>DestroyHierarchy</code> s’arrête sur 100 % des sous-arbres qui ont au moins un enfant (Debug) ; en Release, 0 entité détruite et la racine détachée de son parent</td><td><a href="#e3">3</a></td></tr>
+<tr><td>CE3</td><td>Écrire le garde-fou en assertion seule</td><td class="num">Release : expression jamais évaluée (<code>(void)sizeof(…)</code>), la mauvaise porte reste ouverte dans la seule configuration livrée</td><td><a href="#e5">5</a></td></tr>
+<tr><td>CE4</td><td>Faire inclure <code>Hierarchy.hpp</code> par <code>Registry.hpp</code></td><td class="num">Cycle d’inclusion direct (<code>Hierarchy.hpp</code> inclut <code>Registry.hpp</code>) ; la couche générique apprend la forme de <code>HierarchyComponent</code> (R20)</td><td><a href="#t-owner">2.1</a></td></tr>
+<tr><td>CE5</td><td>Garder <code>if (!tr) return;</code> dans <code>PropagateWorld</code></td><td class="num">Terre et Lune dessinées en (0 ; 0), au centre du Soleil, à toutes les frames ; à l’instant de référence de l’étape 7 elles devraient être en (8,660254 ; 5) et (9,307301 ; 7,4148145)</td><td><a href="#e7">7</a></td></tr>
+<tr><td>CE6</td><td>Dupliquer la boucle de récursion dans les deux branches</td><td class="num">2 sites d’appel récursif à maintenir à l’identique, 2 matrices (<code>parentWorld</code>, <code>world</code>) égales par construction seulement</td><td><a href="#e7">7</a></td></tr>
+<tr><td>CE7</td><td>Garder 8 bits de génération avec un recyclage LIFO</td><td class="num">Un système qui crée et détruit des entités à chaque frame : un vieux ticket redevient valide après 256 frames, soit 4,3 s à 60 i/s (18 min 12 s en 16/16)</td><td><a href="#e8">8</a></td></tr>
+<tr><td>CE8</td><td>Graver <code>LV3_MAX_ENTITIES</code> (4096) dans le format du handle</td><td class="num">Le chiffre n’est lu par aucun fichier de <code>Scene/</code> ; en 12/20, la 4 096ᵉ entité simultanée déclencherait l’assertion de capacité</td><td><a href="#e8">8</a></td></tr>
+<tr><td>CE9</td><td>Corriger la garde de 59 par la seule inversion <code>||</code></td><td class="num">Laboratoire : Groupe-Terre absent du dump et ses 2 descendants (Terre, Lune) avec lui</td><td><a href="#e10">10</a></td></tr>
+<tr><td>CE10</td><td>Tester la branche « sans nom » en supprimant l’<code>id</code> d’un nœud JSON</td><td class="num">On exerce le chemin d’erreur du chargeur (D-L6-2, chargement refusé), 0 ligne de dump</td><td><a href="#e11">11</a></td></tr>
+<tr><td>CE11</td><td>Croire un document qui dit « validé » sans lire le code</td><td class="num">Carnet : « correctif validé » ; dépôt : 0 occurrence de <code>HasOutgoingLinks</code></td><td><a href="#e1">1</a></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>Détruire un objet et tout ce qui le suit</h3>
+<pre><code>// Le vaisseau et sa tourelle, son réacteur, sa caméra embarquée : tout part.
+LV3::DestroyHierarchy(registry, ship);</code></pre>
+
+<h3>Sauver un enfant avant de détruire son parent</h3>
+<pre><code>// La capsule de sauvetage doit survivre au vaisseau.
+LV3::Detach(registry, capsule);          // devient une racine : monde = son local
+LV3::DestroyHierarchy(registry, ship);
+// Pour qu'elle reste à la même place à l'écran, il faudrait keepWorld (refusé aujourd'hui, L6-7).</code></pre>
+
+<h3>Détruire une entité isolée</h3>
+<pre><code>// Une entité sans parent ni enfant : DestroyEntity est légal et suffit.
+LV3_ASSERT(!LV3::HasOutgoingLinks(registry, flare));
+registry.DestroyEntity(flare);</code></pre>
+
+<h3>Ce qui arrive quand on se trompe de porte</h3>
+<pre class="out">[LV3_ASSERT] !HasOutgoingLinks(*this, e) &amp;&amp; "DestroyEntity : entité encore liée dans la hiérarchie — passer par DestroyHierarchy, ou Detach() d'abord"
+  …\LibraryV3\Scene\Registry.hpp:177</pre>
+<p class="small">Debug : le débogueur s’arrête sur cette ligne, la pile d’appels mène à l’appelant fautif. <code>RelWithAsserts</code> : même message sur <code>stderr</code>, puis <code>abort()</code>. Release : rien ne se passe et rien n’est écrit (AM8).</p>
+
+<h3>Un nœud de regroupement dans une scène</h3>
+<pre><code>{ "id": "Inner-Planets", "parent": "Solar-System", "components": null },   // aucun composant : nœud transparent
+{ "id": "Mercury-Anchor", "parent": "Inner-Planets",
+  "components": { "Transform": { "translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1] } } },
+{ "id": "Venus-Anchor",   "parent": "Inner-Planets", "components": { "Transform": { … } } }</code></pre>
+<p class="small">Depuis le correctif de 57, <code>Inner-Planets</code> transmet le monde de <code>Solar-System</code> à ses enfants sans rien y ajouter. Depuis celui de 59, il apparaît dans le dump sous forme de ligne de substitution. Il n’apparaîtra pas du tout s’il est racine (AM6). <code>"components": null</code> est la délégation explicite de la règle du 07/10 : <code>ParseNode</code> journalise une information « aucun composant » ; une clé <code>components</code> absente serait signalée comme un souci.</p>
+
+<h3>Allumer le dump récursif</h3>
+<pre><code>&lt;!-- build/LV3.User.props (non versionné), le temps d'une séance Debug --&gt;
+&lt;ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'"&gt;
+  &lt;ClCompile&gt;
+    &lt;PreprocessorDefinitions&gt;LV3_VERBOSE_LOG=1;%(PreprocessorDefinitions)&lt;/PreprocessorDefinitions&gt;
+  &lt;/ClCompile&gt;
+&lt;/ItemDefinitionGroup&gt;</code></pre>
+<p class="small"><code>DebugDisplaySystem</code> est appelé deux fois dans <code>main.cpp</code> sous <code>#if LV3_DEBUG</code> puis <code>#if LV3_VERBOSE_LOG</code> : après le chargement (matrices encore vides) et à chaque frame. Ne pas le confondre avec <code>DrawHierarchySystem</code> (lot PH0, <code>LV3_DUMP_HIERARCHY</code>), qui liste le pool de <code>Transform</code> à plat.</p>
+
+<h3>Lire un ticket dans le débogueur</h3>
+<pre><code>e = 0x0003002A   →   génération 0x0003 = 3, index 0x002A = 42
+EntityLabel(registry, e)   →   "Earth (idx 42, gen 3)"</code></pre>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que le dépôt et les lots suivants changent à cet échange</h2>
+<p>En relisant le dépôt de novembre 2026 (LIB <code>e7cae94</code>, EXE <code>5203980</code>) pour reconstruire ce lot, plusieurs affirmations de l’échange se révèlent fausses, améliorées ou incomplètes. Chacune est donnée en avant / après. Rien ici n’est acté : les points ouverts vont dans la roadmap.</p>
+
+<div class="amend"><div class="h">AM1 · Ce que provoquait réellement le bug 59 <span class="pill bad">erreur de l’échange</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant (échange, carnet)</div><pre><code>« getComponent non-const ne vérifie rien : elle descend dans
+  getStorage&lt;T&gt;()-&gt;Get(entity), l'index sparse est invalide,
+  l'accès à m_Dense part hors limites. Pas un crash propre :
+  valeurs aberrantes, plantage plus tard, ou rien du tout. »</code></pre></div>
+<div class="ap"><div class="t">Après (lu dans le dépôt)</div><pre><code>SparseSet::Get(entity) commence par LV3_ASSERT(Contains(entity));
+DebugDisplaySystem n'est appelé que sous LV3_DEBUG + VERBOSE_LOG,
+donc toujours avec les assertions allumées :
+→ arrêt propre : [LV3_ASSERT] Contains(entity), SparseSet.hpp
+(en Release, l'appel n'est pas compilé)</code></pre></div>
+</div>
+<p class="small">Le diagnostic (garde fausse, composant absent lu) et le correctif restent justes ; c’est la conséquence décrite qui était fausse. Ce qui était vraiment silencieux, c’était le quatrième cas de la table §2.5 : un nœud sans aucun des deux composants faisait taire tout son sous-arbre. PH1C-16.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM2 · 65 535 entités, pas 65 536 <span class="pill warn">incohérence chiffrée</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant (échange, carnet, architecture-rules, assertion)</div><pre><code>« 65 536 entités max »
+LV3_ASSERT(idx &lt; ENTITY_INDEX_MASK &amp;&amp; "… épuisée (65 536) …");</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>idx &lt; 0xFFFF   →   index 0 … 65 534   →   65 535 entités
+l'index 0xFFFF est réservé : avec la génération 0xFFFF,
+il formerait NULL_ENTITY = 0xFFFFFFFF</code></pre></div>
+</div>
+<p class="small">Sans conséquence pratique (marge ×16 sur le budget). À corriger dans le message de l’assertion et les documents. PH1C-5.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM3 · <code>Entity.hpp</code> se contredit <span class="pill warn">documentation</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Dépôt — commentaire du bloc de déclarations</div><pre><code>//  Entity — ticket daté : [ génération : 8 bits ][ index : 24 bits ]
+//  - index      : slot dans le Registry (16 777 215 entités max)</code></pre></div>
+<div class="ap"><div class="t">À écrire</div><pre><code>//  Entity — ticket daté : [ génération : 16 bits ][ index : 16 bits ]
+//  - index      : slot dans le Registry (65 535 entités max,
+//                 l'index 0xFFFF est réservé à NULL_ENTITY)</code></pre></div>
+</div>
+<p class="small">Le grand commentaire d’en-tête du fichier a été mis à jour, pas celui-ci. PH1C-6.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM4 · La ligne de substitution <span class="pill ok">améliorée par Onky</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Proposition de l’échange</div><pre><code>std::cout &lt;&lt; " - [noeud sans nom]" &lt;&lt; std::endl;</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>std::cout &lt;&lt; "\033[31m= - [noeud sans Nom ou Transform]\033[0m" &lt;&lt; std::endl;</code></pre></div>
+</div>
+<p class="small">Le texte dit vrai dans les trois cas (Name absent, Transform absent, les deux) ; le rouge le détache du reste. Il ne dit pas encore lequel des deux manque (PH1C-12).</p>
+</div></div>
+
+<div class="amend"><div class="h">AM5 · Deux tests sont devenus permanents <span class="pill ok">évolution</span> <span class="pill warn">en-têtes périmés</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Échange</div><pre><code>Tests 0 à 4 et test 54 : « à coller temporairement »,
+« à retirer après validation »</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>Test/TestHierarchy.cpp    → test_hierarchy()     (ex-Test 0)
+Test/Test54_Recyclage.cpp → test54_Recyclage()   (A et B)
+appelés en tête de RunAllTests (sous LV3_DEBUG), verdict booléen,
+Logger::success / Logger::error
+… mais leurs commentaires disent toujours « à retirer après validation »</code></pre></div>
+</div>
+<p class="small">Bonne décision d’Onky : ce sont des tests de non-régression bon marché. Restent à mettre à jour leurs en-têtes (PH1C-7) et à couvrir ce qui ne l’est pas : <code>DestroyHierarchy</code>, <code>PropagateWorld</code> à travers un nœud sans Transform, le dump (PH1C-8, PH1C-9).</p>
+</div></div>
+
+<div class="amend"><div class="h">AM6 · Une troisième occurrence du même anti-patron <span class="pill bad">dette relevée</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Dépôt — DebugDisplaySystem</div><pre><code>registry.ForEachAlive([&amp;](Entity entity)
+{
+<span class="hl">    if (registry.hasComponent&lt;TransformComponent&gt;(entity)</span>
+        &amp;&amp; IsRoot(registry, entity))
+        DebugDisplaySystemRecursive(registry, entity, 0);
+});
+// racine sans Transform : tout l'arbre est absent du dump</code></pre></div>
+<div class="pr"><div class="t">Proposé (PH1C-1, non appliqué)</div><pre><code>registry.ForEachAlive([&amp;](Entity entity)
+{
+    const bool inTree  = registry.hasComponent&lt;HierarchyComponent&gt;(entity);
+    const bool hasXf   = registry.hasComponent&lt;TransformComponent&gt;(entity);
+<span class="hl">    if ((inTree || hasXf) &amp;&amp; IsRoot(registry, entity))   // toute racine</span>
+        DebugDisplaySystemRecursive(registry, entity, 0);
+});</code></pre></div>
+</div>
+<p class="small"><code>WorldTransformSystem</code> n’a pas ce défaut (sa passe 1 part de toute racine hiérarchisée, avec ou sans Transform). Le carnet demandait de formaliser la règle si le patron réapparaissait une troisième fois : c’est le cas (règle PH1C.a proposée, PH1C-2). Laboratoire : case « Soleil sans Transform ».</p>
+</div></div>
+
+<div class="amend"><div class="h">AM7 · Une deuxième porte de service, toujours ouverte <span class="pill bad">dette relevée</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Dépôt — Registry.hpp</div><pre><code>template &lt;typename T&gt;
+void removeComponent(Entity entity);   // générique, sans garde
+
+registry.removeComponent&lt;HierarchyComponent&gt;(terre);
+// le parent garde Terre dans m_children (ticket VIVANT),
+// la Lune garde Terre comme parent : jamais revisitée → gelée
+// Terre passe en « solitaire » : monde = local, elle saute</code></pre></div>
+<div class="pr"><div class="t">Options (PH1C-3, non tranchées)</div><pre><code>(a) interdire à la compilation :
+    template&lt;&gt; void Registry::removeComponent&lt;HierarchyComponent&gt;(Entity) = delete;
+    et un verbe Hierarchy : RemoveFromHierarchy(e) = Detach(e)
+    + détacher (ou réparenter) ses enfants, puis retirer
+(b) garde à l'exécution, même patron que DestroyEntity :
+    LV3_ASSERT(!HasOutgoingLinks(…)) + refus</code></pre></div>
+</div>
+<p class="small">Aucun appel aujourd’hui : <code>removeComponent</code> n’est utilisé nulle part dans les deux dépôts. Laboratoire : bouton « 2ᵉ porte ».</p>
+</div></div>
+
+<div class="amend"><div class="h">AM8 · Le refus de Release est muet <span class="pill warn">décision à prendre</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Dépôt</div><pre><code>if (HasOutgoingLinks(*this, e))
+    return;     // aucun journal, aucune valeur de retour
+// l'appelant croit l'entité détruite : elle reste vivante,
+// visible, et continue d'occuper son slot</code></pre></div>
+<div class="pr"><div class="t">Options (PH1C-4)</div><pre><code>(a) Logger::warn une fois par entité refusée
+(b) [[nodiscard]] bool DestroyEntity(Entity) : false si refusé
+(c) rester muet, documenté : un bug d'appel est trouvé en Debug</code></pre></div>
+</div>
+</div></div>
+
+<div class="amend"><div class="h">AM9 · Le patron « assertion + repli » a essaimé <span class="pill ok">évolution</span></div><div class="b">
+<pre><code>// Scene/RenderSystem.cpp (phase G)
+// Garanti par RegisterMesh. Le if est un filet memoire actif en Release
+// (meme patron que DestroyEntity, bug 53) : un seul test par mesh, gratuit.
+LV3_ASSERT(nVerts &lt;= ClipSpaceBuffer::Capacity());
+if (nVerts &gt; ClipSpaceBuffer::Capacity()) continue;</code></pre>
+<p class="small">Le patron mérite son nom de règle (PH1C.b proposée).</p>
+</div></div>
+
+<div class="amend"><div class="h">AM10 · La discussion D réutilise le correctif de 57 <span class="pill ok">conforme</span></div><div class="b">
+<p class="small">La cuisson ciblée (bug 65, règle S13) ajoute <code>WorldTransformSystem(registry, std::span&lt;const Entity&gt; roots)</code>, qui appelle <code>PropagateWorld</code> sur chaque caméra rendue, avec une précondition assertée <code>LV3_ASSERT(IsRoot(registry, e))</code>. Elle hérite du comportement transparent : un gizmo rangé un jour sous un nœud d’organisation, sous sa caméra, serait bien propagé.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM11 · Le compteur <code>XformNodes</code> n’est jamais incrémenté <span class="pill bad">dette de mesure</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Dépôt</div><pre><code>// Core/Profiler.h
+XformNodes,        // noeuds visites par PropagateWorld
+// … aucun LV3_PROF_COUNT(XformNodes, …) dans tout le dépôt
+// summaries de mesure : XformNodes;0;0;0;0</code></pre></div>
+<div class="pr"><div class="t">Proposé (PH1C-11)</div><pre><code>void PropagateWorld(…)
+{
+    LV3_PROF_COUNT(EProfCounter::XformNodes, 1);   // nœuds visités,
+    …                                            // transparents compris
+}</code></pre></div>
+</div>
+<p class="small">La décision A3 (traversée aplatie, dirty par sous-arbre) doit se prendre sur des chiffres ; le nombre de nœuds visités par frame en est un.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM12 · Recoupements avec les roadmaps des lots précédents <span class="pill">clôtures proposées</span></div><div class="b">
+<ul>
+<li><b>L3-1</b> (découpage de l’entité) : 16/16 est en place dans <code>Entity.hpp</code> ; la leçon L03 et son artefact restent en 24/8. Clôture proposée de la vérification, la mise à jour de la leçon reste à décider (PH1C-20).</li>
+<li><b>L3-17</b> (la leçon L03 ignore les garde-fous de destruction) : ce lot documente <code>HasOutgoingLinks</code> et le dénouage ; un renvoi depuis la leçon suffirait (PH1C-19).</li>
+<li><b>PH0-7</b> (handles périmés dans <code>overlapping_entities</code>) : la moitié « à vérifier » est tranchée, <code>TryGet</code> refuse un ticket périmé (<code>Contains</code> compare le handle complet) tant que la génération n’a pas bouclé ; l’EXIT vers un handle mort reste à décider (PH1C-18).</li>
+<li><b>L3-14</b> : le commentaire « ordre sacré » est toujours dans <code>DestroyEntity</code>. <b>L6-3</b> : l’assertion de <code>linkChildToParent</code> est toujours sous <code>#ifdef _DEBUG</code>. <b>L6-9</b> : <code>DestroyHierarchy</code> alloue toujours un <code>std::vector</code> par appel. Inchangés, non repris ici.</li>
+</ul>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>Prédictions vérifiables</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Situation</th><th>Debug</th><th>RelWithAsserts</th><th>Release</th></tr></thead>
+<tbody>
+<tr><td><code>DestroyEntity</code> sur un nœud qui a un parent ou un enfant</td><td>arrêt, <code>Registry.hpp:177</code></td><td>arrêt, message sur <code>stderr</code></td><td>refus muet, <code>IsAlive</code> reste vrai</td></tr>
+<tr><td><code>DestroyHierarchy</code> sur un sous-arbre de n nœuds</td><td colspan="3">aucun assert ; <code>GetAliveCount</code> −n ; le parent de la racine perd un enfant ; tous les tickets du sous-arbre refusés par <code>TryGet</code></td></tr>
+<tr><td>Nœud sans Transform entre une racine et une feuille</td><td colspan="3">la feuille a monde = local(feuille) · monde(racine), au bit près du calcul sans le nœud</td></tr>
+<tr><td><code>test_hierarchy</code>, <code>test54_Recyclage</code></td><td>SUCCES (A : 0, B : 1)</td><td colspan="2">non exécutés (<code>RunAllTests</code> est sous <code>LV3_DEBUG</code>)</td></tr>
+<tr><td>Dump, nœud incomplet</td><td>ligne rouge de substitution, descendants affichés</td><td colspan="2">non compilé</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Test hors moteur à écrire (proposé, PH1C-8)</h3>
+<pre><code>// Test/Test_PH1C_SceneGraph.cpp — PROPOSÉ, non écrit (#include &lt;cstring&gt; pour memcmp)
+bool Test_PH1C_SceneGraph()
+{
+    bool ok = true;
+
+    // 1. DestroyHierarchy : delta exact, liens défaits, tickets périmés refusés
+    {
+        Registry r;
+        const Entity a = r.CreateEntity(), b = r.CreateEntity(), c = r.CreateEntity(), d = r.CreateEntity();
+        for (Entity e : { a, b, c, d }) r.addComponent(e, TransformComponent{});
+        linkChildToParent(r, b, a);  linkChildToParent(r, c, b);  linkChildToParent(r, d, a);
+        const std::uint32_t before = r.GetAliveCount();                    // 4
+        DestroyHierarchy(r, b);                                            // b et c
+        ok &amp;= r.GetAliveCount() == before - 2;
+        ok &amp;= !r.IsAlive(b) &amp;&amp; !r.IsAlive(c) &amp;&amp; r.IsAlive(a) &amp;&amp; r.IsAlive(d);
+        ok &amp;= r.getComponent&lt;HierarchyComponent&gt;(a).m_children.size() == 1; // d seul
+        ok &amp;= r.TryGet&lt;TransformComponent&gt;(b) == nullptr;                  // ticket périmé
+        ok &amp;= HasOutgoingLinks(r, d);                                      // d garde son parent a
+    }
+
+    // 2. PropagateWorld traverse un nœud sans Transform (sens transparent)
+    {
+        Registry r;
+        const Entity root = r.CreateEntity(), grp = r.CreateEntity(), leaf = r.CreateEntity();
+        r.addComponent(root, TransformComponent{});
+        r.addComponent(leaf, TransformComponent{});
+        r.getComponent&lt;TransformComponent&gt;(root).m_local.position = Vec3f(10.f, 0.f, 0.f);
+        r.getComponent&lt;TransformComponent&gt;(leaf).m_local.position = Vec3f(2.5f, 0.f, 0.f);
+        linkChildToParent(r, grp, root);  linkChildToParent(r, leaf, grp);
+        LocalTransformSystem(r);  WorldTransformSystem(r);
+        const Matrix44f&amp; L  = r.getComponent&lt;TransformComponent&gt;(leaf).m_localMatrix;
+        const Matrix44f&amp; R0 = r.getComponent&lt;TransformComponent&gt;(root).m_worldMatrix;
+        const Matrix44f  expected = L * R0;                                 // même produit, même ordre
+        ok &amp;= std::memcmp(&amp;expected, &amp;r.getComponent&lt;TransformComponent&gt;(leaf).m_worldMatrix,
+                          sizeof(Matrix44f)) == 0;                         // au bit près
+    }
+
+    // 3. Mutation attendue en échec : remettre « if (!tr) return; » → la feuille reste à l'identité.
+    return ok;
+}</code></pre>
+<p class="small">La mauvaise porte ne se teste pas dans une TNR qui tourne en Debug : l’assertion arrêterait le processus. Elle se teste à la main (test 1 de l’étape 6) ou dans une configuration de test dédiée où <code>AssertFailed</code> serait remplaçable, ce que le moteur n’a pas aujourd’hui.</p>
+
+<h3>Filet Debug proposé (non appliqué, PH1C-10)</h3>
+<pre><code>// Appelé par CheckSceneInvariants, sous LV3_ASSERTS_ENABLED (règle PH0.c)
+void CheckHierarchyInvariants(const Registry&amp; registry)
+{
+    const SparseSet&lt;HierarchyComponent&gt;* pool = registry.getStorage&lt;HierarchyComponent&gt;();
+    if (!pool) return;
+    const auto&amp; hs = pool-&gt;GetDenseData();
+    const auto&amp; es = pool-&gt;GetDenseEntities();
+    for (size_t i = 0; i &lt; hs.size(); ++i)
+    {
+        const Entity e = es[i];
+        if (hs[i].m_parent != NULL_ENTITY)
+        {
+            const HierarchyComponent* p = registry.TryGet&lt;HierarchyComponent&gt;(hs[i].m_parent);
+            LV3_ASSERT(p &amp;&amp; "parent mort ou sans HierarchyComponent (famille du bug 53)");
+            if (p)
+                LV3_ASSERT(std::find(p-&gt;m_children.begin(), p-&gt;m_children.end(), e) != p-&gt;m_children.end()
+                           &amp;&amp; "parent qui ne connaît pas son enfant");
+        }
+        for (Entity c : hs[i].m_children)
+        {
+            const HierarchyComponent* ch = registry.TryGet&lt;HierarchyComponent&gt;(c);
+            LV3_ASSERT(ch &amp;&amp; ch-&gt;m_parent == e &amp;&amp; "enfant mort, ou qui désigne un autre parent");
+        }
+    }
+}</code></pre>
+<p class="small">Coût : une lecture par lien et par frame, en Debug et <code>RelWithAsserts</code> seulement. Il aurait arrêté le programme à la première frame après la mauvaise porte du bug 53, et il arrête aujourd’hui la deuxième porte (AM7).</p>
+
+<h3>Liste de contrôle</h3>
+<ul>
+<li>Debug, <code>RelWithAsserts</code>, Release : compilation sans avertissement, LIB et EXE.</li>
+<li><code>RunAllTests</code> (Debug) : <code>test_hierarchy</code> et <code>test54_Recyclage</code> en SUCCES.</li>
+<li>Les scènes v1compat et les scènes de banc s’animent comme avant dans les trois configurations : le lot ne change le calcul d’aucun nœud qui a un <code>Transform</code>.</li>
+<li><code>grep</code> : <code>DestroyEntity(</code> n’est appelé que par <code>DestroyHierarchy</code> et les tests ; <code>removeComponent&lt;HierarchyComponent&gt;</code> n’est appelé nulle part.</li>
+<li><code>Entity.hpp</code> : les trois <code>static_assert</code> compilent avec <code>0x00010002u</code>.</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — évolutions et dettes à décider plus tard</h2>
+<p>Inscrites dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH1-C ». <b>Rien n’est acté.</b> Les décisions prises pendant l’échange sont consignées dans <code>Résultats/Résultats_Lot_PH1C_Integrite_Graphe_Scene.md</code>.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th></tr></thead>
+<tbody>
+<tr><td>PH1C-1</td><td><code>DebugDisplaySystem</code> ne part que d’une racine qui a un Transform : un arbre à racine d’organisation n’est pas affiché (AM6)</td><td><span class="pill bad">dette</span></td></tr>
+<tr><td>PH1C-2</td><td>Règle PH1C.a (traiter un nœud et descendre sont indépendants ; nœud sans Transform transparent) : troisième occurrence atteinte</td><td><span class="pill warn">décision</span></td></tr>
+<tr><td>PH1C-3</td><td><code>removeComponent&lt;HierarchyComponent&gt;</code> : deuxième porte de service, même gel que 53 (AM7)</td><td><span class="pill bad">dette</span></td></tr>
+<tr><td>PH1C-4</td><td>Refus de <code>DestroyEntity</code> muet en Release : journal, valeur de retour, ou silence documenté (AM8)</td><td><span class="pill warn">décision</span></td></tr>
+<tr><td>PH1C-5</td><td>Capacité réelle 65 535 et non 65 536 : message de l’assertion, carnet, <code>architecture-rules.md</code> (AM2)</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH1C-6</td><td>Commentaire du bloc de déclarations d’<code>Entity.hpp</code> resté en 8/24 (AM3)</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH1C-7</td><td>En-têtes de <code>TestHierarchy.cpp</code> et <code>Test54_Recyclage.cpp</code> : « à retirer après validation » alors qu’ils sont permanents (AM5)</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH1C-8</td><td>TNR <code>Test_PH1C_SceneGraph</code> : <code>DestroyHierarchy</code> et <code>PropagateWorld</code> transparent (§7)</td><td><span class="pill">proposée</span></td></tr>
+<tr><td>PH1C-9</td><td>Dump non testable (écrit sur <code>std::cout</code>) ; test 59 non permanent : visiteur qui rend les lignes, ou flux en paramètre</td><td><span class="pill">évolution</span></td></tr>
+<tr><td>PH1C-10</td><td><code>CheckHierarchyInvariants</code> par frame sous <code>LV3_ASSERTS_ENABLED</code> (§7)</td><td><span class="pill">proposée</span></td></tr>
+<tr><td>PH1C-11</td><td>Compteur <code>XformNodes</code> jamais incrémenté (AM11), utile à la décision A3</td><td><span class="pill bad">dette</span></td></tr>
+<tr><td>PH1C-12</td><td>La ligne de substitution ne dit pas lequel des deux composants manque</td><td><span class="pill">évolution mineure</span></td></tr>
+<tr><td>PH1C-13</td><td>Ancien <code>DestroyHierarchy</code> commenté dans <code>Hierarchy.cpp</code> (rejoint L6-5)</td><td><span class="pill">hygiène</span></td></tr>
+<tr><td>PH1C-14</td><td><code>HasOutgoingLinks</code> déclarée deux fois (<code>Registry.hpp</code>, <code>Hierarchy.hpp</code>) : les deux signatures doivent rester identiques ; dépendance d’édition de liens à documenter</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH1C-15</td><td>Recyclage FIFO ou quarantaine d’index si un système à fort renouvellement arrive (particules, projectiles), ou pool dédié par système</td><td><span class="pill">évolution</span></td></tr>
+<tr><td>PH1C-16</td><td>Carnet de route, note du bug 59 : conséquence décrite fausse (AM1)</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH1C-17</td><td>Règle PH1C.b (garde-fou = assertion + repli) à acter ou non</td><td><span class="pill warn">décision</span></td></tr>
+<tr><td>PH1C-18</td><td>PH0-7 : moitié « à vérifier » tranchée (<code>TryGet</code> refuse un ticket périmé)</td><td><span class="pill ok">clôture partielle</span></td></tr>
+<tr><td>PH1C-19</td><td>L3-17 : couvert par ce lot, renvoi depuis la leçon L03</td><td><span class="pill ok">clôture proposée</span></td></tr>
+<tr><td>PH1C-20</td><td>L3-1 : 16/16 vérifié dans le dépôt ; mise à jour de la leçon L03 à décider</td><td><span class="pill ok">clôture proposée</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+Lot PH1-C · LibraryV3 · reconstruit le 12 novembre 2026 à partir de l’échange du 16-17 septembre 2026 (discussion C du carnet de route) et du dépôt LIB <code>e7cae94</code> / EXE <code>5203980</code>. Valeurs float32 et durées recalculées par cette page.
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = (id) => document.getElementById(id);
+const f = Math.fround;
+const NULL = 0xFFFFFFFF;
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const hex = (v) => "0x" + (v >>> 0).toString(16).toUpperCase().padStart(8, "0");
+const fr = (v, d) => Number(v).toLocaleString("fr-FR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const f32 = (v) => { if (v === 0) return "0"; let s = String(v); for (let p = 1; p <= 9; p++){ const c = Number(v.toPrecision(p)); if (Math.fround(c) === v){ s = String(c); break; } } return s.replace(".", ","); };   // plus courte écriture qui redonne le même float32
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#888"; }
+
+/* ───────────── Matrices 3×3, vecteur-ligne, float32 (chaque produit et chaque somme arrondis) ───────────── */
+const I3 = [1,0,0, 0,1,0, 0,0,1];
+function mul(A, B){
+  const C = new Array(9);
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++){
+      let acc = f(0);
+      for (let k = 0; k < 3; k++) acc = f(acc + f(A[i*3+k] * B[k*3+j]));
+      C[i*3+j] = acc;
+    }
+  return C;
+}
+function Rot(deg){ const a = deg * Math.PI / 180, c = f(Math.cos(a)), s = f(Math.sin(a)); return [c,s,0, -s,c,0, 0,0,1]; }
+function Tr(x, z){ return [1,0,0, 0,1,0, f(x),f(z),1]; }
+
+/* ───────────── Mini-Registry : mêmes règles que Registry.hpp / SparseSet.hpp (16/16) ───────────── */
+let gens, aliveArr, freeList, aliveCount, stores, meta, frame, halted, logLines;
+const idxOf = (h) => h & 0xFFFF;
+const genOf = (h) => h >>> 16;
+const make  = (i, g) => (((g & 0xFFFF) << 16) | (i & 0xFFFF)) >>> 0;
+function createEntity(){
+  let i;
+  if (freeList.length) i = freeList.pop();             // LIFO
+  else { i = gens.length; gens.push(0); aliveArr.push(false); }
+  aliveArr[i] = true; aliveCount++;
+  return make(i, gens[i]);
+}
+function isAlive(h){ const i = idxOf(h); return h !== NULL && i < gens.length && gens[i] === genOf(h); }
+function has(c, h){ if (h === NULL) return false; const s = stores[c].get(idxOf(h)); return !!s && s.h === h; }   // Contains : handle COMPLET
+function get(c, h){ return has(c, h) ? stores[c].get(idxOf(h)).d : null; }
+function add(c, h, d){ stores[c].set(idxOf(h), { h, d }); }
+function hasOutgoing(h){ const hc = get("H", h); if (!hc) return false; return hc.parent !== NULL || hc.children.length > 0; }
+function isRoot(h){ const hc = get("H", h); return !hc || hc.parent === NULL; }
+function nameOf(h){
+  const i = idxOf(h);
+  if (meta[i] && meta[i].handle === h) return meta[i].name;
+  return "ticket périmé " + hex(h);
+}
+
+function log(cls, text){ logLines.push({ cls, text }); if (logLines.length > 60) logLines.shift(); }
+function cfg(){ return $("lgCfg").value; }
+function fix53(){ return $("lgFix53").value; }
+
+function halt(expr, file, line){
+  halted = true;
+  log("e", "[LV3_ASSERT] " + expr + "\n  …\\LibraryV3\\Scene\\" + file + ":" + line);
+  log("e", cfg() === "debug" ? "__debugbreak() : le débogueur s'arrête sur cette ligne, puis abort()." : "abort() : le processus s'arrête.");
+  $("lgHalt").innerHTML = '<div class="halt"><b>Programme arrêté.</b> ' + esc(expr) + ' — ' + esc(file) + ':' + line + '. Recharger la scène pour reprendre.</div>';
+  stopPlay();
+}
+
+/* ───────────── Les verbes, tels que dans le dépôt ───────────── */
+function destroyEntity(h){
+  const assertsOn = cfg() !== "release";
+  if (!isAlive(h)){
+    if (assertsOn){ halt('IsAlive(e) && "DestroyEntity : double destruction ou handle périmé"', "Registry.hpp", 173); return; }
+    return;
+  }
+  if (fix53() !== "none" && hasOutgoing(h)){
+    if (assertsOn){ halt('!HasOutgoingLinks(*this, e) && "DestroyEntity : entité encore liée dans la hiérarchie — passer par DestroyHierarchy, ou Detach() d\'abord"', "Registry.hpp", 177); return; }
+    log("w", "DestroyEntity(" + nameOf(h) + ") refusé : lien sortant. (Dans le moteur, rien n'est journalisé : AM8.)");
+    return;
+  }
+  const i = idxOf(h);
+  for (const c in stores) if (has(c, h)) stores[c].delete(i);   // OnEntityDestroyed sur chaque stockage
+  gens[i] = (gens[i] + 1) & 0xFFFF;
+  aliveArr[i] = false; aliveCount--; freeList.push(i);
+  meta[i].dead = true;
+  log("i", "DestroyEntity(" + meta[i].name + ") : composants retirés, génération " + genOf(h) + " → " + gens[i] + ", index " + i + " libéré.");
+}
+function detach(h){
+  const hc = get("H", h); if (!hc || hc.parent === NULL) return;
+  const ph = get("H", hc.parent);
+  if (ph){ const k = ph.children.indexOf(h); if (k >= 0){ ph.children[k] = ph.children[ph.children.length-1]; ph.children.pop(); } }
+  hc.parent = NULL;
+}
+function collect(h, out){ out.push(h); const hc = get("H", h); if (hc) for (const c of hc.children) collect(c, out); }
+function destroyHierarchy(h){
+  const sub = []; collect(h, sub);
+  detach(h);
+  if (fix53() === "full")
+    for (const e of sub){ const hc = get("H", e); if (hc){ hc.parent = NULL; hc.children.length = 0; } }
+  log("i", "DestroyHierarchy(" + nameOf(h) + ") : sous-arbre [" + sub.map(nameOf).join(", ") + "]" + (fix53() === "full" ? ", dénoué avant destruction." : ", liens internes laissés en place."));
+  for (const e of sub){ destroyEntity(e); if (halted) return; }
+}
+function linkChild(child, parent){
+  let hc = get("H", child);
+  if (hc) hc.parent = parent; else add("H", child, { parent, children: [] });
+  if (!has("H", parent)) add("H", parent, { parent: NULL, children: [] });
+  get("H", parent).children.push(child);
+}
+
+/* ───────────── La scène ───────────── */
+let H = {};   // handles nommés
+function setupScene(){
+  gens = []; aliveArr = []; freeList = []; aliveCount = 0;
+  stores = { T: new Map(), N: new Map(), H: new Map() };
+  meta = []; frame = 0; halted = false; logLines = [];
+  $("lgHalt").innerHTML = "";
+  const spec = [
+    ["sun",   "Soleil",       !$("lgRootOrg").checked],
+    ["group", "Groupe-Terre", !$("lgOrg").checked],
+    ["earth", "Terre",        true],
+    ["moon",  "Lune",         true],
+    ["cam",   "Caméra-Debug", true],
+    ["giz",   "__gizmo(Caméra-Debug)", true]
+  ];
+  for (const [kind, name, withT] of spec){
+    const h = createEntity();
+    H[kind] = h;
+    meta[idxOf(h)] = { handle: h, name, kind, dead: false, last: null };
+    add("N", h, name);
+    if (withT) add("T", h, { kind, local: I3, world: I3, written: -1 });
+  }
+  linkChild(H.group, H.sun); linkChild(H.earth, H.group); linkChild(H.moon, H.earth); linkChild(H.giz, H.cam);
+  log("i", "Scène chargée : 6 entités. " + ($("lgOrg").checked ? "Groupe-Terre n'a pas de Transform." : "Groupe-Terre a un Transform identité.") + ($("lgRootOrg").checked ? " Le Soleil n'a pas de Transform." : ""));
+}
+function localOf(kind, t){
+  switch (kind){
+    case "sun":   return Rot(6 * t);                       // ancre : porte l'orbite de ses descendants
+    case "group": return I3;
+    case "earth": return mul(Rot(9 * t), Tr(10, 0));       // S·R·T : rotation propre, puis translation
+    case "moon":  return Tr(2.5, 0);
+    case "cam":   return Tr(-14, 9);
+    case "giz":   return Tr(1.4, -0.9);
+  }
+  return I3;
+}
+function propagate(h, pw, fix57){
+  let w = pw;
+  const tr = get("T", h);
+  if (!tr){ if (!fix57) return; }                          // bug 57 : un seul return pour deux questions
+  else { tr.world = mul(tr.local, pw); tr.written = frame; w = tr.world; }
+  const hc = get("H", h);
+  if (hc) for (const c of hc.children) propagate(c, w, fix57);
+}
+function step(t){
+  if (halted) return;
+  frame++;
+  for (const [, s] of stores.T) s.d.local = localOf(s.d.kind, t);        // LocalTransformSystem
+  const fix57 = $("lgFix57").checked;
+  const hs = [...stores.H.values()].sort((a, b) => idxOf(a.h) - idxOf(b.h));
+  for (const s of hs) if (s.d.parent === NULL) propagate(s.h, I3, fix57); // passe 1 : racines hiérarchisées
+  for (const [, s] of stores.T) if (!has("H", s.h)){ s.d.world = s.d.local; s.d.written = frame; }   // passe 2 : solitaires
+  for (const [, s] of stores.T){ const m = meta[idxOf(s.h)]; m.last = [s.d.world[6], s.d.world[7]]; }
+}
+
+/* ───────────── Dump : DebugDisplaySystem ───────────── */
+function fmtG(v){
+  if (v === 0) return Object.is(v, -0) ? "-0" : "0";
+  let s = Number(v).toPrecision(6);
+  if (s.indexOf("e") < 0 && s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+  return s;
+}
+function dump(){
+  if (halted){ log("w", "Programme arrêté : recharger la scène."); return; }
+  if (cfg() !== "debug"){ log("w", "DebugDisplaySystem n'est pas compilé dans cette configuration (#if LV3_DEBUG puis #if LV3_VERBOSE_LOG dans main.cpp)."); return; }
+  const fix59 = $("lgFix59").checked;
+  const out = [];
+  function rec(h, ident){
+    if (halted) return;
+    const hasT = has("T", h), hasN = has("N", h);
+    if (!fix59){
+      if (!hasT && !hasN) return;                         // ne refuse que si LES DEUX manquent
+      if (!hasT){ flush(); halt("Contains(entity)", "SparseSet.hpp", 121); return; }   // getComponent<TransformComponent>
+      if (!hasN){ flush(); halt("Contains(entity)", "SparseSet.hpp", 121); return; }   // getComponent<NameComponent>
+    }
+    const pad = "  ".repeat(ident);
+    if (hasT && hasN){
+      const tr = get("T", h);
+      out.push({ cls: "o", text: pad + " - " + get("N", h) + "\tLocal(" + fmtG(tr.local[6]) + ", 0, " + fmtG(tr.local[7]) + ")    \tWorld(" + fmtG(tr.world[6]) + ", 0, " + fmtG(tr.world[7]) + ")" });
+    } else {
+      out.push({ cls: "e", text: pad + "= - [noeud sans Nom ou Transform]" });
+    }
+    const hc = get("H", h);
+    if (hc) for (const c of hc.children) rec(c, ident + 1);
+  }
+  function flush(){ log("i", "— DebugDisplaySystem —"); for (const l of out) log(l.cls, l.text); out.length = 0; }
+  for (let i = 0; i < gens.length && !halted; i++){
+    if (!aliveArr[i]) continue;
+    const h = make(i, gens[i]);
+    if (has("T", h) && isRoot(h)) rec(h, 0);              // point d'entrée du dépôt (AM6)
+  }
+  if (!halted){ flush(); if ($("lgRootOrg").checked) log("w", "Le Soleil n'a pas de Transform : son arbre n'est pas affiché (AM6)."); }
+}
+
+/* ───────────── Rendu : canvas, arbre, table, console ───────────── */
+function stateOf(h){
+  const i = idxOf(h), m = meta[i];
+  if (m.dead) return "dead";
+  if (!has("T", h)) return "org";
+  return get("T", h).written === frame ? "live" : "frozen";
+}
+function drawCanvas(){
+  const cv = $("lgCanvas"), ctx = cv.getContext("2d");
+  const W = cv.width, Hh = cv.height, cx = W / 2 + 40, cy = Hh / 2, sc = 14;
+  const col = { ink: cssVar("--ink"), ink3: cssVar("--ink3"), line: cssVar("--line"), live: cssVar("--live"), frozen: cssVar("--frozen"), org: cssVar("--org"), dead: cssVar("--dead"), accent: cssVar("--accent"), bg: cssVar("--surface") };
+  ctx.fillStyle = col.bg; ctx.fillRect(0, 0, W, Hh);
+  const P = (x, z) => [cx + x * sc, cy - z * sc];
+  ctx.strokeStyle = col.line; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(cx, cy, 10 * sc, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  ctx.font = "12px ui-monospace, Consolas, monospace";
+  // liens vers l'ancêtre le plus proche qui a une position
+  for (let i = 0; i < meta.length; i++){
+    const m = meta[i]; if (!m || m.dead || !has("T", m.handle)) continue;
+    let p = get("H", m.handle) ? get("H", m.handle).parent : NULL;
+    while (p !== NULL && isAlive(p) && !has("T", p)){ const hp = get("H", p); p = hp ? hp.parent : NULL; }
+    if (p !== NULL && isAlive(p) && has("T", p)){
+      const a = P(m.last[0], m.last[1]), b = P(get("T", p).world[6], get("T", p).world[7]);
+      ctx.strokeStyle = col.ink3; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+    }
+  }
+  const size = { sun: 12, earth: 7, moon: 4.5, cam: 7, giz: 4, group: 0 };
+  for (let i = 0; i < meta.length; i++){
+    const m = meta[i]; if (!m || !m.last) continue;
+    const st = stateOf(m.handle);
+    const [x, y] = P(m.last[0], m.last[1]);
+    const r = size[m.kind] || 5;
+    ctx.lineWidth = 2;
+    if (st === "dead"){ ctx.setLineDash([3, 3]); ctx.strokeStyle = col.dead; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = col.dead; ctx.fillText(m.name + " (détruite)", x + r + 4, y + 4); continue; }
+    ctx.fillStyle = st === "live" ? col.live : col.frozen;
+    if (m.kind === "cam"){ ctx.fillRect(x - r, y - r, 2 * r, 2 * r); }
+    else { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+    if (st === "frozen"){ ctx.strokeStyle = col.frozen; ctx.beginPath(); ctx.arc(x, y, r + 5, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.fillStyle = st === "frozen" ? col.frozen : col.ink;
+    ctx.fillText(m.name + (st === "frozen" ? " — gelée" : ""), x + r + 5, y - r - 2);
+  }
+  // nœuds sans Transform : pas de position, listés en haut à gauche
+  const orgs = meta.filter(m => m && !m.dead && !has("T", m.handle)).map(m => m.name);
+  ctx.fillStyle = col.org;
+  ctx.fillText(orgs.length ? "Sans Transform (aucune position) : " + orgs.join(", ") : "Tous les nœuds ont un Transform", 10, 18);
+  ctx.fillStyle = col.ink3;
+  ctx.fillText("frame " + frame + " · entités vivantes " + aliveCount, 10, Hh - 10);
+}
+function drawTree(){
+  const lines = [];
+  const visited = new Set();
+  function rec(h, depth, parentAlive){
+    const pad = "   ".repeat(depth);
+    if (!isAlive(h)){ lines.push(pad + '<span class="stale">↳ ' + esc(nameOf(h)) + " (lien vers une entité morte)</span>"); return; }
+    visited.add(idxOf(h));
+    const st = stateOf(h);
+    const cls = st === "live" ? "alive" : st === "org" ? "org" : "frozen";
+    const tag = st === "org" ? " [sans Transform]" : st === "frozen" ? " [gelée]" : "";
+    lines.push(pad + (depth ? "└ " : "") + '<span class="' + cls + '">' + esc(nameOf(h)) + tag + "</span>  " + hex(h));
+    const hc = get("H", h);
+    if (hc) for (const c of hc.children) rec(c, depth + 1, true);
+  }
+  for (let i = 0; i < gens.length; i++){
+    if (!aliveArr[i] || visited.has(i)) continue;
+    const h = make(i, gens[i]);
+    if ((has("H", h) || has("T", h)) && isRoot(h)) rec(h, 0, true);
+  }
+  for (let i = 0; i < gens.length; i++){
+    if (!aliveArr[i] || visited.has(i)) continue;
+    const h = make(i, gens[i]); const hc = get("H", h);
+    const why = hc && !isAlive(hc.parent) ? "parent périmé " + hex(hc.parent) : "parent vivant qui ne la liste pas";
+    lines.push('<span class="frozen">✕ ' + esc(nameOf(h)) + " : inaccessible (" + why + ")</span>");
+  }
+  for (let i = 0; i < meta.length; i++) if (meta[i] && meta[i].dead) lines.push('<span class="dead">' + esc(meta[i].name) + "</span>  " + hex(meta[i].handle));
+  $("lgTree").innerHTML = "<b>Arbre vu depuis les racines</b>\n" + lines.join("\n");
+}
+function drawTable(){
+  let html = "<thead><tr><th>Entité</th><th>Ticket</th><th>Vivante</th><th>Parent (m_parent)</th><th>Monde (x ; z), float32</th><th>État</th></tr></thead><tbody>";
+  for (let i = 0; i < meta.length; i++){
+    const m = meta[i]; if (!m) continue;
+    const h = m.handle, alive = isAlive(h), hc = get("H", h);
+    const par = !hc ? "—" : hc.parent === NULL ? "NULL_ENTITY (racine)" : (isAlive(hc.parent) ? nameOf(hc.parent) : "périmé " + hex(hc.parent));
+    const st = stateOf(h);
+    const pill = st === "live" ? '<span class="pill ok">écrite à cette frame</span>' : st === "frozen" ? '<span class="pill bad">gelée</span>' : st === "org" ? '<span class="pill">sans position</span>' : '<span class="pill">détruite</span>';
+    const pos = (has("T", h) && m.last) ? f32(m.last[0]) + " ; " + f32(m.last[1]) : "—";
+    html += "<tr><td>" + esc(m.name) + "</td><td class=\"num\">" + hex(h) + "</td><td>" + (alive ? "oui" : "non") + "</td><td>" + esc(par) + "</td><td class=\"num\">" + pos + "</td><td>" + pill + "</td></tr>";
+  }
+  $("lgTable").innerHTML = html + "</tbody>";
+}
+function drawLog(){
+  $("lgLog").innerHTML = logLines.map(l => '<span class="' + l.cls + '">' + esc(l.text) + "</span>").join("\n");
+  $("lgLog").scrollTop = 1e9;
+}
+function render(){ drawCanvas(); drawTree(); drawTable(); drawLog(); }
+
+let t = 5, playing = false, lastTs = 0, raf = 0;
+function setT(v){ t = v; $("lgT").value = String(v); $("lgTV").textContent = fr(v, 2) + " s"; }
+function tick(ts){
+  if (!playing) return;
+  const dt = lastTs ? Math.min(0.05, (ts - lastTs) / 1000) : 0; lastTs = ts;
+  let nt = t + dt; if (nt > 60) nt -= 60; setT(nt);
+  step(t); render();
+  raf = requestAnimationFrame(tick);
+}
+function stopPlay(){ playing = false; $("lgPlay").textContent = "Lecture"; cancelAnimationFrame(raf); }
+$("lgPlay").addEventListener("click", () => {
+  if (halted){ log("w", "Programme arrêté : recharger la scène."); render(); return; }
+  playing = !playing; $("lgPlay").textContent = playing ? "Pause" : "Lecture";
+  if (playing){ lastTs = 0; raf = requestAnimationFrame(tick); }
+});
+$("lgT").addEventListener("input", () => { setT(parseFloat($("lgT").value)); step(t); render(); });
+function guarded(fn){ return () => { if (halted){ log("w", "Programme arrêté : recharger la scène."); render(); return; } fn(); step(t); render(); }; }
+$("lgBad").addEventListener("click", guarded(() => { log("i", "> registry.DestroyEntity(Terre)  [" + $("lgCfg").selectedOptions[0].text + "]"); destroyEntity(H.earth); }));
+$("lgGood").addEventListener("click", guarded(() => { log("i", "> DestroyHierarchy(registry, Terre)  [" + $("lgCfg").selectedOptions[0].text + "]"); if (!isAlive(H.earth)){ log("w", "Terre est déjà détruite."); return; } destroyHierarchy(H.earth); }));
+$("lgRm").addEventListener("click", guarded(() => {
+  log("i", "> registry.removeComponent<HierarchyComponent>(Terre)");
+  if (!isAlive(H.earth)){ log("w", "Terre est déjà détruite."); return; }
+  if (has("H", H.earth)){ stores.H.delete(idxOf(H.earth)); log("w", "Aucun garde : Groupe-Terre liste encore Terre, la Lune désigne encore Terre comme parent."); }
+}));
+$("lgDump").addEventListener("click", () => { log("i", "> DebugDisplaySystem(registry)"); dump(); render(); });
+function reload(){ stopPlay(); setupScene(); step(t); render(); }
+$("lgReset").addEventListener("click", reload);
+["lgOrg", "lgRootOrg", "lgFix57"].forEach(id => $(id).addEventListener("change", reload));   // 57 : la scène est rechargée avec le code choisi
+["lgFix59", "lgCfg", "lgFix53"].forEach(id => $(id).addEventListener("change", () => { if (!halted) step(t); render(); }));
+reload();
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+
+/* ───────────── Laboratoire 1.2 : le ticket daté ───────────── */
+function bitsHtml(handle, idxBits){
+  let s = "";
+  for (let b = 31; b >= 0; b--){
+    const bit = (handle >>> b) & 1;
+    s += '<span class="' + (b >= idxBits ? "g" : "x") + '" title="bit ' + b + '">' + bit + "</span>";
+  }
+  return s;
+}
+function duration(sec){
+  if (!isFinite(sec)) return "jamais";
+  if (sec < 60) return fr(sec, sec < 10 ? 1 : 0) + " s";
+  if (sec < 3600){ const m = Math.floor(sec / 60), s = Math.round(sec - m * 60); return m + " min " + s + " s"; }
+  if (sec < 86400){ const h = Math.floor(sec / 3600), m = Math.round((sec - h * 3600) / 60); return h + " h " + m + " min"; }
+  return fr(sec / 86400, 1) + " j";
+}
+function ticket(){
+  const genBits = parseInt($("tkSplit").value, 10), idxBits = 32 - genBits;
+  const M = 2 ** genBits;
+  let n = Math.max(0, Math.min(70000, parseInt($("tkNn").value, 10) || 0));
+  const slot = 7;
+  const mk = (g) => ((((g % M) * (2 ** idxBits)) + slot) >>> 0);
+  const curGen = n % M;
+  const oldH = mk(0), curH = mk(curGen);
+  $("tkBitsOld").innerHTML = bitsHtml(oldH, idxBits);
+  $("tkBitsCur").innerHTML = bitsHtml(curH, idxBits);
+  const alive = curGen === 0;
+  let verdict;
+  if (n === 0) verdict = '<div class="v" style="color:var(--ok)">vrai</div><div class="small">même entité, jamais détruite</div>';
+  else if (alive) verdict = '<div class="v" style="color:var(--bad)">vrai : ABA</div><div class="small">le vieux ticket désigne l’entité d’aujourd’hui</div>';
+  else verdict = '<div class="v" style="color:var(--ok)">faux</div><div class="small">ticket périmé reconnu</div>';
+  const next = (n > 0 && curGen === 0) ? 0 : M - curGen;
+  $("tkStats").innerHTML =
+    '<div><div class="k">Génération du slot</div><div class="v">' + curGen.toLocaleString("fr-FR") + '</div><div class="small">' + n.toLocaleString("fr-FR") + " mod " + M.toLocaleString("fr-FR") + "</div></div>" +
+    '<div><div class="k">Ticket gardé</div><div class="v">' + hex(oldH) + "</div></div>" +
+    '<div><div class="k">Ticket courant</div><div class="v">' + hex(curH) + "</div></div>" +
+    '<div><div class="k">IsAlive(ticket gardé)</div>' + verdict + "</div>" +
+    '<div><div class="k">Prochain bouclage</div><div class="v">' + (next === 0 ? "maintenant" : next.toLocaleString("fr-FR")) + '</div><div class="small">recyclages</div></div>';
+  const k = parseInt($("tkK").value, 10), F = parseInt($("tkF").value, 10);
+  $("tkKV").textContent = String(k); $("tkFV").textContent = String(F);
+  const fps = 60;
+  const rateLifo = fps, rateFifo = Math.min(fps, fps * k / F);
+  let rows = "<thead><tr><th>Liste libre</th><th>Découpage</th><th>Recyclages par seconde d’un slot chaud</th><th>Temps avant qu’un vieux ticket redevienne valide</th></tr></thead><tbody>";
+  for (const [pol, rate] of [["LIFO (dépôt)", rateLifo], ["FIFO (quarantaine)", rateFifo]])
+    for (const gb of [8, 16]){
+      const cur = gb === genBits && pol.startsWith("LIFO");
+      rows += "<tr" + (cur ? ' style="font-weight:600"' : "") + "><td>" + pol + "</td><td>" + (32 - gb) + " / " + gb + '</td><td class="num">' + fr(rate, rate < 1 ? 4 : 0) + '</td><td class="num">' + duration((2 ** gb) / rate) + "</td></tr>";
+    }
+  $("tkTable").innerHTML = rows + "</tbody>";
+}
+$("tkN").addEventListener("input", () => { $("tkNn").value = $("tkN").value; ticket(); });
+$("tkNn").addEventListener("input", () => { $("tkN").value = $("tkNn").value; ticket(); });
+["tkSplit", "tkK", "tkF"].forEach(id => $(id).addEventListener("input", ticket));
+ticket();
+})();
+</script>
+
+</body></html>

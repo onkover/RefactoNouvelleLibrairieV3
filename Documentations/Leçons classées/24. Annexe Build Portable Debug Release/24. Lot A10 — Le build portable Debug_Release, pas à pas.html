@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot A10 — Le build portable Debug/Release, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+}
+*{box-sizing:inherit}
+html{height:100%; scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 68px);}
+body{
+  margin:0; height:100%; background:var(--bg); color:var(--ink);
+  font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  padding:10px 20px;
+}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{
+  font-size:12px; text-decoration:none; color:var(--ink2);
+  border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg);
+}
+nav a:hover{color:var(--ink); border-color:var(--accent)}
+main{max-width:1000px; margin:0 auto; padding:26px 20px 90px}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px}
+h3{font-size:16.5px; margin:26px 0 8px; color:var(--ink)}
+h4{font-size:14.5px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.06em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+code{font-family:ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace; font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{background:none; padding:0; font-size:12.5px; line-height:1.55}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:16px 18px; margin:14px 0}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:480px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+td.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; gap:7px; align-items:center; cursor:pointer; color:var(--ink2)}
+.ctl select, .ctl input[type=text]{font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent)}
+.out{font-family:ui-monospace, Consolas, monospace; font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; white-space:pre-wrap; overflow-x:auto}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13px}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0}
+.small{font-size:13px; color:var(--ink2)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px; margin:8px 0}
+.kv .k{color:var(--ink3)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="t">Lot A10 — Le build portable Debug / Release, pas à pas</div>
+  <div class="s">LibraryV3 · phase 0 du retour sur la leçon 06 · création (aucun artefact n’existait)</div>
+  <nav>
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">La méthode MSBuild</a>
+    <a href="#etapes">Les étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">La leçon 06 devait se clore par une <b>mesure</b> : combien coûtent <code>WorldTransformSystem</code>, la rasterisation et <code>TriggerSystem</code> sur trois scènes du système solaire. Cette mesure n’a jamais eu lieu, et la raison n’avait rien à voir avec le moteur.</p>
+
+<p>La configuration <code>Release|x64</code> n’avait <b>jamais été construite</b>. Pas une fois depuis la création du projet. Ce n’était pas un oubli anodin : cinq défauts indépendants l’en empêchaient, chacun suffisant à lui seul. Tant qu’ils tenaient, la seule configuration disponible était <code>Debug</code> — et mesurer en Debug ne mesure rien d’utile.</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ, celui qu’il faut écarter avant tout le reste.</b><br>
+« On profilera en Debug, les proportions restent les mêmes. » <b>Faux.</b> En Debug, <code>/Od</code> supprime l’inlining ; <code>ComponentView</code>, <code>EdgeFunction</code> et les opérateurs de <code>Vec3f</code> n’existent que par l’inlining ; les itérateurs de la STL paient leurs contrôles de validité. On ne mesurerait pas le coût de <code>WorldTransformSystem</code> : on mesurerait le coût de <b>ne pas inliner</b>, dans des rapports qui ne se transposent pas. La configuration Release n’est pas une variante de Debug — c’est un programme différent.
+</div>
+
+<p>Ce lot ne produit donc <b>aucune fonctionnalité visible à l’écran</b>. C’est un lot d’infrastructure, et c’est précisément ce qui le rend facile à repousser indéfiniment. Il a pourtant un rendement immédiat et mesurable : en le faisant, le compilateur a dénoncé <b>cinq bugs réels</b> du moteur que six mois de développement en Debug n’avaient pas révélés.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Bug trouvé</th><th>Par quel mécanisme</th></tr></thead>
+<tbody>
+<tr><td><b>52</b> — <code>SimulationClock _clock</code> déclarée deux fois : les quatre commandes temporelles du clavier pilotent une horloge jamais avancée</td><td><code>C4459</code>, disponible seulement à partir de <code>/W4</code></td></tr>
+<tr><td><b>61</b> — <code>capacity</code> et <code>slotCount</code> reçus et jamais lus : un contrat de borne écrit dans la signature et nulle part dans le code</td><td><code>C4100</code></td></tr>
+<tr><td>Suite de tests <b>inerte</b> en Release : valeurs attendues calculées, jamais comparées</td><td><code>C4189</code> en cascade</td></tr>
+<tr><td><code>FragmentContext::magic</code> déclaré sous un commutateur, lu par une assertion sous un <b>autre</b> commutateur</td><td>le <code>sizeof</code> du nouveau <code>LV3_ASSERT</code></td></tr>
+<tr><td><code>Release|x64</code> définissait <code>_DEBUG</code> : <code>_ITERATOR_DEBUG_LEVEL</code> incohérent entre la LIB et l’EXE</td><td>lecture du <code>.vcxproj</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<p class="small">Autrement dit : ce n’est pas la mesure qui était bloquée par le build, c’est <b>le diagnostic du moteur</b> qui était bloqué par l’absence d’une seconde configuration. Un programme qui ne se compile que d’une seule façon n’est jamais relu que d’une seule façon.</p>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Ce lot arrive après la leçon 06 (scénegraphe, hiérarchie, <code>SimulationClock</code>) et après l’annexe A9, qui venait de clore le bug du gizmo orthographique démesuré. Les lots qui comptent pour comprendre celui-ci :</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que A10 en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L01</b> — Config, Enums &amp; PCH</td><td><code>Core/config.h</code> et son bloc <code>#ifdef _DEBUG</code> ; l’en-tête précompilé <code>pch.h</code> / <code>pch.cpp</code></td><td>Le bloc à quatre commutateurs liés — c’est lui qu’on démonte au §8. Et le <code>.pch</code> dont la production était conditionnée à une seule configuration.</td></tr>
+<tr><td><b>L03</b> — ECS, SparseSet &amp; ResourceManager</td><td><code>LoadMeshChecked</code> renvoyant un <code>std::expected</code> (F5)</td><td>C’est <b>lui</b> qui impose C++23, donc <code>stdcpp23</code> — et qui rendait <code>Release</code> en <code>stdcpp20</code> inconstructible.</td></tr>
+<tr><td><b>A6</b> — JsonReader &amp; EngineConfig</td><td><code>engine.json</code> et son emplacement</td><td><code>engine.json</code> devient le <b>marqueur</b> de la racine de contenu. L’emplacement cesse d’être une convention pour devenir une donnée résolue à l’exécution.</td></tr>
+<tr><td><b>A5 / A9</b> — gizmos de caméra</td><td><code>GizmoAssets</code>, chargement des deux meshes canoniques</td><td><code>LoadGizmoAssets</code> fournit le <b>bug 55</b> relevé en passant (garde en <code>||</code>, corps en <code>&amp;&amp;</code>).</td></tr>
+<tr><td><b>L06</b> — scénegraphe</td><td>Hiérarchie, <code>WorldTransformSystem</code>, <code>SimulationClock</code></td><td>Le sujet de la mesure qui reste à faire, et la source des bugs 52, 53, 57, 58.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+L’état de départ du dépôt, vérifié et non supposé : <code>Debug|x64</code> en <code>stdcpp23</code> avec <code>/utf-8</code>, <code>Release|x64</code> en <code>stdcpp20</code> sans rien ; deux machines (<code>G:\Projects Visual Studio\</code> et <code>C:\Pascal_Perso\…</code>) codées en dur dans les fichiers de projet versionnés ; <code>WarningLevel3</code> partout ; un <code>/arch:AVX</code> présent sur un seul projet et une seule configuration.
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<p>Trois propriétés manquaient au projet, et aucune n’est un détail d’outillage.</p>
+
+<h3>1. Le moteur doit se compiler de deux façons</h3>
+<p>Debug pour comprendre, Release pour mesurer. Deux configurations qui divergent sur dix réglages ne sont pas deux façons de compiler le même programme : ce sont deux programmes. L’objectif n’est pas « que Release compile » — c’est que <b>Debug et Release ne diffèrent que par ce qui doit légitimement les différencier</b> : optimisation, bibliothèque d’exécution, contrôles d’exécution. Tout le reste doit être commun par construction, pas par vigilance.</p>
+
+<h3>2. Le projet doit s’installer n’importe où</h3>
+<p>Onky travaille sur deux machines. Jusqu’ici, ça fonctionnait parce que <b>les deux chemins étaient écrits dans le fichier de projet versionné</b>, et que l’un des deux était ignoré. Ça marche à deux. Ça casse à trois, et ça casse au premier renommage de dossier — avec un message incompréhensible.</p>
+<p>L’objectif fonctionnel, formulé comme un test : <b>copier le dossier <code>x64\Release\</code> sur une clé USB, le lancer par double-clic sur une machine qui n’a jamais vu le code source, et que la scène s’affiche.</b></p>
+
+<h3>3. Les filets doivent être pilotables indépendamment</h3>
+<p>Un seul <code>#ifdef _DEBUG</code> gouvernait quatre choses sans rapport : les assertions, le code d’outillage, les journaux de diagnostic et les journaux verbeux. Conséquence pratique : <b>impossible d’activer les invariants sans réactiver le rendu console</b>. Donc on ne les active jamais, et on mesure sans filet.</p>
+
+<div class="rule">
+<b>Règle R45.</b> Tests et invariants ne se gouvernent pas par le même commutateur. Un test vérifie un comportement à la demande, hors production ; un invariant garde une propriété <i>pendant</i> l’exécution, y compris là où ça compte. Les lier à <code>_DEBUG</code> revient à décider que le code optimisé ne mérite pas de filet — c’est-à-dire à retirer le filet exactement là où on tombe.
+</div>
+
+<h4>Ce que ce lot ne traite pas</h4>
+<p>Pas de SIMD, pas de mathématiques, pas de rendu. Ce lot est entièrement dans la chaîne de construction et le démarrage. Il n’a donc <b>ni pendant scalaire ni pendant vectorisé</b> : il n’y a pas de boucle de calcul à dérouler. La seule décision qui touche au SIMD est le retrait du <code>/arch:</code> global — et elle a été <b>renversée plus tard</b> par le chantier B1, ce que le §<a href="#amend">Amendements</a> documente en avant/après.</p>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>Le moteur est devenu dense. Voici la chaîne complète, du fichier de projet jusqu’à la boucle de rendu. <b>Le lot A10 occupe les deux premiers étages</b> — ceux que l’on traverse une seule fois et qu’on oublie ensuite.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 620" role="img" aria-label="Chaîne complète du projet, de la compilation à la boucle de rendu, avec les étages du lot A10 en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 13px ui-sans-serif,system-ui,sans-serif}
+  .sb{fill:var(--ink3); font:11.5px ui-mono,ui-monospace,Consolas,monospace}
+  .ph{fill:var(--ink3); font:600 10.5px ui-sans-serif,system-ui,sans-serif; letter-spacing:.09em}
+  .ln{stroke:var(--ink3); stroke-width:1.4; fill:none; color:var(--ink3)}
+  .zn{fill:none; stroke:var(--hl-line); stroke-width:1.6; stroke-dasharray:5 4}
+</style>
+
+<rect class="zn" x="14" y="26" width="872" height="244" rx="12"/>
+<text class="ph" x="26" y="20">ÉTAGES COUVERTS PAR LE LOT A10</text>
+
+<!-- étage 1 : construction -->
+<text class="ph" x="26" y="50">1 · CONSTRUCTION  (une fois, sur la machine du développeur)</text>
+<rect class="bxh" x="26" y="60" width="192" height="56" rx="8"/>
+<text class="lb" x="40" y="82">LV3.User.props</text><text class="sb" x="40" y="100">chemins de la machine</text>
+<rect class="bxh" x="238" y="60" width="192" height="56" rx="8"/>
+<text class="lb" x="252" y="82">LV3.Common.props</text><text class="sb" x="252" y="100">stdcpp23 · /W4 · /we…</text>
+<rect class="bxh" x="450" y="60" width="192" height="56" rx="8"/>
+<text class="lb" x="464" y="82">.vcxproj × 2</text><text class="sb" x="464" y="100">ce qui diffère seulement</text>
+<rect class="bxh" x="662" y="60" width="212" height="56" rx="8"/>
+<text class="lb" x="676" y="82">cl.exe / link.exe</text><text class="sb" x="676" y="100">LibraryV3.lib + .exe</text>
+<line class="ln" x1="218" y1="88" x2="234" y2="88" marker-end="url(#ar)"/>
+<line class="ln" x1="430" y1="88" x2="446" y2="88" marker-end="url(#ar)"/>
+<line class="ln" x1="642" y1="88" x2="658" y2="88" marker-end="url(#ar)"/>
+
+<rect class="bxh" x="450" y="130" width="424" height="44" rx="8"/>
+<text class="lb" x="464" y="150">LV3CopyContent  →  engine.json, assets\, DLL  dans $(OutDir)</text>
+<text class="sb" x="464" y="166">la livraison devient réelle, pas théorique</text>
+<line class="ln" x1="768" y1="116" x2="768" y2="126" marker-end="url(#ar)"/>
+
+<!-- étage 2 : démarrage -->
+<text class="ph" x="26" y="200">2 · DÉMARRAGE  (à chaque lancement, sur n’importe quelle machine)</text>
+<rect class="bxh" x="26" y="210" width="192" height="52" rx="8"/>
+<text class="lb" x="40" y="232">ResolveContentRoot</text><text class="sb" x="40" y="249">3 candidats, ordre fixe</text>
+<rect class="bxh" x="238" y="210" width="192" height="52" rx="8"/>
+<text class="lb" x="252" y="232">EngineConfig</text><text class="sb" x="252" y="249">lecture d’engine.json</text>
+<rect class="bx" x="450" y="210" width="192" height="52" rx="8"/>
+<text class="lb" x="464" y="232">ResourceManager</text><text class="sb" x="464" y="249">OBJ / MTL → meshes</text>
+<rect class="bx" x="662" y="210" width="212" height="52" rx="8"/>
+<text class="lb" x="676" y="232">Serializer</text><text class="sb" x="676" y="249">scène → Registry</text>
+<line class="ln" x1="218" y1="236" x2="234" y2="236" marker-end="url(#ar)"/>
+<line class="ln" x1="430" y1="236" x2="446" y2="236" marker-end="url(#ar)"/>
+<line class="ln" x1="642" y1="236" x2="658" y2="236" marker-end="url(#ar)"/>
+
+<!-- étage 3 : boucle -->
+<text class="ph" x="26" y="306">3 · BOUCLE DE FRAME  (hors périmètre du lot — inchangée)</text>
+<rect class="bx" x="26" y="316" width="166" height="48" rx="8"/>
+<text class="lb" x="40" y="338">PollEvents</text><text class="sb" x="40" y="354">InputState</text>
+<rect class="bx" x="206" y="316" width="166" height="48" rx="8"/>
+<text class="lb" x="220" y="338">SimulationClock</text><text class="sb" x="220" y="354">realDt → simDt</text>
+<rect class="bx" x="386" y="316" width="166" height="48" rx="8"/>
+<text class="lb" x="400" y="338">Animation</text><text class="sb" x="400" y="354">orbites, m_dirty</text>
+<rect class="bx" x="566" y="316" width="166" height="48" rx="8"/>
+<text class="lb" x="580" y="338">LocalTransform</text><text class="sb" x="580" y="354">compose m_local</text>
+<rect class="bx" x="746" y="316" width="128" height="48" rx="8"/>
+<text class="lb" x="760" y="338">WorldTransform</text><text class="sb" x="760" y="354">hiérarchie</text>
+<line class="ln" x1="192" y1="340" x2="202" y2="340" marker-end="url(#ar)"/>
+<line class="ln" x1="372" y1="340" x2="382" y2="340" marker-end="url(#ar)"/>
+<line class="ln" x1="552" y1="340" x2="562" y2="340" marker-end="url(#ar)"/>
+<line class="ln" x1="732" y1="340" x2="742" y2="340" marker-end="url(#ar)"/>
+
+<rect class="bx" x="26" y="390" width="166" height="48" rx="8"/>
+<text class="lb" x="40" y="412">CollectCameras</text><text class="sb" x="40" y="428">BuildViewData</text>
+<rect class="bx" x="206" y="390" width="166" height="48" rx="8"/>
+<text class="lb" x="220" y="412">Frustum / culling</text><text class="sb" x="220" y="428">AABB</text>
+<rect class="bx" x="386" y="390" width="166" height="48" rx="8"/>
+<text class="lb" x="400" y="412">VertexStage</text><text class="sb" x="400" y="428">SoA, projection</text>
+<rect class="bx" x="566" y="390" width="166" height="48" rx="8"/>
+<text class="lb" x="580" y="412">Clipper</text><text class="sb" x="580" y="428">near plane</text>
+<rect class="bx" x="746" y="390" width="128" height="48" rx="8"/>
+<text class="lb" x="760" y="412">Rasterizer</text><text class="sb" x="760" y="428">edge fn, Z</text>
+<line class="ln" x1="192" y1="414" x2="202" y2="414" marker-end="url(#ar)"/>
+<line class="ln" x1="372" y1="414" x2="382" y2="414" marker-end="url(#ar)"/>
+<line class="ln" x1="552" y1="414" x2="562" y2="414" marker-end="url(#ar)"/>
+<line class="ln" x1="732" y1="414" x2="742" y2="414" marker-end="url(#ar)"/>
+<line class="ln" x1="52" y1="364" x2="52" y2="386" marker-end="url(#ar)"/>
+
+<!-- étage transverse -->
+<text class="ph" x="26" y="476">TRANSVERSE · ce que les commutateurs de A10 gouvernent, à TOUS les étages</text>
+<rect class="bxh" x="26" y="486" width="206" height="46" rx="8"/>
+<text class="lb" x="40" y="506">LV3_ASSERT</text><text class="sb" x="40" y="523">invariants, partout</text>
+<rect class="bxh" x="252" y="486" width="206" height="46" rx="8"/>
+<text class="lb" x="266" y="506">LV3_DEBUG</text><text class="sb" x="266" y="523">outils, dumps, console</text>
+<rect class="bxh" x="478" y="486" width="190" height="46" rx="8"/>
+<text class="lb" x="492" y="506">LV3_DEBUG_LOG</text><text class="sb" x="492" y="523">diagnostic</text>
+<rect class="bxh" x="688" y="486" width="186" height="46" rx="8"/>
+<text class="lb" x="702" y="506">LV3_VERBOSE_LOG</text><text class="sb" x="702" y="523">trace par entité</text>
+
+<rect class="bx" x="26" y="556" width="848" height="46" rx="8"/>
+<text class="lb" x="40" y="576">Suite de tests (RunAllTests)  ·  gouvernée séparément  ·  règle R43 : la garde de la définition ET celle de l’appel</text>
+<text class="sb" x="40" y="593">en Release : aucun test exécuté, et le programme le DIT</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Nature de l’intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Build/LV3.Common.props</code></td><td>EXE (dépôt)</td><td><span class="pill ok">créé</span> réglages communs aux deux projets, aux quatre configurations</td></tr>
+<tr><td><code>Build/LV3.User.props</code></td><td>EXE (dépôt), <b>non versionné</b></td><td><span class="pill ok">créé</span> le seul fichier autorisé à contenir un chemin absolu</td></tr>
+<tr><td><code>Build/LV3.User.props.example</code></td><td>EXE (dépôt)</td><td><span class="pill ok">créé</span> modèle versionné</td></tr>
+<tr><td><code>LibraryV3.vcxproj</code></td><td>LIB</td><td><span class="pill warn">réécrit</span> imports, bloc sans condition, <code>pch.cpp</code> dé-conditionné, <code>DepthBuffer.h</code> en <code>ClInclude</code></td></tr>
+<tr><td><code>RefactoNouvelleLibrairieV3.vcxproj</code></td><td>EXE</td><td><span class="pill warn">réécrit</span> idem + <code>LV3CopyContent</code> + <code>NDEBUG</code> en Release</td></tr>
+<tr><td><code>Core/ContentRoot.h</code> / <code>.cpp</code></td><td>LIB</td><td><span class="pill ok">créés</span> <code>ExecutableDir</code>, <code>ResolveContentRoot</code></td></tr>
+<tr><td><code>Core/config.h</code></td><td>LIB</td><td><span class="pill warn">réécrit</span> quatre commutateurs indépendants, <code>AssertFailed</code>, <code>LV3_ASSERT</code></td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td><span class="pill warn">modifié</span> <code>argc/argv</code> utilisés, <code>contentRoot</code> en remplacement de <code>PROJECT_DIR</code></td></tr>
+<tr><td><code>Test/RunAllTests.cpp</code> et 4 fichiers de test</td><td>EXE</td><td><span class="pill warn">modifiés</span> gardes symétriques (R43)</td></tr>
+<tr><td><code>Rendering/Fragment.h</code> (<code>FragmentContext</code>)</td><td>LIB</td><td><span class="pill bad">bug corrigé</span> <code>magic</code> basculé sur le commutateur de son assertion</td></tr>
+<tr><td><code>.gitignore</code></td><td>EXE</td><td><span class="pill warn">modifié</span> une ligne, en fin de fichier</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="apport">
+<h2>0.5 · L’apport du lot, en détail — avant / après</h2>
+
+<p>Quatre mécanismes sont remis en cause. Pour chacun, le fonctionnement d’avant et celui d’après.</p>
+
+<h3>A · La résolution des chemins</h3>
+<div class="sv">
+<svg viewBox="0 0 900 300" role="img" aria-label="Avant et après la résolution de la racine de contenu">
+<style>
+  .t1{fill:var(--bad); font:600 11.5px ui-sans-serif,system-ui,sans-serif; letter-spacing:.07em}
+  .t2{fill:var(--ok); font:600 11.5px ui-sans-serif,system-ui,sans-serif; letter-spacing:.07em}
+  .bb{fill:var(--bad-bg); stroke:var(--bad); stroke-width:1}
+  .gb{fill:var(--ok-bg); stroke:var(--ok); stroke-width:1}
+  .nb{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+</style>
+<text class="t1" x="20" y="22">AVANT · une macro de compilation</text>
+<rect class="bb" x="20" y="32" width="200" height="46" rx="8"/>
+<text class="lb" x="32" y="52">$(ProjectDir)</text><text class="sb" x="32" y="69">machine de compilation</text>
+<rect class="bb" x="248" y="32" width="200" height="46" rx="8"/>
+<text class="lb" x="260" y="52">PROJECT_DIR</text><text class="sb" x="260" y="69">gravé dans le binaire</text>
+<rect class="bb" x="476" y="32" width="230" height="46" rx="8"/>
+<text class="lb" x="488" y="52">cheminProjet</text><text class="sb" x="488" y="69">une seule machine possible</text>
+<line class="ln" x1="220" y1="55" x2="244" y2="55" marker-end="url(#ar)"/>
+<line class="ln" x1="448" y1="55" x2="472" y2="55" marker-end="url(#ar)"/>
+<text class="sb" x="730" y="52">Debug seulement</text>
+<text class="sb" x="730" y="69">Release : ne compile pas</text>
+
+<text class="t2" x="20" y="124">APRÈS · trois candidats, résolus à l’exécution</text>
+<rect class="gb" x="20" y="134" width="256" height="44" rx="8"/>
+<text class="lb" x="32" y="154">1 · LV3_CONTENT_ROOT</text><text class="sb" x="32" y="170">variable d’environnement</text>
+<rect class="gb" x="20" y="190" width="256" height="44" rx="8"/>
+<text class="lb" x="32" y="210">2 · ExecutableDir()</text><text class="sb" x="32" y="226">le cas livré</text>
+<rect class="gb" x="20" y="246" width="256" height="44" rx="8"/>
+<text class="lb" x="32" y="266">3 · extraCandidates</text><text class="sb" x="32" y="282">argv[1], LV3_PROJECT_DIR</text>
+
+<rect class="nb" x="320" y="176" width="210" height="60" rx="8"/>
+<text class="lb" x="334" y="200">IsContentRoot(dir)</text>
+<text class="sb" x="334" y="218">dir / « engine.json » existe ?</text>
+<line class="ln" x1="276" y1="156" x2="316" y2="196" marker-end="url(#ar)"/>
+<line class="ln" x1="276" y1="212" x2="316" y2="206" marker-end="url(#ar)"/>
+<line class="ln" x1="276" y1="268" x2="316" y2="222" marker-end="url(#ar)"/>
+
+<rect class="gb" x="574" y="152" width="300" height="44" rx="8"/>
+<text class="lb" x="588" y="172">contentRoot</text><text class="sb" x="588" y="188">composé avec chaque chemin relatif</text>
+<rect class="bb" x="574" y="216" width="300" height="44" rx="8"/>
+<text class="lb" x="588" y="236">{} + journal des chemins essayés</text><text class="sb" x="588" y="252">arrêt propre, cause lisible</text>
+<line class="ln" x1="530" y1="196" x2="568" y2="178" marker-end="url(#ar)"/>
+<line class="ln" x1="530" y1="216" x2="568" y2="234" marker-end="url(#ar)"/>
+</svg>
+</div>
+
+<div class="rule">
+<b>Règle R36.</b> Un binaire ne connaît jamais l’arborescence de la machine qui l’a produit. La racine du contenu est une donnée d’<i>exécution</i> : elle se résout au démarrage, par ordre de priorité explicite, et le chemin du projet n’en est que le dernier repli — réservé au confort du développeur.
+</div>
+
+<h3>B · Les réglages de compilation</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — chaque configuration se décrit elle-même</div>
+<pre><code>Debug|x64   : stdcpp23  Level4  /utf-8  $(ProjectDir)  PROJECT_DIR  ConformanceMode=Default  /arch:AVX
+Release|x64 : stdcpp20  Level3  —       —              —            ConformanceMode=true     /arch:AVX
+Debug|Win32 : stdcpp20  Level3  —       —              —            ConformanceMode=true     —
+Release|W32 : stdcpp20  Level3  —       —              —            ConformanceMode=true     —
+
+→ 4 descriptions indépendantes, 4 occasions de diverger,
+  et la divergence ne se voit QUE si on construit les 4.</code></pre></div>
+<div class="ap"><div class="t">Après — une source unique, puis le delta</div>
+<pre><code>LV3.Common.props (sans Condition, donc les 4 configs) :
+    stdcpp23 · /permissive- · Level4 · /MP
+    /utf-8 /Zc:__cplusplus /we4456 /we4457 /we4458
+    /we4459 /we4553 /we4700 /we4701 /we4715
+
+ItemDefinitionGroup sans Condition (EXE) :
+    includes + libs SDL2 + LibraryV3
+
+Par configuration, il ne reste QUE :
+    Optimization · RuntimeLibrary · PreprocessorDefinitions
+    FunctionLevelLinking · GenerateDebugInformation…</code></pre></div>
+</div>
+
+<h3>C · Les commutateurs</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — un seul interrupteur pour quatre lampes</div>
+<pre><code>#ifdef _DEBUG
+    #define LV3_DEBUG           1
+    #define LV3_ASSERT(x)       assert(x)
+    #define LV3_DEBUG_LOG       1
+    #define LV3_VERBOSE_LOG     1
+#else
+    #define LV3_DEBUG           0
+    #define LV3_ASSERT(x)       ((void)0)   // expression JETÉE
+    #define LV3_DEBUG_LOG       0
+    #define LV3_VERBOSE_LOG     0
+#endif</code></pre></div>
+<div class="ap"><div class="t">Après — quatre interrupteurs, surchargeables</div>
+<pre><code>#ifndef LV3_ASSERTS_ENABLED
+    #ifdef _DEBUG
+        #define LV3_ASSERTS_ENABLED 1
+    #else
+        #define LV3_ASSERTS_ENABLED 0
+    #endif
+#endif
+// idem LV3_DEBUG, LV3_DEBUG_LOG, LV3_VERBOSE_LOG
+
+#if LV3_ASSERTS_ENABLED
+    #define LV3_ASSERT(...) do{ if(!(__VA_ARGS__)) \
+        LV3::AssertFailed(#__VA_ARGS__,__FILE__,__LINE__);}while(0)
+#else
+    #define LV3_ASSERT(...) ((void)sizeof(!(__VA_ARGS__)))  // COMPILÉE
+#endif</code></pre></div>
+</div>
+<p class="small">Le <code>#ifndef</code> en tête est le point clé : une configuration de projet peut forcer la valeur sans toucher au fichier. Les valeurs par défaut dérivent de <code>_DEBUG</code>, donc Debug et Release se comportent <b>exactement comme avant</b> — le changement n’ouvre une porte qu’à une troisième configuration.</p>
+
+<h3>D · La suite de tests</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — garde d’un seul côté</div>
+<pre><code>// TestCameraZoom.cpp
+namespace LV3::Tests {
+#ifdef _DEBUG
+    void TestCameraZoom(){ … }
+#endif
+}
+
+// RunAllTests.cpp
+void TestCameraZoom();   // déclaration NUE
+…
+TestCameraZoom();        // appel NU
+
+→ Release : LNK2001, à 20 fichiers de la cause</code></pre></div>
+<div class="ap"><div class="t">Après — garde symétrique, et le programme le dit</div>
+<pre><code>// RunAllTests.cpp
+#ifdef _DEBUG
+    void TestCameraZoom();
+    …
+#endif
+
+bool RunAllTests(Registry&amp; registry){
+#ifdef _DEBUG
+    …   // tout le corps
+    return s_failures == 0;
+#else
+    (void)registry;
+    Logger::info("[TNR] Suite désactivée en Release : aucun test exécuté.");
+    return true;
+#endif
+}</code></pre></div>
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="methode">
+<h2>1 · La méthode : comment MSBuild construit la ligne de commande</h2>
+
+<p>Tout ce lot repose sur un mécanisme qu’il faut comprendre avant de toucher quoi que ce soit, parce qu’il est <b>silencieux quand on s’y prend mal</b>. Deux tentatives ont échoué ici avant que le montage fonctionne, et dans les deux cas trois réglages sur quatre passaient — ce qui est la pire situation possible : ça a l’air de marcher.</p>
+
+<h3>Le modèle</h3>
+<p>MSBuild lit un <code>.vcxproj</code> <b>de haut en bas</b>, une seule fois. À chaque <code>&lt;Import&gt;</code>, il déroule le fichier importé sur place, comme un <code>#include</code>. Les valeurs s’empilent et <b>la dernière écrase la précédente</b>.</p>
+
+<p>Deux familles de valeurs, qui n’obéissent pas aux mêmes règles :</p>
+<ul>
+<li><b>Les propriétés</b> — <code>&lt;PropertyGroup&gt;</code>, exemple <code>$(LV3BuildDir)</code>. Écrasement pur.</li>
+<li><b>Les métadonnées d’item</b> — <code>&lt;ItemDefinitionGroup&gt;&lt;ClCompile&gt;</code>, exemple <code>AdditionalOptions</code>. Écrasement <b>sauf</b> si l’on écrit explicitement <code>%(AdditionalOptions)</code> dans la nouvelle valeur, auquel cas l’ancienne est réinjectée à cet endroit.</li>
+</ul>
+
+<div class="rule">
+<b>Règle R40.</b> Toute métadonnée d’item définie dans un <code>.vcxproj</code> doit se terminer par <code>%(NomDeLaMétadonnée)</code>. Sans lui, elle ne complète pas l’héritage : <b>elle l’efface</b>. C’est le même mécanisme que l’oubli de <code>$(IncludePath)</code> à la fin d’un <code>IncludePath</code>, et il est silencieux dans les deux cas.
+</div>
+
+<h3>Schéma dynamique — la chaîne d’imports</h3>
+<p>Joue avec les trois réglages ci-dessous. Chacun reproduit une situation réellement rencontrée pendant ce lot. Observe la colonne de droite : <b>ce qui survit n’est pas ce qu’on croit</b>.</p>
+
+<div class="ctl">
+  <label>Position de <code>LV3.Common.props</code> :
+    <select id="pos">
+      <option value="fin">fin de chaque ImportGroup PropertySheets &nbsp;(correct)</option>
+      <option value="nu">Import nu, juste après Microsoft.Cpp.props</option>
+      <option value="avant">avant Microsoft.Cpp.props</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="dup"> ImportGroup en double (anciens non supprimés)</label>
+  <label><input type="checkbox" id="pct" checked> <code>%(AdditionalOptions)</code> présent</label>
+</div>
+
+<div class="sv"><svg id="chain" viewBox="0 0 900 230" role="img" aria-label="Chaîne d’imports MSBuild, ordre d’évaluation"></svg></div>
+<div id="chainOut" class="out"></div>
+
+<p class="small">Le fichier <code>Microsoft.Cpp.x64.user.props</code> est la feuille utilisateur globale de Visual Studio, dans <code>%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\</code>. Sur cette machine, elle contenait un <code>AdditionalOptions</code> <b>sans</b> <code>%(…)</code> — écrit par l’IDE, qui ne l’ajoute jamais spontanément. C’est elle qui effaçait nos dix options, et elle seule, puisqu’elle ne définit ni <code>LanguageStandard</code>, ni <code>WarningLevel</code>, ni <code>ConformanceMode</code>.</p>
+
+<div class="warn">
+<b>Méthode de diagnostic.</b> Le <b>Gestionnaire de propriétés</b> (Affichage → Autres fenêtres) n’affiche que les feuilles importées dans un <code>&lt;ImportGroup Label="PropertySheets"&gt;</code> : un <code>&lt;Import&gt;</code> nu est appliqué mais <b>invisible</b>. Le seul juge est le champ gris de <b>Propriétés → C/C++ → Ligne de commande</b>, qui montre la commande réellement passée à <code>cl.exe</code>.<br><br>
+Et le point de méthode à retenir : ce n’est pas le raisonnement qui a trouvé la cause. Deux hypothèses plausibles et fausses ont précédé un <code>grep</code> sur les fichiers de build. <b>Ne crois pas la documentation, lis la source</b> — la règle vaut pour le moteur comme pour l’outillage.
+</div>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="etapes">
+<h2>2 · Les étapes</h2>
+
+<!-- E1 -->
+<div class="step">
+<div class="h"><span class="n">Étape 1</span> Diagnostiquer : pourquoi Release ne construit pas</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Ne pas réparer au jugé. Lister les causes <b>indépendantes</b>, pour savoir combien d’obstacles séparent le projet d’une mesure — et ne pas croire que la première réparation suffira.</div>
+<div><h5>Entrée</h5>Les deux <code>.vcxproj</code> du dépôt, lus ligne à ligne. Aucune supposition : les tables ci-dessous viennent du fichier.</div>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Cause</th><th>Erreur produite</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>LV3_PROJECT_DIR</code> / <code>PROJECT_DIR</code> défini en Debug seulement, utilisé sans garde dans <code>main.cpp</code></td><td><code>C2065</code> à la première ligne utile</td></tr>
+<tr><td>2</td><td><code>stdcpp20</code> en Release contre <code>std::expected</code> (C++23) de <code>LoadMeshChecked</code></td><td><code>C2039</code> / <code>C1083</code></td></tr>
+<tr><td>3</td><td>Includes, dossiers de bibliothèques et <code>SDL2.lib</code> / <code>SDL2_ttf.lib</code> absents de Release</td><td><code>C1083</code> puis <code>LNK2019</code></td></tr>
+<tr><td>4</td><td><code>_DEBUG</code> défini en Release (copier-coller depuis Debug), avec la CRT release <code>/MD</code></td><td><code>LNK2038</code></td></tr>
+<tr><td>5</td><td><code>PrecompiledHeader=Create</code> sur <code>pch.cpp</code> conditionné à <code>Debug|x64</code></td><td><code>C1083</code> sur <b>tous</b> les fichiers</td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>La cause 4 mérite son détail</h4>
+<p>MSVC émet, dans <code>&lt;yvals.h&gt;</code>, un <code>#pragma detect_mismatch("_ITERATOR_DEBUG_LEVEL", …)</code>. L’éditeur de liens compare donc les deux moitiés du programme et <b>refuse</b> de les assembler. C’est une protection, pas un hasard — sans elle, la divergence serait silencieuse :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Type (MSVC x64)</th><th><code>_ITERATOR_DEBUG_LEVEL = 0</code><br>(la LIB, avec <code>NDEBUG</code>)</th><th><code>_ITERATOR_DEBUG_LEVEL = 2</code><br>(l’EXE, avec <code>_DEBUG</code>)</th></tr></thead>
+<tbody>
+<tr><td><code>std::vector&lt;int&gt;</code></td><td class="num">24 octets</td><td class="num">32 octets</td></tr>
+<tr><td><code>std::string</code></td><td class="num">32 octets</td><td class="num">40 octets</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Un <code>std::vector</code> construit côté LIB et lu côté EXE serait décalé de 8 octets. Toute la hiérarchie, tous les <code>m_children</code>, tous les <code>SparseSet</code> traversent cette frontière.</p>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Cinq obstacles, dont <b>trois</b> invisibles tant qu’on ne lit pas le <code>.vcxproj</code> (1, 4, 5). Le plan devient : réparer le build d’abord, chercher les bugs ensuite — l’inverse aurait fait attribuer au moteur des défauts de configuration.</div>
+<div><h5>Ce que ça interdit</h5>Toute conclusion du type « le moteur plante en Release ». À ce stade, le moteur n’a pas encore eu l’occasion de planter en Release.</div>
+</div>
+</div>
+</div>
+
+<!-- E2 -->
+<div class="step">
+<div class="h"><span class="n">Étape 2</span> La racine de contenu : un marqueur, trois candidats</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Remplacer une macro figée à la compilation par une résolution à l’exécution, pour que le binaire cesse de connaître l’arborescence de la machine qui l’a produit (R36).</div>
+<div><h5>Entrée (étape 1)</h5>Cause n°1 : <code>cheminProjet = PROJECT_DIR</code> sans garde. On ne se contente pas d’ajouter la macro en Release — ce serait le contre-exemple CE-1.</div>
+</div>
+
+<h4>Le marqueur</h4>
+<pre><code>inline constexpr const char* kContentMarker = "engine.json";
+
+static bool IsContentRoot(const std::filesystem::path&amp; dir)
+{
+    if (dir.empty()) return false;
+    std::error_code ec;
+    return std::filesystem::exists(dir / kContentMarker, ec) &amp;&amp; !ec;
+}</code></pre>
+<p>On teste la <b>présence du marqueur</b>, jamais l’existence du dossier seul. Un <code>x64\Release\</code> vide capterait sinon la résolution et court-circuiterait les replis suivants. C’est la même discipline que les invariants du moteur : on vérifie le fait observable, pas le raisonnement sur le fait.</p>
+
+<h4>Simulateur — qui gagne, et pourquoi</h4>
+<div class="ctl">
+  <label>Configuration :
+    <select id="rcCfg"><option>Debug</option><option>Release</option></select>
+  </label>
+  <label><input type="checkbox" id="rcEnv"> <code>LV3_CONTENT_ROOT</code> défini</label>
+  <label><input type="checkbox" id="rcEnvOk" checked> …et il contient <code>engine.json</code></label>
+  <label><input type="checkbox" id="rcExe" checked> <code>engine.json</code> à côté de l’exe (post-build)</label>
+  <label><input type="checkbox" id="rcArg"> racine passée en <code>argv[1]</code></label>
+</div>
+<div id="rcOut" class="out"></div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Une fonction qui renvoie un chemin <b>ou rien</b>, et qui journalise la liste des chemins essayés quand elle renvoie rien. Un « fichier introuvable » sans cette liste coûte une heure ; avec, trente secondes.</div>
+<div><h5>Décision notable</h5><b>Aucun cache interne.</b> Pas de <code>static const auto root = …</code> : ce serait un état global caché, initialisé à un moment que personne ne contrôle, impossible à réinitialiser dans un test, et une seconde autorité à côté d’<code>EngineConfig</code>. <code>main()</code> résout une fois, stocke, distribue.</div>
+</div>
+</div>
+</div>
+
+<!-- E3 -->
+<div class="step">
+<div class="h"><span class="n">Étape 3</span> <code>ExecutableDir</code> — et le piège de <code>MAX_PATH</code></div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Obtenir le dossier de l’exécutable de façon fiable, indépendamment du répertoire courant et de la manière dont le processus a été lancé.</div>
+<div><h5>Entrée (étape 2)</h5>Le candidat n°2 de <code>ResolveContentRoot</code> a besoin de ce chemin. S’il est faux, c’est tout le scénario « binaire livré » qui tombe.</div>
+</div>
+
+<h4>Où vivent les symboles</h4>
+<div class="scroll">
+<table>
+<thead><tr><th>Symbole</th><th>En-tête réel</th><th>Tiré par</th><th>Binaire</th></tr></thead>
+<tbody>
+<tr><td><code>MAX_PATH</code></td><td><code>minwindef.h</code></td><td><code>windef.h</code> ← <code>windows.h</code></td><td>— (macro)</td></tr>
+<tr><td><code>GetModuleFileNameW</code></td><td><code>libloaderapi.h</code></td><td><code>windows.h</code></td><td><code>kernel32.dll</code>, lié par défaut</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small"><code>Core/Platform.h</code> les rendait déjà disponibles, avec les bonnes gardes : <code>WIN32_LEAN_AND_MEAN</code>, <code>NOMINMAX</code> (sans lui, les macros <code>min</code>/<code>max</code> cassent <code>std::clamp</code> utilisé dans <code>CameraZoomSystem</code>), <code>NOGDI</code> (sans lui, <code>RGB(...)</code> entre en collision avec le type <code>Color</code>).</p>
+
+<div class="rule">
+<b>Règle R37.</b> Un en-tête n’impose jamais à ses consommateurs les dépendances de son implémentation. D’où <code>ContentRoot.h</code> qui n’inclut que <code>&lt;filesystem&gt;</code> et <code>&lt;span&gt;</code>, et <code>ContentRoot.cpp</code> seul à inclure <code>Platform.h</code>.
+</div>
+
+<h4>Le contrat de retour, et pourquoi la boucle</h4>
+<ul>
+<li><b>Succès</b> → nombre de <code>wchar_t</code> copiés, <b>zéro final exclu</b>. Donc succès ⟹ <code>n &lt; taille du buffer</code>, toujours.</li>
+<li><b>Buffer trop petit</b> → renvoie exactement <code>nSize</code>, chaîne tronquée mais terminée, <code>ERROR_INSUFFICIENT_BUFFER</code>.</li>
+<li><b>Échec</b> → 0.</li>
+</ul>
+<p><code>MAX_PATH</code> vaut 260, terminaison comprise. Mais les fonctions <code>…W</code> ne sont <b>pas</b> limitées à 260 : jusqu’à 32 767 caractères. Abandonner à 260 serait un mauvais contrat — on double et on recommence.</p>
+
+<div class="ctl">
+  <label>Longueur du chemin de l’exe : <input type="range" id="plen" min="40" max="900" value="111" step="1"> <span id="plenV" class="pill"></span></label>
+</div>
+<div id="exeOut" class="out"></div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Un dossier normalisé par <code>weakly_canonical</code> (ou le brut en cas d’échec — un chemin non normalisé reste utilisable, un chemin vide non).</div>
+<div><h5>Note pour plus tard</h5><code>hModule = nullptr</code> désigne le module de <b>l’EXE du processus</b>. Si <code>LibraryV3</code> devenait un jour une DLL, il faudrait <code>GetModuleHandleExW</code> avec <code>GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS</code>. Aujourd’hui c’est une bibliothèque statique : <code>nullptr</code> est exactement ce qu’on veut.</div>
+</div>
+</div>
+</div>
+
+<!-- E4 -->
+<div class="step">
+<div class="h"><span class="n">Étape 4</span> <code>LV3.Common.props</code> — une source unique pour les réglages</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Rendre la divergence Debug/Release <b>impossible par construction</b> sur tout ce qui n’a pas de raison de différer. Pas « corriger la divergence » : supprimer l’endroit où elle peut naître.</div>
+<div><h5>Entrée (étape 1)</h5>Causes 2 et 3 : <code>stdcpp20</code> et l’absence de SDL en Release. Les réparer configuration par configuration recréerait quatre descriptions indépendantes.</div>
+</div>
+
+<pre><code>&lt;ItemDefinitionGroup&gt;
+  &lt;ClCompile&gt;
+    &lt;LanguageStandard&gt;stdcpp23&lt;/LanguageStandard&gt;
+    &lt;ConformanceMode&gt;true&lt;/ConformanceMode&gt;
+    &lt;WarningLevel&gt;Level4&lt;/WarningLevel&gt;
+    &lt;MultiProcessorCompilation&gt;true&lt;/MultiProcessorCompilation&gt;
+    &lt;AdditionalOptions&gt;/utf-8 /Zc:__cplusplus /we4456 /we4457 /we4458 /we4459 /we4553 /we4700 /we4701 /we4715 %(AdditionalOptions)&lt;/AdditionalOptions&gt;
+  &lt;/ClCompile&gt;
+&lt;/ItemDefinitionGroup&gt;</code></pre>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Option</th><th>Pourquoi elle est là</th><th>Ce qu’elle a trouvé</th></tr></thead>
+<tbody>
+<tr><td><code>/utf-8</code></td><td>Sources et littéraux en UTF-8</td><td>Son absence en Release ressuscitait le bug 12 (chaînes ANSI)</td></tr>
+<tr><td><code>/Zc:__cplusplus</code></td><td>MSVC renvoie <code>199711L</code> par défaut, quel que soit <code>/std:</code>. <b>Aucune case dans l’IDE.</b></td><td>Sans lui, <code>json.hpp</code> et SDL prennent silencieusement leur branche C++98</td></tr>
+<tr><td><code>/we4456…4459</code></td><td>Masquage de variable</td><td><span class="pill bad">bug 52</span> <code>_clock</code> déclarée deux fois</td></tr>
+<tr><td><code>/we4553</code></td><td>Expression sans effet</td><td>C’est l’avertissement qui avait été émis <b>et ignoré</b> lors du bug 23</td></tr>
+<tr><td><code>/we4700</code> <code>/we4701</code></td><td>Variable non initialisée</td><td>—</td></tr>
+<tr><td><code>/we4715</code></td><td>Chemin de sortie sans valeur de retour</td><td>—</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn"><b>Ce qui n’y est délibérément PAS :</b> aucun <code>/arch:</code>. Motif de l’époque : un flag d’architecture global est incompatible avec un dispatch runtime, et le moteur doit tourner sur un i7 AVX2 comme sur un i9 AVX-512. <b>Cette décision a été renversée plus tard</b> — voir §<a href="#amend">Amendements</a>, point A10-14.</div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Quatre réglages et dix options, définis une fois, appliqués aux deux projets et aux quatre configurations.</div>
+<div><h5>Non négociable</h5>Le <code>%(AdditionalOptions)</code> final. Sans lui, le fichier détruit l’héritage au lieu de le compléter (R40, et contre-exemple CE-3).</div>
+</div>
+</div>
+</div>
+
+<!-- E5 -->
+<div class="step">
+<div class="h"><span class="n">Étape 5</span> <code>LV3.User.props</code> — un seul endroit où un chemin absolu est permis</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Sortir les chemins de machine des fichiers versionnés, sans rendre le projet plus pénible à installer.</div>
+<div><h5>Entrée (étape 4)</h5><code>LV3.Common.props</code> ne doit contenir aucun chemin : il est versionné, donc partagé. Les chemins vont dans un fichier jumeau, ignoré par git.</div>
+</div>
+
+<pre><code>&lt;PropertyGroup Label="UserMacros"&gt;
+  &lt;SDL2_DIR&gt;G:\code\lib\SDL2\SDL2-2.26.2&lt;/SDL2_DIR&gt;
+  &lt;SDL2_TTF_DIR&gt;G:\code\lib\SDL2\SDL2_ttf-2.0.14&lt;/SDL2_TTF_DIR&gt;
+  &lt;LIBRARYV3_DIR&gt;G:\Projects Visual Studio\LibraryV3&lt;/LIBRARYV3_DIR&gt;
+&lt;/PropertyGroup&gt;</code></pre>
+
+<p>Un exemplaire par poste, plus <code>LV3.User.props.example</code> versionné comme modèle. Dans le <code>.gitignore</code>, <b>en fin de fichier</b> — le <code>.gitignore</code> standard de GitHub reste intact en tête, remplaçable plus tard sans écraser l’ajout, et une règle de fin de fichier ne peut pas être annulée par une ligne au-dessus :</p>
+<pre><code>Build/LV3.User.props</code></pre>
+
+<div class="bad"><b>Piège :</b> <code>.gitignore</code> ne s’applique qu’aux fichiers <b>non suivis</b>. Si le fichier a déjà été ajouté à l’index : <code>git rm --cached Build/LV3.User.props</code>. Le <code>--cached</code> est impératif — sans lui, <code>git rm</code> efface le fichier du disque, et les chemins SDL ne sont plus nulle part.</div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Zéro chemin absolu dans un fichier versionné. L’installation sur une machine neuve se résume à copier <code>.example</code> et à corriger trois lignes.</div>
+<div><h5>Contrepartie assumée</h5><code>LibraryV3</code> ne se construit plus seul : il désigne les <code>.props</code> du dépôt de l’EXE. C’est une dépendance d’<b>outillage</b>, pas de code — aucun <code>#include</code> de la LIB ne pointe vers l’EXE. À remplacer par un dépôt <code>LV3.Build</code> ou un sous-module le jour où la LIB devra être construite isolément (point A10-12).</div>
+</div>
+</div>
+</div>
+
+<!-- E6 -->
+<div class="step">
+<div class="h"><span class="n">Étape 6</span> Le câblage, et la garde qui refuse de compiler sans lui</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Brancher les deux feuilles au bon endroit de la chaîne, et faire en sorte que leur absence produise une <b>erreur nommée</b> plutôt qu’un binaire mal réglé.</div>
+<div><h5>Entrée (§1)</h5>La chaîne d’imports : nos feuilles doivent être en <b>dernière position</b>, après <code>Microsoft.Cpp.$(Platform).user.props</code>.</div>
+</div>
+
+<h4>6a — Désigner le dossier</h4>
+<pre><code>&lt;!-- EXE, tout en haut, après &lt;Project&gt; --&gt;
+&lt;PropertyGroup&gt;&lt;LV3BuildDir&gt;$(MSBuildThisFileDirectory)Build\&lt;/LV3BuildDir&gt;&lt;/PropertyGroup&gt;
+
+&lt;!-- LIB --&gt;
+&lt;PropertyGroup&gt;&lt;LV3BuildDir&gt;$(MSBuildThisFileDirectory)..\RefactoNouvelleLibrairieV3\Build\&lt;/LV3BuildDir&gt;&lt;/PropertyGroup&gt;</code></pre>
+<p class="small"><b>Pourquoi pas <code>$(SolutionDir)</code> :</b> cette macro n’est définie que lorsque le build passe par la solution. En ligne de commande, depuis un script ou un pipeline, elle est vide — et le <code>Condition="exists(…)"</code> devient faux <b>en silence</b>, produisant un binaire sans aucun des réglages. <code>$(MSBuildThisFileDirectory)</code> désigne le dossier du fichier qui contient l’expression, et vaut toujours quelque chose.</p>
+
+<h4>6b — Importer, dans les quatre ImportGroup, des deux projets</h4>
+<pre><code>&lt;ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'"&gt;
+  &lt;Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists(…)" Label="LocalAppDataPlatform" /&gt;
+  &lt;Import Project="$(LV3BuildDir)LV3.Common.props" Condition="exists('$(LV3BuildDir)LV3.Common.props')" /&gt;
+  &lt;Import Project="$(LV3BuildDir)LV3.User.props"   Condition="exists('$(LV3BuildDir)LV3.User.props')" /&gt;
+&lt;/ImportGroup&gt;</code></pre>
+
+<h4>6c — La garde</h4>
+<pre><code>&lt;!-- dans LV3.Common.props --&gt;
+&lt;PropertyGroup&gt;&lt;LV3CommonPropsLoaded&gt;true&lt;/LV3CommonPropsLoaded&gt;&lt;/PropertyGroup&gt;
+
+&lt;!-- dans chaque .vcxproj, avant &lt;/Project&gt; --&gt;
+&lt;Target Name="LV3CheckProps" BeforeTargets="ClCompile" Condition="'$(LV3CommonPropsLoaded)' != 'true'"&gt;
+  &lt;Error Text="LV3.Common.props introuvable via LV3BuildDir=$(LV3BuildDir) — les réglages communs ne sont PAS appliqués." /&gt;
+&lt;/Target&gt;</code></pre>
+
+<div class="ok">Même discipline que le <code>#error</code> sur <code>__cpp_lib_expected</code> : <b>l’absence d’une condition requise doit être bruyante</b>, et le message doit contenir le chemin testé — sinon il envoie chercher au mauvais endroit.</div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Huit emplacements (4 configurations × 2 projets) qui chargent les mêmes deux feuilles, et deux cibles qui refusent de compiler si elles manquent.</div>
+<div><h5>Vérification</h5>Exactement <b>quatre</b> <code>ImportGroup Label="PropertySheets"</code> par projet. Huit = les anciens n’ont pas été supprimés : c’est l’échec n°1, et il ne se voit que sur <code>AdditionalOptions</code>.</div>
+</div>
+</div>
+</div>
+
+<!-- E7 -->
+<div class="step">
+<div class="h"><span class="n">Étape 7</span> <code>LV3CopyContent</code> — rendre la livraison réelle</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que le candidat n°2 de <code>ResolveContentRoot</code> trouve quelque chose. Sans copie, « à côté de l’exécutable » est un repli qui n’aboutit jamais.</div>
+<div><h5>Entrée (étape 2)</h5>L’ordre des candidats. Le n°2 est le seul qui fonctionne sur une machine qui n’a jamais vu le code source — c’est donc lui qui définit ce qu’est une livraison.</div>
+</div>
+
+<pre><code>&lt;Target Name="LV3CopyContent" AfterTargets="Build"&gt;
+  &lt;ItemGroup&gt;
+    &lt;LV3ContentRoot Include="$(ProjectDir)engine.json;$(ProjectDir)config.json" /&gt;
+    &lt;LV3Assets      Include="$(ProjectDir)assets\**\*" /&gt;
+    &lt;LV3Runtime     Include="$(ProjectDir)*.dll;$(ProjectDir)tahoma.ttf" /&gt;
+  &lt;/ItemGroup&gt;
+  &lt;Copy SourceFiles="@(LV3ContentRoot);@(LV3Runtime)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" /&gt;
+  &lt;Copy SourceFiles="@(LV3Assets)"
+        DestinationFiles="@(LV3Assets-&gt;'$(OutDir)assets\%(RecursiveDir)%(Filename)%(Extension)')"
+        SkipUnchangedFiles="true" /&gt;
+  &lt;Message Importance="high" Text="[LV3] Contenu copié vers $(OutDir)" /&gt;
+&lt;/Target&gt;</code></pre>
+
+<h4>Trois détails qui comptent</h4>
+<ul>
+<li><b><code>ItemGroup</code> DANS la cible</b> : évalué au moment du build, donc un asset ajouté depuis le dernier chargement de la solution est pris en compte. Déclaré hors cible, il ne serait évalué qu’au chargement du <code>.vcxproj</code>.</li>
+<li><b><code>%(RecursiveDir)</code></b> ne contient que la partie captée par le <code>**</code>. Il faut reposer <code>assets\</code> devant — sinon <code>assets\Meshes\rock_a.obj</code> atterrit dans <code>$(OutDir)Meshes\</code> et <b>tous</b> les chemins relatifs d’<code>engine.json</code> cassent.</li>
+<li><b>Pas conditionnée à Release.</b> Debug est copié aussi, pour que le chemin de livraison soit testé à chaque build au lieu d’être découvert le jour de la mesure. Corollaire gratuit : les DLL SDL2 cessent de dépendre du répertoire de travail du débogueur.</li>
+</ul>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Un <code>x64\Release\</code> autonome : exe, DLL, police, <code>engine.json</code>, <code>config.json</code>, et <code>assets\</code> avec son arborescence intacte.</div>
+<div><h5>Dette ouverte</h5><code>config.json</code> porte encore <code>REP_OBJ_DEFAULT</code> et <code>REP_GFX_DEFAULT</code> en <b>absolu</b>. Copier le fichier ne suffira pas : il renverra le moteur vers <code>G:\Projects Visual Studio\</code> (point A10-1, et contre-exemple CE-4).</div>
+</div>
+</div>
+</div>
+
+<!-- E8 -->
+<div class="step">
+<div class="h"><span class="n">Étape 8</span> Quatre commutateurs au lieu d’un</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Pouvoir activer les invariants <b>sans</b> activer le rendu console ni les journaux par entité. C’est la condition d’existence d’une configuration de mesure.</div>
+<div><h5>Entrée (§0.5 C)</h5>Le bloc de L01, avant/après déjà posé. Ici on s’occupe de l’usage : lequel choisir, et pourquoi l’erreur de classement est silencieuse.</div>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Ce que fait le code</th><th>Commutateur</th><th>Exemple</th></tr></thead>
+<tbody>
+<tr><td>Vérifie une propriété qui doit toujours être vraie</td><td><code>LV3_ASSERT</code></td><td><code>LV3_ASSERT(IsAlive(e) &amp;&amp; "handle périmé")</code></td></tr>
+<tr><td>Fonction de validation d’état</td><td><code>#if LV3_ASSERTS_ENABLED</code></td><td><code>CheckSceneInvariants</code>, <code>ValidateHierarchy</code></td></tr>
+<tr><td>Outil de développement, dump, rendu console</td><td><code>#if LV3_DEBUG</code></td><td><code>DebugDumpControllers</code>, <code>RenderSystem</code> console</td></tr>
+<tr><td>Trace de diagnostic</td><td><code>LV3_LOG_DEBUG</code></td><td><code>"[Content] racine = …"</code></td></tr>
+<tr><td>Trace détaillée, par entité ou par frame</td><td><code>LV3_LOG_VERBOSE</code></td><td><code>"[Gizmo] s=… ortho=…"</code></td></tr>
+<tr><td><b>Erreur réelle</b>, chemin d’échec</td><td><b>sans garde</b></td><td><code>Logger::error("aucune racine valide")</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn">Le piège du classement : <code>CheckSceneInvariants</code> est un <b>filet</b>, pas un outil. Rangée sous <code>LV3_DEBUG</code>, elle ne tournera jamais dans la configuration de mesure. Rangée sous <code>LV3_ASSERTS_ENABLED</code>, elle y tournera. Le code est identique ; seule la ligne de rangement change le résultat.</div>
+
+<h4>Les macros de journal, et l’erreur à ne pas refaire</h4>
+<pre><code>// config.h — DÉFINITION. Aucun #include "Logger.h" ici.
+#if LV3_DEBUG_LOG
+    #define LV3_LOG_DEBUG(msg)   LV3::Logger::info(msg)
+#else
+    #define LV3_LOG_DEBUG(msg)   ((void)0)
+#endif</code></pre>
+<pre><code>// ContentRoot.cpp — APPEL. Ce fichier inclut déjà Logger.h.
+LV3_LOG_DEBUG("[Content] racine = " + exeDir.string());</code></pre>
+
+<div class="rule">
+<b>Règle R48.</b> Un en-tête de configuration est une <b>feuille</b> de l’arbre d’inclusion : tout le monde l’inclut, il n’inclut personne du projet. Une macro qui nomme un service du moteur ne crée aucune dépendance d’en-tête — seule l’unité qui l’utilise doit inclure ce service.
+</div>
+<p class="small">Ajouter <code>#include "Logger.h"</code> dans <code>config.h</code> crée un cycle, puisque <code>Logger.h</code> inclut <code>config.h</code>. Le <code>#pragma once</code> n’empêche pas la boucle : il la transforme en <b>inclusion partielle</b>, et l’erreur apparaît très loin de sa cause — <code>'void LV3::Logger::info(std::string_view)' : la redéclaration du membre n’est pas autorisée</code>, signalée <i>dans Logger.h</i> alors que la ligne fautive est dans <code>config.h</code>.</p>
+<p class="small">Et ici <code>((void)0)</code> est le bon choix de branche éteinte, contrairement au cas de l’assertion : l’argument est une chaîne construite, pas une condition à type-vérifier — et l’on veut précisément que la concaténation <code>std::string</code> ne soit pas compilée, car elle coûterait une allocation par appel.</p>
+
+<h4>Matrice — quel code est actif dans quelle configuration</h4>
+<div class="ctl">
+  <label>Configuration : <select id="swCfg">
+    <option>Debug</option><option>Release</option><option>RelWithAsserts (proposée)</option>
+  </select></label>
+</div>
+<div id="swOut" class="out"></div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Quatre commutateurs indépendants, tous surchargeables par configuration de projet. Debug et Release inchangés ; une troisième configuration devient possible <b>sans toucher une ligne de code</b>.</div>
+<div><h5>Décision reportée</h5>La configuration <code>RelWithAsserts</code> elle-même n’a pas été créée dans ce lot (point A10-3). Elle se duplique depuis <b>Release</b> — surtout pas depuis Debug, sinon <code>LV3_DEBUG=1</code> ramène le <code>RenderSystem</code> console et ses milliers de lignes par frame.</div>
+</div>
+</div>
+</div>
+
+<!-- E9 -->
+<div class="step">
+<div class="h"><span class="n">Étape 9</span> <code>LV3_ASSERT</code> affranchi de <code>assert</code> — et le <code>sizeof</code></div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que <code>LV3_ASSERTS_ENABLED=1</code> active réellement quelque chose en Release. Et, par effet de bord voulu, que les assertions soient <b>type-vérifiées même éteintes</b>.</div>
+<div><h5>Entrée (étape 8)</h5>Le commutateur existe. Mais tant que <code>LV3_ASSERT(x)</code> se résout en <code>assert(x)</code>, il ne commute rien.</div>
+</div>
+
+<div class="bad"><b>Le piège qui aurait rendu l’étape 8 inutile.</b> <code>assert</code> de la bibliothèque standard se neutralise dès que <b><code>NDEBUG</code></b> est défini — ce que fait Release. Une configuration <code>RelWithAsserts</code> avec <code>LV3_ASSERTS_ENABLED=1</code> aurait donc produit <code>assert(x)</code>… lui-même vide. Un commutateur qui ne commute rien.</div>
+
+<pre><code>namespace LV3
+{
+    // inline : vit dans config.h. fprintf et non Logger : Logger.h inclut
+    // config.h, donc un cycle d’inclusion serait assuré. Un mécanisme
+    // d’assertion ne doit dépendre de rien du moteur — surtout pas quand
+    // le moteur va mal.
+    [[noreturn]] inline void AssertFailed(const char* expr, const char* file, int line)
+    {
+        std::fprintf(stderr, "\n[LV3_ASSERT] %s\n  %s:%d\n", expr, file, line);
+        std::fflush(stderr);
+    #ifdef _MSC_VER
+        __debugbreak();     // s’arrête DANS le débogueur, au bon endroit
+    #endif
+        std::abort();
+    }
+}</code></pre>
+
+<h4>Pourquoi <code>__VA_ARGS__</code> et pas <code>(x)</code></h4>
+<p>Une expression contenant une virgule non parenthésée — <code>LV3_ASSERT(std::min(a,b) &gt; 0)</code> — serait vue comme <b>deux arguments</b> par le préprocesseur. Avec <code>__VA_ARGS__</code>, elle passe. Et <code>#__VA_ARGS__</code> donne à <code>AssertFailed</code> le texte complet de l’expression, ce qui rend l’idiome <code>&amp;&amp; "message"</code> réellement utile : la chaîne vaut <code>true</code>, ne change pas la condition, et apparaît dans le diagnostic.</p>
+
+<h4>Pourquoi <code>sizeof</code> et pas <code>((void)0)</code></h4>
+<p>C’est le gain principal de l’étape, et il était imprévu.</p>
+<div class="scroll">
+<table>
+<thead><tr><th></th><th><code>((void)0)</code> — avant</th><th><code>((void)sizeof(!(…)))</code> — après</th></tr></thead>
+<tbody>
+<tr><td>Expression évaluée en Release ?</td><td>non</td><td>non</td></tr>
+<tr><td>Expression <b>compilée</b> en Release ?</td><td><span class="pill bad">non</span></td><td><span class="pill ok">oui</span></td></tr>
+<tr><td>Variables de l’assertion comptées comme utilisées ?</td><td>non → <code>C4189</code> en cascade</td><td>oui → l’avertissement s’éteint parce que le code est <b>correct</b></td></tr>
+<tr><td>Membre renommé, signature changée ?</td><td>invisible jusqu’au prochain build Debug</td><td>erreur de compilation immédiate</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="ok"><b>Gain constaté à la première compilation.</b> <code>FragmentContext::magic</code> était déclaré sous <code>#if LV3_DEBUG</code>, et son assertion est désormais compilée dans toutes les configurations → erreur. L’incohérence existait depuis longtemps : le champ témoin et son contrôle vivaient sur deux interrupteurs différents.</div>
+
+<div class="rule">
+<b>Règle R47.</b> Une donnée qui n’existe que pour être vérifiée par une assertion partage impérativement le commutateur de cette assertion. Deux <code>#if</code> distincts sur un témoin et son contrôle finissent toujours par diverger — et la divergence ne se voit que dans la configuration qu’on compile le moins.
+</div>
+<div class="rule">
+<b>Règle R46.</b> Une assertion n’a jamais d’effet de bord. <code>LV3_ASSERT(++i &lt; n)</code> : l’expression est compilée mais <b>jamais exécutée</b> quand les assertions sont éteintes. Debug et Release divergent, et le bug ne se manifeste que là où on ne le cherche pas.
+</div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Un mécanisme d’assertion indépendant de la CRT, qui s’arrête dans le débogueur, affiche l’expression, et type-vérifie ses conditions dans toutes les configurations.</div>
+<div><h5>Reste à faire</h5>Passe <code>grep assert(</code> : les appels directs à <code>assert</code> restent gouvernés par <code>NDEBUG</code> et resteront muets dans <code>RelWithAsserts</code> — une seconde autorité d’assertion (point A10-4).</div>
+</div>
+</div>
+</div>
+
+<!-- E10 -->
+<div class="step">
+<div class="h"><span class="n">Étape 10</span> Les gardes de la suite de tests</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Faire disparaître un <code>LNK2001</code> qui n’apparaissait qu’en Release — et choisir le <b>bon sens</b> de correction.</div>
+<div><h5>Entrée (étape 9)</h5>Zéro avertissement en Debug, mais le lien Release échoue sur <code>LV3::Tests::TestCameraZoom</code>.</div>
+</div>
+
+<p><code>TestCameraZoom.cpp</code> enfermait tout son contenu dans <code>#ifdef _DEBUG</code> ; en Release il compile — on le voit passer dans la sortie — mais produit une unité de traduction <b>vide</b>. <code>RunAllTests.cpp</code> déclarait et appelait sans garde.</p>
+
+<div class="rule">
+<b>Règle R43.</b> Une garde de compilation autour d’une <b>définition</b> doit avoir sa jumelle autour de chaque <b>déclaration</b> et de chaque <b>appel</b>. Une définition conditionnelle appelée inconditionnellement ne produit jamais d’erreur de compilation : elle produit une erreur d’édition de liens, à des kilomètres de la cause, et seulement dans la configuration où la condition est fausse.
+</div>
+
+<div class="bad"><b>Le mauvais sens de correction (CE-6).</b> Retirer la garde de la définition « pour faire passer le lien ». Ça compile, ça lie — et on obtient en Release une fonction dont <b>toutes</b> les assertions ont disparu : elle parcourt ses huit sections, n’en vérifie aucune, imprime ses lignes de tableau et annonce <code>tous les cas passent</code>. <b>Un test qui ne peut plus échouer est pire qu’un test absent : il produit une confiance fausse.</b></div>
+
+<p>Et ce n’était pas un risque théorique. Les <code>C4189</code> de la même compilation listaient onze variables — <code>kEps</code>, <code>expectedW</code>, <code>s</code>, <code>area</code>, <code>before</code>, <code>countBefore</code> — toutes des valeurs attendues calculées et jamais comparées. <code>/W4</code> venait d’annoncer que <b>la suite de non-régression était inerte en Release</b>. <code>TestCameraZoom</code> avait au moins l’honnêteté de disparaître.</p>
+
+<div class="rule">
+<b>Règle R44.</b> Un avertissement se corrige en supprimant sa <b>cause</b>, jamais en supprimant sa <b>visibilité</b>. <code>(void)x</code> et <code>[[maybe_unused]]</code> sont réservés au cas où l’inutilisation est réellement voulue et définitive.
+</div>
+
+<h4>Le cas <code>[[nodiscard]]</code> contre <code>C4189</code></h4>
+<p>Dans <code>TestF1_EntityVersioning</code>, ignorer le retour de <code>CreateEntity</code> déclenchait <code>C4834</code> ; le stocker sans l’utiliser déclenchait <code>C4189</code>. Il n’y avait pas d’issue syntaxique — parce que le problème ne l’était pas.</p>
+<div class="ab">
+<div class="av"><div class="t">Avant — une variable pour faire taire</div>
+<pre><code>LV3::Entity held = reg.CreateEntity();
+reg.DestroyEntity(held);
+LV3::Entity Result = reg.CreateEntity();  // recycle le slot
+assert(!reg.IsAlive(held));</code></pre></div>
+<div class="ap"><div class="t">Après — le témoin est interrogé</div>
+<pre><code>LV3::Entity held = reg.CreateEntity();
+const std::uint32_t heldIndex = LV3::EntityIndex(held);
+reg.DestroyEntity(held);
+
+LV3::Entity recycled = reg.CreateEntity();
+LV3_ASSERT(LV3::EntityIndex(recycled) == heldIndex
+           &amp;&amp; "le slot n’a pas été recyclé");
+LV3_ASSERT(recycled != held);
+LV3_ASSERT(!reg.IsAlive(held));
+LV3_ASSERT(reg.IsAlive(recycled));</code></pre></div>
+</div>
+<p class="small">Sans la vérification du recyclage, le §4 ne prouvait rien : un <code>Registry</code> qui ne recyclerait <b>jamais</b> ses index aurait passé le test.</p>
+
+<div class="rule">
+<b>Règle R49.</b> Quand <code>[[nodiscard]]</code> et « variable non référencée » se contredisent, ce n’est jamais un conflit de règles : c’est que la valeur a un sens que le code n’a pas encore exploité. Le <code>[[nodiscard]]</code> dit « regarde-moi » ; le <code>C4189</code> dit « tu m’as rangée sans me regarder ». Les deux disent la même chose.
+</div>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Lien Release réussi. Zéro erreur, zéro avertissement sur les deux projets et les deux configurations.</div>
+<div><h5>Point ouvert</h5>Onky l’a relevé lui-même : « en mode release, il n’y aura plus de filet de sécurité ». Exact pour les <b>invariants</b> — pas pour les tests, qui n’ont rien à faire dans un binaire livré. C’est ce qui motive <code>RelWithAsserts</code> (A10-3).</div>
+</div>
+</div>
+</div>
+
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="contre">
+<h2>3 · Contre-exemples chiffrés</h2>
+
+<h3>CE-1 · Ajouter <code>PROJECT_DIR</code> aux définitions de Release</h3>
+<p>Deux lignes. Ça compile, ça lie, ça tourne <b>sur la machine qui a compilé</b>.</p>
+<div class="out">Binaire produit sur  G:\Projects Visual Studio\RefactoNouvelleLibrairieV3\
+Copié sur            C:\Temp\lv3\
+Lancé                → cherche engine.json dans G:\Projects Visual Studio\RefactoNouvelleLibrairieV3\
+                     → ce dossier n’existe pas sur la machine cible
+                     → échec, sans message exploitable
+
+Machines où ce binaire fonctionne : 1</div>
+
+<h3>CE-2 · Le littéral sans <code>R"(...)"</code></h3>
+<p><code>$(ProjectDir)</code> se termine <b>toujours</b> par un antislash. En littéral classique :</p>
+<div class="out">&lt;PreprocessorDefinitions&gt;LV3_PROJECT_DIR="$(ProjectDir)";_DEBUG;…
+
+ligne de commande réellement produite :
+  /D LV3_PROJECT_DIR="G:\Projects Visual Studio\RefactoNouvelleLibrairieV3\";_DEBUG;_CONSOLE
+                                                                          ↑
+                        l’antislash échappe le guillemet fermant : la chaîne continue
+                        et dévore « ;_DEBUG;_CONSOLE » et la suite de la ligne
+
+erreur obtenue : C2001 / C2143, située dans un fichier sans rapport</div>
+
+<h3>CE-3 · <code>AdditionalOptions</code> sans <code>%(AdditionalOptions)</code></h3>
+<p>Le cas réellement rencontré. Ce qui survit, et ce qui tombe :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Réglage de <code>LV3.Common.props</code></th><th>Redéfini en aval ?</th><th>Survit ?</th></tr></thead>
+<tbody>
+<tr><td><code>LanguageStandard</code> = <code>stdcpp23</code></td><td>non</td><td><span class="pill ok">oui</span></td></tr>
+<tr><td><code>ConformanceMode</code> = <code>true</code></td><td>non</td><td><span class="pill ok">oui</span></td></tr>
+<tr><td><code>WarningLevel</code> = <code>Level4</code></td><td>non</td><td><span class="pill ok">oui</span></td></tr>
+<tr><td><code>MultiProcessorCompilation</code></td><td>non</td><td><span class="pill ok">oui</span></td></tr>
+<tr><td><code>AdditionalOptions</code> (10 options)</td><td><b>oui</b>, par la feuille utilisateur globale</td><td><span class="pill bad">non — 10 options perdues</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="small"><b>4 réglages sur 5 passent.</b> C’est exactement ce qui rend le défaut si difficile : le projet semble correctement configuré, et seule la ligne de commande réelle révèle que <code>/utf-8</code>, <code>/Zc:__cplusplus</code> et les huit <code>/we…</code> ont disparu — donc que le bug 52 ne sera jamais dénoncé.</p>
+
+<h3>CE-4 · Un chemin absolu dans un fichier de contenu</h3>
+<p><code>operator/</code> de <code>std::filesystem::path</code> <b>écrase entièrement le membre de gauche</b> si le membre de droite est absolu. Conforme à la norme, et totalement silencieux.</p>
+<div class="ctl">
+  <label>Chemin lu dans le JSON : <input type="text" id="jp" size="34" value="G:/Projects Visual Studio/OBJ/"></label>
+</div>
+<div id="jpOut" class="out"></div>
+<p class="small">Sous Windows, « absolu » exige racine de <b>nom</b> <i>et</i> racine de <b>répertoire</b>. <code>\Assets\x.obj</code> et <code>C:Assets\x.obj</code> sont <b>relatifs</b> malgré les apparences — le premier dépend du lecteur courant, le second du répertoire courant <i>de ce volume</i>. <code>has_root_path()</code> ne remplace donc pas <code>is_absolute()</code>.</p>
+
+<h3>CE-5 · <code>robocopy … /MIR</code> pour la copie d’assets</h3>
+<p>La formule qu’on trouve partout. <code>/MIR</code> <i>miroir</i> la destination : tout ce qui est dans <code>$(OutDir)</code> et absent de la source est <b>supprimé</b>.</p>
+<div class="out">$(OutDir) avant :  RefactoNouvelleLibrairieV3.exe  LibraryV3.lib  *.pdb  SDL2.dll  SDL2_ttf.dll  assets\
+robocopy "$(ProjectDir)assets" "$(OutDir)" /MIR
+$(OutDir) après :  assets\
+
+→ l’étape censée compléter le build a effacé le build.</div>
+
+<h3>CE-6 · Retirer la garde du test au lieu de l’ajouter à l’appel</h3>
+<div class="out">TestCameraZoom() en Release, garde retirée :
+  8 sections parcourues
+  0 assertion évaluée (assert neutralisé par NDEBUG)
+  sortie : « [ZOOM] tous les cas passent »
+
+Taux de détection de régression : 0 %
+Confiance produite par la sortie : 100 %</div>
+
+<h3>CE-7 · Une assertion à effet de bord</h3>
+<div class="out">LV3_ASSERT(reg.CreateEntity() != NULL_ENTITY);
+
+LV3_ASSERTS_ENABLED = 1 (Debug)    → entité créée,  m_AliveCount = 1
+LV3_ASSERTS_ENABLED = 0 (Release)  → expression COMPILÉE, jamais ÉVALUÉE
+                                   → aucune entité créée,  m_AliveCount = 0
+
+Divergence Debug/Release : 1 entité. Manifestation : uniquement en Release.</div>
+
+<h3>CE-8 · Dimensionner un tableau de pile sur une valeur lue</h3>
+<p>Rencontré en voulant sortir le <code>8</code> en dur de <code>Slot found[8]</code> vers <code>engine.json</code>.</p>
+<div class="out">Entity cams[maxCamerasLuDansEngineJson];   // illégal en C++ (VLA : C99 seulement, MSVC ne l’implémente pas)
+
+Et si le compilateur l’acceptait (GCC/Clang par extension) :
+  engine.json : "maxCameras": 100000
+  → 100 000 × 4 octets = 400 Ko sur une pile de 1 Mo, par appel, par frame
+  → débordement de pile, pas d’exception, pas de code d’erreur : la pile n’a pas de mécanisme d’échec
+
+const ne change rien : const = « je ne le modifierai pas », constexpr = « connu à la compilation ».</div>
+<p class="small">Décision retenue : <code>kMaxCamerasHard</code> en <code>constexpr</code> pour dimensionner le tampon de pile, <code>maxCameras</code> dans <code>engine.json</code> borné par <code>std::min</code> des deux. Le paramétrage existe, l’allocation reste nulle, et la configuration devient incapable de provoquer un débordement.</p>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="usage">
+<h2>4 · Exemples d’utilisation</h2>
+
+<h3>Installer le projet sur une machine neuve</h3>
+<pre><code>git clone …/LibraryV3.git
+git clone …/RefactoNouvelleLibrairieV3.git        # côte à côte, même dossier parent
+cd RefactoNouvelleLibrairieV3\Build
+copy LV3.User.props.example LV3.User.props
+notepad LV3.User.props        # 3 lignes : SDL2_DIR, SDL2_TTF_DIR, LIBRARYV3_DIR
+</code></pre>
+<p class="small">Si <code>LV3BuildDir</code> ne tombe pas juste (profondeur différente entre les deux dépôts), le build s’arrête sur <code>LV3.Common.props introuvable via LV3BuildDir=…</code> en affichant le chemin testé. On ajuste le nombre de <code>..\</code>, et c’est réglé — sans risque de compiler en silence avec les mauvais réglages.</p>
+
+<h3>Mesurer trois scènes avec un seul binaire</h3>
+<pre><code>x64\Release\RefactoNouvelleLibrairieV3.exe  D:\scenes\v1compat
+x64\Release\RefactoNouvelleLibrairieV3.exe  D:\scenes\v2
+x64\Release\RefactoNouvelleLibrairieV3.exe  D:\scenes\belt</code></pre>
+<p class="small">Chaque dossier porte son <code>engine.json</code>. Aucune recompilation, aucune édition de <code>config.json</code>. C’est ce que <code>argc/argv</code>, jusque-là inutilisés et signalés par <code>C4100</code>, ont permis de gagner — l’avertissement a été corrigé <b>en utilisant</b> les paramètres, pas en les masquant.</p>
+
+<h3>Forcer une racine sans toucher à la ligne de commande</h3>
+<pre><code>set LV3_CONTENT_ROOT=D:\scenes\belt
+x64\Release\RefactoNouvelleLibrairieV3.exe</code></pre>
+
+<h3>Ajouter un invariant qui survivra à la mesure</h3>
+<pre><code>// Le filet doit tourner là où l’on mesure : LV3_ASSERTS_ENABLED, pas LV3_DEBUG.
+#if LV3_ASSERTS_ENABLED
+    CheckSceneInvariants(registry);
+#endif
+
+// Et dans le moteur, un invariant ordinaire :
+LV3_ASSERT(n &lt;= capacity &amp;&amp; "CollectActiveCameras : tampon trop petit, caméras ignorées");</code></pre>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="amend">
+<h2>5 · Amendements — ce que les lots postérieurs ont changé</h2>
+
+<p>Ce lot reconstruit une étape de <b>phase 0</b>. Entre-temps, la phase G a tranché différemment sur deux points. Conformément à la règle de reconstruction, l’artefact est amendé ici, avec l’avant et l’après — rien n’est acté par cet amendement, les points partent en roadmap.</p>
+
+<h3>A10-14 · Le <code>/arch:</code> global : décision renversée</h3>
+<div class="ab">
+<div class="av"><div class="t">A10 (ce lot) — aucun /arch:</div>
+<pre><code>LV3.Common.props : aucun EnableEnhancedInstructionSet
+
+Motif : un flag d’architecture global est incompatible
+avec un dispatch runtime. Le SIMD devait passer par des
+.cpp dédiés, compilés chacun avec son /arch:, choisis
+par __cpuid au démarrage.
+Retrait du /arch:AVX présent sur l’EXE Debug.</code></pre></div>
+<div class="ap"><div class="t">Chantier B1 (13/10) — /arch:AVX2 global</div>
+<pre><code>LV3.Common.props : /arch:AVX2 + /fp:precise
+
+Motif : AVX2 devient la BASE du moteur. Les CPU sans
+AVX2 ne sont pas une cible. Un seul flag général
+LV3_SIMD (décidé le 25/10) : scalaire partout, ou
+vectorisation autorisée dans tout le programme —
+pas de commutateur par chantier.</code></pre></div>
+</div>
+<p class="small"><b>Ce qui reste vrai de A10 :</b> le raisonnement sur l’asymétrie LIB/EXE. Un <code>/arch:</code> posé sur un seul des deux projets produit deux codegen pour les mêmes fonctions <code>inline</code> de <code>Vectorlib.h</code> — c’est bien pour cela que B1 l’a mis dans <code>LV3.Common.props</code>, qui s’applique aux deux. <b>Ce qui est faux :</b> « aucun <code>/arch:</code> ». La variante AVX-512 de l’i9 reste, elle, un cas de dispatch par fichier — l’argument de A10 n’a pas disparu, il s’est déplacé d’un cran.</p>
+<p class="small">Corollaire : <code>LV3_SIMD</code> est un <b>cinquième commutateur</b>, à ajouter à la table du §8. Et le <code>#error</code> sous <code>/fp:fast</code> ajouté dans <code>Viewport.h</code> par le lot D-a1d est le descendant direct du <code>#error</code> sur <code>__cpp_lib_expected</code> posé ici (point A10-15).</p>
+
+<h3>A10-3 bis · La mesure de la leçon 06 a été dépassée</h3>
+<p>A10 se terminait sur « mesurer les trois scènes du système solaire, puis consolidation C2 ». La phase G a institué depuis un protocole bien plus strict (découpage par ablation C0, séquences A/B/B/A, règle des +2 %, références I/K épinglées sur l’i7-1265U). La campagne décrite à la fin de ce lot n’a plus lieu d’être sous cette forme : <code>solar_system.json</code> a d’ailleurs été renommé <code>scene_test.json</code> le 11/10, et la scène de référence est désormais V3 (niveau FPS à six pièces).</p>
+<p class="small">Ce qui <b>reste</b> entièrement valide : la nécessité d’une configuration <code>RelWithAsserts</code>, et le protocole en deux passes (une passe filets actifs pour valider la santé de la scène, une passe Release pure pour les chiffres). La phase G mesure en Release pur sans ce garde-fou.</p>
+
+<h3>A10-x · Points relevés pendant le lot, non tranchés</h3>
+<p>Dix-neuf points partent en roadmap sous « Décisions en attente — lot A10 ». Les plus structurants :</p>
+<ul>
+<li><b>A10-1</b> — <code>config.json</code> porte des chemins absolus et double <code>engine.json</code> : deux autorités pour la même donnée (R20 + R39).</li>
+<li><b>A10-3</b> — <code>RelWithAsserts</code> : créée ou non ? Sans elle, toute mesure se fait sans invariants.</li>
+<li><b>A10-11</b> — <code>Microsoft.Cpp.x64.user.props</code> de la machine contient un <code>AdditionalOptions</code> sans <code>%(…)</code> : il s’applique à <b>tous</b> les projets C++ de ce poste, invisible.</li>
+<li><b>A10-12</b> — la LIB ne se construit plus seule : dépendance d’outillage vers le dépôt de l’EXE.</li>
+<li><b>A10-13</b> — le journal de bugs a deux autorités de numérotation (audit jusqu’à 51, A9 a émis 32-35).</li>
+</ul>
+</section>
+
+<!-- ─────────────────────────────────────────────── -->
+<section id="verifier">
+<h2>6 · Vérifier</h2>
+
+<h3>Hors moteur — trois contrôles indépendants</h3>
+<ol>
+<li><b>La ligne de commande réelle.</b> Propriétés → C/C++ → Ligne de commande, champ gris, configuration <code>Release|x64</code>, sur <b>les deux projets</b>. Doivent y figurer : <code>/std:c++23preview</code>, <code>/W4</code>, <code>/permissive-</code>, <code>/utf-8</code>, <code>/Zc:__cplusplus</code> et les huit <code>/we…</code>. Le Gestionnaire de propriétés ne suffit pas : il n’affiche pas les <code>&lt;Import&gt;</code> nus.</li>
+<li><b>Le compte des <code>ImportGroup</code>.</b> Exactement quatre <code>ImportGroup Label="PropertySheets"</code> par <code>.vcxproj</code>. Huit = échec n°1.</li>
+<li><b>Le test de livraison.</b> Copier <code>x64\Release\</code> en entier ailleurs — autre disque, clé USB, <code>C:\Temp\lv3\</code> — et lancer par <b>double-clic</b>, sans Visual Studio. Puis refaire la même chose en Debug : c’est le même test, et il révèle le problème des DLL avant qu’il ne se manifeste en Release.</li>
+</ol>
+
+<h3>Filets Debug — ce qui doit se déclencher</h3>
+<ul>
+<li>Renommer <code>Build\LV3.Common.props</code> → le build s’arrête sur <code>LV3.Common.props introuvable via LV3BuildDir=…</code> avec le chemin testé. <i>Pour valider une correction, il faut pouvoir produire le défaut à volonté.</i></li>
+<li>Renommer <code>engine.json</code> → <code>[Content] aucune racine valide</code> suivi de la liste des chemins essayés, puis arrêt propre (<code>return -1</code>), pas un crash.</li>
+<li>Mettre <code>stdcpp20</code> dans <code>LV3.Common.props</code> → <code>#error "LibraryV3 exige std::expected…"</code>, et non une cascade de <code>C2039</code> trois cents lignes plus loin.</li>
+<li>Renommer un membre référencé uniquement dans un <code>LV3_ASSERT</code> → erreur de compilation <b>en Release aussi</b>, grâce au <code>sizeof</code>.</li>
+</ul>
+
+<h3>État constaté à la clôture</h3>
+<div class="out">Regénération : LibraryV3 (Release|x64) + RefactoNouvelleLibrairieV3 (Release|x64)
+  22 + 20 fichiers compilés
+  Level4, 8 catégories promues en erreurs
+  0 erreur, 0 avertissement
+  [LV3] Contenu copié vers …\x64\Release\
+  Reconstruire tout : 2 réussi, 0 a échoué
+
+Idem en Debug|x64.</div>
+<p class="small">La preuve de portabilité est dans la sortie elle-même : le projet, configuré sur <code>G:\Projects Visual Studio\</code>, a été compilé sur <code>C:\Pascal_Perso\source\repos\</code> <b>sans modifier un seul fichier versionné</b>.</p>
+
+<h3>Prédictions pour le lot appairé (la suite de la phase 0)</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Lot suivant</th><th>Prédiction</th><th>Ce qui l’infirmerait</th></tr></thead>
+<tbody>
+<tr><td><code>TriggerSystem</code> — retrait du <code>std::set</code> et du <code>std::cout</code></td><td>Gain massif et <b>non proportionnel</b> au nombre d’entités en N² : la console et l’allocateur dominent avant la complexité</td><td>Un gain faible signifierait que le N² domine déjà — à vérifier par ablation, pas par intuition</td></tr>
+<tr><td><code>RenderSystem</code> console</td><td>Invisible en Release (il est sous <code>LV3_DEBUG</code>), déterminant en Debug sur la scène ceinture</td><td>Un effet en Release signifierait qu’il n’est pas correctement gardé</td></tr>
+<tr><td><code>RelWithAsserts</code></td><td>Les invariants s’activent, et <b>au moins un</b> saute sur l’une des scènes — les bugs 53 et 57 produisent des états incohérents silencieux</td><td>Aucun assert ne saute → soit les scènes ne détruisent aucune entité (probable), soit les filets sont mal rangés sous <code>LV3_DEBUG</code></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+Lot A10 — Le build portable Debug / Release, pas à pas · LibraryV3 · artefact créé (aucun n’existait pour ce sujet).<br>
+Règles posées : R36 (racine d’exécution), R37 (en-tête et dépendances), R38 (portée des macros), R39 (chemins de contenu), R40 (<code>%(…)</code>), R43 (gardes symétriques), R44 (cause et non visibilité), R45 (tests ≠ invariants), R46 (assertions sans effet de bord), R47 (témoin et contrôle sur le même commutateur), R48 (en-tête feuille), R49 (<code>[[nodiscard]]</code> contre <code>C4189</code>) — <b>proposées, non actées</b>.
+</footer>
+
+</main>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ───────── 1. Chaîne d’imports MSBuild ───────── */
+  var pos = document.getElementById("pos");
+  var dup = document.getElementById("dup");
+  var pct = document.getElementById("pct");
+  var chain = document.getElementById("chain");
+  var chainOut = document.getElementById("chainOut");
+
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function buildChain(){
+    var p = pos.value, d = dup.checked, k = pct.checked;
+    var seq = [];
+    if (p === "avant") seq.push({n:"LV3.Common.props", ours:true});
+    seq.push({n:"Microsoft.Cpp.props", ours:false});
+    if (p === "nu") seq.push({n:"LV3.Common.props", ours:true});
+    if (p === "fin"){
+      seq.push({n:"Microsoft.Cpp.x64.user.props", ours:false});
+      seq.push({n:"LV3.Common.props", ours:true});
+    } else {
+      seq.push({n:"Microsoft.Cpp.x64.user.props", ours:false});
+    }
+    if (d) seq.push({n:"Microsoft.Cpp.x64.user.props", ours:false, dup:true});
+    seq.push({n:"ItemDefinitionGroup du .vcxproj", ours:false, last:true});
+
+    /* évaluation : la dernière définition gagne */
+    var st = {std:"(défaut toolset : stdcpp14)", warn:"(défaut : Level3)", conf:"(défaut : false)", opts:"(vide)"};
+    var i, e, lastOursIdx = -1, userAfterOurs = false;
+    for (i=0;i<seq.length;i++){
+      e = seq[i];
+      if (e.ours){
+        /* Microsoft.Cpp.props réinitialise les défauts du toolset :
+           une feuille placée AVANT lui est écrasée sur ses valeurs par défaut. */
+        st.std = "stdcpp23"; st.warn = "Level4"; st.conf = "true";
+        st.opts = "/utf-8 /Zc:__cplusplus /we4456 /we4457 /we4458 /we4459 /we4553 /we4700 /we4701 /we4715"
+                + (k ? "" : "");
+        lastOursIdx = i;
+      } else if (e.n === "Microsoft.Cpp.props" && lastOursIdx >= 0){
+        st.std = "(défaut toolset : stdcpp14)"; st.warn = "(défaut : Level3)"; st.conf = "(défaut : false)"; st.opts = "(vide)";
+      } else if (e.n === "Microsoft.Cpp.x64.user.props" && lastOursIdx >= 0){
+        /* la feuille utilisateur globale redéfinit AdditionalOptions SANS %() */
+        st.opts = "(écrasé par la feuille utilisateur globale)";
+        userAfterOurs = true;
+      }
+    }
+    if (!k && lastOursIdx >= 0 && !userAfterOurs){
+      /* sans %(), notre propre valeur efface ce que la feuille utilisateur avait posé — ici sans effet visible */
+    }
+
+    /* rendu SVG */
+    var W = 900, x = 24, y = 58, h = 48, gap = 14, bw;
+    var svg = '<style>.cb{stroke-width:1}.ct{font:600 11.5px ui-sans-serif,system-ui,sans-serif}.cs{font:10.5px ui-monospace,Consolas,monospace;fill:var(--ink3)}.cl{stroke:var(--ink3);stroke-width:1.3;fill:none;color:var(--ink3)}</style>';
+    svg += '<text x="24" y="26" class="cs" style="fill:var(--ink2);font-size:11.5px">ordre d’évaluation MSBuild — la dernière définition gagne</text>';
+    var avail = W - 48 - gap*(seq.length-1);
+    bw = Math.max(96, Math.floor(avail/seq.length));
+    for (i=0;i<seq.length;i++){
+      e = seq[i];
+      var fill = e.ours ? "var(--hl)" : (e.dup ? "var(--bad-bg)" : "var(--surface2)");
+      var str  = e.ours ? "var(--hl-line)" : (e.dup ? "var(--bad)" : "var(--line)");
+      svg += '<rect class="cb" x="'+x+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="7" fill="'+fill+'" stroke="'+str+'"/>';
+      var nm = e.n, parts = [];
+      if (nm.length > Math.floor(bw/6.2)){
+        var cut = nm.lastIndexOf(".", nm.length-1);
+        parts = [nm.slice(0, Math.floor(bw/6.2)), nm.slice(Math.floor(bw/6.2))];
+      } else parts = [nm];
+      svg += '<text class="ct" x="'+(x+8)+'" y="'+(y+19)+'" fill="var(--ink)">'+esc(parts[0])+'</text>';
+      if (parts[1]) svg += '<text class="ct" x="'+(x+8)+'" y="'+(y+33)+'" fill="var(--ink)">'+esc(parts[1])+'</text>';
+      svg += '<text class="cs" x="'+(x+8)+'" y="'+(y+43)+'">'+(e.ours?"nos réglages":(e.dup?"DOUBLON":(e.last?"le projet":"Visual Studio")))+'</text>';
+      if (i < seq.length-1) svg += '<line class="cl" x1="'+(x+bw)+'" y1="'+(y+h/2)+'" x2="'+(x+bw+gap-2)+'" y2="'+(y+h/2)+'"/>';
+      x += bw + gap;
+    }
+    svg += '<text x="24" y="150" class="cs" style="fill:var(--ink2);font-size:11.5px">position de nos feuilles : '
+        + (p==="fin" ? "correcte — en dernier" : (p==="nu" ? "trop tôt — la feuille utilisateur globale passe après" : "avant Microsoft.Cpp.props — les défauts du toolset écrasent tout"))
+        + (d ? "  ·  ImportGroup EN DOUBLE" : "") + '</text>';
+    chain.innerHTML = svg;
+
+    var ok = (st.std === "stdcpp23" && st.warn === "Level4" && st.opts.indexOf("/utf-8") === 0);
+    var txt = "";
+    txt += "Réglage                    Valeur effective\n";
+    txt += "─────────────────────────  ────────────────────────────────────────────────\n";
+    txt += "LanguageStandard           " + st.std + "\n";
+    txt += "WarningLevel               " + st.warn + "\n";
+    txt += "ConformanceMode            " + st.conf + "\n";
+    txt += "AdditionalOptions          " + st.opts + "\n\n";
+    if (ok){
+      txt += "✔  Les 4 réglages passent. /we4459 est actif : le bug 52 (_clock masquée) sera dénoncé.";
+    } else if (st.std === "stdcpp23" && st.opts.indexOf("écrasé") >= 0){
+      txt += "✘  4 réglages sur 5 passent — le piège parfait.\n";
+      txt += "   10 options perdues, dont /utf-8 (bug 12 revient) et /we4459 (bug 52 jamais dénoncé).\n";
+      txt += "   Le Gestionnaire de propriétés ne le montre pas. Seul le champ gris de la ligne\n";
+      txt += "   de commande révèle l’absence.";
+    } else {
+      txt += "✘  Rien ne passe : la feuille est évaluée avant Microsoft.Cpp.props, qui repose\n";
+      txt += "   ensuite les valeurs par défaut du toolset v145 par-dessus.\n";
+      txt += "   Et LV3CommonPropsLoaded vaut quand même 'true' : la garde LV3CheckProps NE SE\n";
+      txt += "   DÉCLENCHE PAS. Le projet se déclare correctement configuré sans l’être.";
+    }
+    chainOut.textContent = txt;
+  }
+  pos.addEventListener("change", buildChain);
+  dup.addEventListener("change", buildChain);
+  pct.addEventListener("change", buildChain);
+  buildChain();
+
+  /* ───────── 2. ResolveContentRoot ───────── */
+  var rcIds = ["rcCfg","rcEnv","rcEnvOk","rcExe","rcArg"];
+  var rcOut = document.getElementById("rcOut");
+  function rc(){
+    var cfg = document.getElementById("rcCfg").value;
+    var env = document.getElementById("rcEnv").checked;
+    var envOk = document.getElementById("rcEnvOk").checked;
+    var exe = document.getElementById("rcExe").checked;
+    var arg = document.getElementById("rcArg").checked;
+    var ENVP = "D:\\scenes\\belt";
+    var EXEP = "C:\\Temp\\lv3";
+    var ARGP = "D:\\scenes\\v2";
+    var PROJ = "G:\\Projects Visual Studio\\RefactoNouvelleLibrairieV3\\";
+    var tried = [], win = null, how = "";
+
+    if (env){
+      if (envOk){ win = ENVP; how = "LV3_CONTENT_ROOT"; }
+      else tried.push([ENVP, "pas d’engine.json"]);
+    }
+    if (!win && exe){ win = EXEP; how = "dossier de l’exécutable"; }
+    else if (!win && !exe) tried.push([EXEP, "pas d’engine.json"]);
+
+    if (!win && arg){ win = ARGP; how = "candidat applicatif — argv[1]"; }
+    else if (!win && !arg){ /* rien */ }
+
+    if (!win && cfg === "Debug"){ win = PROJ; how = "candidat applicatif — LV3_PROJECT_DIR (Debug)"; }
+    else if (!win && cfg === "Release") tried.push(["(LV3_PROJECT_DIR non défini en Release)", "branche absente du binaire"]);
+
+    var t = "";
+    t += "Configuration : " + cfg + "\n";
+    t += "Candidats, dans l’ordre :\n";
+    t += "  1. LV3_CONTENT_ROOT    " + (env ? (envOk ? ENVP + "   → engine.json trouvé" : ENVP + "   → engine.json ABSENT") : "(variable non définie)") + "\n";
+    t += "  2. ExecutableDir()     " + EXEP + (exe ? "   → engine.json trouvé" : "   → engine.json ABSENT (pas de post-build)") + "\n";
+    t += "  3. extraCandidates     " + (arg ? "argv[1] = " + ARGP + "   → engine.json trouvé\n" : "(aucun argv[1])\n");
+    t += "                         " + (cfg === "Debug" ? "LV3_PROJECT_DIR = " + PROJ + "   → engine.json trouvé" : "LV3_PROJECT_DIR : #ifdef faux, la branche n’existe pas dans le binaire") + "\n\n";
+    if (win){
+      t += "RÉSULTAT  →  " + win + "\n";
+      t += "journal   →  [Content] racine = " + how + " : " + win + "\n\n";
+      t += "Composition : contentRoot / \"assets/Meshes/rock_a.obj\"\n";
+      t += "            =  " + win.replace(/\\$/,"") + "\\assets\\Meshes\\rock_a.obj";
+    } else {
+      t += "RÉSULTAT  →  {}  (chemin vide)\n\n";
+      t += "journal   →  [Content] aucune racine valide : 'engine.json' introuvable.\n";
+      for (var i=0;i<tried.length;i++) t += "             [Content]   essayé : " + tried[i][0] + "   (" + tried[i][1] + ")\n";
+      t += "\nmain()    →  Logger::error(\"Arrêt : aucune racine de contenu.\"); return -1;\n";
+      t += "             Arrêt propre, cause lisible — pas un crash trois fonctions plus loin.";
+    }
+    rcOut.textContent = t;
+  }
+  rcIds.forEach(function(id){ document.getElementById(id).addEventListener("change", rc); });
+  rc();
+
+  /* ───────── 3. ExecutableDir : la boucle ───────── */
+  var plen = document.getElementById("plen"), plenV = document.getElementById("plenV"), exeOut = document.getElementById("exeOut");
+  function ex(){
+    var L = parseInt(plen.value, 10);
+    plenV.textContent = L + " wchar_t";
+    var size = 260, it = 0, t = "";
+    t += "MAX_PATH = 260 (terminaison comprise)   |   longueur réelle du chemin : " + L + "\n";
+    t += "────────────────────────────────────────────────────────────────────────────\n";
+    t += "itér.  buf.size()   n renvoyé   test n < size   action\n";
+    while (true){
+      it++;
+      var n = (L < size) ? L : size;   // tronqué -> renvoie nSize
+      var okk = n < size;
+      t += String(it).padEnd(7) + String(size).padEnd(12) + String(n).padEnd(12)
+         + (okk ? "vrai        " : "FAUX        ")
+         + (okk ? "buf.resize(" + n + ") ; break" : "tronqué → buf.resize(" + (size*2) + ")") + "\n";
+      if (okk) break;
+      size *= 2;
+      if (size >= 32768){
+        t += "       32768       —           —             borne dure de l’API large → Logger::error, return {}\n";
+        break;
+      }
+      if (it > 12) break;
+    }
+    t += "\nRappel du contrat : en cas de SUCCÈS, n exclut le zéro final — donc n < size, toujours.\n";
+    t += "En cas de buffer trop petit, GetModuleFileNameW renvoie EXACTEMENT nSize.\n";
+    t += "C’est ce qui rend le test « n < size » suffisant, sans interroger GetLastError().\n\n";
+    if (L <= 259) t += "→ Chemin typique : une seule itération. La boucle ne coûte rien dans le cas normal.";
+    else if (L < 32767) t += "→ Chemin long : " + it + " itérations. Abandonner à 260 aurait été un mauvais contrat :\n   les fonctions …W acceptent jusqu’à 32 767 caractères.";
+    else t += "→ Hors domaine de l’API.";
+    exeOut.textContent = t;
+  }
+  plen.addEventListener("input", ex);
+  ex();
+
+  /* ───────── 4. operator/ et is_absolute ───────── */
+  var jp = document.getElementById("jp"), jpOut = document.getElementById("jpOut");
+  function isAbsWin(p){
+    var s = p.replace(/\//g, "\\");
+    if (/^\\\\[^\\]/.test(s)) return {abs:true, why:"UNC : le serveur tient lieu de racine de nom"};
+    if (/^[A-Za-z]:\\/.test(s)) return {abs:true, why:"racine de nom (lettre de volume) ET racine de répertoire"};
+    if (/^[A-Za-z]:/.test(s)) return {abs:false, why:"racine de NOM sans racine de répertoire → relatif au répertoire courant DE CE VOLUME"};
+    if (/^\\/.test(s)) return {abs:false, why:"racine de RÉPERTOIRE sans racine de nom → dépend du lecteur courant"};
+    return {abs:false, why:"ni racine de nom, ni racine de répertoire"};
+  }
+  function joinWin(root, p){
+    var a = isAbsWin(p);
+    if (a.abs) return p.replace(/\//g,"\\");
+    return root.replace(/\\$/,"") + "\\" + p.replace(/^[\\\/]/,"").replace(/\//g,"\\");
+  }
+  function jpf(){
+    var p = jp.value || "";
+    var root = "C:\\Temp\\lv3";
+    var a = isAbsWin(p);
+    var res = joinWin(root, p);
+    var t = "";
+    t += "contentRoot              = " + root + "\n";
+    t += "chemin lu dans le JSON   = " + p + "\n\n";
+    t += "p.is_absolute()          = " + (a.abs ? "true" : "false") + "\n";
+    t += "   raison                 " + a.why + "\n";
+    t += "p.has_root_path()        = " + ((/^([A-Za-z]:|\\)/.test(p.replace(/\//g,"\\"))) ? "true" : "false") + "   ← ne remplace PAS is_absolute()\n\n";
+    t += "contentRoot / p          = " + res + "\n\n";
+    if (a.abs){
+      t += "✘  contentRoot a été PUREMENT ET SIMPLEMENT JETÉ.\n";
+      t += "   Conforme à la norme, totalement silencieux : tout le travail de ResolveContentRoot\n";
+      t += "   est annulé par un opérateur qui fait exactement ce qu’on lui demande.\n";
+      t += "   LV3_ASSERT(!p.is_absolute()) est le seul témoin de cette annulation.";
+    } else {
+      t += "✔  Composition correcte : le chemin du JSON est relatif, la racine est respectée.";
+    }
+    jpOut.textContent = t;
+  }
+  jp.addEventListener("input", jpf);
+  jpf();
+
+  /* ───────── 5. Matrice des commutateurs ───────── */
+  var swCfg = document.getElementById("swCfg"), swOut = document.getElementById("swOut");
+  function sw(){
+    var c = swCfg.value, d, a, dl, vl, ndebug;
+    if (c === "Debug"){ a=1; d=1; dl=1; vl=1; ndebug=false; }
+    else if (c === "Release"){ a=0; d=0; dl=0; vl=0; ndebug=true; }
+    else { a=1; d=0; dl=0; vl=0; ndebug=true; }
+    var t = "";
+    t += "Configuration : " + c + "\n";
+    t += "Définitions   : " + (ndebug ? "NDEBUG" : "_DEBUG") + (c.indexOf("RelWith")===0 ? " + LV3_ASSERTS_ENABLED=1" : "") + "\n";
+    t += "Optimisation  : " + (c === "Debug" ? "/Od" : "/O2") + "\n";
+    t += "──────────────────────────────────────────────────────────────────\n";
+    t += "LV3_ASSERTS_ENABLED   " + a + "    invariants : " + (a ? "ACTIFS" : "éteints (expression compilée, non évaluée)") + "\n";
+    t += "LV3_DEBUG             " + d + "    outils, dumps, RenderSystem console : " + (d ? "actifs" : "absents du binaire") + "\n";
+    t += "LV3_DEBUG_LOG         " + dl + "    journaux de diagnostic : " + (dl ? "actifs" : "aucune allocation std::string") + "\n";
+    t += "LV3_VERBOSE_LOG       " + vl + "    trace par entité : " + (vl ? "active" : "absente") + "\n";
+    t += "──────────────────────────────────────────────────────────────────\n";
+    t += "LV3_ASSERT(x) se résout en :\n";
+    t += a ? "    do{ if(!(x)) LV3::AssertFailed(#x,__FILE__,__LINE__); }while(0)\n"
+           : "    ((void)sizeof(!(x)))        ← compilée, jamais évaluée\n";
+    t += "assert(x) de la CRT se résout en :\n";
+    t += ndebug ? "    ((void)0)   ← NEUTRALISÉ par NDEBUG, même en RelWithAsserts\n"
+                : "    contrôle actif\n";
+    t += "\nCheckSceneInvariants / ValidateHierarchy : " + (a ? "s’exécutent" : "ne s’exécutent pas") + "\n";
+    t += "RunAllTests : " + (c === "Debug" ? "suite complète" : "« [TNR] Suite désactivée en Release : aucun test exécuté. »") + "\n";
+    if (c.indexOf("RelWith") === 0){
+      t += "\n→ C’est la seule configuration où l’on mesure du code représentatif AVEC les filets.\n";
+      t += "  Elle se duplique depuis Release, jamais depuis Debug : sinon LV3_DEBUG=1 ramène le\n";
+      t += "  RenderSystem console et ses milliers de lignes par frame.\n";
+      t += "  Point ouvert A10-4 : les appels directs à assert() y resteront muets.";
+    }
+    if (c === "Release"){
+      t += "\n→ Aucun filet. C’est exact, et c’est le problème relevé : on y mesure sans savoir si\n";
+      t += "  la scène est saine. Un sous-arbre gelé (bug 53) ne fait aucun bruit ici.";
+    }
+    swOut.textContent = t;
+  }
+  swCfg.addEventListener("change", sw);
+  sw();
+
+})();
+</script>
+</body>
+</html>

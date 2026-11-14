@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot A7 — Dolly, zoom et le faux bug orthographique, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eee9; --surface3:#e7e4dd;
+  --ink:#1c1b18; --ink2:#4a4740; --ink3:#78746a;
+  --line:#ddd9d0; --line2:#c8c3b7;
+  --accent:#b8860b; --accent2:#8a6508; --accentBg:#fdf6e3;
+  --ok:#2d6a4f; --okBg:#e8f3ed;
+  --bad:#9b2226; --badBg:#fbeaea;
+  --info:#1f5673; --infoBg:#e8f1f6;
+  --code:#2b2a26; --codeBg:#f3f1ec;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+    --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+    --line:#333139; --line2:#454350;
+    --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+    --ok:#6ac095; --okBg:#17291f;
+    --bad:#e8777c; --badBg:#2c1619;
+    --info:#7cb8d8; --infoBg:#132430;
+    --code:#dcd9e2; --codeBg:#232228;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+  --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+  --line:#333139; --line2:#454350;
+  --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+  --ok:#6ac095; --okBg:#17291f;
+  --bad:#e8777c; --badBg:#2c1619;
+  --info:#7cb8d8; --infoBg:#132430;
+  --code:#dcd9e2; --codeBg:#232228;
+}
+*{box-sizing:inherit}
+html{scroll-behavior:smooth; scroll-padding-top: calc(54px + env(safe-area-inset-top, 0px));}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.65;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px);
+  background:var(--surface); z-index:50;}
+
+/* ---- barre de navigation ---- */
+#nav{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:.5rem; padding:.45rem .7rem;
+  overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap;
+}
+#nav a{
+  color:var(--ink2); text-decoration:none; font-size:.78rem; font-weight:600;
+  padding:.3rem .55rem; border-radius:6px; flex:0 0 auto;
+}
+#nav a:hover{background:var(--surface2); color:var(--ink)}
+#nav a.on{background:var(--accentBg); color:var(--accent2)}
+#themeBtn{
+  margin-left:auto; flex:0 0 auto; background:var(--surface2); color:var(--ink2);
+  border:1px solid var(--line); border-radius:6px; padding:.3rem .5rem;
+  font-size:.78rem; cursor:pointer; font-family:inherit;
+}
+
+main{max-width:980px; margin:0 auto; padding:1.2rem 1rem 5rem}
+
+/* ---- titres ---- */
+h1{font-size:1.85rem; line-height:1.2; margin:.4rem 0 .3rem; letter-spacing:-.02em}
+h2{font-size:1.3rem; margin:2.6rem 0 .5rem; padding-top:.9rem; border-top:2px solid var(--line);
+   letter-spacing:-.01em}
+h3{font-size:1.05rem; margin:1.8rem 0 .4rem; color:var(--ink)}
+h4{font-size:.93rem; margin:1.2rem 0 .3rem; color:var(--ink2); text-transform:uppercase;
+   letter-spacing:.06em}
+.sub{color:var(--ink3); font-size:.9rem; margin:0 0 1.4rem}
+.kicker{display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--accent2); background:var(--accentBg);
+  padding:.2rem .5rem; border-radius:4px; margin-bottom:.5rem}
+p{margin:.7rem 0}
+ul,ol{margin:.6rem 0; padding-left:1.3rem}
+li{margin:.3rem 0}
+strong{font-weight:650}
+code{font-family:var(--mono); font-size:.86em; background:var(--codeBg); color:var(--code);
+  padding:.1em .34em; border-radius:4px}
+pre{background:var(--codeBg); border:1px solid var(--line); border-radius:8px;
+  padding:.8rem .9rem; overflow-x:auto; margin:.8rem 0; font-size:.8rem; line-height:1.55}
+pre code{background:none; padding:0; font-size:inherit}
+.cm{color:var(--ink3)}
+.kw{color:var(--accent2); font-weight:600}
+.st{color:var(--ok)}
+.nb{color:var(--info)}
+
+/* ---- blocs ---- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:1rem 1.1rem; margin:1rem 0}
+.note, .warn, .good, .info{
+  border-left:4px solid; border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0;
+  font-size:.92rem}
+.note{border-color:var(--accent); background:var(--accentBg)}
+.warn{border-color:var(--bad); background:var(--badBg)}
+.good{border-color:var(--ok); background:var(--okBg)}
+.info{border-color:var(--info); background:var(--infoBg)}
+.rule{background:var(--surface2); border:1px solid var(--line2); border-left:4px solid var(--accent);
+  border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.rule b{color:var(--accent2)}
+.counter{border:1px dashed var(--bad); background:var(--badBg); border-radius:8px;
+  padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.counter .lbl{font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--bad); display:block; margin-bottom:.3rem}
+
+/* ---- tableaux ---- */
+.tw{overflow-x:auto; margin:1rem 0; border:1px solid var(--line); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:.84rem; background:var(--surface)}
+th,td{padding:.5rem .65rem; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+th{background:var(--surface2); font-weight:650; font-size:.76rem; text-transform:uppercase;
+  letter-spacing:.04em; color:var(--ink2); white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num{font-family:var(--mono); white-space:nowrap}
+
+/* ---- contrôles ---- */
+.ctl{display:flex; flex-wrap:wrap; gap:.85rem; align-items:flex-end; margin:.8rem 0;
+  padding:.8rem; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.fld{display:flex; flex-direction:column; gap:.2rem; min-width:128px; flex:1 1 128px}
+.fld label{font-size:.72rem; font-weight:650; color:var(--ink2); text-transform:uppercase;
+  letter-spacing:.05em}
+.fld .val{font-family:var(--mono); font-size:.8rem; color:var(--accent2); font-weight:600}
+input[type=range]{width:100%; accent-color:var(--accent); margin:0}
+input[type=number],select{font-family:var(--mono); font-size:.82rem; padding:.3rem .4rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2); border-radius:5px;
+  width:100%}
+.seg{display:flex; gap:.25rem; flex-wrap:wrap}
+.seg button{font-family:inherit; font-size:.76rem; font-weight:600; padding:.32rem .6rem;
+  background:var(--surface); color:var(--ink2); border:1px solid var(--line2);
+  border-radius:5px; cursor:pointer}
+.seg button.on{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.btn{font-family:inherit; font-size:.8rem; font-weight:600; padding:.4rem .75rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2);
+  border-radius:6px; cursor:pointer}
+.btn:hover{background:var(--surface3)}
+.btn.pri{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.chk{display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--ink2);
+  cursor:pointer; user-select:none}
+
+/* ---- canvas / sorties ---- */
+canvas{display:block; width:100%; max-width:100%; background:var(--surface);
+  border:1px solid var(--line); border-radius:8px; touch-action:none}
+.out{font-family:var(--mono); font-size:.79rem; line-height:1.55; background:var(--codeBg);
+  border:1px solid var(--line); border-radius:8px; padding:.7rem .85rem; margin:.7rem 0;
+  overflow-x:auto; white-space:pre; color:var(--code)}
+.out .g{color:var(--ok); font-weight:600}
+.out .r{color:var(--bad); font-weight:600}
+.out .a{color:var(--accent2); font-weight:600}
+.out .d{color:var(--ink3)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
+@media (max-width:720px){ .grid2{grid-template-columns:1fr} }
+
+/* ---- étapes ---- */
+.step{border:1px solid var(--line); border-radius:10px; margin:1.1rem 0; overflow:hidden;
+  background:var(--surface)}
+.step>summary{cursor:pointer; padding:.75rem 1rem; background:var(--surface2);
+  font-weight:650; font-size:.95rem; list-style:none; display:flex; align-items:center; gap:.6rem}
+.step>summary::-webkit-details-marker{display:none}
+.step>summary::before{content:"▸"; color:var(--accent); font-size:.8rem; flex:0 0 auto}
+.step[open]>summary::before{content:"▾"}
+.step>summary .n{background:var(--accent); color:#1c1b18; font-family:var(--mono);
+  font-size:.72rem; font-weight:700; padding:.1rem .4rem; border-radius:4px; flex:0 0 auto}
+.step .body{padding:.9rem 1rem 1.1rem; border-top:1px solid var(--line)}
+.io{display:grid; grid-template-columns:auto 1fr; gap:.3rem .7rem; font-size:.83rem;
+  margin:.7rem 0; padding:.6rem .7rem; background:var(--surface2); border-radius:7px}
+.io dt{font-weight:650; color:var(--ink2); white-space:nowrap}
+.io dd{margin:0; font-family:var(--mono); font-size:.78rem}
+.goal{font-size:.9rem; color:var(--ink2); border-left:3px solid var(--accent);
+  padding-left:.7rem; margin:.5rem 0 .8rem; font-style:italic}
+
+/* ---- pipeline ---- */
+.pipe{display:flex; flex-direction:column; gap:.3rem; margin:1rem 0}
+.pstage{display:flex; align-items:center; gap:.6rem; padding:.45rem .7rem;
+  background:var(--surface2); border:1px solid var(--line); border-radius:7px; font-size:.84rem}
+.pstage .pn{font-family:var(--mono); font-size:.72rem; color:var(--ink3); width:1.6rem;
+  flex:0 0 auto}
+.pstage .pt{font-weight:600}
+.pstage .pd{color:var(--ink3); font-size:.78rem; margin-left:auto; text-align:right}
+.pstage.hot{background:var(--accentBg); border-color:var(--accent); border-width:2px}
+.pstage.hot .pt{color:var(--accent2)}
+.pstage.new{border-style:dashed; border-color:var(--ok); background:var(--okBg)}
+.pstage.new .pt{color:var(--ok)}
+.pbadge{font-size:.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:.1rem .35rem; border-radius:3px; background:var(--accent); color:#1c1b18; flex:0 0 auto}
+.pbadge.n{background:var(--ok); color:#fff}
+
+.legend{display:flex; flex-wrap:wrap; gap:.8rem; font-size:.75rem; color:var(--ink3); margin:.5rem 0}
+.legend span{display:flex; align-items:center; gap:.3rem}
+.sw{width:.8rem; height:.8rem; border-radius:3px; display:inline-block}
+
+.ba{display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0}
+@media (max-width:720px){ .ba{grid-template-columns:1fr} }
+.ba>div{border:1px solid var(--line); border-radius:8px; padding:.7rem .8rem; font-size:.84rem}
+.ba .before{border-left:4px solid var(--bad); background:var(--badBg)}
+.ba .after{border-left:4px solid var(--ok); background:var(--okBg)}
+.ba h5{margin:0 0 .4rem; font-size:.74rem; text-transform:uppercase; letter-spacing:.07em}
+.ba .before h5{color:var(--bad)}
+.ba .after h5{color:var(--ok)}
+.ba pre{margin:.4rem 0 0; background:var(--surface); font-size:.74rem}
+
+.foot{margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
+  color:var(--ink3); font-size:.8rem}
+.tag{display:inline-block; font-family:var(--mono); font-size:.7rem; padding:.1rem .4rem;
+  border-radius:3px; background:var(--surface3); color:var(--ink2); margin-right:.3rem}
+/* ---- ajouts A7 ---- */
+.lanes{border-collapse:collapse; font-family:var(--mono); font-size:.74rem; width:100%}
+.lanes th,.lanes td{border:1px solid var(--line); padding:.25rem .35rem; text-align:right; white-space:nowrap}
+.lanes th{background:var(--surface2); text-transform:none; letter-spacing:0; font-size:.72rem}
+.lanes td.l{text-align:left; color:var(--ink2); font-weight:600}
+.pass{color:var(--ok); font-weight:700}
+.fail{color:var(--bad); font-weight:700}
+.big{font-family:var(--mono); font-size:1.05rem; font-weight:700; color:var(--accent2)}
+.files td:first-child{font-family:var(--mono); font-size:.78rem; white-space:nowrap}
+.hl{background:var(--accentBg); border-radius:3px; padding:0 .15rem}
+.newl{background:var(--okBg); border-radius:3px; padding:0 .15rem}
+.algo{font-family:var(--mono); font-size:.78rem; line-height:1.6; background:var(--codeBg); border:1px solid var(--line);
+  border-radius:8px; padding:.8rem .9rem; overflow-x:auto; white-space:pre; color:var(--code)}
+.algo .hl{color:var(--accent2); font-weight:700}
+.algo .newl{color:var(--ok); font-weight:700}
+.algo .d{color:var(--ink3)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#s0">Pourquoi</a>
+  <a href="#s1">Rappel</a>
+  <a href="#s2">Objectif</a>
+  <a href="#s3">Algo global</a>
+  <a href="#s4">Algo du lot</a>
+  <a href="#s5">Technique</a>
+  <a href="#s6">Étapes</a>
+  <a href="#s6c">Contre-exemples</a>
+  <a href="#s7">Vérifier</a>
+  <a href="#s8">Exemples</a>
+  <a href="#s9">Incidents</a>
+  <a href="#s10">Règles</a>
+  <a href="#s11">Décisions</a>
+  <button id="themeBtn">◐ Thème</button>
+</nav>
+
+<main>
+
+<span class="kicker">LibraryV3 · Annexe A7 · rattachée à la Leçon 05</span>
+<h1>Lot A7 — Dolly, zoom et le faux bug orthographique, pas à pas</h1>
+<p class="sub">Une caméra orthographique « refuse » d’avancer. Elle avance pourtant. Comprendre
+pourquoi l’écran ne peut pas le montrer, puis donner à la molette le geste qui manquait : le zoom.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s0">0 · Pourquoi ce lot</h2>
+
+<p>Le constat de départ est simple et paraît accablant : avec une caméra <strong>perspective</strong>,
+les flèches avant/arrière font avancer et reculer la vue. Avec une caméra
+<strong>orthographique</strong>, droite/gauche fonctionne, mais avant/arrière ne produit
+<em>rien</em> à l’écran. Tout pousse à conclure à un bug du contrôleur clavier.</p>
+
+<p>Ce lot existe pour deux raisons, de natures très différentes :</p>
+<ol>
+  <li><strong>Une leçon de diagnostic.</strong> Le contrôleur n’est pas fautif, la matrice non plus.
+  L’orthographique est <em>mathématiquement incapable</em> de montrer un déplacement le long de
+  son axe de visée. Ce n’est pas un défaut, c’est sa définition. Corriger le contrôleur ou la
+  matrice aurait détruit une propriété dont le reste du moteur dépend (les gizmos de l’A5, la
+  section constante).</li>
+  <li><strong>Une commande qui manquait.</strong> Puisque « avancer » ne peut rien montrer en
+  orthographique, il faut un autre geste pour cadrer plus serré ou plus large : le
+  <strong>zoom</strong>. Il était même prévu — <code>InputState::wheelDelta</code> portait le
+  commentaire « molette : zoom / vitesse » — mais aucun système ne le lisait.</li>
+</ol>
+
+<div class="info"><b>Ce que livre le lot.</b> Aucune ligne modifiée dans le contrôleur ni dans les
+matrices de projection. Un nouveau système, <code>CameraZoomSystem</code> (<code>Scene/System.cpp</code>) ;
+un commentaire d’en-tête rectifié dans <code>CameraComponent</code> ; une TNR de huit sections,
+<code>TestCameraZoom</code> (EXE). Et, pendant le même échange, deux incidents qui n’avaient
+rien à voir avec le zoom mais qui ont été pris pour lui (§9).</div>
+
+<div class="note"><b>À relire dans un an.</b> Si un déplacement clavier « ne fait rien », la
+première question n’est pas « que fait le contrôleur ? » mais « qu’est-ce que la projection
+est capable de montrer ? ». Ce lot est la démonstration complète de cette question.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s1">1 · Rappel — où en est le moteur</h2>
+
+<p>Ce lot s’appuie sur des briques posées avant lui. Rien n’y est réécrit ; tout y est lu.</p>
+
+<div class="tw"><table>
+<tr><th>Origine</th><th>Ce qui existe</th><th>Ce que ce lot en utilise</th></tr>
+<tr><td>L01–L02</td><td>Configuration, enums (<code>EProjectionType</code>, <code>ELensModel</code>), bibliothèque mathématique (<code>Matrix44f</code>, convention vecteur-ligne)</td><td>Les deux enums qui aiguillent le zoom</td></tr>
+<tr><td>L03</td><td>ECS : <code>Registry</code>, <code>SparseSet</code>, <code>ViewGroup&lt;…&gt;</code></td><td>L’itération <code>ViewGroup&lt;CameraComponent, FPSControllerComponent&gt;</code> ; des <code>Registry</code> jetables dans la TNR</td></tr>
+<tr><td>L04</td><td>Rasterizer, clipping near, reverse-Z</td><td>Rien directement ; c’est lui qui dessine ce que la projection décide</td></tr>
+<tr><td>L05</td><td><code>CameraComponent</code> = la lentille ; <code>TransformComponent</code> = la position ; Règle 1 « la caméra n’existe pas » ; <code>Projection::Perspective / PerspectiveInfinite / OrthographicCentered</code> ; <code>CameraFovY()</code> source unique (lentille <code>fov</code> ou <code>filmback</code>) ; <code>BuildViewData</code> reconstruit les matrices chaque frame</td><td>Tout le raisonnement du §5 ; le zoom écrit dans la lentille, <code>BuildViewData</code> le lit à la frame suivante</td></tr>
+<tr><td>A5</td><td>Gizmos de caméra, <code>CameraBinding</code>, <code>CameraGizmoSystem</code> qui lit <code>m_orthoHeight</code> et <code>CameraFovY()</code> chaque frame ; section constante (ortho) contre proportionnelle (perspective)</td><td>Le « même phénomène, deux symptômes » du §5.1 ; l’affirmation « le gizmo suit le zoom », amendée par l’A9 (§9)</td></tr>
+<tr><td>A6</td><td><code>JsonReader</code>, <code>ParseCamera</code>, discriminant <code>lens</code></td><td>Les trois champs de lentille chargés depuis la scène</td></tr>
+<tr><td>Core</td><td><code>InputState</code> : <code>moveForward…</code>, <code>sprint</code>, <code>mouseDeltaX/Y</code>, <code>wheelDelta</code> (rempli, jamais lu)</td><td><code>wheelDelta</code> et <code>sprint</code></td></tr>
+<tr><td>Contrôleur</td><td><code>FPSControllerComponent</code> (<code>m_isEnabled</code>, <code>m_moveSpeed</code>, <code>m_sprintMultiplier</code>…) et son système</td><td>Le filtre de portée et le multiplicateur de sprint</td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s2">2 · Contexte et objectif fonctionnel</h2>
+
+<p>La scène de travail compte deux viewports : à gauche <code>FPS_Camera</code>, perspective,
+pilotée au clavier et à la souris ; à droite une caméra de debug, souvent
+orthographique (<code>Top_Camera</code>, vue de dessus, <code>orthoHeight: 120</code>).
+L’objectif est un contrat de gestes <strong>identique quelle que soit la projection</strong>,
+celui de tout moteur ou jeu à la première personne :</p>
+
+<div class="tw"><table>
+<tr><th>Geste</th><th>Ce qu’il commande</th><th>Ce qu’il écrit</th><th>Visible en perspective</th><th>Visible en ortho</th></tr>
+<tr><td>Clavier (ZQSD / flèches)</td><td><b>dolly</b> : déplacer la caméra</td><td><code>TransformComponent::m_local.position</code></td><td>oui</td><td>latéral oui, axial <b>non</b> (§5.1)</td></tr>
+<tr><td>Souris</td><td>orientation (où l’on regarde)</td><td><code>m_local.rotation</code></td><td>oui</td><td>oui</td></tr>
+<tr><td>Molette</td><td><b>zoom</b> : changer la lentille</td><td><code>CameraComponent</code> (un seul champ selon la lentille)</td><td>oui</td><td>oui</td></tr>
+<tr><td>Shift</td><td>accélère le déplacement <i>et</i> le zoom</td><td>rien (multiplicateur)</td><td>oui</td><td>oui</td></tr>
+</table></div>
+
+<p><b>Contraintes posées avant le code</b> : ne toucher ni au contrôleur (il est juste), ni aux
+matrices (elles sont justes) ; n’écrire que dans la lentille ; une seule formule pour les trois
+lentilles ; la molette avant zoome, la molette arrière dézoome ; une TNR qui verrouille le sens.</p>
+
+<p><b>Décisions à prendre, et pourquoi elles comptent</b> (réponses au §11) :
+où vit le système (contrôleur générique ou gizmo ?) ; quelles caméras la molette atteint
+(celles qu’on <em>pilote</em> ou celles qu’on <em>voit</em> ?) ; pas additif ou multiplicatif
+(trois grandeurs d’échelles sans rapport : ~120, ~45, ~35) ; le sprint s’applique-t-il ;
+le commentaire « donnée d’auteur pure » de <code>CameraComponent</code> reste-t-il vrai.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s3">3 · Algorithme global du moteur — où se situe ce lot</h2>
+
+<p>La boucle de frame complète. Trois lectures : avant le lot, juste après le lot, et
+aujourd’hui (ordre canonique S13, deux passes de cuisson), pour voir que la place du zoom
+n’a pas bougé quand la boucle a été réorganisée.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto">
+    <label>Vue du pipeline</label>
+    <div class="seg" id="pipeSeg">
+      <button data-v="before" class="on">Avant le lot (fin A5)</button>
+      <button data-v="after">Après le lot A7</button>
+      <button data-v="today">Aujourd’hui (S13)</button>
+      <button data-v="diff">Différences seules</button>
+    </div>
+  </div>
+  <label class="chk"><input type="checkbox" id="pipeDetail"> Afficher le détail de chaque étage</label>
+</div>
+<div class="pipe" id="pipeline"></div>
+<div class="legend">
+  <span><i class="sw" style="background:var(--surface2);border:1px solid var(--line)"></i> inchangé</span>
+  <span><i class="sw" style="background:var(--accentBg);border:2px solid var(--accent)"></i> modifié par le lot</span>
+  <span><i class="sw" style="background:var(--okBg);border:1px dashed var(--ok)"></i> créé par le lot</span>
+</div>
+
+<div class="info"><b>Lecture.</b> Le zoom s’insère au palier des contrôleurs, <em>avant</em>
+<code>BuildCameraBindings</code> et <code>CameraGizmoSystem</code> : tout ce qui lit la lentille
+pendant la frame voit déjà la nouvelle valeur. Il n’a pas besoin d’être avant
+<code>LocalTransformSystem</code> — il n’écrit pas de <code>Transform</code> (§5.5).</div>
+
+<h3>Carte des fichiers</h3>
+<div class="tw"><table class="files">
+<tr><th>Fichier</th><th>Projet</th><th>Rôle dans le lot</th><th>Touché ?</th></tr>
+<tr><td>Core/InputState.h</td><td>LIB</td><td><code>wheelDelta</code>, <code>sprint</code> — enfin consommés</td><td>lu</td></tr>
+<tr><td>Maths/Projection.cpp</td><td>LIB</td><td>La preuve du §5.1 : colonne de <code>x_clip</code> sans terme en z en ortho</td><td>lu, <b>surtout pas modifié</b></td></tr>
+<tr><td>Scene/System.cpp / .hpp</td><td>LIB</td><td><code>CameraZoomSystem</code>, à côté de <code>CameraFPSControllerSystem</code></td><td><span class="newl">créé</span></td></tr>
+<tr><td>Scene/Components/Component.hpp</td><td>LIB</td><td>En-tête de <code>CameraComponent</code> : trois champs réécrits au runtime</td><td><span class="hl">modifié (commentaire)</span></td></tr>
+<tr><td>Scene/DebugGizmos.cpp</td><td>LIB</td><td><code>CameraGizmoSystem</code> lit la lentille chaque frame</td><td>inchangé</td></tr>
+<tr><td>main.cpp</td><td>EXE</td><td>Appel de <code>CameraZoomSystem(registry, in)</code> au palier caméra</td><td><span class="hl">modifié</span></td></tr>
+<tr><td>Test/TestCameraZoom.cpp</td><td>EXE</td><td>TNR, huit sections, une entité fraîche par section</td><td><span class="newl">créé</span></td></tr>
+<tr><td>Test/RunAllTests.cpp</td><td>EXE</td><td>Appel de <code>TestCameraZoom()</code></td><td><span class="hl">modifié</span></td></tr>
+<tr><td>Scene/System.cpp — <code>DebugDisplaySystemRecursive</code></td><td>LIB</td><td>Incident A8 (§9) : une ligne retirée</td><td><span class="hl">corrigé</span></td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s4">4 · Algorithme détaillé du lot</h2>
+
+<p>Le système complet tient en un aiguillage. Les lignes <span class="newl">vertes</span> sont
+créées par le lot ; les lignes <span class="hl">ambrées</span> portent la décision qui a demandé
+le plus de réflexion.</p>
+
+<div class="algo"><span class="newl">CameraZoomSystem(registry, in)</span>
+│
+├─ si in.wheelDelta == 0 → retour immédiat               <span class="d">(99 % des frames)</span>
+│
+└─ pour chaque entité ayant <span class="hl">CameraComponent ET FPSControllerComponent</span>
+     │
+     ├─ si !ctrl.m_isEnabled → entité suivante          <span class="d">(on zoome ce qu’on PILOTE)</span>
+     │
+     ├─ crans effectifs  e = wheelDelta × (sprint ? ctrl.m_sprintMultiplier : 1)
+     ├─ <span class="hl">facteur           s = 0,9^e</span>                        <span class="d">(s &lt; 1 quand on zoome)</span>
+     │
+     └─ selon la SOURCE DE VÉRITÉ de la lentille :
+          ├─ Orthographic             : orthoHeight  ← clamp(orthoHeight × s, 0,5 ; 5000)
+          ├─ Perspective, FieldOfView : fovYDeg      ← clamp(fovYDeg    × s, 1° ; 170°)
+          └─ Perspective, Filmback    : <span class="hl">focalLengthMm ← clamp(focal ÷ s, 1 ; 2000 mm)</span>  <span class="d">(inversé !)</span>
+
+<span class="d">frame suivante (même frame en S13) :</span>
+BuildViewData → CameraFovY(cam) / OrthographicCentered(orthoHeight, …) → nouvelle projection</div>
+
+<h3>Avant / après</h3>
+
+<div class="ba">
+  <div class="before"><h5>Avant — la molette</h5>
+  <code>PollEvents</code> remplit <code>in.wheelDelta</code>. Aucun système ne le lit. Le seul
+  moyen de cadrer plus large en ortho : éditer <code>orthoHeight</code> dans le JSON et relancer.
+  <pre><code>int wheelDelta = 0;  // molette : zoom / vitesse
+// ... jamais consommé</code></pre></div>
+  <div class="after"><h5>Après</h5>
+  <code>CameraZoomSystem</code> consomme <code>wheelDelta</code> une fois par frame, pour les
+  caméras pilotées, et écrit la seule source de vérité de leur lentille.
+  <pre><code>CameraZoomSystem(registry, in);   // palier caméra
+// avant BuildCameraBindings</code></pre></div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Avant — l’en-tête de CameraComponent</h5>
+  <pre><code>/*  LA LENTILLE, et rien d'autre.
+    ... Aucun état dérivé non plus ...
+    Ce composant est une donnée d'AUTEUR,
+    pure et sérialisable. */</code></pre>
+  Devenu faux à l’instant où la molette écrit dedans.</div>
+  <div class="after"><h5>Après</h5>
+  <pre><code>/*  Donnée principalement d'AUTEUR.
+    Exception : m_fovYDeg / m_focalLengthMm /
+    m_orthoHeight peuvent être réécrits au
+    runtime par CameraZoomSystem, selon
+    m_lensModel / m_projection — un seul est
+    la source de vérité à un instant donné. */</code></pre></div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Leçon d’origine — signature</h5>
+  <pre><code>void CameraZoomSystem(Registry&amp;,
+    const InputState&amp;, float /*dt*/);</code></pre>
+  Un <code>dt</code> inutilisé, présent « par symétrie » avec les autres systèmes.</div>
+  <div class="after"><h5>Dépôt — signature</h5>
+  <pre><code>void CameraZoomSystem(Registry&amp;,
+    const InputState&amp;);</code></pre>
+  <b>Écart justifié</b> : un cran de molette est un événement, pas une vitesse. Un paramètre
+  <code>dt</code> inutilisé invite à le multiplier un jour (contre-exemple CE4, §6). Conforme à la
+  doctrine du temps S10. À entériner (A7-2).</div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>A7 annonçait</h5>
+  « <code>CameraGizmoSystem</code> lit déjà <code>m_orthoHeight</code> chaque frame : le gizmo
+  suit le zoom sans une ligne modifiée. »</div>
+  <div class="after"><h5>Amendé par l’A9 (sémantique S2)</h5>
+  Vrai en perspective. <b>Faux en orthographique depuis l’A9</b> : le gizmo ortho est une
+  maquette d’échelle <code>L / (orthoHeight/2)</code>, sa taille ne dépend plus de
+  <code>orthoHeight</code>. Le zoom ortho ne se voit plus sur le gizmo — il se verra dans
+  l’overlay de debug prévu en L07. Le commentaire du dépôt dit encore « le gizmo (boîte) doit
+  suivre visuellement » : dette A7-1.</div>
+</div>
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s5">5 · La technique</h2>
+
+<h3>5.1 La preuve est dans la matrice</h3>
+
+<p>Les deux fabriques de <code>Maths/Projection.cpp</code>, réduites à ce qui produit la
+coordonnée verticale (même raisonnement pour x, avec l’aspect en plus) :</p>
+
+<div class="grid2">
+<pre><code><span class="cm">// Perspective (vecteur-ligne)</span>
+m[1][1] = 1 / tan(fovY / 2);
+m[2][3] = -1;          <span class="cm">// recopie -z_vue dans w</span>
+<span class="cm">// clip.y = y_vue · m11</span>
+<span class="cm">// clip.w = -z_vue</span>
+<span class="cm">// ndc.y  = y_vue · m11 / (-z_vue)</span></code></pre>
+<pre><code><span class="cm">// Orthographique (OrthographicCentered)</span>
+m[1][1] = 2 / orthoHeight;
+<span class="cm">// m[2][3] = 0 : w reste à 1</span>
+<span class="cm">// clip.y = y_vue · m11</span>
+<span class="cm">// clip.w = 1</span>
+<span class="cm">// ndc.y  = y_vue · m11       ← aucun z</span></code></pre>
+</div>
+
+<p>En perspective, <code>z_vue</code> divise : approcher la caméra réduit <code>-z_vue</code>,
+l’objet grossit et s’écarte du centre. En orthographique, <code>w = 1</code> pour tous les
+sommets ; <code>z_vue</code> n’entre que dans <code>ndc.z</code> (la profondeur). Translater la
+caméra le long de son axe change <code>z_vue</code> de tous les sommets… et ne change
+<code>ndc.x</code> ni <code>ndc.y</code> d’aucun. <strong>La caméra bouge ; l’écran ne peut pas
+le dire</strong>, sauf quand un objet franchit le near ou le far, ou quand deux objets
+échangent leur ordre de profondeur.</p>
+
+<div class="rule"><b>Même cause, deux symptômes.</b> C’est la section constante de l’A5 §2.4 :
+le gizmo ortho est une boîte (section indépendante de la distance), le gizmo perspective une
+pyramide. Ici, le symptôme est un dolly invisible. Corriger l’un sans l’autre est impossible :
+c’est la même propriété.</div>
+
+<h4>Laboratoire — vue de côté, calculs en float32</h4>
+<p>Deux objets : <b>A</b> (hauteur 2, à z = 0) et <b>B</b> (hauteur 6, à z = −40), demi-taille 1.
+La caméra regarde vers −z. Déplacez-la (dolly), changez la lentille (zoom), comparez.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Projection</label>
+    <div class="seg" id="l1Proj"><button data-v="p" class="on">Perspective</button><button data-v="o">Orthographique</button></div></div>
+  <div class="fld"><label>Position caméra z (dolly) <span class="val" id="l1ZV"></span></label><input type="range" id="l1Z" min="4" max="60" step="1" value="20"></div>
+  <div class="fld" id="l1FovF"><label>fovY ° (zoom) <span class="val" id="l1FovV"></span></label><input type="range" id="l1Fov" min="5" max="120" step="1" value="45"></div>
+  <div class="fld" id="l1OhF" style="display:none"><label>orthoHeight (zoom) <span class="val" id="l1OhV"></span></label><input type="range" id="l1Oh" min="4" max="60" step="1" value="20"></div>
+  <label class="chk" id="l1VtF"><input type="checkbox" id="l1Vt"> Effet Vertigo (dolly + zoom compensé sur A)</label>
+</div>
+<canvas id="l1C" height="300"></canvas>
+<div class="out" id="l1Out"></div>
+
+<h3>5.2 Dolly et zoom : parallaxe contre homothétie</h3>
+<p>Le laboratoire montre la différence qui justifie deux commandes séparées :</p>
+<ul>
+<li><b>Le zoom</b> multiplie <code>m11</code> : <em>tous</em> les <code>ndc</code> sont
+multipliés par le même facteur. C’est une homothétie de l’image, centrée sur l’axe de visée.
+Les rapports de taille entre A et B ne changent pas.</li>
+<li><b>Le dolly</b> (en perspective) change <code>-z_vue</code> d’une même quantité pour tous les
+sommets, mais la division fait varier chaque objet <em>différemment</em> selon sa distance :
+A, proche, grossit beaucoup ; B, lointain, à peine. C’est la <b>parallaxe</b>.</li>
+<li><b>L’effet Vertigo</b> (Hitchcock, 1958) combine les deux : la caméra recule pendant que la
+lentille resserre, de sorte que A garde exactement sa taille. Seul B change : la profondeur
+« s’écrase ». C’est la preuve visuelle que dolly et zoom ne sont pas interchangeables.</li>
+</ul>
+
+<h3>5.3 Pourquoi un pas multiplicatif</h3>
+<p>Les trois grandeurs n’ont pas la même échelle : <code>orthoHeight</code> ≈ 120 (ou 1200 sur la
+scène système solaire), <code>fovYDeg</code> ≈ 45, <code>focalLengthMm</code> ≈ 35. Un pas
+additif fixe est imperceptible sur une grande valeur et violent (voire négatif) sur une petite.
+Un pas multiplicatif change la valeur du même <em>pourcentage</em> quelle qu’elle soit — ce que
+l’œil perçoit, c’est un rapport de grossissement, pas une différence.</p>
+
+<div class="ctl">
+  <div class="fld"><label>Valeur de départ <span class="val" id="l2V0V"></span></label><input type="range" id="l2V0" min="1" max="1200" step="1" value="120"></div>
+  <div class="fld"><label>Pas additif (unités/cran) <span class="val" id="l2DV"></span></label><input type="range" id="l2D" min="1" max="20" step="1" value="2"></div>
+</div>
+<canvas id="l2C" height="230"></canvas>
+<div class="out" id="l2Out"></div>
+
+<h3>5.4 Trois sources de vérité, et le piège de la focale</h3>
+<p><code>CameraFovY(cam)</code> (L05) est l’unique fonction qui dit le fov vertical réel :</p>
+<pre><code><span class="kw">if</span> (cam.m_lensModel == ELensModel::Filmback)
+    <span class="kw">return</span> 2 · atan( m_filmHeightMm / (2 · m_focalLengthMm) );   <span class="cm">// focale + pellicule</span>
+<span class="kw">return</span> m_fovYDeg · TO_RADIAN;                                       <span class="cm">// angle direct</span></code></pre>
+<p>Donc, pour une lentille <code>Filmback</code>, <code>m_fovYDeg</code> n’est <strong>pas lu</strong>.
+Un zoom qui l’écrirait n’aurait aucun effet (CE3). Et la focale varie à l’inverse de l’angle :
+une focale <em>plus longue</em> donne un angle <em>plus étroit</em>, donc un zoom avant.
+D’où l’unique inversion du système : <code>focal ÷ s</code> au lieu de <code>× s</code>.</p>
+
+<div class="ctl">
+  <div class="fld"><label>Hauteur de pellicule mm <span class="val" id="l4HV"></span></label><input type="range" id="l4H" min="10" max="36" step="1" value="24"></div>
+  <div class="fld"><label>Focale mm <span class="val" id="l4FV"></span></label><input type="range" id="l4F" min="1" max="400" step="1" value="35"></div>
+</div>
+<div class="out" id="l4Out"></div>
+
+<h3>5.5 Pourquoi le zoom n’a pas besoin de <code>m_dirty</code></h3>
+<p>Le dolly écrit <code>m_local.position</code> : il <em>doit</em> lever <code>m_dirty</code>, sinon
+<code>LocalTransformSystem</code> ne recuit pas <code>m_localMatrix</code> (contrat R11bis). Le
+zoom écrit dans <code>CameraComponent</code>, qui n’a <strong>aucune</strong> forme cuite :
+<code>BuildViewData</code> relit la lentille brute et reconstruit la projection à chaque frame.
+Aucun cache, donc aucun drapeau d’invalidation. Ajouter un <code>tr.m_dirty = true</code> dans
+<code>CameraZoomSystem</code> serait inutile — et mentirait sur ce qui a changé.</p>
+
+<div class="rule"><b>Règle.</b> Un drapeau <code>dirty</code> n’a de sens que là où existe une
+forme cuite (un cache). Pas de cache, pas de drapeau. Le lever « par précaution » coûte une
+recomposition et brouille le contrat.</div>
+
+<h3>5.6 Portée : la caméra pilotée, pas la caméra vue</h3>
+<p>Le moteur distingue deux notions orthogonales (règle d’architecture) :
+<code>active</code>/<code>priority</code> (politique de rendu : qui est affichée) et
+<code>enabled</code> (contrôleur : qui reçoit les commandes). Le déplacement clavier suit
+<code>FPSControllerComponent::m_isEnabled</code>. Le zoom suit <strong>le même filtre</strong> :
+sinon la molette zoomerait une caméra que le clavier ne déplace pas, et réciproquement.
+Conséquence assumée : une caméra sans contrôleur (<code>Overview_Camera</code>,
+<code>Top_View</code>…) ne zoome pas. C’est la demande « pouvoir cadrer la vue de droite »,
+notée pour plus tard (A7-5).</p>
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s6">6 · Les étapes</h2>
+
+<p>Le système, déroulé ligne par ligne sur un cas que vous choisissez. Tous les calculs sont faits
+en <b>float32</b> (<code>Math.fround</code>), comme le CPU. Chaque étape affiche ce qu’elle
+reçoit de la précédente et ce qu’elle produit.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Lentille</label>
+    <div class="seg" id="mLens"><button data-v="o" class="on">Ortho</button><button data-v="f">Perspective FOV</button><button data-v="b">Perspective Filmback</button></div></div>
+  <div class="fld"><label>Valeur initiale <span class="val" id="mV0V"></span></label><input type="number" id="mV0" value="120" step="any"></div>
+  <div class="fld"><label>wheelDelta <span class="val" id="mWV"></span></label><input type="range" id="mW" min="-12" max="12" step="1" value="1"></div>
+  <div class="fld"><label>sprintMultiplier <span class="val" id="mSMV"></span></label><input type="range" id="mSM" min="1" max="10" step="0.5" value="3"></div>
+  <label class="chk"><input type="checkbox" id="mSp"> Shift (sprint)</label>
+  <label class="chk"><input type="checkbox" id="mEn" checked> Contrôleur activé</label>
+  <label class="chk"><input type="checkbox" id="mHas" checked> Possède FPSControllerComponent</label>
+</div>
+
+<details class="step" open><summary><span class="n">E1</span> Sortie immédiate si la molette n’a pas bougé</summary><div class="body">
+<p class="goal">Pourquoi : 99 % des frames n’ont aucun cran de molette. Le système ne doit rien coûter
+dans ce cas — pas même construire la vue <code>ViewGroup</code>.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e1In"></dd><dt>Produit</dt><dd id="e1Out"></dd></dl>
+<pre><code><span class="kw">if</span> (in.wheelDelta == 0) <span class="kw">return</span>;
+<span class="kw">const float</span> wheel = <span class="kw">static_cast</span>&lt;<span class="kw">float</span>&gt;(in.wheelDelta);</code></pre>
+<p><b>Pendant vectoriel :</b> aucun, et aucun à chercher — c’est un test de branche unique par frame.</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E2</span> Portée : seulement les caméras pilotées</summary><div class="body">
+<p class="goal">Pourquoi : on zoome ce qu’on pilote. Le même filtre que le déplacement clavier
+(§5.6), sinon clavier et molette agiraient sur deux caméras différentes.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e2In"></dd><dt>Produit</dt><dd id="e2Out"></dd></dl>
+<pre><code><span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [entity, cam, ctrl] :
+     registry.ViewGroup&lt;CameraComponent, FPSControllerComponent&gt;())
+{
+    <span class="kw">if</span> (!ctrl.m_isEnabled) <span class="kw">continue</span>;</code></pre>
+<p><b>Pendant vectoriel :</b> aucun. <code>ViewGroup</code> itère le plus petit des deux pools
+(L03) : ici une poignée de caméras. Un parcours SoA n’a de sens qu’à partir de dizaines
+d’éléments homogènes ; ce sont 1 à 5 entités par frame.</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E3</span> Crans effectifs : le sprint multiplie l’exposant</summary><div class="body">
+<p class="goal">Pourquoi : Shift accélère déjà le déplacement. Le zoom doit suivre la même règle,
+sans constante propre : on réutilise <code>m_sprintMultiplier</code> du contrôleur.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e3In"></dd><dt>Produit</dt><dd id="e3Out"></dd></dl>
+<pre><code><span class="kw">const float</span> effectiveWheel = wheel * (in.sprint ? ctrl.m_sprintMultiplier : 1.0f);</code></pre>
+<p><b>Pendant vectoriel :</b> aucun (un produit scalaire par caméra).</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E4</span> Le facteur unique : <code>s = 0,9^e</code></summary><div class="body">
+<p class="goal">Pourquoi : une seule constante (10 % par cran) pour trois lentilles. <code>s &lt; 1</code>
+en zoom avant, <code>s &gt; 1</code> en zoom arrière, <code>s(−e) = 1/s(e)</code> : dézoomer est
+l’inverse exact de zoomer (au float près, CE7).</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e4In"></dd><dt>Produit</dt><dd id="e4Out"></dd></dl>
+<pre><code><span class="kw">constexpr float</span> zoomRatioPerNotch = 0.90f;            <span class="cm">// 10 % par cran</span>
+<span class="kw">const float</span> shrink = std::pow(zoomRatioPerNotch, effectiveWheel);</code></pre>
+<div class="out" id="e4Bits"></div>
+<p><b>Pendant vectoriel :</b> aucun dans le moteur. <code>_mm256_pow_ps</code> n’existe qu’en SVML
+(bibliothèque Intel) ; pour 1 à 5 valeurs par frame, l’appel scalaire <code>powf</code> coûte
+quelques dizaines de nanosecondes — moins que le chargement des registres.</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E5</span> Aiguillage vers la source de vérité</summary><div class="body">
+<p class="goal">Pourquoi : écrire dans le champ que <code>BuildViewData</code> lira réellement.
+<code>m_projection</code> d’abord, <code>m_lensModel</code> ensuite — en ortho, la lentille
+n’a pas de sens.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e5In"></dd><dt>Produit</dt><dd id="e5Out"></dd></dl>
+<pre><code><span class="kw">switch</span> (cam.m_projection) {
+<span class="kw">case</span> EProjectionType::Orthographic: <span class="cm">/* m_orthoHeight */</span>
+<span class="kw">case</span> EProjectionType::Perspective:
+    <span class="kw">if</span> (cam.m_lensModel == ELensModel::FieldOfView) <span class="cm">/* m_fovYDeg */</span>
+    <span class="kw">else</span>                                             <span class="cm">/* m_focalLengthMm */</span>
+}</code></pre>
+<p><b>Pendant vectoriel :</b> aucun. En SIMD, trois branches deviennent trois calculs complets
+masqués par <code>_mm256_blendv_ps</code> : on paierait les trois pour en garder un.</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E6</span> Application du facteur (avec l’inversion de la focale)</summary><div class="body">
+<p class="goal">Pourquoi : <code>orthoHeight</code> et <code>fovYDeg</code> rétrécissent quand on
+zoome (×s) ; la focale allonge (÷s). L’inversion est portée par la formule, jamais par une
+seconde constante.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e6In"></dd><dt>Produit</dt><dd id="e6Out"></dd></dl>
+<pre><code>cam.m_orthoHeight   * shrink    <span class="cm">// ortho</span>
+cam.m_fovYDeg       * shrink    <span class="cm">// FOV</span>
+cam.m_focalLengthMm / shrink    <span class="cm">// Filmback : inversé</span></code></pre>
+<p><b>Pendant vectoriel :</b> aucun (un produit ou un quotient).</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E7</span> Bornes : le clamp</summary><div class="body">
+<p class="goal">Pourquoi : <code>orthoHeight → 0</code> rend <code>2/orthoHeight</code> infini ;
+<code>fov → 180°</code> rend <code>tan(fov/2)</code> infini ; <code>fov → 0</code> ou
+<code>focale → 0</code> rendent la projection dégénérée. Les bornes gardent la matrice finie quoi
+que fasse la molette.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e7In"></dd><dt>Produit</dt><dd id="e7Out"></dd></dl>
+<pre><code>cam.m_orthoHeight   = std::clamp(h * s, 0.5f, 5000.0f);
+cam.m_fovYDeg       = std::clamp(f * s, 1.0f,  170.0f);
+cam.m_focalLengthMm = std::clamp(F / s, 1.0f, 2000.0f);</code></pre>
+<p><b>Pendant vectoriel :</b> <code>_mm256_min_ps(_mm256_max_ps(v, lo), hi)</code> existerait,
+mais pour une valeur : <code>std::clamp</code> compile déjà en <code>minss/maxss</code>.</p>
+</div></details>
+
+<details class="step" open><summary><span class="n">E8</span> Effet en aval : la projection, et ce que voit l’étage sommets</summary><div class="body">
+<p class="goal">Pourquoi : vérifier que le champ écrit est bien celui qui change l’image. On suit la
+valeur jusqu’au coefficient <code>m11</code> de la projection, puis dans les huit couloirs de
+l’étage sommets.</p>
+<dl class="io"><dt>Reçoit</dt><dd id="e8In"></dd><dt>Produit</dt><dd id="e8Out"></dd></dl>
+<pre><code><span class="cm">// BuildViewData (System.cpp), étape 2 — scalaire, une fois par vue</span>
+<span class="kw">const float</span> fovY = CameraFovY(cam);
+<span class="kw">if</span> (cam.m_projection == EProjectionType::Orthographic)
+    v.projectionMatrix = Projection::OrthographicCentered(cam.m_orthoHeight, aspect, n, f);
+<span class="kw">else</span> ...  Projection::PerspectiveInfinite(fovY, aspect, n);</code></pre>
+<p><b>Pendant vectoriel (il existe, c’est l’étage sommets) :</b> huit sommets en SoA, une
+projection, une division par <code>w</code> couloir par couloir. Ci-dessous, huit sommets à
+<code>y_vue = 1</code> et à des profondeurs différentes, avant et après le zoom, puis avant et
+après un dolly de 5 unités.</p>
+<pre><code><span class="cm">// Même principe que l'étage sommets du chantier B3 (SoA, AVX2)</span>
+__m256 vy  = _mm256_loadu_ps(yVue);          <span class="cm">// couloirs 0..7 : y en espace vue</span>
+__m256 vz  = _mm256_loadu_ps(zVue);          <span class="cm">// couloirs 0..7 : z en espace vue (&lt; 0 devant)</span>
+__m256 m11 = _mm256_set1_ps(P[1][1]);        <span class="cm">// le coefficient que le zoom vient de changer</span>
+__m256 cy  = _mm256_mul_ps(vy, m11);         <span class="cm">// clip.y = y · m11</span>
+__m256 cw  = ortho ? _mm256_set1_ps(1.0f)    <span class="cm">// ortho : w = 1 dans TOUS les couloirs</span>
+                   : _mm256_sub_ps(_mm256_setzero_ps(), vz);   <span class="cm">// persp : w = -z</span>
+__m256 ny  = _mm256_div_ps(cy, cw);          <span class="cm">// ndc.y, couloir par couloir</span></code></pre>
+<div id="e8Lanes" class="tw"></div>
+<div class="out" id="e8Read"></div>
+</div></details>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s6c">6.1 · Contre-exemples chiffrés</h2>
+<p>Ce qu’il ne faut pas faire, avec les nombres que produirait le CPU (float32). Ils reprennent les
+valeurs de la machine ci-dessus quand c’est pertinent.</p>
+<div id="ceHost"></div>
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s7">7 · Vérifier</h2>
+
+<h3>7.1 Tests hors moteur — <code>TestCameraZoom</code> rejouée ici</h3>
+<p>Les huit sections de la TNR (EXE, <code>Test/TestCameraZoom.cpp</code>), recalculées en float32
+avec les mêmes valeurs (orthoHeight 120, fov 45°, focale 35 mm, sprint ×3, ε = 1e-4). Chaque
+section construit son propre <code>Registry</code> : aucune ne peut faire réussir la suivante.</p>
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Injecter un défaut dans le système simulé</label>
+  <div class="seg" id="tnrBug">
+    <button data-v="none" class="on">Aucun</button>
+    <button data-v="same">Focale ×s (copier-coller)</button>
+    <button data-v="add">Pas additif</button>
+    <button data-v="active">Filtre m_isActive</button>
+    <button data-v="noclamp">Clamp retiré</button>
+    <button data-v="nosprint">Sprint ignoré</button>
+  </div></div>
+</div>
+<div class="tw" id="tnrOut"></div>
+<div class="warn"><b>Faiblesse relevée (A7-7).</b> La section §8 vérifie seulement que les valeurs
+restent finies et positives après ±200 crans. Elle ne vérifie pas qu’elles valent <em>exactement</em>
+la borne attendue (0,5 / 5000, 1 / 170, 1 / 2000). Une borne mal orientée (par exemple
+<code>maxFov = 1</code>) passerait. Renfort proposé, non appliqué :
+<code>LV3_ASSERT(result.m_orthoHeight == 0.5f)</code> pour « ortho zoom max », etc.</div>
+
+<h3>7.2 Filets Debug déjà en place</h3>
+<ul>
+<li><code>BuildViewData</code> : <code>LV3_ASSERT(std::isfinite(aspect) &amp;&amp; aspect &gt; 0)</code>,
+<code>LV3_ASSERT(cam.m_infiniteFar || std::isfinite(v.farPlane))</code>,
+<code>LV3_ASSERT(!(ortho &amp;&amp; infiniteFar))</code>. Le zoom ne peut pas les déclencher :
+les clamps gardent <code>m11</code> fini.</li>
+<li><code>CheckControllerExclusivity</code> (chaque frame) : un seul contrôleur actif par caméra. Le zoom
+ne crée pas de conflit — il n’écrit pas le <code>Transform</code>.</li>
+<li><code>Test_GizmoMatchesFrustum</code> (A5/A9) : vérifie que le gizmo suit la lentille <em>après</em>
+un zoom (en perspective : échelle 1 ; en ortho : rapport <code>s = L/(orthoHeight/2)</code>).</li>
+</ul>
+
+<h3>7.3 Prédictions chiffrées</h3>
+<p>Ce que vous devez lire à l’écran ou au débogueur, calculé ici en float32. Si une valeur
+diffère, la cause est dans la formule, pas dans l’arrondi (l’écart serait d’ordre 1, pas 1e-6).</p>
+<div class="tw" id="predOut"></div>
+
+<h3>7.4 Vérification à l’œil (validée par Onky)</h3>
+<ul>
+<li>Molette avant : le champ se resserre, dans les trois lentilles — y compris la focale, malgré la formule inversée.</li>
+<li>Shift + molette : accélération nette, sans saut brutal à la butée.</li>
+<li>Butées : poussées volontairement, aucun artefact, aucune division par zéro.</li>
+<li>Gizmo : suit le zoom en perspective ; en ortho, <b>ne le suit plus depuis l’A9</b> (normal, §9).</li>
+</ul>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s8">8 · Exemples d’utilisation</h2>
+<div class="ctl"><div class="fld" style="flex:0 0 auto"><label>Cas</label>
+<div class="seg" id="exSeg">
+  <button data-v="1" class="on">Vue de dessus zoomable</button>
+  <button data-v="2">Caméra sténopé (Filmback)</button>
+  <button data-v="3">Effet Vertigo (illustration)</button>
+  <button data-v="4">Pourquoi la vue de droite ne zoome pas</button>
+</div></div></div>
+<pre><code id="exCode"></code></pre>
+<div class="info" id="exNote"></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s9">9 · Les incidents de l’échange, et ce que les annexes suivantes ont corrigé</h2>
+
+<p>Après la clôture du zoom, deux symptômes sont apparus. Ils ont d’abord été soupçonnés d’être des
+effets du zoom. Aucun ne l’était. Ils sont gardés ici parce qu’ils remettent en question des
+affirmations faites pendant cet échange.</p>
+
+<h3>9.1 « Je ne vois plus les objets à droite » — le drapeau <code>dirty</code> volé (A8)</h3>
+<p><b>Contexte.</b> Seul le gizmo restait visible dans le viewport de droite. <code>wheelDelta</code>
+était à 0 et les caméras de droite n’avaient pas de contrôleur : <code>CameraZoomSystem</code> était
+matériellement hors de cause.</p>
+<p><b>Cause.</b> <code>DebugDisplaySystemRecursive</code>, une fonction d’affichage, baissait
+<code>transform.m_dirty</code>. Elle consommait le signal destiné à <code>LocalTransformSystem</code> :
+la matrice locale des caméras sans contrôleur restait à l’identité pour toujours. La caméra FPS
+survivait parce que son contrôleur relève le drapeau à chaque frame. Preuve : dans deux relevés
+successifs, <code>Overview_Camera</code> restait à <code>(0, 0, 0)</code> au chiffre près.</p>
+<div class="ba">
+  <div class="before"><h5>Avant</h5><pre><code>Vec3f localPosition = ...;
+transform.m_dirty = false; // Reset dirty flag after displaying
+std::cout &lt;&lt; ...</code></pre></div>
+  <div class="after"><h5>Après</h5><pre><code>Vec3f localPosition = ...;
+<span class="cm">// une fonction d'affichage ne mute rien</span>
+std::cout &lt;&lt; ...</code></pre></div>
+</div>
+<p>Le bug a récidivé une fois après un retour arrière git (ligne restaurée), puis a été recorrigé.
+Il a donné la règle <b>R11bis</b> (§10). Le dépôt actuel ne contient plus la ligne.</p>
+
+<h3>9.2 « Le gizmo de la FPS devient démesuré » — un faux diagnostic (A9)</h3>
+<p>Cet échange s’est terminé sur une note de reprise affirmant que le gizmo de
+<code>FPS_Camera</code> grossissait en présence d’une caméra ortho à <code>orthoHeight: 1200</code>,
+sans cause trouvée. L’annexe A9 a démontré que <b>ce titre était faux</b>.</p>
+<div class="tw"><table>
+<tr><th>Affirmé pendant cet échange</th><th>Établi par l’A9</th><th>Bug</th></tr>
+<tr><td>Le gizmo de <code>FPS_Camera</code> grossit (identification visuelle)</td><td>Une caméra ne dessine jamais son propre gizmo (<code>m_hideForCamera</code>). L’objet géant était <code>__gizmo(Overview_Camera)</code> : scale mesurée 256 × 600 × 5 pendant que celui de la FPS restait à 1,59 × 1,24 × 3.</td><td>32</td></tr>
+<tr><td>La formule ortho <code>(halfH·aspect, halfH, L)</code> est juste et doit rester</td><td>Juste au sens strict, mais la section ortho n’était bornée que par <code>orthoHeight</code> (jusqu’à 5000 avec le clamp de ce lot). Sémantique <b>S2</b> retenue : maquette <code>{L·aspect, L}</code>, test exprimé en rapport <code>s</code>.</td><td>33</td></tr>
+<tr><td>Epsilon du test mis à l’échelle de <code>camPos.length()</code></td><td>La magnitude qui gouverne l’annulation est celle du <b>coin évalué</b> (<code>world.length()</code>), pas du nœud.</td><td>34</td></tr>
+<tr><td>Sonde « triangle quasi dégénéré » : muette pendant l’artefact</td><td>Disculpée ; à retirer (A9 §11).</td><td>—</td></tr>
+</table></div>
+<div class="ba">
+  <div class="before"><h5>Proposé dans cet échange</h5><pre><code>const Vec3f camPos{ trGiz.m_worldMatrix[3][0], ... };
+const float eps = kUlpMargin * FLT_EPSILON
+                * std::max(1.0f, camPos.length());</code></pre></div>
+  <div class="after"><h5>Retenu (A9 §5.4, bug 34)</h5><pre><code>const float eps = kUlpMargin * FLT_EPSILON
+                * std::max(1.0f, world.length());
+<span class="cm">// world = coin du gizmo, pas sa caméra</span></code></pre></div>
+</div>
+<div class="note"><b>Ce que ça change pour ce lot.</b> Avec S2, le gizmo ortho ne grandit plus avec
+<code>orthoHeight</code> : la phrase « le gizmo suit le zoom » de l’A7 ne vaut plus qu’en
+perspective (§4). Le clamp <code>maxHeight = 5000</code> du zoom n’a plus d’effet visuel sur le
+gizmo, seulement sur le cadrage.</div>
+<div class="info"><b>Traitement complet : <a href="https://claude.ai/artifact/4Ww827XRmXMXbSogohTnpR" target="_blank" rel="noopener">Lot A9 — L’échelle du gizmo orthographique, pas à pas</a></b> (ajouté le 12/11/2026).
+Ce paragraphe n’en est qu’un résumé vu depuis le zoom. Le lot A9 déroule l’identification (laboratoire « qui dessine quoi »),
+les sémantiques S1/S2/S3, le rapport <code>s</code> du test, le laboratoire float32 de l’epsilon — qui reproduit l’assert
+du dézoom perspective (fov 170°) —, le bug 35 (<code>CheckControllerExclusivity</code> dupliquée LIB/EXE), et les amendements
+ultérieurs : politique de visibilité non retenue (Discussion E, bug 56), garde de vacuité généralisée, place de S3 dans
+l’ordre S13.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s10">10 · Les règles dégagées</h2>
+<div class="rule"><b>Dolly ≠ zoom.</b> Le clavier écrit la position (<code>Transform</code>), la molette
+écrit la lentille (<code>CameraComponent</code>). Jamais l’un pour l’autre.</div>
+<div class="rule"><b>Écrire dans la source de vérité.</b> Une lentille a un seul champ lu à la fois ;
+écrire l’autre est une écriture morte (CE3).</div>
+<div class="rule"><b>Grandeurs d’échelles différentes → pas multiplicatif.</b> Même règle reprise plus
+tard pour le temps (S10 : l’échelle de temps est multiplicative, comme le zoom).</div>
+<div class="rule"><b>Une inversion vit dans la formule, pas dans une constante dupliquée.</b>
+<code>÷ s</code> pour la focale, un seul <code>s</code>.</div>
+<div class="rule"><b>R11bis.</b> Seul l’écrivain de <code>m_local</code> lève <code>m_dirty</code> ;
+seul <code>LocalTransformSystem</code>, après recomposition, le baisse. Jamais un système d’affichage.</div>
+<div class="rule"><b>Pas de cache, pas de drapeau.</b> Le zoom n’a pas de <code>dirty</code> parce que la
+lentille n’a pas de forme cuite (§5.5).</div>
+<div class="rule"><b>Principe n°13 (A9).</b> Avant de chercher pourquoi un objet se comporte mal,
+vérifier <em>quel</em> objet. Une identification visuelle n’est pas une mesure.</div>
+<div class="rule"><b>Un déplacement sans effet visible n’est pas forcément un bug de déplacement.</b>
+Vérifier d’abord ce que la projection peut montrer.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s11">11 · Décisions, dettes et roadmap</h2>
+<h3>Décisions prises pendant l’échange</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Décision</th><th>Pourquoi</th></tr>
+<tr><td>D1</td><td>Aucune modification du contrôleur ni de <code>Orthographic()</code></td><td>Le dolly ortho invisible est une propriété, pas un bug</td></tr>
+<tr><td>D2</td><td>Clavier = dolly, souris = orientation, molette = zoom, pour les deux projections</td><td>Contrat de gestes unique (Onky)</td></tr>
+<tr><td>D3</td><td><code>CameraZoomSystem</code> dans <code>Scene/System.cpp</code></td><td>Contrôleur générique ; <code>DebugGizmos.cpp</code> ne regroupe que le gizmo</td></tr>
+<tr><td>D4</td><td>Portée = caméras avec <code>FPSControllerComponent</code> activé</td><td>Même filtre que le clavier : on zoome ce qu’on pilote</td></tr>
+<tr><td>D5</td><td>Pas multiplicatif, 10 % par cran, bornes 0,5–5000 / 1–170° / 1–2000 mm</td><td>Trois échelles sans rapport ; constantes confiées à Claude par Onky</td></tr>
+<tr><td>D6</td><td>Molette avant = zoom avant (<code>wheelDelta &gt; 0</code>)</td><td>Choix d’Onky</td></tr>
+<tr><td>D7</td><td>Shift accélère le zoom via <code>m_sprintMultiplier</code></td><td>Cohérence avec le déplacement (Onky)</td></tr>
+<tr><td>D8</td><td>En-tête de <code>CameraComponent</code> rectifié</td><td>Le commentaire « donnée d’auteur pure » devenait faux</td></tr>
+<tr><td>D9</td><td>TNR <code>TestCameraZoom</code>, huit sections, <code>Registry</code> jetables</td><td><code>Registry</code> n’a aucun état partagé ; seul <code>s_NextNextID</code> est global, et sans danger</td></tr>
+<tr><td>D10</td><td>Ligne <code>m_dirty = false</code> retirée de l’affichage de debug (A8)</td><td>R11bis</td></tr>
+</table></div>
+
+<h3>Dettes et évolutions — rien n’est acté</h3>
+<p>Inscrites dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot A7 ».
+À vérifier sur le dépôt avant toute modification.</p>
+<div class="tw"><table>
+<tr><th>Réf</th><th>Sujet</th><th>Nature</th></tr>
+<tr><td>A7-1</td><td>Commentaire de <code>CameraZoomSystem</code> (dépôt) : « le gizmo (boîte) doit suivre visuellement » — faux depuis A9 S2</td><td>dette (doc)</td></tr>
+<tr><td>A7-2</td><td>Signature sans <code>dt</code> (écart leçon/dépôt), conforme à S10</td><td>évolution à entériner</td></tr>
+<tr><td>A7-3</td><td>Bornes incohérentes entre lentilles : FOV 1–170°, Filmback 1–2000 mm ⇒ <span id="a73"></span> avec pellicule 24 mm. Proposition : borner les deux en angle</td><td>à décider</td></tr>
+<tr><td>A7-4</td><td>Constantes en dur (0,9 ; bornes) — candidates pour <code>engine.json</code> (<code>camera.zoom</code>)</td><td>évolution</td></tr>
+<tr><td>A7-5</td><td>Cadrer une caméra de debug sans contrôleur (souhait d’Onky : la vue de droite) ; aujourd’hui toutes les caméras FPS activées zooment ensemble. Piste : une « caméra focalisée » portée par le slot (<code>Panel</code>, A11)</td><td>évolution</td></tr>
+<tr><td>A7-6</td><td><code>wheelDelta</code> entier : perd les molettes haute résolution / pavés tactiles (<code>preciseY</code> de SDL)</td><td>évolution</td></tr>
+<tr><td>A7-7</td><td>TNR §8 : vérifier les valeurs exactes de butée, pas seulement finitude</td><td>dette (test)</td></tr>
+<tr><td>A7-8</td><td>Butée non réversible (perte d’information) et dérive float des allers-retours (CE7) : informatif</td><td>aucune action proposée</td></tr>
+<tr><td>A7-9</td><td>Sonde « triangle quasi dégénéré » dans <code>RasterizeTriangle</code> : retrait (A9 §11)</td><td>à vérifier</td></tr>
+<tr><td>A7-10</td><td><code>ScaledEps</code> / <code>AssertNear</code> mutualisés pour <code>TestCameraMath</code> (A9 §11)</td><td>à décider</td></tr>
+<tr><td>A7-11</td><td>Invariant « drapeau volé » proposé en A8 §7 (compteur de compositions), non implémenté</td><td>à décider</td></tr>
+<tr><td>A7-12</td><td>Annexe A8 (drapeau volé) produite pendant l’échange, absente du projet ; R11bis vit déjà dans les règles d’architecture</td><td>à décider</td></tr>
+</table></div>
+<p>Décisions du lot consignées dans <code>Résultats/Résultats_Lot_A7_Zoom_Dolly_Camera.md</code>.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s12">12 · Synthèse</h2>
+<p>Le « bug » de la caméra ortho décrivait un comportement exact : la position change, la projection
+n’a aucun terme qui puisse le montrer. Le vrai manque était une commande — le zoom — déjà prévue par
+le code mais jamais câblée. Elle tient en un système de quarante lignes qui écrit la seule source de
+vérité de chaque lentille, avec une seule constante et une seule inversion, verrouillées par une
+TNR. Le reste de l’échange a rappelé deux disciplines : une fonction d’affichage n’écrit rien, et
+avant de chercher la cause d’un comportement, on nomme l’objet qui le produit.</p>
+
+<p class="foot">LibraryV3 — Lot A7 (Annexe A7, Leçon 05). Amendements : A8 (R11bis), A9 (bugs 32–35, lot A9 dédié,
+sémantique S2), S10, S13. Calculs du laboratoire en float32 (<code>Math.fround</code>).</p>
+</main>
+<script>
+"use strict";
+const f32 = Math.fround;
+const $  = (id) => document.getElementById(id);
+const fx = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : "—");
+const fr = (v, n) => fx(v, n).replace(".", ",");
+const DEG = Math.PI / 180;
+function hex32(v){ const b = new DataView(new ArrayBuffer(4)); b.setFloat32(0, v); return "0x" + b.getUint32(0).toString(16).toUpperCase().padStart(8,"0"); }
+function g(v){ return Number.isFinite(v) ? String(f32(v)) : String(v); }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function seg(el, cb){
+  el.addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if (!b) return;
+    [...el.querySelectorAll("button")].forEach(x => x.classList.toggle("on", x === b));
+    cb(b);
+  });
+}
+function segVal(id){ return document.querySelector("#" + id + " button.on").dataset.v; }
+function fitCanvas(c){
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const h = +c.getAttribute("height");
+  c.width = Math.max(300, r.width) * dpr; c.height = h * dpr;
+  const x = c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0);
+  return { x, w: Math.max(300, r.width), h };
+}
+
+/* ═══════════ thème + nav ═══════════ */
+$("themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  redrawAll();
+});
+(function(){
+  const links = [...document.querySelectorAll("#nav a")];
+  const secs  = links.map(a => $(a.getAttribute("href").slice(1))).filter(Boolean);
+  const obs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    links.forEach(a => a.classList.toggle("on", a.getAttribute("href").slice(1) === e.target.id));
+  }), { rootMargin: "-20% 0px -70% 0px" });
+  secs.forEach(s => obs.observe(s));
+})();
+
+/* ═══════════ 3 · pipeline ═══════════ */
+const P_BEFORE = [
+ ["PollEvents / BuildInputState","clavier, souris, molette → InputState","keep","wheelDelta est rempli à chaque frame… et aucun système ne le lit."],
+ ["FPSControllerSystem / CameraFollowSystem","écrivent m_local (position, rotation) + m_dirty","keep","Le dolly : position. L’orientation : rotation. Ignorent tout de la projection (Règle 1)."],
+ ["BuildCameraBindings","(caméra, viewport, mode) × N","keep","A5."],
+ ["CameraGizmoSystem","lit la lentille, écrit le scale du gizmo","keep","Lit m_orthoHeight et CameraFovY() chaque frame."],
+ ["LocalTransformSystem","m_local → m_localMatrix (dirty seulement)","keep",""],
+ ["WorldTransformSystem","propage m_worldMatrix","keep",""],
+ ["TriggerSystem","collisions","keep","Hors sujet."],
+ ["BuildViewData × N","lentille brute → projection, frustum","keep","Relit CameraComponent chaque frame : aucune forme cuite de la lentille."],
+ ["RenderView × N","culling, sommets, clipping, raster","keep",""]
+];
+const P_AFTER = [
+ ["PollEvents / BuildInputState","wheelDelta enfin consommé","mod","Aucune ligne changée dans InputState : c’est le premier consommateur qui apparaît."],
+ ["FPSControllerSystem / CameraFollowSystem","écrivent m_local","keep","Inchangés : le contrôleur était juste (§5.1)."],
+ ["CameraZoomSystem","molette → UN champ de CameraComponent","new","Filtre FPSControllerComponent::m_isEnabled ; s = 0,9^e ; ×s ou ÷s selon la lentille ; clamp. N’écrit aucun Transform, ne lève aucun m_dirty."],
+ ["BuildCameraBindings","(caméra, viewport, mode) × N","keep",""],
+ ["CameraGizmoSystem","lit la lentille (déjà zoomée)","keep","Voit la nouvelle valeur dès cette frame. (Depuis A9 : le gizmo ortho n’en dépend plus.)"],
+ ["LocalTransformSystem","m_local → m_localMatrix","keep",""],
+ ["WorldTransformSystem","propage m_worldMatrix","keep",""],
+ ["TriggerSystem","collisions","keep",""],
+ ["BuildViewData × N","nouvelle projection","keep","OrthographicCentered(orthoHeight…) ou Perspective(CameraFovY…) : le zoom se voit ici."],
+ ["Tests (_DEBUG)","TestCameraZoom (RunAllTests)","new","Huit sections, une entité fraîche chacune."],
+ ["RenderView × N","rendu","keep",""]
+];
+const P_TODAY = [
+ ["(1) realDt mesuré, clampé","","keep","S10."],
+ ["(2) simDt = clock.Advance(realDt)","","keep","Pause / échelle de temps."],
+ ["(3) BuildInputState","InputState de la frame, avant tout lecteur","keep","Bug 45 : construire avant de lire."],
+ ["(4) PlayerInputSystem, AnimationSystem","écrivent m_local du monde","keep",""],
+ ["(5) Cuisson n°1 : Local + World (toute la scène)","","keep","Les caméras lisent des matrices fraîches."],
+ ["(6) CameraFPSControllerSystem / CameraFollowSystem","écrivent m_local des caméras (realDt)","keep",""],
+ ["(6) CameraZoomSystem","molette → lentille","new","Toujours à la même place : après les contrôleurs, avant la sélection et les bindings. Sans dt (A7-2)."],
+ ["(6) sélection, BuildCameraBindings, CameraGizmoSystem","","keep",""],
+ ["(7) Cuisson n°2 ciblée (caméras rendues)","Local dirty-only + World(roots)","keep","Le zoom n’y participe pas : pas de Transform écrit."],
+ ["(8) TriggerSystem","","keep",""],
+ ["(9) BuildViewData, RenderView","","keep","Projection reconstruite depuis la lentille zoomée."]
+];
+function renderPipe(){
+  const v = segVal("pipeSeg"), detail = $("pipeDetail").checked;
+  let list = v === "before" ? P_BEFORE : v === "today" ? P_TODAY : P_AFTER;
+  if (v === "diff") list = P_AFTER.filter(s => s[2] !== "keep");
+  const host = $("pipeline"); host.innerHTML = "";
+  list.forEach((s, i) => {
+    const d = document.createElement("div");
+    d.className = "pstage" + (s[2] === "mod" ? " hot" : s[2] === "new" ? " new" : "");
+    const badge = s[2] === "mod" ? '<span class="pbadge">modifié</span>' : s[2] === "new" ? '<span class="pbadge n">créé</span>' : "";
+    d.innerHTML = '<span class="pn">' + (i+1) + '</span><span class="pt">' + s[0] + '</span>' + badge + '<span class="pd">' + s[1] + '</span>';
+    host.appendChild(d);
+    if (detail && s[3]){
+      const e = document.createElement("div");
+      e.style.cssText = "font-size:.78rem;color:var(--ink3);padding:.1rem .7rem .5rem 2.3rem;line-height:1.5";
+      e.textContent = s[3]; host.appendChild(e);
+    }
+  });
+}
+seg($("pipeSeg"), renderPipe);
+$("pipeDetail").addEventListener("change", renderPipe);
+
+/* ═══════════ 5.1 · laboratoire vue de côté ═══════════ */
+const OBJ = [ { n:"A", y:2, z:0 }, { n:"B", y:6, z:-40 } ];
+const VT_D0 = 20, VT_F0 = 45;
+function l1State(){
+  const proj = segVal("l1Proj"), camZ = +$("l1Z").value;
+  let fov = +$("l1Fov").value; const oh = +$("l1Oh").value;
+  const vt = $("l1Vt").checked && proj === "p";
+  if (vt){ // garde la demi-taille apparente de A constante
+    const t = Math.tan(VT_F0*DEG/2) * VT_D0 / (camZ - OBJ[0].z);
+    fov = 2 * Math.atan(t) / DEG;
+  }
+  return { proj, camZ, fov, oh, vt };
+}
+function projectY(st, y, zWorld){
+  const zv = f32(zWorld - st.camZ);
+  if (st.proj === "p"){
+    const m11 = f32(1 / f32(Math.tan(f32(st.fov*DEG)/2)));
+    const cy = f32(y * m11), w = f32(-zv);
+    return { zv, m11, cy, w, ndc: f32(cy / w), vis: w > 0.1 };
+  }
+  const m11 = f32(2 / st.oh), cy = f32(y * m11);
+  return { zv, m11, cy, w: 1, ndc: cy, vis: zv < -1 };
+}
+function l1Draw(){
+  const st = l1State();
+  $("l1ZV").textContent = st.camZ; $("l1FovV").textContent = fr(st.fov,1) + "°"; $("l1OhV").textContent = st.oh;
+  $("l1FovF").style.display = st.proj === "p" ? "" : "none";
+  $("l1OhF").style.display  = st.proj === "o" ? "" : "none";
+  $("l1VtF").style.opacity  = st.proj === "p" ? 1 : .4;
+  if (st.vt) $("l1Fov").value = Math.round(st.fov);
+  const c = $("l1C"), { x, w, h } = fitCanvas(c);
+  const ink = css("--ink"), ink3 = css("--ink3"), acc = css("--accent"), ok = css("--ok"), bad = css("--bad"), line = css("--line2");
+  x.clearRect(0,0,w,h);
+  const imgW = 120, W = w - imgW - 30;
+  const sx = W / 110, sy = (h-40) / 30, cy0 = h/2;
+  const X = z => 20 + (st.camZ - z) * sx, Y = y => cy0 - y * sy;
+  // axe
+  x.strokeStyle = line; x.setLineDash([4,4]); x.beginPath(); x.moveTo(10,cy0); x.lineTo(W+10,cy0); x.stroke(); x.setLineDash([]);
+  // frustum
+  x.fillStyle = acc + "22"; x.strokeStyle = acc; x.lineWidth = 1.2; x.beginPath();
+  const far = st.camZ - 105;
+  if (st.proj === "p"){ const t = Math.tan(st.fov*DEG/2), L = st.camZ - far;
+    x.moveTo(X(st.camZ), Y(0)); x.lineTo(X(far), Y(t*L)); x.lineTo(X(far), Y(-t*L)); }
+  else { const hh = st.oh/2; x.moveTo(X(st.camZ), Y(hh)); x.lineTo(X(far), Y(hh)); x.lineTo(X(far), Y(-hh)); x.lineTo(X(st.camZ), Y(-hh)); }
+  x.closePath(); x.save(); x.beginPath(); x.rect(10,10,W,h-20); x.clip();
+  x.beginPath();
+  if (st.proj === "p"){ const t = Math.tan(st.fov*DEG/2), L = st.camZ - far;
+    x.moveTo(X(st.camZ), Y(0)); x.lineTo(X(far), Y(t*L)); x.lineTo(X(far), Y(-t*L)); }
+  else { const hh = st.oh/2; x.moveTo(X(st.camZ), Y(hh)); x.lineTo(X(far), Y(hh)); x.lineTo(X(far), Y(-hh)); x.lineTo(X(st.camZ), Y(-hh)); }
+  x.closePath(); x.fill(); x.stroke();
+  // objets
+  OBJ.forEach((o,i) => { x.fillStyle = i ? ok : bad; x.fillRect(X(o.z)-4, Y(o.y+1), 8, 2*sy); x.fillStyle = ink; x.font = "12px sans-serif"; x.fillText(o.n, X(o.z)+7, Y(o.y)+4); });
+  x.restore();
+  // caméra
+  x.fillStyle = ink; x.beginPath(); x.arc(X(st.camZ), Y(0), 5, 0, 7); x.fill();
+  x.font = "11px sans-serif"; x.fillStyle = ink3; x.fillText("caméra (z = " + st.camZ + ")", X(st.camZ)-10, Y(0)+18);
+  // image
+  const ix = W + 30, ih = h - 40, iy = 20;
+  x.strokeStyle = ink3; x.strokeRect(ix, iy, imgW - 10, ih);
+  x.fillStyle = ink3; x.fillText("image (ndc.y)", ix, iy - 6);
+  const out = [];
+  OBJ.forEach((o,i) => {
+    const top = projectY(st, o.y+1, o.z), bot = projectY(st, o.y-1, o.z), mid = projectY(st, o.y, o.z);
+    out.push({ o, top, bot, mid });
+    if (!mid.vis) return;
+    const yT = iy + ih/2 - top.ndc * ih/2, yB = iy + ih/2 - bot.ndc * ih/2;
+    x.save(); x.beginPath(); x.rect(ix, iy, imgW-10, ih); x.clip();
+    x.fillStyle = i ? ok : bad; x.fillRect(ix + 15 + i*45, yT, 30, yB - yT); x.restore();
+    x.fillStyle = ink; x.fillText(o.n, ix + 26 + i*45, iy + ih + 14);
+  });
+  let s = (st.proj === "p" ? "Perspective  fovY = " + fr(st.fov,2) + "°" : "Orthographique  orthoHeight = " + st.oh) + "   m11 = " + g(out[0].mid.m11) + (st.vt ? "   <span class=\"a\">[Vertigo : fov recalculé]</span>" : "") + "\n";
+  out.forEach(r => {
+    s += r.o.n + " : z_vue = " + g(r.mid.zv) + "   clip.y = " + g(r.mid.cy) + "   w = " + g(r.mid.w) +
+         "   ndc.y = <span class=\"a\">" + g(r.mid.ndc) + "</span>   taille ndc = " + fx(r.top.ndc - r.bot.ndc, 5) + (r.mid.vis ? "" : "  <span class=\"r\">(derrière le near)</span>") + "\n";
+  });
+  const ratio = (out[0].top.ndc - out[0].bot.ndc) / (out[1].top.ndc - out[1].bot.ndc);
+  s += "Rapport de taille A/B = " + fx(ratio,4) + (st.proj === "o" ? "   <span class=\"d\">(ortho : toujours 1, quel que soit le dolly)</span>" : "   <span class=\"d\">(perspective : varie avec le dolly, PAS avec le zoom)</span>");
+  $("l1Out").innerHTML = s;
+}
+seg($("l1Proj"), l1Draw);
+["l1Z","l1Fov","l1Oh","l1Vt"].forEach(id => $(id).addEventListener("input", l1Draw));
+
+/* ═══════════ 5.3 · multiplicatif contre additif ═══════════ */
+function l2Draw(){
+  const v0 = +$("l2V0").value, d = +$("l2D").value;
+  $("l2V0V").textContent = v0; $("l2DV").textContent = d;
+  const N = 40, mul = [], add = []; let m = f32(v0), a = f32(v0);
+  const r = f32(0.9);
+  for (let i = 0; i <= N; i++){ mul.push(m); add.push(a); m = f32(Math.max(0.5, f32(m*r))); a = f32(a - d); }
+  const c = $("l2C"), { x, w, h } = fitCanvas(c);
+  x.clearRect(0,0,w,h);
+  const L = 40, B = h - 24, T = 10, R = w - 10;
+  const lmin = Math.log10(0.4), lmax = Math.log10(Math.max(v0, 2) * 1.2);
+  const X = i => L + (R-L) * i / N, Y = v => B - (B-T) * (Math.log10(Math.max(v,0.4)) - lmin) / (lmax - lmin);
+  x.strokeStyle = css("--line2"); x.strokeRect(L, T, R-L, B-T);
+  x.fillStyle = css("--ink3"); x.font = "10px sans-serif";
+  [1,10,100,1000].forEach(t => { if (t > Math.pow(10,lmax)) return; x.fillText(t, 4, Y(t)+3); });
+  x.fillText("crans →", R - 44, h - 6);
+  const plot = (arr, col) => { x.strokeStyle = col; x.lineWidth = 2; x.beginPath();
+    let pen = false; arr.forEach((v,i) => { if (v <= 0){ return; } if (!pen){ x.moveTo(X(i),Y(v)); pen = true; } else x.lineTo(X(i),Y(v)); }); x.stroke(); };
+  plot(mul, css("--ok")); plot(add, css("--bad"));
+  const firstNeg = add.findIndex(v => v <= 0);
+  let s = "<span class=\"g\">multiplicatif ×0,9</span> : chaque cran = −10 % de la valeur, toujours (" + g(mul[0]) + " → " + g(mul[1]) + " → " + g(mul[2]) + " …)\n";
+  s += "<span class=\"r\">additif −" + d + "</span>      : 1er cran = −" + fr(100*d/v0,3) + " % ; " +
+       (firstNeg >= 0 ? "valeur ≤ 0 au cran " + firstNeg + " → matrice invalide sans clamp" : "jamais ≤ 0 sur " + N + " crans") + "\n";
+  s += "<span class=\"d\">Échelle verticale logarithmique : une droite = un rapport constant par cran.</span>";
+  $("l2Out").innerHTML = s;
+}
+["l2V0","l2D"].forEach(id => $(id).addEventListener("input", l2Draw));
+
+/* ═══════════ 5.4 · focale ═══════════ */
+function fovFromFocal(hMm, fMm){ return f32(2 * Math.atan(f32(hMm / f32(2*fMm)))) / DEG; }
+function l4Draw(){
+  const H = +$("l4H").value, F = +$("l4F").value;
+  $("l4HV").textContent = H; $("l4FV").textContent = F;
+  const fov = fovFromFocal(H, F), s = f32(0.9);
+  const fIn = f32(F / s), fBad = f32(F * s);
+  $("l4Out").innerHTML =
+    "fovY = 2·atan(" + H + " / (2·" + F + ")) = <span class=\"a\">" + fr(fov,3) + "°</span>\n" +
+    "Un cran avant, correct  : focale ÷ 0,9 = " + g(fIn) + " mm → fovY = <span class=\"g\">" + fr(fovFromFocal(H,fIn),3) + "°</span> (se resserre : zoom avant)\n" +
+    "Un cran avant, copié-collé : focale × 0,9 = " + g(fBad) + " mm → fovY = <span class=\"r\">" + fr(fovFromFocal(H,fBad),3) + "°</span> (s’élargit : dézoom !)";
+}
+["l4H","l4F"].forEach(id => $(id).addEventListener("input", l4Draw));
+
+/* ═══════════ 6 · simulateur de CameraZoomSystem (float32) ═══════════ */
+const B = { o:[0.5,5000], f:[1,170], b:[1,2000] };
+function clampF(v, lo, hi){ return Math.min(Math.max(v, lo), hi); }
+// bug : "none" | "same" | "add" | "active" | "noclamp" | "nosprint"
+function zoomSim(cam, ctrl, inp, bug){
+  const r = { ...cam };
+  if (inp.wheel === 0) return r;
+  if (!ctrl.has) return r;
+  if (bug === "active" ? !cam.active : !ctrl.enabled) return r;
+  const wheel = f32(inp.wheel);
+  const e = f32(wheel * ((inp.sprint && bug !== "nosprint") ? f32(ctrl.mult) : 1));
+  const s = f32(Math.pow(f32(0.9), e));
+  const cl = (v, k) => bug === "noclamp" ? v : f32(clampF(v, B[k][0], B[k][1]));
+  if (cam.proj === "o"){
+    r.oh = cl(bug === "add" ? f32(cam.oh - e) : f32(cam.oh * s), "o");
+  } else if (cam.lens === "f"){
+    r.fov = cl(bug === "add" ? f32(cam.fov - 2*e) : f32(cam.fov * s), "f");
+  } else {
+    r.focal = cl(bug === "add" ? f32(cam.focal + 5*e) : bug === "same" ? f32(cam.focal * s) : f32(cam.focal / s), "b");
+  }
+  return r;
+}
+function camOf(kind, v0){
+  return { proj: kind === "o" ? "o" : "p", lens: kind === "b" ? "b" : "f",
+           oh: kind === "o" ? f32(v0) : f32(120), fov: kind === "f" ? f32(v0) : f32(45),
+           focal: kind === "b" ? f32(v0) : f32(35), active: true };
+}
+const FIELD = { o:"m_orthoHeight", f:"m_fovYDeg", b:"m_focalLengthMm" };
+const KEY   = { o:"oh", f:"fov", b:"focal" };
+const DEF   = { o:120, f:45, b:35 };
+const FILM_H = 24;
+function fovOf(cam){ return cam.proj === "o" ? NaN : cam.lens === "b" ? fovFromFocal(FILM_H, cam.focal) : cam.fov; }
+function m11Of(cam){ return cam.proj === "o" ? f32(2 / cam.oh) : f32(1 / f32(Math.tan(f32(fovOf(cam)*DEG)/2))); }
+
+let mPrevLens = "o";
+function machine(){
+  const lens = segVal("mLens");
+  if (lens !== mPrevLens){ $("mV0").value = DEF[lens]; mPrevLens = lens; }
+  const v0 = f32(+$("mV0").value || DEF[lens]);
+  const wheel = +$("mW").value, mult = +$("mSM").value, sprint = $("mSp").checked;
+  const ctrl = { has: $("mHas").checked, enabled: $("mEn").checked, mult };
+  $("mV0V").textContent = FIELD[lens]; $("mWV").textContent = wheel; $("mSMV").textContent = mult;
+  const cam = camOf(lens, v0);
+  const k = KEY[lens];
+
+  // E1
+  $("e1In").textContent = "in.wheelDelta = " + wheel;
+  $("e1Out").innerHTML = wheel === 0 ? '<span class="fail">return</span> — rien n’est fait cette frame' : "wheel = " + g(f32(wheel)) + " (float)";
+  // E2
+  const pass2 = wheel !== 0 && ctrl.has && ctrl.enabled;
+  $("e2In").textContent = "wheel = " + g(f32(wheel)) + " ; entité : FPSControllerComponent " + (ctrl.has ? "présent" : "ABSENT") + ", m_isEnabled = " + ctrl.enabled;
+  $("e2Out").innerHTML = wheel === 0 ? "— (E1 est sorti)" :
+    !ctrl.has ? '<span class="fail">entité absente du ViewGroup</span> — caméra non pilotée, jamais zoomée' :
+    !ctrl.enabled ? '<span class="fail">continue</span> — contrôleur désactivé' : '<span class="pass">retenue</span>';
+  // E3
+  const e = f32(f32(wheel) * (sprint ? f32(mult) : 1));
+  $("e3In").textContent = "wheel = " + g(f32(wheel)) + ", sprint = " + sprint + ", m_sprintMultiplier = " + mult;
+  $("e3Out").textContent = pass2 ? "effectiveWheel = " + g(e) : "—";
+  // E4
+  const s = f32(Math.pow(f32(0.9), e));
+  $("e4In").textContent = pass2 ? "effectiveWheel = " + g(e) + " ; 0.90f = " + g(f32(0.9)) + " (" + hex32(f32(0.9)) + ")" : "—";
+  $("e4Out").innerHTML = pass2 ? "shrink = " + g(s) + " (" + hex32(s) + ") → " + (s < 1 ? "zoom avant" : s > 1 ? "zoom arrière" : "neutre") : "—";
+  $("e4Bits").innerHTML = pass2 ?
+    "0.90f n’est pas 0,9 : " + g(f32(0.9)) + "  (erreur " + (f32(0.9) - 0.9).toExponential(2) + ")\n" +
+    "s(e)·s(−e) = " + g(f32(s * f32(Math.pow(f32(0.9), -e)))) + "  <span class=\"d\">(1 au ULP près : réversible, voir CE7)</span>" : "<span class=\"d\">Aucun calcul : le système est sorti avant.</span>";
+  // E5
+  $("e5In").textContent = "m_projection = " + (cam.proj === "o" ? "Orthographic" : "Perspective") + (cam.proj === "p" ? ", m_lensModel = " + (cam.lens === "b" ? "Filmback" : "FieldOfView") : "");
+  $("e5Out").innerHTML = pass2 ? "champ écrit : <b>" + FIELD[lens] + "</b>" + (lens === "b" ? " (m_fovYDeg n’est pas lu par CameraFovY)" : "") : "—";
+  // E6
+  const raw = lens === "b" ? f32(v0 / s) : f32(v0 * s);
+  $("e6In").textContent = pass2 ? FIELD[lens] + " = " + g(v0) + ", shrink = " + g(s) : "—";
+  $("e6Out").innerHTML = pass2 ? (lens === "b" ? g(v0) + " ÷ " + g(s) : g(v0) + " × " + g(s)) + " = <b>" + g(raw) + "</b>" : "—";
+  // E7
+  const after = zoomSim(cam, ctrl, { wheel, sprint }, "none");
+  const fin = after[k];
+  $("e7In").textContent = pass2 ? "valeur brute = " + g(raw) + ", bornes [" + B[lens][0] + " ; " + B[lens][1] + "]" : "—";
+  $("e7Out").innerHTML = pass2 ? FIELD[lens] + " = <b>" + g(fin) + "</b>" + (fin !== raw ? ' <span class="fail">(butée atteinte)</span>' : ' <span class="pass">(dans les bornes)</span>') : "inchangé : " + g(v0);
+  // E8
+  const m0 = m11Of(cam), m1 = m11Of(after);
+  $("e8In").textContent = FIELD[lens] + " : " + g(v0) + " → " + g(fin);
+  $("e8Out").innerHTML = "m11 : " + g(m0) + " → " + g(m1) + "   grossissement ×" + fx(m1/m0, 5) +
+    (cam.proj === "p" ? "   fovY : " + fr(fovOf(cam),3) + "° → " + fr(fovOf(after),3) + "°" : "");
+  lanes(cam, m0, m1);
+}
+function lanes(cam, m0, m1){
+  const Z = [-2,-4,-8,-16,-32,-64,-128,-256], ortho = cam.proj === "o", D = 5;
+  const row = (lbl, arr, cls) => "<tr><td class=\"l\">" + lbl + "</td>" + arr.map(v => "<td" + (cls ? " class=\"" + cls + "\"" : "") + ">" + v + "</td>").join("") + "</tr>";
+  const w0 = Z.map(z => ortho ? 1 : f32(-z));
+  const n0 = Z.map((z,i) => f32(f32(1*m0) / w0[i]));
+  const n1 = Z.map((z,i) => f32(f32(1*m1) / w0[i]));
+  const wd = Z.map(z => ortho ? 1 : f32(-(z + D)));
+  const nd = Z.map((z,i) => (!ortho && wd[i] <= 0) ? NaN : f32(f32(1*m0) / wd[i]));
+  let h = "<table class=\"lanes\"><tr><th>couloir</th>" + Z.map((_,i) => "<th>" + i + "</th>").join("") + "</tr>";
+  h += row("z_vue", Z.map(g));
+  h += row("w (avant)", w0.map(g));
+  h += row("ndc.y avant", n0.map(v => fx(v,5)));
+  h += row("ndc.y après zoom", n1.map(v => fx(v,5)));
+  h += row("rapport zoom", n1.map((v,i) => fx(v/n0[i],5)), "");
+  h += row("w après dolly +" + D, wd.map(v => v <= 0 ? "derrière" : g(v)));
+  h += row("ndc.y après dolly", nd.map(v => Number.isFinite(v) ? fx(v,5) : "—"));
+  h += row("rapport dolly", nd.map((v,i) => Number.isFinite(v) ? fx(v/n0[i],5) : "—"));
+  h += "</table>";
+  $("e8Lanes").innerHTML = h;
+  $("e8Read").innerHTML = ortho ?
+    "Ortho : w = 1 dans les 8 couloirs. Le zoom multiplie tous les ndc par le même rapport ; le dolly ne change <b>aucun</b> couloir (rapport 1,00000). C’est le §5.1, en registre." :
+    "Perspective : le zoom multiplie les 8 couloirs par le <b>même</b> rapport (homothétie). Le dolly donne un rapport différent par couloir : énorme au premier plan, ≈ 1 au loin (parallaxe).";
+}
+seg($("mLens"), machine);
+["mV0","mW","mSM","mSp","mEn","mHas"].forEach(id => $(id).addEventListener("input", machine));
+
+/* ═══════════ 6.1 · contre-exemples ═══════════ */
+function ce(){
+  const s1 = f32(0.9);
+  const cards = [];
+  // CE1
+  const a1200 = f32(1200 - 1), a2 = f32(2 - 1);
+  cards.push(["CE1 · Pas additif (orthoHeight −= 1 par cran)",
+    "orthoHeight = 1200 : 1200 → " + g(a1200) + "  soit −" + fr(100/1200,3) + " % : il faut 120 crans pour cadrer 10 % plus serré.\n" +
+    "orthoHeight = 2    : 2 → " + g(a2) + "  soit −50 % ; un cran de plus → 0 → m11 = 2/0 = <span class=\"r\">" + g(f32(2/0)) + "</span>.\n" +
+    "Multiplicatif : 1200 → " + g(f32(1200*s1)) + " et 2 → " + g(f32(2*s1)) + " : −10 % dans les deux cas."]);
+  // CE2
+  const F = 35, fBad = f32(F*s1), fOk = f32(F/s1);
+  cards.push(["CE2 · Même formule pour la focale (focal × s)",
+    "Focale 35 mm, pellicule 24 mm : fovY = " + fr(fovFromFocal(24,F),3) + "°\n" +
+    "focal × 0,9 = " + g(fBad) + " mm → fovY = <span class=\"r\">" + fr(fovFromFocal(24,fBad),3) + "°</span> : la molette avant DÉZOOME.\n" +
+    "focal ÷ 0,9 = " + g(fOk) + " mm → fovY = <span class=\"g\">" + fr(fovFromFocal(24,fOk),3) + "°</span> : correct. La TNR §4 le verrouille (wrongIfCopied)."]);
+  // CE3
+  cards.push(["CE3 · Écrire m_fovYDeg sur une lentille Filmback",
+    "m_fovYDeg : 45 → " + g(f32(45*s1)) + "   mais CameraFovY() lit la focale : fovY reste " + fr(fovFromFocal(24,35),3) + "°.\n" +
+    "Écriture morte : aucun effet, aucun message. C’est pourquoi le système aiguille sur la SOURCE de vérité (E5)."]);
+  // CE4
+  const s60 = f32(Math.pow(s1, f32(1/60))), s144 = f32(Math.pow(s1, f32(1/144)));
+  cards.push(["CE4 · Multiplier le cran par dt",
+    "60 Hz  : s = 0,9^(1/60)  = " + g(s60) + " → 120 devient " + g(f32(120*s60)) + " (−" + fr(100*(1-s60),3) + " %)\n" +
+    "144 Hz : s = 0,9^(1/144) = " + g(s144) + " → 120 devient " + g(f32(120*s144)) + "\n" +
+    "Un cran est un ÉVÉNEMENT, pas une vitesse : avec dt, le zoom devient imperceptible et dépend du framerate (S10)."]);
+  // CE5
+  const k = 10, nA = f32(2*f32(2/20)), mA = f32(f32(2/20) + k/10), mB = f32(f32(2/20) + k/100);
+  cards.push(["CE5 · « Réparer » Orthographic() avec un terme en 1/z",
+    "Deux points de même hauteur y = 2, à z = −10 et z = −100, orthoHeight = 20.\n" +
+    "Ortho correct      : ndc.y = " + g(nA) + " pour les deux (section constante).\n" +
+    "m11 += " + k + "/|z|     : ndc.y = <span class=\"r\">" + g(f32(2*mA)) + "</span> et <span class=\"r\">" + g(f32(2*mB)) + "</span> : ce n’est plus une projection orthographique,\n" +
+    "ni une perspective (pas de division homogène) — et le frustum ne peut plus être décrit par des plans."]);
+  // CE6
+  const y = 2, m = f32(2/120), before = f32(y*m);
+  cards.push(["CE6 · moveSpeed = 10 000 en ortho",
+    "Point y = 2, orthoHeight = 120 : ndc.y = " + g(before) + " (" + hex32(before) + ")\n" +
+    "Après un dolly de 10 000 × (1/60) = " + fx(10000/60,1) + " unités : ndc.y = " + g(f32(y*m)) + " (" + hex32(f32(y*m)) + ") — identique au bit près.\n" +
+    "Seul ndc.z change ; l’objet disparaîtra d’un coup en franchissant near ou far."]);
+  // CE7
+  let x = f32(120); const sIn = f32(Math.pow(s1,1)), sOut = f32(Math.pow(s1,-1));
+  for (let i = 0; i < 1000; i++){ x = f32(x*sIn); x = f32(x*sOut); }
+  let c = f32(120); for (let i = 0; i < 60; i++) c = f32(clampF(f32(c*sIn), 0.5, 5000));
+  const atClamp = c; for (let i = 0; i < 60; i++) c = f32(clampF(f32(c*sOut), 0.5, 5000));
+  cards.push(["CE7 · Croire le zoom parfaitement réversible",
+    "1000 allers-retours (×s puis ×1/s) depuis 120 : " + g(x) + "  (écart " + (x-120).toExponential(2) + ", négligeable)\n" +
+    "60 crans avant puis 60 crans arrière : 120 → " + g(atClamp) + " (butée 0,5) → <span class=\"r\">" + g(c) + "</span>\n" +
+    "La butée détruit l’information : le retour n’est pas symétrique. Comportement attendu (A7-8), pas un bug."]);
+  $("ceHost").innerHTML = cards.map(cd => '<div class="counter"><span class="lbl">' + cd[0] + '</span><div class="out" style="background:transparent;border:none;padding:0;margin:0">' + cd[1] + '</div></div>').join("");
+}
+
+/* ═══════════ 7 · TNR rejouée ═══════════ */
+function tnr(){
+  const bug = segVal("tnrBug"), eps = 1e-4, R = f32(0.9);
+  const ctrl = { has:true, enabled:true, mult:3 };
+  const rows = [];
+  const run = (kind, inp, en = true, active = true) => { const c = camOf(kind, DEF[kind]); c.active = active;
+    return zoomSim(c, { ...ctrl, enabled: en }, { sprint:false, ...inp }, bug); };
+  let r;
+  r = run("o", { wheel:1 }); rows.push(["§1 ortho, 1 cran", "120 × 0,9 = " + g(f32(120*R)), g(r.oh), Math.abs(r.oh - f32(120*R)) < eps]);
+  r = run("o", { wheel:-1 }); rows.push(["§2 dézoom inverse", "120 / 0,9 = " + g(f32(120/R)), g(r.oh), Math.abs(r.oh - f32(120/R)) < eps && r.oh > 120]);
+  r = run("f", { wheel:1 }); rows.push(["§3 FOV même sens", "45 × 0,9 = " + g(f32(45*R)), g(r.fov), Math.abs(r.fov - f32(45*R)) < eps && r.fov < 45]);
+  r = run("b", { wheel:1 }); const exp4 = f32(35/R), wrong = f32(35*R);
+  rows.push(["§4 focale inversée", "35 / 0,9 = " + g(exp4), g(r.focal), Math.abs(r.focal-exp4) < eps && r.focal > 35 && Math.abs(r.focal-wrong) > eps]);
+  r = run("o", { wheel:1, sprint:true }); const exp5 = f32(120*f32(Math.pow(R,3)));
+  rows.push(["§5 sprint ×3", "120 × 0,9³ = " + g(exp5), g(r.oh), Math.abs(r.oh-exp5) < eps && Math.abs(r.oh - f32(120*R)) > 1]);
+  r = run("o", { wheel:5 }, false, true); rows.push(["§6 contrôleur désactivé (caméra active)", "120 (inchangé)", g(r.oh), Math.abs(r.oh-120) < eps]);
+  r = run("b", { wheel:0 }); rows.push(["§7 wheelDelta = 0", "35 (inchangé)", g(r.focal), Math.abs(r.focal-35) < eps]);
+  const cases = [["o",200],["o",-200],["f",200],["f",-200],["b",200],["b",-200]];
+  let ok8 = true, det = [];
+  cases.forEach(([k,w]) => { const x = run(k, { wheel:w }); [x.oh,x.fov,x.focal].forEach(v => { if (!(Number.isFinite(v) && v > 0)) ok8 = false; }); det.push(k + (w>0?"+":"−") + ":" + g(x[KEY[k]])); });
+  rows.push(["§8 rafale ±200", "fini et > 0", det.join(" "), ok8]);
+  let h = "<table><tr><th>Section</th><th>Attendu</th><th>Obtenu (float32)</th><th>Verdict</th></tr>";
+  rows.forEach(rw => h += "<tr><td>" + rw[0] + "</td><td class=\"num\">" + rw[1] + "</td><td class=\"num\">" + rw[2] + "</td><td class=\"" + (rw[3] ? "pass\">vert" : "fail\">ROUGE") + "</td></tr>");
+  h += "</table>";
+  const nFail = rows.filter(rw => !rw[3]).length;
+  h += '<div class="out">' + (bug === "none" ? '<span class="g">8/8 vertes : le système simulé est celui du dépôt.</span>' :
+       nFail ? '<span class="r">' + nFail + ' section(s) rouge(s)</span> : le défaut injecté est détecté.' :
+       '<span class="r">Défaut NON détecté</span> : la TNR a un angle mort (voir A7-7).') + "</div>";
+  $("tnrOut").innerHTML = h;
+}
+seg($("tnrBug"), tnr);
+
+/* ═══════════ 7.3 · prédictions ═══════════ */
+function notchesTo(kind, dir){
+  let c = camOf(kind, DEF[kind]), n = 0; const lim = dir > 0 ? (kind === "b" ? B[kind][1] : B[kind][0]) : (kind === "b" ? B[kind][0] : B[kind][1]);
+  while (n < 1000){ const nc = zoomSim(c, { has:true, enabled:true, mult:1 }, { wheel:dir, sprint:false }, "none"); n++; c = nc; if (c[KEY[kind]] === f32(lim)) break; }
+  return n;
+}
+function pred(){
+  const R = f32(0.9), rows = [
+    ["Ortho 120, 1 cran avant", "m_orthoHeight", g(f32(120*R))],
+    ["Ortho 120, 1 cran arrière", "m_orthoHeight", g(f32(120*f32(Math.pow(R,-1))))],
+    ["FOV 45°, 1 cran avant", "m_fovYDeg", g(f32(45*R))],
+    ["Focale 35 mm, 1 cran avant", "m_focalLengthMm", g(f32(35/R)) + "  (fovY " + fr(fovFromFocal(24,35),3) + "° → " + fr(fovFromFocal(24,f32(35/R)),3) + "°)"],
+    ["Ortho 120, Shift ×3, 1 cran", "m_orthoHeight", g(f32(120*f32(Math.pow(R,3))))],
+    ["Ortho 1200, Shift ×6 (scène système solaire), 1 cran", "m_orthoHeight", g(f32(1200*f32(Math.pow(R,6))))],
+    ["Crans avant jusqu’à la butée — ortho 120 → 0,5", "crans", notchesTo("o",1)],
+    ["Crans arrière jusqu’à la butée — ortho 120 → 5000", "crans", notchesTo("o",-1)],
+    ["Crans avant jusqu’à la butée — FOV 45° → 1°", "crans", notchesTo("f",1)],
+    ["Crans arrière jusqu’à la butée — FOV 45° → 170°", "crans", notchesTo("f",-1)],
+    ["Crans avant jusqu’à la butée — focale 35 → 2000 mm", "crans", notchesTo("b",1)],
+    ["Crans arrière jusqu’à la butée — focale 35 → 1 mm", "crans", notchesTo("b",-1)]
+  ];
+  let h = "<table><tr><th>Cas</th><th>Grandeur</th><th>Valeur prédite</th></tr>";
+  rows.forEach(r => h += "<tr><td>" + r[0] + "</td><td><code>" + r[1] + "</code></td><td class=\"num\">" + r[2] + "</td></tr>");
+  $("predOut").innerHTML = h + "</table>";
+  $("a73").textContent = "angle " + fr(fovFromFocal(24,2000),3) + "° à " + fr(fovFromFocal(24,1),2) + "°";
+}
+
+/* ═══════════ 8 · exemples ═══════════ */
+const EX = {
+ "1": ["{\n  \"id\": \"Top_Camera\",\n  \"components\": {\n    \"Transform\": { \"translation\": [0, 150, 0], \"rotation\": [-90, 0, 0], \"scale\": [1, 1, 1] },\n    \"Camera\": { \"projection\": \"orthographic\", \"orthoHeight\": 120.0,\n                \"near\": 1.0, \"far\": 400.0, \"infiniteFar\": false,\n                \"active\": true, \"priority\": 1, \"category\": \"debug\" },\n    \"CameraFPS\": { \"enabled\": true, \"moveSpeed\": 40.0, \"mouseSensitivity\": 0.15,\n                   \"lockVertical\": true, \"pitchLimit\": 89.0, \"sprintMultiplier\": 4.0 }\n  }\n}",
+       "Pour qu’une vue de dessus zoome, elle doit porter un <code>CameraFPS</code> activé (D4). Effet de bord : elle reçoit aussi le clavier et la souris — et si <code>FPS_Camera</code> est activée en même temps, les deux bougent et zooment ensemble. C’est la limite notée en A7-5. Rotation <code>pitch = −90°</code> dérivée de <code>Forward()</code> (A11), pas devinée."],
+ "2": ["\"Camera\": {\n  \"projection\": \"perspective\",\n  \"lens\": \"filmback\",\n  \"focalLength\": 35.0,\n  \"filmHeight\": 24.0,\n  \"near\": 0.1, \"infiniteFar\": true,\n  \"active\": true, \"priority\": 10\n}",
+       "Molette avant : la focale passe de 35 à 38,89 mm et l’angle se resserre (§5.4). Le champ <code>fov</code>, s’il était présent, serait ignoré par <code>CameraFovY()</code> et signalé par <code>WarnUnread</code>. Noms de clés JSON à vérifier dans <code>ParseCamera</code> (A6)."],
+ "3": ["// ILLUSTRATION — système non présent dans le moteur.\n// Effet Vertigo : recule la caméra en gardant la cible à taille constante.\nvoid DollyZoomSystem(Registry& reg, float realDt)\n{\n    for (auto&& [e, cam, tr, dz] : reg.ViewGroup<CameraComponent, TransformComponent, DollyZoomComponent>())\n    {\n        const float d = Distance(tr, dz.m_target);           // distance à la cible\n        // tan(fov/2) · d = constante  <=>  taille apparente constante\n        const float t = dz.m_tanHalf0 * dz.m_dist0 / d;\n        cam.m_fovYDeg = 2.0f * std::atan(t) * TO_DEGREE;      // la lentille (zoom)\n        tr.m_local.position += dz.m_dir * (dz.m_speed * realDt); // la position (dolly)\n        tr.m_dirty = true;                                    // R11bis : l'écrivain de m_local\n    }\n}",
+       "Les deux commandes du lot, utilisées ensemble : la position (avec <code>m_dirty</code>) et la lentille (sans). Le laboratoire du §5.1 (case « Vertigo ») montre le résultat. Ce n’est pas une proposition de chantier."],
+ "4": ["{\n  \"id\": \"Overview_Camera\",\n  \"components\": {\n    \"Transform\": { ... },\n    \"Camera\": { \"projection\": \"orthographic\", \"orthoHeight\": 1200.0, ... }\n    // pas de \"CameraFPS\" : absente de ViewGroup<CameraComponent, FPSControllerComponent>\n  }\n}",
+       "Sans <code>FPSControllerComponent</code>, la caméra n’entre jamais dans la boucle de <code>CameraZoomSystem</code> (E2) : ni dolly, ni zoom. C’est voulu (D4) — et c’est exactement ce qui t’empêchait de « voir un peu plus de la scène » à droite. Évolution A7-5."]
+};
+function exUpdate(v){ $("exCode").textContent = EX[v][0]; $("exNote").innerHTML = EX[v][1]; }
+seg($("exSeg"), b => exUpdate(b.dataset.v));
+
+/* ═══════════ init ═══════════ */
+function redrawAll(){ l1Draw(); l2Draw(); }
+renderPipe(); l1Draw(); l2Draw(); l4Draw(); machine(); ce(); tnr(); pred(); exUpdate("1");
+addEventListener("resize", redrawAll);
+</script>
+</body>
+</html>

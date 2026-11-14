@@ -1,0 +1,187 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Étage sommets LV3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f3f4f6; --panel:#ffffff; --ink:#1b2230; --mute:#5b6576; --line:#d5d9e1;
+  --amber:#c77700; --amberSoft:#f6d9a6; --cold:#7d8797; --hot:#c0392b; --ok:#2e7d4f;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace; --sans:"Archivo",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12161d; --panel:#1a2029; --ink:#e6e9ef; --mute:#98a2b3; --line:#2c3440;
+  --amber:#f0a030; --amberSoft:#5a3d10; --cold:#6d7787; --hot:#ef6b5b; --ok:#5cc28a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12161d; --panel:#1a2029; --ink:#e6e9ef; --mute:#98a2b3; --line:#2c3440;
+  --amber:#f0a030; --amberSoft:#5a3d10; --cold:#6d7787; --hot:#ef6b5b; --ok:#5cc28a; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;gap:22px}
+h1{font-size:clamp(24px,4vw,34px);font-weight:800;margin:0;text-wrap:balance;letter-spacing:-.01em}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber)}
+p{margin:0;max-width:68ch;color:var(--mute)}
+.stage{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+@media (max-width:760px){.stage{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:12px;min-width:0}
+canvas{width:100%;height:auto;display:block;max-width:100%}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:600 13px var(--sans);padding:7px 12px;border-radius:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button[aria-pressed="true"]{background:var(--amber);border-color:var(--amber);color:#fff}
+button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.counters{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cnt{border:1px solid var(--line);border-radius:4px;padding:10px}
+.cnt b{display:block;font:600 26px var(--mono);font-variant-numeric:tabular-nums}
+.cnt span{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mute)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.mem{overflow-x:auto}
+.mem svg{min-width:560px;width:100%;height:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+td{font-family:var(--mono)}
+.tbl{overflow-x:auto}
+.note{font-size:13px;color:var(--mute)}
+code{font-family:var(--mono);font-size:.92em}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">LibraryV3 · Chantier 2 · Étage sommets</div>
+  <h1>Un sommet partagé par six faces ne se transforme qu'une fois</h1>
+  <p>Chaque face lit ses coins par indice. Aujourd'hui, <code>RenderView</code> appelle <code>MulRow</code> sur chaque coin : un sommet intérieur est transformé autant de fois que de faces le touchent. Le chantier 2 transforme chaque sommet une seule fois par (instance, vue) dans un tableau plat, puis les faces ne font que lire ce tableau.</p>
+
+  <div class="stage">
+    <div class="panel">
+      <div class="controls" role="group" aria-label="Stratégie">
+        <button id="mCorner" aria-pressed="true">Avant : par coin</button>
+        <button id="mVertex" aria-pressed="false">Après : par sommet</button>
+        <button id="run">Rejouer</button>
+      </div>
+      <canvas id="cv" width="640" height="420" aria-label="Maillage triangulé, sommets colorés par nombre de transformations"></canvas>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--cold)"></i>0 transformation</span>
+        <span><i class="sw" style="background:var(--ok)"></i>1</span>
+        <span><i class="sw" style="background:var(--amber)"></i>2 à 3</span>
+        <span><i class="sw" style="background:var(--hot)"></i>4 à 6 (travail refait)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="counters">
+        <div class="cnt"><span>Appels MulRow</span><b id="cMul">0</b></div>
+        <div class="cnt"><span>Sommets uniques</span><b id="cUni">0</b></div>
+        <div class="cnt"><span>Faces traitées</span><b id="cFace">0</b></div>
+        <div class="cnt"><span>Travail inutile</span><b id="cWaste">0 %</b></div>
+      </div>
+      <p class="note" id="explain"></p>
+      <div class="tbl">
+      <table>
+        <thead><tr><th>Mesh</th><th>Sommets</th><th>Coins</th><th>Coins ÷ sommets</th></tr></thead>
+        <tbody>
+          <tr><td>rock_a/b/c</td><td>115</td><td>504</td><td>4,38</td></tr>
+          <tr><td>sphere_lo</td><td>185</td><td>864</td><td>4,67</td></tr>
+          <tr><td>sphere_mid</td><td>559</td><td>2 880</td><td>5,15</td></tr>
+          <tr><td>sphere_hi</td><td>2 143</td><td>11 904</td><td>5,55</td></tr>
+          <tr><td>ship_scout</td><td>358</td><td>888</td><td>2,48</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="note">Sommets après soudure <code>(pos, uv, nrm)</code> de l'OBJLoader. 600 roches sur 685 nœuds : le rapport de la ceinture est ≈ 4,4.</p>
+    </div>
+  </div>
+
+  <div class="panel mem">
+    <div class="eyebrow">Mémoire, pour une (instance, vue)</div>
+    <svg viewBox="0 0 900 230" role="img" aria-label="vertexPositions transformé une fois vers ClipSpaceBuffer, puis indices lus par les faces">
+      <g font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink)">
+        <text x="10" y="22">vertexPositions (Vec3f, 12 o)</text>
+        <text x="10" y="112">ClipSpaceBuffer (Vec4f, 16 o) — 115 × 16 o = 1,8 Kio, tient dans L1</text>
+        <text x="10" y="202">indices (uint32) → faces : lecture seule, aucune multiplication</text>
+      </g>
+      <g id="rowA"></g><g id="rowB"></g><g id="rowC"></g><g id="arrows"></g>
+    </svg>
+  </div>
+</div>
+
+<script>
+(function(){
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  // Maillage : grille 6x5 triangulée, perturbée
+  const COLS=6, ROWS=5, V=[], F=[];
+  let seed=7; const rnd=()=>((seed=seed*16807%2147483647)/2147483647);
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)
+    V.push({x:60+c*104+(c&&c<COLS-1?(rnd()-.5)*40:0), y:40+r*85+(r&&r<ROWS-1?(rnd()-.5)*30:0)});
+  for(let r=0;r<ROWS-1;r++)for(let c=0;c<COLS-1;c++){
+    const a=r*COLS+c,b=a+1,d=a+COLS,e=d+1;
+    if((r+c)&1){F.push([a,d,b],[b,d,e]);}else{F.push([a,d,e],[a,e,b]);}
+  }
+  const cv=document.getElementById('cv'), g=cv.getContext('2d');
+  let mode='corner', counts, face, mul, timer=null, done=false;
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function color(n){ if(!n)return css('--cold'); if(n===1)return css('--ok'); if(n<=3)return css('--amber'); return css('--hot'); }
+  function draw(){
+    g.clearRect(0,0,cv.width,cv.height);
+    F.forEach((f,i)=>{
+      g.beginPath(); g.moveTo(V[f[0]].x,V[f[0]].y); g.lineTo(V[f[1]].x,V[f[1]].y); g.lineTo(V[f[2]].x,V[f[2]].y); g.closePath();
+      g.fillStyle = i<face ? css('--amberSoft') : 'transparent'; if(i<face) g.fill();
+      g.strokeStyle=css('--line'); g.lineWidth=1.2; g.stroke();
+      if(i===face-1 && !done){ g.strokeStyle=css('--amber'); g.lineWidth=2.5; g.stroke(); }
+    });
+    V.forEach((v,i)=>{
+      g.beginPath(); g.arc(v.x,v.y,12,0,Math.PI*2); g.fillStyle=color(counts[i]); g.fill();
+      g.fillStyle='#fff'; g.font='600 12px JetBrains Mono, monospace'; g.textAlign='center'; g.textBaseline='middle';
+      g.fillText(counts[i],v.x,v.y+.5);
+    });
+    document.getElementById('cMul').textContent=mul;
+    document.getElementById('cUni').textContent=V.length;
+    document.getElementById('cFace').textContent=face+' / '+F.length;
+    const waste = mul? Math.round(100*(mul-Math.min(mul,V.length))/mul):0;
+    document.getElementById('cWaste').textContent=waste+' %';
+  }
+  function explain(){
+    document.getElementById('explain').textContent = mode==='corner'
+      ? 'Par coin : 3 MulRow par face. Les sommets intérieurs finissent à 6, le résultat étant identique à chaque fois.'
+      : 'Par sommet : une passe TransformPositions remplit le tableau (tout passe à 1), puis chaque face lit 3 Vec4f par indice.';
+  }
+  function step(){
+    if(face>=F.length){ done=true; clearInterval(timer); timer=null; draw(); return; }
+    if(mode==='corner'){ F[face].forEach(k=>{counts[k]++; mul++;}); }
+    face++; draw();
+  }
+  function start(){
+    if(timer) clearInterval(timer);
+    counts=V.map(()=>0); face=0; mul=0; done=false;
+    if(mode==='vertex'){ counts=V.map(()=>1); mul=V.length; }
+    explain();
+    if(reduce){ while(face<F.length) step(); done=true; draw(); return; }
+    draw(); timer=setInterval(step,140);
+  }
+  function setMode(m){ mode=m;
+    document.getElementById('mCorner').setAttribute('aria-pressed',m==='corner');
+    document.getElementById('mVertex').setAttribute('aria-pressed',m==='vertex'); start(); }
+  document.getElementById('mCorner').onclick=()=>setMode('corner');
+  document.getElementById('mVertex').onclick=()=>setMode('vertex');
+  document.getElementById('run').onclick=start;
+
+  // Schéma mémoire
+  const NS='http://www.w3.org/2000/svg', mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  const rowA=document.getElementById('rowA'),rowB=document.getElementById('rowB'),rowC=document.getElementById('rowC'),arr=document.getElementById('arrows');
+  for(let i=0;i<14;i++){
+    rowA.appendChild(mk('rect',{x:10+i*48,y:32,width:44,height:36,rx:3,fill:'var(--bg)',stroke:'var(--line)'}));
+    const t=mk('text',{x:32+i*48,y:55,'text-anchor':'middle','font-family':'JetBrains Mono, monospace','font-size':11,fill:'var(--mute)'});t.textContent='p'+i;rowA.appendChild(t);
+    rowB.appendChild(mk('rect',{x:10+i*62,y:122,width:58,height:36,rx:3,fill:'var(--amberSoft)',stroke:'var(--amber)'}));
+    const t2=mk('text',{x:39+i*62,y:145,'text-anchor':'middle','font-family':'JetBrains Mono, monospace','font-size':11,fill:'var(--ink)'});t2.textContent='c'+i;rowB.appendChild(t2);
+    arr.appendChild(mk('line',{x1:32+i*48,y1:68,x2:39+i*62,y2:122,stroke:'var(--ok)','stroke-width':1.2}));
+  }
+  const idx=[0,5,1, 1,5,6, 1,6,2, 2,6,7];
+  idx.forEach((v,i)=>{
+    const x=10+i*40, fcol=Math.floor(i/3)%2?'var(--panel)':'var(--bg)';
+    rowC.appendChild(mk('rect',{x,y:168,width:36,height:22,rx:3,fill:fcol,stroke:'var(--line)'}));
+    const t=mk('text',{x:x+18,y:183,'text-anchor':'middle','font-family':'JetBrains Mono, monospace','font-size':11,fill:'var(--ink)'});t.textContent=v;rowC.appendChild(t);
+    arr.appendChild(mk('line',{x1:x+18,y1:168,x2:39+v*62,y2:158,stroke:'var(--amber)','stroke-width':.8,'stroke-dasharray':'3 3'}));
+  });
+  setMode('corner');
+})();
+</script>
+
+</body></html>

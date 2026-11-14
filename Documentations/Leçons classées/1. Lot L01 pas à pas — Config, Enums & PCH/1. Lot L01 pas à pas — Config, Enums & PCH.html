@@ -445,23 +445,360 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
     <span class="badge badge-blue">Leçon 01</span>
     <span class="badge badge-green">LibraryV3</span>
   </h1>
-  <div class="sub">Architecture des headers · Frontière compile-time / runtime · Enums scoped · Bitmasks</div>
+  <div class="sub">Partie A : architecture des headers · frontière compile-time / runtime · enums scoped · bitmasks — Partie B : démarrer le moteur et lire sa configuration</div>
 </div>
 
 <div class="tabs">
-  <button class="tab-btn active" data-tab="ouverture">Ouverture</button>
+  <button class="tab-btn active" data-tab="vue">Vue d’ensemble</button>
+  <button class="tab-btn" data-tab="ouverture">Ouverture</button>
   <button class="tab-btn" data-tab="intro">Schéma</button>
   <button class="tab-btn" data-tab="algo">Algorithme</button>
   <button class="tab-btn" data-tab="fonct">Fonctionnement</button>
   <button class="tab-btn" data-tab="steps">Étapes pas à pas</button>
   <button class="tab-btn" data-tab="contre">Contre-exemple</button>
   <button class="tab-btn" data-tab="verify">Vérifier</button>
+  <button class="tab-btn" data-tab="demarrage">B · Démarrer &amp; configurer</button>
 </div>
 
 
-<!-- ═══════════════════════════════════════ TAB OUVERTURE ═══════════════════════════════════════ -->
-<div id="tab-ouverture" class="tab-panel active">
 
+<!-- ═══════════════════════════════════════ TAB VUE D'ENSEMBLE ═══════════════════════════════════════ -->
+<div id="tab-vue" class="tab-panel active">
+
+<style>
+#tab-vue .toc{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.4rem;margin:.4rem 0 1rem}
+#tab-vue .toc a{font-size:.85rem;color:var(--accent);text-decoration:none;padding:.4rem .6rem;border:1px solid var(--border);border-radius:6px;background:var(--surface)}
+#tab-vue .lead{font-size:.98rem;color:var(--text2);max-width:80ch;margin-bottom:1rem}
+#tab-vue h2{margin:2rem 0 .6rem}
+#tab-vue h3{margin:1.3rem 0 .5rem;font-size:1rem;font-weight:500}
+#tab-vue .layers{display:grid;gap:4px;margin:.6rem 0 .4rem}
+#tab-vue .layer{display:grid;grid-template-columns:9.5em 1fr 9em;gap:.8rem;align-items:baseline;border:1px solid var(--border);border-radius:6px;padding:.5rem .8rem;background:var(--surface);font-size:.84rem;color:var(--text2)}
+#tab-vue .layer b{font-family:var(--mono);color:var(--text);font-weight:600}
+#tab-vue .layer .who{font-size:.75rem;color:var(--text3)}
+#tab-vue .layer.dim{opacity:.6}
+#tab-vue .layer.lot{border:2px solid var(--accent);background:var(--accent-bg);color:var(--accent-text);opacity:1}
+#tab-vue .layer.part{border:2px dashed var(--accent);opacity:1}
+#tab-vue .layer.lot b,#tab-vue .layer.lot .who{color:var(--accent-text)}
+#tab-vue .layer .side{display:block;font-size:.76rem;margin-top:.2rem;color:var(--text3)}
+#tab-vue .layer.lot .side{color:var(--accent-text);opacity:.85}
+#tab-vue .cap{font-size:.8rem;color:var(--text3);margin:.3rem 0 .9rem}
+#tab-vue .seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin:.3rem 0 .5rem}
+#tab-vue .seg .vbtn{border:none;border-right:1px solid var(--border);font-size:.82rem;padding:.35rem .8rem;background:var(--surface2);color:var(--text);cursor:pointer}
+#tab-vue .seg .vbtn:last-child{border-right:none}
+#tab-vue .seg .vbtn.on{background:var(--accent-bg);color:var(--accent-text)}
+#tab-vue .chk{font-size:.85rem;color:var(--text2);margin:.3rem 0 .6rem;display:flex;gap:.4rem;align-items:center}
+#tab-vue .pipe{display:grid;gap:3px;margin:.4rem 0 .6rem}
+#tab-vue .pphase{font-size:.74rem;font-weight:600;letter-spacing:.03em;color:var(--text3);margin:.7rem 0 .15rem;text-transform:uppercase}
+#tab-vue .pstage{display:grid;grid-template-columns:2.2em minmax(13em,1.1fr) minmax(12em,1fr);gap:.2rem .8rem;border:1px solid var(--border);border-radius:6px;padding:.4rem .7rem;background:var(--surface);font-size:.83rem;opacity:.5}
+#tab-vue .pstage.lot{opacity:1;border:2px solid var(--accent);background:var(--accent-bg)}
+#tab-vue .pstage .pn{font-family:var(--mono);color:var(--text3)}
+#tab-vue .pstage .pt{color:var(--text);font-weight:500}
+#tab-vue .pstage .pd{font-family:var(--mono);font-size:.76rem;color:var(--text2)}
+#tab-vue .pstage.lot .pd{color:var(--accent-text)}
+#tab-vue .pstage .px{grid-column:2/-1;font-size:.8rem;color:var(--text2);border-top:1px dashed var(--border);padding-top:.3rem;margin-top:.15rem}
+#tab-vue .pbadge,#tab-vue .tag{display:inline-block;font-size:.68rem;padding:0 7px;border-radius:10px;margin-left:.45rem;font-weight:500;vertical-align:1px;white-space:nowrap}
+#tab-vue .new{background:var(--green-bg);color:var(--green)}
+#tab-vue .mod{background:var(--amber-bg);color:var(--amber)}
+#tab-vue .up{background:var(--purple-bg);color:var(--purple)}
+#tab-vue .keep,#tab-vue .out{background:var(--surface2);color:var(--text3)}
+#tab-vue .gap,#tab-vue .del{background:var(--red-bg);color:var(--red)}
+#tab-vue .legend{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem;font-size:.78rem;color:var(--text3);margin:.3rem 0 1rem;align-items:center}
+#tab-vue .legend .sw{display:inline-block;width:14px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:.35rem}
+#tab-vue .twrap{overflow-x:auto}
+#tab-vue tr.lotrow td{background:var(--accent-bg);color:var(--accent-text)}
+#tab-vue tr.lotrow td code{background:transparent;color:inherit}
+#tab-vue tr.outrow td{opacity:.6}
+#tab-vue pre.algo{font-size:.78rem;line-height:1.55;white-space:pre;overflow-x:auto;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem}
+#tab-vue pre.algo .s{color:var(--green);font-weight:600}
+#tab-vue pre.algo .m{color:var(--amber);font-weight:600}
+#tab-vue pre.algo .u{color:var(--purple);font-weight:600}
+#tab-vue pre.algo .x{color:var(--red);font-weight:600}
+#tab-vue pre.algo .h{color:var(--text);font-weight:600}
+#tab-vue pre.algo .c{color:var(--text3)}
+#tab-vue pre.algo .lotl{background:var(--accent-bg);display:inline-block;width:100%}
+#tab-vue .bcard{border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);padding:.8rem 1rem .6rem;margin:.8rem 0 1.1rem}
+#tab-vue .bcard>p.bt{color:var(--text);font-weight:500;margin-bottom:.4rem}
+#tab-vue .code2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+#tab-vue .code2>pre{margin:0;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface2);padding:.6rem .8rem;font-size:.76rem;line-height:1.5;white-space:pre;overflow-x:auto;min-width:0}
+#tab-vue .code2 .dh{font-size:.72rem;color:var(--text3);display:block;margin-bottom:.2rem;font-family:inherit}
+#tab-vue .code2 .del{background:var(--red-bg);color:var(--red);display:inline-block;width:100%}
+#tab-vue .code2 .add{background:var(--green-bg);color:var(--green);display:inline-block;width:100%}
+#tab-vue .code2 .c{color:var(--text3)}
+#tab-vue .bcard table td.bad{color:var(--red)}
+#tab-vue .bcard table td.good{color:var(--green)}
+@media (max-width:700px){#tab-vue .code2{grid-template-columns:1fr}#tab-vue .layer{grid-template-columns:1fr}#tab-vue .pstage{grid-template-columns:2em 1fr}#tab-vue .pstage .pd{grid-column:2}}
+</style>
+
+<div class="toc">
+  <a href="#v01">0.1 · Le moteur en couches, et la place du lot</a>
+  <a href="#v01b">0.1 · Le cycle de vie : compilation, démarrage, frame, fermeture</a>
+  <a href="#v01c">0.1 · Carte des fichiers touchés par L01</a>
+  <a href="#v02">0.2 · Algorithme détaillé de l’apport du lot</a>
+  <a href="#v02a">0.2 · A — Ce que le lot ajoute</a>
+  <a href="#v02b">0.2 · B — Ce que le lot remet en question (avant / après)</a>
+</div>
+
+<p class="lead">Le moteur devient dense. Avant d’entrer dans le lot, deux cartes : <strong>où il se situe dans l’ensemble</strong>, puis <strong>ce qu’il ajoute ou modifie exactement</strong>. Particularité de L01 : comme L02, ce n’est pas un étage de la frame, c’est un <strong>socle</strong>. Mais il agit à un moment que les autres lots ne voient pas : <strong>avant</strong> la première frame — à la compilation (ce que chaque <code>.cpp</code> voit, et combien de fichiers recompilent) et au démarrage (ce que l’exécutable lit pour se régler sans recompiler).</p>
+
+<h2 id="v01">0.1 — Algorithme global du projet, et la place de ce lot</h2>
+<h3>Vu d’en haut : le moteur en couches</h3>
+<p>Lecture de haut en bas : chaque couche consomme celles du dessous et ignore celles du dessus. L01 possède la couche du bas, <code>Core/</code>, et la façon dont le compilateur la voit (le PCH). La partie B du lot touche aussi le haut : le démarrage de l’exécutable, qui lit <code>engine.json</code> et <code>config.json</code>.</p>
+<div class="layers" role="list">
+  <div class="layer part" role="listitem"><b>EXE</b><span>main.cpp — <strong>démarrage (partie B : racine, config.json, engine.json, ordre)</strong>, fenêtre SDL, boucle, <code>Present</code>, fermeture<span class="side">en pointillés : seul le démarrage et la fermeture relèvent de L01</span></span><span class="who">L01-B · G2 · A5</span></div>
+  <div class="layer dim" role="listitem"><b>Scene/</b><span>ECS (Registry, SparseSet), Serializer, Hierarchy, systèmes Local/WorldTransform, BuildViewData, RenderView, Trigger, gizmos</span><span class="who">L03 · L05 · L06 · A5</span></div>
+  <div class="layer dim" role="listitem"><b>Rendering/</b><span>VertexStage, Clipper, FaceStage, Rasterizer, Fragment, FrameBuffer, DepthBuffer — et <code>RenderTypes.h</code>, rangé par L01</span><span class="who">L04 · phase G</span></div>
+  <div class="layer dim" role="listitem"><b>Ressources/</b><span>OBJLoader, MTLLoader, ResourceManager, MeshClass, MathTypes.h</span><span class="who">L03 · A13</span></div>
+  <div class="layer dim" role="listitem"><b>Maths/</b><span>Vectorlib, MatrixLib, QuaternionLib, Transform, Projection, Geometry</span><span class="who">L02 · L05</span></div>
+  <div class="layer lot" role="listitem"><b>Core/</b><span><strong>config.h · Compiler.h · CoreTypes.h · EngineSettings.h · EngineConfig · Platform.h</strong> — ▶ CE LOT
+    <span class="side">à côté, posés par d’autres lots sur ce socle : <code>JsonReader</code> (A5, A6) · <code>ContentRoot</code> (discussion D, bugs 63 à 68) · <code>Logger</code> · <code>Profiler</code> (phase G) · <code>AlignedAllocator</code> (B3)</span></span><span class="who">L01 · A6</span></div>
+  <div class="layer lot" role="listitem"><b>Build</b><span><strong>pch.h / pch.cpp (/Yc, /Yu)</strong> — ▶ CE LOT · <code>LV3.Common.props</code> (commutateurs <code>/D</code> communs LIB + EXE), /arch:AVX2, C++23
+    <span class="side">le mécanisme du PCH est détaillé dans le lot P1 ; les configurations Debug / Release / RelWithAsserts dans l’annexe A10</span></span><span class="who">L01 · P1 · A10</span></div>
+</div>
+<p class="cap">Surbrillance pleine : périmètre du lot L01. Pointillés : couche dont L01 ne possède qu’une partie (le démarrage de <code>main.cpp</code>, partie B).</p>
+
+<h3 id="v01b">Vu dans le temps : compilation, démarrage, frame, fermeture</h3>
+<p>Le moteur ne vit pas seulement pendant la boucle. La colonne de droite dit <strong>ce que L01 fournit à l’étape</strong>. Un étage en surbrillance dépend du lot ; un étage grisé n’en a pas besoin. Les badges disent ce que <strong>ce lot</strong> a changé.</p>
+<div class="seg" id="v-pipeSeg">
+  <button class="vbtn on" data-v="all" type="button">Tout le cycle</button>
+  <button class="vbtn" data-v="lot" type="button">Seulement là où L01 agit</button>
+  <button class="vbtn" data-v="diff" type="button">Seulement ce que L01 a changé</button>
+</div>
+<label class="chk"><input type="checkbox" id="v-pipeDetail"> Afficher pourquoi l’étage dépend du lot</label>
+<div class="pipe" id="v-pipeline"></div>
+<div class="legend">
+  <span><i class="sw" style="background:var(--accent-bg);border:2px solid var(--accent)"></i>dépend de L01</span>
+  <span><i class="sw" style="background:var(--surface);border:1px solid var(--border);opacity:.5"></i>n’en dépend pas</span>
+  <span><span class="pbadge new" style="margin:0">ajouté</span> par L01</span>
+  <span><span class="pbadge mod" style="margin:0">changé</span> par L01</span>
+  <span><span class="pbadge up" style="margin:0">repris</span> par un lot supérieur</span>
+  <span><span class="pbadge keep" style="margin:0">inchangé</span></span>
+  <span><span class="pbadge gap" style="margin:0">écart</span> à corriger</span>
+</div>
+<div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Lecture.</strong> L01 agit surtout <em>avant</em> la frame : à la compilation, il décide ce que voit chaque <code>.cpp</code> et combien de fichiers recompilent ; au démarrage, il décide d’où viennent les réglages. Pendant la frame, il n’exécute presque rien : il est <em>lu</em> (un <code>if</code> sur <code>EngineConfig</code>, une borne <code>kMaxCamerasHard</code>, un commutateur <code>#if LV3_SIMD</code> déjà tranché par le compilateur). Deux écarts restent visibles sur le cycle : la date simulée lue en <code>float</code> (E20) et la fermeture qui n’appelle pas <code>ShutdownConsole</code> (E19).</span></div>
+
+<h3 id="v01c">Carte des fichiers touchés par L01</h3>
+<div class="twrap"><table id="v-fileMap"></table></div>
+
+<h2 id="v02">0.2 — Algorithme détaillé de l’apport du lot</h2>
+<p>Ce que L01 établit, écrit dans l’ordre où il s’exécute : d’abord à chaque build, puis une fois au démarrage, puis à chaque frame, puis à la sortie. La bande bleue est ce que L01 possède ; le reste est l’usage qu’en font les autres lots. Les marques : <b style="color:var(--green)">★</b> ajouté par L01 · <b style="color:var(--amber)">✎</b> modifié ou corrigé par L01 · <b style="color:var(--purple)">↻</b> repris par un lot supérieur · <b style="color:var(--red)">✗</b> écart à corriger.</p>
+<pre class="algo"><span class="h">COMPILATION — à chaque build, par configuration</span>                         <span class="c">MSBuild · cl.exe</span>
+<span class="lotl">  pch.cpp  /Yc"pch.h"  → LibraryV3.pch (analysé une seule fois)          <span class="s">★ D1</span></span>
+<span class="lotl">     pch.h = STL + Compiler.h + config.h + CoreTypes.h                   <span class="s">★ stable ET sans pollution</span></span>
+           + MathTypes.h + Transform.h + InputState.h                      <span class="u">↻ entrés depuis (E7, E8)</span>
+<span class="lotl">  pour chaque .cpp : 1re ligne #include "pch.h"  → /Yu, réutilise le .pch  <span class="s">★ D1, D8</span></span>
+<span class="lotl">  config.h  : constantes constexpr (M_PI, NEAR_ZERO…)                      <span class="m">✎ #define → constexpr (E1, E2)</span></span>
+<span class="lotl">              commutateurs #ifndef X / #define X défaut / testés par #if  <span class="s">★ D7</span></span>
+                valeur imposée par LV3.Common.props (/D), identique LIB + EXE  <span class="u">↻ bug 0.3, A10 (E4)</span>
+<span class="lotl">  EngineSettings.h (inclus à la main, hors PCH)                             <span class="s">★ D2</span></span>
+<span class="lotl">     bornes  : kMaxCamerasHard, kMaxMeshVerticesHard  → dimensionnent la pile <span class="m">✎ DB1 (E16 : le reste en #define)</span></span>
+<span class="lotl">     défauts : LV3_DEFAULT_*   → initialisent EngineConfig, jamais de #if    <span class="m">✎ DB1 (E15 : commentaires périmés)</span></span>
+<span class="lotl">  Platform.h (windows.h) : inclus par ContentRoot.cpp, Profiler.cpp, main.cpp seulement  <span class="s">★ D3</span></span>
+<span class="lotl">  enum class E : uint8_t | uint32_t                                         <span class="s">★ D4</span></span>
+<span class="lotl">     liste close ET ≥ 2 systèmes → CoreTypes.h (PCH) ; sinon header du système  <span class="s">★ D5</span></span>
+<span class="lotl">     ELayerMask : uint32_t + | &amp; ~ + HasLayer                                <span class="s">★ D6</span></span>
+
+<span class="h">DÉMARRAGE — une fois</span>                                                     <span class="c">main.cpp (EXE)</span>
+  InitConsole ; args ← ParseArgs(argv)                                     <span class="c">G2a</span>
+<span class="lotl">  identité du build : LV3_PROFILE(EXE) == Profiler::CompiledProfileFlag() (LIB) ?  <span class="u">↻ contrôle de E4</span></span>
+<span class="lotl">  racine ← ResolveContentRoot(env, --root, LV3_PROJECT_DIR, dossier exe)   <span class="u">↻ engine.json = marqueur (E17)</span></span>
+<span class="lotl">  cfg ← ProgrammeConfig(racine/"config.json")        réglages de l’APPLICATION  <span class="s">★ DB1</span></span>
+<span class="lotl">  EngineConfig::Get()  existe déjà : chaque membre = LV3_DEFAULT_*          <span class="s">★ É1 (magic static)</span></span>
+<span class="lotl">  ok ← LoadFromJson(racine/"engine.json")             réglages du MOTEUR     <span class="m">✎ ReadIf → JsonReader (E14)</span></span>
+<span class="lotl">     absent / malformé → error, false, *this intact = défauts                 <span class="s">★ O4</span></span>
+<span class="lotl">     pour chaque bloc B : rb ← Child(B)    absent : warn · null : info      <span class="s">★ DB3</span></span>
+<span class="lotl">        v ← rb.Read(k, LV3_DEFAULT_k)      T déduit du DÉFAUT                <span class="x">✗ simTime lu en float (E20)</span></span>
+<span class="lotl">        garde : !(v &gt; 0) || !isfinite(v) → warn + défaut                    <span class="s">★ DB4</span></span>
+<span class="lotl">        maxViewport ∈ [1, kMaxCamerasHard] → sinon plafonne + warn          <span class="s">★ DB2</span></span>
+<span class="lotl">        rb.WarnUnread()                    faute de frappe → warn             <span class="s">★ DB3</span></span>
+<span class="lotl">     si !ok : warn « défauts LV3_DEFAULT_* utilisés »                         <span class="s">★ O4</span></span>
+  scène, gizmos ← Serializer (JsonReader)                                  <span class="c">L03, A5, A6</span>
+<span class="lotl">  #if LV3_DEBUG : RunAllTests                 avant toute ressource système  <span class="m">✎ DB6 (E18)</span></span>
+  SDLINIT(cfg.screenWidth, cfg.screenHeight) ; db.Resize                   <span class="c">L04</span>
+<span class="lotl">  #if LV3_PROFILE : Profiler::Begin si --bench                                <span class="u">↻ phase G</span></span>
+<span class="lotl">  _clock.Configure(EngineConfig::Get().simulation)                            <span class="x">✗ m_default jamais lu (E20)</span></span>
+
+<span class="h">BOUCLE — par frame</span>
+<span class="lotl">  V ← min(EngineConfig.viewport.maxViewport, kMaxCamerasHard)   réglage borné  <span class="s">★ DB2</span></span>
+<span class="lotl">  rendu : if (rc.multithread) … else …      réglage RUNTIME, jamais #if    <span class="m">✎ question d’Onky (DB1)</span></span>
+<span class="lotl">  renderer.SetDepthDisplayRange(EngineConfig.debug.depthDisplayRange)        <span class="u">↻ A5 §13.3</span></span>
+<span class="lotl">  #if LV3_SIMD / LV3_RASTER_FIXED : chemin AVX2, virgule fixe — tranché à la compilation  <span class="u">↻ B3, D-a1</span></span>
+<span class="lotl">  #if LV3_ASSERTS_ENABLED : CheckSceneInvariants, LV3_ASSERT(…)              <span class="m">✎ assert → AssertFailed (E3)</span></span>
+  BuildInputState, systèmes, RenderView, Present                           <span class="c">L03 à L06, phase G</span>
+
+<span class="h">FERMETURE</span>
+<span class="lotl">  #if LV3_PROFILE : DumpCsv — écrit simd=, fixed=, asserts_lib= vus par la LIB  <span class="u">↻ M11</span></span>
+  SDLkill()                                                                <span class="c">bug 27</span>
+<span class="lotl">  void ShutdownConsole();      déclaration, n’appelle rien                    <span class="x">✗ E19 → ShutdownConsole();</span></span></pre>
+
+
+<h3 id="v02a">A — Ce que le lot ajoute</h3>
+<div class="twrap"><table>
+<tr><th style="width:3em">#</th><th style="width:15em">Ajout</th><th>Pourquoi, et ce qui se passerait sans</th></tr>
+<tr><td>A1</td><td><strong>Un PCH stable</strong><br><code>pch.h</code> en première ligne de chaque <code>.cpp</code></td><td>La STL et le socle sont analysés une fois par configuration au lieu d’une fois par <code>.cpp</code>. Sans lui, chaque fichier repaie l’analyse de <code>&lt;vector&gt;</code>, <code>&lt;format&gt;</code>, <code>&lt;ranges&gt;</code>… (modèle de coût : lot P1).</td></tr>
+<tr><td>A2</td><td><strong>Trois étages de configuration</strong><br><code>config.h</code> · <code>EngineSettings.h</code> · <code>engine.json</code></td><td>Chaque valeur est rangée selon son coût de modification : rebuild complet, quelques <code>.cpp</code>, ou rien. Sans eux, changer la résolution ou un réglage de tuile recompile le moteur.</td></tr>
+<tr><td>A3</td><td><strong>Isolement de <code>windows.h</code></strong><br><code>Platform.h</code></td><td>Les macros <code>min</code>, <code>max</code>, <code>near</code>, <code>far</code>, <code>RGB</code> ne sortent pas des trois <code>.cpp</code> qui parlent à l’OS. Sans lui : bug B11 de LibV2, bug n°13 (RGB) de la leçon 05.</td></tr>
+<tr><td>A4</td><td><strong>Vocabulaire typé</strong><br><code>enum class E : uint8_t</code>, <code>CoreTypes.h</code></td><td>Taille garantie, aucune conversion implicite, aucun nom dans le scope global. Sans lui : les trois énumérations de LibV2 pour un seul concept.</td></tr>
+<tr><td>A5</td><td><strong>Bitmask de couches</strong><br><code>ELayerMask : uint32_t</code></td><td>32 couches combinables, format stable dans les scènes sauvegardées.</td></tr>
+<tr><td>A6</td><td><strong>Commutateurs de build testés par <code>#if</code></strong></td><td>Mettre à 0 désactive vraiment ; le symbole existe toujours. Avec <code>#ifdef</code>, <code>#define X 0</code> ne désactive rien.</td></tr>
+<tr><td>A7</td><td><strong>Défauts <code>LV3_DEFAULT_*</code> + <code>EngineConfig</code></strong> (partie B)</td><td>Une configuration complète existe avant toute lecture : fichier absent ou illisible, le moteur démarre quand même (O4).</td></tr>
+<tr><td>A8</td><td><strong>Lecture tracée d’<code>engine.json</code></strong> (partie B, avec A6)</td><td>Absente, type invalide, hors domaine, clé inconnue : un avertissement compté pour chaque cas. Sans elle, une campagne « tuiles de 32 » se mesure à 64 sans que personne le sache (CB1).</td></tr>
+<tr><td>A9</td><td><strong>Ordre de démarrage</strong> (partie B)</td><td>Du moins cher au plus cher : une faute d’argument coûte zéro seconde, une scène manquante ne laisse aucune fenêtre ouverte.</td></tr>
+</table></div>
+
+<h3 id="v02b">B — Ce que le lot remet en question</h3>
+<p>Chaque carte met l’ancien fonctionnement en face du nouveau. Le badge dit si la remise en question vient de L01 lui-même ou d’un lot supérieur qui a ensuite repris (ou corrigé) une décision de L01.</p>
+
+<div class="bcard">
+<p class="bt">B1 — Chaque header là où il sert → un PCH stable <span class="tag mod">changé par L01</span></p>
+<div class="code2">
+<pre><span class="dh">avant — LibV2 : includes au fil de l’eau</span><span class="c">// chaque .cpp</span>
+<span class="del">#include &lt;vector&gt;</span>
+<span class="del">#include &lt;windows.h&gt;          // pour un seul appel OS</span>
+<span class="del">#include "EngineSettings.h"   // réglages de tuning</span>
+<span class="del">#include "Camera.h"</span>
+<span class="c">// … chaque .cpp réanalyse la STL et windows.h</span></pre>
+<pre><span class="dh">après — pch.h stable, le reste à la demande</span><span class="c">// pch.h (analysé une fois, /Yc)</span>
+<span class="add">#include &lt;vector&gt; … &lt;format&gt; &lt;expected&gt;</span>
+<span class="add">#include "Core/Compiler.h"</span>
+<span class="add">#include "Core/config.h"</span>
+<span class="add">#include "Core/CoreTypes.h"</span>
+<span class="c">// dans le .cpp (/Yu) : #include "pch.h" en 1re ligne,</span>
+<span class="c">// puis seulement ce que le fichier utilise</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>STL</td><td class="bad">Analysée N fois</td><td class="good">Analysée 1 fois par configuration</td></tr><tr><td>Retouche d’un réglage</td><td class="bad">Recompile tout fichier qui inclut le réglage, souvent tout</td><td class="good">Seuls les .cpp qui incluent EngineSettings.h</td></tr><tr><td>windows.h</td><td class="bad">Visible partout</td><td class="good">Trois .cpp</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B2 — Un réglage n’est plus un <code>#define</code> testé par <code>#if</code> <span class="tag mod">changé par L01 (partie B)</span></p>
+<div class="code2">
+<pre><span class="dh">avant — leçon initiale, EngineSettings.h</span><span class="del">#define LV3_FEATURE_MULTITHREAD 1</span>
+<span class="del">#define LV3_TILE_SIZE           64</span>
+<span class="del"></span>
+<span class="del">#if LV3_FEATURE_MULTITHREAD</span>
+<span class="del">    RenderTilesParallel();</span>
+<span class="del">#endif</span></pre>
+<pre><span class="dh">après — défaut compile-time, valeur au démarrage</span><span class="add">#define LV3_DEFAULT_FEATURE_MULTITHREAD 0   // défaut</span>
+<span class="c">// engine.json : "renderer": { "multithread": true }</span>
+<span class="add"></span>
+<span class="add">const RendererConfig&amp; rc = EngineConfig::Get().renderer;</span>
+<span class="add">if (rc.multithread) RenderTilesParallel(rc.tileSize);</span>
+<span class="add">else                RenderTilesSerial(rc.tileSize);</span></pre>
+</div>
+<p style="font-size:.86rem;color:var(--text2);margin-top:.5rem">C’est ta question pendant la leçon : « on perd en dynamisme ». La réponse a coupé EngineSettings.h en deux : les bornes qui dimensionnent (compile-time, voulu) et les défauts des réglages (lus au démarrage).</p>
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>Essayer multithread = 0 sur l’i7</td><td class="bad">Recompiler LIB + EXE</td><td class="good">Éditer une ligne, relancer</td></tr><tr><td>Même binaire, trois réglages</td><td class="bad">Impossible</td><td class="good">Oui (campagne de mesure)</td></tr><tr><td>Ce qui reste en #if</td><td class="bad">Tout</td><td class="good">Les commutateurs de build seulement (SIMD, asserts, mesure)</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B3 — Enum nu → <code>enum class</code> typé <span class="tag mod">changé par L01</span></p>
+<div class="code2">
+<pre><span class="dh">avant — LibV2</span><span class="del">enum Frustum { _LEFT, _RIGHT, _NEAR, _FAR };</span>
+<span class="c">// _N majuscule : réservé au compilateur</span>
+<span class="c">// NEAR/FAR : macros de windows.h</span>
+<span class="del">enum FrustumInside { INSIDE, OUTSIDE, INTERSECT };</span>
+<span class="c">// taille : celle d'un int (4 o), laissée au compilateur</span></pre>
+<pre><span class="dh">après — LibraryV3</span><span class="add">enum class EFace : uint8_t { Front, Back, Both };</span>
+<span class="add">enum class ELayerMask : uint32_t { None = 0, Default = 1 &lt;&lt; 0, … };</span>
+<span class="c">// accès qualifié : EFace::Back</span>
+<span class="c">// taille garantie, pas de conversion implicite</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>Nom d’une valeur</td><td class="bad">Global, collision possible</td><td class="good">Confiné au type</td></tr><tr><td>Taille</td><td class="bad">4 o, non garantie</td><td class="good">1 o (ou 4 pour un masque), garantie</td></tr><tr><td>Conversion vers int</td><td class="bad">Silencieuse</td><td class="good">static_cast explicite</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B4 — <code>windows.h</code> partout → <code>Platform.h</code> isolé <span class="tag mod">changé par L01</span></p>
+<div class="code2">
+<pre><span class="dh">avant — LibV2</span><span class="c">// header public ou PCH</span>
+<span class="del">#include &lt;windows.h&gt;</span>
+<span class="c">// near, far, min, max, RGB : macros dans tout le moteur</span>
+<span class="del">float near = 0.1f;   // devient "float = 0.1f;"</span></pre>
+<pre><span class="dh">après — LibraryV3</span><span class="c">// Core/Platform.h, inclus par 3 .cpp</span>
+<span class="add">#define WIN32_LEAN_AND_MEAN</span>
+<span class="add">#define NOMINMAX</span>
+<span class="add">#define NOGDI</span>
+<span class="add">#include &lt;windows.h&gt;</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>std::min / std::max</td><td class="bad">Réécrits par une macro</td><td class="good">Intacts</td></tr><tr><td>Camera::near / far</td><td class="bad">Collision</td><td class="good">Intacts hors des 3 .cpp</td></tr><tr><td>Fonction RGB du moteur</td><td class="bad">C4430 (bug n°13)</td><td class="good">Renommée MakeColor, NOGDI en plus</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B5 — Lecture silencieuse → lecture tracée <span class="tag mod">changé par L01 (partie B) et A6</span></p>
+<div class="code2">
+<pre><span class="dh">avant — leçon, discussion L01</span><span class="del">template&lt;typename T&gt;</span>
+<span class="del">static void ReadIf(const json&amp; o, const std::string&amp; k, T&amp; t)</span>
+<span class="del">{</span>
+<span class="del">    if (o.contains(k) &amp;&amp; !o[k].is_null())</span>
+<span class="del">        t = o[k].get&lt;T&gt;();     // type_error non rattrapée</span>
+<span class="del">}                              // absente : silence</span>
+<span class="del">void Sanitize() { if (tileSize &lt; 1) tileSize = 64; }  // silence</span></pre>
+<pre><span class="dh">après — dépôt (JsonReader, R5)</span><span class="add">JsonReader rr = r.Child("renderer");</span>
+<span class="add">renderer.tileSize = rr.Read("tile_size", LV3_DEFAULT_TILE_SIZE);</span>
+<span class="add">if (renderer.tileSize &lt;= 0)</span>
+<span class="add">{   Logger::warn("[EngineConfig] renderer.tile_size &lt;= 0, force a 64");</span>
+<span class="add">    renderer.tileSize = LV3_DEFAULT_TILE_SIZE; }</span>
+<span class="add">rr.WarnUnread();               // "tile_sise" -&gt; warn</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>"tile_sise": 32</td><td class="bad">64, 0 message</td><td class="good">64, 2 avertissements</td></tr><tr><td>"multithread": "true"</td><td class="bad">std::terminate</td><td class="good">1 avertissement, défaut false</td></tr><tr><td>"tile_size": 0</td><td class="bad">64, 0 message</td><td class="good">64, 1 avertissement</td></tr><tr><td>NaN</td><td class="bad">Passe (NaN < 0 est faux)</td><td class="good">Rejeté (!(x > 0))</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B6 — Chemin relatif → racine de contenu <span class="tag up">repris par la discussion D, bugs 63 à 68</span></p>
+<div class="code2">
+<pre><span class="dh">avant — leçon</span><span class="del">EngineConfig::Get().LoadFromJson("engine.json");</span>
+<span class="c">// relatif au répertoire courant :</span>
+<span class="c">//   F5 : $(ProjectDir) · double-clic : dossier de l'exe</span>
+<span class="c">//   script de mesure : ailleurs</span></pre>
+<pre><span class="dh">après — dépôt</span><span class="add">const auto contentRoot = LV3::ResolveContentRoot(devCandidates);</span>
+<span class="add">if (contentRoot.empty()) { Logger::error("Arret …"); return -1; }</span>
+<span class="add">EngineConfig::Get().LoadFromJson(</span>
+<span class="add">    (contentRoot / LV3::kContentMarker).string());</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>Fichier lu</td><td class="bad">Dépend du mode de lancement</td><td class="good">Toujours celui de la racine</td></tr><tr><td>engine.json absent</td><td class="bad">Défauts, en silence</td><td class="good">Arrêt avec la liste des chemins essayés</td></tr><tr><td>Racine demandée invalide</td><td class="bad">—</td><td class="good">Arrêt, aucun repli silencieux (bug 68)</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B7 — Ordre de démarrage de la leçon → ordre du dépôt <span class="tag up">repris par la phase G (G2, bug 27)</span></p>
+<div class="code2">
+<pre><span class="dh">avant — leçon</span><span class="del">Logger::Init();</span>
+<span class="del">LoadFromJson("engine.json");</span>
+<span class="del">ResourceManager::Init(); Window::Init(); Renderer::Init();</span>
+<span class="del">LoadScene(…);            // échec : fenêtre déjà ouverte</span>
+<span class="del">RunMainLoop();</span>
+<span class="del">Shutdown(); Logger::Shutdown();</span></pre>
+<pre><span class="dh">après — dépôt</span><span class="add">InitConsole(); ParseArgs();              // 0 s si faute</span>
+<span class="add">/* identité du build */ ResolveContentRoot();</span>
+<span class="add">ProgrammeConfig(config.json); LoadFromJson(engine.json);</span>
+<span class="add">LoadSceneGraph(); RunAllTests();         // avant toute ressource</span>
+<span class="add">SDLINIT(); Profiler::Begin(); _clock.Configure();</span>
+<span class="add">while (g_running) { … }</span>
+<span class="add">DumpCsv(); SDLkill(); ShutdownConsole();</span></pre>
+</div>
+
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>Logger</td><td class="bad">Init / Shutdown</td><td class="good">Aucun : statiques prêtes avant main</td></tr><tr><td>Scène introuvable</td><td class="bad">Fenêtre à fermer</td><td class="good">Arrêt avant SDL</td></tr><tr><td>Faute d’argument</td><td class="bad">Découverte tard</td><td class="good">Usage affiché, 0 s de calcul</td></tr></table>
+</div>
+<div class="bcard">
+<p class="bt">B8 — « config.h immuable » → config.h porte les commutateurs globaux <span class="tag up">précisé par A10 et le bug 0.3</span></p>
+<div class="code2">
+<pre><span class="dh">avant — leçon : config.h = vrai le jour 1000</span><span class="c">// config.h (dans le PCH)</span>
+<span class="del">#define LV3_PI      3.14159265358979323846</span>
+<span class="del">#define LV3_EPSILON 1e-6f</span>
+<span class="c">// les options : dans EngineSettings.h, hors PCH</span></pre>
+<pre><span class="dh">après — dépôt : une valeur unique, imposée par le build</span><span class="c">// config.h (dans le PCH)</span>
+<span class="add">#ifndef LV3_SIMD</span>
+<span class="add">    #define LV3_SIMD 1</span>
+<span class="add">#endif</span>
+<span class="add">#if LV3_SIMD &amp;&amp; !defined(__AVX2__)</span>
+<span class="add">    #error "LV3_SIMD = 1 exige /arch:AVX2"</span>
+<span class="add">#endif</span>
+<span class="c">// valeur posée par LV3.Common.props, LIB ET EXE</span></pre>
+</div>
+<p style="font-size:.86rem;color:var(--text2);margin-top:.5rem">Reste une incohérence : le défaut de LV3_PROFILE vaut 1 alors que son commentaire et son #pragma message annoncent 0 (E5).</p>
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr><tr><td>Critère d’entrée dans le PCH</td><td class="bad">« stable »</td><td class="good">« recompilé par le bon nombre de fichiers »</td></tr><tr><td>Changer un commutateur</td><td class="bad">—</td><td class="good">Rebuild complet, inévitable : /D change la ligne de commande (lot P1)</td></tr><tr><td>Combinaisons jamais testées</td><td class="bad">Possibles</td><td class="good">Interdites par #error</td></tr></table>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════ TAB OUVERTURE ═══════════════════════════════════════ -->
+<div id="tab-ouverture" class="tab-panel">
+
+  <div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Deux parties.</strong> La <strong>partie A</strong> (onglets Ouverture à Vérifier) range chaque valeur à son étage. La <strong>partie B</strong> (dernier onglet, « B · Démarrer &amp; configurer ») répond à la question posée pendant la leçon : comment l’exécutable lit <code>engine.json</code> au démarrage, retombe sur ses défauts et le signale, sans recompiler. Ses décisions DB1 à DB6 précisent D2 et D7 ; ses écarts sont E14 à E21 ci-dessous.</span></div>
   <h2>1. Rappel — d’où l’on part</h2>
   <p>Ce lot est le premier de LibraryV3 : aucun lot ne le précède. Ce qui le précède, c’est <strong>LibV2</strong>, l’ancien moteur, dont l’audit a conduit à repartir de zéro. Sur le terrain de cette leçon, l’audit relevait notamment :</p>
   <table>
@@ -495,7 +832,7 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
     <div><b>Un vocabulaire commun</b>Les énumérations partagées (<code>EAxis</code>, <code>ESpace</code>, <code>EFace</code>…) existent une seule fois, avec une taille garantie, visibles partout.</div>
     <div><b>Une compilation qui coûte ce qu’elle doit</b>Retoucher un réglage ne recompile que les fichiers concernés ; seul un changement de constante absolue reconstruit tout.</div>
     <div><b>Aucune collision de macros</b><code>windows.h</code> reste confiné ; <code>std::min</code>, <code>near</code> et <code>far</code> gardent leur sens dans tout le moteur.</div>
-    <div><b>Des réglages sans recompiler</b>Ce qui varie d’une exécution à l’autre se lit dans <code>config.json</code>.</div>
+    <div><b>Des réglages sans recompiler</b>Ce qui varie d’une exécution à l’autre se lit au démarrage : <code>engine.json</code> pour le moteur, <code>config.json</code> pour l’application (partie B).</div>
     <div><b>Des inclusions lisibles</b>Un <code>#include</code> dit d’où vient le fichier : guillemets pour le dépôt, chevrons pour le reste.</div>
   </div>
   <p><strong>Intérêt.</strong> Ces décisions sont invisibles à l’écran, mais elles se paient à chaque compilation et à chaque bug de collision. Prises maintenant, elles coûtent une leçon ; prises après coup, elles imposent de reprendre les inclusions de tout le moteur.</p>
@@ -519,12 +856,12 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
   <div class="step" id="dec2">
     <div class="step-header">
       <div class="step-num">D2</div>
-      <div><div class="step-title">Trois étages de configuration</div><div class="step-why">config.h · EngineSettings.h · config.json</div></div>
+      <div><div class="step-title">Trois étages de configuration</div><div class="step-why">config.h · EngineSettings.h · engine.json (précisée par DB1)</div></div>
       <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
     </div>
     <div class="step-body">
       <p style="margin-top:.75rem"><strong>Question.</strong> Une valeur du moteur (π, nombre maximal de lumières, largeur d’écran) : où la déclarer ?</p>
-      <div class="dec-keep"><strong>Décision.</strong> Trois étages, selon la fréquence de changement. Constante absolue → <code>config.h</code> (dans le PCH). Réglage de compilation qui se retouche → <code>EngineSettings.h</code> (hors PCH). Paramètre qui varie d’une exécution à l’autre → <code>config.json</code>, lu au démarrage par <code>EngineConfig</code>.</div>
+      <div class="dec-keep"><strong>Décision.</strong> Trois étages, selon la fréquence de changement. Constante absolue → <code>config.h</code> (dans le PCH). Réglage de compilation qui se retouche → <code>EngineSettings.h</code> (hors PCH). Paramètre qui varie d’une exécution à l’autre → <code>engine.json</code>, lu au démarrage par <code>EngineConfig::LoadFromJson</code> ; les réglages propres à l’application (taille d’écran, scène) vont dans <code>config.json</code>, lu par l’EXE. <em>Précision de la partie B (DB1) : dans <code>EngineSettings.h</code> ne restent que les bornes qui dimensionnent et les défauts <code>LV3_DEFAULT_*</code> ; un réglage qui doit varier d’un run à l’autre n’y est jamais un <code>#define</code> testé par <code>#if</code>.</em></div>
       <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Chaque étage a un coût de modification différent : rebuild complet, recompilation de quelques .cpp, ou aucune recompilation. Ranger une valeur au bon étage, c’est payer le coût juste quand on la change.</p>
       <div class="dec-alt"><strong>Alternative écartée.</strong> Un fichier unique de constantes. Changer la résolution d’écran obligerait alors à recompiler, et changer un réglage de tuning reconstruirait le PCH.</div>
     </div>
@@ -592,6 +929,7 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
       <div class="dec-keep"><strong>Décision.</strong> Chaque option est toujours définie, à 0 ou 1, et testée par <code>#if</code>.</div>
       <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Avec <code>#ifdef</code>, une option mise à 0 reste « définie » et sa branche est compilée quand même ; il faudrait supprimer le <code>#define</code>, ce qui laisse des références orphelines. Avec <code>#if</code>, la valeur décide, et le symbole existe toujours.</p>
       <div class="dec-alt"><strong>Alternative écartée.</strong> <code>#ifdef LV3_FEATURE_SHADOWS</code> : écrire <code>#define LV3_FEATURE_SHADOWS 0</code> ne désactive rien.</div>
+      <div class="callout callout-info" style="margin-top:.6rem"><span class="callout-icon">ℹ</span><span><strong>Portée, précisée en partie B (DB1).</strong> <code>#if</code> est la règle pour un <em>commutateur de build</em> (<code>config.h</code> : asserts, mesure, SIMD). Une fonctionnalité qu’on veut activer ou couper d’un run à l’autre (ombres, multithread) n’est pas un commutateur : c’est un <code>if</code> sur <code>EngineConfig::Get()</code>, réglé dans <code>engine.json</code>.</span></div>
     </div>
   </div>
 
@@ -624,8 +962,8 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
 
   <h2>5. Écarts entre la leçon et le code d’aujourd’hui</h2>
   <p>Le code a évolué depuis la leçon (relevé du dépôt, novembre 2026). Chaque écart est donné avec sa raison, ce qu’il apporte et son verdict : <strong>évolution à retenir</strong> (elle complète ou précise la leçon), <strong>dette</strong> (à reprendre), ou <strong>à corriger</strong> (incohérence). Quand la raison n’est écrite nulle part, la fiche le dit.</p>
-  <div class="callout callout-warn"><span class="callout-icon">⚡</span><span><strong>Rien n’est acté.</strong> Les verdicts ci-dessous sont des propositions. Chaque écart est inscrit dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — socle L01 », avec la décision qu’il attend. E12 et E13, relevés ensuite, n’y figurent pas encore.</span></div>
-  <div class="gap-sum"><span class="st st-keep">Évolution à retenir (proposé) : 6</span><span class="st st-debt">À acter ou dette (proposé) : 5</span><span class="st st-fix">À corriger (proposé) : 2</span></div>
+  <div class="callout callout-warn"><span class="callout-icon">⚡</span><span><strong>Rien n’est acté.</strong> Les verdicts ci-dessous sont des propositions. Les vingt-deux écarts (E1 à E13 et E22 pour la partie A, E14 à E21 pour la partie B) sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard », sous-section « Décisions en attente — socle L01 » (relevé du 07/11/2026), chacun avec la décision qu’il attend ; les décisions de lot D8, D9 et DB1 à DB6, non actées, y figurent aussi.</span></div>
+  <div class="gap-sum"><span class="st st-keep">Évolution à retenir (proposé) : 9</span><span class="st st-debt">À acter, à vérifier ou dette (proposé) : 8</span><span class="st st-fix">À corriger (proposé) : 5</span></div>
 
   <div class="gap-card">
     <div class="gap-head"><span class="step-num">E1</span><span class="gap-title">config.h — les constantes deviennent des constexpr</span><span class="st st-debt">Évolution à retenir + dette mineure</span></div>
@@ -757,7 +1095,98 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
       <div class="gk">Verdict</div><div><strong>À acter :</strong> <code>.h</code> partout. Si la décision inverse est prise un jour, le coût est le nombre de lignes <code>#include</code> à renommer, détectées une par une par l’erreur C1083.</div>
     </div>
   </div>
-  <div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Ce que ces écarts changent à la leçon.</strong> E4 précise la décision D1 : le critère n’est pas seulement « stable », c’est « recompilé par le bon nombre de fichiers ». E1 et E2 remplacent la forme des constantes de la section 3 de la leçon. Les autres fiches ne touchent pas les règles : elles les appliquent mieux (E3, E6, E9, E10), ou y dérogent (E5, E7, E8, E11, E12, E13).</span></div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E22</span><span class="gap-title">Core/Types.h — une ancienne famille d’enums à côté de celle de L01</span><span class="st st-debt">À vérifier, puis dette</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>Un concept, une énumération : <code>ELightType</code> dans <code>LightTypes.h</code>, <code>ERenderMode</code> / <code>EShadingModel</code> dans <code>RenderTypes.h</code>, bitmask en <code>uint32_t</code>.</div>
+      <div class="gk">Dépôt actuel</div><div><code>Core/Types.h</code> déclare encore <code>ObjectType</code>, <code>LightType { Distant, Point, Spot }</code>, <code>ShadeMode</code>, <code>DrawMode</code> et un bitmask <code>FaceFlag : uint8_t</code> avec ses opérateurs, plus des alias <code>INT8…UINT64</code> et <code>ARGB4f/ARGB32</code>.</div>
+      <div class="gk">Raison de l’écart</div><div>Non documentée : vraisemblablement un reste de la migration depuis LibV2. Relevé le 11/11 en construisant la carte des fichiers.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Rien s’il n’est plus inclus. S’il l’est : deux vocabulaires pour l’éclairage et le mode de rendu, exactement la faute de LibV2 que L01 voulait éteindre (trois énumérations pour un concept).</div>
+      <div class="gk">Verdict</div><div><strong>À vérifier :</strong> qui inclut <code>Core/Types.h</code> (recherche dans les deux dépôts). Sans inclusion : supprimer le fichier. Avec : migrer chaque usage vers l’énumération de L01, puis supprimer.</div>
+    </div>
+  </div>
+  <h3 style="margin-top:1.5rem">Écarts de la partie B — démarrage et chargement (relevé du dépôt, 07/11/2026)</h3>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E14</span><span class="gap-title">Chargement — ReadIf + Sanitize remplacés par JsonReader</span><span class="st st-keep">Évolution à retenir</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>Leçon 01 §11 (markdown) : <code>ReadIf</code> lit une clé seulement si elle est présente et non nulle, en silence sinon ; <code>Sanitize()</code> corrige après coup, en silence ; seul <code>parse_error</code> est rattrapé.</div>
+      <div class="gk">Dépôt actuel</div><div><code>JsonReader::Read</code> (exacte : silence ; absente : warn + défaut ; <code>null</code> : info ; type invalide : warn + défaut), <code>WarnUnread()</code> sur chaque bloc, gardes de domaine clé par clé, <code>catch (json::exception)</code> global.</div>
+      <div class="gk">Raison de l’écart</div><div>Règle R5 (annexe A5 §6), annexe A6, règle du 07/10/2026 : aucune lecture muette.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Les fautes d’auteur deviennent visibles et comptées (<code>Logger::warnCount</code>). La version de la leçon devient le contre-exemple CB1, CB2, CB5.</div>
+      <div class="gk">Verdict</div><div><strong>À retenir.</strong> Corriger le markdown de la leçon 01 §11 pour qu’il renvoie au dépôt et présente <code>ReadIf</code> comme contre-exemple.</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E15</span><span class="gap-title">EngineSettings.h — commentaires périmés et exemple mort</span><span class="st st-fix">À corriger</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>Partie B, DB1 : <code>EngineSettings.h</code> ne garde que bornes et défauts.</div>
+      <div class="gk">Dépôt actuel</div><div>En-tête « contient tout ce qui se règle, se tune, ou se toggle » ; bloc FEATURES « 0 = système entier désactivé à la compilation, le code mort est éliminé par <code>#if</code> » au-dessus de <code>LV3_DEFAULT_FEATURE_*</code> ; commentaire final d’exemple avec <code>LV3_TILE_SIZE</code> et <code>#if LV3_FEATURE_MULTITHREAD</code>, qui n’existent plus.</div>
+      <div class="gk">Raison de l’écart</div><div>Le code a migré (les flags sont devenus des défauts runtime), les commentaires non.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Rien : un lecteur qui suit le commentaire écrirait un <code>#if LV3_DEFAULT_FEATURE_SHADOWS</code>, qui figerait à la compilation le défaut d’un réglage runtime.</div>
+      <div class="gk">Verdict</div><div><strong>À corriger :</strong> réécrire l’en-tête et le bloc FEATURES (« défaut d’un réglage runtime, utilisé si <code>engine.json</code> ne le donne pas »), supprimer l’exemple final (le bon exemple est dans <code>EngineConfig.h</code>).</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E16</span><span class="gap-title">EngineSettings.h — #define dans namespace LV3, bornes nommées DEFAULT</span><span class="st st-debt">Dette</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div><code>#define</code> pour toutes les valeurs.</div>
+      <div class="gk">Dépôt actuel</div><div>Les <code>#define</code> sont écrits <em>dans</em> <code>namespace LV3 { … }</code> ; <code>LV3_DEFAULT_MAX_TEXTURES</code> et <code>LV3_DEFAULT_MAX_MESHES</code> sont des capacités (bornes) nommées comme des défauts surchargeables ; à côté, <code>kMaxCamerasHard</code> et <code>kMaxMeshVerticesHard</code> sont des <code>inline constexpr</code> (bug 61, chantier 2).</div>
+      <div class="gk">Raison de l’écart</div><div>Les deux <code>constexpr</code> sont nés de bugs ; les autres valeurs n’ont pas été migrées.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Le <code>namespace</code> donne l’illusion d’une portée : le préprocesseur l’ignore, <code>LV3_MAX_LIGHTS</code> est visible partout. Le préfixe DEFAULT sur une borne fait croire qu’<code>engine.json</code> peut la changer.</div>
+      <div class="gk">Verdict</div><div><strong>Dette :</strong> migrer les bornes en <code>inline constexpr size_t kMax…Hard</code> (forme de <code>kMaxCamerasHard</code>) et renommer les deux capacités ; garder les <code>LV3_DEFAULT_*</code> en macros ou les passer en <code>constexpr</code>, au choix, mais sortir les macros du <code>namespace</code>.</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E17</span><span class="gap-title">engine.json — marqueur de la racine de contenu, lu par chemin absolu</span><span class="st st-keep">Évolution à retenir</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div><code>LoadFromJson("engine.json")</code> : chemin relatif au répertoire courant.</div>
+      <div class="gk">Dépôt actuel</div><div><code>kContentMarker = "engine.json"</code> ; <code>ResolveContentRoot</code> cherche <code>LV3_CONTENT_ROOT</code>, puis l’argument, puis <code>LV3_PROJECT_DIR</code> (Debug), puis le dossier de l’exe ; <code>LoadFromJson((contentRoot / kContentMarker).string())</code>.</div>
+      <div class="gk">Raison de l’écart</div><div>Discussion D (18/09), bugs 63, 67, 68 : F5, double-clic et scripts de mesure lisaient trois fichiers différents.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Une seule racine pour tous les lancements ; une racine demandée et invalide arrête le programme au lieu de basculer en silence (CB7).</div>
+      <div class="gk">Verdict</div><div><strong>À retenir.</strong> Conséquence : sans <code>engine.json</code>, le programme s’arrête avant <code>LoadFromJson</code> ; le chemin « fichier absent → défauts » ne sert plus qu’aux tests (prédiction P6).</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E18</span><span class="gap-title">main.cpp — ordre de démarrage réel</span><span class="st st-keep">Évolution à retenir</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>Neuf étapes : <code>Logger::Init</code>, config, ressources, fenêtre, renderer, scène, boucle, arrêt inverse, <code>Logger::Shutdown</code>.</div>
+      <div class="gk">Dépôt actuel</div><div><code>InitConsole</code> → <code>ParseArgs</code> → identité du build et contrôle LIB/EXE → racine → <code>config.json</code> → <code>engine.json</code> → scène → gizmos → tests Debug → SDL → profiler → horloge → boucle → CSV → <code>SDLkill</code>. <code>Logger</code> n’a ni <code>Init</code> ni <code>Shutdown</code>.</div>
+      <div class="gk">Raison de l’écart</div><div>Échouer tôt (bench, G2a/G2b), tests avant toute ressource système, bug 27 (fuite SDL sur les chemins d’échec).</div>
+      <div class="gk">Ce qu’il apporte</div><div>Une faute d’argument coûte zéro seconde ; une scène manquante ne laisse aucune fenêtre ouverte ; le journal fonctionne dès la première ligne sans initialisation.</div>
+      <div class="gk">Verdict</div><div><strong>À retenir</strong> (DB6). Corriger le markdown de la leçon 01 §12 (ordre et <code>Logger</code>).</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E19</span><span class="gap-title">main.cpp — <code>void ShutdownConsole();</code> est une déclaration</span><span class="st st-fix">À corriger</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>Libération dans l’ordre inverse de l’initialisation.</div>
+      <div class="gk">Dépôt actuel</div><div>Avant-dernière ligne de <code>main</code> : <code>void ShutdownConsole();</code>.</div>
+      <div class="gk">Raison de l’écart</div><div>Non documentée : vraisemblablement un copier-coller de la déclaration.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Rien : la ligne déclare une fonction locale et n’exécute rien. <code>InitConsole()</code> n’a pas de pendant.</div>
+      <div class="gk">Verdict</div><div><strong>À corriger :</strong> <code>ShutdownConsole();</code> (CB6, prédiction P7). À vérifier au passage : que <code>ShutdownConsole</code> existe bien et rétablit ce que <code>InitConsole</code> change.</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E20</span><span class="gap-title">Read&lt;T&gt; — le type lu est celui du défaut (simTime) ; m_default jamais lu</span><span class="st st-fix">À corriger + dette</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>—</div>
+      <div class="gk">Dépôt actuel</div><div><code>simulation.m_simTime = rs.Read("simTime", LV3_DEFAULT_SIMTIME_SCALE)</code> avec un défaut <code>0.0f</code> : lecture en <code>float</code> rangée dans un <code>double</code>. <code>SimulationClockSettings::m_default</code> (valeur de la touche 0) n’est lu dans aucune clé.</div>
+      <div class="gk">Raison de l’écart</div><div>Le défaut a été écrit avec le suffixe <code>f</code> commun aux autres réglages de l’horloge.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Rien. 2451545,37 devient 2451545,25 (−2 h 52 min 48 s, CB4). La touche 0 revient toujours à 0,20, même si <code>engine.json</code> règle <code>timeScale</code> à une autre valeur.</div>
+      <div class="gk">Verdict</div><div><strong>À corriger :</strong> <code>Read("simTime", static_cast&lt;double&gt;(LV3_DEFAULT_SIMTIME_SCALE))</code> (DB5). <strong>Dette à décider :</strong> lire <code>default</code>, ou faire de <code>timeScale</code> la valeur de réinitialisation.</div>
+    </div>
+  </div>
+  <div class="gap-card">
+    <div class="gap-head"><span class="step-num">E21</span><span class="gap-title">nlohmann — conversion silencieuse vers un entier</span><span class="st st-debt">À vérifier, puis dette</span></div>
+    <div class="gap-body">
+      <div class="gk">Leçon d’origine</div><div>—</div>
+      <div class="gk">Dépôt actuel</div><div><code>Read&lt;int&gt;</code> appelle <code>get&lt;int&gt;()</code>. Pour un type arithmétique, <code>nlohmann</code> accepte un nombre décimal ou un booléen et le convertit (<code>static_cast</code>) sans exception.</div>
+      <div class="gk">Raison de l’écart</div><div>Comportement de la bibliothèque, pas du moteur.</div>
+      <div class="gk">Ce qu’il apporte</div><div>Une valeur mal écrite (<code>"tile_size": 64.7</code>, <code>"max_bounces": true</code>) passe sans message : seul trou restant dans la règle « aucune lecture muette ».</div>
+      <div class="gk">Verdict</div><div><strong>À vérifier</strong> sur ta version de <code>json.hpp</code> (prédiction P4). Si confirmé, dette : dans <code>Read</code>, refuser un <code>number_float</code> ou un <code>boolean</code> quand <code>T</code> est entier (<code>is_number_integer()</code>), avec <code>WarnDefault(key, "de type invalide", …)</code>.</div>
+    </div>
+  </div>
+  <div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Ce que ces écarts changent à la leçon.</strong> E4 précise la décision D1 : le critère n’est pas seulement « stable », c’est « recompilé par le bon nombre de fichiers ». E1 et E2 remplacent la forme des constantes de la section 3 de la leçon. Les autres fiches ne touchent pas les règles : elles les appliquent mieux (E3, E6, E9, E10), ou y dérogent (E5, E7, E8, E11, E12, E13). Pour la partie B : E14, E17 et E18 remplacent les sections 11 et 12 du markdown de la leçon ; E15, E16, E19, E20 et E21 sont des corrections ou des dettes du dépôt.</span></div>
 </div>
 
 <!-- ═══════════════════════════════════════ TAB INTRO ═══════════════════════════════════════ -->
@@ -835,8 +1264,8 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
 
       <!-- Runtime -->
       <rect x="200" y="365" width="280" height="44" rx="8" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
-      <text x="340" y="383" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" font-weight="500" fill="#0f6e56">config.json — Runtime</text>
-      <text x="340" y="400" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#0f6e56">screen_w/h · asset paths · samples_per_pixel</text>
+      <text x="340" y="383" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" font-weight="500" fill="#0f6e56">engine.json · config.json — Runtime</text>
+      <text x="340" y="400" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#0f6e56">tile_size · multithread · lod  |  écran · scène</text>
 
       <!-- Arrows -->
       <line x1="340" y1="161" x2="340" y2="193" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
@@ -888,7 +1317,7 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
       <h4>Algorithme du lot</h4>
 <pre>placer(D) :
   <mark class="hl-add">si D varie entre deux exécutions</mark>
-      <mark class="hl-add">→ config.json</mark>
+      <mark class="hl-add">→ engine.json (moteur) · config.json (application)</mark>
   <mark class="hl-add">sinon si D peut évoluer</mark>
       <mark class="hl-add">→ header hors pch.h</mark>
   <mark class="hl-add">sinon si D pollue le scope global</mark>
@@ -975,8 +1404,8 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
       <rect x="200" y="390" width="280" height="88" rx="8" fill="#e1f5ee" stroke="#0f6e56" stroke-width="1"/>
       <text x="340" y="413" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" font-weight="500" fill="#0f6e56">Paramètre variable au runtime ?</text>
       <text x="340" y="430" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#0f6e56">screen_width, paths des assets…</text>
-      <text x="340" y="450" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" font-weight="500" fill="#0f6e56">→ config.json (pas de header du tout)</text>
-      <text x="340" y="468" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#0f6e56">Chargé par EngineConfig au démarrage</text>
+      <text x="340" y="450" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="11" font-weight="500" fill="#0f6e56">→ engine.json / config.json (aucun header)</text>
+      <text x="340" y="468" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#0f6e56">engine.json : EngineConfig · config.json : l’EXE</text>
     </svg>
   </div>
 
@@ -984,8 +1413,8 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
   <table>
     <tr><th>Frontière</th><th>Mécanisme</th><th>Exemple LibraryV3</th></tr>
     <tr><td><strong>pch.h</strong><br><small>compile-time stable</small></td><td>Précompilé une seule fois, jamais rechargé</td><td><code>PI</code>, <code>FORCEINLINE</code>, <code>EAxis</code></td></tr>
-    <tr><td><strong>EngineSettings.h</strong><br><small>compile-time évolutif</small></td><td>Inclus manuellement, seul son .cpp recompile si modifié</td><td><code>LV3_MAX_LIGHTS=8</code>, <code>LV3_TILE_SIZE=64</code></td></tr>
-    <tr><td><strong>config.json</strong><br><small>runtime</small></td><td>Chargé par <code>EngineConfig</code> au démarrage, 0 recompilation</td><td><code>screen_width</code>, chemins d’assets</td></tr>
+    <tr><td><strong>EngineSettings.h</strong><br><small>compile-time évolutif</small></td><td>Inclus manuellement, seul son .cpp recompile si modifié</td><td><code>LV3_MAX_LIGHTS=8</code>, <code>LV3_DEFAULT_TILE_SIZE=64</code> (défaut d’un réglage)</td></tr>
+    <tr><td><strong>engine.json · config.json</strong><br><small>runtime (démarrage)</small></td><td>Lus au démarrage, 0 recompilation : <code>engine.json</code> par <code>EngineConfig::LoadFromJson</code>, <code>config.json</code> par l’EXE (<code>ProgrammeConfig</code>). Partie B.</td><td><code>tile_size</code>, <code>lod.tolerancePx</code> · <code>screen_width</code>, scène</td></tr>
   </table>
 </div>
 
@@ -1134,7 +1563,10 @@ mark.hl-add { background: var(--green-bg); color: var(--green); padding: 0 2px; 
 // --- Feature flags ---
 #define LV3_FEATURE_SHADOWS     1
 #define LV3_FEATURE_MULTITHREAD 1
-#define LV3_FEATURE_STATS       1</pre>
+#define LV3_FEATURE_STATS       1
+// Leçon d'origine. Corrigé en partie B (DB1) :
+// ces flags et LV3_TILE_SIZE deviennent des défauts
+// LV3_DEFAULT_*, la valeur vit dans engine.json.</pre>
         </div>
       </div>
       <div class="callout callout-warn"><span class="callout-icon">⚡</span><span>Test de frontière : <code>LV3_PI</code> est vrai le jour 1 et le jour 1000. <code>LV3_MAX_LIGHTS</code> passera un jour de 8 à 16. Le premier va dans <code>config.h</code>, le second dans <code>EngineSettings.h</code>.</span></div>
@@ -1526,12 +1958,13 @@ SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
     SDL_TEXTUREACCESS_STREAMING,
     1280, 720);  // ← hardcodé, non configurable
 // Pour changer la résolution : recompiler le projet entier</pre>
-    <div class="code-label" style="margin-top:.75rem"><span class="good">✓</span> Via config.json + EngineConfig</div>
+    <div class="code-label" style="margin-top:.75rem"><span class="good">✓</span> Via config.json (réglage de l’application, lu par l’EXE)</div>
     <pre>// config.json
 { "screen_width": 1280, "screen_height": 720 }
 
-// main.cpp
-auto&amp; cfg = EngineConfig::Get();
+// main.cpp (dépôt)
+config cfg;
+ProgrammeConfig((contentRoot / "config.json").string(), cfg);
 SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888,
     SDL_TEXTUREACCESS_STREAMING,
     cfg.screenWidth, cfg.screenHeight);  // ← runtime</pre>
@@ -1651,6 +2084,1158 @@ int main() { return 0; }  // Zéro assert = succès</pre>
 
   <button class="dl-btn" id="dl-btn" type="button">↓ Télécharger cet artefact (HTML)</button>
 </div>
+
+
+<!-- ═══════════════════════════════════════ TAB B : DÉMARRER & CONFIGURER ═══════════════════════════════════════ -->
+<div id="tab-demarrage" class="tab-panel">
+<style>
+#tab-demarrage h2{margin-top:2rem}
+#tab-demarrage h2:first-child{margin-top:0}
+#tab-demarrage h3{margin:1.2rem 0 .4rem;font-size:1rem;font-weight:500}
+#tab-demarrage .bwrap{overflow-x:auto}
+#tab-demarrage textarea{width:100%;min-height:330px;font-family:var(--mono);font-size:.8rem;line-height:1.45;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:var(--radius);padding:.6rem .75rem;resize:vertical}
+#tab-demarrage .btab td,#tab-demarrage .btab th{font-size:.78rem;padding:.3rem .5rem}
+#tab-demarrage .btab td:first-child{white-space:nowrap;font-family:var(--mono)}
+#tab-demarrage tr.r-warn td{background:var(--amber-bg);color:var(--amber)}
+#tab-demarrage tr.r-info td{background:var(--accent-bg);color:var(--accent-text)}
+#tab-demarrage tr.r-silent td{background:var(--red-bg);color:var(--red)}
+#tab-demarrage tr.r-crash td{background:var(--red-bg);color:var(--red);font-weight:500}
+#tab-demarrage .console{background:#141413;color:#d8d6cf;border-radius:var(--radius);padding:.6rem .8rem;font-family:var(--mono);font-size:.74rem;line-height:1.5;max-height:300px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+#tab-demarrage .console .c-warn{color:#f0c46a}
+#tab-demarrage .console .c-info{color:#d8d6cf}
+#tab-demarrage .console .c-err{color:#ff8f85}
+#tab-demarrage .console .c-ok{color:#97c459}
+#tab-demarrage .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.5rem;margin:.6rem 0}
+#tab-demarrage .kpi div{background:var(--surface2);border-radius:var(--radius);padding:.5rem .7rem;font-size:.8rem;color:var(--text2)}
+#tab-demarrage .kpi b{display:block;font-size:1.05rem;color:var(--text);font-weight:500;font-family:var(--mono)}
+#tab-demarrage .sub-tl{display:flex;flex-wrap:wrap;gap:4px;margin:.6rem 0}
+#tab-demarrage .sub-tl button{font-size:.75rem;padding:.35rem .55rem;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer}
+#tab-demarrage .sub-tl button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+#tab-demarrage .sub-tl button.fail{border-color:var(--red)}
+#tab-demarrage .replay{font-size:.78rem;padding:.25rem .6rem;border-radius:6px;border:1px solid var(--accent);background:transparent;color:var(--accent);cursor:pointer;margin-top:.5rem}
+#tab-demarrage .code-cols>div{min-width:0}
+#tab-demarrage .code-cols pre{overflow-x:auto;white-space:pre}
+#tab-demarrage .ieee td{font-family:var(--mono);text-align:center}
+@media (max-width:640px){#tab-demarrage textarea{min-height:240px}}
+</style>
+
+  <h2>B1. Pourquoi cette partie, avant toute technique</h2>
+  <p>La partie A (onglets Ouverture à Vérifier) a répondu à une question : <em>où déclarer une valeur</em>. Elle laissait ouverte celle que tu as posée pendant la leçon : si <code>LV3_FEATURE_MULTITHREAD</code> vaut 1 dans <code>EngineSettings.h</code>, l’exécutable impose le multithread ; pour l’essayer à 0 sur le portable i7, il faut recompiler. On perd le dynamisme.</p>
+  <p>Ranger une valeur à l’étage « exécution » ne suffit pas. Cet étage n’existe que si trois choses sont vraies : <strong>quelqu’un lit le fichier</strong>, <strong>au bon moment du démarrage</strong>, et <strong>dit ce qu’il a retenu</strong>. Sans la troisième, un réglage mal écrit est remplacé par son défaut sans un mot, et l’on mesure une configuration qu’on ne croit pas avoir. La partie B traite ces trois points : comment le moteur démarre, comment il lit <code>engine.json</code>, comment il retombe sur ses défauts, et comment il le signale.</p>
+  <div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Périmètre.</strong> Cette partie reste dans le sujet de la leçon 01 : la configuration et le démarrage. Les notions des lots suivants (horloge de simulation, viewports, LOD) n’apparaissent que comme <em>clés lues</em>, jamais pour elles-mêmes.</span></div>
+
+  <h2>B2. Rappel — d’où l’on part</h2>
+  <table>
+    <tr><th>Source</th><th>Ce qu’elle a posé</th></tr>
+    <tr><td>Partie A, D1 et D2</td><td>Trois étages : <code>config.h</code> (PCH, immuable), <code>EngineSettings.h</code> (hors PCH), un fichier JSON lu au démarrage. D7 : un commutateur de build se teste par <code>#if</code>.</td></tr>
+    <tr><td>Leçon 01, cette discussion</td><td>Première version du chargement : un <code>ReadIf</code> qui ne lit que les clés présentes, un <code>Sanitize()</code> qui corrige après coup, un <code>main</code> en neuf étapes (Logger, config, ressources, fenêtre, renderer, scène, boucle, arrêt inverse). Elle sert ici de <strong>point de départ</strong> et de contre-exemple.</td></tr>
+    <tr><td>Annexe A5 §6</td><td><code>JsonReader</code> et la règle R5 : chaque clé lue est tracée, toute clé jamais lue est signalée (<code>WarnUnread</code>).</td></tr>
+    <tr><td>Annexe A6</td><td><code>JsonReader</code> sorti de <code>Serializer.cpp</code> vers <code>Core/</code> ; <code>EngineConfig::LoadFromJson</code> enfin implémentée (elle n’était que déclarée) ; <code>engine.json</code> déplacé de la LIB vers l’EXE.</td></tr>
+    <tr><td>Règle du 07/10/2026</td><td>Trois formes d’écriture d’une clé, aucune muette : valeur exacte (silence), clé absente (avertissement + défaut), <code>null</code> (annonce : délégation voulue), type invalide (avertissement + défaut).</td></tr>
+    <tr><td>Discussion D (18/09), bugs 63, 67, 68</td><td><code>ContentRoot</code> : <code>engine.json</code> devient le <em>marqueur</em> de la racine de contenu ; ordre de recherche <code>LV3_CONTENT_ROOT</code> → argument → <code>LV3_PROJECT_DIR</code> → dossier de l’exe ; une racine demandée et invalide arrête le programme.</td></tr>
+    <tr><td>Bug 61</td><td><code>viewport.maxViewport</code> est un réglage runtime borné par <code>kMaxCamerasHard</code>, borne compile-time qui dimensionne des tableaux de pile.</td></tr>
+  </table>
+
+  <h2>B3. Contexte et objectif fonctionnel</h2>
+  <p><strong>Contexte.</strong> Une seule <code>LibraryV3.lib</code>, deux machines (le Core i9 avec AVX-512, le portable i7 en AVX2, référence de comparaison), trois scènes de mesure lancées par la <em>même</em> binaire Release (<code>--scene</code>, <code>--bench</code>). Entre deux runs, on veut changer <code>tile_size</code>, <code>multithread</code>, <code>viewport.maxViewport</code>, <code>lod.tolerancePx</code> ou <code>debug.depthDisplayRange</code> sans toucher au compilateur, et savoir exactement avec quels réglages chaque run a tourné.</p>
+  <div class="ov-goal">
+    <div><b>O1 — Zéro recompilation</b>Changer un réglage du moteur, c’est éditer <code>engine.json</code> et relancer.</div>
+    <div><b>O2 — Une provenance pour chaque valeur</b>Fichier, défaut, ou <code>null</code> écrit par l’auteur : le journal le dit.</div>
+    <div><b>O3 — Aucune faute d’auteur muette</b>Clé mal orthographiée, mauvais type, valeur hors domaine : chacune produit un avertissement compté.</div>
+    <div><b>O4 — Démarrer quand même</b>Fichier absent ou illisible : le moteur tourne sur ses défauts et le dit. Jamais de plantage, jamais un état inventé.</div>
+    <div><b>O5 — Échouer tôt et pas cher</b>Une faute de l’opérateur coûte zéro seconde de calcul : on vérifie avant d’ouvrir une fenêtre ou de charger une scène.</div>
+  </div>
+  <p><strong>Intérêt.</strong> Une campagne de mesure ne vaut que par la configuration qui l’a produite. Un réglage ignoré en silence donne des chiffres exacts… d’une autre configuration que celle qu’on croit mesurer.</p>
+
+<h2>B4. Décisions à prendre et leur pourquoi</h2>
+  <p>Comme pour la partie A : cliquer pour voir la question, la décision, sa justification et l’alternative écartée. <strong>Rien n’est acté</strong> : ces décisions précisent D2 et attendent ta validation.</p>
+
+  <div class="step" id="bdec1">
+    <div class="step-header">
+      <div class="step-num">DB1</div>
+      <div><div class="step-title">Trois étages, quatre fichiers</div><div class="step-why">borne · défaut · réglage moteur · réglage application</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> Une valeur du moteur : est-ce une borne, un défaut ou un réglage ? Et un réglage de qui ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> Une <strong>borne</strong> qui dimensionne un tableau ou un type va dans <code>EngineSettings.h</code>, de préférence en <code>inline constexpr kXxxHard</code> (comme <code>kMaxCamerasHard</code>). Le <strong>défaut</strong> d’un réglage va aussi dans <code>EngineSettings.h</code>, sous le nom <code>LV3_DEFAULT_*</code>. Le <strong>réglage du moteur</strong> va dans <code>engine.json</code>, lu par <code>EngineConfig::LoadFromJson</code>. Le <strong>réglage de l’application</strong> (taille d’écran, scène, table des assets) va dans <code>config.json</code>, lu par l’EXE (<code>ProgrammeConfig</code>).</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Deux tests suffisent. « La valeur dimensionne-t-elle un tableau ? » sépare la borne du réglage : une borne qui bouge exige de recompiler, et c’est voulu. « Si un autre jeu liait la même <code>.lib</code>, la valeur changerait-elle ? » (annexe A6 §4) sépare <code>engine.json</code> de <code>config.json</code> : les deux vivent côté EXE, mais l’un parle au moteur, l’autre à l’application.</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> <code>#define LV3_FEATURE_MULTITHREAD 1</code> dans <code>EngineSettings.h</code>, testé par <code>#if</code> : exactement ta question, l’exécutable ne se règle plus. Un <code>#if</code> reste la bonne forme pour un <em>commutateur de build</em> (<code>config.h</code>, D7), jamais pour un réglage qui varie d’un run à l’autre.</div>
+    </div>
+  </div>
+
+  <div class="step" id="bdec2">
+    <div class="step-header">
+      <div class="step-num">DB2</div>
+      <div><div class="step-title">Un réglage peut être borné par une borne, jamais l’inverse</div><div class="step-why">maxViewport ∈ [1, kMaxCamerasHard]</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> Un réglage runtime et une borne compile-time portent sur la même grandeur (nombre de viewports). Qui commande ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> La borne commande. Le réglage est ramené dans <code>[1, kMaxCamerasHard]</code> <em>au chargement</em>, avec un avertissement, puis n’est plus jamais revérifié.</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> <code>kMaxCamerasHard</code> dimensionne <code>ViewSlot slots[kMaxCamerasHard]</code> et <code>CameraBinding bindings[kMaxCamerasHard]</code> sur la pile. Une valeur JSON de 9 écrirait hors de ces tableaux. Borner une fois, à l’entrée, rend tout le reste du moteur indépendant de la qualité du fichier.</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> Faire confiance au fichier et vérifier au moment de l’usage : chaque consommateur devrait répéter la garde, et le premier qui l’oublie écrit hors tableau.</div>
+    </div>
+  </div>
+
+  <div class="step" id="bdec3">
+    <div class="step-header">
+      <div class="step-num">DB3</div>
+      <div><div class="step-title">Aucune lecture muette</div><div class="step-why">R5 + règle du 07/10/2026</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> Une clé peut être bien écrite, absente, <code>null</code>, de mauvais type, ou inconnue (faute de frappe). Que fait le lecteur dans chaque cas ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> Valeur exacte : prise, silence. Clé absente : avertissement et défaut. <code>null</code> : annonce (l’auteur délègue au défaut). Type invalide : avertissement et défaut. Clé inconnue : avertissement par <code>WarnUnread()</code>, appelé en dernier sur chaque bloc. Tout avertissement passe par <code>Logger::warn</code>, qui le compte (<code>Logger::warnCount()</code>).</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Chaque cas silencieux est un réglage perdu sans trace. Le compteur rend le silence constatable : « 0 avertissement » devient une propriété qu’un test vérifie, au lieu d’une impression à la lecture du journal.</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> Le <code>ReadIf</code> de la leçon : une clé absente garde son défaut sans un mot, une clé mal orthographiée n’est jamais vue, un type invalide lève une exception que personne ne rattrape (contre-exemples CB1 et CB2).</div>
+    </div>
+  </div>
+
+  <div class="step" id="bdec4">
+    <div class="step-header">
+      <div class="step-num">DB4</div>
+      <div><div class="step-title">Le domaine se vérifie à la lecture, clé par clé</div><div class="step-why">forme positive niée : !(x > 0) || !isfinite(x)</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> Une valeur bien typée peut être absurde (<code>tile_size</code> = 0, <code>depthDisplayRange</code> = −1). Où et comment la rejeter ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> Juste après sa lecture, dans le bloc qui la lit, avec un message qui nomme la clé, la valeur lue et le défaut pris. La garde s’écrit en <strong>forme positive niée</strong> : on teste ce qui est valide, et on nie.</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Le message naît là où l’on connaît encore la clé et le fichier. La forme positive niée rejette aussi NaN : toute comparaison ordonnée avec NaN est fausse, donc <code>x &lt; 0</code> laisse passer NaN alors que <code>!(x &gt; 0)</code> l’arrête (contre-exemple CB3).</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> Un <code>Sanitize()</code> global appelé après coup, comme dans la leçon : il corrige en silence, ne sait plus d’où venait la valeur, et ses tests <code>x &lt; 0</code> laissent passer NaN.</div>
+    </div>
+  </div>
+
+  <div class="step" id="bdec5">
+    <div class="step-header">
+      <div class="step-num">DB5</div>
+      <div><div class="step-title">Un défaut, un seul nom — et son type est celui du membre</div><div class="step-why">Read(clé, LV3_DEFAULT_X) avec le type du membre</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> <code>Read&lt;T&gt;(key, def)</code> déduit <code>T</code> de <code>def</code>. Que se passe-t-il si le défaut n’a pas le type du membre qui reçoit la valeur ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> Le défaut s’écrit une seule fois (<code>LV3_DEFAULT_*</code>) et sert à la fois d’initialiseur du membre et de second argument de <code>Read</code>. Quand le type de la macro diffère de celui du membre, on convertit le <em>défaut</em> (<code>static_cast&lt;double&gt;(…)</code>), jamais la valeur lue.</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Le type de <code>T</code> décide de la précision de la lecture. <code>Read("simTime", 0.0f)</code> lit un <code>float</code>, puis le range dans un <code>double</code> : la précision est perdue avant l’affectation (contre-exemple CB4 : 2451545,37 devient 2451545,25).</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> Deux défauts écrits à deux endroits (initialiseur du membre et littéral dans <code>Read</code>) : le jour où l’un change, ils divergent. C’est aujourd’hui le cas de <code>renderer.rasterizer</code> et <code>renderer.raycaster</code> (littéraux <code>true</code>/<code>false</code> répétés), sans conséquence tant qu’ils restent égaux.</div>
+    </div>
+  </div>
+
+  <div class="step" id="bdec6">
+    <div class="step-header">
+      <div class="step-num">DB6</div>
+      <div><div class="step-title">Ordre de démarrage : du moins cher au plus cher</div><div class="step-why">chaque étape ne dépend que des précédentes</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <p style="margin-top:.75rem"><strong>Question.</strong> Dans quel ordre démarrer : ligne de commande, racine, configurations, scène, fenêtre, mesure, boucle ?</p>
+      <div class="dec-keep"><strong>Décision proposée.</strong> Ligne de commande → identité du build → racine de contenu → <code>config.json</code> → <code>engine.json</code> → scène → tests Debug → SDL (fenêtre, texture, Z-buffer) → harnais de mesure → horloge → boucle → écriture des mesures → libération dans l’ordre inverse.</div>
+      <p style="margin-top:.6rem"><strong>Pourquoi.</strong> Une erreur de frappe dans un argument doit coûter zéro seconde ; une scène introuvable ne doit pas laisser une fenêtre ouverte ; les tests de non-régression passent avant toute ressource système. Chaque étape ne lit que ce que les précédentes ont produit (onglet B7, frise interactive).</p>
+      <div class="dec-alt"><strong>Alternative écartée.</strong> L’ordre de la leçon (fenêtre et renderer avant la scène) : une scène manquante obligeait à fermer une fenêtre déjà ouverte, et chaque chemin d’échec devait libérer SDL (bug 27).</div>
+    </div>
+  </div>
+
+  <h2>B5. Schéma dynamique — rejouer un chargement</h2>
+  <p>Le simulateur reproduit, en JavaScript, les deux lecteurs : celui de la leçon (<code>ReadIf</code> + <code>Sanitize</code>) et celui du dépôt (<code>JsonReader</code>, <code>Core/EngineConfig.cpp</code>). Le texte est celui de <code>engine.json</code> du dépôt EXE. Choisis un cas, ou édite le fichier toi-même : le tableau donne, pour chaque clé, la valeur retenue et sa provenance, et la console reproduit les messages du moteur.</p>
+  <div class="sim">
+    <div class="sim-row"><strong style="color:var(--text)">Cas :</strong><span id="b-presets" style="display:flex;flex-wrap:wrap;gap:.35rem"></span></div>
+    <div class="sim-row"><strong style="color:var(--text)">Lecteur :</strong>
+      <button type="button" class="layer-btn" data-reader="naive">Leçon : ReadIf + Sanitize</button>
+      <button type="button" class="layer-btn active" data-reader="repo">Dépôt : JsonReader</button>
+      <label style="margin-left:.75rem;display:flex;gap:.35rem;align-items:center"><input type="checkbox" id="b-present" checked> fichier présent</label>
+    </div>
+    <textarea id="b-json" spellcheck="false" aria-label="Contenu de engine.json"></textarea>
+    <div id="b-verdict" class="callout callout-info" style="margin-top:.6rem"></div>
+    <div class="kpi" id="b-kpi"></div>
+    <div class="bwrap"><table class="btab" id="b-table"></table></div>
+    <div class="code-label" style="margin-top:.6rem">Console (format de <code>Logger</code>)</div>
+    <div class="console" id="b-console"></div>
+    <p style="font-size:.78rem;color:var(--text3);margin-top:.5rem">Modèle : les nombres <code>float</code> sont arrondis par <code>Math.fround</code> (float32 comme le CPU). La conversion d’un nombre décimal vers un entier, ou d’un booléen vers un nombre, suit ce que fait <code>nlohmann::json</code> pour un type arithmétique : à <strong>constater</strong> chez toi (prédiction P4 de l’étape Vérifier). Résolution supposée pour le compte de tuiles : 1280 × 720.</p>
+  </div>
+
+
+  <h2>B6. L’algorithme initial et ce que le dépôt y change</h2>
+  <p>À gauche, le chargement tel que la leçon l’a écrit pendant cette discussion. À droite, ce que fait le dépôt aujourd’hui (<code>Core/EngineConfig.cpp</code>, <code>Core/JsonReader.h</code>, <code>main.cpp</code>). Les lignes barrées disparaissent, les lignes vertes sont nouvelles.</p>
+  <div class="ba-grid">
+    <div class="ba-col before">
+      <h4>Leçon (discussion L01)</h4>
+<pre>main :
+  Logger::Init()
+  <mark class="hl-del">LoadFromJson("engine.json")   // relatif au répertoire courant</mark>
+
+LoadFromJson(chemin) :
+  ouvrir chemin
+  si échec : Warning, Sanitize(), retour faux
+  data ← analyser            <mark class="hl-del">// seule parse_error rattrapée</mark>
+  pour bloc ∈ {renderer, features, resources} :
+    si bloc présent et objet :
+      pour chaque clé connue :
+        <mark class="hl-del">si présente et non null : membre ← get&lt;T&gt;()</mark>
+        <mark class="hl-del">// absente, null : silence</mark>
+        <mark class="hl-del">// mauvais type : exception non rattrapée</mark>
+  <mark class="hl-del">// clé inconnue : jamais vue</mark>
+  <mark class="hl-del">Sanitize()   // tileSize&lt;1 → 64, bias&lt;0 → défaut, en silence</mark>
+  LogCurrentConfig()
+  retour vrai</pre>
+    </div>
+    <div class="ba-col after">
+      <h4>Dépôt (novembre 2026)</h4>
+<pre>main :
+  <mark class="hl-add">args ← ParseArgs ; identité du build ; LIB/EXE cohérents ?</mark>
+  <mark class="hl-add">racine ← ResolveContentRoot(argv, env)   // engine.json = marqueur</mark>
+  LoadFromJson(<mark class="hl-add">racine / "engine.json"</mark>)
+
+LoadFromJson(chemin) :
+  ouvrir ; si échec : error, retour faux   <mark class="hl-add">// *this intact = défauts</mark>
+  root ← analyser ; si parse_error : error, retour faux
+  <mark class="hl-add">r ← JsonReader(root, "engine", chemin)</mark>
+  pour chaque bloc B du modèle :
+    <mark class="hl-add">rb ← r.Child(B)    // absent : warn · null : info · non objet : warn</mark>
+    pour chaque clé k :
+      <mark class="hl-add">v ← rb.Read(k, LV3_DEFAULT_k)</mark>
+      <mark class="hl-add">// exacte : silence · absente : warn + défaut</mark>
+      <mark class="hl-add">// null : info · type invalide : warn + défaut</mark>
+    <mark class="hl-add">garde de domaine : si !(v &gt; 0) || !isfinite(v) : warn + défaut</mark>
+    <mark class="hl-add">réglage ≤ borne compile-time : sinon plafonne + warn</mark>
+    <mark class="hl-add">rb.WarnUnread()     // clé inconnue : warn</mark>
+  <mark class="hl-add">r.WarnUnread()</mark>
+  <mark class="hl-add">catch json::exception : error, retour faux</mark>
+  retour vrai        <mark class="hl-add">// silence = Logger::warnCount() inchangé</mark></pre>
+    </div>
+  </div>
+  <div class="ba-note callout callout-warn"><span class="callout-icon">⚡</span><span>Ce qui change n’est pas « plus de vérifications ». C’est <strong>qui découvre la faute</strong> : dans la leçon, l’auteur du fichier la découvre en lisant des chiffres de mesure faux ; dans le dépôt, le moteur la lui dit au démarrage, avec la clé, le fichier et le défaut pris.</span></div>
+
+<h2>B7. Fonctionnement technique</h2>
+
+  <h3>1. Les défauts existent avant toute lecture</h3>
+  <p><code>EngineConfig</code> est un agrégat dont chaque membre est initialisé par un <code>LV3_DEFAULT_*</code>. <code>EngineConfig::Get()</code> renvoie une variable <code>static</code> locale à la fonction : C++11 garantit qu’elle est construite une seule fois, au premier appel, de façon sûre même si deux threads appellent en même temps (« magic statics »). Avant même <code>LoadFromJson</code>, <code>Get()</code> rend donc un objet complet et valide. C’est ce qui rend gratuit l’objectif O4 : « fichier absent → défauts » ne demande aucun code, il suffit de retourner avant d’écrire quoi que ce soit.</p>
+<pre>struct RendererConfig
+{
+    bool  rasterizer  = true;
+    int   tileSize    = LV3_DEFAULT_TILE_SIZE;                           // 64
+    bool  multithread = static_cast&lt;bool&gt;(LV3_DEFAULT_FEATURE_MULTITHREAD); // 0 -&gt; false
+    // ...
+};
+struct EngineConfig
+{
+    RendererConfig renderer;  /* features, resources, debug, lod, viewport, simulation */
+    static EngineConfig&amp; Get() { static EngineConfig instance; return instance; }
+    bool LoadFromJson(const std::string&amp; path);
+};</pre>
+  <h3>2. Ce que JsonReader retient : l’ensemble des clés vues</h3>
+  <p>Chaque <code>Read</code>, <code>Child</code>, <code>TryRead</code>, <code>Delegate</code> insère sa clé dans <code>m_seen</code> (un <code>std::set&lt;std::string, std::less&lt;&gt;&gt;</code>, comparateur transparent : on cherche avec un <code>const char*</code> sans construire de <code>std::string</code>). <code>WarnUnread()</code>, appelé en dernier, parcourt les clés <em>du fichier</em> et signale celles qui ne sont pas dans <code>m_seen</code>, sauf celles qui commencent par <code>_</code> (<code>_comment</code>, <code>_version</code>). La recherche se fait toujours par <code>find()</code>, jamais par <code>operator[]</code> (R28) : sur un <code>json</code> non const, <code>operator[]</code> <em>insère</em> la clé ; sur un <code>json</code> const, une clé absente est un comportement indéfini.</p>
+  <table>
+    <tr><th>Le fichier contient</th><th>Read(k, def) rend</th><th>Message</th><th>Compté</th></tr>
+    <tr><td><code>"tile_size": 32</code></td><td>32</td><td>aucun</td><td>non</td></tr>
+    <tr><td>clé absente</td><td>def</td><td><code>cle 'tile_size' absente … defaut pris : 64</code></td><td>oui</td></tr>
+    <tr><td><code>"tile_size": null</code></td><td>def</td><td><code>cle 'tile_size' = null … valeur retenue : 64</code> (info)</td><td>non</td></tr>
+    <tr><td><code>"tile_size": "32"</code></td><td>def</td><td><code>cle 'tile_size' de type invalide … defaut pris : 64</code></td><td>oui</td></tr>
+    <tr><td><code>"tile_sise": 32</code></td><td>def pour <code>tile_size</code></td><td>deux : <code>absente</code> puis <code>cle ignoree 'tile_sise'</code></td><td>oui, 2</td></tr>
+  </table>
+
+  <h3>3. Le type lu est celui du défaut</h3>
+  <p><code>template&lt;typename T&gt; T Read(const char* key, T def)</code> : <code>T</code> est déduit du second argument. Le type du membre qui reçoit le résultat n’intervient pas.</p>
+  <table>
+    <tr><th>Appel</th><th>T déduit</th><th>Conséquence</th></tr>
+    <tr><td><code>Read("tile_size", LV3_DEFAULT_TILE_SIZE)</code></td><td><code>int</code></td><td>correct</td></tr>
+    <tr><td><code>Read("shadow_bias", 0.0001f)</code></td><td><code>float</code></td><td>correct, le membre est <code>float</code></td></tr>
+    <tr><td><code>Read("simTime", LV3_DEFAULT_SIMTIME_SCALE)</code> (<code>0.0f</code>)</td><td><code>float</code></td><td>le membre est <code>double</code> : la valeur est arrondie à 24 bits de mantisse <em>avant</em> d’y arriver</td></tr>
+    <tr><td><code>Read("assets", LV3_DEFAULT_RESOURCE_PATH)</code></td><td><code>const char*</code></td><td>ne compile pas (<code>get&lt;const char*&gt;</code>) : c’est pourquoi le dépôt écrit <code>std::string(LV3_DEFAULT_RESOURCE_PATH)</code></td></tr>
+  </table>
+
+  <h3>4. Pourquoi la forme positive niée arrête NaN</h3>
+  <p>IEEE 754 : toute comparaison ordonnée (<code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>) avec NaN vaut <code>false</code>. Un test qui cherche l’invalide (<code>x &lt; 0</code>) ne voit pas NaN ; un test qui cherche le valide et le nie (<code>!(x &gt; 0)</code>) le voit. JSON ne sait pas écrire NaN, mais la même garde protège les valeurs calculées ou surchargées (surcharges caméra par <code>TryRead</code>), et <code>isfinite</code> arrête l’infini.</p>
+  <table class="ieee">
+    <tr><th>x</th><th>x &lt; 0</th><th>x &lt;= 0</th><th>!(x &gt; 0)</th><th>!(x &gt; 0) || !isfinite(x)</th></tr>
+    <tr><td>80.0f</td><td>false</td><td>false</td><td>false</td><td>false (gardé)</td></tr>
+    <tr><td>0.0f</td><td>false</td><td>true</td><td>true</td><td>true (rejeté)</td></tr>
+    <tr><td>−1.0f</td><td>true</td><td>true</td><td>true</td><td>true (rejeté)</td></tr>
+    <tr><td>NaN</td><td><strong>false</strong></td><td><strong>false</strong></td><td>true</td><td>true (rejeté)</td></tr>
+    <tr><td>+inf</td><td>false</td><td>false</td><td>false</td><td>true (rejeté)</td></tr>
+  </table>
+
+  <h3>5. L’ordre de démarrage, étape par étape</h3>
+  <p>Clique une étape : ce qu’elle lit, ce qu’elle produit, et ce qui se passe si elle échoue. Le bouton « échec » simule l’arrêt à cette étape : les étapes suivantes ne s’exécutent pas, et la frise montre ce qu’il reste à libérer.</p>
+  <div class="sub-tl" id="b-tl"></div>
+  <div class="io" id="b-tl-io"></div>
+  <div id="b-tl-fail" class="callout callout-warn" style="display:none"></div>
+
+<h2>B8. Étapes pas à pas (É1 à É9)</h2>
+  <p>Chaque étape reprend le résultat de la précédente. Les valeurs sont celles du fichier <code>engine.json</code> du dépôt EXE (cas « Fichier du dépôt » du simulateur).</p>
+
+  <div class="step" id="bstep1">
+    <div class="step-header">
+      <div class="step-num">É1</div>
+      <div><div class="step-title">Les défauts existent avant toute lecture</div><div class="step-why">EngineSettings.h → initialiseurs de EngineConfig</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : disposer, dès le premier appel à <code>Get()</code>, d’une configuration complète et valide, qui servira telle quelle si rien ne se lit.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>Rien : c’est la première étape. Les macros <code>LV3_DEFAULT_*</code> de <code>EngineSettings.h</code>.</div>
+        <div><b>Sortie (résultat de cette étape)</b><code>tileSize = 64</code>, <code>multithread = false</code>, <code>shadows = false</code>, <code>wireframe = true</code>, <code>depthDisplayRange = 100</code>, <code>tolerancePx = 0.5</code>, <code>pointRadiusPx = 1</code>, <code>maxViewport = 4</code>, <code>timeScale = 0.2</code>, <code>simTime = 0</code>.</div>
+      </div>
+      <pre>// EngineSettings.h (extrait du dépôt)
+#define LV3_DEFAULT_TILE_SIZE               64
+#define LV3_DEFAULT_FEATURE_MULTITHREAD     0     // défaut d'un réglage runtime
+#define LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE 100.0f
+inline constexpr size_t kMaxCamerasHard = LV3_MAX_VIEWPORT;   // borne : dimensionne des tableaux</pre><div class="callout callout-warn"><span class="callout-icon">⚡</span><span>Le commentaire du dépôt au-dessus des <code>LV3_DEFAULT_FEATURE_*</code> dit encore « 0 = système entier désactivé à la compilation, le code mort est éliminé par <code>#if</code> ». C’est faux depuis qu’ils sont des défauts runtime : écart E15.</span></div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep2">
+    <div class="step-header">
+      <div class="step-num">É2</div>
+      <div><div class="step-title">Trouver la racine de contenu</div><div class="step-why">engine.json est le marqueur</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : connaître un chemin <em>absolu</em> vers <code>engine.json</code>, identique que l’on lance par F5, par double-clic ou en ligne de commande.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>L’argument <code>--root</code> éventuel, la variable <code>LV3_CONTENT_ROOT</code>, <code>LV3_PROJECT_DIR</code> (Debug), le dossier de l’exe. Les défauts de É1 sont en place, inutilisés pour l’instant.</div>
+        <div><b>Sortie (résultat de cette étape)</b><code>contentRoot</code>, absolu, qui contient <code>engine.json</code> (vérifié par <code>IsContentRoot</code>). Sinon : arrêt immédiat, avec la liste des chemins essayés.</div>
+      </div>
+      <div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> Leçon : chemin relatif</div><pre>// main.cpp (leçon)
+EngineConfig::Get().LoadFromJson("engine.json");
+// relatif au REPERTOIRE COURANT :
+//   F5            -&gt; $(ProjectDir)  (Working Directory)
+//   double-clic   -&gt; dossier de l'exe
+//   ligne de cmd  -&gt; la ou l'on est</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Dépôt : racine résolue, puis chemin absolu</div><pre>// main.cpp (dépôt)
+const std::filesystem::path contentRoot =
+    LV3::ResolveContentRoot(devCandidates);
+if (contentRoot.empty())
+{
+    Logger::error("Arret : aucune racine de contenu.");
+    return -1;
+}
+LV3_ASSERT(contentRoot.is_absolute());</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep3">
+    <div class="step-header">
+      <div class="step-num">É3</div>
+      <div><div class="step-title">Ouvrir et analyser le fichier</div><div class="step-why">échec = retour avant toute écriture</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : obtenir l’arbre JSON, ou échouer <em>sans rien modifier</em> : l’état de É1 reste intact.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b><code>contentRoot / "engine.json"</code> (étape É2).</div>
+        <div><b>Sortie (résultat de cette étape)</b>Un <code>nlohmann::json root</code> de 7 blocs (+ <code>_comment</code>, <code>_version</code>). Si le fichier est absent ou malformé : <code>Logger::error</code>, retour <code>false</code>, et <code>main</code> ajoute un <code>warn</code> « défauts LV3_DEFAULT_* utilisés ».</div>
+      </div>
+      <pre>std::ifstream file(path);
+if (!file.is_open())
+{
+    Logger::error("EngineConfig::LoadFromJson — fichier introuvable : " + path);
+    return false;                      // *this n'a pas ete touche
+}
+nlohmann::json root;
+try { file &gt;&gt; root; }
+catch (const nlohmann::json::parse_error&amp; e)
+{
+    Logger::error(std::string("EngineConfig::LoadFromJson — JSON malforme : ") + e.what());
+    return false;
+}</pre>
+    </div>
+  </div>
+
+  <div class="step" id="bstep4">
+    <div class="step-header">
+      <div class="step-num">É4</div>
+      <div><div class="step-title">Descendre dans un bloc et lire chaque clé</div><div class="step-why">Child + Read</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : remplacer chaque défaut par la valeur du fichier, et seulement quand elle est bien écrite ; dans tout autre cas, garder le défaut <em>et le dire</em>.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>L’arbre <code>root</code> (É3) et les défauts (É1) passés en second argument de <code>Read</code>.</div>
+        <div><b>Sortie (résultat de cette étape)</b>Fichier du dépôt : <code>tileSize = 64</code> (fichier), <code>multithread = true</code> (fichier, le défaut était <code>false</code>), <code>shadows = false</code>, <code>wireframe = false</code> (fichier, défaut <code>true</code>), <code>depthDisplayRange = 80</code>. Avertissements : 0.</div>
+      </div>
+      <div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> Leçon : ReadIf</div><pre>template&lt;typename T&gt;
+static void ReadIf(const json&amp; obj, const std::string&amp; key, T&amp; target)
+{
+    if (obj.contains(key) &amp;&amp; !obj[key].is_null())
+        target = obj[key].get&lt;T&gt;();   // type_error : hors du try
+}                                     // absente : silence
+
+if (data.contains("renderer") &amp;&amp; data["renderer"].is_object())
+    ReadIf(data["renderer"], "tile_size", renderer.tileSize);</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Dépôt : JsonReader</div><pre>JsonReader r(root, "engine", path);
+{
+    JsonReader rr = r.Child("renderer");   // absent : warn, null : info
+    renderer.tileSize    = rr.Read("tile_size",   LV3_DEFAULT_TILE_SIZE);
+    renderer.multithread = rr.Read("multithread",
+        static_cast&lt;bool&gt;(LV3_DEFAULT_FEATURE_MULTITHREAD));
+    // ... gardes (etape 5), puis :
+    rr.WarnUnread();
+}</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep5">
+    <div class="step-header">
+      <div class="step-num">É5</div>
+      <div><div class="step-title">Garder le domaine, clé par clé</div><div class="step-why">forme positive niée, message nominatif</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : rejeter une valeur bien typée mais absurde, là où l’on sait encore quelle clé et quel fichier la portent.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>Les valeurs brutes de É4. Cas « Hors domaine » du simulateur : <code>tile_size = 0</code>, <code>depthDisplayRange = −1</code>.</div>
+        <div><b>Sortie (résultat de cette étape)</b><code>tileSize = 64</code> et <code>depthDisplayRange = 100</code>, deux <code>warn</code> qui nomment la clé, la valeur lue et le défaut pris. <code>maxViewport</code> lu à 9 → plafonné à 4 (<code>kMaxCamerasHard</code>), un <code>warn</code>.</div>
+      </div>
+      <div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> Leçon : Sanitize() après coup</div><pre>void EngineConfig::Sanitize()
+{
+    if (renderer.tileSize   &lt; 1)   renderer.tileSize   = LV3_DEFAULT_TILE_SIZE;
+    if (renderer.shadowBias &lt; 0.f) renderer.shadowBias = LV3_DEFAULT_SHADOW_BIAS;
+    // silence ; NaN &lt; 0.f est faux : NaN passe
+}</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Dépôt : garde à la lecture</div><pre>JsonReader rd = r.Child("debug");
+const float range = rd.Read("depthDisplayRange",
+                            LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE);
+if (!(range &gt; 0.0f) || !std::isfinite(range))   // rejette aussi NaN, inf
+{
+    Logger::warn(std::format("[engine.debug] cle 'depthDisplayRange' invalide"
+        " ({}, attendu &gt; 0 et fini) sur {} — defaut pris : {}",
+        range, path, LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE));
+    debug.depthDisplayRange = LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE;
+}
+else
+    debug.depthDisplayRange = range;</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep6">
+    <div class="step-header">
+      <div class="step-num">É6</div>
+      <div><div class="step-title">Signaler l’inconnu</div><div class="step-why">WarnUnread, en dernier</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : voir la faute de frappe : une clé que personne n’a lue est soit inutile, soit mal orthographiée.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>Pour le bloc <code>renderer</code> : <code>m_seen</code> = {rasterizer, raycaster, tile_size, max_bounces, shadow_bias, alpha_thresh, multithread}. Cas « Faute de frappe » : le fichier contient <code>tile_sise</code>.</div>
+        <div><b>Sortie (résultat de cette étape)</b>Deux avertissements : <code>cle 'tile_size' absente … defaut pris : 64</code> (É4), puis <code>[engine.renderer] cle ignoree 'tile_sise'</code>. <code>warnCount</code> +2.</div>
+      </div>
+      <pre>void WarnUnread() const
+{
+    if (!m_j.is_object()) return;
+    for (auto&amp; [key, _] : m_j.items())
+    {
+        if (key.starts_with('_')) continue;          // "_comment", "_version"
+        if (!m_seen.contains(key))
+            Logger::warn("[" + m_comp + "] cle ignoree '" + key + "' sur " + m_owner);
+    }
+}</pre>
+    </div>
+  </div>
+
+  <div class="step" id="bstep7">
+    <div class="step-header">
+      <div class="step-num">É7</div>
+      <div><div class="step-title">Brancher le chargement dans main</div><div class="step-why">après la racine, avant la scène</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : charger la configuration au seul moment où tout ce dont elle dépend existe, et avant tout ce qui la consomme.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b><code>contentRoot</code> (É2). <code>config.json</code> déjà lu (taille d’écran, scène).</div>
+        <div><b>Sortie (résultat de cette étape)</b>Une configuration chargée et journalisée avant <code>LoadSceneGraph</code>, <code>SDLINIT</code>, <code>db.Resize</code>, <code>Profiler::Begin</code> et <code>_clock.Configure</code>, qui la lisent.</div>
+      </div>
+      <pre>// main.cpp (dépôt) — ordre réel
+InitConsole();
+const AppArgs args = ParseArgs(argc, argv);           // 1. zero seconde si faute de frappe
+/* identite du build, LV3_PROFILE LIB == EXE ? */      // 2.
+const auto contentRoot = ResolveContentRoot(dev);      // 3.
+ProgrammeConfig((contentRoot / "config.json").string(), cfg);          // 4. application
+if (!EngineConfig::Get().LoadFromJson((contentRoot / kContentMarker).string()))
+    Logger::warn("EngineConfig — defauts LV3_DEFAULT_* utilises ...");  // 5. moteur
+SceneSerializer::LoadSceneGraph(/* ... */);            // 6. scene
+#if LV3_DEBUG
+    RunAllTests(/* ... */);                            // 7. avant toute ressource systeme
+#endif
+SDLINIT(FrameW, FrameH, /* ... */);  db.Resize(FrameW, FrameH);        // 8.
+/* Profiler::Begin si --bench */                       // 9.
+_clock.Configure(EngineConfig::Get().simulation);      // 10.
+while (g_running) { /* ... */ }                        // 11.</pre><div class="callout callout-info"><span class="callout-icon">ℹ</span><span><strong>Correction de la leçon.</strong> J’avais écrit <code>Logger::Init()</code> en première étape et <code>Logger::Shutdown()</code> en dernière. Le <code>Logger</code> du dépôt n’a pas d’état à construire : deux statiques (<code>s_level</code>, <code>s_warnCount</code>) initialisées avant <code>main</code>. Il est utilisable à la première ligne, sans <code>Init</code>, et le reste jusqu’à la dernière. La règle « le journal naît en premier et meurt en dernier » est vraie, mais le langage la remplit seul.</span></div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep8">
+    <div class="step-header">
+      <div class="step-num">É8</div>
+      <div><div class="step-title">Consommer la configuration sans #if</div><div class="step-why">un if runtime sur une référence locale</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : que le réglage agisse sans recompiler, et sans payer à chaque usage plus qu’une lecture mémoire.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>La configuration chargée (É7).</div>
+        <div><b>Sortie (résultat de cette étape)</b>Le même binaire passe du rendu mono-thread au multithread en éditant une ligne de <code>engine.json</code> et en relançant.</div>
+      </div>
+      <div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> Leçon initiale : commutateur de build</div><pre>#if LV3_FEATURE_MULTITHREAD
+    RenderTilesParallel();
+#else
+    RenderTilesSerial();
+#endif
+// changer = recompiler la LIB et l'EXE</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Réglage runtime</div><pre>const RendererConfig&amp; rc = EngineConfig::Get().renderer;  // une fois
+if (rc.multithread) RenderTilesParallel(rc.tileSize);
+else                RenderTilesSerial(rc.tileSize);
+// changer = editer engine.json et relancer</pre></div>
+      </div><div class="callout callout-warn"><span class="callout-icon">⚡</span><span><strong>Coût.</strong> <code>Get()</code> contient la garde de la variable statique (un test d’un drapeau, branche toujours prise après le premier appel) : négligeable une fois par frame, comme <code>viewport.maxViewport</code> dans la boucle de <code>main</code>. Dans une boucle de pixels, on lit une référence locale prise avant la boucle. <strong>Limite :</strong> c’est l’étage « démarrage », pas « à chaud ». Relire <code>engine.json</code> pendant la boucle (touche de rechargement) est une évolution possible, inscrite dans la roadmap, non décidée.</span></div>
+    </div>
+  </div>
+
+  <div class="step" id="bstep9">
+    <div class="step-header">
+      <div class="step-num">É9</div>
+      <div><div class="step-title">Fermer dans l’ordre inverse</div><div class="step-why">ce qui a été ouvert en dernier se ferme en premier</div></div>
+      <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="step-body">
+      <div class="step-why-box">🎯 Objectif : rendre au système, dans l’ordre inverse, ce que le démarrage a pris : CSV de mesure, SDL, console.</div>
+      <div class="io">
+        <div><b>Entrée (résultat de l’étape précédente)</b>L’état en fin de boucle : SDL initialisé, éventuellement le harnais armé, la console en UTF-8 (<code>InitConsole</code>).</div>
+        <div><b>Sortie (résultat de cette étape)</b>CSV écrit (si <code>--bench</code>), <code>SDLkill()</code>, console restaurée… à condition que la dernière ligne soit un appel. Elle ne l’est pas : contre-exemple CB6.</div>
+      </div>
+      <div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> main.cpp, dernières lignes (dépôt)</div><pre>    SDLkill();
+    void ShutdownConsole();   // DECLARATION d'une fonction, pas un appel
+    return 0;
+}</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Correction proposée</div><pre>    SDLkill();
+    ShutdownConsole();        // appel
+    return 0;
+}</pre></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>B9. Contre-exemples chiffrés</h2>
+  <div class="counter-ex">
+    <h3>CB1 — La faute de frappe silencieuse</h3>
+    <p>Le fichier contient <code>"tile_sise": 32</code> au lieu de <code>"tile_size": 32</code>. Résolution 1280 × 720.</p>
+    <table>
+      <tr><th></th><th>Lecteur de la leçon</th><th>Lecteur du dépôt</th></tr>
+      <tr><td>tileSize retenu</td><td>64</td><td>64</td></tr>
+      <tr><td>Tuiles par frame</td><td>⌈1280/64⌉ × ⌈720/64⌉ = 20 × 12 = <strong>240</strong>, au lieu des 40 × 23 = 920 voulues</td><td>idem</td></tr>
+      <tr><td>Messages</td><td><strong>0</strong></td><td><strong>2</strong> : <code>absente</code>, puis <code>cle ignoree 'tile_sise'</code></td></tr>
+    </table>
+    <p>Les deux lecteurs retiennent la même valeur. La différence est entière dans la ligne « Messages » : avec la leçon, une campagne « tuiles de 32 » est mesurée à 64 et personne ne le sait.</p>
+    <button type="button" class="replay" data-bpreset="typo">Rejouer dans le simulateur</button>
+  </div>
+  <div class="counter-ex">
+    <h3>CB2 — L’exception que personne ne rattrape</h3>
+    <p><code>"multithread": "true"</code> (des guillemets en trop). Le lecteur de la leçon appelle <code>get&lt;bool&gt;()</code> sur une chaîne : <code>nlohmann::json::type_error</code> (302, « type must be boolean, but is string »). Son seul <code>try</code> entoure <code>file &gt;&gt; data</code> : l’exception remonte jusqu’à <code>main</code>, puis <code>std::terminate</code>. Sous MSVC : boîte « abort() has been called », <strong>aucune ligne de journal ne parle de engine.json</strong>.</p>
+    <p>Le dépôt : <code>Read</code> rattrape <code>type_error</code>, journalise <code>cle 'multithread' de type invalide … defaut pris : false</code>, et continue. Attention : le défaut (<code>false</code>) n’est pas l’intention de l’auteur (<code>true</code>). Le message est la seule trace ; c’est pourquoi on compte les avertissements.</p>
+    <button type="button" class="replay" data-bpreset="type">Rejouer dans le simulateur</button>
+  </div>
+  <div class="counter-ex">
+    <h3>CB3 — NaN passe un test « &lt; 0 »</h3>
+    <p><code>Sanitize()</code> de la leçon : <code>if (shadowBias &lt; 0.f) shadowBias = défaut;</code>. Avec <code>shadowBias = NaN</code> (valeur calculée, ou surcharge), <code>NaN &lt; 0.f</code> vaut <code>false</code> : la valeur reste NaN. Même mécanisme pour <code>depthDisplayRange</code>, que <code>Fragment.cpp</code> divise : avec 80, un fragment à z = 40 donne 40 / 80 = <strong>0,5</strong> ; avec −1, il donne <strong>−40</strong> (saturé à 0 : tout blanc ou tout noir selon la convention) ; avec NaN, <strong>NaN</strong>, et chaque comparaison suivante est fausse.</p>
+    <p>Garde du dépôt : <code>!(range &gt; 0.0f) || !std::isfinite(range)</code> rejette −1, 0, NaN et ±inf (tableau de B7.4).</p>
+    <button type="button" class="replay" data-bpreset="dom">Rejouer (valeurs −1 et 0)</button>
+  </div>
+  <div class="counter-ex">
+    <h3>CB4 — Le défaut <code>float</code> qui tronque un <code>double</code></h3>
+    <p><code>simulation.m_simTime = rs.Read("simTime", LV3_DEFAULT_SIMTIME_SCALE);</code> avec <code>LV3_DEFAULT_SIMTIME_SCALE = 0.0f</code> : <code>T = float</code>. Une date en jours juliens, <code>"simTime": 2451545.37</code> (1<sup>er</sup> janvier 2000, 20 h 52) :</p>
+    <table>
+      <tr><th>Étape</th><th>Valeur</th></tr>
+      <tr><td>Texte du fichier</td><td>2451545.37</td></tr>
+      <tr><td><code>get&lt;float&gt;()</code> (float32, espacement 0,25 entre 2<sup>21</sup> et 2<sup>22</sup>)</td><td><strong>2451545.25</strong></td></tr>
+      <tr><td>Affecté au <code>double m_simTime</code></td><td>2451545.25 (la précision est déjà perdue)</td></tr>
+      <tr><td>Écart</td><td>−0,12 jour = <strong>−2 h 52 min 48 s</strong></td></tr>
+    </table>
+<div class="code-cols">
+        <div><div class="code-label"><span class="bad">✗</span> Core/EngineConfig.cpp (dépôt)</div><pre>simulation.m_simTime = rs.Read("simTime", LV3_DEFAULT_SIMTIME_SCALE);
+// T = float</pre></div>
+        <div><div class="code-label"><span class="good">✓</span> Correction proposée</div><pre>simulation.m_simTime = rs.Read("simTime",
+    static_cast&lt;double&gt;(LV3_DEFAULT_SIMTIME_SCALE));
+// T = double : 2451545.37 conserve</pre></div>
+      </div>
+    <button type="button" class="replay" data-bpreset="date">Rejouer dans le simulateur</button>
+  </div>
+  <div class="counter-ex">
+    <h3>CB5 — Corriger en silence, c’est mentir à l’auteur</h3>
+    <p><code>"tile_size": 0</code>. <code>Sanitize()</code> le remplace par 64, sans message. Le moteur fonctionne ; l’auteur croit avoir désactivé le découpage en tuiles (ou s’est trompé de valeur) et ne le saura jamais. Le dépôt fait la même correction, mais l’annonce : <code>renderer.tile_size &lt;= 0, force a 64</code>.</p>
+  </div>
+  <div class="counter-ex">
+    <h3>CB6 — <code>void ShutdownConsole();</code> n’appelle rien</h3>
+    <p>Dans un corps de fonction, une ligne de la forme <em>type nom(paramètres);</em> est une <strong>déclaration</strong> de fonction locale. C’est légal, compile sans erreur et sans avertissement par défaut, et n’exécute rien. <code>ShutdownConsole()</code> n’est jamais appelée : ce que <code>InitConsole()</code> a changé dans la console (page de code, mode) n’est pas rétabli à la sortie.</p>
+    <p>Vérification sans effort : un point d’arrêt dans <code>ShutdownConsole</code> n’est jamais atteint (prédiction P7). Correction : retirer <code>void</code> (étape É9).</p>
+  </div>
+  <div class="counter-ex">
+    <h3>CB7 — Lire engine.json avant de connaître la racine</h3>
+    <p><code>LoadFromJson("engine.json")</code> : chemin relatif au répertoire courant. Lancé par F5 (répertoire de travail = <code>$(ProjectDir)</code>), il lit le fichier du dépôt ; lancé par double-clic, celui du dossier de l’exe (la copie post-build, peut-être périmée) ; lancé par un script de mesure depuis un autre dossier, aucun, et le moteur tourne sur ses défauts. Trois lancements, trois configurations, un seul binaire. C’est l’histoire des bugs 63, 67 et 68.</p>
+  </div>
+
+
+  <h2>B10. Vérifier</h2>
+  <h3>Test hors moteur : EngineConfig seul, sans scène ni fenêtre</h3>
+  <p>Le test charge des variantes du fichier du dépôt dans une instance <em>locale</em> d’<code>EngineConfig</code> (pas <code>Get()</code> : un singleton garderait l’état d’un test au suivant, en particulier quand le fichier est absent et que rien n’est réécrit). Il compte les avertissements par différence de <code>Logger::warnCount()</code>. Fichier proposé : <code>Test/TestEngineConfig.cpp</code>, appelé depuis <code>RunAllTests</code>.</p>
+<pre>// Test/TestEngineConfig.cpp — hors moteur : aucune scene, aucune fenetre
+#include "pch.h"
+#include &lt;filesystem&gt;
+#include &lt;fstream&gt;
+#include "Core/EngineConfig.h"
+#include "Core/Logger.h"
+
+namespace LV3::Tests
+{
+    namespace
+    {
+        // Copie du engine.json du depot EXE : 0 avertissement attendu.
+        constexpr std::string_view kNominal = R"json({
+  "_comment": "test", "_version": "1.0.0",
+  "renderer": { "rasterizer": true, "raycaster": false, "tile_size": 64, "max_bounces": 10,
+                "shadow_bias": 0.0001, "alpha_thresh": 0.5, "multithread": true },
+  "features": { "shadows": false, "fog": false, "wireframe": false, "stats": true, "raycast": false },
+  "resources": { "assets": "/assets/", "mesh": "/assets/meshes/", "scene": "/assets/graphscene/", "graph": "/assets/graphs/" },
+  "simulationclock": { "timeScale": 0.20, "simTime": 0.20, "step": 1.5, "sprint": 4.0, "min": 0.001, "max": 1000.0 },
+  "debug": { "depthDisplayRange": 80.0 },
+  "lod": { "tolerancePx": 0.5, "pointRadiusPx": 1.0 },
+  "viewport": { "maxViewport": 4 }
+})json";
+
+        std::string Replace(std::string s, std::string_view from, std::string_view to)
+        {
+            const size_t at = s.find(from);
+            LV3_ASSERT(at != std::string::npos);          // la variante doit modifier le texte
+            return s.replace(at, from.size(), to);
+        }
+
+        // Ecrit le texte, charge, rend le nombre d'avertissements emis pendant le chargement.
+        uint32_t Load(EngineConfig&amp; c, std::string_view text, bool&amp; ok)
+        {
+            const auto p = std::filesystem::temp_directory_path() / "lv3_test_engine.json";
+            { std::ofstream(p, std::ios::trunc) &lt;&lt; text; }
+            const uint32_t w0 = Logger::warnCount();
+            ok = c.LoadFromJson(p.string());
+            std::filesystem::remove(p);
+            return Logger::warnCount() - w0;
+        }
+    }
+
+    bool Test_EngineConfig()
+    {
+        bool pass = true;
+        auto check = [&amp;](bool cond, const char* what)
+        {
+            if (!cond) { Logger::error(std::string("[TEST EngineConfig] ") + what); pass = false; }
+        };
+        const std::string nominal(kNominal);
+        bool ok = false;
+
+        { EngineConfig c; const uint32_t w = Load(c, nominal, ok);                       // T1
+          check(ok &amp;&amp; w == 0, "T1 fichier nominal : 0 avertissement");
+          check(c.renderer.multithread &amp;&amp; c.debug.depthDisplayRange == 80.0f, "T1 valeurs du fichier"); }
+
+        { EngineConfig c; const uint32_t w = Load(c, Replace(nominal, "\"tile_size\"", "\"tile_sise\""), ok);  // T2
+          check(ok &amp;&amp; w == 2 &amp;&amp; c.renderer.tileSize == LV3_DEFAULT_TILE_SIZE, "T2 faute de frappe : 2 avertissements, defaut"); }
+
+        { EngineConfig c; const uint32_t w = Load(c, Replace(nominal, "\"multithread\": true", "\"multithread\": \"true\""), ok); // T3
+          check(ok &amp;&amp; w == 1 &amp;&amp; !c.renderer.multithread, "T3 type invalide : 1 avertissement, defaut false"); }
+
+        { EngineConfig c; const uint32_t w = Load(c, Replace(nominal, "80.0", "-1"), ok);  // T4
+          check(ok &amp;&amp; w == 1 &amp;&amp; c.debug.depthDisplayRange == LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE, "T4 hors domaine"); }
+
+        { EngineConfig c; const uint32_t w = Load(c, Replace(nominal, "\"maxViewport\": 4", "\"maxViewport\": 9"), ok); // T5
+          check(ok &amp;&amp; w == 1 &amp;&amp; c.viewport.maxViewport == static_cast&lt;int&gt;(kMaxCamerasHard), "T5 plafond compile-time"); }
+
+        { EngineConfig c; const uint32_t w0 = Logger::warnCount();                           // T6
+          ok = c.LoadFromJson("lv3_fichier_qui_n_existe_pas.json");
+          check(!ok &amp;&amp; Logger::warnCount() == w0, "T6 absent : false, aucun warn (un error)");
+          check(c.renderer.tileSize == LV3_DEFAULT_TILE_SIZE &amp;&amp; !c.renderer.multithread, "T6 defauts intacts"); }
+
+        { EngineConfig c; Load(c, Replace(nominal, "\"simTime\": 0.20", "\"simTime\": 2451545.37"), ok); // T7
+          // PREDICTION P5 : echoue AVANT la correction de CB4 (2451545.25), passe APRES.
+          check(std::abs(c.simulation.m_simTime - 2451545.37) &lt; 1e-6, "T7 simTime lu en double"); }
+
+        if (pass) Logger::success("[TEST EngineConfig] 7/7");
+        return pass;
+    }
+}</pre>
+  <h3>Filets Debug</h3>
+<pre>// Core/EngineConfig.cpp — les defauts eux-memes ne peuvent pas etre faux :
+// ils sont le repli du repli. Verifies a la compilation, une fois pour toutes.
+static_assert(LV3_DEFAULT_TILE_SIZE &gt; 0);
+static_assert(LV3_DEFAULT_MAX_DEPTH_DISPLAY_RANGE &gt; 0.0f);
+static_assert(LV3_DEFAULT_LOD_TOLERANCE_PX &gt; 0.0f);
+static_assert(LV3_DEFAULT_LOD_POINT_RADIUS_PX &gt;= 0.0f);
+
+// main.cpp — juste apres LoadFromJson : ce que les gardes promettent, verifie.
+#if LV3_ASSERTS_ENABLED
+{
+    const auto&amp; c = LV3::EngineConfig::Get();
+    LV3_ASSERT(c.renderer.tileSize &gt; 0);
+    LV3_ASSERT(c.debug.depthDisplayRange &gt; 0.0f &amp;&amp; std::isfinite(c.debug.depthDisplayRange));
+    LV3_ASSERT(c.viewport.maxViewport &gt;= 1 &amp;&amp; c.viewport.maxViewport &lt;= static_cast&lt;int&gt;(kMaxCamerasHard));
+}
+#endif</pre>
+  <h3>Prédictions du lot — coche quand ton build les confirme</h3>
+  <ul class="check-list" id="b-checks">
+    <li>P1 — Avec le <code>engine.json</code> du dépôt, <code>LoadFromJson</code> n’émet aucun avertissement (T1).</li>
+    <li>P2 — <code>tile_sise</code> au lieu de <code>tile_size</code> : exactement 2 avertissements, <code>tileSize = 64</code> (T2).</li>
+    <li>P3 — <code>"multithread": "true"</code> : 1 avertissement, <code>multithread = false</code>, pas de plantage (T3).</li>
+    <li>P4 — <code>"tile_size": 64.7</code> : <code>tileSize = 64</code> <strong>sans aucun message</strong> (conversion de <code>nlohmann</code> vers un type arithmétique). Si c’est confirmé : écart E21, dette à décider.</li>
+    <li>P5 — <code>"simTime": 2451545.37</code> : 2451545.25 avant la correction de CB4, 2451545.37 après (T7).</li>
+    <li>P6 — Sans <code>engine.json</code> à la racine : <code>ResolveContentRoot</code> échoue (le marqueur manque) et le programme s’arrête avant <code>LoadFromJson</code>. Le chemin « fichier absent → défauts » n’est donc atteignable qu’en test (T6).</li>
+    <li>P7 — Un point d’arrêt dans <code>ShutdownConsole()</code> n’est jamais atteint avant la correction de CB6, et l’est après.</li>
+  </ul>
+  <p style="font-size:.82rem;color:var(--text3)">Lots appairés : la partie A (onglet Vérifier : includes, PCH) et le lot P1 (PCH), qui reçoit dans ses questions de fond la réponse « un commutateur passé par <code>/D</code> recompile-t-il tout ? ».</p>
+
+  <h2>B11. Questions de fond posées pendant la leçon</h2>
+  <div class="verify-grid">
+    <div class="verify-card"><h4>« Mettre l’include du define à la fin du PCH ne recompilera pas tout ? »</h4><p>Si : tout ce que <code>pch.h</code> inclut, directement ou non, reconstruit le <code>.pch</code> puis chaque <code>.cpp</code> en <code>/Yu</code>. Réponse détaillée en partie A (D1 et E4) et dans le lot P1.</p></div>
+    <div class="verify-card"><h4>« Ai-je oublié quelque chose ? »</h4><p>La leçon avait répondu : la validation des valeurs (<code>Sanitize</code>). Il en manquait quatre autres, que le dépôt a trouvées depuis : la faute de frappe (<code>WarnUnread</code>), le type invalide (exception rattrapée par clé), l’emplacement du fichier (racine de contenu), et le type du défaut (CB4).</p></div>
+    <div class="verify-card"><h4>« On perd en dynamisme ? »</h4><p>Oui, pour tout ce qui est un <code>#define</code> testé par <code>#if</code>. D’où DB1 : un réglage qui doit varier d’un run à l’autre n’est jamais un <code>#if</code>. Les commutateurs de build (<code>config.h</code>) restent des <code>#if</code> : ils changent le code compilé, pas un réglage.</p></div>
+  </div>
+  <button class="dl-btn" data-dl type="button" style="margin-top:1.5rem">↓ Télécharger cet artefact (HTML)</button>
+</div>
+
+<script>
+
+// ─── Vue d'ensemble (§0) : cycle de vie et carte des fichiers ───
+document.addEventListener('DOMContentLoaded', function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+if (!$('v-pipeline')) return;
+function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+// [phase, étage, ce que L01 fournit, dépend de L01 ?, badge, pourquoi]
+var V_PIPE = [
+  ['Compilation — à chaque build', 'pch.cpp en /Yc → LibraryV3.pch', 'pch.h : STL + Compiler.h + config.h + CoreTypes.h', true, 'new',
+   'Le PCH est analysé une fois par configuration. Son contenu est la décision D1 de L01 ; MathTypes.h, Transform.h et InputState.h y sont entrés depuis (E7, E8, à acter).'],
+  ['Compilation — à chaque build', 'Chaque .cpp en /Yu', '#include "pch.h" en première ligne', true, 'new',
+   'Rien avant l’include : en /Yu, une directive placée avant est ignorée sans message (lot P1, contre-exemple 3).'],
+  ['Compilation — à chaque build', 'Commutateurs de build', 'config.h : #ifndef / #if / #error', true, 'up',
+   'LV3_ASSERTS_ENABLED, LV3_PROFILE, LV3_SIMD, LV3_RASTER_FIXED… Une seule valeur pour la LIB et l’EXE, posée par LV3.Common.props (bug 0.3, annexe A10).'],
+  ['Compilation — à chaque build', 'Bornes et défauts', 'EngineSettings.h, inclus à la main', true, 'mod',
+   'Bornes qui dimensionnent la pile (kMaxCamerasHard) et défauts LV3_DEFAULT_* des réglages runtime. Commentaires périmés (E15), #define dans un namespace (E16).'],
+  ['Compilation — à chaque build', 'Code OS', 'Platform.h dans 3 .cpp', true, 'new', 'ContentRoot.cpp, Profiler.cpp, main.cpp. Partout ailleurs, near, far, min, max gardent leur sens.'],
+  ['Compilation — à chaque build', 'Vocabulaire', 'enum class : CoreTypes.h, RenderTypes.h…', true, 'new',
+   'RenderTypes.h a évolué depuis (EDepthTest::Greater du reverse-Z, modes de débogage). Core/Types.h garde une ancienne famille (LightType, ShadeMode, DrawMode, FaceFlag) : usage à vérifier (E22).'],
+  ['Démarrage — une fois', 'InitConsole, ParseArgs', '—', false, null, 'Console UTF-8, arguments --root, --scene, --bench (G2a).'],
+  ['Démarrage — une fois', 'Identité du build', 'LV3_PROFILE EXE == LIB ?', true, 'up', 'Contrôle direct de la règle E4 : un commutateur posé d’un seul côté se dénonce au lancement.'],
+  ['Démarrage — une fois', 'ResolveContentRoot', 'engine.json = marqueur', true, 'up', 'L’emplacement d’engine.json décide de la racine de tout le contenu (E17, bugs 63, 67, 68).'],
+  ['Démarrage — une fois', 'config.json', 'réglages de l’application', true, 'new', 'Taille d’écran, scène, table des assets (DB1). Lu par l’EXE, pas par EngineConfig.'],
+  ['Démarrage — une fois', 'EngineConfig::LoadFromJson', 'défauts + JsonReader + gardes', true, 'mod',
+   'Le cœur de la partie B. Le contrat (DB2 à DB5) est celui du dépôt ; ma version initiale (ReadIf + Sanitize) devient le contre-exemple (E14).'],
+  ['Démarrage — une fois', 'Scène, gizmos', '—', false, null, 'Serializer et JsonReader (L03, A5, A6) : même règle de lecture, autre lot.'],
+  ['Démarrage — une fois', 'Tests Debug', '#if LV3_DEBUG', true, 'mod', 'Avant toute ressource système (DB6, E18).'],
+  ['Démarrage — une fois', 'SDL, Z-buffer', '—', false, null, 'Taille venue de config.json ; l’initialisation elle-même relève de L04.'],
+  ['Démarrage — une fois', 'Profiler::Begin', '#if LV3_PROFILE', true, 'up', 'Harnais de mesure de la phase G, armé seulement si le commutateur vaut 1.'],
+  ['Démarrage — une fois', '_clock.Configure', 'EngineConfig.simulation', true, 'gap', 'simTime lu en float puis rangé en double ; m_default jamais lu (E20).'],
+  ['Boucle — par frame', 'Entrées, animation, transforms, caméras', '—', false, null, 'L03 à L06, A5.'],
+  ['Boucle — par frame', 'Choix des viewports', 'maxViewport ≤ kMaxCamerasHard', true, 'keep', 'Réglage runtime borné au chargement par une borne compile-time (DB2) ; relu chaque frame sans revérification.'],
+  ['Boucle — par frame', 'RenderView', 'depthDisplayRange, lod.tolerancePx, ERenderMode', true, 'keep', 'Réglages lus dans EngineConfig, vocabulaire de RenderTypes.h.'],
+  ['Boucle — par frame', 'Étages sommets, faces, pixels', '#if LV3_SIMD · #if LV3_RASTER_FIXED', true, 'up', 'Choix tranchés par le compilateur : aucun test pendant la frame (B3 à D-a1).'],
+  ['Boucle — par frame', 'Invariants', '#if LV3_ASSERTS_ENABLED : LV3_ASSERT', true, 'mod', 'LV3_ASSERT appelle AssertFailed, actif aussi en RelWithAsserts (E3).'],
+  ['Boucle — par frame', 'Present', '—', false, null, 'Hors LIB.'],
+  ['Fermeture', 'DumpCsv', 'simd=, fixed=, asserts_lib= écrits depuis config.h', true, 'keep', 'Chaque mesure porte les commutateurs vus par la LIB (M11).'],
+  ['Fermeture', 'SDLkill', '—', false, null, 'Bug 27.'],
+  ['Fermeture', 'ShutdownConsole', '« void ShutdownConsole(); »', true, 'gap', 'Déclaration d’une fonction locale : n’appelle rien (E19).']
+];
+function render() {
+  var on = document.querySelector('#v-pipeSeg .on'), v = on ? on.dataset.v : 'all', det = $('v-pipeDetail').checked;
+  var h = '', ph = '';
+  V_PIPE.forEach(function (r, i) {
+    if (v === 'lot' && !r[3]) return;
+    if (v === 'diff' && !(r[4] === 'new' || r[4] === 'mod' || r[4] === 'up' || r[4] === 'gap')) return;
+    if (r[0] !== ph) { ph = r[0]; h += '<div class="pphase">' + esc(ph) + '</div>'; }
+    var b = r[4] === 'new' ? '<span class="pbadge new">ajouté</span>' : r[4] === 'mod' ? '<span class="pbadge mod">changé</span>' :
+            r[4] === 'up' ? '<span class="pbadge up">repris</span>' : r[4] === 'gap' ? '<span class="pbadge gap">écart</span>' : r[4] === 'keep' ? '<span class="pbadge keep">inchangé</span>' : '';
+    h += '<div class="pstage' + (r[3] ? ' lot' : '') + '"><span class="pn">' + (i + 1) + '</span><span class="pt">' + esc(r[1]) + b +
+         '</span><span class="pd">' + esc(r[2]) + '</span>' + (det ? '<span class="px">' + esc(r[5]) + '</span>' : '') + '</div>';
+  });
+  $('v-pipeline').innerHTML = h;
+}
+document.querySelectorAll('#v-pipeSeg .vbtn').forEach(function (b) {
+  b.addEventListener('click', function () { document.querySelectorAll('#v-pipeSeg .vbtn').forEach(function (x) { x.classList.toggle('on', x === b); }); render(); });
+});
+$('v-pipeDetail').addEventListener('change', render);
+render();
+// [fichier, statut, classe, contenu, appartient au lot ?]
+var F = [
+  ['pch.h / pch.cpp', 'ajouté', 'new', 'STL + Compiler.h + config.h + CoreTypes.h (+ MathTypes, Transform, InputState : E7, E8) ; garde __cpp_lib_expected (E6)', 1],
+  ['Core/Compiler.h', 'ajouté', 'new', 'LV3_FORCEINLINE, LV3_NOINLINE, LV3_ALIGN_SIMD / CACHE (alignas)', 1],
+  ['Core/config.h', 'modifié', 'mod', 'Constantes constexpr, AssertFailed, LV3_ASSERT, une douzaine de commutateurs #ifndef + #error (E1 à E5)', 1],
+  ['Core/CoreTypes.h', 'ajouté', 'new', 'EAxis, ESpace, EFace, EWindingOrder, EEnabled', 1],
+  ['Core/EngineSettings.h', 'modifié', 'mod', 'Bornes (dont kMaxCamerasHard, kMaxMeshVerticesHard) et défauts LV3_DEFAULT_* ; commentaires périmés (E15, E16)', 1],
+  ['Core/EngineConfig.h / .cpp', 'modifié', 'mod', 'Agrégat de réglages + Get() ; LoadFromJson implémentée par A6, contrat de la partie B ; simTime (E20)', 1],
+  ['Core/Platform.h', 'ajouté', 'new', 'windows.h avec WIN32_LEAN_AND_MEAN, NOMINMAX, NOGDI ; WindowHandle / DeviceContext', 1],
+  ['Rendering/RenderTypes.h', 'ajouté', 'new', 'ERenderMode, ECullMode, EDepthTest (Greater, reverse-Z), EBlendMode, EShadingModel', 1],
+  ['Lighting/LightTypes.h · Scene/SceneTypes.h', 'à vérifier', 'out', 'Prévus par la leçon (ELightType, EShadowMode, ELayerMask) : présence dans le dépôt non vérifiée', 1],
+  ['Core/Types.h', 'à vérifier', 'gap', 'Ancienne famille : ObjectType, LightType, ShadeMode, DrawMode, FaceFlag (uint8_t). Doublon possible de LightTypes.h et RenderTypes.h (E22)', 1],
+  ['engine.json (EXE)', 'modifié', 'mod', 'Réglages du moteur ; marqueur de la racine de contenu', 1],
+  ['config.json (EXE)', 'existant', 'keep', 'Réglages de l’application (écran, scène, assets)', 1],
+  ['main.cpp (EXE), démarrage et fermeture', 'modifié', 'mod', 'Ordre de démarrage (E18), ShutdownConsole (E19)', 1],
+  ['Core/JsonReader.h', 'autre lot', 'up', 'Lecteur à clé tracée (R5) — A5, A6', 0],
+  ['Core/ContentRoot.h / .cpp', 'autre lot', 'up', 'Racine de contenu — discussion D, bugs 63 à 68', 0],
+  ['Core/Logger, Profiler, AlignedAllocator', 'autre lot', 'out', 'Journal, harnais de mesure (phase G), allocation alignée (B3)', 0],
+  ['Build/LV3.Common.props', 'autre lot', 'up', 'Commutateurs /D communs LIB + EXE — A10, consolidation C2', 0]
+];
+$('v-fileMap').innerHTML = '<tr><th>Fichier</th><th style="width:7em">Statut</th><th>Contenu, après le lot</th></tr>' +
+  F.map(function (f) { return '<tr class="' + (f[4] ? 'lotrow' : 'outrow') + '"><td><code>' + esc(f[0]) + '</code></td><td><span class="tag ' + f[2] + '">' + esc(f[1]) + '</span></td><td>' + esc(f[3]) + '</td></tr>'; }).join('');
+});
+</script>
+
+<script>
+// ─── Partie B : simulateur de chargement engine.json + frise de démarrage ───
+// Exécuté sur DOMContentLoaded : la copie vierge (PRISTINE) du script principal est
+// prise AVANT, la page téléchargée reste donc sans état.
+document.addEventListener('DOMContentLoaded', function () {
+'use strict';
+var $ = function (id) { return document.getElementById(id); };
+if (!$('b-json')) return;
+var f32 = Math.fround;
+var hasOwn = function (o, k) { return Object.prototype.hasOwnProperty.call(o, k); };
+function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+var PATH = 'C:\\LV3\\Content\\engine.json';
+var NOMINAL = [
+'{',
+'  "_comment": "LibraryV3 — Configuration moteur (engine.json)",',
+'  "_version": "1.0.0",',
+'',
+'  "renderer": {',
+'    "rasterizer": true,',
+'    "raycaster": false,',
+'    "tile_size": 64,',
+'    "max_bounces": 10,',
+'    "shadow_bias": 0.0001,',
+'    "alpha_thresh": 0.5,',
+'    "multithread": true',
+'  },',
+'',
+'  "features": {',
+'    "shadows": false,',
+'    "fog": false,',
+'    "wireframe": false,',
+'    "stats": true,',
+'    "raycast": false',
+'  },',
+'',
+'  "resources": {',
+'    "assets": "/assets/",',
+'    "mesh": "/assets/meshes/",',
+'    "scene": "/assets/graphscene/",',
+'    "graph": "/assets/graphs/"',
+'  },',
+'  "simulationclock": {',
+'    "timeScale": 0.20,',
+'    "simTime": 0.20,',
+'    "step": 1.5,',
+'    "sprint": 4.0,',
+'    "min": 0.001,',
+'    "max": 1000.0',
+'  },',
+'  "debug": { "depthDisplayRange": 80.0 },',
+'  "lod": {',
+'    "tolerancePx": 0.5,',
+'    "pointRadiusPx": 1.0',
+'  },',
+'  "viewport": { "maxViewport": 4 }',
+'}'].join('\n');
+
+var PRESETS = [
+  { id: 'nom',  label: 'Fichier du dépôt', text: NOMINAL },
+  { id: 'typo', label: 'Faute de frappe',  text: NOMINAL.replace('"tile_size": 64', '"tile_sise": 32') },
+  { id: 'type', label: 'Type invalide',    text: NOMINAL.replace('"multithread": true', '"multithread": "true"') },
+  { id: 'dom',  label: 'Hors domaine',     text: NOMINAL.replace('"tile_size": 64', '"tile_size": 0').replace('"depthDisplayRange": 80.0', '"depthDisplayRange": -1') },
+  { id: 'null', label: 'Bloc null',        text: NOMINAL.replace(/"lod": \{[\s\S]*?\}/, '"lod": null') },
+  { id: 'abs',  label: 'Bloc absent',      text: NOMINAL.replace(',\n  "viewport": { "maxViewport": 4 }', '') },
+  { id: 'conv', label: '64.7 au lieu de 64', text: NOMINAL.replace('"tile_size": 64', '"tile_size": 64.7') },
+  { id: 'date', label: 'Date simulée',     text: NOMINAL.replace('"simTime": 0.20', '"simTime": 2451545.37') },
+  { id: 'vp',   label: '9 viewports',      text: NOMINAL.replace('"maxViewport": 4', '"maxViewport": 9') },
+  { id: 'bad',  label: 'JSON malformé',    text: NOMINAL.replace('"multithread": true', '"multithread": true,') },
+  { id: 'none', label: 'Fichier absent',   text: NOMINAL, absent: true }
+];
+
+// Modèle de Core/EngineConfig.cpp (dépôt) : défauts de EngineSettings.h
+var SCHEMA = [
+  { b: 'renderer', keys: [
+    { k: 'rasterizer', t: 'bool', d: true }, { k: 'raycaster', t: 'bool', d: false },
+    { k: 'tile_size', t: 'int', d: 64, g: 'tile' }, { k: 'max_bounces', t: 'int', d: 10 },
+    { k: 'shadow_bias', t: 'float', d: 0.0001 }, { k: 'alpha_thresh', t: 'float', d: 0.5 },
+    { k: 'multithread', t: 'bool', d: false } ] },
+  { b: 'features', keys: [
+    { k: 'shadows', t: 'bool', d: false }, { k: 'fog', t: 'bool', d: false },
+    { k: 'wireframe', t: 'bool', d: true }, { k: 'stats', t: 'bool', d: true },
+    { k: 'raycast', t: 'bool', d: false } ] },
+  { b: 'resources', keys: [
+    { k: 'assets', t: 'str', d: 'assets/' }, { k: 'mesh', t: 'str', d: 'assets/MESHES/' },
+    { k: 'scene', t: 'str', d: 'assets/GRAPHSCENE/' }, { k: 'graph', t: 'str', d: 'assets/GRAPH/' } ] },
+  { b: 'debug', keys: [ { k: 'depthDisplayRange', t: 'float', d: 100, g: 'pos', fmt: 'debug' } ] },
+  { b: 'lod', keys: [ { k: 'tolerancePx', t: 'float', d: 0.5, g: 'pos' }, { k: 'pointRadiusPx', t: 'float', d: 1.0, g: 'nonneg' } ] },
+  { b: 'simulationclock', keys: [
+    { k: 'timeScale', t: 'float', d: 0.2 }, { k: 'simTime', t: 'float', d: 0, dbl: true },
+    { k: 'step', t: 'float', d: 1.5 }, { k: 'sprint', t: 'float', d: 4 },
+    { k: 'min', t: 'float', d: 0.0001 }, { k: 'max', t: 'float', d: 1000 } ] },
+  { b: 'viewport', keys: [ { k: 'maxViewport', t: 'int', d: 4, g: 'clamp' } ] }
+];
+// Ce que connaissait le lecteur de la leçon (renderer sans rasterizer/raycaster, features, resources.path)
+var NAIVE = { renderer: ['tile_size', 'max_bounces', 'shadow_bias', 'alpha_thresh', 'multithread'],
+              features: ['shadows', 'fog', 'wireframe', 'stats', 'raycast'], resources: ['path'] };
+
+function show(v, t) {
+  if (t === 'str') return '"' + v + '"';
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'number') {
+    if (t === 'int') return String(v);
+    var s = (Math.abs(v) >= 1e5) ? v.toFixed(4) : String(+v.toPrecision(8));
+    return s;
+  }
+  return JSON.stringify(v);
+}
+// Conversion nlohmann vers T. err = type_error (302). silent = conversion sans message.
+function conv(K, x) {
+  if (K.t === 'bool') return (typeof x === 'boolean') ? { v: x } : { err: true };
+  if (K.t === 'str')  return (typeof x === 'string') ? { v: x } : { err: true };
+  if (typeof x === 'boolean') return { v: x ? 1 : 0, silent: 'booléen converti en nombre, sans message' };
+  if (typeof x !== 'number') return { err: true };
+  if (K.t === 'int') {
+    var t = Math.trunc(x);
+    return (t !== x) ? { v: t, silent: x + ' → ' + t + ' (troncature, sans message)' } : { v: t };
+  }
+  var v = f32(x);
+  if (K.dbl && Math.abs(v - x) >= 1e-4) {
+    var dj = v - x, s = Math.round(Math.abs(dj) * 86400);
+    var hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = s % 60;
+    return { v: v, silent: 'lu en float32 puis rangé en double : écart ' + dj.toFixed(4) + ' j (' + (dj < 0 ? '−' : '+') + hh + ' h ' + mm + ' min ' + ss + ' s)' };
+  }
+  return { v: v };
+}
+
+function readRepo(root) {
+  var log = [], rows = [], warn = 0;
+  function W(m) { warn++; log.push(['warn', m]); }
+  function I(m) { log.push(['info', m]); }
+  SCHEMA.forEach(function (blk) {
+    var comp = 'engine.' + blk.b, obj = null, deleg = false, seen = {};
+    if (!hasOwn(root, blk.b)) W('[engine] cle \'' + blk.b + '\' absente sur ' + PATH + ' — defaut pris : bloc entier par defaut');
+    else if (root[blk.b] === null) { I('[engine] cle \'' + blk.b + '\' = null sur ' + PATH + ' — valeur retenue : bloc entier par defaut'); deleg = true; }
+    else if (typeof root[blk.b] !== 'object') W('[engine] cle \'' + blk.b + '\' ni objet ni tableau sur ' + PATH + ' — defaut pris : bloc entier par defaut');
+    else obj = root[blk.b];
+    var isObj = obj && !Array.isArray(obj);
+    var vals = {};
+    blk.keys.forEach(function (K) {
+      seen[K.k] = 1;
+      var row = { key: blk.b + '.' + K.k, val: K.d, t: K.t, src: '', cls: '' };
+      if (!(isObj && hasOwn(obj, K.k))) {
+        if (deleg) { I('[' + comp + '] cle \'' + K.k + '\' (bloc null) sur ' + PATH + ' — valeur retenue : ' + show(K.d, K.t)); row.src = 'défaut — bloc null (annoncé)'; row.cls = 'info'; }
+        else { W('[' + comp + '] cle \'' + K.k + '\' absente sur ' + PATH + ' — defaut pris : ' + show(K.d, K.t)); row.src = 'défaut — clé absente'; row.cls = 'warn'; }
+      } else if (obj[K.k] === null) {
+        I('[' + comp + '] cle \'' + K.k + '\' = null sur ' + PATH + ' — valeur retenue : ' + show(K.d, K.t)); row.src = 'défaut — null écrit par l’auteur'; row.cls = 'info';
+      } else {
+        var r = conv(K, obj[K.k]);
+        if (r.err) { W('[' + comp + '] cle \'' + K.k + '\' de type invalide sur ' + PATH + ' — defaut pris : ' + show(K.d, K.t)); row.src = 'défaut — type invalide (' + JSON.stringify(obj[K.k]) + ')'; row.cls = 'warn'; }
+        else { row.val = r.v; row.src = 'fichier'; if (r.silent) { row.src = 'fichier — ' + r.silent; row.cls = 'silent'; } }
+      }
+      // Gardes de domaine (Core/EngineConfig.cpp)
+      var v = row.val;
+      if (K.g === 'tile' && v <= 0) { W('[EngineConfig] renderer.tile_size <= 0, force a ' + K.d); row.val = K.d; row.src += ' → garde : défaut'; row.cls = 'warn'; }
+      if (K.g === 'pos' && (!(v > 0) || !isFinite(v))) {
+        if (K.k === 'tolerancePx') W('[EngineConfig] lod.tolerancePx invalide, force a ' + show(K.d, K.t));
+        else W('[engine.' + blk.b + '] cle \'' + K.k + '\' invalide (' + show(v, K.t) + ', attendu > 0 et fini) sur ' + PATH + ' — defaut pris : ' + show(K.d, K.t));
+        row.val = K.d; row.src += ' → garde : défaut'; row.cls = 'warn';
+      }
+      if (K.g === 'nonneg' && (!(v >= 0) || !isFinite(v))) { W('[engine.lod] cle \'' + K.k + '\' invalide (' + show(v, K.t) + ', attendu >= 0 et fini) sur ' + PATH + ' — defaut pris : ' + show(K.d, K.t)); row.val = K.d; row.src += ' → garde : défaut'; row.cls = 'warn'; }
+      if (K.g === 'clamp') {
+        if (v < 1) { W('[EngineConfig] viewport.maxViewport < 1, force a 1'); row.val = 1; row.src += ' → garde : 1'; row.cls = 'warn'; }
+        else if (v > 4) { W('[EngineConfig] viewport.maxViewport (' + v + ') > kMaxCamerasHard (4) — plafonne au maximum compile-time'); row.val = 4; row.src += ' → plafonné à 4'; row.cls = 'warn'; }
+      }
+      vals[K.k] = row.val;
+      rows.push(row);
+    });
+    if (blk.b === 'renderer') { rows.__r = vals; if (vals.rasterizer && vals.raycaster) W('[EngineConfig] rasterizer ET raycaster actifs — aucun arbitrage defini'); }
+    if (blk.b === 'features' && vals.raycast && !(rows.__r && rows.__r.raycaster)) W('[EngineConfig] features.raycast=true mais renderer.raycaster=false — sans effet');
+    if (isObj) Object.keys(obj).forEach(function (k) {
+      if (k.charAt(0) !== '_' && !seen[k]) { W('[' + comp + '] cle ignoree \'' + k + '\' sur ' + PATH); rows.push({ key: blk.b + '.' + k, val: obj[k], t: 'raw', src: 'clé inconnue — ignorée', cls: 'warn' }); }
+    });
+  });
+  var known = {}; SCHEMA.forEach(function (b) { known[b.b] = 1; });
+  Object.keys(root).forEach(function (k) { if (k.charAt(0) !== '_' && !known[k]) { W('[engine] cle ignoree \'' + k + '\' sur ' + PATH); rows.push({ key: k, val: root[k], t: 'raw', src: 'bloc inconnu — ignoré', cls: 'warn' }); } });
+  log.push(['info', 'EngineConfig::LoadFromJson — configuration chargee depuis ' + PATH]);
+  return { ok: true, rows: rows, log: log, warn: warn };
+}
+
+function readNaive(root) {
+  var log = [], rows = [], silent = 0;
+  for (var bi = 0; bi < SCHEMA.length; ++bi) {
+    var blk = SCHEMA[bi], list = NAIVE[blk.b] || [];
+    var obj = (hasOwn(root, blk.b) && root[blk.b] && typeof root[blk.b] === 'object' && !Array.isArray(root[blk.b])) ? root[blk.b] : null;
+    for (var ki = 0; ki < blk.keys.length; ++ki) {
+      var K = blk.keys[ki], row = { key: blk.b + '.' + K.k, val: K.d, t: K.t, src: '', cls: '' };
+      if (list.indexOf(K.k) < 0) { row.src = 'non modélisé — défaut, sans message'; row.cls = 'silent'; silent++; }
+      else if (obj && hasOwn(obj, K.k) && obj[K.k] !== null) {
+        var r = conv(K, obj[K.k]);
+        if (r.err) {
+          rows.push({ key: row.key, val: obj[K.k], t: 'raw', src: 'get<' + (K.t === 'str' ? 'std::string' : K.t) + '>() lève json::type_error 302 — non rattrapée', cls: 'crash' });
+          log.push(['err', 'terminate : exception nlohmann::json::type_error non rattrapee ([json.exception.type_error.302] type must be ' + (K.t === 'bool' ? 'boolean' : K.t === 'str' ? 'string' : 'number') + ', but is ' + (typeof obj[K.k] === 'string' ? 'string' : typeof obj[K.k] === 'boolean' ? 'boolean' : 'object') + ')']);
+          log.push(['err', 'abort() has been called — aucune ligne de journal sur engine.json']);
+          return { crash: true, rows: rows, log: log, silent: silent };
+        }
+        row.val = r.v; row.src = 'fichier'; if (r.silent) { row.src = 'fichier — ' + r.silent; row.cls = 'silent'; silent++; }
+      } else { row.src = 'défaut — ' + (obj ? (hasOwn(obj, K.k) ? 'null' : 'clé absente') : 'bloc absent') + ', sans message'; row.cls = 'silent'; silent++; }
+      rows.push(row);
+    }
+    if (obj) Object.keys(obj).forEach(function (k) {
+      var inSchema = blk.keys.some(function (K) { return K.k === k; });
+      if (!inSchema && list.indexOf(k) < 0) { rows.push({ key: blk.b + '.' + k, val: obj[k], t: 'raw', src: 'clé inconnue — jamais vue', cls: 'silent' }); silent++; }
+    });
+  }
+  // Sanitize() : corrige en silence
+  rows.forEach(function (r) {
+    if (r.key === 'renderer.tile_size' && r.val < 1) { r.val = 64; r.src += ' → Sanitize (silence)'; r.cls = 'silent'; silent++; }
+    if (r.key === 'renderer.alpha_thresh' && (r.val < 0 || r.val > 1)) { r.val = 0.5; r.src += ' → Sanitize (silence)'; r.cls = 'silent'; silent++; }
+    if (r.key === 'renderer.shadow_bias' && r.val < 0) { r.val = 0.0001; r.src += ' → Sanitize (silence)'; r.cls = 'silent'; silent++; }
+  });
+  log.push(['info', '[EngineConfig] Charge depuis \'engine.json\'.']);
+  log.push(['info', '[EngineConfig] ── Renderer ── tile_size : ' + rows.filter(function (r) { return r.key === 'renderer.tile_size'; })[0].val]);
+  return { ok: true, rows: rows, log: log, silent: silent };
+}
+
+var state = { reader: 'repo', preset: 'nom' };
+var ta = $('b-json'), presentBox = $('b-present');
+
+function run() {
+  var present = presentBox.checked, text = ta.value, res, root = null, parseErr = null;
+  if (present) { try { root = JSON.parse(text); } catch (e) { parseErr = e.message; } }
+  var naive = state.reader === 'naive';
+  if (!present) {
+    res = { ok: false, rows: [], log: naive ? [['warn', '[EngineConfig] engine.json introuvable : \'engine.json\' — valeurs par defaut conservees.']]
+                                           : [['err', 'EngineConfig::LoadFromJson — fichier introuvable : ' + PATH], ['warn', 'EngineConfig — defauts LV3_DEFAULT_* utilises (fichier absent ou invalide)']], warn: naive ? 0 : 1, silent: 0 };
+  } else if (parseErr) {
+    res = { ok: false, rows: [], log: naive ? [['err', '[EngineConfig] JSON malforme dans \'engine.json\' : ' + parseErr + ' — valeurs par defaut conservees.']]
+                                           : [['err', 'EngineConfig::LoadFromJson — JSON malforme : ' + parseErr], ['warn', 'EngineConfig — defauts LV3_DEFAULT_* utilises (fichier absent ou invalide)']], warn: naive ? 0 : 1, silent: 0 };
+  } else if (root === null || typeof root !== 'object' || Array.isArray(root)) {
+    res = naive ? readNaive({}) : readRepo({});
+  } else res = naive ? readNaive(root) : readRepo(root);
+
+  if (!res.rows.length) SCHEMA.forEach(function (b) { b.keys.forEach(function (K) { res.rows.push({ key: b.b + '.' + K.k, val: K.d, t: K.t, src: 'défaut — fichier non lu', cls: '' }); }); });
+
+  // Tableau
+  var h = '<tr><th>bloc.clé</th><th>valeur retenue</th><th>provenance</th></tr>';
+  res.rows.forEach(function (r) {
+    h += '<tr class="' + (r.cls ? 'r-' + r.cls : '') + '"><td>' + esc(r.key) + '</td><td><code>' + esc(r.t === 'raw' ? JSON.stringify(r.val) : show(r.val, r.t)) + '</code></td><td>' + esc(r.src) + '</td></tr>';
+  });
+  $('b-table').innerHTML = h;
+  // Console
+  $('b-console').innerHTML = res.log.map(function (l) {
+    var c = l[0] === 'warn' ? 'c-warn' : l[0] === 'err' ? 'c-err' : 'c-info';
+    return '<span class="' + c + '">=[LibV3] ' + esc(l[1]) + '</span>';
+  }).join('\n');
+  // Verdict
+  var v = $('b-verdict');
+  if (res.crash) {
+    v.className = 'callout callout-bad';
+    v.innerHTML = '<span class="callout-icon">💥</span><span><strong>Plantage.</strong> Le lecteur de la leçon laisse échapper <code>json::type_error</code> : le programme s’arrête, et le journal ne dit rien du fichier.</span>';
+  } else if (!res.ok) {
+    v.className = 'callout callout-warn';
+    v.innerHTML = '<span class="callout-icon">⚡</span><span><code>LoadFromJson</code> → <strong>false</strong> : fichier non lu, <strong>tous les défauts</strong> restent en place' + (naive ? ' (un message, aucun compteur).' : ' · <code>Logger::warnCount()</code> <strong>+' + res.warn + '</strong> (avertissement de <code>main</code>), plus une erreur.') + '</span>';
+  } else if (naive) {
+    v.className = res.silent ? 'callout callout-bad' : 'callout callout-ok';
+    v.innerHTML = '<span class="callout-icon">' + (res.silent ? '🔇' : '✓') + '</span><span><code>LoadFromJson</code> → <strong>' + res.ok + '</strong> · <strong>' + (res.silent || 0) + '</strong> valeur(s) ignorée(s), remplacée(s) ou corrigée(s) <strong>sans un mot</strong> · 0 avertissement.</span>';
+  } else {
+    var sil = res.rows.filter(function (r) { return r.cls === 'silent'; }).length;
+    v.className = sil ? 'callout callout-bad' : res.warn ? 'callout callout-warn' : 'callout callout-ok';
+    v.innerHTML = '<span class="callout-icon">' + (sil ? '🔇' : res.warn ? '⚡' : '✓') + '</span><span><code>LoadFromJson</code> → <strong>' + res.ok + '</strong> · <code>Logger::warnCount()</code> <strong>+' + res.warn + '</strong>' +
+      (res.warn ? ' : chaque écart est dit, avec la clé et le défaut pris.' : (sil ? '.' : ' : silence vérifiable.')) +
+      (sil ? ' <strong>Mais ' + sil + ' valeur(s) modifiée(s) sans message</strong> (ligne rouge du tableau) : trou restant du lecteur, écarts E20 et E21.' : '') + '</span>';
+  }
+  // Indicateurs : effet sur le moteur
+  var get = function (k) { var r = res.rows.filter(function (x) { return x.key === k; })[0]; return r ? r.val : undefined; };
+  var t = get('renderer.tile_size'), mv = get('viewport.maxViewport'), mt = get('renderer.multithread'), dr = get('debug.depthDisplayRange');
+  var kp = '';
+  if (typeof t === 'number' && t > 0) kp += '<div><b>' + (Math.ceil(1280 / t) * Math.ceil(720 / t)) + '</b>tuiles / frame (1280 × 720, tuile ' + t + ')</div>';
+  if (typeof mt === 'boolean') kp += '<div><b>' + (mt ? 'parallèle' : 'série') + '</b>rendu des tuiles</div>';
+  if (typeof mv === 'number') kp += '<div><b>' + (mv >= 4 ? 4 : mv >= 2 ? 2 : 1) + '</b>viewports au plus (SnapToSupportedViewportCount)</div>';
+  if (typeof dr === 'number') kp += '<div><b>' + (40 / f32(dr)).toFixed(3) + '</b>gris d’un fragment à z = 40 (mode Depth)</div>';
+  $('b-kpi').innerHTML = kp;
+}
+
+// Boutons de cas
+var pc = $('b-presets');
+PRESETS.forEach(function (p) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'toggle-chip'; b.textContent = p.label; b.dataset.p = p.id;
+  pc.appendChild(b);
+});
+function applyB(id) {
+  var p = PRESETS.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+  state.preset = id; ta.value = p.text; presentBox.checked = !p.absent;
+  Array.prototype.forEach.call(pc.children, function (c) { c.classList.toggle('checked', c.dataset.p === id); });
+  run();
+}
+pc.addEventListener('click', function (e) { var c = e.target.closest('.toggle-chip'); if (c) applyB(c.dataset.p); });
+document.querySelectorAll('#tab-demarrage [data-reader]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    state.reader = b.dataset.reader;
+    document.querySelectorAll('#tab-demarrage [data-reader]').forEach(function (x) { x.classList.toggle('active', x === b); });
+    run();
+  });
+});
+ta.addEventListener('input', run);
+presentBox.addEventListener('change', run);
+document.addEventListener('click', function (e) {
+  var g = e.target.closest('[data-bpreset]'); if (!g) return;
+  applyB(g.dataset.bpreset);
+  var s = document.querySelector('#tab-demarrage .sim'); if (s) s.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+applyB('nom');
+
+// ─── Frise de démarrage (DB6) ───
+var TL = [
+  { n: 'InitConsole', reads: 'rien', makes: 'console en UTF-8 (accents des journaux)', fail: 'sans objet', open: 'console' },
+  { n: 'ParseArgs', reads: 'argc, argv', makes: 'AppArgs : --root, --scene, --bench, --csv', fail: 'usage affiché, retour −1 : zéro seconde de calcul perdue', open: '' },
+  { n: 'Identité du build', reads: 'LV3_PROFILE (EXE) et Profiler::CompiledProfileFlag() (LIB)', makes: 'une ligne [Build] ; erreur si LIB ≠ EXE', fail: 'journalisé (ne s’arrête pas)', open: '' },
+  { n: 'ResolveContentRoot', reads: 'LV3_CONTENT_ROOT, --root, LV3_PROJECT_DIR, dossier de l’exe', makes: 'contentRoot absolu contenant engine.json', fail: 'liste des chemins essayés, retour −1', open: '' },
+  { n: 'config.json', reads: 'contentRoot / "config.json"', makes: 'cfg : taille d’écran, table des assets, viewports d’affichage', fail: 'retour 1', open: '' },
+  { n: 'engine.json', reads: 'contentRoot / kContentMarker', makes: 'EngineConfig::Get() rempli, avertissements comptés', fail: 'défauts LV3_DEFAULT_* + warn : on continue', open: '', soft: true },
+  { n: 'Scène', reads: 'EngineConfig.resources.pathGraphScene, cfg, --scene', makes: 'Registry, ResourceManager peuplés', fail: 'retour −1 (aucune ressource système à libérer)', open: '' },
+  { n: 'Tests Debug', reads: 'registry, chemins de meshes', makes: 'RunAllTests : non-régression avant toute ressource système', fail: 'retour −1', open: '' },
+  { n: 'SDL', reads: 'cfg.screenWidth / screenHeight', makes: 'fenêtre, renderer, texture, Z-buffer', fail: 'retour −1 ; à partir d’ici, SDLkill() est dû', open: 'SDL' },
+  { n: 'Profiler', reads: '--bench, LV3_PROFILE', makes: 'harnais armé, frames réservées', fail: 'avertissement si LV3_PROFILE = 0', open: '' },
+  { n: 'Horloge', reads: 'EngineConfig.simulation', makes: '_clock configurée', fail: 'LV3_ASSERT des réglages', open: '' },
+  { n: 'Boucle', reads: 'tout ce qui précède', makes: 'frames', fail: 'SDLkill() puis retour −1', open: '' },
+  { n: 'Fermeture', reads: 'état final', makes: 'CSV, SDLkill(), ShutdownConsole()', fail: '—', open: '' }
+];
+var tlSel = 5, tlFail = -1, tl = $('b-tl');
+function renderTL() {
+  tl.innerHTML = TL.map(function (s, i) {
+    var cls = (i === tlSel ? 'active' : '') + (tlFail >= 0 && i > tlFail ? ' fail' : '');
+    return '<button type="button" class="' + cls + '" data-tl="' + i + '"' + (tlFail >= 0 && i > tlFail ? ' style="opacity:.45"' : '') + '>' + (i + 1) + '. ' + esc(s.n) + '</button>';
+  }).join('');
+  var s = TL[tlSel];
+  $('b-tl-io').innerHTML = '<div><b>Lit (produit par les étapes 1 à ' + tlSel + ')</b>' + esc(s.reads) + '</div><div><b>Produit</b>' + esc(s.makes) + '</div><div><b>Si elle échoue</b>' + esc(s.fail) +
+    ' <button type="button" class="replay" data-tlfail="' + tlSel + '">' + (tlFail === tlSel ? 'annuler l’échec' : 'simuler l’échec ici') + '</button></div>';
+  var box = $('b-tl-fail');
+  if (tlFail >= 0) {
+    var opened = TL.slice(0, tlFail).filter(function (x) { return x.open; }).map(function (x) { return x.open; });
+    box.style.display = '';
+    box.innerHTML = '<span class="callout-icon">⚡</span><span>Arrêt à l’étape ' + (tlFail + 1) + ' (' + esc(TL[tlFail].n) + ') : ' + (TL.length - tlFail - 1) + ' étape(s) jamais exécutée(s). ' +
+      (TL[tlFail].soft ? 'Cette étape ne s’arrête pas : le moteur continue sur ses défauts. ' : '') +
+      'À libérer avant de sortir : ' + (opened.length ? opened.reverse().join(', puis ') : 'rien') + '.</span>';
+  } else box.style.display = 'none';
+}
+tl.addEventListener('click', function (e) { var b = e.target.closest('[data-tl]'); if (b) { tlSel = +b.dataset.tl; renderTL(); } });
+$('b-tl-io').addEventListener('click', function (e) { var b = e.target.closest('[data-tlfail]'); if (b) { var i = +b.dataset.tlfail; tlFail = (tlFail === i) ? -1 : i; renderTL(); } });
+renderTL();
+
+document.querySelectorAll('[data-dl]').forEach(function (b) { b.addEventListener('click', function () { var d = $('dl-btn'); if (d) d.click(); }); });
+// Cases à cocher des prédictions
+var ck = $('b-checks'); if (ck) ck.addEventListener('click', function (e) { var li = e.target.closest('li'); if (li) li.classList.toggle('done'); });
+});
+</script>
 
 <script>
 (function () {

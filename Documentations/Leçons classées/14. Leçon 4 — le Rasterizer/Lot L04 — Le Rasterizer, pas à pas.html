@@ -110,6 +110,15 @@
   .l-del{background:rgba(248,113,113,.17);display:block;margin:0 -15px;padding:0 15px}
   .l-add{background:rgba(74,222,128,.15);display:block;margin:0 -15px;padding:0 15px}
 
+  /* surbrillance des algorithmes globaux */
+  .hl{background:rgba(96,165,250,.20);display:block;margin:0 -15px;padding:0 15px;
+      box-shadow:inset 3px 0 0 var(--accent)}
+  .hl-s{background:rgba(96,165,250,.26);border-radius:3px;padding:0 3px}
+  .dimline{color:#6b7280}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin:9px 0 0}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+
   table{width:100%;border-collapse:collapse;font-size:13px;margin:11px 0}
   th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
   th{color:var(--dim);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em}
@@ -184,6 +193,7 @@
 <div class="wrap">
 
 <nav class="toc">
+  <a href="#vue">0 · Vue d’ensemble</a>
   <a href="#pourquoi">1 · Pourquoi ce lot</a>
   <a href="#methode">2 · La méthode</a>
   <a href="#schema">3 · Schéma dynamique</a>
@@ -194,6 +204,290 @@
   <a href="#verifier">8 · Vérifier</a>
   <a href="#roadmap">9 · Décisions &amp; dettes</a>
 </nav>
+
+<!-- ═══════════════ 0 ═══════════════ -->
+<section id="vue">
+  <h2><span class="num">0</span>Vue d’ensemble</h2>
+  <p class="lead">Le moteur devient dense. Avant d’entrer dans ce lot, deux cartes : <b>où il se situe dans l’ensemble</b>, puis <b>ce qu’il ajoute ou modifie exactement</b>.</p>
+
+  <!-- ─────────── 0.1 ─────────── -->
+  <h3>0.1 — Algorithme global du moteur, et la place de ce lot</h3>
+  <p class="small">Une frame complète, de <code>main()</code> à <code>SDL_RenderPresent</code>. La zone en surbrillance bleue est le périmètre du lot L04 ; les lignes marquées <b>★</b> sont les fonctions qu’il crée ou réécrit.</p>
+
+  <div class="card">
+<pre><code><span class="dimline">main.cpp</span>
+<span class="dimline">  ├─ Platform::Init · Logger · EngineConfig::Load("engine.json")          [A6]</span>
+<span class="dimline">  ├─ RunAllTests()                                     [tests de non-régression]</span>
+<span class="dimline">  ├─ SDL_Init · CreateWindow · CreateRenderer · CreateTexture(STREAMING)</span>
+<span class="dimline">  ├─ LoadSceneGraph("scene.json") → Registry                        [L03 + L05]</span>
+<span class="dimline">  │     ParseNode → Transform · Mesh · Camera · CameraFPS · Light · …</span>
+<span class="dimline">  │     ResourceManager::LoadMesh(OBJ/MTL) → MeshClass               [L03]</span>
+<span class="dimline">  └─ BOUCLE DE FRAME ↓</span>
+
+<span class="dimline">┌ 1 · ENTRÉES &amp; LOGIQUE ─────────────────────────────────────────────────────┐</span>
+<span class="dimline">│  InputState (clavier, souris)                                              │</span>
+<span class="dimline">│  FPSControllerSystem · CameraFollowSystem      → écrivent Transform.m_local │  [L05]</span>
+<span class="dimline">│  AnimationSystem (rotation propre, orbite)                                 │</span>
+<span class="dimline">│  PropagateWorld   local → monde, via le dirty-flag                         │  [L02/L03]</span>
+<span class="dimline">│  TriggerSystem                                                             │</span>
+<span class="dimline">└────────────────────────────────────────────────────────────────────────────┘</span>
+<span class="dimline">┌ 2 · PRÉPARATION DE LA VUE ─────────────────────────────────────────────────┐</span>
+<span class="dimline">│  FindActiveCamera / FindCameraByName                                       │</span>
+<span class="dimline">│  BuildViewData → viewMatrix · projectionMatrix · VP · Viewport · Frustum   │  [L05]</span>
+<span class="dimline">└────────────────────────────────────────────────────────────────────────────┘</span>
+<span class="dimline">┌ 3 · OUVERTURE DE FRAME ────────────────────────────────────────────────────┐</span>
+<span class="dimline">│  SDL_LockTexture → FrameBuffer::Bind(pixels, PITCH, w, h)                  │</span>
+<span class="dimline">│  Renderer::BeginFrame → DepthBuffer::Clear(0.0f)   ← reverse-Z             │  [L05]</span>
+<span class="dimline">└────────────────────────────────────────────────────────────────────────────┘</span>
+
+<span class="hl">╔══ 4 · RENDU ════════════════════════════════  ▶▶▶ CE LOT ◀◀◀  ═════════════╗</span>
+<span class="hl">║  pour chaque VUE (split-screen : 2 passes) :                               ║</span>
+<span class="hl">║    RenderView(registry, resourceManager, renderer, viewData)               ║</span>
+<span class="hl">║                                                                            ║</span>
+<span class="hl">║      pour chaque MESH :                                                    ║</span>
+<span class="hl">║        Frustum::Classify(AABB monde)   Outside → skip                      ║</span>
+<span class="hl">║        needsNearClip = (vis == Intersect)                       ★ exploite ║</span>
+<span class="hl">║                                                                            ║</span>
+<span class="hl">║        pour chaque FACE (vpf = 3 ou 4) :                                   ║</span>
+<span class="hl">║          MulRow(mvp, position)              → CLIP SPACE                   ║</span>
+<span class="hl">║          NearDistance(cv) = w − z           → classification    ★ nouveau  ║</span>
+<span class="hl">║          éventail : trianguler AVANT de clipper                 ★ nouveau  ║</span>
+<span class="hl">║            ClipTriangleNear(tri, poly)      → 0, 3 ou 4 sommets ★ nouveau  ║</span>
+<span class="hl">║                                                                            ║</span>
+<span class="hl">║            pour chaque TRIANGLE émis :                                     ║</span>
+<span class="hl">║              EmitClipTriangle                                   ★ nouveau  ║</span>
+<span class="hl">║                invW = 1/w   ÷w → NDC                            ★ nouveau  ║</span>
+<span class="hl">║                Viewport::ToRaster (flip Y)                        [L05]    ║</span>
+<span class="hl">║                IsBackFacing(EdgeFunction(r0,r1,r2))             ★ corrigé  ║</span>
+<span class="hl">║                                                                            ║</span>
+<span class="hl">║                Renderer::DrawTriangle(RasterTriangle, color)    ★ étendu   ║</span>
+<span class="hl">║                  RasterizeTriangle                              ★ nouveau  ║</span>
+<span class="hl">║                    boîte englobante + clamp viewport (scissor)             ║</span>
+<span class="hl">║                    biais haut-gauche, relatif à l’aire                     ║</span>
+<span class="hl">║                    par pixel : 3 × EdgeFunction → barycentriques           ║</span>
+<span class="hl">║                      ShadeFragment_*(x, y, bary, &amp;FragmentContext)         ║</span>
+<span class="hl">║                        z affine → DepthBuffer::TestAndSet  (early-Z)       ║</span>
+<span class="hl">║                        den = Σ bᵢ·invWᵢ → varyings corrigés     ★ nouveau  ║</span>
+<span class="hl">║                        FrameBuffer::SetPixel                               ║</span>
+<span class="hl">╚════════════════════════════════════════════════════════════════════════════╝</span>
+
+<span class="dimline">┌ 5 · FERMETURE DE FRAME ────────────────────────────────────────────────────┐</span>
+<span class="dimline">│  Renderer::EndFrame · ReportCullStats()                                    │</span>
+<span class="dimline">│  SDL_UnlockTexture · SDL_RenderCopy · SDL_RenderPresent                    │</span>
+<span class="dimline">└────────────────────────────────────────────────────────────────────────────┘</span></code></pre>
+    <div class="legend">
+      <span><i class="sw" style="background:rgba(96,165,250,.45)"></i> périmètre du lot L04</span>
+      <span><b>★</b> fonction créée, réécrite ou corrigée par ce lot</span>
+      <span><i class="sw" style="background:#6b7280"></i> hors périmètre — posé par un autre lot</span>
+    </div>
+  </div>
+
+  <h4>Carte des fichiers touchés</h4>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:230px">Fichier</th><th style="width:96px">Statut</th><th>Rôle dans le lot</th></tr>
+      <tr><td><code>Rendering/Rasterizer.h/.cpp</code></td><td><span class="tag ok">créé</span></td><td><code>EdgeFunction</code> (noyau antisymétrique), <code>IsTopLeft</code>, <code>IsBackFacing</code>, <code>RasterizeTriangle</code>, <code>BarycentricWeights</code>, <code>FragmentCallback</code></td></tr>
+      <tr><td><code>Rendering/ClipVertex.h</code></td><td><span class="tag ok">créé</span></td><td><code>ClipVertex</code>, <code>Lerp</code>, <code>NearDistance</code></td></tr>
+      <tr><td><code>Rendering/Clipper.h/.cpp</code></td><td><span class="tag ok">créé</span></td><td><code>ClipTriangleNear</code>, <code>ClipLess</code>, <code>kMaxClipVertices</code></td></tr>
+      <tr><td><code>Rendering/Fragment.h/.cpp</code></td><td><span class="tag warn">étendu</span></td><td><code>FragmentContext</code> + <code>invW</code> + <code>magic</code> − <code>near/far</code> ; <code>AsFragmentContext</code> ; <code>ShadeFragment_Solid / Depth / LinearDepth / Barycentric</code></td></tr>
+      <tr><td><code>Rendering/Renderer.h/.cpp</code></td><td><span class="tag warn">étendu</span></td><td><code>RasterTriangle</code>, <code>DrawTriangle</code> recopie <code>invW</code>, <code>SetDepthDisplayRange</code>, invariant de dimensions dans <code>BeginFrame</code></td></tr>
+      <tr><td><code>Scene/RenderSystem.cpp</code></td><td><span class="tag bad">réécrit</span></td><td>Boucle de face entière : classification mesh, clipping, <code>EmitClipTriangle</code>, compteurs <code>[CULL]</code></td></tr>
+      <tr><td><code>Rendering/FrameBuffer.h</code></td><td><span class="tag acc">consommé</span></td><td><code>Bind</code> avec le <b>pitch</b> SDL, <code>SetPixel</code> borné</td></tr>
+      <tr><td><code>Rendering/DepthBuffer.h</code></td><td><span class="tag acc">audité</span></td><td>Clear <code>0.0f</code>, <code>TestAndSet</code> GREATER — vérifié, non modifié</td></tr>
+      <tr><td><code>Maths/MathUtils.h</code></td><td><span class="tag warn">étendu</span></td><td><code>Saturate</code>, <code>Clamp</code>, <code>Lerp</code> scalaires</td></tr>
+      <tr><td><code>Tests/Test_Clipper.cpp</code><br><code>Tests/Test_Depth.cpp</code><br><code>Tests/Test_Rasterizer.cpp</code><br><code>Tests/Test_ClipCoverage.cpp</code></td><td><span class="tag ok">créés</span></td><td>Les 10 tests de non-régression du lot</td></tr>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Ce que la carte montre d’un coup d’œil.</b> Le lot ne touche <b>aucun</b> fichier de scène, d’ECS ou de ressources. Il consomme ce que L03 et L05 produisent (mesh, matrices, viewport, Z-buffer) et s’arrête à l’écriture du pixel. C’est ce découplage qui a permis de tester neuf de ses dix tests <b>hors moteur</b>, sans fenêtre ni scène.
+  </div>
+
+  <!-- ─────────── 0.2 ─────────── -->
+  <h3>0.2 — Algorithme détaillé de l’apport du lot</h3>
+  <p class="small">Ce que le lot ajoute, ce qu’il modifie, et ce qu’il remet en cause. Chaque remise en cause est donnée en <span style="color:var(--bad)">avant</span> / <span style="color:var(--ok)">après</span>.</p>
+
+  <h4>A — Fonctionnalités entièrement nouvelles</h4>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:38px">#</th><th style="width:210px">Fonctionnalité</th><th>Ce qu’elle permet, qui n’était pas possible avant</th></tr>
+      <tr><td class="n">A1</td><td><b>Remplissage de triangle</b><br><code>RasterizeTriangle</code></td><td>Passer de « trois points projetés » à « une surface de pixels ». Boîte englobante clampée, biais haut-gauche, trois fonctions de bord par pixel.</td></tr>
+      <tr><td class="n">A2</td><td><b>Coordonnées barycentriques</b><br><code>BarycentricWeights</code></td><td>Interpoler n’importe quelle grandeur portée par les sommets. Produites <b>gratuitement</b> par le test d’appartenance.</td></tr>
+      <tr><td class="n">A3</td><td><b>Règle haut-gauche</b><br><code>IsTopLeft</code> + biais</td><td>Attribuer sans ambiguïté les pixels tombant exactement sur une arête partagée. Sans elle : trous ou double écriture.</td></tr>
+      <tr><td class="n">A4</td><td><b>Clipping near</b><br><code>ClipTriangleNear</code></td><td>Survivre à une caméra qui traverse un objet. Supprime la singularité <code>w ≤ 0</code>.</td></tr>
+      <tr><td class="n">A5</td><td><b>Ordre canonique d’intersection</b><br><code>ClipLess</code></td><td>Garantir que deux triangles adjacents calculent le <b>même</b> point d’intersection, bit à bit. Supprime les fissures de couture.</td></tr>
+      <tr><td class="n">A6</td><td><b>Correction perspective</b><br><code>invW</code> + dénominateur</td><td>Interpoler UV, couleurs, normales correctement sur une surface inclinée. Sans elle : erreur jusqu’à +202 % (§7.2).</td></tr>
+      <tr><td class="n">A7</td><td><b>Early-Z</b></td><td>Rejeter un fragment occulté <b>avant</b> de payer le shading. Divise le coût par le facteur de recouvrement.</td></tr>
+      <tr><td class="n">A8</td><td><b>Indirection de shading</b><br><code>FragmentCallback</code></td><td>Changer de mode de rendu sans toucher une ligne du rasterizer. <code>Solid</code>, <code>Depth</code>, <code>LinearDepth</code>, <code>BarycentricColors</code>.</td></tr>
+      <tr><td class="n">A9</td><td><b>Instrumentation</b><br>couverture, <code>[CULL]</code>, modes debug</td><td>Mesurer ce que l’œil ne voit pas. <b>Trois bugs sur quatre ont été trouvés par ces instruments</b>, pas par l’observation.</td></tr>
+    </table>
+  </div>
+
+  <h4>B — Fonctionnements existants remis en cause</h4>
+
+  <div class="card">
+    <p><b>B1 — Le traitement du plan near</b> <span class="tag bad">comportement changé</span></p>
+    <div class="diff">
+      <div class="dh">avant — la face entière disparaît</div>
+      <pre><code><span class="l-del">pour chaque face :
+    si UN SEUL sommet a  w ≤ nearPlane  →  REJETER TOUTE LA FACE</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">après — la face est découpée</div>
+      <pre><code><span class="l-add">pour chaque face :
+    d[k] = w[k] − z[k]                       (forme canonique)
+    si TOUS d &lt; 0            → rejet trivial
+    sinon si TOUS d ≥ 0      → copie bit à bit, aucun travail
+    sinon                    → Sutherland-Hodgman
+                               → 0, 3 ou 4 sommets
+                               → éventail → 1 ou 2 triangles</span></code></pre>
+    </div>
+    <table>
+      <tr><th style="width:190px">Conséquence</th><th>Avant</th><th>Après</th></tr>
+      <tr><td>Caméra frôlant un mur</td><td style="color:var(--bad)">Des faces entières clignotent et disparaissent</td><td style="color:var(--ok)">Le mur est coupé net au plan near</td></tr>
+      <tr><td>Projection orthographique</td><td style="color:var(--bad)">Le test ne teste rien (<code>w = 1</code> partout)</td><td style="color:var(--ok)">Fonctionne à l’identique</td></tr>
+      <tr><td>Far infini</td><td>fonctionnait par chance</td><td style="color:var(--ok)">Indépendance prouvée (test 8)</td></tr>
+      <tr><td>Couplage</td><td style="color:var(--bad)">Le clipper connaît la lentille</td><td style="color:var(--ok)">Il ne connaît que le volume canonique</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <p><b>B2 — Le sens du backface culling</b> <span class="tag bad">BUG — le moteur affichait les faces arrière</span></p>
+    <div class="diff">
+      <div class="dh">avant — signe déduit de la convention de winding</div>
+      <pre><code><span class="l-del">front-face = CCW  →  on suppose aire &gt; 0
+si (aire ≤ 0) rejeter
+→ le moteur cullait les faces AVANT et dessinait les ARRIÈRE</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">après — signe mesuré à travers la chaîne complète</div>
+      <pre><code><span class="l-add">front-face = CCW en espace VUE
+  → Viewport::ToRaster inverse Y
+  → donc CW en espace RASTER
+  → donc aire signée NÉGATIVE                  (mesuré : −25600)
+si (aire ≥ 0) rejeter        ← le ≥ rejette aussi l'aire nulle
++ test unitaire qui verrouille le signe pour toujours</span></code></pre>
+    </div>
+    <div class="note bad" style="margin-top:4px">
+      <b>Pourquoi ça a tenu toute une leçon.</b> La couleur était un hash par face : un cube rendu à l’envers a la même silhouette, la même cohérence de profondeur, des couleurs tout aussi arbitraires. Le critère « ça s’affiche » ne discrimine pas les deux hypothèses. Il a fallu un mode de rendu dont la couleur a un <b>sens géométrique</b> pour que l’erreur devienne visible.
+    </div>
+  </div>
+
+  <div class="card">
+    <p><b>B3 — La fonction de bord</b> <span class="tag warn">reformulée pour la robustesse numérique</span></p>
+    <div class="diff">
+      <div class="dh">avant — référence sur le sommet A</div>
+      <pre><code><span class="l-del">E(a,b,p) = (b.x − a.x)·(p.y − a.y) − (b.y − a.y)·(p.x − a.x)
+
+→ E(b,a,p) n'est PAS l'opposé exact de E(a,b,p) : ce sont
+  des produits différents. Sur une couture, un pixel peut
+  être rejeté par les DEUX triangles.
+→ magnitudes absolues : jusqu'à 9 900 px hors viewport
+  sur les intersections du plan near → annulation catastrophique</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">après — référence sur le point testé</div>
+      <pre><code><span class="l-add">ux = a.x − p.x ;  uy = a.y − p.y
+vx = b.x − p.x ;  vy = b.y − p.y
+E(a,b,p) = ux·vy − uy·vx
+
+→ E(b,a,p) = −E(a,b,p)  EXACTEMENT en IEEE 754 :
+  mêmes produits, seul l'ordre de la soustraction change.
+→ magnitudes locales au pixel : l'annulation disparaît.</span></code></pre>
+    </div>
+    <p class="small"><b>Effet mesuré :</b> 124 trous → 4 trous + 2 doublons. <code>ClipLess</code> (A5) supprime le reste. <b>La bissection a prouvé que les deux correctifs traitent deux causes distinctes</b> — pas un de trop, pas un de moins.</p>
+  </div>
+
+  <div class="card">
+    <p><b>B4 — La reconstruction de la distance dans le fragment</b> <span class="tag warn">source de vérité changée</span></p>
+    <div class="diff">
+      <div class="dh">avant — reconstruire depuis z_ndc, via near et far</div>
+      <pre><code><span class="l-del">FragmentContext porte  nearPlane  et  farPlane
+d = n·f / (z·(f−n) + n)
+
+→ CASSE en far infini : n·1e30 / (z·1e30 + n)
+→ formule INVALIDE en orthographique
+→ précision dégradée au loin (z_ndc y est écrasé)
+→ le fragment connaît la LENTILLE</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">après — lire la distance directement</div>
+      <pre><code><span class="l-add">FragmentContext porte  invW0, invW1, invW2
+den  = b0·invW0 + b1·invW1 + b2·invW2
+dist = 1 / den                        ← w EST la distance à l'œil
+
+→ aucun paramètre de lentille
+→ identique en far fini, far infini et orthographique
+→ erreur uniforme sur toute la plage
+→ la division est DÉJÀ payée pour les varyings : coût nul</span></code></pre>
+    </div>
+    <p class="small"><b>Principe dégagé :</b> un champ ajouté pour contourner une information manquante doit être réexaminé le jour où l’information arrive. Sinon il survit, diverge, et devient une seconde source de vérité. <code>depthDisplayRange</code> reste, parce qu’il exprime autre chose : une <b>préférence d’affichage</b>, pas une propriété de la caméra.</p>
+  </div>
+
+  <div class="card">
+    <p><b>B5 — L’ordre triangulation / clipping</b> <span class="tag warn">décision inversée en cours de lot</span></p>
+    <div class="diff">
+      <div class="dh">envisagé d’abord — clipper le polygone, puis trianguler</div>
+      <pre><code><span class="l-del">quad (4 sommets) → clipper → jusqu'à 5 sommets → éventail
+
+→ exige que les quads OBJ soient CONVEXES (rien ne le garantit)
+→ deux tailles d'entrée à gérer dans le clipper
+→ borne de sortie variable selon vpf</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">retenu — trianguler, puis clipper chaque triangle</div>
+      <pre><code><span class="l-add">quad → éventail → 2 triangles → clipper chacun → max 4 sommets
+
+→ un triangle est convexe PAR NATURE : hypothèse supprimée
+→ borne FIXE à 4 sommets, tableau en pile sûr
+→ un seul chemin de code
+→ coût : 2 clippings au lieu d'1, sur &lt; 1 % des faces
+→ c'est aussi ce que fait le primitive assembly des GPU</span></code></pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <p><b>B6 — La granularité du culling</b> <span class="tag warn">objection traitée, décision révisée</span></p>
+    <p class="small">Objection initiale, légitime : <i>« le backface culling arrive après plusieurs calculs par triangle, il devrait rejeter plus tôt. »</i></p>
+    <div class="diff">
+      <div class="dh">piste écartée — déplacer le test par triangle (<code>ClipOrientation</code>)</div>
+      <pre><code><span class="l-del">culler en espace de clip, avant les divisions
+  coût  : 14 opérations sur 100 % des triangles
+  gain  : 3 divisions + 3 ToRaster sur ≈ 50 %   ≈ 30 cycles
+  → MATCH NUL, dans le bruit de mesure
+  → et introduit un SECOND signe d'orientation à calibrer
+  → valide seulement si tous les w &gt; 0 → deux tests coexistants</span></code></pre>
+    </div>
+    <div class="diff">
+      <div class="dh">retenu — changer de granularité</div>
+      <pre><code><span class="l-add">une décision par MESH, pas par triangle :
+  Frustum::Classify(AABB) == Inside
+    → AUCUN de ses triangles ne peut traverser le near
+    → needsNearClip = false
+    → économise vpf soustractions + 2·vpf comparaisons PAR FACE,
+      sur la totalité du mesh
+
+mesuré en scène réelle :
+  vue fixe    : Inside 100 % en permanence
+  vue animée  : Intersect jusqu'à 95 %  → le clipper travaille vraiment</span></code></pre>
+    </div>
+    <div class="note">
+      <b>Le principe généralisable (règle 22).</b> Quand un test par élément coûte trop cher, la solution professionnelle n’est pas de le déplacer de quelques instructions — c’est de <b>changer de granularité</b>. Un test par mesh remplace 100 000 tests par triangle. C’est exactement la logique du <i>cluster cone culling</i> de Nanite, un cran plus haut.
+    </div>
+  </div>
+
+  <h4>C — Ce que le lot ne change pas, et pourquoi</h4>
+  <div class="card tight">
+    <table>
+      <tr><th style="width:230px">Élément</th><th>Raison</th></tr>
+      <tr><td><code>DepthBuffer</code></td><td>Déjà conforme (clear <code>0.0f</code>, test GREATER, buffer propriétaire donc <code>y·width+x</code> légitime). <b>Audité, pas modifié</b> — l’audit a consisté à le <i>prouver</i> par le test 4.</td></tr>
+      <tr><td>Les 4 plans latéraux du frustum</td><td>Aucune singularité : un <i>scissor</i> (clamp de la boîte englobante) coûte 4 <code>min/max</code> là où le clipping coûterait des triangles supplémentaires. Les GPU font pareil, avec leur <i>guard band</i>.</td></tr>
+      <tr><td>Le plan far</td><td>Avec le far infini acté en L05, il n’existe pas.</td></tr>
+      <tr><td>Le chargeur OBJ, l’ECS, le SceneGraph</td><td>Hors périmètre. Le lot consomme leur sortie sans la toucher.</td></tr>
+      <tr><td><code>uv</code> / <code>normal</code> dans <code>ClipVertex</code></td><td>Bloqués par la dette <code>MeshClass::GetFaceView</code>. Pas de champs morts dans une structure copiée des milliers de fois par frame — <b>dette L4-2</b>.</td></tr>
+    </table>
+  </div>
+</section>
 
 <!-- ═══════════════ 1 ═══════════════ -->
 <section id="pourquoi">

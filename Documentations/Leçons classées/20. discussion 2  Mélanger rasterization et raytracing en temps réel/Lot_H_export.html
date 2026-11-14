@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot H — Cadrage hybride rasterisation + ray tracing, pas à pas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F5F7; --paper:#FFFFFF; --ink:#16202A; --ink2:#4A5866; --ink3:#7B8794;
+  --line:#D5DCE3; --accent:#1F5FBF; --accent-soft:#E3ECFA; --add:#E4F4E8; --add-ink:#1C6B34;
+  --del:#FBE7E5; --del-ink:#9B2C22; --warn:#FFF3D6; --warn-ink:#7A5300; --code:#F0F3F6;
+  --hit:#C8402F; --lit:#D9A400; --box:#6B7A8C;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F151B; --paper:#17202A; --ink:#E6EBF0; --ink2:#AAB6C2; --ink3:#7C8896; --line:#2C3946;
+  --accent:#7FB0FF; --accent-soft:#1B2C46; --add:#123321; --add-ink:#8FDCA6; --del:#3A1A17; --del-ink:#F2A49B;
+  --warn:#3A2D0E; --warn-ink:#F1CF7C; --code:#111A22; --hit:#F2766A; --lit:#F1CF7C; --box:#8FA0B3; color-scheme: dark; }}
+:root[data-theme="dark"]{
+  --bg:#0F151B; --paper:#17202A; --ink:#E6EBF0; --ink2:#AAB6C2; --ink3:#7C8896; --line:#2C3946;
+  --accent:#7FB0FF; --accent-soft:#1B2C46; --add:#123321; --add-ink:#8FDCA6; --del:#3A1A17; --del-ink:#F2A49B;
+  --warn:#3A2D0E; --warn-ink:#F1CF7C; --code:#111A22; --hit:#F2766A; --lit:#F1CF7C; --box:#8FA0B3; color-scheme: dark; }
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans",system-ui,"Segoe UI",sans-serif}
+.wrap{max-width:980px;margin:0 auto;padding:2rem 1.25rem 4rem}
+header.hero{border-left:6px solid var(--accent);padding:.25rem 0 .25rem 1.25rem;margin-bottom:2rem}
+header.hero h1{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.15;margin:.2rem 0 .6rem;font-weight:600;letter-spacing:-.01em}
+header.hero p{color:var(--ink2);max-width:70ch;margin:.3rem 0}
+.tag{display:inline-block;font:500 .8rem "IBM Plex Mono",monospace;background:var(--accent-soft);color:var(--accent);padding:.15rem .5rem;border-radius:4px;margin-right:.35rem}
+nav.toc{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1rem 1.25rem;margin-bottom:2rem}
+nav.toc ol{margin:.2rem 0;padding-left:1.4rem;columns:2;column-gap:2rem}
+nav.toc a{color:var(--accent);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:1.4rem 1.5rem;margin:1.25rem 0}
+section h2{font-size:1.35rem;font-weight:600;margin:0 0 .8rem}
+section h3{font-size:1.05rem;font-weight:600;margin:1.3rem 0 .5rem}
+section h4{font-size:.95rem;font-weight:600;margin:1rem 0 .3rem;color:var(--ink2)}
+p,li{max-width:78ch}
+.muted{color:var(--ink2)}
+code,.mono{font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-size:.88em}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.8rem 1rem;overflow-x:auto;font:13px/1.55 "IBM Plex Mono",ui-monospace,Consolas,monospace;margin:.5rem 0}
+.tblwrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.93rem;margin:.6rem 0}
+th,td{border-bottom:1px solid var(--line);padding:.45rem .55rem;text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--ink2);background:var(--bg)}
+.add{background:var(--add);color:var(--add-ink)}
+.del{background:var(--del);color:var(--del-ink);text-decoration:line-through}
+.note{background:var(--warn);color:var(--warn-ink);border-radius:8px;padding:.7rem .9rem;margin:.8rem 0}
+.rule{border:1px solid var(--accent);background:var(--accent-soft);border-radius:8px;padding:.6rem .9rem;margin:.6rem 0}
+.rule b{color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:720px){.grid2{grid-template-columns:1fr} nav.toc ol{columns:1}}
+.ctrl{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center;margin:.6rem 0;font-size:.92rem}
+.ctrl label{display:inline-flex;align-items:center;gap:.35rem}
+button{font:500 .9rem "IBM Plex Sans",sans-serif;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:6px;padding:.35rem .75rem;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.on{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select,input[type=range]{accent-color:var(--accent)}
+select{font:inherit;background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:.2rem .4rem}
+canvas{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+.out{font:13px/1.5 "IBM Plex Mono",monospace;background:var(--code);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem;white-space:pre-wrap;margin:.5rem 0}
+.pipe{display:flex;flex-direction:column;gap:4px;font:13px "IBM Plex Mono",monospace}
+.pipe div{padding:.35rem .6rem;border-radius:5px;border:1px solid var(--line);background:var(--bg)}
+.pipe div.new{background:var(--add);color:var(--add-ink);border-color:var(--add-ink)}
+.pipe div.mod{background:var(--warn);color:var(--warn-ink);border-color:var(--warn-ink)}
+.pipe div.off{opacity:.35}
+.pipe div.sub{margin-left:1.5rem}
+.steps-nav{display:flex;flex-wrap:wrap;gap:.35rem;margin:.6rem 0 1rem}
+.steps-nav button{min-width:2.6rem}
+.step-card{display:none}
+.step-card.on{display:block}
+.step-card .lbl{font-weight:600;color:var(--ink2);font-size:.85rem;margin:.9rem 0 .2rem}
+.box-in{border-left:4px solid var(--ink3);padding:.4rem .8rem;background:var(--bg);border-radius:0}
+.box-out{border-left:4px solid var(--accent);padding:.4rem .8rem;background:var(--accent-soft);border-radius:0}
+.lanes{display:grid;grid-template-columns:7.5rem repeat(8,1fr);gap:2px;font:12px "IBM Plex Mono",monospace;margin:.5rem 0;min-width:640px}
+.lanes div{padding:.25rem .3rem;background:var(--bg);text-align:right}
+.lanes div.h{background:transparent;text-align:left;color:var(--ink2)}
+.lanes div.hl{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.lanes div.shadow{background:var(--del);color:var(--del-ink)}
+.lanes div.lit{background:var(--add);color:var(--add-ink)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin:.6rem 0}
+.kpi div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:.6rem .8rem}
+.kpi .l{font-size:.78rem;color:var(--ink3)}
+.kpi .v{font:500 1.25rem "IBM Plex Mono",monospace}
+.bar{height:14px;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:var(--bg)}
+.bar div{height:100%;width:0}
+.ok{color:var(--add-ink)} .ko{color:var(--del-ink)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+@media (max-width:720px){.cmp{grid-template-columns:1fr}}
+.cmp pre{margin:0}
+.legend{font-size:.85rem;color:var(--ink2)}
+.legend .dot{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;vertical-align:middle;margin:0 .25rem 0 .6rem}
+.legend .dot:first-child{margin-left:0}
+.stat{font:13px/1.5 "IBM Plex Mono",ui-monospace,Consolas,monospace;color:var(--ink2);margin:.2rem 0 .8rem}
+details{margin:.5rem 0}
+summary{cursor:pointer;color:var(--accent);font-weight:500}
+.avap{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin:.5rem 0}
+@media (max-width:720px){.avap{grid-template-columns:1fr}}
+.avap div{border-radius:8px;padding:.5rem .8rem;border:1px solid var(--line)}
+.avap .a{background:var(--del)}
+.avap .b{background:var(--add)}
+.avap .a b,.avap .b b{display:block;font-size:.8rem;margin-bottom:.2rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+<span class="tag">Lot H</span><span class="tag">cadrage</span><span class="tag">discussion du 05/09/2026</span><span class="tag">artefact créé le 11/11/2026</span>
+<h1>Cadrage hybride : rasterisation + ray tracing sur CPU, pas à pas</h1>
+<p>Comment mélanger un rasterizer et un ray tracer dans un moteur 100 % CPU qui doit tenir 60 images par seconde. Pas une leçon de code : un cadrage, c'est-à-dire les règles, le budget et l'ordre des chantiers qui en découlent — avec, pour fixer les idées, le calcul complet d'un rayon d'ombre en float32, scalaire puis en 8 couloirs AVX2.</p>
+<p class="muted">Reconstruction d'un échange sans artefact (création, pas reconstruction). Les écarts apparus depuis — chantiers B, C, D, cadrage L07 — sont traités en §12 avec un avant / après. Rien de ce lot n'est acté : les règles H.1 à H.6 restent des propositions jusqu'à décision d'Onky.</p>
+</header>
+
+<nav class="toc"><ol>
+<li><a href="#vue">0 · Vue d'ensemble : où se place ce lot</a></li>
+<li><a href="#pourquoi">1 · Pourquoi ce lot</a></li>
+<li><a href="#rappel">2 · Ce qu'on a déjà fait</a></li>
+<li><a href="#contexte">3 · Contexte et objectif fonctionnel</a></li>
+<li><a href="#decisions">4 · Décisions et leur pourquoi (H.1 à H.6)</a></li>
+<li><a href="#schema">5 · Schéma dynamique : un rayon d'ombre en coupe</a></li>
+<li><a href="#budget">6 · Le budget, en rayons par frame</a></li>
+<li><a href="#forward">7 · Forward contre deferred</a></li>
+<li><a href="#technique">8 · Fonctionnement technique</a></li>
+<li><a href="#etapes">9 · Les étapes, pas à pas (float32, 8 couloirs)</a></li>
+<li><a href="#contre">10 · Contre-exemples chiffrés</a></li>
+<li><a href="#verifier">11 · Vérifier</a></li>
+<li><a href="#amendements">12 · Amendements et écarts avec le dépôt</a></li>
+<li><a href="#usage">13 · Exemples d'utilisation</a></li>
+</ol></nav>
+
+<section id="vue">
+<h2>0 · Vue d'ensemble : où se place ce lot</h2>
+<h3>0.1 Algorithme global du moteur, une frame (ordre S13) — le lot en surbrillance</h3>
+<p>Le moteur est devenu dense. Voici la frame complète telle qu'elle tourne aujourd'hui, avec en <span class="add">&nbsp;vert&nbsp;</span> ce que le cadrage H ajoute et en <span style="background:var(--warn);color:var(--warn-ink)">&nbsp;ambre&nbsp;</span> ce qu'il modifie. Tout ce qui est en vert ou ambre n'existe pas encore : c'est la cible des leçons L08 à L12.</p>
+<div class="pipe">
+<div>1. realDt mesuré, clampé</div>
+<div>2. simDt = _clock.Advance(realDt)</div>
+<div>3. BuildInputState</div>
+<div>4. PlayerInputSystem (realDt), AnimationSystem (simDt) → m_local</div>
+<div>5. Cuisson n°1 : LocalTransformSystem → WorldTransformSystem (toute la scène)</div>
+<div class="new sub">5b. Refit du TLAS : AABB monde des instances → nœuds (L11, règle H.4)</div>
+<div>6. Caméras : FPSController / Follow / Zoom, sélection, BuildCameraBindings, CameraGizmoSystem</div>
+<div>7. Cuisson n°2 ciblée : caméras rendues + gizmos</div>
+<div class="mod">8. TriggerSystem — broad-phase N² remplacée par une requête sur le TLAS, narrow-phase et file d'événements inchangées (L11)</div>
+<div>9. BuildViewData × N (V, P, V·P, frustum, invVP paresseux)</div>
+<div>10. Clear (couleur, profondeur)</div>
+<div class="mod">11. RenderView × N : sommets SoA (B3) → faces (B4/B5) → Giesen (D-a1) → boucle pixels (C1/C2/C3) → <b>le shader écrit le G-buffer (invW/z, normale, matId, albédo) au lieu d'une couleur</b> (L10)</div>
+<div class="new">12. ShadowPass : pour chaque pixel du masque, 1 rayon vers la lumière, any-hit dans le BVH → ShadowBuffer 1 bit (L12)</div>
+<div class="new">13. LightingPass : G-buffer + ShadowBuffer → couleur finale dans le FrameBuffer (L10)</div>
+<div>14. Surfaces transparentes en forward (après la LightingPass), HUD, menu, overlay debug (R7.5)</div>
+<div>15. Present</div>
+</div>
+<h3>0.2 Carte des fichiers concernés</h3>
+<div class="tblwrap"><table>
+<tr><th>Fichier (LIB)</th><th>État</th><th>Rôle dans le cadrage H</th></tr>
+<tr><td><code>Rendering/Fragment.h</code> + shaders C1 (<code>ShaderSolid</code>, <code>Shade8</code>)</td><td>modifié</td><td>Nouveau shader <code>ShaderGBuffer</code> : même contrat <code>Shade()</code> / <code>Shade8()</code> que C1/C2, mais écrit 3 tampons au lieu d'un</td></tr>
+<tr><td><code>Rendering/GBuffer.h</code></td><td class="add">nouveau</td><td>Possède ses tampons (comme <code>DepthBuffer</code>) : normale encodée, matId, albédo ; jamais la position monde</td></tr>
+<tr><td><code>Rendering/Renderer.h/.cpp</code></td><td>modifié</td><td>Propriétaire du G-buffer et du ShadowBuffer ; <code>ERenderMode::Deferred</code></td></tr>
+<tr><td><code>Rendering/RT/BVH.h/.cpp</code></td><td class="add">nouveau</td><td>BLAS par mesh (triangles, SoA des bornes, nœuds 8-wide), TLAS des instances</td></tr>
+<tr><td><code>Rendering/RT/Trace.h/.cpp</code></td><td class="add">nouveau</td><td>Le service : <code>TraceAnyHit(RayPacket8&amp;)</code> et <code>TraceClosest(...)</code>, sans aucune notion de rendu</td></tr>
+<tr><td><code>Rendering/ShadowPass.h/.cpp</code>, <code>LightingPass.h/.cpp</code></td><td class="add">nouveau</td><td>Les deux passes plein écran ; seules à connaître les lumières</td></tr>
+<tr><td><code>Scene/System.cpp</code> (<code>TriggerSystem</code>)</td><td>modifié</td><td><code>BroadPhase::FindPairs</code> derrière une interface ; implémentation N² conservée jusqu'à L11</td></tr>
+<tr><td><code>Core/config.h</code> (<code>LV3_SIMD</code>), <code>LV3.Common.props</code></td><td>modifié</td><td>Dispatch AVX2 / AVX-512 à l'exécution (règle H.6, rejoint la piste B6)</td></tr>
+</table></div>
+<h3>0.3 Apport du lot : l'algorithme détaillé, avant / après</h3>
+<p>Ce lot ne modifie aucun fichier aujourd'hui. Il fixe <em>ce que deviendra</em> chaque fonction touchée, pour que les leçons L08 à L10 soient conçues avec la cible en vue et qu'on ne refasse rien. Trois remises en question :</p>
+<div class="avap"><div class="a"><b>AVANT — Fragment en forward (L04, C1)</b>le callback de fragment reçoit (x, y, bary), fait <code>TestAndSet</code> sur le Z-buffer, interpole les varyings par <code>invW</code>, et <b>écrit une couleur</b> dans le FrameBuffer. S'il y avait des lumières, elles seraient évaluées ici, pour chaque fragment, visibles ou recouverts plus tard.</div><div class="b"><b>APRÈS — Fragment en deferred (L10)</b>même entrée, même <code>TestAndSet</code>, même interpolation ; le shader <b>écrit des attributs</b> : normale (2 × 16 bits, octaédrique), matId (16 bits), albédo (32 bits). Aucune lumière ici. La couleur est calculée une fois par pixel, après, par la <code>LightingPass</code>.</div></div>
+<div class="avap"><div class="a"><b>AVANT — TriggerSystem (L06)</b>double boucle sur <code>ViewGroup</code> : N² paires candidates, test sphère/sphère, file d'événements Enter/Stay/Exit (L3-11 : le bug 62 a retiré les paires zone-contre-zone, pas le parcours quadratique).</div><div class="b"><b>APRÈS — TriggerSystem (L11)</b><code>BroadPhase::FindPairs(out)</code> interroge le TLAS (le même que celui du ray tracing) ; narrow-phase et file d'événements <b>inchangées</b>. Test de non-régression : même ensemble de paires que le N² sur les scènes de test.</div></div>
+<div class="avap"><div class="a"><b>AVANT — pas de ray tracing</b>la visibilité est entièrement rasterisée ; les ombres, s'il y en avait, viendraient d'une shadow map (seconde rasterisation).</div><div class="b"><b>APRÈS — ray tracing comme service (L12)</b>le rasterizer garde la visibilité primaire (H.1) ; les rayons partent du G-buffer et répondent à des questions point-à-point. Budget déclaré en rayons par frame (H.2), chaque effet conçu avec ≥ 2 leviers d'amortissement (H.3).</div></div>
+</section>
+<section id="pourquoi">
+<h2>1 · Pourquoi ce lot</h2>
+<p>Onky sait écrire un rasterizer et sait écrire un ray tracer. La question posée le 05/09/2026 n'était pas « comment faire l'un ou l'autre » mais « comment les <em>mélanger</em> », sachant qu'un écran entier en ray tracing CPU ne tient pas en 16,7 ms. L'intuition de départ : certains objets ou certaines parties du jeu pourraient profiter du ray tracing sans ruiner le temps de frame.</p>
+<p>Le lot existe parce que cette intuition, prise au pied de la lettre, mène à une architecture fausse (le découpage par objet, §10, contre-exemple 1). Avant d'écrire une ligne de G-buffer, de BVH ou de rayon, il fallait fixer <b>ce que le ray tracing fait</b> dans ce moteur, <b>en quelle unité on compte son coût</b>, et <b>dans quel ordre les chantiers s'enchaînent</b> pour qu'aucune donnée ne soit à refaire. C'est un cadrage, au même titre que le cadrage L07 de l'UI : des règles et un budget, pas du code.</p>
+<div class="note"><b>La phrase à retenir, un an plus tard :</b> le rasterizer répond à « qu'est-ce qui est visible depuis la caméra ? » ; le ray tracer répond à « ce point voit-il ce point ? ». Le premier est cohérent et bon marché, le second est arbitraire et cher. On ne les mélange pas par objet, on les enchaîne : la rasterisation produit les points, le ray tracing pose les questions.</div>
+</section>
+
+<section id="rappel">
+<h2>2 · Ce qu'on a déjà fait</h2>
+<p>Au 05/09/2026, date de la discussion, le moteur en était à L06 (scenegraph, en cours). Au 11/11/2026, date de l'artefact, la phase G a ajouté les chantiers de vectorisation et de rasterisation. Les deux états comptent : le cadrage a été pensé sur le premier, il doit tenir sur le second.</p>
+<div class="tblwrap"><table>
+<tr><th>Lot</th><th>Ce qu'il apporte au cadrage H</th></tr>
+<tr><td>L02 — mathématiques, reverse-Z</td><td>La chaîne clip → NDC → raster et son inverse (<code>invVP</code> paresseux dans <code>ViewData</code>) : c'est elle qui reconstruit la position monde d'un pixel depuis sa profondeur. Reverse-Z garantit la précision au loin, donc des origines de rayons justes.</td></tr>
+<tr><td>L03 — ECS, SparseSet, ResourceManager</td><td>Culture DOD : les nœuds du BVH seront des tableaux SoA, pas des objets ; le <code>Material</code> sera un indice dense.</td></tr>
+<tr><td>L04 — rasterizer, C1 (chaîne des espaces)</td><td><code>invW</code> comme seul passager clip → NDC ; interpolation perspective-correcte des varyings : la normale et l'albédo du G-buffer en sont.</td></tr>
+<tr><td>L05 — caméra, frustum</td><td>Le frustum culling par AABB : le TLAS réutilisera ces mêmes AABB monde.</td></tr>
+<tr><td>L06 — scenegraph (en cours), A5, A6</td><td>Ordre S13 de la frame, <code>TriggerSystem</code> avec file d'événements, cuisson ciblée des matrices : le refit du TLAS s'insère après la cuisson n°1.</td></tr>
+<tr><td>Phase G — B (SoA, AVX2, <code>LV3_SIMD</code>), C (boucles pixels spécialisées par shader, <code>Shade8</code>), D-a1 (Giesen)</td><td>Le shader est déjà une entité à part (<code>ShaderSolid::Shade8</code>) : le G-buffer sera <em>un shader de plus</em>, pas une refonte. La discipline de mesure (lots A/B/B/A, thermomètres, TNR bit-exacte) est celle qu'appliquera chaque étape du RT.</td></tr>
+<tr><td>Lot V3 — scène FPS « rooms »</td><td>Scène de test toute trouvée pour les ombres (grands triangles proches, ouvertures, intérieurs).</td></tr>
+<tr><td>L07·C1 — cadrage UI</td><td>R7.0 : l'UI est une couche 2D composée après <code>RenderView×N</code>. L'overlay de debug y affichera le budget rayons (voir §12 pour l'écart avec ce qui était dit ici).</td></tr>
+</table></div>
+</section>
+
+<section id="contexte">
+<h2>3 · Contexte et objectif fonctionnel</h2>
+<p><b>Le contexte.</b> Le but final du moteur est un FPS. Un FPS veut des ombres crédibles, des reflets sur quelques surfaces (eau, verre), de l'occlusion ambiante dans les coins. Sur GPU, on prendrait une shadow map et du screen-space. Sur CPU, le ray tracing est paradoxalement une option sérieuse pour ces effets : il remplace plusieurs techniques d'approximation par une seule requête exacte, et le CPU n'a pas de pipeline fixe qui favorise la rasterisation. Mais il n'a pas non plus 10 000 cœurs.</p>
+<p><b>L'objectif fonctionnel.</b> Que le moteur puisse, à 60 fps, afficher des ombres dures exactes d'une lumière directionnelle sur la scène « rooms », puis des reflets sur des surfaces taguées, puis des effets plus doux — sans jamais dépasser un budget de temps déclaré à l'avance. Et que tout ce qui n'exige pas 60 fps (lightmaps, sondes) utilise le même ray tracer hors de la frame.</p>
+<p><b>Ce que le lot livre.</b> Six règles (H.1 à H.6), un modèle de coût en rayons par frame avec ses cinq leviers d'amortissement, le choix d'un G-buffer (donc du deferred shading), le principe d'un BVH partagé entre rendu et physique, l'ordre des leçons L07 → L12, et un premier effet cible : l'ombre directionnelle, un rayon par pixel, qui est le cas le plus pédagogique pour le SIMD.</p>
+<p><b>Ce que le lot ne livre pas.</b> Du code. Le multithreading (plus tard). Les lumières ponctuelles et les ombres douces (après l'ombre directionnelle).</p>
+</section>
+
+<section id="decisions">
+<h2>4 · Décisions et leur pourquoi — règles H.1 à H.6 (proposées, non actées)</h2>
+<div class="rule"><b>H.1</b> — Le rasterizer possède la visibilité primaire. Aucun rayon primaire dans le chemin temps réel.<br><span class="muted">Pourquoi : la visibilité caméra est la question la plus cohérente qui soit (voisins → mêmes triangles) ; la rasterisation la résout en O(triangles + pixels) avec des accès mémoire séquentiels. La tracer coûterait O(pixels × log triangles) en sauts de cache pour un résultat identique.</span></div>
+<div class="rule"><b>H.2</b> — Le coût se compte en rayons par frame, jamais en objets. Chaque effet déclare son maximum de rayons avant d'être écrit.<br><span class="muted">Pourquoi : un rayon traverse la scène entière quel que soit l'objet qui l'émet (§10, contre-exemple 1). Le seul nombre qui prédit le temps est <code>rayons × coût par rayon</code> (§6).</span></div>
+<div class="rule"><b>H.3</b> — Tout effet RT temps réel est conçu dès l'origine avec au moins deux leviers d'amortissement : masque spatial, résolution réduite, réutilisation temporelle, longueur de rayon bornée.<br><span class="muted">Pourquoi : à pleine résolution et un rayon par pixel, aucun CPU ne tient 60 fps (§6). Un effet pensé sans amortissement est un effet qu'on jettera.</span></div>
+<div class="rule"><b>H.4</b> — Une seule structure d'accélération partagée : TLAS des instances (AABB monde) pour le rendu <em>et</em> pour la broad-phase du <code>TriggerSystem</code> ; BLAS par mesh pour les triangles.<br><span class="muted">Pourquoi : deux hiérarchies spatiales sur les mêmes AABB, refit chaque frame par deux systèmes, c'est deux fois le coût et deux fois les bugs. La dette L3-11 (N²) se rembourse avec la même structure.</span></div>
+<div class="rule"><b>H.5</b> — Ce qui n'exige pas 60 fps sort de la frame : cuisson au chargement ou raffinement progressif sur N frames.<br><span class="muted">Pourquoi : c'est là que le ray tracing CPU est vraiment bon — sans contrainte de temps, il produit des lightmaps et des sondes exactes avec le même code que les ombres temps réel.</span></div>
+<div class="rule"><b>H.6</b> — Le noyau de traversée est écrit une fois contre une largeur abstraite, compilé dans deux unités de traduction (AVX2 / AVX-512), choisi à l'exécution par CPUID. Jamais de <code>#ifdef</code> global.<br><span class="muted">Pourquoi : deux machines cibles (Core 9 AVX-512, portable AVX2). Un <code>/arch:AVX512</code> sur tout le projet émet des instructions illégales sur le portable. Rejoint la piste B6 de la roadmap (§12).</span></div>
+<h3>Les décisions d'ordre</h3>
+<div class="tblwrap"><table>
+<tr><th>Décision</th><th>Pourquoi</th></tr>
+<tr><td>Le G-buffer n'est pas une leçon à part : c'est le premier tiers de la leçon lumières (L10).</td><td>On ne peut pas écrire une <code>LightingPass</code> sans lui, et il est inutile avant elle.</td></tr>
+<tr><td>Submesh + <code>Material</code> (L08) avant textures (L09) avant lumières (L10).</td><td>Chaîne de dépendances de données : le <code>matId</code> du G-buffer est l'indice du submesh ; l'albédo vient de la texture ; les lumières lisent les deux.</td></tr>
+<tr><td>Textures en forward unlit d'abord (L09), passage au G-buffer en une ligne en L10.</td><td>Validation visuelle immédiate ; un damier en perspective ferme la dette de l'interpolation perspective-correcte (L04 P2).</td></tr>
+<tr><td>Overlay de debug + profiler intercalés avant tout (L07).</td><td>Chaque étape suivante se juge au chronomètre affiché : budget rayons, gain SIMD, coût des mipmaps.</td></tr>
+<tr><td>BVH (L11) avant ombres (L12) ; premier effet : ombre dure directionnelle, 1 rayon/pixel, sans amortissement.</td><td>Rayons cohérents (même direction, origines voisines) : le paquet de 8 traverse le BVH en lock-step, démonstration la plus claire du SIMD. Les amortissements viennent après, mesurés un par un.</td></tr>
+<tr><td>Le scenegraph se termine d'abord (L06) : hiérarchie puis événements de collision, broad-phase N² isolée derrière <code>BroadPhase::FindPairs</code>.</td><td>La cascade de destruction définit le cycle de vie des entités ; la file d'événements a besoin de savoir ce qu'est une paire dont un membre a disparu.</td></tr>
+</table></div>
+</section>
+<section id="schema">
+<h2>5 · Schéma dynamique : un rayon d'ombre en coupe</h2>
+<p>Vue de côté (l'axe horizontal est l'axe Z du monde, la caméra regarde vers −Z). Le sol est rasterisé : chaque point jaune ou rouge est un pixel dont le G-buffer connaît la position. De chacun part <em>un</em> rayon vers la lumière directionnelle. S'il rencontre la boîte, le pixel est à l'ombre. Il n'y a jamais de rayon depuis la caméra : c'est la règle H.1 en image.</p>
+<div class="ctrl">
+<label>Élévation de la lumière <input type="range" id="s-elev" min="10" max="80" value="40"> <span id="s-elev-o">40°</span></label>
+<label>Résolution RT <select id="s-res"><option value="1">pleine</option><option value="2">demi</option><option value="4">quart</option></select></label>
+<label>Biais le long de la normale <input type="range" id="s-bias" min="0" max="20" value="8"> <span id="s-bias-o">8 ulp</span></label>
+<label><input type="checkbox" id="s-acne" checked> cas particulier : erreur de reconstruction ±1 ulp (acné)</label>
+<label><input type="checkbox" id="s-obj"> contre-exemple : « tracer l'objet » (rayons primaires)</label>
+</div>
+<canvas id="s-cv" width="900" height="360"></canvas>
+<p class="legend"><span class="dot" style="background:var(--lit)"></span>éclairé <span class="dot" style="background:var(--hit)"></span>à l'ombre <span class="dot" style="background:var(--box)"></span>occulteur (boîte)</p>
+<p class="stat" id="s-stat"></p>
+<p class="muted">À essayer : biais à 0 avec l'acné cochée — des points éclairés deviennent noirs au hasard, parce que l'origine reconstruite tombe un ulp <em>sous</em> le sol et que le rayon rencontre le sol lui-même. C'est la raison du décalage <code>o = P + n·ε</code> de l'étape 2. Puis « tracer l'objet » : les rayons partent de la caméra et traversent toute la scène pour redire ce que le Z-buffer savait déjà.</p>
+</section>
+
+<section id="budget">
+<h2>6 · Le budget, en rayons par frame</h2>
+<p>Ordres de grandeur CPU retenus pour le cadrage (à <b>mesurer</b> sur l'i7 de référence avant tout chiffre définitif, point H-13 de la roadmap) : 8 cœurs, BVH 8-wide AVX2, scène d'environ 500 k triangles — rayons cohérents en paquets 30 à 60 Mrays/s ; rayons incohérents 5 à 15 Mrays/s. Une frame de 60 fps dure 16,67 ms ; si le RT en reçoit 4 ms, il dispose d'environ 150 000 rayons. Un écran 1280×720 contient 921 600 pixels. L'inégalité est brutale : <b>on ne peut pas se payer un rayon par pixel</b>. Toute la discipline hybride CPU découle de là.</p>
+<div class="ctrl">
+<label>Résolution <select id="b-res"><option value="921600">1280×720</option><option value="2073600">1920×1080</option><option value="518400">960×540</option></select></label>
+<label>Pixels concernés (masque) <input type="range" id="b-frac" min="1" max="100" value="100"> <span id="b-frac-o">100 %</span></label>
+<label>Échelle RT <select id="b-scale"><option value="1">1/1</option><option value="0.25">1/2 (¼ des pixels)</option><option value="0.0625">1/4 (1/16)</option></select></label>
+<label>Rayons / pixel <input type="range" id="b-rpp" min="1" max="8" value="1"> <span id="b-rpp-o">1</span></label>
+<label>Réutilisation temporelle <input type="range" id="b-temp" min="1" max="8" value="1"> <span id="b-temp-o">1 frame</span></label>
+<label>Débit CPU <input type="range" id="b-mr" min="2" max="80" value="20"> <span id="b-mr-o">20 Mr/s</span></label>
+</div>
+<div class="kpi"><div><div class="l">Rayons par frame</div><div class="v" id="b-rays">—</div></div><div><div class="l">Coût RT</div><div class="v" id="b-ms">—</div></div><div><div class="l">Part de la frame (16,67 ms)</div><div class="v" id="b-pct">—</div></div></div>
+<div class="bar"><div id="b-bar"></div></div>
+<p id="b-verdict" class="muted"></p>
+<h3>Les cinq leviers d'amortissement (règle H.3)</h3>
+<ol>
+<li><b>Sélection spatiale.</b> Un masque de pixels décide qui reçoit un rayon : seuls les matériaux sous un seuil de rugosité pour les reflets ; seule la zone de pénombre candidate pour les ombres. Le masque vient du G-buffer, donc de la rasterisation.</li>
+<li><b>Résolution réduite.</b> Tracer à ½ ou ¼ et remonter par filtre bilatéral guidé par la profondeur et la normale. Bien toléré par les effets basse fréquence (AO, ombres douces, GI), mal par les reflets miroir.</li>
+<li><b>Réutilisation temporelle.</b> Les matrices de la frame N−1 et la profondeur permettent de reprojeter le résultat précédent et de n'en recalculer qu'une fraction. Levier le plus puissant et le plus piégeux (ghosting, désocclusion).</li>
+<li><b>Longueur de rayon bornée.</b> Une ombre de contact ou un rayon d'AO à 0,5 m sort du BVH après deux ou trois nœuds. Le coût est dominé par les traversées longues et incohérentes.</li>
+<li><b>Hors temps réel (H.5).</b> Lightmaps cuites au chargement, sondes raffinées sur 100 frames.</li>
+</ol>
+<h3>Où le ray tracing vaut son coût, classement CPU</h3>
+<div class="tblwrap"><table>
+<tr><th>Effet</th><th>Rayons</th><th>Cohérence</th><th>Verdict</th></tr>
+<tr><td>Ombres de contact, AO courte portée</td><td>courts</td><td>moyenne</td><td>Excellent rapport</td></tr>
+<tr><td>Ombre dure d'une lumière directionnelle</td><td>1 par pixel</td><td>forte (paquets)</td><td>Bon ; rivalise avec la shadow map ; premier effet du cadrage</td></tr>
+<tr><td>Reflets miroir / eau sur surfaces taguées</td><td>quelques % des pixels</td><td>faible</td><td>Bon si le masque est strict</td></tr>
+<tr><td>Reflets rugueux, ombres douces</td><td>plusieurs par pixel</td><td>faible</td><td>Coûteux, temporel obligatoire</td></tr>
+<tr><td>Illumination globale temps réel</td><td>énorme</td><td>nulle</td><td>Non : cuisson ou sondes progressives (H.5)</td></tr>
+</table></div>
+</section>
+
+<section id="forward">
+<h2>7 · Forward contre deferred : pourquoi le G-buffer est un préalable</h2>
+<p><b>Forward shading</b> : la couleur est calculée au moment où le triangle est rasterisé — le callback de fragment interpole, éclaire, écrit. C'est LV3 aujourd'hui (<code>ShaderSolid</code>, modes Unlit / Depth / Barycentric). <b>Deferred shading</b> : le fragment n'écrit aucune couleur, il écrit les attributs du pixel (profondeur, normale, albédo, matId) dans le <b>G-buffer</b> ; une passe séparée éclaire chaque pixel une seule fois, après tous les triangles.</p>
+<p>Le coût d'éclairage forward est <code>fragments × lumières</code> ; le deferred est <code>pixels × lumières</code>. La différence est l'<em>overdraw</em> : un pixel couvert par cinq triangles successifs est éclairé cinq fois en forward (le early-Z n'attrape que ceux qui arrivent <em>après</em> le plus proche). Pour le ray tracing c'est pire : en forward on tracerait un rayon par <em>fragment</em>, en deferred un rayon par <em>pixel</em> visible.</p>
+<div class="ctrl"><label>Overdraw moyen de la scène <input type="range" id="f-od" min="10" max="40" value="23"> <span id="f-od-o">2,3</span></label><label>Lumières <input type="range" id="f-l" min="1" max="8" value="1"> <span id="f-l-o">1</span></label></div>
+<div class="kpi"><div><div class="l">Forward : évaluations d'éclairage</div><div class="v" id="f-fw">—</div></div><div><div class="l">Deferred : évaluations</div><div class="v" id="f-df">—</div></div><div><div class="l">Rayons d'ombre forward / deferred</div><div class="v" id="f-r">—</div></div></div>
+<p class="muted">Base 1280×720. Le deferred ne dépend ni de l'overdraw ni de l'ordre de soumission ; c'est aussi ce qui permet de lancer les rayons <em>après</em> que le BVH est prêt et que seuls les pixels finalement visibles restent.</p>
+<p><b>Ce que coûte le deferred, pour être honnête :</b> de la mémoire (quelques tampons pleine résolution, un <code>DepthBuffer</code>-like par attribut), pas de transparence native (les surfaces transparentes restent en forward, passées après la <code>LightingPass</code>), un seul modèle d'éclairage par <code>matId</code> sauf à stocker davantage.</p>
+</section>
+
+<section id="technique">
+<h2>8 · Fonctionnement technique</h2>
+<h3>8.1 Le G-buffer : trois tampons, jamais la position</h3>
+<div class="tblwrap"><table>
+<tr><th>Tampon</th><th>Format</th><th>Octets / pixel</th><th>Qui l'écrit</th><th>Qui le lit</th></tr>
+<tr><td>Profondeur</td><td>float32 z_ndc reverse-Z (existe déjà)</td><td>4</td><td>Rasterizer (<code>TestAndSet</code>)</td><td>ShadowPass (reconstruction), LightingPass</td></tr>
+<tr><td>Normale</td><td>2 × int16, encodage octaédrique</td><td>4</td><td>ShaderGBuffer (interpolée par invW)</td><td>ShadowPass (biais), LightingPass (N·L)</td></tr>
+<tr><td>Albédo</td><td>RGBA8</td><td>4</td><td>ShaderGBuffer (texture L09)</td><td>LightingPass</td></tr>
+<tr><td>matId</td><td>uint16 (indice dense, L08)</td><td>2</td><td>ShaderGBuffer</td><td>LightingPass (modèle), masque des reflets</td></tr>
+</table></div>
+<p>Soit 14 octets par pixel, 12,9 Mo en 1280×720. La position monde (12 octets) n'est <b>pas</b> stockée : elle se reconstruit depuis la profondeur par <code>invVP</code> (étape 1). Règle DOD : lire 4 octets et calculer plutôt que lire 12 octets ; la LightingPass et la ShadowPass parcourent les tampons en ligne, séquentiellement, cache-friendly.</p>
+<h3>8.2 La reconstruction (chaîne inverse de C1)</h3>
+<p>Du pixel (px, py) et de z_ndc : <code>x_ndc = 2·(px+0,5)/W − 1</code>, <code>y_ndc = 1 − 2·(py+0,5)/H</code> (flip Y défait), puis <code>c = (x_ndc, y_ndc, z_ndc, 1) · invVP</code> et <code>P = c.xyz / c.w</code>. En row-major, vecteur-ligne, comme tout le moteur. L'erreur est de quelques ulp : la mesure de l'étape 1 donne y = 1,5·10⁻⁷ pour un sol à y = 0.</p>
+<h3>8.3 Le BVH : deux niveaux, nœuds 8-wide en SoA</h3>
+<p><b>BLAS</b> (par mesh, construit au chargement, SAH) : nœuds de 8 enfants, bornes stockées <code>minX[8], minY[8], minZ[8], maxX[8], maxY[8], maxZ[8]</code> — 192 octets, trois lignes de cache, un test de 8 boîtes en 12 instructions AVX2. Feuilles de 4 à 8 triangles, triangles précalculés (sommet a, arêtes E1, E2). <b>TLAS</b> (par scène, refit chaque frame) : une boîte monde par instance, c'est exactement l'AABB que <code>Frustum::Classify</code> utilise déjà. La règle H.4 est ce partage.</p>
+<p>Deux façons de vectoriser une traversée : <em>un rayon contre 8 enfants</em> (couloirs = boîtes ; bon pour les rayons incohérents) ou <em>8 rayons contre une boîte</em> (couloirs = rayons ; bon pour les rayons cohérents, les ombres directionnelles). Le pas à pas §9 montre la seconde, parce que c'est le cas du premier effet.</p>
+<h3>8.4 Le ray tracer comme service</h3>
+<pre>// Rendering/RT/Trace.h — ne connaît ni lumière, ni pixel, ni caméra
+struct RayPacket8 { float ox[8], oy[8], oz[8]; float dx, dy, dz;  // direction commune (directionnelle)
+                    float tmax[8]; uint8_t active; };
+uint8_t TraceAnyHit (const Tlas&amp;, const RayPacket8&amp;);          // 1 bit par couloir : occulté
+void    TraceClosest(const Tlas&amp;, const RayPacket8&amp;, Hit8&amp; out); // t, u, v, triId par couloir</pre>
+<p><code>TraceAnyHit</code> sort au premier triangle touché (une ombre ne demande pas le plus proche). <code>TraceClosest</code> servira les reflets. Les deux ont un pendant scalaire sous <code>LV3_SIMD = 0</code>, comme B3/B4/B5.</p>
+<h3>8.5 Le dispatch AVX2 / AVX-512 (règle H.6)</h3>
+<pre>// Trace_AVX2.cpp   (propriété du fichier : /arch:AVX2)   → TraceAnyHit_AVX2
+// Trace_AVX512.cpp (propriété du fichier : /arch:AVX512) → TraceAnyHit_AVX512
+// Trace.cpp : table remplie une fois au démarrage
+static TraceFn g_traceAnyHit = nullptr;
+void InitTrace() {
+  int r[4]; __cpuidex(r, 7, 0);
+  const bool avx512f = (r[1] &amp; (1 &lt;&lt; 16)) != 0;        // EBX bit 16 = AVX-512F
+  g_traceAnyHit = avx512f ? &amp;TraceAnyHit_AVX512 : &amp;TraceAnyHit_AVX2;
+}</pre>
+<p>Le reste du moteur appelle <code>g_traceAnyHit</code> sans savoir quelle largeur travaille. <code>LV3.Common.props</code> garde <code>/arch:AVX2</code> comme socle (B1) ; seul le fichier AVX-512 reçoit <code>/arch:AVX512</code>, jamais le projet. Le flag <code>LV3_SIMD</code> conserve sa réserve <code>2 = AVX-512</code> pour forcer une largeur en test.</p>
+</section>
+<section id="etapes">
+<h2>9 · Les étapes, pas à pas : un rayon d'ombre, 8 pixels voisins</h2>
+<p>Scénario calculé réellement en float32 (<code>Math.fround</code> à chaque opération, comme le CPU) : caméra à (0, 1,5, 4) regardant −Z, fov 60°, 1280×720, near 0,1, reverse-Z infini. Un sol à y = 0, une boîte [−0,5 ; 0,47]×[0 ; 1]×[−2,5 ; −1,5]. Lumière directionnelle venant de la direction (0,3 ; 0,6 ; −0,8) normalisée. On traite les 8 pixels <code>px = 672 … 679</code> de la ligne <code>py = 546</code> : un paquet AVX2, un couloir par pixel.</p>
+<div class="steps-nav" id="st-nav"></div>
+
+<div class="step-card" data-step="1">
+<h3>Étape 1 — Lire le G-buffer et reconstruire la position monde</h3>
+<div class="lbl">Objectif</div><p>Le rayon a besoin d'une origine. Le G-buffer ne stocke que z_ndc (4 octets) : on retrouve P par la chaîne inverse de C1. Vérifier que l'erreur reste de quelques ulp, sinon tout ce qui suit est faux.</p>
+<div class="lbl">Entrée (ce que le rasterizer a écrit)</div><div class="box-in" id="st1-in"></div>
+<div class="lbl">Code scalaire</div>
+<pre>Vec3f ReconstructWorld(int px, int py, float zndc, const Mat4f&amp; invVP, int W, int H) {
+    const float xn = 2.f * (px + 0.5f) / W - 1.f;
+    const float yn = 1.f - 2.f * (py + 0.5f) / H;        // flip Y défait (Viewport::ToRaster)
+    const Vec4f c  = Vec4f(xn, yn, zndc, 1.f) * invVP;  // vecteur-ligne, row-major
+    const float iw = 1.f / c.w;
+    return { c.x * iw, c.y * iw, c.z * iw };
+}</pre>
+<div class="lbl">Équivalent vectorisé (8 pixels d'une ligne : yn, zndc par couloir, xn par couloir)</div>
+<pre>// xn8 = (px0 + lane + 0.5) * 2/W - 1 ; yn commun ; zndc8 = load depth[py][px0..px0+7]
+__m256 cx = fmadd(xn8, bc(invVP[0][0]), fmadd(yn8, bc(invVP[1][0]), fmadd(zn8, bc(invVP[2][0]), bc(invVP[3][0]))));
+// ... idem cy, cz, cw : 16 fmadd, puis
+__m256 iw = _mm256_div_ps(one, cw);                      // jamais rcp (bit-exactitude)
+px8 = _mm256_mul_ps(cx, iw); py8 = ...; pz8 = ...;</pre>
+<div class="note">FMA : le cadrage le propose ici parce que la reconstruction n'est pas tenue à la bit-exactitude contre le rasterizer (elle est tenue à une erreur en ulp, testée). La roadmap garde la FMA comme décision séparée (piste « FMA », jamais dans <code>EdgeFunction</code>) : à trancher en L10.</div>
+<div class="lbl">Résultat de l'étape (8 couloirs)</div><div class="tblwrap"><div class="lanes" id="st1-lanes"></div></div>
+<div class="box-out" id="st1-out"></div>
+</div>
+
+<div class="step-card" data-step="2">
+<h3>Étape 2 — Construire le rayon : origine décalée, direction commune</h3>
+<div class="lbl">Objectif</div><p>Éviter que le rayon rencontre la surface dont il part (acné, §5). On décale l'origine le long de la normale du G-buffer : <code>o = P + n·ε</code>. Pour une lumière directionnelle, la direction est la même pour tous les couloirs : un seul registre diffusé, pas huit.</p>
+<div class="lbl">Entrée (étape 1)</div><div class="box-in" id="st2-in"></div>
+<div class="lbl">Code scalaire</div>
+<pre>constexpr float kShadowBias = 1e-3f;                 // en unités monde ; à relier à la taille de scène
+Ray MakeShadowRay(const Vec3f&amp; P, const Vec3f&amp; n, const Vec3f&amp; toLight) {
+    Ray r; r.o = P + n * kShadowBias; r.d = toLight;  // toLight déjà normalisé
+    r.tmax = std::numeric_limits&lt;float&gt;::infinity();   // directionnelle : pas de borne
+    return r;
+}</pre>
+<div class="lbl">Équivalent vectorisé</div>
+<pre>ox8 = fmadd(nx8, bc(kShadowBias), px8);  oy8 = fmadd(ny8, bc(kShadowBias), py8);  oz8 = ...;
+// direction : trois scalaires diffusés une fois par paquet (dx, dy, dz) ; invDir précalculé une fois par frame</pre>
+<div class="lbl">Résultat de l'étape</div><div class="tblwrap"><div class="lanes" id="st2-lanes"></div></div>
+<div class="box-out" id="st2-out"></div>
+</div>
+
+<div class="step-card" data-step="3">
+<h3>Étape 3 — Traverser le BVH : 8 rayons contre une boîte (test des slabs)</h3>
+<div class="lbl">Objectif</div><p>Ne tester des triangles que si la boîte qui les contient est traversée. Le test des slabs calcule, par axe, l'intervalle de t où le rayon est entre les deux plans ; la boîte est touchée si l'intersection des trois intervalles est non vide et devant l'origine. La division par la direction est précalculée (<code>invDir</code>) : trois divisions par frame pour une directionnelle, pas trois par rayon.</p>
+<div class="lbl">Entrée (étape 2) et nœud testé</div><div class="box-in" id="st3-in"></div>
+<div class="lbl">Code scalaire (Williams et al. 2005, « An efficient and robust ray-box intersection »)</div>
+<pre>bool HitAABB(const Ray&amp; r, const Vec3f&amp; inv, const AABB&amp; b, float&amp; t0, float&amp; t1) {
+    float tx0 = (b.min.x - r.o.x) * inv.x, tx1 = (b.max.x - r.o.x) * inv.x; if (inv.x &lt; 0) std::swap(tx0, tx1);
+    float ty0 = (b.min.y - r.o.y) * inv.y, ty1 = (b.max.y - r.o.y) * inv.y; if (inv.y &lt; 0) std::swap(ty0, ty1);
+    float tz0 = (b.min.z - r.o.z) * inv.z, tz1 = (b.max.z - r.o.z) * inv.z; if (inv.z &lt; 0) std::swap(tz0, tz1);
+    t0 = std::max({tx0, ty0, tz0, 0.f});  t1 = std::min({tx1, ty1, tz1, r.tmax});
+    return t0 &lt;= t1;
+}</pre>
+<div class="lbl">Équivalent vectorisé (couloirs = rayons ; la boîte est diffusée)</div>
+<pre>// invDir est commun : le signe est connu par axe → on choisit near/far une fois, pas de swap par couloir
+__m256 tx0 = _mm256_mul_ps(_mm256_sub_ps(bc(nearX), ox8), bc(invX));   // nearX = min.x si invX &gt; 0, sinon max.x
+__m256 tx1 = _mm256_mul_ps(_mm256_sub_ps(bc(farX),  ox8), bc(invX));
+// ... ty0, ty1, tz0, tz1
+__m256 t0 = _mm256_max_ps(_mm256_max_ps(tx0, ty0), _mm256_max_ps(tz0, zero));
+__m256 t1 = _mm256_min_ps(_mm256_min_ps(tx1, ty1), _mm256_min_ps(tz1, tmax8));
+int mask = _mm256_movemask_ps(_mm256_cmp_ps(t0, t1, _CMP_LE_OQ));      // 1 bit par rayon : descendre ce nœud
+if (mask == 0) return;  // aucun rayon du paquet ne traverse : nœud et sous-arbre ignorés d'un coup</pre>
+<div class="lbl">Résultat de l'étape</div><div class="tblwrap"><div class="lanes" id="st3-lanes"></div></div>
+<div class="box-out" id="st3-out"></div>
+</div>
+
+<div class="step-card" data-step="4">
+<h3>Étape 4 — Intersection triangle (Möller–Trumbore), any-hit</h3>
+<div class="lbl">Objectif</div><p>Pour une ombre, on cherche <em>s'il existe</em> un triangle entre le point et la lumière, pas le plus proche : dès qu'un couloir touche, il est fini. Möller–Trumbore (1997, « Fast, minimum storage ray-triangle intersection ») résout (t, u, v) en un déterminant et deux produits vectoriels, sans précalcul de plan.</p>
+<div class="lbl">Entrée (étape 3, couloirs actifs) et triangle testé</div><div class="box-in" id="st4-in"></div>
+<div class="lbl">Code scalaire</div>
+<pre>bool HitTri(const Ray&amp; r, const Vec3f&amp; a, const Vec3f&amp; e1, const Vec3f&amp; e2, float&amp; t) {
+    const Vec3f p   = Cross(r.d, e2);
+    const float det = Dot(e1, p);
+    if (std::fabs(det) &lt; 1e-8f) return false;          // rayon parallèle au plan
+    const float inv = 1.f / det;
+    const Vec3f s   = r.o - a;
+    const float u   = Dot(s, p) * inv;        if (u &lt; 0.f || u &gt; 1.f) return false;
+    const Vec3f q   = Cross(s, e1);
+    const float v   = Dot(r.d, q) * inv;      if (v &lt; 0.f || u + v &gt; 1.f) return false;
+    t = Dot(e2, q) * inv;
+    return t &gt; 0.f &amp;&amp; t &lt; r.tmax;
+}</pre>
+<div class="lbl">Équivalent vectorisé (couloirs = rayons ; le triangle et d sont diffusés, donc p et det aussi)</div>
+<pre>// p = d × e2 et det = e1·p sont COMMUNS au paquet (direction unique) : calculés une fois, scalaires.
+__m256 sx = _mm256_sub_ps(ox8, bc(a.x)), sy = ..., sz = ...;
+__m256 u  = _mm256_mul_ps(dot8(sx,sy,sz, bc(p)), bc(inv));
+__m256 qx = fmsub(sy, bc(e1.z), _mm256_mul_ps(sz, bc(e1.y))), qy = ..., qz = ...;   // q = s × e1
+__m256 v  = _mm256_mul_ps(dot8(bc(d), qx,qy,qz), bc(inv));
+__m256 t  = _mm256_mul_ps(dot8(bc(e2), qx,qy,qz), bc(inv));
+__m256 ok = cmp(u, zero, GE) &amp; cmp(v, zero, GE) &amp; cmp(add(u,v), one, LE) &amp; cmp(t, zero, GT) &amp; cmp(t, tmax8, LT);
+hitMask |= _mm256_movemask_ps(ok) &amp; active;  active &amp;= ~hitMask;     // any-hit : le couloir sort</pre>
+<div class="lbl">Résultat de l'étape</div><div class="tblwrap"><div class="lanes" id="st4-lanes"></div></div>
+<div class="box-out" id="st4-out"></div>
+</div>
+
+<div class="step-card" data-step="5">
+<h3>Étape 5 — Écrire le masque d'ombre</h3>
+<div class="lbl">Objectif</div><p>Le résultat d'un rayon d'ombre est un bit. Huit rayons donnent un octet : le <code>movemask</code> de l'étape 4 <em>est</em> l'écriture. Le ShadowBuffer fait W/8 octets par ligne (115 ko en 720p) et se lit par la LightingPass en séquence.</p>
+<div class="lbl">Entrée (étape 4)</div><div class="box-in" id="st5-in"></div>
+<div class="lbl">Code scalaire</div>
+<pre>shadow[py * (W/8) + px/8] |= uint8_t(occluded) &lt;&lt; (px &amp; 7);</pre>
+<div class="lbl">Équivalent vectorisé</div>
+<pre>shadow[py * (W/8) + px0/8] = uint8_t(hitMask);   // px0 multiple de 8 : un octet, une écriture</pre>
+<div class="lbl">Résultat de l'étape</div><div class="box-out" id="st5-out"></div>
+</div>
+
+<div class="step-card" data-step="6">
+<h3>Étape 6 — LightingPass : la couleur, une fois par pixel</h3>
+<div class="lbl">Objectif</div><p>Combiner albédo, normale et masque : <code>couleur = albédo × (ambiant + visible × max(0, N·L) × lumière)</code>. C'est la seule étape qui connaît les lumières ; elle lit les tampons en ligne, cache-friendly, et ne voit jamais un triangle.</p>
+<div class="lbl">Entrée (G-buffer + étape 5)</div><div class="box-in" id="st6-in"></div>
+<div class="lbl">Code scalaire</div>
+<pre>const float ndl = std::max(0.f, Dot(n, toLight));
+const float vis = (shadow[idx8] &gt;&gt; (px &amp; 7)) &amp; 1 ? 0.f : 1.f;
+const float k   = kAmbient + vis * ndl * lightIntensity;
+fb[py][px] = MakeColor(uint8_t(albedo.r * k * 255.f + 0.5f), ...);</pre>
+<div class="lbl">Équivalent vectorisé</div>
+<pre>__m256 ndl8 = max(zero, dot8(nx8,ny8,nz8, bc(L)));
+__m256 vis8 = _mm256_andnot_ps(maskFromBits(shadowByte), one);          // 1.0 si éclairé, 0.0 sinon
+__m256 k8   = fmadd(mul(vis8, ndl8), bc(lightI), bc(kAmbient));
+r8 = cvt(mul(mul(albR8, k8), bc(255.f))) ...; store packed RGBA (cvtps_epi32 → packus)</pre>
+<div class="lbl">Résultat de l'étape</div><div class="tblwrap"><div class="lanes" id="st6-lanes"></div></div>
+<div class="box-out" id="st6-out"></div>
+</div>
+</section>
+
+<section id="contre">
+<h2>10 · Contre-exemples chiffrés</h2>
+<h3>1. Le découpage par objet</h3>
+<p>Taguer une entité <code>RayTraced</code>, la retirer de la rasterisation, la tracer au pixel, composer par le Z-buffer. Trois défauts, un fatal.</p>
+<ul>
+<li><b>Le coût est dans la scène, pas dans l'objet.</b> Un miroir de 2 000 triangles couvrant 5 % de l'écran reflète les 500 000 triangles rasterisés : chaque rayon de reflet traverse le BVH complet (≈ 19 niveaux, pas 11). Il faut donc le BVH entier de toute façon — rien n'est économisé par le découpage.</li>
+<li><b>La composition est fragile.</b> Deux pipelines produisent deux profondeurs par deux chemins : interpolation de z_ndc affine en écran (rasterizer) contre <code>t</code> paramétrique reconverti (ray tracer). Exemple calculé ci-dessous : les deux valeurs diffèrent au dernier bit, le vainqueur du test <code>&gt;</code> est aléatoire le long des silhouettes — la fissure du bug 21, en pire.</li>
+<li><b>Ça ne rend rien de plus.</b> Tracer les rayons primaires d'un objet répond à « qu'est-ce qui est visible ? », question que le rasterizer résout déjà, de façon cohérente et DOD.</li>
+</ul>
+<div class="out" id="ce1"></div>
+<h3>2. Le forward avec des lumières et des rayons</h3>
+<p>Overdraw 2,3 sur 921 600 pixels : <b>2 119 680</b> fragments éclairés et <b>2 119 680</b> rayons d'ombre, pour 921 600 pixels finalement visibles. 56 % du travail jeté, et des rayons tracés pour des fragments qui seront recouverts. Le deferred ramène les deux nombres à 921 600.</p>
+<h3>3. Pleine résolution, un rayon par pixel, sans amortissement</h3>
+<p>921 600 rayons à 20 Mrays/s = <b>46,1 ms</b> : 2,8 frames. Même à 60 Mrays/s (paquets parfaitement cohérents), 15,4 ms : la frame entière. Avec masque 40 % + demi-résolution + réutilisation sur 2 frames : 46 080 rayons, <b>2,3 ms</b>.</p>
+<h3>4. Origine sans biais : l'acné</h3>
+<p>Calcul réel : l'origine reconstruite de l'étape 1 n'est pas sur le sol, elle en est à <span id="ce4-y"></span>. Si l'on teste le triangle du sol avec <code>t &gt; 0</code> et sans biais, le résultat dépend du signe de cette erreur, pixel par pixel :</p>
+<div class="out" id="ce4"></div>
+<p>Avec <code>ε = 10⁻³</code> le long de la normale, <code>t</code> du sol devient négatif pour tous les pixels : plus d'acné. La valeur de ε est une dette assumée (H-14 : la relier à l'échelle de la scène, ou utiliser un décalage en ulp sur la position comme Wächter &amp; Binder 2019).</p>
+<h3>5. Stocker la position monde dans le G-buffer</h3>
+<p>12 octets au lieu de 4 : 11 Mo au lieu de 3,7 Mo en 720p, et la LightingPass lit 3× plus de lignes de cache pour la même information. Sur CPU, où la passe plein écran est limitée par la bande passante (comme <code>Clear</code>, A15), c'est directement du temps. La reconstruction coûte 16 FMA par 8 pixels, en registres.</p>
+</section>
+
+<section id="verifier">
+<h2>11 · Vérifier</h2>
+<h3>Tests hors moteur (avant tout code dans la LIB)</h3>
+<ul>
+<li><b>Aller-retour G-buffer</b> : pour 10⁶ points tirés dans le frustum, projeter → quantifier en (px, py, z_ndc) → reconstruire ; exiger |erreur| &lt; k·ulp(distance) avec k mesuré (attendu ≤ 4). Référence indépendante en double, comme D-a1d.</li>
+<li><b>BVH contre force brute</b> : 10⁵ rayons aléatoires, le BVH doit retourner exactement les mêmes any-hit que le test de tous les triangles. Zéro désaccord, pas « presque ».</li>
+<li><b>Scalaire contre AVX2 contre AVX-512</b> : mêmes rayons, mêmes masques, bit à bit (sans FMA) ou à 1 ulp près (avec FMA, décision L10).</li>
+<li><b>Ombre analytique</b> : boîte sur un sol, lumière directionnelle : la surface d'ombre se calcule à la main ; compter les pixels à l'ombre, exiger l'aire attendue ± périmètre.</li>
+</ul>
+<h3>Filets Debug (LV3_ASSERT)</h3>
+<ul>
+<li>Direction normalisée (|d|² − 1 &lt; 10⁻⁵), origine finie, tmax &gt; 0.</li>
+<li>Nombre de rayons lancés == nombre de pixels du masque (compteur <code>RaysShadow</code> dans le Profiler, actif sous <code>LV3_PROFILE</code>).</li>
+<li>Après le refit : chaque AABB d'instance contient tous les sommets transformés (échantillonnage en Debug).</li>
+<li><code>TriggerSystem</code> : le TLAS et le N² produisent le même ensemble de paires (TNR L11, garde-fou de H.4).</li>
+</ul>
+<h3>Prédictions pour le lot appairé (L12, à confirmer en mesure)</h3>
+<ul>
+<li>Scène rooms, 1280×720, ombre directionnelle, 1 rayon/pixel, scalaire : <b>&gt; 30 ms</b> (hors budget, attendu — c'est le point de départ, pas le produit).</li>
+<li>AVX2 paquets de 8, rayons cohérents : facteur 4 à 6 sur la traversée (pas 8 : divergence des couloirs aux feuilles).</li>
+<li>Demi-résolution + masque : passage sous 4 ms sur l'i7 de référence ; sinon le cadrage se révise avant L13.</li>
+<li>Compteurs à publier dans chaque summary : <code>RaysShadow</code>, <code>NodesVisited</code>, <code>TrisTested</code>, <code>AnyHitEarlyExit</code>.</li>
+</ul>
+</section>
+
+<section id="amendements">
+<h2>12 · Amendements et écarts avec le dépôt (relevés le 11/11/2026)</h2>
+<p>La discussion date du 05/09. Depuis, le dépôt a avancé. Chaque écart est présenté avant / après ; rien n'est acté, les points sont inscrits dans la roadmap (section « Décisions en attente — cadrage H », H-1 à H-14).</p>
+<div class="avap"><div class="a"><b>AVANT (05/09) — overlay de debug</b>Fonte bitmap 1 bit embarquée en <code>constexpr</code>, blit direct dans le FrameBuffer, tampon de commandes immédiat, « pas de système de widgets ».</div><div class="b"><b>APRÈS (L07·C1, 07/11)</b>Dear ImGui pour le debug (sous flag de compilation, jamais livré), police ProggyClean embarquée rasterisée par <code>stb_truetype</code> ; <code>MenuSystem</code> maison pour le joueur ; R7.0 à R7.6. L'esprit est conservé (coût nul en release, couche 2D après <code>RenderView×N</code>), le moyen change. L'overlay affichera le budget rayons de H.2. <b>Point H-7.</b></div></div>
+<div class="avap"><div class="a"><b>AVANT — SIMD « plus tard, L13+ »</b>Le cadrage prévoyait la vectorisation après les ombres.</div><div class="b"><b>APRÈS — chantiers B, C, D-a1</b>La vectorisation est arrivée avant : SoA, AVX2 sous <code>/arch:AVX2</code> (B1), commutateur unique <code>LV3_SIMD</code> (0 scalaire, 1 AVX2, réserve 2 AVX-512), boucles pixels spécialisées par shader, <code>Shade8</code>. La règle H.6 (dispatch à l'exécution) rejoint la piste B6 de la roadmap ; sa contrainte nouvelle : <code>/arch:AVX512</code> <em>par fichier</em>, jamais dans <code>LV3.Common.props</code>. <b>Point H-6.</b></div></div>
+<div class="avap"><div class="a"><b>AVANT — clé de paire = deux EntityId 24/8</b></div><div class="b"><b>APRÈS — Entity repacké 16/16 (bug 54)</b>La clé canonique d'une paire reste deux ids versionnés ordonnés, 64 bits ; aucune conséquence sur le cadrage, correction de texte. <b>Point H-9.</b></div></div>
+<div class="avap"><div class="a"><b>AVANT — « les textures ferment le Chantier B »</b></div><div class="b"><b>APRÈS — collision de noms</b>« Chantier B » désigne désormais la vectorisation (phase G). La dette visée ici est la validation de l'interpolation perspective-correcte (L04 P2, encore ouverte). À renommer, comme C1-0 l'a demandé pour les consolidations. <b>Point H-8.</b></div></div>
+<div class="avap"><div class="a"><b>AVANT — « le fragment écrit une couleur dans le callback »</b></div><div class="b"><b>APRÈS — C1 : boucles spécialisées par shader</b>Le callback par pointeur de fonction a disparu (C1) ; un shader est un type avec <code>Shade()</code> / <code>Shade8()</code>. Le G-buffer devient <code>ShaderGBuffer</code>, et le chemin C3 (boîte d'un pixel) doit l'accepter aussi. Rend H.1 plus naturel qu'en septembre. <b>Point H-2.</b></div></div>
+<div class="avap"><div class="a"><b>AVANT — rien sur les points</b></div><div class="b"><b>APRÈS — rendu en point (A20)</b>Un objet sous-pixel dessiné comme un point n'a pas de normale interpolée : que met-on dans le G-buffer ? Normale face caméra, ou pas d'ombre pour les splats. <b>Point H-4.</b></div></div>
+<h3>Autres points relevés (roadmap H-1 à H-14)</h3>
+<ul>
+<li>H-1 règles H.1–H.6 à acter · H-3 FMA dans la reconstruction (liée à la piste FMA) · H-5 ce que partage réellement H.4 (TLAS, pas BLAS) · H-10 réutilisation temporelle : <code>ViewData</code> doit garder V·P de la frame N−1 · H-11 transparents en forward après la LightingPass (<code>EBlendMode</code>) · H-12 <code>Rendering/RT/</code> comme sous-dossier, deux noyaux any-hit / closest · H-13 débits Mrays/s à mesurer hors moteur avant tout budget · H-14 valeur du biais d'ombre.</li>
+</ul>
+</section>
+
+<section id="usage">
+<h2>13 · Exemples d'utilisation (cible L10–L12)</h2>
+<pre>// scene.json — une lumière directionnelle (ParseLight existe déjà, A6-1 : échelle de m_color à confirmer)
+"lights": [ { "type": "directional", "direction": [0.3, 0.6, -0.8], "color": [1, 0.96, 0.9], "intensity": 1.0, "shadows": true } ]
+
+// Renderer : mode et tampons
+renderer.SetMode(ERenderMode::Deferred);        // le shader de RenderView devient ShaderGBuffer
+renderer.EnsureGBuffer(w, h);                   // alloue normale / albédo / matId si la taille change
+
+// Boucle (ordre S13, étapes 11 à 13)
+RenderView(registry, view, renderer);           // G-buffer rempli
+ShadowPass::Run(tlas, renderer.GBuffer(), view, light, renderer.ShadowBuffer());   // RaysShadow++
+LightingPass::Run(renderer.GBuffer(), renderer.ShadowBuffer(), lights, renderer.FrameBuffer());
+
+// Le même service, hors frame (H.5) : une lightmap au chargement
+for (texel : lightmap) { RayPacket8 p = MakeHemisphere8(texel); hits = g_traceClosest(tlas, p, out); ... }</pre>
+<p class="muted">Exemple de masque (levier 1) : <code>mask[px] = (gbuf.matId[px] != kSky) &amp;&amp; (Dot(n, L) &gt; 0)</code> — un pixel dont la normale tourne le dos à la lumière est à l'ombre sans rayon. Sur la scène rooms, cela retire typiquement 30 à 50 % des rayons avant de commencer.</p>
+</section>
+</div>
+<script>
+(function(){
+const f=Math.fround,$=id=>document.getElementById(id);
+const fmt=(x,n)=>Number.isFinite(x)?x.toFixed(n===undefined?6:n):String(x);
+/* ---------- maths row-major, vecteur-ligne, float32 ---------- */
+function mat4(){return [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];}
+function mul(A,B){const R=mat4();for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s=f(s+f(A[i][k]*B[k][j]));R[i][j]=s;}return R;}
+function vmul(v,M){const r=[0,0,0,0];for(let j=0;j<4;j++){let s=0;for(let k=0;k<4;k++)s=f(s+f(v[k]*M[k][j]));r[j]=s;}return r;}
+function inv4(M){const a=M.map(r=>r.slice()),b=mat4();for(let c=0;c<4;c++){let p=c;for(let r=c+1;r<4;r++)if(Math.abs(a[r][c])>Math.abs(a[p][c]))p=r;[a[c],a[p]]=[a[p],a[c]];[b[c],b[p]]=[b[p],b[c]];const d=f(1/a[c][c]);for(let j=0;j<4;j++){a[c][j]=f(a[c][j]*d);b[c][j]=f(b[c][j]*d);}for(let r=0;r<4;r++){if(r===c)continue;const m=a[r][c];if(m===0)continue;for(let j=0;j<4;j++){a[r][j]=f(a[r][j]-f(m*a[c][j]));b[r][j]=f(b[r][j]-f(m*b[c][j]));}}}return b;}
+const dot=(a,b)=>f(f(f(a[0]*b[0])+f(a[1]*b[1]))+f(a[2]*b[2]));
+const cross=(a,b)=>[f(f(a[1]*b[2])-f(a[2]*b[1])),f(f(a[2]*b[0])-f(a[0]*b[2])),f(f(a[0]*b[1])-f(a[1]*b[0]))];
+const sub=(a,b)=>[f(a[0]-b[0]),f(a[1]-b[1]),f(a[2]-b[2])];
+const W=1280,H=720,near=f(0.1),eye=[0,1.5,4];
+const fy=f(1/Math.tan(60*Math.PI/360)),aspect=f(W/H);
+const V=mat4();V[3]=[f(-eye[0]),f(-eye[1]),f(-eye[2]),1];
+const P=[[f(fy/aspect),0,0,0],[0,fy,0,0],[0,0,0,-1],[0,0,near,0]];
+const VP=mul(V,P),invVP=inv4(VP);
+const Lraw=[0.3,0.6,-0.8],Ln=f(Math.sqrt(dot(Lraw,Lraw)));const L=[f(Lraw[0]/Ln),f(Lraw[1]/Ln),f(Lraw[2]/Ln)];
+const invD=[f(1/L[0]),f(1/L[1]),f(1/L[2])];
+const box={min:[-0.5,0,-2.5],max:[0.47,1,-1.5]};
+const A=[-0.5,0,-1.5],B=[0.47,0,-1.5],C=[0.47,1,-1.5];const E1=sub(B,A),E2=sub(C,A);
+const n=[0,1,0],bias=f(1e-3),albedo=[0.8,0.7,0.6],amb=f(0.15);
+const px0=672,py=546;
+function groundSample(px){const xn=f(f(f(px+0.5)/W)*2-1),yn=f(1-f(f(py+0.5)/H)*2);const dx=f(f(xn*aspect)/fy),dy=f(yn/fy);const t=f(-eye[1]/dy);const Pw=[f(eye[0]+f(t*dx)),0,f(eye[2]-t)];return {xn,yn,Pw,zndc:f(near/f(t))};}
+function recon(px,z){const xn=f(f(f(px+0.5)/W)*2-1),yn=f(1-f(f(py+0.5)/H)*2);const c=vmul([xn,yn,z,1],invVP);const iw=f(1/c[3]);return {c,P:[f(c[0]*iw),f(c[1]*iw),f(c[2]*iw)]};}
+function slab(o){const t=[];for(let k=0;k<3;k++){let a=f(f(box.min[k]-o[k])*invD[k]),b=f(f(box.max[k]-o[k])*invD[k]);if(invD[k]<0)[a,b]=[b,a];t.push([a,b]);}const t0=Math.max(t[0][0],t[1][0],t[2][0],0),t1=Math.min(t[0][1],t[1][1],t[2][1],Infinity);return {t,t0,t1,hit:t0<=t1};}
+const pv=cross(L,E2),det=dot(E1,pv),inv=f(1/det);
+function mt(o){const s=sub(o,A);const u=f(dot(s,pv)*inv);const q=cross(s,E1);const v=f(dot(L,q)*inv);const t=f(dot(E2,q)*inv);return {u,v,t,hit:u>=0&&u<=1&&v>=0&&u+v<=1&&t>0};}
+/* ---------- calcul des 8 couloirs ---------- */
+const lanes=[];for(let l=0;l<8;l++){const g=groundSample(px0+l);const r=recon(px0+l,g.zndc);const o=[f(r.P[0]+f(n[0]*bias)),f(r.P[1]+f(n[1]*bias)),f(r.P[2]+f(n[2]*bias))];const sl=slab(o);const m=sl.hit?mt(o):null;lanes.push({px:px0+l,g,r,o,sl,m,hit:!!(m&&m.hit)});}
+const hitMask=lanes.reduce((a,x,i)=>a|((x.hit?1:0)<<i),0);
+function grid(id,rows){const g=$(id);g.innerHTML='';const hdr=document.createElement('div');hdr.className='h';hdr.textContent='couloir';g.appendChild(hdr);for(let l=0;l<8;l++){const d=document.createElement('div');d.className='h';d.textContent=l;g.appendChild(d);}rows.forEach(([name,vals,cls])=>{const h=document.createElement('div');h.className='h';h.textContent=name;g.appendChild(h);vals.forEach((v,i)=>{const d=document.createElement('div');d.textContent=v;if(cls)d.className=cls(i);g.appendChild(d);});});}
+const laneCls=i=>lanes[i].hit?'shadow':'lit';
+/* étape 1 */
+$('st1-in').innerHTML=`<code>py = ${py}</code>, <code>px = ${px0}…${px0+7}</code> ; z_ndc stocké par le rasterizer pour ces 8 pixels (sol à y = 0) : <code>${fmt(lanes[0].g.zndc,9)}</code> (identique sur la ligne : même profondeur de vue). invVP[3] = [${invVP[3].map(x=>fmt(x,4)).join(', ')}].`;
+grid('st1-lanes',[['x_ndc',lanes.map(x=>fmt(x.g.xn,6))],['c.w (= 1/invW)',lanes.map(x=>fmt(x.r.c[3],5))],['P.x reconstruit',lanes.map(x=>fmt(x.r.P[0],6))],['P.y reconstruit',lanes.map(x=>x.r.P[1].toExponential(2))],['P.z reconstruit',lanes.map(x=>fmt(x.r.P[2],6))],['P.x vrai (sol)',lanes.map(x=>fmt(x.g.Pw[0],6))],['erreur x (ulp)',lanes.map(x=>Math.round((x.r.P[0]-x.g.Pw[0])/(2**-26)))]]);
+$('st1-out').innerHTML=`Les 8 positions sont retrouvées à ≤ 2 ulp sur x et à <code>${lanes[0].r.P[1].toExponential(2)}</code> sur y (le sol vrai est à 0). Cette erreur de 1,5·10⁻⁷ est <b>positive</b> ici ; elle peut être négative pour un autre pixel : c'est l'acné de l'étape 2.`;
+/* étape 2 */
+$('st2-in').innerHTML=`P.x = [${lanes.map(x=>fmt(x.r.P[0],4)).join(', ')}], P.y ≈ 1,5·10⁻⁷, P.z = ${fmt(lanes[0].r.P[2],4)} ; normale du G-buffer n = (0, 1, 0) ; toLight = (${L.map(x=>fmt(x,6)).join(', ')}) ; ε = 10⁻³.`;
+grid('st2-lanes',[['o.x',lanes.map(x=>fmt(x.o[0],6))],['o.y',lanes.map(x=>fmt(x.o[1],7))],['o.z',lanes.map(x=>fmt(x.o[2],6))],['d (commun)',lanes.map(()=>'(0.287, 0.575, −0.766)')],['tmax',lanes.map(()=>'+inf')]]);
+$('st2-out').innerHTML=`o.y = ${fmt(lanes[0].o[1],7)} : l'origine est maintenant franchement au-dessus du sol. Un seul triplet (dx, dy, dz) et un seul invDir = (${invD.map(x=>fmt(x,4)).join(', ')}) pour tout l'écran : zéro division par rayon.`;
+/* étape 3 */
+$('st3-in').innerHTML=`Origines de l'étape 2 ; nœud = boîte de l'occulteur min (−0,5, 0, −2,5) max (0,47, 1, −1,5). invDir.z &lt; 0 : sur l'axe z, « near » est max.z = −1,5.`;
+grid('st3-lanes',[['tx0',lanes.map(x=>fmt(x.sl.t[0][0],4))],['tx1',lanes.map(x=>fmt(x.sl.t[0][1],4))],['ty0',lanes.map(x=>fmt(x.sl.t[1][0],4))],['ty1',lanes.map(x=>fmt(x.sl.t[1][1],4))],['tz0',lanes.map(x=>fmt(x.sl.t[2][0],4))],['tz1',lanes.map(x=>fmt(x.sl.t[2][1],4))],['t0 = max',lanes.map(x=>fmt(x.sl.t0,4))],['t1 = min',lanes.map(x=>fmt(x.sl.t1,4))],['t0 ≤ t1',lanes.map(x=>x.sl.hit?'1':'0'),i=>lanes[i].sl.hit?'hl':'']]);
+const slMask=lanes.reduce((a,x,i)=>a|((x.sl.hit?1:0)<<i),0);
+$('st3-out').innerHTML=`movemask = <code>0b${slMask.toString(2).padStart(8,'0')}</code> (bit 0 = couloir 0). Les couloirs ${lanes.map((x,i)=>x.sl.hit?i:null).filter(x=>x!==null).join(', ')} traversent la boîte : on descend dans ses feuilles pour eux seulement. Les autres sont finis pour ce sous-arbre — sans avoir touché un triangle.`;
+/* étape 4 */
+$('st4-in').innerHTML=`Couloirs actifs : ${lanes.map((x,i)=>x.sl.hit?i:null).filter(x=>x!==null).join(', ')}. Triangle T1 de la face avant : a = (−0,5, 0, −1,5), e1 = (0,97, 0, 0), e2 = (0,97, 1, 0). Communs au paquet : p = d × e2 = (${pv.map(x=>fmt(x,6)).join(', ')}), det = e1·p = ${fmt(det,6)}, inv = ${fmt(inv,6)}.`;
+grid('st4-lanes',[['u',lanes.map(x=>x.m?fmt(x.m.u,5):'—')],['v',lanes.map(x=>x.m?fmt(x.m.v,5):'—')],['u+v ≤ 1',lanes.map(x=>x.m?(x.m.u+x.m.v<=1?'1':'0'):'—')],['t',lanes.map(x=>x.m?fmt(x.m.t,5):'—')],['touché',lanes.map(x=>x.hit?'1':'0'),laneCls]]);
+$('st4-out').innerHTML=`hitMask = <code>0b${hitMask.toString(2).padStart(8,'0')}</code>. Les couloirs ${lanes.map((x,i)=>x.hit?i:null).filter(x=>x!==null).join(', ')} sont à l'ombre (v ∈ [0 ; 1], u + v ≤ 1, t ≈ ${fmt(lanes[0].m.t,3)}) ; les autres ont u &gt; 1 ou u + v &gt; 1 : le rayon passe à droite du triangle (puis T2 est testé, il manque aussi : x &gt; 0,47). Any-hit : les couloirs touchés quittent la traversée.`;
+/* étape 5 */
+$('st5-in').innerHTML=`hitMask = 0b${hitMask.toString(2).padStart(8,'0')} ; px0 = ${px0} = 8 × ${px0/8}.`;
+$('st5-out').innerHTML=`<code>shadow[${py} × 160 + ${px0/8}] = shadow[${py*160+px0/8}] = 0x${hitMask.toString(16).padStart(2,'0')}</code>. Un octet écrit pour huit rayons ; la ligne entière fait 160 octets, le tampon 115 200.`;
+/* étape 6 */
+const ndl=f(dot(n,L));
+const col=lanes.map(x=>{const vis=x.hit?0:1;const k=f(amb+f(f(vis*ndl)*1));return albedo.map(a=>Math.min(255,Math.floor(f(f(a*k)*255)+0.5)));});
+$('st6-in').innerHTML=`Albédo (0,8, 0,7, 0,6) ; n = (0, 1, 0) ; N·L = ${fmt(ndl,6)} ; ambiant 0,15 ; intensité 1 ; octet d'ombre 0x${hitMask.toString(16).padStart(2,'0')}.`;
+grid('st6-lanes',[['vis',lanes.map(x=>x.hit?'0.0':'1.0'),laneCls],['k',lanes.map(x=>fmt(f(amb+(x.hit?0:ndl)),6))],['R',col.map(c=>c[0])],['G',col.map(c=>c[1])],['B',col.map(c=>c[2])]]);
+$('st6-out').innerHTML=`Éclairé : (${col[7].join(', ')}) ; à l'ombre : (${col[0].join(', ')}). Six opérations par pixel, aucune lecture de triangle, tampons lus en ligne.`;
+/* contre-exemples */
+{// rasterizer : z_ndc du pixel (chaîne clip → NDC) ; « objet tracé » : rayon primaire, Möller–Trumbore sur le sol, z_ndc depuis le point touché
+ const rows=lanes.map(x=>{const dx=f(f(x.g.xn*aspect)/fy),dy=f(x.g.yn/fy);const nn=f(Math.sqrt(dot([dx,dy,-1],[dx,dy,-1])));const d=[f(dx/nn),f(dy/nn),f(-1/nn)];
+  const Ag=[-10,0,10],Eg1=[20,0,0],Eg2=[10,0,-40];const pp=cross(d,Eg2),dd=dot(Eg1,pp),ii=f(1/dd);const s=sub(eye,Ag);const q=cross(s,Eg1);const tt=f(dot(Eg2,q)*ii);
+  const Pz=f(eye[2]+f(tt*d[2]));const zt=f(near/f(-(f(Pz-eye[2]))));return [x.px,x.g.zndc,zt,Math.round((x.g.zndc-zt)/(2**-29))];});
+ $('ce1').textContent='px     z_ndc rasterizer   z_ndc rayon primaire   écart\n'+rows.map(r=>`${r[0]}   ${r[1].toFixed(10)}      ${r[2].toFixed(10)}      ${r[3]} ulp`).join('\n')+'\n→ même surface, deux chemins de calcul : le test GREATER tranche sur le dernier bit, pixel par pixel, le long des silhouettes.';}
+{const err=lanes[0].r.P[1];$('ce4-y').textContent=`y = ${err.toExponential(2)} (${Math.round(err/(2**-26))} ulp de 1,5)`;const lines=[];[1,-1].forEach(sg=>{const o=[lanes[0].r.P[0],f(sg*Math.abs(err)),lanes[0].r.P[2]];const t=f(-o[1]/L[1]);lines.push(`origine à y = ${o[1].toExponential(2)} : t(sol) = ${t.toExponential(3)} → ${t>0?'t > 0 : ombre fantôme (acné)':'t < 0 : correct'}`);});$('ce4').textContent=lines.join('\n');}
+/* navigation des étapes */
+const cards=[...document.querySelectorAll('.step-card')];const nav=$('st-nav');
+cards.forEach((c,i)=>{const b=document.createElement('button');b.textContent=(i+1);b.onclick=()=>show(i);nav.appendChild(b);});
+function show(i){cards.forEach((c,j)=>c.classList.toggle('on',i===j));[...nav.children].forEach((b,j)=>b.classList.toggle('on',i===j));}
+show(0);
+/* ---------- §6 budget ---------- */
+function upB(){const px=+$('b-res').value,fr=+$('b-frac').value/100,s=+$('b-scale').value,r=+$('b-rpp').value,t=+$('b-temp').value,mr=+$('b-mr').value;$('b-frac-o').textContent=Math.round(fr*100)+' %';$('b-rpp-o').textContent=r;$('b-temp-o').textContent=t+(t>1?' frames':' frame');$('b-mr-o').textContent=mr+' Mr/s';const rays=px*fr*s*r/t,ms=rays/(mr*1e6)*1000,pct=ms/16.67*100;$('b-rays').textContent=Math.round(rays).toLocaleString('fr-FR');$('b-ms').textContent=ms.toFixed(2)+' ms';$('b-pct').textContent=pct.toFixed(0)+' %';const bar=$('b-bar');bar.style.width=Math.min(100,pct)+'%';bar.style.background=ms<=4?'var(--add-ink)':ms<=16.67?'var(--warn-ink)':'var(--del-ink)';$('b-verdict').textContent=ms<=4?'Dans le budget RT (≤ 4 ms sur 16,67 ms).':ms<=16.67?'Consomme '+pct.toFixed(0)+' % de la frame : le reste du moteur ne tient plus.':'Dépasse la frame entière ('+(ms/16.67).toFixed(1)+' frames).';}
+['b-res','b-frac','b-scale','b-rpp','b-temp','b-mr'].forEach(id=>$(id).addEventListener('input',upB));upB();
+/* ---------- §7 overdraw ---------- */
+function upF(){const od=+$('f-od').value/10,l=+$('f-l').value;$('f-od-o').textContent=od.toFixed(1).replace('.',',');$('f-l-o').textContent=l;const px=921600;$('f-fw').textContent=Math.round(px*od*l).toLocaleString('fr-FR');$('f-df').textContent=(px*l).toLocaleString('fr-FR');$('f-r').textContent=Math.round(px*od).toLocaleString('fr-FR')+' / '+px.toLocaleString('fr-FR');}
+['f-od','f-l'].forEach(id=>$(id).addEventListener('input',upF));upF();
+/* ---------- §5 schéma en coupe ---------- */
+const cv=$('s-cv'),cx=cv.getContext('2d');
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function drawS(){const elev=+$('s-elev').value,res=+$('s-res').value,bs=+$('s-bias').value,acne=$('s-acne').checked,obj=$('s-obj').checked;$('s-elev-o').textContent=elev+'°';$('s-bias-o').textContent=bs+' ulp';
+ const Wc=cv.width,Hc=cv.height;cx.clearRect(0,0,Wc,Hc);
+ // monde : z de -6 (gauche) à +4.5 (droite) ; y de -0.3 à 3
+ const X=z=>(z+6)/10.5*Wc,Y=y=>Hc-(y+0.3)/3.3*Hc;
+ const ink=css('--ink'),ink3=css('--ink3'),lit=css('--lit'),hit=css('--hit'),boxc=css('--box'),acc=css('--accent');
+ cx.lineWidth=2;cx.strokeStyle=ink3;cx.beginPath();cx.moveTo(X(-6),Y(0));cx.lineTo(X(4.5),Y(0));cx.stroke();
+ cx.fillStyle=boxc;cx.fillRect(X(-2.5),Y(1),X(-1.5)-X(-2.5),Y(0)-Y(1));
+ // caméra
+ cx.fillStyle=ink;cx.beginPath();cx.moveTo(X(4),Y(1.5));cx.lineTo(X(3.7),Y(1.65));cx.lineTo(X(3.7),Y(1.35));cx.closePath();cx.fill();cx.font='14px "IBM Plex Sans", system-ui, "Segoe UI", sans-serif';cx.textBaseline='alphabetic';cx.fillText('caméra',X(3.75),Y(1.9));cx.fillText('sol rasterisé (G-buffer)',X(-5.9),Y(-0.15));cx.fillText('occulteur',X(-2.45),Y(1.15));
+ const th=elev*Math.PI/180;const ldz=Math.cos(th)*-1,ldy=Math.sin(th); // lumière vient de -Z (gauche) et du haut : toLight = (-cos, +sin)
+ // flèche lumière
+ {const x0=X(-5.6),y0=Y(2.75),x1=X(-5.6-ldz*0.9),y1=Y(2.75-ldy*0.9),a=Math.atan2(y1-y0,x1-x0);cx.strokeStyle=lit;cx.fillStyle=lit;cx.lineWidth=2;cx.beginPath();cx.moveTo(x0,y0);cx.lineTo(x1,y1);cx.stroke();cx.beginPath();cx.moveTo(x1,y1);cx.lineTo(x1-10*Math.cos(a-0.4),y1-10*Math.sin(a-0.4));cx.lineTo(x1-10*Math.cos(a+0.4),y1-10*Math.sin(a+0.4));cx.closePath();cx.fill();cx.fillText('lumière directionnelle',x0+14,y0+4);}
+ const rnd=rng(12345+elev*7+bs);let nS=0,nL=0,nA=0;
+ const step=0.12*res;
+ for(let z=-5.5;z<3.2;z+=step){ if(z>-2.5&&z<-1.5)continue; // sous la boîte : pixels du dessus de boîte, ignorés pour la lisibilité
+  let occl=false;
+  // intersection analytique du rayon (z,0)+t(ldz,ldy) avec la boîte [-2.5,-1.5]x[0,1]
+  if(ldz<0){const t=(-1.5-z)/ldz;if(t>0){const y=t*ldy;if(y<=1&&z>-1.5)occl=true;}}
+  // acné : erreur de reconstruction ±1 ulp, biais en ulp
+  let ac=false;if(acne&&!occl&&bs<2){const e=rnd()<0.5?-1:1;if(e+bs<=0)ac=true;}
+  if(ac)nA++;else if(occl)nS++;else nL++;
+  if(obj){ // contre-exemple : rayon primaire depuis la caméra vers le point du sol
+   cx.strokeStyle=acc;cx.lineWidth=.6;cx.beginPath();cx.moveTo(X(4),Y(1.5));cx.lineTo(X(z),Y(0));cx.stroke();
+  } else {
+   const tEnd=occl?(-1.5-z)/ldz:3.2;cx.strokeStyle=(occl||ac)?hit:lit;cx.lineWidth=.8;cx.globalAlpha=.7;cx.beginPath();cx.moveTo(X(z),Y(0));cx.lineTo(X(z+ldz*tEnd),Y(ldy*tEnd));cx.stroke();cx.globalAlpha=1;
+  }
+  cx.fillStyle=(occl||ac)?hit:lit;cx.beginPath();cx.arc(X(z),Y(0),3.2,0,Math.PI*2);cx.fill();
+ }
+ $('s-stat').textContent=obj?`contre-exemple : ${nS+nL+nA} rayons primaires qui redisent le Z-buffer, et aucune ombre`:`${nS+nL+nA} rayons · ${nS} à l'ombre · ${nL} éclairés · ${nA} faux positifs (acné)`;
+}
+['s-elev','s-res','s-bias','s-acne','s-obj'].forEach(id=>$(id).addEventListener('input',drawS));
+if(window.matchMedia)window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',drawS);
+drawS();
+})();
+</script>
+</body>
+</html>

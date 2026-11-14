@@ -1,0 +1,1352 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH4-CH1a — Le LOD des sphères, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+.bar{display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin:8px 0; background:var(--surface2)}
+.bar>span{display:block; height:100%; min-width:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px}
+.kv>dt{color:var(--ink3); font-family:var(--mono); font-size:12.5px}
+.kv>dd{margin:0; font-family:var(--mono); font-size:12.5px; overflow-wrap:anywhere}
+input[type=text].cmd{width:100%; font-family:var(--mono); font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.tag{font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.zone-chip{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+
+/* Ajouts PH4-CH2 et PH4-CH3b. */
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:3px; margin:6px 0}
+.lanes>div{font-family:var(--mono); font-size:11px; background:var(--surface2); border:1px solid var(--line); border-radius:4px; padding:3px 4px; text-align:right; overflow-wrap:anywhere; min-width:0}
+.lanes>div.h{background:var(--hl); border-color:var(--hl-line)}
+.reg{font-family:var(--mono); font-size:11.5px; color:var(--ink3); margin-top:8px}
+.bits{font-family:var(--mono); font-size:11.5px; color:var(--ink2)}
+.ports{display:grid; gap:3px; margin:8px 0}
+.ports>div{display:flex; height:22px; border-radius:4px; overflow:hidden; border:1px solid var(--line); background:var(--surface2)}
+.ports>div>span{display:block; height:100%}
+.ports .lbl{font-size:11.5px; color:var(--ink3); font-family:var(--mono)}
+.mesh{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0}
+.cell{font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); border-radius:5px; padding:6px 4px; text-align:center; background:var(--surface2)}
+.cell.a{background:var(--ok-bg); border-color:var(--ok); color:var(--ok)}
+.cell.b{background:var(--bad-bg); border-color:var(--bad); color:var(--bad)}
+.cell.p{outline:2px solid var(--accent); outline-offset:1px}
+</style>
+<style>
+/* Ajouts PH4-CH3b : couleurs des trois boîtes du laboratoire de couverture. */
+:root{ --loose:#b36b00; --tight:#0b7d70; --cov:#2f5bd3; --zone:#e9e4da; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; } }
+:root[data-theme="dark"]{ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; }
+.trio{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:10px 0}
+@media(max-width:620px){ .trio{grid-template-columns:1fr} }
+.trio>div{border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:var(--surface); min-width:0; font-size:13.5px}
+.trio b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3); margin-bottom:3px}
+.hbars{display:grid; gap:6px; margin:10px 0}
+.hbars>div{display:grid; grid-template-columns:minmax(90px,150px) 1fr 76px; gap:8px; align-items:center; font-size:13px}
+.hbars .tr{height:14px; background:var(--surface2); border:1px solid var(--line); border-radius:3px; overflow:hidden}
+.hbars .fl{height:100%; background:var(--accent)}
+.hbars .fl.bad{background:var(--bad)} .hbars .fl.ok{background:var(--ok)} .hbars .fl.cov{background:var(--cov)} .hbars .fl.tight{background:var(--tight)} .hbars .fl.loose{background:var(--loose)}
+.stats .v.ok,.stats .v.bad,.stats .v.warn{border:0;background:none;padding:0;margin:0;border-radius:0}
+.hbars .vv{font-family:var(--mono); font-size:12px; text-align:right; font-variant-numeric:tabular-nums}
+</style>
+<style>
+/* Ajouts PH4-CH2b : couleurs des deux chemins et du laboratoire de latence. */
+:root{ --inside:#2f6b46; --inter:#2563a8; --div:#9a3024; --lat:#8a6a12; --loose:#b36b00; --tight:#0b7d70; --cov:#2f5bd3; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --inside:#7fc49a; --inter:#6aa8ec; --div:#e38a7c; --lat:#d9bb6a; --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; } }
+:root[data-theme="dark"]{ --inside:#7fc49a; --inter:#6aa8ec; --div:#e38a7c; --lat:#d9bb6a; --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; }
+.two{display:grid; grid-template-columns:1fr; gap:12px}
+@media(min-width:820px){ .two{grid-template-columns:3fr 2fr} }
+.two>div{min-width:0}
+.badge{display:inline-block; font-family:var(--mono); font-size:11px; padding:0 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.badge.in{border-color:var(--inside); color:var(--inside)} .badge.it{border-color:var(--inter); color:var(--inter)}
+</style>
+
+<style>
+/* Ajouts PH4-CH1a : laboratoires de la sphère (pixels, chaînes, couleurs). */
+:root{ --lv0:#26215c; --lv1:#534ab7; --lv2:#9a90e0; --lv3:#d5d0f6; --pt:#b5651d; --sag:#9a3024; --rim:#0b7d70; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --lv0:#cfc9ff; --lv1:#9e94f0; --lv2:#6b60c9; --lv3:#3b3478; --pt:#e09a55; --sag:#e38a7c; --rim:#3cc4b4; } }
+:root[data-theme="dark"]{ --lv0:#cfc9ff; --lv1:#9e94f0; --lv2:#6b60c9; --lv3:#3b3478; --pt:#e09a55; --sag:#e38a7c; --rim:#3cc4b4; }
+.chains{display:grid; gap:6px; margin:10px 0}
+.chains>div{display:grid; grid-template-columns:minmax(96px,130px) repeat(4,minmax(0,1fr)); gap:5px; align-items:stretch}
+.chains .nm{font-family:var(--mono); font-size:12px; color:var(--ink2); display:flex; align-items:center}
+.chains .lv{border:1px solid var(--line); border-radius:6px; padding:5px 7px; font-size:12px; color:var(--ink2); background:var(--surface); min-width:0; line-height:1.35}
+.chains .lv.on{border:2px solid var(--accent); background:var(--accent-bg); color:var(--ink)}
+.chains .lv.pt{border:2px solid var(--pt); color:var(--pt)}
+.chains .lv .e.bad{color:var(--bad)}
+.pix{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; margin:10px 0}
+.pix>div{min-width:0}
+.pix canvas{image-rendering:pixelated}
+.pix .cap{font-size:12px; color:var(--ink3); margin-top:4px; font-family:var(--mono)}
+</style>
+
+<header>
+  <div class="t">Lot PH4-CH1a — Le LOD des sphères, pas à pas</div>
+  <div class="s">LibraryV3 · phase G, étape 1 (« LOD optionnel pour tout mesh ») · mesure des ε des sphères UV, deux décisions (fabrication en deux voies, pas de droit de monter), trois descripteurs <code>sphere_hi/mid/lo.lod.json</code>, lot M13 à binaire unique, loi de coût <code>a + b × faces</code>, Référence J, constat du popping de couleur · avenant A14a · échange du 04/10 au 07/10/2026 · création du 13/11/2026 (aucun artefact n’existait ; le petit widget « sélection par chaîne » de l’échange est repris et étendu en 1.2)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">Méthode</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">Le chantier LOD des rochers (lot PH4-CH1) avait fait descendre les 1 200 roches visibles de 168 à 8 faces. Restaient les <b>planètes et les lunes</b> : 40 sphères dessinées en pleine résolution, qui portaient à elles seules <b>88 % des faces encore soumises</b>. Ce lot leur donne des niveaux de détail, et en profite pour vérifier qu’une exigence posée par Onky est tenue : <b>tout mesh, présent ou futur, doit pouvoir avoir ou non une chaîne de LOD</b>, sans code particulier.</p>
+
+<p>Le lot est court en code (aucune ligne du moteur ne change) mais riche en leçons, parce qu’il pose trois questions que les rochers n’avaient pas posées :</p>
+<ol>
+<li><b>Une sphère se mesure-t-elle comme un rocher ?</b> Non : sur une surface lisse, l’erreur maximale ne se cache pas au même endroit. La mesure le montre, et une vérification analytique indépendante le confirme.</li>
+<li><b>Qui décide de la résolution d’une planète ?</b> L’auteur de la scène avait choisi <code>sphere_mid</code> pour Mercure. Une chaîne a-t-elle le droit d’aller plus haut quand la planète grossit à l’écran ? Le lot tranche : <b>non, L0 est un plafond</b>.</li>
+<li><b>Que reste-t-il à gagner ?</b> La mesure montre que Render ne suit plus le nombre de faces : un <b>coût fixe</b> par objet domine désormais. C’est la fin du chantier LOD sur cette scène, et le passage au chantier <code>Clear</code>.</li>
+</ol>
+<p>Trois jours après la clôture, une observation d’Onky (« je vois le changement de niveau d’une frame à l’autre ») a ajouté une quatrième leçon : <b>ε garantit la silhouette, pas la couleur</b>. Elle est racontée en fin de lot (étape 14) et dans le laboratoire 1.5.</p>
+
+<div class="rule"><b>En une phrase.</b> Une chaîne de LOD est une optimisation qui ne doit jamais changer l’image de plus de τ : elle ne descend que sous le choix de l’auteur, elle se fabrique de la façon la plus exacte disponible, et tout ce qui est affiché doit être une propriété de la surface, jamais de la numérotation du maillage.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+<div class="scroll"><table>
+<thead><tr><th>Étape</th><th>Ce qu’elle a apporté</th><th>Ce qu’elle laisse à ce lot</th></tr></thead>
+<tbody>
+<tr><td>L01 à L06, PH1</td><td>Socle, mathématiques, ECS, <code>ResourceManager</code>, rasterizer, caméra, graphe de scène, 4 vues</td><td>Chaque objet est dessiné quatre fois par frame</td></tr>
+<tr><td>SG (scénegraphe Système Solaire)</td><td><code>gen_meshes.py</code> : <code>uv_sphere(seg, rings)</code> avec couture et pôles corrigés ; <code>sphere_lo</code> 16×10, <code>sphere_mid</code> 32×16, <code>sphere_hi</code> 64×32 ; choix du maillage par corps</td><td>Les trois sphères et la fonction qui les génère</td></tr>
+<tr><td>Campagne de mesure (PH4-G)</td><td><code>Profiler</code>, CSV, règles M1 à M13 (M12 : règle écrite avant la mesure ; M13 : lire l’en-tête, épingler, A B B A)</td><td>La méthode de mesure</td></tr>
+<tr><td>PH4-CH2, CH2b, CH3b</td><td>Pré-transformation, projection par sommet, rejet précoce</td><td>Un pipeline où le coût est en amont des pixels</td></tr>
+<tr><td><b>PH4-CH1 (30/09 → 04/10)</b></td><td>LOD des rochers : <code>LodChain</code>, <code>SelectLodLevel</code>, <code>LodChainLoader</code>, τ par vue, chaînes implicites (« un mesh sans LOD est une chaîne de longueur 1 »), Référence I</td><td><b>Toute la mécanique.</b> Ce lot ne fait que l’utiliser pour une nouvelle famille de meshes</td></tr>
+</tbody></table></div>
+<p><b>Référence I</b> (point de départ, i7-1265U épinglé, ceinture, 4 vues, 1536 × 900, Release) : Render 1,67 à 1,69 ms, frame 3,87 ms, 82 988 faces soumises, « ≈ 20 ns par face ».</p>
+<p>Nom du lot : <b>PH4-CH1a</b>, comme l’avenant A14a l’est à l’annexe A14. Le plan de la phase G l’appelait « étape 1 » ; ce nom est repris par trop d’autres séries (étape 1 du LOD des rochers, chantier B1, consolidation C1) pour être utilisé seul.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>La situation au départ</h3>
+<p>Dans <code>solar_system_v1compat_belt_lod.json</code>, la scène de la Référence I, l’auteur a choisi un maillage par corps céleste selon son importance : 3 corps en <code>sphere_hi</code> (Soleil, Jupiter, Saturne), 15 en <code>sphere_mid</code> (Mercure, Vénus, la Terre, la Lune, Mars, les lunes galiléennes, Titan, Uranus, Neptune, Triton, Pluton, Éris), 22 en <code>sphere_lo</code> (petites lunes, Cérès, Vesta, Pallas…). Si tout était visible, cela ferait 32 640 faces par vue. Vues par quatre caméras lointaines, presque toutes ces sphères font quelques pixels de rayon.</p>
+
+<h3>Le besoin, en termes fonctionnels</h3>
+<ul>
+<li><b>Moins de travail pour une image identique</b> : une planète de 3 pixels n’a pas besoin de 960 faces.</li>
+<li><b>Le choix de l’auteur est respecté</b> : vue de près, une planète garde exactement la résolution qu’il a choisie.</li>
+<li><b>Tout mesh peut avoir ou non des niveaux</b> : un vaisseau, un mesh importé demain doivent pouvoir entrer dans le même système.</li>
+<li><b>Une méthode pour fabriquer les niveaux</b> d’un mesh qui ne vient d’aucune fonction.</li>
+<li><b>Un gain mesuré</b>, par un lot recevable, et une nouvelle référence.</li>
+</ul>
+
+<h3>Les objectifs du lot</h3>
+<div class="scroll"><table>
+<thead><tr><th>Objectif</th><th>Critère</th><th>Résultat</th></tr></thead>
+<tbody>
+<tr><td>Mesurer avant de construire</td><td>ε de chaque niveau, vérifié par deux méthodes</td><td><span class="pill ok">accord à 10⁻⁵</span></td></tr>
+<tr><td>Trancher avant le code</td><td>méthode de fabrication ; droit de monter</td><td><span class="pill ok">deux voies</span> <span class="pill ok">L0 = plafond</span></td></tr>
+<tr><td>Aucun code moteur</td><td>3 descripteurs, 3 <code>.obj</code>, une copie de scène</td><td><span class="pill ok">0 ligne LIB</span></td></tr>
+<tr><td>Retirer le travail</td><td><code>FacesSubmitted</code></td><td><span class="pill ok">82 988 → 14 752</span></td></tr>
+<tr><td>Mesurer proprement</td><td>lot M13, binaire unique, A B B A</td><td><span class="pill ok">Render ×0,38</span> <span class="pill warn">réserve paire 1</span></td></tr>
+<tr><td>Image inchangée</td><td>aucun popping visible</td><td><span class="pill warn">tenu en <code>Depth</code> ; pas en <code>Solid</code></span> (constat du 07/10)</td></tr>
+</tbody></table></div>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll"><table>
+<thead><tr><th>Question</th><th>Décision (04/10)</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Comment fabriquer les niveaux ?</td><td><b>Deux voies</b> : <code>"resample"</code> quand une fonction génératrice existe, <code>"qem"</code> hors ligne pour le reste (sous-chantier séparé)</td><td>Le ré-échantillonnage est exact et gratuit ; le QEM est le seul recours pour un mesh importé, mais il ne doit pas retarder les sphères.</td></tr>
+<tr><td>Une chaîne peut-elle monter au-dessus du choix de l’auteur ?</td><td><b>Non</b> : L0 = plafond ; trois descripteurs, un par plafond</td><td>Monter change l’image et rend le coût imprévisible ; l’auteur qui veut plus de détail choisit un plafond plus haut.</td></tr>
+<tr><td>Quels niveaux grossiers ?</td><td>Sous chaque plafond : les sphères existantes, puis 12×6, 8×5, 6×4</td><td>Chaque pas divise les faces par 2 à 4 ; la chaîne a au plus 4 niveaux (<code>kMaxLevels</code>).</td></tr>
+<tr><td>Comment mesurer ?</td><td>Un seul binaire, deux scènes, A B B A, épinglé</td><td>A et B ne diffèrent que par la donnée : aucun risque de binaire mal étiqueté.</td></tr>
+</tbody></table></div>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+<p>La chaîne complète du moteur à la clôture de l’échange (07/10). <span class="tag" style="background:var(--hl);border-color:var(--hl-line)">surligné</span> = <b>créé ou modifié</b> par ce lot (ici, uniquement des données et des outils) ; <span class="tag" style="border-style:dashed;border-color:var(--accent)">tireté</span> = code inchangé mais <b>traversé différemment</b> (les sphères y passent désormais par la sélection) ; <span class="tag" style="border-color:var(--bad);color:var(--bad)">rouge</span> = le point mis en cause par le constat du 07/10.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 900" role="img" aria-label="Chaîne complète du moteur. Créés par le lot PH4-CH1a : gen_sphere_lod.py, trois niveaux de sphère et trois descripteurs, scène belt_lod_spheres, lot de mesure à binaire unique. Traversés différemment : Serializer, ResourceManager, RenderView et sélection, compteurs LodLevel. Mis en cause : couleur par indice de face dans l'étage fragments.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>
+.bx{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.bxh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}
+.bxo{fill:var(--surface2);stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 3}
+.bxr{fill:var(--bad-bg);stroke:var(--bad);stroke-width:1.6}
+.lb{fill:var(--ink);font:600 12.5px var(--sans)}
+.sb{fill:var(--ink3);font:11px var(--mono)}
+.ph{fill:var(--ink3);font:600 10.5px var(--sans);letter-spacing:.09em}
+.ln{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}
+</style>
+<text class="ph" x="16" y="20">0 · HORS LIGNE (script, aucune compilation)</text>
+<rect class="bx" x="16" y="30" width="200" height="56" rx="8"/><text class="lb" x="28" y="52">gen_meshes.py</text><text class="sb" x="28" y="70">uv_sphere(seg, rings)</text>
+<rect class="bxh" x="230" y="30" width="300" height="56" rx="8"/><text class="lb" x="242" y="52">gen_sphere_lod.py (étapes 2, 5)</text><text class="sb" x="242" y="70">re-échantillonne, mesure ε</text>
+<rect class="bxh" x="544" y="30" width="340" height="56" rx="8"/><text class="lb" x="556" y="52">sphere_12x6/8x5/6x4.obj</text><text class="sb" x="556" y="70">+ sphere_hi/mid/lo.lod.json</text>
+<line class="ln" x1="216" y1="58" x2="226" y2="58" marker-end="url(#ar)"/><line class="ln" x1="530" y1="58" x2="540" y2="58" marker-end="url(#ar)"/>
+<rect class="bxh" x="544" y="96" width="340" height="44" rx="8"/><text class="lb" x="556" y="116">…_belt_lod_spheres.json (étape 5)</text><text class="sb" x="556" y="132">40 chemins "model" → .lod.json</text>
+
+<text class="ph" x="16" y="172">1 · LANCEMENT (une fois)</text>
+<rect class="bx" x="16" y="182" width="268" height="56" rx="8"/><text class="lb" x="28" y="204">engine.json → EngineConfig</text><text class="sb" x="28" y="222">lod.tolerancePx = 0,5</text>
+<rect class="bxo" x="298" y="182" width="270" height="56" rx="8"/><text class="lb" x="310" y="204">Serializer::ParseMesh</text><text class="sb" x="310" y="222">.lod.json → chaîne décrite</text>
+<rect class="bxo" x="582" y="182" width="302" height="56" rx="8"/><text class="lb" x="594" y="204">ResourceManager</text><text class="sb" x="594" y="222">3 chaînes ; .obj partagés (cache)</text>
+<line class="ln" x1="284" y1="210" x2="294" y2="210" marker-end="url(#ar)"/><line class="ln" x1="568" y1="210" x2="578" y2="210" marker-end="url(#ar)"/>
+<path class="ln" d="M714 140 L714 178" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="270">2 · UNE FRAME</text>
+<rect class="bx" x="16" y="280" width="420" height="48" rx="8"/><text class="lb" x="28" y="300">dt, horloge, Input, Animation, cuissons, Trigger</text><text class="sb" x="28" y="316">témoins de calcul T</text>
+<rect class="bx" x="450" y="280" width="434" height="48" rx="8"/><text class="lb" x="462" y="300">BuildViewData × 4</text><text class="sb" x="462" y="316">τ, lodParams.kPx / τ</text>
+<line class="ln" x1="436" y1="304" x2="446" y2="304" marker-end="url(#ar)"/>
+<rect class="bx" x="16" y="340" width="868" height="36" rx="8"/><text class="lb" x="28" y="363">Clear, puis Render : pour chaque vue, RenderView(…)</text>
+<path class="ln" d="M667 328 L667 336" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="406">3 · DANS RenderView, POUR CHAQUE INSTANCE</text>
+<rect class="bxo" x="16" y="416" width="268" height="56" rx="8"/><text class="lb" x="28" y="438">① chaîne, frustum (union)</text><text class="sb" x="28" y="456">sphères : 4 niveaux au lieu de 1</text>
+<rect class="bxo" x="298" y="416" width="270" height="56" rx="8"/><text class="lb" x="310" y="438">② q′, SelectLodLevel</text><text class="sb" x="310" y="456">sphère : q′ ≈ R / τ</text>
+<rect class="bxo" x="582" y="416" width="302" height="56" rx="8"/><text class="lb" x="594" y="438">③ mesh du niveau, gardes</text><text class="sb" x="594" y="456">85 sphères en L3 (36 ou 64 faces)</text>
+<line class="ln" x1="284" y1="444" x2="294" y2="444" marker-end="url(#ar)"/><line class="ln" x1="568" y1="444" x2="578" y2="444" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="502">4 · SOMMETS ET FACES</text>
+<rect class="bxo" x="16" y="512" width="868" height="48" rx="8"/><text class="lb" x="28" y="533">ProjectPositions, EmitRasterTriangle, rejet précoce, Rasterizer</text><text class="sb" x="28" y="549">inchangés : 82 % de faces en moins</text>
+<path class="ln" d="M733 472 L733 508" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="590">5 · PIXELS</text>
+<rect class="bxr" x="16" y="600" width="430" height="60" rx="8"/><text class="lb" x="28" y="622">Couleur en mode Solid : FaceColor(int(f))</text><text class="sb" x="28" y="640">hash de l'INDICE de face → popping (étape 14)</text>
+<rect class="bx" x="460" y="600" width="424" height="60" rx="8"/><text class="lb" x="472" y="622">Mode Depth : propriété de la surface</text><text class="sb" x="472" y="640">aucune bascule visible (test F3)</text>
+<path class="ln" d="M300 560 L300 596" marker-end="url(#ar)"/><path class="ln" d="M672 560 L672 596" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="690">6 · FIN DE FRAME ET MESURE</text>
+<rect class="bx" x="16" y="700" width="268" height="52" rx="8"/><text class="lb" x="28" y="722">Present</text><text class="sb" x="28" y="740">hors budget moteur</text>
+<rect class="bxo" x="298" y="700" width="270" height="52" rx="8"/><text class="lb" x="310" y="722">Profiler : LodLevel0..3</text><text class="sb" x="310" y="740">Σ LodLevel = testés − rejetés</text>
+<rect class="bxh" x="582" y="700" width="302" height="52" rx="8"/><text class="lb" x="594" y="722">Lot M13, binaire unique</text><text class="sb" x="594" y="740">a + b·F frame par frame → Réf. J</text>
+<line class="ln" x1="284" y1="726" x2="294" y2="726" marker-end="url(#ar)"/><line class="ln" x1="568" y1="726" x2="578" y2="726" marker-end="url(#ar)"/>
+<text class="sb" x="16" y="790">Les numéros d'étape renvoient à la section 3.</text>
+<text class="sb" x="16" y="810">Après ce lot : A15 (Clear), A19 (coût fixe), A20 (point inséré entre ① et ②), chantiers B, C, D.</text>
+<text class="sb" x="16" y="830">La scène de ce lot devient la scène témoin « L » de tous ces chantiers.</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll"><table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Changement</th><th>Étape</th></tr></thead>
+<tbody>
+<tr><td><code>Documentations/fichiers de génération/gen_sphere_lod.py</code></td><td>EXE (outil)</td><td>créé ; importe <code>gen_meshes.py</code> et <code>gen_rock_lod.py</code></td><td>5</td></tr>
+<tr><td><code>assets/Meshes/sphere_12x6.obj</code>, <code>sphere_8x5.obj</code>, <code>sphere_6x4.obj</code></td><td>EXE (assets)</td><td>créés</td><td>5</td></tr>
+<tr><td><code>assets/Meshes/sphere_hi.lod.json</code>, <code>sphere_mid.lod.json</code>, <code>sphere_lo.lod.json</code></td><td>EXE (assets)</td><td>créés</td><td>5</td></tr>
+<tr><td><code>assets/GraphScene/solar_system_v1compat_belt_lod_spheres.json</code></td><td>EXE (scène)</td><td>copie de la scène de la Référence I, 40 chemins <code>model</code> changés</td><td>5</td></tr>
+<tr><td><code>banc_lod_spheres.bat</code></td><td>poste de mesure</td><td>créé : un binaire, deux scènes, jetable + A B B A</td><td>9</td></tr>
+<tr><td><code>Plan_Phase_G_LibraryV3.md</code>, avenant <code>A14a</code> (PDF)</td><td>projet</td><td>avancement, Référence J, constat du 07/10</td><td>12, 13, 14</td></tr>
+<tr><td>LIB (<code>LibraryV3</code>)</td><td>—</td><td><b>aucun</b></td><td>—</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+<p>Le parcours d’une planète, de l’outil de génération à l’écran, et ce que le lot y change. Le moteur ne change pas ; ce sont les données qui le font emprunter un autre chemin.</p>
+
+<h3>A · Ce qu’un corps céleste référence</h3>
+<div class="ab"><div class="av"><div class="t">Avant (Référence I)</div><pre><code>"id": "Mercury", "Mesh": { "model": "assets/Meshes/sphere_mid.obj" }
+ParseMesh : .obj → LoadMeshChecked → GetOrCreateSingleLevelChain
+→ chaîne IMPLICITE, longueur 1 : toujours 960 faces</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>"id": "Mercury", "Mesh": { "model": "assets/Meshes/sphere_mid.lod.json" }
+ParseMesh : .lod.json → LoadLodChainChecked
+→ chaîne DÉCRITE, 4 niveaux : mid (960) · lo (288) · 12×6 (120) · 8×5 (64)
+  le plafond reste mid : choix de l'auteur, inchangé</code></pre></div></div>
+
+<h3>B · Comment les niveaux sont fabriqués</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>gen_meshes.py écrit sphere_lo / mid / hi (choix d'auteur)
+aucun ε, aucune chaîne
+question ouverte : comment fabriquer les niveaux
+d'un mesh qui ne vient d'aucune fonction ?</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>gen_sphere_lod.py : même uv_sphere, grilles plus grossières
+ε mesuré contre L0 (rayons + ciblage sommets ET centres de faces)
+vérifié par la flèche analytique (plan de chaque triangle)
+"_fabrication": "resample"  |  "qem" (sous-chantier, plus tard)</code></pre></div></div>
+
+<h3>C · Ce que décide le moteur pour une sphère, à chaque frame</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>q' calculé, SelectLodLevel(chaîne implicite) → 0
+LodLevel0 += 1 ; 960 faces quelle que soit la taille</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>q' ≈ R / τ  (R : rayon apparent en px, rayon local 1)
+k = nombre de i tels que q' ≤ 1/ε_i       (même code qu'avant)
+mid : L0 si R > 15,2 px · L1 lo jusqu'à 15 · L2 12×6 jusqu'à 7,2
+      · L3 8×5 jusqu'à 3,7 px
+dans la scène de mesure : les 85 sphères visibles → L3</code></pre></div></div>
+
+<h3>D · Qui a le droit de choisir plus de détail</h3>
+<div class="ab"><div class="av"><div class="t">Question ouverte</div><pre><code>une chaîne unique partant de sphere_hi pour tous les corps ?
+Mercure vue de près passerait de mid à hi :
+image meilleure… mais différente, coût ×4,1</code></pre></div>
+<div class="ap"><div class="t">Décision</div><pre><code>L0 = PLAFOND choisi par l'auteur
+trois descripteurs, un par plafond, mêmes .obj
+« monter » = l'auteur change de descripteur dans la scène,
+            décision de contenu, mesurée à part</code></pre></div></div>
+
+<h3>E · Ce que dit la mesure</h3>
+<div class="ab"><div class="av"><div class="t">Avant (Référence I, A14 § 8.3)</div><pre><code>« ≈ 20 ns par face soumise, constant »
+lecture implicite : Render ∝ faces</code></pre></div>
+<div class="ap"><div class="t">Après (Référence J)</div><pre><code>Render ≈ a + b × FacesSubmitted
+b = 13,5 ns (pente, frame par frame)   a ≈ 0,39 ms (coût fixe)
+« 20 ns » était un RAPPORT : 13,5 de pente + 6,7 de coût fixe réparti
+→ le LOD a retiré ce qu'il pouvait ; poste suivant : Clear</code></pre></div></div>
+
+<h3>F · Ce que garantit ε</h3>
+<div class="ab"><div class="av"><div class="t">Avant (A13 § 9, A14 § 8.3)</div><pre><code>« avec τ = 0,5 px, le saut est inférieur à un demi-pixel :
+  en pratique, il ne se voit pas »
+« aucun popping observé en vol » (rochers, tous sous 1 px)</code></pre></div>
+<div class="ap"><div class="t">Après (constat du 07/10)</div><pre><code>ε garantit la SILHOUETTE (≤ τ), pas la couleur
+mode Solid : couleur = hash de l'indice de face → 713 px sur 713 changent
+mode Depth : aucune bascule visible (12 px de bord au plus)
+exigences pour le shading futur : UV perspective-correctes,
+Phong par pixel (0 % d'écart sur une sphère), mipmaps</code></pre></div></div>
+
+<h3>G · La référence de performance</h3>
+<div class="ab"><div class="av"><div class="t">Référence I</div><pre><code>Render 1,67 à 1,69 ms · frame 3,87 ms · 82 988 faces
+Clear ≈ 1,08 ms · Present ≈ 0,9 ms</code></pre></div>
+<div class="ap"><div class="t">Référence J (lot M13 du 05/10)</div><pre><code>Render 0,57 à 0,59 ms (≈ 19 %) · frame 2,96 à 3,07 ms (≈ 330 fps)
+Clear 1,25 à 1,28 ms (≈ 42 %) · Present 0,94 à 0,99 ms
+FacesSubmitted 14 752</code></pre></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="methode">
+<h2>M · La méthode : fabriquer, mesurer et plafonner une chaîne</h2>
+
+<h3>M.1 · L’idée, vulgarisée</h3>
+<p>Une sphère dessinée avec des triangles est un polyèdre : vue de loin, sa silhouette est un polygone. L’écart entre ce polygone et le vrai cercle s’appelle la <b>flèche</b> (le mot vient de l’arc et de sa corde : la flèche est la hauteur de l’arc au-dessus de la corde). Plus il y a de triangles, plus la flèche est petite. Le LOD remplace une sphère fine par une sphère grossière <b>tant que la flèche, ramenée en pixels, reste sous un demi-pixel</b>. Pour une sphère, la règle devient presque parlante : « <code>sphere_lo</code> suffit tant que l’astre fait moins de 15 pixels de rayon ».</p>
+
+<h3>M.2 · Les deux façons de fabriquer un niveau</h3>
+<div class="scroll"><table>
+<thead><tr><th>Voie</th><th>Principe</th><th>Quand</th><th>Source</th></tr></thead>
+<tbody>
+<tr><td><b>Ré-échantillonnage</b> (<code>"resample"</code>)</td><td>On rappelle la fonction qui a créé L0 avec une grille plus grossière. La surface est exactement la même ; seuls les points d’échantillonnage changent.</td><td>Sphères, rochers, terrains : tout mesh issu d’une fonction</td><td>Pratique standard des générateurs procéduraux ; utilisée pour les rochers (A14 § 3.1)</td></tr>
+<tr><td><b>Simplification par quadriques</b> (<code>"qem"</code>)</td><td>On fusionne des arêtes une à une, en choisissant chaque fois celle dont la disparition déforme le moins la surface, mesurée par une somme de distances aux plans voisins (une quadrique par sommet).</td><td>Mesh modélisé ou importé, sans fonction</td><td>M. Garland et P. S. Heckbert, « Surface Simplification Using Quadric Error Metrics », SIGGRAPH 1997 ; utilisée par Unreal, Unity (Mesh LOD), meshoptimizer (A. Kapoulkine)</td></tr>
+</tbody></table></div>
+<p>La validation prévue du QEM utilise les sphères comme <b>banc d’essai</b> : simplifier <code>sphere_hi</code> jusqu’à 960, 288 et 64 faces, et comparer son ε à celui du ré-échantillonnage exact au même nombre de faces. Le QEM devrait même gagner : une sphère UV gaspille des triangles minces aux pôles.</p>
+
+<h3>M.3 · La mesure de ε, et sa vérification</h3>
+<p>Comme pour les rochers : on lance des rayons depuis le centre dans 100 000 directions aléatoires, plus des directions ciblées ; pour chaque rayon on mesure la distance à la surface de L0 et à celle de L<sub>k</sub> ; ε<sub>k</sub> est le plus grand écart, ×1,1, arrondi vers le haut au dix-millième. Le lot ajoute deux choses :</p>
+<ul>
+<li><b>Un ciblage sur les centres de faces</b> : sur une sphère, la flèche est maximale au centre des triangles, pas aux sommets (où l’écart est nul, puisque les sommets sont sur la sphère).</li>
+<li><b>Une vérification analytique indépendante</b> : pour un triangle dont les sommets sont sur la sphère unité, le point le plus enfoncé est le pied de la perpendiculaire abaissée du centre sur son plan ; la flèche vaut <code>1 − |n·a|</code> (n normale unitaire, a un sommet), si ce pied tombe dans le triangle. Aucun rayon, aucun tirage.</li>
+</ul>
+
+<h3>M.4 · Pourquoi ε se lit en pixels de rayon</h3>
+<p>Le moteur admet le niveau k si <code>ε<sub>k</sub> × q ≤ τ</code>, avec q le nombre de pixels par unité locale. Une sphère de rayon local 1 a pour rayon apparent R = q pixels. Donc :</p>
+<pre><code>niveau k admis  ⇔  R ≤ τ / ε_k        (τ = 0,5 px)
+mid  : 0,5 / 0,0106 = 47,2 px      lo  : 0,5 / 0,0330 = 15,2 px
+12×6 : 0,5 / 0,0698 =  7,2 px      8×5 : 0,5 / 0,1335 =  3,7 px      6×4 : 0,5 / 0,2030 = 2,5 px</code></pre>
+<p>La flèche est proportionnelle au rayon : ε ne dépend pas de l’échelle du <code>Transform</code>. Pour un rocher, ces seuils n’ont pas d’expression aussi simple (son rayon local varie autour de 1).</p>
+
+<h3>M.5 · Le plafond : une décision de contenu, pas d’optimisation</h3>
+<p>Un LOD est une optimisation <b>conservatrice</b> : il remplace ce que l’auteur a demandé par quelque chose d’indiscernable et de moins cher. Monter au-dessus du choix de l’auteur serait l’inverse : plus cher et différent. Les moteurs du commerce font la même séparation : dans Unity, le premier niveau d’un <code>LODGroup</code> est le mesh de l’artiste ; dans Unreal, le niveau 0 d’un <code>StaticMesh</code> est l’asset importé. Une résolution plus fine est un autre asset, choisi par l’auteur.</p>
+
+<h3>M.6 · Les indicateurs du lot</h3>
+<div class="scroll"><table>
+<thead><tr><th>Indicateur</th><th>Où</th><th>Ce qu’il prouve</th></tr></thead>
+<tbody>
+<tr><td>ε mesuré / flèche analytique</td><td><code>_measure</code> des descripteurs</td><td>que la mesure est juste (deux méthodes, accord à 10⁻⁵)</td></tr>
+<tr><td><code>LodLevel0..3</code></td><td>CSV</td><td>où sont les sphères : A 97 en L0 ; B 12 en L0, 1 285 en L3</td></tr>
+<tr><td><code>FacesSubmitted</code></td><td>CSV</td><td>le travail retiré : 82 988 → 14 752</td></tr>
+<tr><td>Render, frame (médiane, p95)</td><td>lot M13</td><td>le gain, sa stabilité, la loi a + b × F</td></tr>
+<tr><td>Témoins T et <code>Clear</code></td><td>lot M13</td><td>que la machine n’a pas dérivé</td></tr>
+<tr><td>Pixels qui changent à la bascule</td><td>laboratoire 1.5</td><td>ce que voit l’œil selon la façon de colorer</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir avant le code</h2>
+<p>Tout est calculé dans la page. Les sphères sont générées par la même fonction que <code>gen_meshes.py</code> (<code>uv_sphere</code>, couture et pôles compris). Les comparaisons de la sélection sont faites en <code>float32</code> (<code>Math.fround</code>), comme dans le moteur.</p>
+
+<h3>1.1 · La flèche : une sphère facettée rasterisée</h3>
+<p>Choisis une grille et un rayon à l’écran. La sphère est projetée (vue orthographique), puis chaque centre de pixel est testé contre la silhouette du polyèdre et contre le vrai disque. Les pixels <span style="color:var(--sag)">manquants</span> sont ceux que le cercle couvre et pas le polyèdre. La flèche maximale est calculée analytiquement, triangle par triangle.</p>
+<div class="ctl">
+<label>Grille <select id="f1G"><option value="64,32">hi 64×32</option><option value="32,16">mid 32×16</option><option value="16,10" selected>lo 16×10</option><option value="12,6">12×6</option><option value="8,5">8×5</option><option value="6,4">6×4</option></select></label>
+<label>Rayon R <input type="range" id="f1R" min="2" max="60" step="0.5" value="15"><span id="f1RV" class="num"></span></label>
+<label>Rotation <input type="range" id="f1Rot" min="0" max="90" step="1" value="10"><span id="f1RotV" class="num"></span></label>
+<label>Inclinaison <input type="range" id="f1Tilt" min="-90" max="90" step="1" value="20"><span id="f1TiltV" class="num"></span></label>
+</div>
+<canvas id="f1Cv"></canvas>
+<div class="stats" id="f1Stats"></div>
+<div id="f1Tab"></div>
+
+<h3>1.2 · Trois chaînes, un rayon apparent</h3>
+<p>Fais varier le rayon apparent R. Pour chaque descripteur, le moteur compte les comparaisons <code>q′ ≤ invEps[i]</code> vraies (<code>SelectLodLevel</code>, en <code>float32</code>). La case cerclée est le niveau dessiné. « Flèche » est l’écart réel du niveau dessiné à la vraie sphère, en pixels ; en rouge s’il dépasse τ. Deux cases à cocher montrent la décision écartée (une chaîne unique qui monte) et un amendement postérieur (le dessin en point, A20).</p>
+<div class="ctl">
+<label>Rayon R <input type="range" id="c2R" min="0" max="100" step="1" value="62"><span id="c2RV" class="num"></span></label>
+<label>τ <select id="c2Tau"><option value="0.5" selected>0,5 px</option><option value="1">1 px</option><option value="0.25">0,25 px</option></select></label>
+<label><input type="checkbox" id="c2Up"> chaîne unique qui « monte » (décision écartée)</label>
+<label><input type="checkbox" id="c2Pt"> dessin en point sous 1 px (A20, après ce lot)</label>
+</div>
+<div class="chains" id="c2Rows"></div>
+<div class="stats" id="c2Stats"></div>
+<div id="c2Verdict"></div>
+
+<h3>1.3 · Mesurer ε : où se cache le maximum ?</h3>
+<p>Sur un rocher, 400 directions aléatoires sous-estimaient ε de 46 % (lot PH4-CH1, laboratoire 1.2). Ici, on cherche la flèche de la sphère choisie par N rayons tirés au hasard, et on compare au maximum analytique. Le graphe montre le meilleur maximum trouvé en fonction du nombre de rayons. Les rayons sont lancés pour de vrai contre les triangles (Möller-Trumbore, en double précision).</p>
+<div class="ctl">
+<label>Grille <select id="m3G"><option value="32,16">mid 32×16</option><option value="16,10" selected>lo 16×10</option><option value="12,6">12×6</option><option value="8,5">8×5</option><option value="6,4">6×4</option></select></label>
+<label>Rayons N <select id="m3N"><option value="100">100</option><option value="400" selected>400</option><option value="2000">2 000</option><option value="10000">10 000</option></select></label>
+<label><input type="checkbox" id="m3Tgt"> ajouter les centres de faces</label>
+<button id="m3Seed">Nouveau tirage</button>
+</div>
+<canvas id="m3Cv"></canvas>
+<div class="stats" id="m3Stats"></div>
+<div id="m3Verdict"></div>
+
+<h3>1.4 · La loi de coût : un rapport n’est pas une pente</h3>
+<p>Les deux nuages sont les deux scènes du lot M13 (médianes des 4 runs). La droite pointillée est le modèle « coût constant par face » tiré de la Référence I (Render ÷ faces) ; la droite pleine est le modèle à deux termes mesuré frame par frame. Fais glisser F pour voir ce que chaque modèle prédit.</p>
+<div class="ctl">
+<label>Faces soumises F <input type="range" id="l4F" min="0" max="100000" step="500" value="14752"><span id="l4FV" class="num"></span></label>
+<label><input type="checkbox" id="l4R"> afficher la décomposition d’A19 (après ce lot)</label>
+</div>
+<canvas id="l4Cv"></canvas>
+<div class="stats" id="l4Stats"></div>
+<div id="l4Verdict"></div>
+
+<h3>1.5 · La bascule vue par l’œil : silhouette ou couleur ?</h3>
+<p>Une sphère est rasterisée au rayon exact du seuil, au niveau fin (frame n), puis au niveau grossier (frame n+1). La troisième image montre les pixels qui changent. Choisis la façon de colorer : le hash de l’indice de face (mode <code>Solid</code> du moteur), une couleur de matériau, la profondeur (mode <code>Depth</code>), ou un éclairage Flat, Gouraud ou Phong (futur chantier shading).</p>
+<div class="ctl">
+<label>Bascule <select id="p5T"><option value="0">hi → mid à 47,2 px</option><option value="1" selected>mid → lo à 15,2 px</option><option value="2">lo → 12×6 à 7,2 px</option><option value="3">12×6 → 8×5 à 3,7 px</option></select></label>
+<label>Couleur <select id="p5M"><option value="hash" selected>Solid : hash de l’indice (moteur actuel)</option><option value="mat">Matériau uniforme</option><option value="depth">Depth (profondeur)</option><option value="flat">Flat (une normale par face)</option><option value="gouraud">Gouraud (éclairé aux sommets)</option><option value="phong">Phong (normale par pixel)</option></select></label>
+<label>Rotation <input type="range" id="p5Rot" min="0" max="90" step="1" value="17"><span id="p5RotV" class="num"></span></label>
+</div>
+<div class="pix"><div><canvas id="p5A"></canvas><div class="cap" id="p5Ac"></div></div><div><canvas id="p5B"></canvas><div class="cap" id="p5Bc"></div></div><div><canvas id="p5D"></canvas><div class="cap" id="p5Dc"></div></div></div>
+<div class="stats" id="p5Stats"></div>
+<div id="p5Verdict"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<h3>2.1 · La sphère UV : une fonction, donc un ré-échantillonnage exact</h3>
+<p><code>uv_sphere(seg, rings)</code> pose (rings + 1) × (seg + 1) sommets sur la sphère unité. Deux corrections, déjà dans le lot SG, conditionnent tout ce qui suit : la <b>couture</b> (une colonne dupliquée, même position, u = 1 au lieu de 0) et les <b>pôles</b> (une rangée complète de sommets confondus, chacun avec son u ; un seul triangle par quad dégénéré). Appeler la fonction avec une grille plus petite donne un niveau grossier <b>de la même surface</b>.</p>
+<pre><code># gen_meshes.py (extrait)
+for j in range(rings + 1):
+    phi = math.pi * j / rings                     # 0 = pôle nord (+Y)
+    for i in range(seg + 1):                      # seg + 1 : colonne de couture dupliquée
+        theta = 2.0 * math.pi * i / seg
+        n = (sin(phi) * cos(theta), cos(phi), sin(phi) * sin(theta))
+        V.append(n); VN.append(n); VT.append((i / seg, 1.0 - j / rings))
+...
+if j != rings - 1: F.append((a, d, c))          # pôle sud : un seul triangle par quad
+if j != 0:         F.append((a, b, d))          # pôle nord : idem
+
+# gen_sphere_lod.py : les niveaux grossiers sont de simples appels
+GRIDS  = {"hi": (64, 32), "mid": (32, 16), "lo": (16, 10),
+          "12x6": (12, 6), "8x5": (8, 5), "6x4": (6, 4)}
+CHAINS = {"sphere_hi":  ("hi", "mid", "lo", "8x5"),
+          "sphere_mid": ("mid", "lo", "12x6", "8x5"),
+          "sphere_lo":  ("lo", "12x6", "8x5", "6x4")}</code></pre>
+<div class="note"><b>Pas de pendant vectorisé.</b> C’est un outil hors ligne, exécuté une fois par Claude (Onky ne lance pas de Python) ; ses sorties (<code>.obj</code>, <code>.lod.json</code>) sont livrées telles quelles.</div>
+
+<h3>2.2 · La flèche analytique : scalaire et pendant AVX2</h3>
+<p>Pour un triangle (a, b, c) dont les sommets sont sur la sphère unité, n = (b − a) × (c − a) normalisé, d = |n·a| est la distance du centre au plan. Le point du plan le plus proche du centre est p = (n·a) n. S’il tombe dans le triangle (coordonnées barycentriques ≥ 0), la flèche du triangle vaut 1 − d. Le maximum sur les faces est la flèche du maillage. Ce calcul a servi à vérifier la mesure par rayons ; il n’entre pas dans le moteur.</p>
+<div class="ab"><div class="av" style="border-color:var(--line)"><div class="t" style="background:var(--surface2);color:var(--ink2)">Scalaire — outil hors ligne</div><pre><code>// Fleche max d'un maillage dont les sommets sont sur la sphere unite.
+float MaxSag(const Vec3f* V, const uint32_t* idx, size_t nFaces)
+{
+    float best = 0.0f;
+    for (size_t f = 0; f &lt; nFaces; ++f)
+    {
+        const Vec3f a = V[idx[3*f]], b = V[idx[3*f+1]], c = V[idx[3*f+2]];
+        const Vec3f e1 = b - a, e2 = c - a;
+        Vec3f n = cross(e1, e2);
+        const float len = n.length();
+        if (len &lt;= NEAR_ZERO) continue;          // quad degenere au pole
+        n = n * (1.0f / len);
+        const float s  = dot(n, a);              // n.a : distance signee
+        const Vec3f v2 = n * s - a;              // pied p - a
+        // barycentriques de p dans (a, e1, e2)
+        const float d00 = dot(e1,e1), d01 = dot(e1,e2), d11 = dot(e2,e2);
+        const float d20 = dot(v2,e1), d21 = dot(v2,e2);
+        const float den = d00*d11 - d01*d01;
+        const float v = (d11*d20 - d01*d21) / den;
+        const float w = (d00*d21 - d01*d20) / den;
+        if (v &gt;= 0.0f &amp;&amp; w &gt;= 0.0f &amp;&amp; v + w &lt;= 1.0f)
+            best = std::max(best, 1.0f - std::fabs(s));
+    }
+    return best;
+}</code></pre></div>
+<div class="pr"><div class="t">Pendant AVX2 — pédagogique, non appliqué</div><pre><code>// 8 faces a la fois, sommets en SoA (ax[8], ay[8], ...),
+// comme les plans de B5 (FacePlanesSoA).
+__m256 MaxSag8(const FaceSoA8&amp; F, __m256 best)
+{
+    // aretes e1 = b - a, e2 = c - a, couloir par couloir
+    const __m256 e1x = _mm256_sub_ps(F.bx, F.ax), e1y = _mm256_sub_ps(F.by, F.ay),
+                 e1z = _mm256_sub_ps(F.bz, F.az);
+    const __m256 e2x = _mm256_sub_ps(F.cx, F.ax), e2y = _mm256_sub_ps(F.cy, F.ay),
+                 e2z = _mm256_sub_ps(F.cz, F.az);
+    // n = e1 x e2 (sans FMA : mul puis sub, comme EdgeFunction)
+    const __m256 nx = _mm256_sub_ps(_mm256_mul_ps(e1y,e2z), _mm256_mul_ps(e1z,e2y));
+    const __m256 ny = _mm256_sub_ps(_mm256_mul_ps(e1z,e2x), _mm256_mul_ps(e1x,e2z));
+    const __m256 nz = _mm256_sub_ps(_mm256_mul_ps(e1x,e2y), _mm256_mul_ps(e1y,e2x));
+    // |n| et n.a : la fleche vaut 1 - |n.a| / |n|
+    const __m256 len = _mm256_sqrt_ps(Dot3(nx,ny,nz, nx,ny,nz));   // vraie racine, pas rsqrt
+    const __m256 s   = _mm256_div_ps(Dot3(nx,ny,nz, F.ax,F.ay,F.az), len);
+    const __m256 sag = _mm256_sub_ps(_mm256_set1_ps(1.0f), Abs(s));
+    // masque : pied dans le triangle ET |n| non nul (faces degenerees du pole)
+    const __m256 in  = _mm256_and_ps(FootInside8(F, nx,ny,nz, s, len),
+                       _mm256_cmp_ps(len, _mm256_set1_ps(NEAR_ZERO), _CMP_GT_OQ));
+    // max couloir par couloir ; reduction horizontale apres la boucle
+    return _mm256_max_ps(best, _mm256_and_ps(in, sag));
+}</code></pre></div></div>
+
+<h3>2.3 · La mesure par rayons : scalaire et pendant AVX2</h3>
+<p>Le rayon issu du centre dans la direction D coupe chaque triangle (au plus un, la sphère facettée est convexe et étoilée). L’intersection de Möller-Trumbore donne la distance t ; on garde la plus petite. ε = max |t<sub>k</sub>(D) − t<sub>0</sub>(D)|. Le script (NumPy) traite toutes les directions en bloc pour un triangle à la fois.</p>
+<div class="ab"><div class="av" style="border-color:var(--line)"><div class="t" style="background:var(--surface2);color:var(--ink2)">Scalaire — une direction, tous les triangles</div><pre><code>// Origine au centre (0,0,0) : s = -a, donc les produits se simplifient.
+float RayRadius(Vec3f D, const Vec3f* V, const uint32_t* idx, size_t nFaces)
+{
+    float best = std::numeric_limits&lt;float&gt;::infinity();
+    for (size_t f = 0; f &lt; nFaces; ++f)
+    {
+        const Vec3f a = V[idx[3*f]];
+        const Vec3f e1 = V[idx[3*f+1]] - a, e2 = V[idx[3*f+2]] - a;
+        const Vec3f p = cross(D, e2);
+        const float det = dot(p, e1);
+        if (std::fabs(det) &lt;= 1e-12f) continue;   // rayon parallele au plan
+        const float inv = 1.0f / det;
+        const Vec3f s = -a;
+        const float u = dot(p, s) * inv;
+        const Vec3f q = cross(s, e1);
+        const float v = dot(D, q) * inv;
+        const float t = dot(e2, q) * inv;
+        if (u &gt;= 0 &amp;&amp; v &gt;= 0 &amp;&amp; u + v &lt;= 1 &amp;&amp; t &gt; 0)
+            best = std::min(best, t);
+    }
+    return best;                                   // +inf = trou : assertion
+}</code></pre></div>
+<div class="pr"><div class="t">Pendant AVX2 — 8 directions à la fois</div><pre><code>// Un triangle diffuse ses aretes (broadcast) ; 8 directions D en SoA.
+// Le meme triangle est teste contre 8 rayons : aucune lecture dispersee.
+void RayRadius8(const Dir8&amp; D, const Tri&amp; T, __m256&amp; best)
+{
+    const __m256 e1x = _mm256_set1_ps(T.e1.x), ... ;           // 9 diffusions
+    const __m256 px = _mm256_sub_ps(_mm256_mul_ps(D.y, e2z), _mm256_mul_ps(D.z, e2y));
+    // ... py, pz : p = D x e2
+    const __m256 det = Dot3(px,py,pz, e1x,e1y,e1z);
+    const __m256 ok  = _mm256_cmp_ps(Abs(det), _mm256_set1_ps(1e-12f), _CMP_GT_OQ);
+    const __m256 inv = _mm256_div_ps(_mm256_set1_ps(1.0f), det);  // division, jamais rcp
+    const __m256 u = _mm256_mul_ps(Dot3(px,py,pz, sx,sy,sz), inv); // s = -a diffuse
+    const __m256 v = _mm256_mul_ps(Dot3(D.x,D.y,D.z, qx,qy,qz), inv); // q = s x e1 diffuse
+    const __m256 t = _mm256_mul_ps(_mm256_set1_ps(dot(T.e2, q)), inv);
+    // masque : ok, u >= 0, v >= 0, u + v <= 1, t > 0 ; puis min masque
+    const __m256 hit = ...;
+    best = _mm256_blendv_ps(best, _mm256_min_ps(best, t), hit);
+}</code></pre></div></div>
+
+<h3>2.4 · Les descripteurs</h3>
+<pre><code>{ "format": "lv3.lodchain", "version": 1, "name": "sphere_mid", "units": "local",
+  "_fabrication": "resample",
+  "_errorMetric": { "method": "radial", "randomDirections": 100000,
+                    "vertexTargeted": true, "faceCenterTargeted": true, "safety": 1.1 },
+  "levels": [
+    { "mesh": "sphere_mid.obj",  "vertices": 559, "faces": 960, "epsilon": 0.0,
+      "_measure": { "max": 0.0,    "mean": 0.0,    "sagVsExactSphere": 0.0096 } },
+    { "mesh": "sphere_lo.obj",   "vertices": 185, "faces": 288, "epsilon": 0.033,  ... },
+    { "mesh": "sphere_12x6.obj", "vertices": 89,  "faces": 120, "epsilon": 0.0698, ... },
+    { "mesh": "sphere_8x5.obj",  "vertices": 52,  "faces": 64,  "epsilon": 0.1335, ... } ] }</code></pre>
+<ul>
+<li><b><code>vertices</code> = sommets du moteur</b> : <code>OBJLoader</code> crée un sommet par triplet <code>v/vt/vn</code> <b>cité par une face</b>. La grille écrit (rings + 1)(seg + 1) sommets, dont un par pôle n’est cité par aucune face : 17 × 33 − 2 = 559 pour <code>mid</code>. C’est la leçon « 117 contre 115 » des rochers, appliquée d’emblée.</li>
+<li><b>Clés préfixées par « _ »</b> : documentation, ignorée par <code>WarnUnread</code>. <code>sagVsExactSphere</code> garde la flèche contre la vraie sphère, utile pour le shading futur.</li>
+<li><b>Un même <code>.obj</code> dans plusieurs chaînes</b> : <code>sphere_lo.obj</code> est L1 de <code>sphere_mid</code>, L2 de <code>sphere_hi</code> et L0 de <code>sphere_lo</code>. Le cache du <code>ResourceManager</code> le charge une fois. Son ε diffère à peine d’une chaîne à l’autre (0,0330 sous <code>hi</code> comme sous <code>mid</code>), parce que <code>hi</code> et <code>mid</code> sont très proches de la vraie sphère ; mais la règle reste de mesurer contre L0, la seule référence qui existe pour un mesh sans fonction.</li>
+</ul>
+
+<h3>2.5 · La sélection pour une sphère : le code ne change pas</h3>
+<pre><code>// Scene/RenderSystem.cpp (inchangé par ce lot)
+const AABB3d&amp; box = chain-&gt;bounds;                          // sphère unité : [-1, 1]^3
+const float rW = BoundingRadiusWorld(box, modelMatrix);     // |Extent| x échelle = √3 · s
+const float wC = MulRow(mvp, box.Center()).w;
+// ProjectedRadiusPx = rW · kPx / (τ · wMin), wMin = wC − rW
+const float qOverTau = ProjectedRadiusPx(view.lodParams, wC, rW) / box.Extent().length();
+//                   = √3·s·kPx / (τ·wMin) / √3  =  s · kPx / (τ · wMin)  ≈  R / τ
+const uint32_t level = SelectLodLevel(*chain, qOverTau);</code></pre>
+<p>Les deux √3 se compensent ; il reste <code>wMin = wC − √3·s</code>, plus proche que le vrai bord de la sphère (<code>wC − s</code>). q′ est donc légèrement surestimé, du côté sûr : le moteur choisit plutôt un niveau plus fin. L’écart compte peu pour un objet lointain (wC ≫ s).</p>
+
+<h3>2.6 · La mesure : un binaire, deux scènes, une pente frame par frame</h3>
+<p>Les scènes A (Référence I) et B (sphères en LOD) ne diffèrent que par 40 chemins. Un seul exécutable sert aux deux : aucun risque d’étiqueter un binaire de travers. La simulation est déterministe : la frame i de A et la frame i de B ont exactement le même état (vérifié : <code>sim_millidays</code> identiques sur 240 frames). Leur seule différence est le LOD. D’où un calcul de pente sans soustraire de médianes (M12) :</p>
+<pre><code>pour chaque frame i (240 mesurées, paire A1/B1 puis A2/B2) :
+    b_i = (Render_A[i] − Render_B[i]) / (Faces_A[i] − Faces_B[i])
+b = médiane des b_i                    → 13,6 et 13,4 ns ; 13,5 sur les deux paires
+a = médiane de (Render_B[i] − b · Faces_B[i])   → ≈ 0,39 ms
+contrôle : a + b · 82 988 = 1,51 ms (A mesuré 1,51 à 1,53) ; a + b · 14 752 = 0,59 ms (B : 0,57 à 0,59)</code></pre>
+<div class="note"><b>Pas de pendant vectorisé.</b> Analyse de CSV hors moteur.</div>
+
+<h3>2.7 · La couleur par indice de face, et les modèles d’éclairage</h3>
+<pre><code>// Rendering/Rasterizer.cpp — couleur de debug d'une face sans DebugVisualComponent
+Color FaceColor(int i) noexcept
+{
+    const uint32_t h = uint32_t(i) * 2654435761u;          // hash de Knuth de l'INDICE
+    return MakeColor(uint8_t(((h &gt;&gt; 16) &amp; 0x7F) + 0x60),
+                     uint8_t(((h &gt;&gt;  8) &amp; 0x7F) + 0x60),
+                     uint8_t(( h        &amp; 0x7F) + 0x60));
+}
+// Scene/RenderSystem.cpp
+const Color col = hasTint ? tint : FaceColor(int(f));       // les sphères n'ont pas de teinte</code></pre>
+<p>Un autre niveau a d’autres faces et d’autres indices : toute la mosaïque change à la bascule. Pour le shading futur, trois modèles, et ce qu’ils donnent à la bascule (laboratoire 1.5) :</p>
+<div class="scroll"><table>
+<thead><tr><th>Modèle</th><th>Calcul</th><th>Écart d’intensité à la bascule mid → lo</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Flat</td><td><code>I = max(0, n<sub>face</sub>·L)</code> par face</td><td class="num">jusqu’à ≈ 21 %</td><td>la normale de face dépend du découpage</td></tr>
+<tr><td>Gouraud</td><td><code>I</code> aux sommets, interpolée</td><td class="num">jusqu’à ≈ 9 %</td><td>l’interpolation linéaire d’un cosinus dépend de la taille des triangles</td></tr>
+<tr><td>Phong</td><td>n interpolée, <b>normalisée</b>, puis <code>max(0, n·L)</code> par pixel</td><td class="num">0 % sur une sphère</td><td>normale de sommet = position ; la normale interpolée normalisée est la direction exacte du point</td></tr>
+</tbody></table></div>
+<p>Valeurs de l’échange du 07/10 (simulation par rayons, lumière rasante). Les UV, elles, sont une fonction de la surface : décalage de texture au seuil ≤ 0,35 px hors pôles, ≤ 0,47 px partout, <b>à condition</b> d’interpoler en perspective (passager <code>invW</code>).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange (04/10 → 07/10)</h2>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Reprendre le plan et lire les dépôts</div><div class="b">
+<p><b>Objectif</b> : partir de ce qui est réellement dans le code, pas de ce que dit le plan.</p>
+<div class="io"><div><h5>Entrée</h5>« Le chantier 4 est terminé, le LOD est implémenté. Continuons comme spécifié dans le plan. » Plan de la phase G, étape 1 : examiner les sphères, mesurer leurs ε, trancher deux questions avant tout code.</div>
+<div><h5>Résultat</h5>Dépôts LIB (<code>7fccfa8</code>, « Chantier 4d-3 et 4d-4 ») et EXE clonés. Lus : <code>LodChain.h</code>, <code>SelectLodLevel</code>, <code>LodChainLoader.cpp</code> (comparaison des sommets au mesh chargé), <code>RegisterLodChain</code> (invEps strictement décroissant), <code>OBJLoader</code> (déduplication des triplets cités), <code>BuildViewData</code> (τ = 0,5 par défaut). Conclusion : <b>le moteur satisfait déjà l’exigence</b> ; il reste une question d’assets.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Examiner les sphères</div><div class="b">
+<p><b>Objectif</b> : savoir d’où viennent les trois <code>.obj</code> et combien la scène en dessine.</p>
+<div class="io"><div><h5>Entrée (étape 1)</h5><code>sphere_lo/mid/hi.obj</code> du dépôt EXE ; <code>gen_meshes.py</code> ; scène <code>solar_system_v1compat_belt_lod.json</code>.</div>
+<div><h5>Résultat</h5>Les trois sphères sont produites par <code>uv_sphere(16,10)</code>, <code>(32,16)</code>, <code>(64,32)</code> : régénérées, elles sont <b>identiques octet pour octet</b> aux fichiers du dépôt. Comptes : 187 / 561 / 2 145 sommets écrits, 185 / 559 / 2 143 sommets moteur, 288 / 960 / 3 968 faces. Scène : 3 <code>hi</code>, 15 <code>mid</code>, 22 <code>lo</code> (32 640 faces si tout est visible).</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Mesurer ε, et le vérifier par une autre méthode</div><div class="b">
+<p><b>Objectif</b> : des ε justes, avant toute décision.</p>
+<div class="io"><div><h5>Entrée (étape 2)</h5>Méthode des rochers (100 000 directions + ciblage des sommets, ×1,1 arrondi haut) ; six grilles candidates (trois existantes, trois plus grossières).</div>
+<div><h5>Résultat</h5>Tableau ci-dessous. La flèche analytique (plan de chaque triangle) redonne les mêmes valeurs à 10⁻⁵. Le tirage aléatoire seul trouvait déjà le maximum à 10⁻³ : sur une sphère, le maximum est une bosse large au centre des faces.</div></div>
+<div class="scroll"><table><thead><tr><th>Niveau</th><th>Faces</th><th>Flèche / vraie sphère</th><th>ε sous hi</th><th>ε sous mid</th><th>ε sous lo</th><th>Admis tant que R ≤</th></tr></thead><tbody>
+<tr><td>hi 64×32</td><td class="num">3 968</td><td class="num">0,0024</td><td>L0</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td>mid 32×16</td><td class="num">960</td><td class="num">0,0096</td><td class="num">0,0106</td><td>L0</td><td>—</td><td class="num">47,2 px</td></tr>
+<tr><td>lo 16×10</td><td class="num">288</td><td class="num">0,0308</td><td class="num">0,0330</td><td class="num">0,0330</td><td>L0</td><td class="num">15,2 px</td></tr>
+<tr><td>12×6</td><td class="num">120</td><td class="num">0,0649</td><td class="num">0,0705</td><td class="num">0,0698</td><td class="num">0,0695</td><td class="num">≈ 7,2 px</td></tr>
+<tr><td>8×5</td><td class="num">64</td><td class="num">0,1213</td><td class="num">0,1335</td><td class="num">0,1335</td><td class="num">0,1335</td><td class="num">3,7 px</td></tr>
+<tr><td>6×4</td><td class="num">36</td><td class="num">0,1848</td><td class="num">0,2023</td><td class="num">0,2023</td><td class="num">0,2030</td><td class="num">2,5 px</td></tr>
+</tbody></table></div>
+<div class="warn"><b>Constat préalable à la question 2.</b> Au-delà de 47 px de rayon, <code>sphere_mid</code> dépasse déjà τ <i>au niveau L0</i> : Mercure vue de près a aujourd’hui une silhouette polygonale visible, LOD ou pas. C’est le choix de l’auteur, pas un défaut du LOD.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> Poser les deux questions, avec une recommandation</div><div class="b">
+<p><b>Objectif</b> : faire trancher Onky avant d’écrire le moindre fichier (plan de la phase G).</p>
+<div class="io"><div><h5>Entrée (étape 3)</h5>Seuils en pixels de rayon ; constat sur <code>sphere_mid</code> ; widget interactif « sélection par chaîne » montré dans l’échange (repris et étendu en 1.2).</div>
+<div><h5>Résultat</h5>Recommandations : <b>deux voies</b> (resample maintenant, QEM ensuite, validé contre les sphères ; contre-exemple de la couture fusionnée) ; <b>pas de droit de monter</b> (trois descripteurs, l’auteur choisit le plafond). Deux remarques au passage : copies périmées <code>assets/Meshesrock_b/c.lod.json</code> à la racine d’<code>assets/</code> ; <code>gen_rock_lod.py</code> écrit <code>errorMetric</code>/<code>measure</code> sans « _ ».</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Les décisions d’Onky, puis la fabrication</div><div class="b">
+<p><b>Objectif</b> : livrer des fichiers prêts à copier, sans Python côté Onky.</p>
+<div class="io"><div><h5>Entrée (étape 4)</h5>Réponses : « Deux voies (recommandé) » ; « Non, L0 = plafond (recommandé) ».</div>
+<div><h5>Résultat</h5><code>gen_sphere_lod.py</code> exécuté par Claude : trois <code>.obj</code> (12×6, 8×5, 6×4), trois descripteurs, et la scène <code>solar_system_v1compat_belt_lod_spheres.json</code> (copie, 41 lignes changées : 40 chemins + le nom de scène). Livrés dans une archive avec l’arborescence du dépôt EXE. Contrôles : <code>RegisterLodChain</code> (invEps strictement décroissant) relu ; comptes de sommets calculés comme <code>OBJLoader</code>.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Premier run : des compteurs justes, des temps refusés</div><div class="b">
+<p><b>Objectif</b> : lire l’en-tête avant le premier chiffre (M13).</p>
+<div class="io"><div><h5>Entrée (étape 5)</h5><code>lod_spheres.csv</code> : exécution normale, aucun avertissement. En-tête : <code>affinity=fff</code>, run unique.</div>
+<div><h5>Résultat</h5>Compteurs (déterministes) recevables : Σ LodLevel = testés − rejetés sur 240 frames ; <code>FacesSubmitted</code> 82 988 → 14 752 ; <code>LodLevel1</code> = <code>LodLevel2</code> = 0 ; 12 à 13 paires en L0. Temps refusés (non épinglé, pas d’ABBA, <code>Clear</code> +16 %, p95 − médiane 0,34 ms). Indication : 53 ns par face, et <b>corrélation frame par frame Render / faces = 0,04</b> : les faces n’expliquent plus Render. Hypothèse : un coût fixe domine.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> « En Release ou RelWithAsserts ? »</div><div class="b">
+<p><b>Objectif</b> : ne pas mélanger « est-ce juste » et « combien ça coûte ».</p>
+<div class="io"><div><h5>Entrée</h5>Question d’Onky avant le lot.</div>
+<div><h5>Résultat</h5>Un run RelWithAsserts de la scène B, non épinglé, pour les assertions et les invariants (compteurs identiques frame par frame au run Release) ; puis le lot de temps en Release (<code>asserts_lib=0</code>, <code>affinity=4</code>). Le run Release déjà fait sert de référence de comparaison.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> La règle, écrite avant la mesure</div><div class="b">
+<p><b>Objectif</b> : une prédiction falsifiable et des zones complètes (M12).</p>
+<div class="io"><div><h5>Entrée (étape 6)</h5>Hypothèse du coût fixe ; Référence I (« ≈ 20 ns par face »).</div>
+<div><h5>Résultat</h5>Recevabilité : <code>affinity=4</code> partout ; T et <code>Clear</code> à moins de 3 % dans chaque paire ; p95 ÷ médiane &lt; 1,15 ou p95 − médiane &lt; 0,3 ms ; compteurs A1 = A2, B1 = B2. Modèle a + b × F, b frame par frame. Zones de B ÷ A : ≤ 0,25 (proportionnel), 0,25 à 0,60 (coût fixe), &gt; 0,60 (anomalie). <b>Prédiction : zone 0,25 à 0,60, b entre 15 et 25 ns.</b> Banc <code>banc_lod_spheres.bat</code> : un binaire, jetable puis A1 B1 B2 A2.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Le lot M13 : recevabilité, et une réserve déclarée</div><div class="b">
+<p><b>Objectif</b> : juger les runs avant de lire Render.</p>
+<div class="io"><div><h5>Entrée (étape 8)</h5>5 runs (jetable, A1, B1, B2, A2), i7-1265U, secteur.</div>
+<div><h5>Résultat</h5>En-têtes conformes ; compteurs identiques frame par frame dans chaque scène ; même état de simulation en A et B. T : +2,2 % et +2,7 %. <b><code>Clear</code> : +5,4 % sur la paire 1</b> (hors règle), −1,3 % sur la paire 2. Dispersion : p95 ÷ médiane jusqu’à 1,35, mais p95 − médiane ≤ 0,28 ms partout. La paire 1 est gardée <b>sous réserve déclarée</b> ; la règle n’est pas réécrite.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Les résultats</div><div class="b">
+<p><b>Objectif</b> : chiffrer le gain et la loi de coût.</p>
+<div class="io"><div><h5>Entrée (étape 9)</h5>Médianes par run et CSV par frame.</div>
+<div><h5>Résultat</h5>Render 1,532 / 1,510 ms → 0,590 / 0,573 ms : B ÷ A = <b>0,385 et 0,379</b>. Frame : 3,85 / 3,86 → 3,07 / 2,96 ms (0,80 et 0,77). <code>LodLevel0</code> 97 → 12, <code>LodLevel3</code> 1 200 → 1 285.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 11</span> La loi de coût, et une prédiction réfutée</div><div class="b">
+<p><b>Objectif</b> : séparer ce qui est fixe de ce qui est proportionnel.</p>
+<div class="io"><div><h5>Entrée (étape 10)</h5>Frames appariées (même état de simulation).</div>
+<div><h5>Résultat</h5><b>b = 13,5 ns par face</b> (13,6 / 13,4 ; IQR 12,3 à 14,5), <b>a ≈ 0,39 ms</b>. La zone prédite est confirmée (coût fixe), mais <b>la prédiction sur b est réfutée</b> : « 20 ns par face » était un rapport (Render ÷ faces), qui n’égale la pente que si a = 0. À la Référence I : 20,2 = 13,5 de pente + 6,7 de coût fixe réparti. Le coût fixe faisait ≈ 26 % de Render à I, les deux tiers à J.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 12</span> La Référence J, et le cap sur <code>Clear</code></div><div class="b">
+<p><b>Objectif</b> : fixer le nouveau point de départ et en tirer la suite.</p>
+<div class="io"><div><h5>Entrée (étape 11)</h5>Répartition de la frame en B.</div>
+<div><h5>Résultat</h5><b>Référence J</b> : Render 0,57 à 0,59 ms (≈ 19 %), frame 2,96 à 3,07 ms (≈ 330 fps), <code>Clear</code> 1,25 à 1,28 ms (≈ 42 %), <code>Present</code> 0,94 à 0,99 ms, 14 752 faces. Les faces restantes ne coûtent plus que 0,20 ms : le LOD a retiré ce qu’il pouvait. Plan mis à jour : étape 1 close, étape 2 (<code>Clear</code>) ouverte.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 13</span> L’avenant A14a</div><div class="b">
+<p><b>Objectif</b> : historiser (demande d’Onky).</p>
+<div class="io"><div><h5>Entrée (étape 12)</h5>Préférence : PDF quand le résumé contient des figures.</div>
+<div><h5>Résultat</h5><code>Avenant_A14a_LOD_Spheres.pdf</code>, 8 pages, 4 figures (flèche ≈ 1/faces et seuils par chaîne ; Render frame par frame ; nuages A/B et distribution des b<sub>i</sub> ; répartition de la frame), 6 contre-exemples, aide-mémoire. Ajouté par Onky aux fichiers du projet.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 14</span> (07/10) « Je vois le changement de niveau d’une frame à l’autre »</div><div class="b">
+<p><b>Objectif</b> : trouver la cause avant de toucher au code.</p>
+<div class="io"><div><h5>Entrée</h5>Observation d’Onky en suivant lentement une sphère. A13 § 9 et A14 § 8.3 affirmaient qu’à τ = 0,5 px la transition ne se voit pas.</div>
+<div><h5>Résultat</h5>Sélection relue : juste et prudente. Cause probable : les sphères n’ont pas de <code>DebugVisualComponent</code>, leur couleur en <code>Solid</code> est <code>FaceColor(int(f))</code> (piège déjà décrit par A13 § 8). Simulation mid → lo à 15 px : <b>713 pixels sur 713</b> changent avec le hash, 12 avec une couleur invariante. Test sans code proposé : <span class="kbd">F3</span> deux fois → mode <code>Depth</code>. Réponse d’Onky : « en mode Depth, aucune différence ; en Wireframe et couleur, on voit la bascule ». <b>Cause confirmée.</b></div></div>
+<div class="note"><b>Suite donnée</b> : pas de correctif immédiat (c’est un chantier de shading, pas une dette de LOD). Exigences inscrites au plan : UV perspective-correctes, Phong par pixel, mipmaps. Correctif à l’historique : « aucun popping observé » (A14 § 8.3) ne valait que pour des objets de moins d’un pixel.</div>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>✗ Laisser le moteur monter au-dessus du choix de l’auteur.</b> Une chaîne unique partant de <code>sphere_hi</code> : Mercure à 100 px de rayon passe de 960 à 3 968 faces (×4,1) et sa silhouette change de 0,96 px (flèche de <code>mid</code> × 100), soit deux fois τ. Image différente, coût qui dépend de la position de la caméra, comparaison avec la Référence I impossible.</div>
+
+<div class="bad"><b>✗ Un simplificateur qui ignore la couture UV.</b> Les deux colonnes de la couture ont la même position : un QEM naïf les fusionne. La géométrie et ε restent justes ; mais le triangle qui enjambe la couture interpole u de 0,98 à 0,02 et balaie toute la texture à l’envers. Une mesure géométrique ne voit pas ce défaut : les arêtes de couture et les rangées polaires doivent être verrouillées.</div>
+
+<div class="bad"><b>✗ Lire les temps d’un run sans lire son en-tête.</b> <code>affinity=fff</code> : Render 0,79 ms, soit 53 ns par face, et <code>Clear</code> à 1,255 ms au lieu de 1,08. Le lot épinglé donne 0,57 à 0,59 ms. Conclure sur le premier run aurait surestimé Render de 35 %.</div>
+
+<div class="bad"><b>✗ Prendre un rapport pour une pente.</b> « 20 ns par face » × 14 752 faces prédisait Render = 0,30 ms ; mesuré : 0,58 ms. L’erreur vient d’une droite forcée par l’origine (laboratoire 1.4).</div>
+
+<div class="bad"><b>✗ Réécrire la règle après avoir vu les chiffres.</b> Le témoin <code>Clear</code> de la paire 1 sort de la règle (+5,4 %). Élargir le seuil à 6 % aurait rendu la paire « conforme » sans rien prouver. La paire est gardée sous réserve déclarée, et la paire 2 porte le verdict.</div>
+
+<div class="bad"><b>✗ Une couleur qui dépend de la numérotation du maillage.</b> Mode <code>Solid</code>, bascule mid → lo à 15 px : <b>713 pixels sur 713</b> changent en une frame (laboratoire 1.5). Avec une couleur de matériau : 12 pixels, tous sur le bord, chacun à moins d’un demi-pixel de la vraie silhouette.</div>
+
+<div class="bad"><b>✗ Un éclairage Flat avec un LOD.</b> Même bascule : jusqu’à ≈ 21 % d’écart d’intensité (≈ 45 % pour 12×6 → 8×5), sur tout le disque. Gouraud : jusqu’à ≈ 9 %. Phong (normale normalisée par pixel) : 0 %.</div>
+
+<div class="bad"><b>✗ Conclure « aucun popping » sur des objets de moins d’un pixel.</b> A14 § 8.3 l’avait observé sur des rochers sous 1 px, où aucune couleur ne peut sauter de façon visible. La première planète de 15 px l’a contredit.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>5.1 · Donner un plafond plus haut à une planète</h3>
+<pre><code>"id": "Mercury",
+"Mesh": { "model": "assets/Meshes/sphere_hi.lod.json", ... }   // au lieu de sphere_mid.lod.json
+// loin : identique (L3 8x5) ; à plus de 47 px : 3 968 faces, silhouette exacte
+// décision de contenu : l'image change de près, nouvelle référence à mesurer</code></pre>
+
+<h3>5.2 · Ajouter un nouvel objet procédural avec ses niveaux</h3>
+<ol>
+<li>Écrire la fonction génératrice (comme <code>uv_sphere</code> ou <code>rock</code>) ; L0 = la grille choisie par l’auteur.</li>
+<li>Choisir 1 à 3 grilles plus grossières, chacune divisant les faces par 2 à 4.</li>
+<li>Mesurer ε contre L0 en ciblant l’endroit où le maximum peut se trouver (sommets, centres de faces), vérifier la convergence ; si une formule exacte existe, la calculer aussi.</li>
+<li>Écrire le descripteur (sommets comptés comme le moteur, clés « _ » pour la documentation), puis <code>"model": "…/objet.lod.json"</code> dans la scène.</li>
+</ol>
+
+<h3>5.3 · Savoir si une planète sera dessinée finement</h3>
+<pre><code>R (rayon apparent, px) ≈ échelle × P[1][1] × H/2 / distance
+sphere_mid.lod.json :  R > 15,2 px → L0 mid · 7,2 à 15,2 → lo · 3,7 à 7,2 → 12x6 · sinon 8x5
+exemple : vue quad 768 × 450 (H/2 = 225), focale verticale de 60° (P[1][1] ≈ 1,73),
+Mercure (échelle 0,68) passe en L0 à moins de 0,68 × 1,73 × 225 / 15,2 ≈ 17 unités</code></pre>
+
+<h3>5.4 · Lire un summary de la scène des sphères</h3>
+<pre><code>1. en-tête : scene=…_lod_spheres.json ; config=Release ; affinity=4 ; asserts_lib=0
+2. Σ LodLevel0..3 == MeshesTested − MeshesCulled, à chaque frame
+   (après A20 : Σ LodLevel + PointSplats == MeshesTested − MeshesCulled)
+3. FacesSubmitted 14 752 ; LodLevel0 12 ; LodLevel3 ≈ 1 285 (Référence J)
+4. seulement ensuite : Render, frame (médiane, p95)</code></pre>
+
+<h3>5.5 · Vérifier la cause d’une bascule visible</h3>
+<pre><code>F3 (panneau principal) : Solid → Wireframe → Depth
+Depth  : propriété de la surface. Bascule invisible → la géométrie est juste ;
+         ce qui saute est la COULEUR (hash d'indice, Flat, Gouraud)
+Depth  : bascule encore visible → chercher une oscillation au seuil ou une sélection fausse</code></pre>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Les étapes 3 et 4 de la phase G (A16 à A20), puis les chantiers B, C et D, ont touché plusieurs pièces de ce lot. Chaque amendement donne l’avant (04-07/10) et l’après. Les points marqués « vérifié » ont été relus sur le dépôt LIB <code>e7cae94</code> / EXE <code>5203980</code> le 13/11 ; les autres viennent des annexes, <b>à vérifier</b> avant toute modification.</p>
+
+<div class="amend"><div class="h">AM1 · La surcharge de τ par caméra est validée à l’entrée (A16, A17) — vérifié</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>float m_lodTolerancePx = -1.0f;   // -1 = non défini
+BuildViewData : (cam.m_lodTolerancePx &gt; 0) ? cam : config
+→ NaN ou négatif retombe EN SILENCE sur engine.json</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>bool  m_hasLodTolerancePx = false;   // false -&gt; EngineConfig
+float m_lodTolerancePx    = 0.0f;
+scène : "lodTolerancePx": null = délégation écrite
+dettes Serializer notées pendant ce lot : RÉSOLUES</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM2 · Un MTL par asset, une clé de cache complète (A18) — vérifié</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>sphere_*.obj : mtllib planet.mtl / usemtl M_Planet
+L0 « identiques octet pour octet » à gen_meshes.py (étape 2)
+cache des meshes et des chaînes indexé par le chemin seul</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>sphere_*.obj (tous niveaux) : mtllib sphere.mtl / M_Sphere
+gen_meshes.py : « Plus de planet.mtl » ; géométrie inchangée
+clé = chemin + OBJLoadOptions::CacheKey()
+invariant : un changement de niveau change la géométrie,
+            jamais l'apparence</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM3 · Le coût fixe a été décomposé (A19)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 11</div><pre><code>Render ≈ a + b × F
+a ≈ 0,39 ms (non décomposé), b = 13,5 ns par face
+piste : « décomposer a », non prioritaire</code></pre></div>
+<div class="ap"><div class="t">Après — campagne R (scènes synthétiques)</div><pre><code>Render ≈ k + a·(rejetés) + b·(dessinés) + c·(faces)
+k = 7,2 µs · a = 19 ns · b = 92 ns · c = 14,4 ns
+c (14,4 ns) recoupe la pente de ce lot (13,5 ns)
+98,5 % des objets dessinés font moins d'un pixel :
+le coût fixe est celui de 1 280 objets qui n'allument rien</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM4 · Un objet sous-pixel est dessiné comme un point, avant la sélection (A20) — vérifié</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — ce lot</div><pre><code>culling → q' → SelectLodLevel → mesh du niveau
+sphère minuscule : L3, 36 ou 64 faces
+Σ LodLevel = MeshesTested − MeshesCulled</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>rOverTau = ProjectedRadiusPx(lodParams, wC, rW)       // une fois
+if (Inside &amp;&amp; rOverTau &lt; view.pointRadiusOverTau) → DrawPoint
+else q' = rOverTau / |Extent| → SelectLodLevel (inchangé)
+Σ LodLevel + PointSplats = MeshesTested − MeshesCulled
+Référence L : Render 201 à 209 µs, FacesSubmitted 1 388
+seuil sur la sphère ENGLOBANTE (√3·s) : une sphère devient
+un point sous ≈ 0,58 px de vrai rayon (voir PH4CH1a-9)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM5 · Les deux remarques de l’étape 4 sont réglées (A16, étape 3.5) — vérifié</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>assets/Meshesrock_b.lod.json, assets/Meshesrock_c.lod.json
+gen_rock_lod.py : "errorMetric", "measure" (sans « _ »)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>assets/ ne contient plus que GraphScene/ et Meshes/
+gen_rock_lod.py : "_errorMetric", "_measure"</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM6 · La scène de ce lot est devenue la scène témoin « L »</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>solar_system_v1compat_belt_lod_spheres.json :
+scène de mesure du LOD des sphères (Référence J)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>Référence K (A15), Référence L (A20), puis scène « L »
+des chantiers B, C, D (témoin à côté de V1, V2, V3)
+V1 (bench_V_V1.json) contourne le LOD : .obj sans .lod.json</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM7 · La couleur par indice est toujours là ; le shading est rangé (plan) — vérifié</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 14</div><pre><code>constat : popping de couleur en Solid
+exigences : UV perspective-correctes, Phong, mipmaps</code></pre></div>
+<div class="ap"><div class="t">Après (13/11)</div><pre><code>RenderSystem.cpp : col = hasTint ? tint : FaceColor(int(f))
+(les deux chemins de faces) ; DrawPoint : FaceColor(0)
+plan : « Chantier shading / texture » dans les pistes rangées
+→ le popping de couleur est toujours visible aujourd'hui</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM8 · Les références qui ont suivi la Référence J</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>J : Render 0,57-0,59 ms, frame 2,96-3,07 ms, Clear 1,25-1,28 ms</code></pre></div>
+<div class="ap"><div class="t">Après (i7 épinglé)</div><pre><code>K (A15, Clear non temporel) : Clear 0,46-0,55 ms, frame ≈ 2,24-2,48 ms
+L (A20, point)              : Render 201-209 µs, frame 2,01-2,05 ms</code></pre></div></div></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>7.1 · Tests hors moteur</h3>
+<ul>
+<li><b>Origine des fichiers</b> : les trois sphères régénérées par <code>uv_sphere</code> étaient identiques octet pour octet aux fichiers du dépôt (04/10, avant A18).</li>
+<li><b>Deux mesures indépendantes de la flèche</b> : rayons (Möller-Trumbore, 100 000 directions + ciblages) et plans des triangles : accord à 10⁻⁵ sur les six grilles. Le laboratoire 1.1 refait le calcul analytique dans la page.</li>
+<li><b>Comptes de sommets</b> : triplets cités par une face, calculés sur les fichiers (185, 559, 2 143, 89, 52, 33), identiques à ceux que le chargeur a acceptés (aucun <code>LevelMismatch</code>).</li>
+<li><b>Scène copiée</b> : 41 lignes de différence (40 chemins + le nom), plus aucun <code>sphere_*.obj</code>, JSON valide.</li>
+<li><b>Simulation de la bascule</b> (07/10) : silhouettes et couleurs rasterisées par rayons ; pixels de bord qui basculent au seuil, en moyenne sur 200 orientations : 43,5 (hi → mid), 14,0 (mid → lo), 5,7 (lo → 12×6), 2,4 (12×6 → 8×5).</li>
+</ul>
+
+<h3>7.2 · Filets du moteur traversés</h3>
+<ul>
+<li><code>LodChainLoader</code> : en-tête, nombre de niveaux, ε de L0 = 0, sommets et faces comparés au mesh chargé.</li>
+<li><code>RegisterLodChain</code> : invEps strictement décroissant (1/0,0106 &gt; 1/0,0330 &gt; 1/0,1335, etc.), cases inutilisées neutres.</li>
+<li>Invariant par frame : Σ LodLevel = testés − rejetés, tenu sur toutes les frames des 5 runs.</li>
+</ul>
+
+<h3>7.3 · Prédictions écrites avant les mesures, et leur sort</h3>
+<div class="scroll"><table>
+<thead><tr><th>Prédiction</th><th>Écrite</th><th>Mesuré</th><th>Sort</th></tr></thead>
+<tbody>
+<tr><td>Aucune ligne du moteur à changer</td><td>étape 1</td><td>chargement sans avertissement</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td>Render B ÷ A dans la zone 0,25 à 0,60 (coût fixe)</td><td>étape 8</td><td>0,385 / 0,379</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td>b entre 15 et 25 ns par face</td><td>étape 8</td><td>13,5 ns</td><td><span class="pill bad">réfutée</span> (un rapport n’est pas une pente)</td></tr>
+<tr><td>Image identique à la Référence I</td><td>étape 4</td><td>vrai en <code>Depth</code> ; faux en <code>Solid</code></td><td><span class="pill warn">tenue pour la géométrie seulement</span></td></tr>
+<tr><td>Hash de couleur : tout le disque change à la bascule</td><td>étape 14</td><td>test <span class="kbd">F3</span> : bascule visible en Solid, invisible en Depth</td><td><span class="pill ok">confirmée</span></td></tr>
+</tbody></table></div>
+
+<h3>7.4 · Ce qui n’a pas été vérifié</h3>
+<ul>
+<li>Le run RelWithAsserts conseillé à l’étape 7 n’a pas été versé au dossier de mesure.</li>
+<li>Les niveaux L1 et L2 des trois chaînes : jamais choisis par la scène de mesure.</li>
+<li>Une comparaison d’images A/B pixel à pixel (en mode <code>Depth</code>).</li>
+<li>Le QEM : sous-chantier non commencé, son protocole de validation est seulement écrit.</li>
+<li>Les CSV du lot ne sont pas dans <code>Mesures/</code> (relu le 13/11).</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p><b>Rien n’est acté.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH4-CH1a ». Les décisions <b>prises</b> pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH4CH1a_LOD_Spheres.md</code>. Les sujets sont à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody id="rmBody"></tbody></table></div>
+<h3>Règles proposées, non actées</h3>
+<ul>
+<li><b>PH4CH1a.a</b> : toute grandeur affichée (couleur, éclairage, texture) est une propriété de la surface (position, normale, matériau, UV), jamais de l’indexation du maillage ; seuls les modes de debug qui montrent le maillage (Wireframe, hash d’indice, barycentriques) font exception, et ils sont nommés comme tels.</li>
+<li><b>PH4CH1a.b</b> : une prédiction de coût part d’une pente mesurée entre deux points de la même séance, jamais d’un rapport (temps ÷ quantité).</li>
+<li><b>PH4CH1a.c</b> : on ne conclut à l’absence d’un artefact visuel que sur une scène qui l’exerce (objets assez grands, transitions réellement franchies).</li>
+</ul>
+<p><b>Renvois sans nouveau numéro</b> : <code>LodChainLoader</code> lit <code>vertices</code>/<code>faces</code> en <code>uint32_t</code> (PH4CH1-1) ; sélection par lots et rayon local rangé dans la chaîne (PH4CH1-7) ; A14 § 3.2 et § 8.3 à annoter (PH4CH1-9, PH4CH1-10).</p>
+</section>
+
+<footer>Lot PH4-CH1a · LibraryV3 · création du 13/11/2026 (aucun artefact n’existait) · sources : échange du 04/10 au 07/10/2026, plan de la phase G, avenant A14a, annexes A13, A14, A16 à A20, dépôts LIB <code>e7cae94</code> / EXE <code>5203980</code>.</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const fr = (v, d=2) => Number(v).toLocaleString("fr-FR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const nf = v => Math.round(v).toLocaleString("fr-FR");
+function fit(cv, h, wmax){
+  const dpr = window.devicePixelRatio || 1;
+  let w = Math.max(200, cv.clientWidth || cv.parentElement.clientWidth || 640);
+  if (wmax) w = Math.min(w, wmax);
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+function stat(k, v, cls){ return `<div><div class="k">${k}</div><div class="v ${cls||""}">${v}</div></div>`; }
+const mono = "11px ui-monospace,Consolas,monospace";
+
+/* ═══════════ uv_sphere, identique à gen_meshes.py ═══════════ */
+function uvSphere(seg, rings){
+  const V = [];
+  for (let j = 0; j <= rings; j++){ const phi = Math.PI*j/rings, sp = Math.sin(phi), cp = Math.cos(phi);
+    for (let i = 0; i <= seg; i++){ const th = 2*Math.PI*i/seg; V.push([sp*Math.cos(th), cp, sp*Math.sin(th)]); } }
+  const F = [], idx = (i,j) => j*(seg+1) + i;
+  for (let j = 0; j < rings; j++) for (let i = 0; i < seg; i++){
+    const a = idx(i,j), b = idx(i+1,j), c = idx(i,j+1), d = idx(i+1,j+1);
+    if (j !== rings-1) F.push([a,d,c]); if (j !== 0) F.push([a,b,d]); }
+  return {V, F, seg, rings};
+}
+const sub = (a,b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+const dot = (a,b) => a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+const cross = (a,b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+const norm = a => { const l = Math.hypot(a[0],a[1],a[2]); return l > 0 ? [a[0]/l, a[1]/l, a[2]/l] : [0,0,0]; };
+/* flèche analytique : 1 − |n·a| au pied de la perpendiculaire, si le pied est dans le triangle */
+function sagAnalytic(m){
+  let best = 0;
+  for (const [i0,i1,i2] of m.F){
+    const a = m.V[i0], e1 = sub(m.V[i1], a), e2 = sub(m.V[i2], a);
+    let n = cross(e1, e2); const l = Math.hypot(...n); if (l < 1e-12) continue; n = [n[0]/l, n[1]/l, n[2]/l];
+    const s = dot(n, a), v2 = sub([n[0]*s, n[1]*s, n[2]*s], a);
+    const d00 = dot(e1,e1), d01 = dot(e1,e2), d11 = dot(e2,e2), d20 = dot(v2,e1), d21 = dot(v2,e2), den = d00*d11 - d01*d01;
+    const v = (d11*d20 - d01*d21)/den, w = (d00*d21 - d01*d20)/den;
+    if (v >= -1e-12 && w >= -1e-12 && v + w <= 1 + 1e-12) best = Math.max(best, 1 - Math.abs(s));
+  }
+  return best;
+}
+const GRIDS = {"64,32":"hi 64×32","32,16":"mid 32×16","16,10":"lo 16×10","12,6":"12×6","8,5":"8×5","6,4":"6×4"};
+const MESH = {}; const SAG = {};
+for (const k of Object.keys(GRIDS)){ const [s,r] = k.split(",").map(Number); MESH[k] = uvSphere(s,r); SAG[k] = sagAnalytic(MESH[k]); }
+function rotate(V, yaw, tilt){
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), ct = Math.cos(tilt), st = Math.sin(tilt);
+  return V.map(([x,y,z]) => { const x1 = cy*x + sy*z, z1 = -sy*x + cy*z; return [x1, ct*y - st*z1, st*y + ct*z1]; });
+}
+function hull(P){
+  const pts = P.slice().sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+  const cr = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lo = [], up = [];
+  for (const p of pts){ while (lo.length >= 2 && cr(lo[lo.length-2], lo[lo.length-1], p) <= 0) lo.pop(); lo.push(p); }
+  for (let i = pts.length-1; i >= 0; i--){ const p = pts[i]; while (up.length >= 2 && cr(up[up.length-2], up[up.length-1], p) <= 0) up.pop(); up.push(p); }
+  return lo.slice(0,-1).concat(up.slice(0,-1));
+}
+function inHull(H, x, y){
+  for (let i = 0; i < H.length; i++){ const a = H[i], b = H[(i+1)%H.length];
+    if ((b[0]-a[0])*(y-a[1]) - (b[1]-a[1])*(x-a[0]) < 0) return false; }
+  return true;
+}
+
+/* ═══════════ 1.1 · flèche rasterisée ═══════════ */
+function f1Draw(){
+  const key = $("f1G").value, R = +$("f1R").value, yaw = +$("f1Rot").value*Math.PI/180, tilt = +$("f1Tilt").value*Math.PI/180;
+  $("f1RV").textContent = fr(R,1) + " px"; $("f1RotV").textContent = $("f1Rot").value + "°"; $("f1TiltV").textContent = $("f1Tilt").value + "°";
+  const m = MESH[key], Vr = rotate(m.V, yaw, tilt);
+  const G = Math.ceil(2*R) + 6, c0 = G/2 + 0.17;
+  const P = Vr.map(v => [c0 + v[0]*R, c0 - v[1]*R]);
+  const H = hull(P);
+  const cv = $("f1Cv"), cell = Math.max(3, Math.min(22, Math.floor(Math.min(cv.clientWidth || 600, 560) / G)));
+  const {g, w} = fit(cv, G*cell + 8);
+  g.clearRect(0,0,w,G*cell+8); g.fillStyle = css("--surface"); g.fillRect(0,0,w,G*cell+8);
+  const ox = Math.max(4, (w - G*cell)/2);
+  let both = 0, circOnly = 0, meshOnly = 0;
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++){
+    const px = x + 0.5, py = y + 0.5, inM = inHull(H, px, py), inC = (px-c0)**2 + (py-c0)**2 <= R*R;
+    let col = null;
+    if (inM && inC){ both++; col = css("--lv3"); } else if (inC){ circOnly++; col = css("--sag"); } else if (inM){ meshOnly++; col = css("--warn"); }
+    if (col){ g.fillStyle = col; g.fillRect(ox + x*cell, 4 + y*cell, cell - (cell > 5 ? 1 : 0), cell - (cell > 5 ? 1 : 0)); }
+  }
+  g.strokeStyle = css("--ink3"); g.lineWidth = 1.2; g.beginPath(); g.arc(ox + c0*cell, 4 + c0*cell, R*cell, 0, 2*Math.PI); g.stroke();
+  g.strokeStyle = css("--accent"); g.lineWidth = 1.6; g.beginPath(); H.forEach((p,i) => { const X = ox + p[0]*cell, Y = 4 + p[1]*cell; i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.closePath(); g.stroke();
+  const sag = SAG[key], sagPx = sag * R;
+  $("f1Stats").innerHTML = stat("faces", nf(m.F.length)) + stat("flèche max (unités)", fr(sag,5)) + stat("flèche à l’écran", fr(sagPx,2) + " px", sagPx > 0.5 ? "bad" : "ok")
+    + stat("pixels du disque manquants", nf(circOnly), circOnly ? "warn" : "ok") + stat("pixels du disque", nf(both + circOnly));
+  let h = `<div class="scroll"><table><thead><tr><th>Grille</th><th>Faces</th><th>Flèche analytique</th><th>Flèche à R = ${fr(R,1)} px</th><th>Flèche ≤ τ = 0,5 px tant que R ≤</th></tr></thead><tbody>`;
+  for (const k of Object.keys(GRIDS)) h += `<tr${k===key?' style="background:var(--accent-bg)"':''}><td>${GRIDS[k]}</td><td class="num">${nf(MESH[k].F.length)}</td><td class="num">${fr(SAG[k],5)}</td><td class="num" style="color:${SAG[k]*R > 0.5 ? 'var(--bad)':'inherit'}">${fr(SAG[k]*R,2)} px</td><td class="num">${fr(0.5/SAG[k],1)} px</td></tr>`;
+  h += `</tbody></table></div><p class="small">Valeurs mesurées par rayons dans l’échange : 0,0024 · 0,00956 · 0,03084 · 0,06489 · 0,12134 · 0,18484. Le seuil de la dernière colonne est celui de la flèche contre la vraie sphère ; le moteur utilise ε (contre L0, × 1,1), donc des seuils un peu plus prudents (1.2).</p>`;
+  $("f1Tab").innerHTML = h;
+}
+["f1G","f1R","f1Rot","f1Tilt"].forEach(id => $(id).addEventListener("input", f1Draw));
+
+/* ═══════════ 1.2 · trois chaînes ═══════════ */
+const SAGN = {hi:0.0024, mid:0.00956, lo:0.03084, "12x6":0.06489, "8x5":0.12134, "6x4":0.18484};
+const FACES = {hi:3968, mid:960, lo:288, "12x6":120, "8x5":64, "6x4":36};
+const CH = [
+  {n:"sphere_hi",  lv:[["hi",0],["mid",0.0106],["lo",0.0330],["8x5",0.1335]], ex:"Soleil, Jupiter, Saturne"},
+  {n:"sphere_mid", lv:[["mid",0],["lo",0.0330],["12x6",0.0698],["8x5",0.1335]], ex:"Mercure, la Terre, Titan…"},
+  {n:"sphere_lo",  lv:[["lo",0],["12x6",0.0695],["8x5",0.1335],["6x4",0.2030]], ex:"Phobos, Mimas, Vesta…"} ];
+function select(lv, qOverTau){
+  const q = f(qOverTau); let k = 0;
+  for (let i = 1; i < 4; i++) if (q <= f(1/lv[i][1])) k++;     // invEps en float32, comme LodChain
+  return k;
+}
+function c2Draw(){
+  const R = 0.3 * Math.pow(1000, +$("c2R").value/100), tau = +$("c2Tau").value, up = $("c2Up").checked, pt = $("c2Pt").checked;
+  $("c2RV").textContent = (R < 10 ? fr(R,2) : fr(R,0)) + " px";
+  const qOverTau = R / tau, isPoint = pt && Math.sqrt(3)*R < 1.0;
+  let h = "", extra = [];
+  CH.forEach((c, ci) => {
+    const author = c.lv[0][0];
+    const lv = up ? CH[0].lv : c.lv;
+    const k = select(lv, qOverTau);
+    h += `<div><div class="nm">${up ? "unique (" + author + ")" : c.n}</div>`;
+    lv.forEach((l, i) => {
+      const e = SAGN[l[0]] * R, on = !isPoint && i === k;
+      h += `<div class="lv${on ? " on" : ""}">L${i} · ${l[0]}<br>${nf(FACES[l[0]])} faces<br><span class="e${e > tau ? " bad" : ""}">flèche ${e < 10 ? fr(e,2) : fr(e,0)} px</span></div>`;
+    });
+    h += `</div>`;
+    if (isPoint) extra.push(`${c.n} : <b>un point</b>`);
+    else if (up && FACES[lv[k][0]] > FACES[author]) extra.push(`${author} : dessinée en <b>${lv[k][0]}</b> au-dessus du choix de l’auteur (×${fr(FACES[lv[k][0]]/FACES[author],1)} faces ; silhouette changée de ${fr((SAGN[author]-SAGN[lv[k][0]])*R,2)} px)`);
+  });
+  $("c2Rows").innerHTML = h;
+  const k = select(CH[1].lv, qOverTau);
+  $("c2Stats").innerHTML = stat("q′ = R / τ (float32)", fr(f(qOverTau),3)) + stat("Mercure (sphere_mid)", isPoint ? "point" : "L" + k + " · " + nf(FACES[CH[1].lv[k][0]]) + " faces")
+    + stat("flèche réelle de Mercure", isPoint ? "—" : fr(SAGN[CH[1].lv[k][0]]*R,2) + " px", (!isPoint && SAGN[CH[1].lv[k][0]]*R > tau) ? "bad" : "ok");
+  let v = "";
+  if (!up && !isPoint && SAGN.mid * R > tau) v += `<div class="warn"><b>Au-dessus de ${fr(tau/SAGN.mid,1)} px</b>, <code>sphere_mid</code> dépasse déjà τ <i>en L0</i> : c’est le choix de l’auteur. Pour une silhouette exacte de près, il choisit <code>sphere_hi.lod.json</code> (exemple 5.1).</div>`;
+  if (extra.length) v += `<div class="${up ? "bad" : "note"}">${up ? "<b>✗ Décision écartée.</b> " : "<b>Amendement A20.</b> "}${extra.join(" ; ")}.</div>`;
+  if (pt && !isPoint) v += `<div class="small">Le dessin en point s’applique quand la sphère <b>englobante de l’AABB</b> (√3 × R) fait moins d’un pixel, soit R &lt; 0,58 px.</div>`;
+  $("c2Verdict").innerHTML = v;
+}
+["c2R","c2Tau","c2Up","c2Pt"].forEach(id => $(id).addEventListener("input", c2Draw));
+
+/* ═══════════ 1.3 · mesure par rayons ═══════════ */
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+let m3seed = 1234;
+function rayRadius(m, D){
+  let best = Infinity;
+  for (const [i0,i1,i2] of m.F){
+    const a = m.V[i0], e1 = sub(m.V[i1], a), e2 = sub(m.V[i2], a);
+    const p = cross(D, e2), det = dot(p, e1); if (Math.abs(det) < 1e-12) continue;
+    const inv = 1/det, s = [-a[0], -a[1], -a[2]], u = dot(p, s)*inv; if (u < 0 || u > 1) continue;
+    const q = cross(s, e1), v = dot(D, q)*inv; if (v < 0 || u + v > 1) continue;
+    const t = dot(e2, q)*inv; if (t > 0 && t < best) best = t;
+  }
+  return best;
+}
+function m3Draw(){
+  const key = $("m3G").value, N = +$("m3N").value, tgt = $("m3Tgt").checked, m = MESH[key];
+  const rnd = mulberry(m3seed), dirs = [];
+  for (let i = 0; i < N; i++){ let x, y, z, l; do { x = 2*rnd()-1; y = 2*rnd()-1; z = 2*rnd()-1; l = x*x+y*y+z*z; } while (l > 1 || l < 1e-6); l = Math.sqrt(l); dirs.push([x/l, y/l, z/l]); }
+  const nRand = dirs.length;
+  if (tgt) for (const [i0,i1,i2] of m.F){ const a = m.V[i0], b = m.V[i1], c = m.V[i2]; dirs.push(norm([(a[0]+b[0]+c[0])/3 + 1e-4*(rnd()-.5), (a[1]+b[1]+c[1])/3, (a[2]+b[2]+c[2])/3])); }
+  const curve = []; let run = 0;
+  dirs.forEach((D, i) => { const t = rayRadius(m, D); if (isFinite(t)) run = Math.max(run, 1 - t); curve.push(run); });
+  const ana = SAG[key];
+  const {g, w, h} = fit($("m3Cv"), 220);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const L = 56, Rr = w - 14, T = 14, B = h - 30, n = curve.length, yMax = ana*1.15;
+  const X = i => L + (Rr - L) * Math.log10(i+1) / Math.log10(n);
+  const Y = v => B - (B - T) * v / yMax;
+  g.strokeStyle = css("--line"); g.lineWidth = 1; g.beginPath(); g.moveTo(L,T); g.lineTo(L,B); g.lineTo(Rr,B); g.stroke();
+  g.strokeStyle = css("--ok"); g.setLineDash([5,4]); g.beginPath(); g.moveTo(L, Y(ana)); g.lineTo(Rr, Y(ana)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--ok"); g.font = mono; g.fillText("analytique " + fr(ana,5), L + 6, Y(ana) - 5);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2; g.beginPath(); curve.forEach((v,i) => { i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)); }); g.stroke();
+  if (tgt){ g.strokeStyle = css("--cam"); g.setLineDash([2,3]); g.beginPath(); g.moveTo(X(nRand-1), T); g.lineTo(X(nRand-1), B); g.stroke(); g.setLineDash([]); g.fillStyle = css("--cam"); g.fillText("centres de faces →", Math.min(X(nRand-1) + 4, Rr - 110), T + 10); }
+  g.fillStyle = css("--ink3"); g.fillText("1", L - 4, B + 14); g.fillText(nf(n) + " rayons (échelle log)", Rr - 150, B + 22); g.fillText("max", 8, T + 8); g.fillText("0", L - 14, B);
+  const foundR = curve[nRand-1], foundAll = curve[n-1], ratio = foundR / ana;
+  let k90 = curve.findIndex(v => v >= 0.99*ana);
+  $("m3Stats").innerHTML = stat("faces", nf(m.F.length)) + stat("max trouvé (aléatoire)", fr(foundR,5)) + stat("aléatoire ÷ analytique", fr(ratio*100,1) + " %", ratio < 0.97 ? "warn" : "ok")
+    + stat("rayons pour 99 %", k90 < 0 ? "non atteint" : nf(k90+1)) + (tgt ? stat("avec centres", fr(foundAll,5), foundAll >= 0.999*ana ? "ok" : "warn") : "");
+  $("m3Verdict").innerHTML = `<div class="${ratio >= 0.97 ? "ok" : "warn"}">${ratio >= 0.97
+    ? `Sur une sphère, le maximum est une <b>bosse large</b> au centre de chaque face : un tirage aléatoire tombe vite dedans. Le rocher de PH4-CH1, lui, cachait le sien dans des pics étroits près des sommets (−46 % avec 400 directions).`
+    : `Avec peu de rayons, le maximum est encore sous-estimé : la règle reste de cibler l’endroit où il peut se trouver (ici, les centres de faces) et de vérifier la convergence.`}</div>`;
+}
+["m3G","m3N","m3Tgt"].forEach(id => $(id).addEventListener("input", m3Draw));
+$("m3Seed").onclick = () => { m3seed = (m3seed * 1103515245 + 12345) >>> 0; m3Draw(); };
+
+/* ═══════════ 1.4 · loi de coût ═══════════ */
+const L4 = { A: [[82988,1.5324],[82988,1.5095]], B: [[14752,0.5904],[14752,0.5726]], a: 0.394, b: 13.5e-6, ratio: 20.2e-6 };
+function l4Draw(){
+  const F = +$("l4F").value, r19 = $("l4R").checked;
+  $("l4FV").textContent = nf(F);
+  const {g, w, h} = fit($("l4Cv"), 240);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const L = 50, Rr = w - 14, T = 12, B = h - 30, xm = 100000, ym = 2.2;
+  const X = v => L + (Rr - L) * v / xm, Y = v => B - (B - T) * v / ym;
+  g.strokeStyle = css("--line"); g.lineWidth = 1; g.beginPath(); g.moveTo(L,T); g.lineTo(L,B); g.lineTo(Rr,B); g.stroke();
+  g.fillStyle = css("--ink3"); g.font = mono;
+  for (let v = 0; v <= 2; v += 0.5){ g.fillText(fr(v,1), 14, Y(v) + 4); }
+  for (let v = 0; v <= 100000; v += 25000){ g.fillText(nf(v), X(v) - 14, B + 16); }
+  g.strokeStyle = css("--ghost"); g.setLineDash([6,4]); g.lineWidth = 1.5; g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(xm), Y(L4.ratio*xm)); g.stroke(); g.setLineDash([]);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2; g.beginPath(); g.moveTo(X(0), Y(L4.a)); g.lineTo(X(xm), Y(L4.a + L4.b*xm)); g.stroke();
+  [["A",css("--planet")],["B",css("--ok")]].forEach(([k,c]) => L4[k].forEach(p => { g.fillStyle = c; g.beginPath(); g.arc(X(p[0]), Y(p[1]), 5, 0, 2*Math.PI); g.fill(); }));
+  g.fillStyle = css("--ink2"); g.fillText("A (Réf. I)", X(82988) - 70, Y(1.52) - 10); g.fillText("B (sphères)", X(14752) + 8, Y(0.58) - 8);
+  g.strokeStyle = css("--cam"); g.beginPath(); g.moveTo(X(F), T); g.lineTo(X(F), B); g.stroke();
+  const pr = L4.ratio*F, pa = L4.a + L4.b*F;
+  $("l4Stats").innerHTML = stat("« 20 ns par face »", fr(pr,3) + " ms") + stat("a + b·F", fr(pa,3) + " ms", "ok") + stat("écart", fr((pr/pa - 1)*100,0) + " %", Math.abs(pr/pa-1) > 0.1 ? "bad" : "ok");
+  let v = `<div class="note">Les deux modèles s’accordent en A (c’est là que le rapport a été mesuré) et divergent quand F diminue : la droite pointillée est forcée par l’origine, elle suppose a = 0. Mesuré en B : 0,57 à 0,59 ms ; le rapport prédisait 0,30 ms.</div>`;
+  if (r19){
+    const k = 0.0072, ar = 1283*19e-6, br = 1297*92e-6, cr = 14752*14.4e-6, tot = k + ar + br + cr;
+    v += `<div class="ok"><b>Amendement A19 (campagne R, après ce lot).</b> Render ≈ k + a·(rejetés) + b·(dessinés) + c·(faces) = ${fr(k*1000,1)} + ${fr(ar*1000,1)} + ${fr(br*1000,1)} + ${fr(cr*1000,1)} µs ≈ <b>${fr(tot*1000,0)} µs</b> pour 1 283 rejetés, 1 297 dessinés, 14 752 faces. c = 14,4 ns recoupe la pente de ce lot (13,5 ns). À la Référence K, ce modèle explique 61 % de Render ; le reste est fait de défauts de cache (A19 § 6). Le coût fixe venait surtout des 1 280 objets sous-pixel, d’où le dessin en point (A20).</div>`;
+  }
+  $("l4Verdict").innerHTML = v;
+}
+["l4F","l4R"].forEach(id => $(id).addEventListener("input", l4Draw));
+
+/* ═══════════ 1.5 · la bascule vue par l’œil ═══════════ */
+const TR = [["64,32","32,16",0.5/0.0106],["32,16","16,10",0.5/0.0330],["16,10","12,6",0.5/0.0698],["12,6","8,5",0.5/0.1335]];
+const Lgt = norm([0.9, 0.35, 0.45]);
+function faceColor(i){ const h = Math.imul(i, 2654435761) >>> 0; return [((h>>>16)&0x7F)+0x60, ((h>>>8)&0x7F)+0x60, (h&0x7F)+0x60]; }
+function rasterSphere(key, R, yaw, mode, G){
+  const m = MESH[key], Vr = rotate(m.V, yaw, 0.35), c0 = G/2 + 0.21;
+  const img = new Int16Array(G*G*3).fill(-1);
+  const base = [176, 150, 122];
+  m.F.forEach(([i0,i1,i2], fi) => {
+    const A = Vr[i0], Bv = Vr[i1], C = Vr[i2];
+    let n = cross(sub(Bv,A), sub(C,A)); const l = Math.hypot(...n); if (l < 1e-12) return;
+    n = [n[0]/l, n[1]/l, n[2]/l];
+    if (dot(n, [A[0]+Bv[0]+C[0], A[1]+Bv[1]+C[1], A[2]+Bv[2]+C[2]]) < 0) n = [-n[0], -n[1], -n[2]];
+    if (n[2] <= 0) return;                                      // face arrière (vue vers −z)
+    const P = [A,Bv,C].map(v => [c0 + v[0]*R, c0 - v[1]*R]);
+    const x0 = Math.max(0, Math.floor(Math.min(P[0][0],P[1][0],P[2][0]))), x1 = Math.min(G-1, Math.ceil(Math.max(P[0][0],P[1][0],P[2][0])));
+    const y0 = Math.max(0, Math.floor(Math.min(P[0][1],P[1][1],P[2][1]))), y1 = Math.min(G-1, Math.ceil(Math.max(P[0][1],P[1][1],P[2][1])));
+    const ar = (P[1][0]-P[0][0])*(P[2][1]-P[0][1]) - (P[1][1]-P[0][1])*(P[2][0]-P[0][0]);
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+      const px = x + .5, py = y + .5;
+      const w0 = ((P[1][0]-px)*(P[2][1]-py) - (P[1][1]-py)*(P[2][0]-px)) / ar;
+      const w1 = ((P[2][0]-px)*(P[0][1]-py) - (P[2][1]-py)*(P[0][0]-px)) / ar;
+      const w2 = 1 - w0 - w1;
+      if (w0 < 0 || w1 < 0 || w2 < 0) continue;
+      let rgb;
+      if (mode === "hash") rgb = faceColor(fi);
+      else if (mode === "mat") rgb = base;
+      else if (mode === "depth"){ const z = w0*A[2] + w1*Bv[2] + w2*C[2], d = 20 - z; const gv = 255*(1 - d/80); rgb = [gv,gv,gv]; }
+      else {
+        let I;
+        if (mode === "flat") I = Math.max(0, dot(n, Lgt));
+        else if (mode === "gouraud") I = w0*Math.max(0, dot(A,Lgt)) + w1*Math.max(0, dot(Bv,Lgt)) + w2*Math.max(0, dot(C,Lgt));
+        else I = Math.max(0, dot(norm([w0*A[0]+w1*Bv[0]+w2*C[0], w0*A[1]+w1*Bv[1]+w2*C[1], w0*A[2]+w1*Bv[2]+w2*C[2]]), Lgt));
+        const s = 0.08 + 0.92*I; rgb = base.map(c => c*s);
+      }
+      const o = (y*G + x)*3; img[o] = Math.round(rgb[0]); img[o+1] = Math.round(rgb[1]); img[o+2] = Math.round(rgb[2]);
+    }
+  });
+  return img;
+}
+function drawImg(cv, img, G, diff){
+  const cell = Math.max(2, Math.floor(Math.min(cv.parentElement.clientWidth || 240, 300) / G));
+  const {g, w, h} = fit(cv, G*cell, G*cell);
+  g.fillStyle = css("--surface2"); g.fillRect(0,0,w,h);
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++){
+    const o = (y*G + x)*3;
+    if (diff){ if (!diff[y*G+x]) continue; g.fillStyle = diff[y*G+x] === 2 ? css("--rim") : css("--bad"); }
+    else { if (img[o] < 0) continue; g.fillStyle = `rgb(${img[o]},${img[o+1]},${img[o+2]})`; }
+    g.fillRect(x*cell, y*cell, cell, cell);
+  }
+}
+function p5Draw(){
+  const [ka, kb, R] = TR[+$("p5T").value], mode = $("p5M").value, yaw = +$("p5Rot").value*Math.PI/180;
+  $("p5RotV").textContent = $("p5Rot").value + "°";
+  const G = Math.ceil(2*R) + 4;
+  const A = rasterSphere(ka, R, yaw, mode, G), B = rasterSphere(kb, R, yaw, mode, G);
+  const diff = new Uint8Array(G*G); let nCol = 0, nRim = 0, nPix = 0, dMax = 0;
+  for (let i = 0; i < G*G; i++){
+    const a = A[i*3] >= 0, b = B[i*3] >= 0; if (a) nPix++;
+    if (a !== b){ diff[i] = 2; nRim++; continue; }
+    if (!a) continue;
+    const d = Math.max(Math.abs(A[i*3]-B[i*3]), Math.abs(A[i*3+1]-B[i*3+1]), Math.abs(A[i*3+2]-B[i*3+2]));
+    if (d > 1){ diff[i] = 1; nCol++; dMax = Math.max(dMax, d); }
+  }
+  drawImg($("p5A"), A, G); drawImg($("p5B"), B, G); drawImg($("p5D"), null, G, diff);
+  $("p5Ac").textContent = "frame n : " + GRIDS[ka] + " · " + nf(MESH[ka].F.length) + " faces";
+  $("p5Bc").textContent = "frame n+1 : " + GRIDS[kb] + " · " + nf(MESH[kb].F.length) + " faces";
+  $("p5Dc").textContent = "rouge : couleur changée · vert : bord";
+  $("p5Stats").innerHTML = stat("rayon au seuil", fr(R,1) + " px") + stat("pixels du disque", nf(nPix)) + stat("couleur changée", nf(nCol), nCol > nPix*0.05 ? "bad" : (nCol ? "warn" : "ok"))
+    + stat("bord (couverture)", nf(nRim)) + stat("écart max (sur 255)", nCol ? nf(dMax) : "0");
+  const msg = {
+    hash: `<div class="bad"><b>✗ Le mode Solid du moteur.</b> La couleur est un hash de l’indice de face : un autre niveau a d’autres faces, donc presque tous les pixels changent en une frame. C’est ce qu’Onky a vu le 07/10.</div>`,
+    mat: `<div class="ok"><b>Couleur de matériau.</b> Seul le bord change, de moins d’un demi-pixel de silhouette : c’est l’amplitude normale d’un LOD discret à τ = 0,5 px.</div>`,
+    depth: `<div class="ok"><b>Mode Depth.</b> La profondeur est une propriété de la surface ; l’écart entre niveaux (au plus la flèche, quelques centièmes d’unité) disparaît dans la plage d’affichage. C’est le test <span class="kbd">F3</span> qui a confirmé la cause.</div>`,
+    flat: `<div class="bad"><b>✗ Flat.</b> La normale de face dépend du découpage : tout le disque change d’intensité. Un LOD garde le popping avec cet éclairage.</div>`,
+    gouraud: `<div class="warn"><b>Gouraud.</b> L’éclairage est calculé aux sommets puis interpolé : l’interpolation d’un cosinus dépend de la taille des triangles. Écart moindre que Flat, encore visible près de la frontière ombre / lumière.</div>`,
+    phong: `<div class="ok"><b>Phong.</b> La normale interpolée puis normalisée est exactement la direction du point sur une sphère (normale de sommet = position) : l’éclairage ne dépend plus du niveau. Seul le bord reste.</div>` };
+  $("p5Verdict").innerHTML = msg[mode];
+}
+["p5T","p5M","p5Rot"].forEach(id => $(id).addEventListener("input", p5Draw));
+
+/* ═══════════ roadmap ═══════════ */
+const RM = [
+["PH4CH1a-1","Le run <code>RelWithAsserts</code> de la scène des sphères (conseillé à l’étape 7) n’a pas été versé au dossier de mesure","Dette (test)","Le refaire (compteurs identiques frame par frame au run Release) et l’archiver, ou constater qu’il a été fait."],
+["PH4CH1a-2","CSV du lot absents de <code>Mesures/</code> (relu le 13/11) : <code>lod_spheres</code>, <code>sph_jetable</code>, <code>sph_A1</code>, <code>sph_B1</code>, <code>sph_B2</code>, <code>sph_A2</code> (et leurs summaries)","Dette (M2)","Les retrouver et les versionner, le premier marqué « temps non recevables » ; rejoint PH4CH2-14, PH4CH3b-3, PH4CH2b-1, PH4CH1-12."],
+["PH4CH1a-3","Popping de couleur en mode <code>Solid</code> : <code>FaceColor(int(f))</code> (hash d’indice) toujours utilisé dans les deux chemins de faces et pour les points (vérifié le 13/11)","Dette (visible)","Attendre le chantier shading ; ou, d’ici là, une couleur stable par entité (matériau MTL, ou hash de l’entité) en <code>Solid</code>, le hash d’indice devenant un mode de debug nommé (règle PH4CH1a.a)."],
+["PH4CH1a-4","Exigences du chantier shading / texture (étape 14) : UV perspective-correctes (<code>invW</code>), Phong par pixel, mipmaps","Décision future","Déjà dans « Pistes rangées ». À trancher au lancement du chantier : Phong (0 % d’écart, coût par pixel : une normalisation) ou Gouraud (≈ 9 % d’écart au seuil). Rejoint L4-2, C1-7, PH4CH2b-6 (attributs par sommet)."],
+["PH4CH1a-5","Les niveaux L1 et L2 des trois chaînes ne sont jamais choisis par la scène de mesure (<code>LodLevel1</code> = <code>LodLevel2</code> = 0)","Dette (test)","Trajectoire de caméra qui s’approche d’une planète, avec contrôle des compteurs, ou test hors moteur de <code>SelectLodLevel</code> autour de chaque seuil ; rejoint PH4CH1-2."],
+["PH4CH1a-6","Aucune comparaison d’images A/B pixel à pixel (mode <code>Depth</code>) entre la scène de la Référence I et celle des sphères","Proposée","Écarts attendus bornés au bord (≈ 2 à 44 pixels par sphère au seuil) ; rejoint PH4CH1-3."],
+["PH4CH1a-7","Sous-chantier QEM non commencé ; protocole écrit : sphères comme banc, ε<sub>QEM</sub> ≤ ε<sub>resample</sub> à faces égales, couture UV et rangées polaires verrouillées","Évolution","À déclencher à l’arrivée d’un mesh sans fonction génératrice (vaisseau modélisé, mesh importé)."],
+["PH4CH1a-8","Plafonds des planètes dans la scène : les 15 corps en <code>sphere_mid</code> dépassent τ en L0 au-delà de 47 px de rayon (silhouette polygonale de près)","Décision de contenu","Garder les choix actuels, ou passer certains corps à <code>sphere_hi.lod.json</code> (image différente de près, nouvelle référence à mesurer)."],
+["PH4CH1a-9","Seuil du dessin en point (A20) mesuré sur la sphère englobante de l’AABB (√3 × rayon) : une sphère ne devient un point que sous ≈ 0,58 px de vrai rayon, et reste en L3 (36 à 64 faces) entre 0,58 et 1 px","Évolution","Ranger le vrai rayon local dans la chaîne (rejoint PH4CH1-7), ou accepter cette marge prudente."],
+["PH4CH1a-10","Avenant A14a : « identiques octet pour octet » n’est plus vrai depuis A18 (<code>mtllib sphere.mtl</code>) ; « décomposer a » a été fait par A19 ; le constat du 07/10 (popping de couleur) n’y figure pas","Documentation","Annoter A14a (renvois A18, A19, et une ligne sur le constat du 07/10)."],
+["PH4CH1a-11","A13 § 9 et A14 § 8.3 affirment qu’à τ = 0,5 px une transition ne se voit pas ; c’est vrai pour la silhouette seulement","Documentation","Annoter : « ε borne la silhouette ; la couleur doit être une propriété de la surface » ; rejoint PH4CH1-9 et PH4CH1-10."],
+["PH4CH1a-12","<code>gen_sphere_lod.py</code> importe <code>ray_radius</code> de <code>gen_rock_lod.py</code> : un générateur dépend d’un autre pour sa mesure","Mineur","Module de mesure commun (<code>lod_measure.py</code>) quand un troisième générateur de chaînes arrivera (QEM)."],
+["PH4CH1a-13","Le nom <code>solar_system_v1compat_belt_lod_spheres.json</code> désigne aujourd’hui la scène témoin « L » de tous les chantiers","Documentation","Garder le nom (historique des références J, K, L) et le relier à « L » dans un readme, ou renommer ; rejoint PH4CH1-17."],
+["PH4CH1a-14","Hystérésis et fondu enchaîné : le bord résiduel (12 à 44 pixels au seuil) n’a pas été réévalué sans le popping de couleur","Évolution","À juger à l’œil une fois PH4CH1a-3 traité ; rejoint PH4CH1-4."] ];
+$("rmBody").innerHTML = RM.map(r => `<tr><td class="num">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+
+function all(){ f1Draw(); c2Draw(); m3Draw(); l4Draw(); p5Draw(); }
+all();
+let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(all, 150); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", all);
+new MutationObserver(all).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+})();
+</script>
+
+</body></html>

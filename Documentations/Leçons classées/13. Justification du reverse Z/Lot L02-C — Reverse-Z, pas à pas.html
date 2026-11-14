@@ -116,10 +116,19 @@ hr{border:0;border-top:1px solid var(--bd);margin:34px 0}
 .chk.done .bx{background:var(--ok);border-color:var(--ok);position:relative}
 .chk.done .bx::after{content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(42deg)}
 .fr{font-size:12px;color:var(--tx3);margin:4px 0 0}
+.algo2{display:grid;gap:12px;grid-template-columns:1fr;margin:0 0 14px}
+@media (min-width:860px){ .algo2{grid-template-columns:1fr 1fr} .algo2 .diff{margin:0} }
+.algo2 pre{font-size:12px}
+#global svg .gn{cursor:pointer}
+#global svg .gn:hover rect{filter:brightness(0.96)}
+#global svg .gn.sel rect{stroke-width:2.4}
+.rev{border:1px solid var(--bd);border-radius:10px;padding:12px 16px;font-size:13.5px;background:var(--card)}
+.rev li{margin:5px 0}
 </style>
 </head>
 <body>
 <nav><div class="inner">
+  <a href="#vue">Vue d’ensemble</a>
   <a href="#pourquoi">Pourquoi</a>
   <a href="#ou">Où on en est</a>
   <a href="#objectif">Objectif</a>
@@ -138,8 +147,144 @@ hr{border:0;border-top:1px solid var(--bd);margin:34px 0}
   <span class="tag t-vi">Lot L02-C</span>
   <h1>Reverse-Z, pas à pas</h1>
   <p style="color:var(--tx2);font-size:17px;margin:4px 0 0">Décision C de la Leçon 02 — la profondeur en <code>[0,1]</code> inversée.<br>
-  Mise en œuvre : <code>Maths/Projection.cpp</code> (L05), <code>Rendering/DepthBuffer.h</code> et <code>ClipVertex.h</code> (L04 P2).</p>
+  Mise en œuvre : <code>Maths/Projection.cpp</code> et <code>Maths/Geometry/Frustum.cpp</code> (L05), <code>Rendering/ClipVertex.h</code>, <code>DepthBuffer.h</code> et <code>Fragment.h</code> (L04 P2, C1, C2).</p>
 </header>
+
+<!-- ============================================================ -->
+<h2 id="vue">0. Vue d’ensemble — où se situe ce lot dans le moteur</h2>
+
+<p>Le moteur est devenu dense. Avant de parler du lot, on se replace dans le trajet complet d’une frame, du chargement de la scène jusqu’au pixel affiché. Le reverse-Z n’est pas un module : c’est une <strong>convention</strong> qui traverse le pipeline de haut en bas. C’est pour ça qu’il touche sept endroits différents — et qu’aucun d’eux, pris isolément, ne ressemble à « la fonctionnalité reverse-Z ».</p>
+
+<h3>0.1 — L’algorithme global d’une frame</h3>
+<p class="note">Clique sur un maillon pour voir son fichier, son lot d’origine et ce que le reverse-Z y change.</p>
+<div class="card" style="padding:14px 10px 10px">
+  <div class="scroll"><div id="global" style="min-width:600px"></div></div>
+  <div class="legend" style="padding:0 8px">
+    <span><i class="sw" style="background:var(--wabg);border:1.5px solid var(--wa)"></i>modifié par ce lot</span>
+    <span><i class="sw" style="background:var(--acbg);border:1.5px dashed var(--ac)"></i>inchangé, mais transporte la profondeur inversée</span>
+    <span><i class="sw" style="background:var(--card2);border:1px solid var(--bd)"></i>non concerné</span>
+  </div>
+</div>
+<div class="card" id="g-info" style="border-left:3px solid var(--ac);min-height:96px">
+  <p class="note" style="margin:0">Sélectionne un maillon du schéma.</p>
+</div>
+
+<p>Trois lectures à retenir de ce schéma :</p>
+<ul>
+<li><strong>Le lot agit à quatre fréquences différentes</strong> : une fois par frame (matrice, plans du frustum, effacement), une fois par instance (classification), une fois par face (test near), une fois par pixel (test de profondeur). Une erreur à n’importe lequel de ces niveaux casse l’image entière.</li>
+<li><strong>Les deux branches Inside et Intersect transportent le même <code>z_ndc</code></strong>, produit par la même multiplication <code>clip.z · (1/w)</code>. Elles ne savent pas qu’il est inversé, et n’ont pas besoin de le savoir.</li>
+<li><strong>Le chargement, l’ECS, le LOD, le backface et le rejet 3b sont totalement étrangers au lot.</strong> Si un bug de profondeur t’amène dans l’un d’eux, tu fais fausse route.</li>
+</ul>
+
+<h3>0.2 — Carte des fichiers</h3>
+<div class="scroll"><table style="min-width:700px">
+<thead><tr><th>Dossier</th><th>Fichier</th><th>Ce qui s’y trouve</th><th>Statut</th></tr></thead>
+<tbody>
+<tr><td rowspan="3"><code>Maths/</code></td><td><code>Projection.h</code></td><td>Convention écrite en tête de fichier : <code>NDC z ∈ [0,1] REVERSE-Z</code></td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>Projection.cpp</code></td><td><code>PerspectiveOffCenter</code>, <code>Orthographic</code> : coefficients <code>m22</code>/<code>m32</code><br><code>PerspectiveInfinite</code> : far infini</td><td><span class="tag t-wa">modifié</span> <span class="tag t-ok">nouveau</span></td></tr>
+<tr><td><code>MatrixLib.h</code></td><td>Anciennes <code>Perspective</code>/<code>Orthographic</code> OpenGL <strong>commentées</strong> — ne plus s’en servir de référence</td><td><span class="tag t-no">retiré</span></td></tr>
+<tr><td rowspan="2"><code>Maths/Geometry/</code></td><td><code>Frustum.cpp</code></td><td><code>Build(VP, reverseZ, infiniteFar)</code> : échange des étiquettes Near/Far, 5 plans en far infini</td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>Plane.h</code></td><td><code>Normalize()</code> tolère la normale nulle du far infini</td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td rowspan="8"><code>Rendering/</code></td><td><code>ViewData.h</code></td><td>Champs <code>reverseZ</code>, <code>hasFarPlane</code>, <code>nearPlane</code>, <code>farPlane</code></td><td><span class="tag t-ok">nouveau</span></td></tr>
+<tr><td><code>ClipVertex.h</code></td><td><code>NearDistance()</code> = <code>w − z</code></td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>Clipper.cpp</code></td><td><code>ClipTriangleNear</code> : consomme <code>NearDistance</code>, aucune ligne propre au reverse-Z</td><td><span class="tag t-ac">transporte</span></td></tr>
+<tr><td><code>VertexStage.h/.cpp</code></td><td><code>ProjectClip</code>, <code>ProjectPositions8</code> : <code>z_ndc</code> transmis tel quel, plus de remap</td><td><span class="tag t-ac">transporte</span></td></tr>
+<tr><td><code>DepthBuffer.h</code></td><td><code>Clear()</code> à <code>0.0f</code> ; <code>DepthTestAndSet</code> : source unique du test</td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>Fragment.h</code></td><td><code>DepthTestAndSet8</code> : jumeau AVX2, même résultat au bit près</td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>RenderTypes.h</code></td><td><code>EDepthTest { Always, Greater, GreaterEqual, Never }</code></td><td><span class="tag t-wa">modifié</span></td></tr>
+<tr><td><code>Fragment.h</code> (shaders)</td><td><code>ShaderDepth</code>, <code>ShaderLinearDepth</code> : lisent <code>1/w</code>, <strong>pas</strong> <code>z_ndc</code></td><td><span class="tag t-ac">non concerné</span></td></tr>
+<tr><td><code>Scene/</code>, <code>ECS/</code>, <code>Resources/</code></td><td>—</td><td>Chargement, transformations, maillages, LOD</td><td><span class="tag" style="background:var(--card2);color:var(--tx3)">hors lot</span></td></tr>
+</tbody></table></div>
+
+<h3>0.3 — L’algorithme de la profondeur, en détail : ce que le lot apporte</h3>
+<p>Voici la profondeur suivie de bout en bout, en pseudo-code, dans l’ancien moteur (convention OpenGL héritée de LibV2, encore visible en commentaire dans <code>MatrixLib.h</code>) puis dans LV3. Chaque ligne surlignée est un <strong>fonctionnement remis en question</strong> ; chaque ligne verte est un <strong>ajout</strong> ; chaque ligne barrée est une <strong>suppression</strong>.</p>
+
+<div class="algo2">
+<div class="diff">
+  <div class="hd av">AVANT — LibV2, convention OpenGL, NDC z ∈ [-1,+1]</div>
+<pre><code><span class="cm">// ── une fois par frame ─────────────────────────</span>
+P  = Perspective(fov, aspect, n, f)
+<mark class="hlr">     m22 = -(f+n)/(f-n)   m32 = -2fn/(f-n)</mark>
+<span class="cm">     // pas de far infini possible</span>
+
+VP = View · P
+<mark class="hlr">frustum.Build(VP)</mark>
+<mark class="hlr">     near : z + w ≥ 0     far : w − z ≥ 0</mark>
+<span class="cm">     // toujours 6 plans</span>
+
+<mark class="hlr">depth.Clear(1.0f)        // 1 = far</mark>
+
+<span class="cm">// ── une fois par instance ──────────────────────</span>
+vis = frustum.Classify(aabb)
+
+<span class="cm">// ── par sommet ─────────────────────────────────</span>
+clip = v · MVP
+
+<span class="cm">// ── par face (Intersect) ───────────────────────</span>
+<mark class="hlr">d_i = clip_i.z + clip_i.w     // dist. au near</mark>
+3 dehors → rejet   mixte → ClipTriangleNear
+
+<span class="cm">// ── par coin / par sommet ──────────────────────</span>
+z_ndc = clip.z · (1 / clip.w)    // ∈ [-1,+1]
+<mark class="hlr">z_buf = z_ndc · 0.5 + 0.5     // remap fenêtre</mark>
+
+<span class="cm">// ── par pixel ──────────────────────────────────</span>
+z = interpolation affine de z_buf
+<mark class="hlr">si z >= depth[p] : rejet      // LESS</mark>
+depth[p] = z</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — LV3, NDC z ∈ [0,1] reverse-Z</div>
+<pre><code><span class="cm">// ── une fois par frame ─────────────────────────</span>
+P  = Perspective(fov, aspect, n, f)
+<mark class="hlg">     m22 = n/(f-n)        m32 = n·f/(f-n)</mark>
+<mark class="hlg"> ou PerspectiveInfinite : m22 = 0, m32 = n</mark>
+
+VP = View · P
+<mark class="hlg">frustum.Build(VP, reverseZ, !hasFarPlane)</mark>
+<mark class="hlg">     near : w − z ≥ 0     far : z ≥ 0</mark>
+<mark class="hlg">     far infini → 5 plans (Far ignoré)</mark>
+
+<mark class="hlg">depth.Clear(0.0f)        // 0 = far</mark>
+
+<span class="cm">// ── une fois par instance ──────────────────────</span>
+vis = frustum.Classify(aabb)            <span class="cm">// inchangé</span>
+
+<span class="cm">// ── par sommet ─────────────────────────────────</span>
+clip = v · MVP                          <span class="cm">// inchangé</span>
+
+<span class="cm">// ── par face (Intersect) ───────────────────────</span>
+<mark class="hlg">d_i = clip_i.w − clip_i.z     // NearDistance</mark>
+3 dehors → rejet   mixte → ClipTriangleNear
+
+<span class="cm">// ── par coin / par sommet ──────────────────────</span>
+z_ndc = clip.z · (1 / clip.w)    // ∈ [0,1]
+<del style="color:var(--tx3)">z_buf = z_ndc · 0.5 + 0.5</del>  <span class="cm">// SUPPRIMÉ</span>
+
+<span class="cm">// ── par pixel ──────────────────────────────────</span>
+z = interpolation affine de z_ndc       <span class="cm">// inchangé</span>
+<mark class="hlg">si z <= depth[p] : rejet      // GREATER</mark>
+depth[p] = z</code></pre>
+</div>
+</div>
+
+<p>Récapitulatif par point de contact :</p>
+<div class="scroll"><table style="min-width:720px">
+<thead><tr><th>#</th><th>Point de contact</th><th>Nature</th><th>Avant</th><th>Après</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>T1</td><td>Coefficients de projection</td><td><span class="tag t-wa">modifié</span></td><td>négatifs, <code>[-1,+1]</code></td><td>positifs, <code>[0,1]</code> inversé</td><td>placer le far là où le <code>float</code> est dense (§6.1)</td></tr>
+<tr><td>T2</td><td>Far infini</td><td><span class="tag t-ok">nouveau</span></td><td>impossible</td><td><code>PerspectiveInfinite</code></td><td>la limite reverse-Z est bien conditionnée (§6.5)</td></tr>
+<tr><td>T3</td><td>Plans du frustum</td><td><span class="tag t-wa">modifié</span></td><td>near <code>z+w</code>, far <code>w−z</code></td><td>near <code>w−z</code>, far <code>z</code></td><td>les bords du volume canonique ont changé de rôle</td></tr>
+<tr><td>T4</td><td>Nombre de plans</td><td><span class="tag t-ok">nouveau</span></td><td>6, toujours</td><td>6, ou 5 en far infini</td><td>le plan far devient dégénéré (normale nulle)</td></tr>
+<tr><td>T5</td><td>Effacement du Z-buffer</td><td><span class="tag t-wa">modifié</span></td><td><code>1.0f</code></td><td><code>0.0f</code></td><td>« rien encore dessiné » = le plus lointain = 0</td></tr>
+<tr><td>T6</td><td>Distance au near (clip)</td><td><span class="tag t-wa">modifié</span></td><td><code>z + w</code></td><td><code>w − z</code></td><td>même raison que T3, au niveau de la face</td></tr>
+<tr><td>T7</td><td>Remap de fenêtre</td><td><span class="tag t-no">supprimé</span></td><td><code>z·0.5 + 0.5</code></td><td>—</td><td>le NDC est déjà dans <code>[0,1]</code> : une multiplication et une addition de moins par sommet</td></tr>
+<tr><td>T8</td><td>Test de profondeur</td><td><span class="tag t-wa">modifié</span></td><td>LESS</td><td>GREATER</td><td>plus proche = plus grand</td></tr>
+<tr><td>T9</td><td>Interpolation de <code>z</code></td><td><span class="tag t-ac">inchangé</span></td><td>affine en écran</td><td>affine en écran</td><td><code>z/w</code> est affine en espace écran, dans les deux conventions</td></tr>
+<tr><td>T10</td><td>Clipping Sutherland-Hodgman</td><td><span class="tag t-ac">inchangé</span></td><td><code>t = dᵢ/(dᵢ−dⱼ)</code></td><td>idem</td><td>ne dépend que du signe et du rapport des distances, pas de leur formule</td></tr>
+</tbody></table></div>
+
+<div class="flat"><p style="margin:0"><strong>Bilan :</strong> cinq fonctionnements modifiés, deux ajouts, une suppression, et zéro ligne de plus dans les boucles chaudes. Le lot <em>retire</em> même du travail par sommet (T7).</p></div>
 
 <!-- ============================================================ -->
 <h2 id="pourquoi">1. Pourquoi ce lot</h2>
@@ -251,7 +396,7 @@ hr{border:0;border-top:1px solid var(--bd);margin:34px 0}
 <!-- ============================================================ -->
 <h2 id="algo">5. L’algorithme initial, et ce que ce lot y change</h2>
 
-<p>L’algorithme de profondeur est le même avant et après — c’est une chaîne en cinq maillons. Ce lot ne change <strong>aucun maillon</strong> : il change <strong>quatre constantes et deux signes de comparaison</strong> à l’intérieur des maillons existants.</p>
+<p>Le §0.3 a montré l’algorithme complet en pseudo-code. Ici on descend au code réel. La chaîne de la profondeur compte six maillons, et le lot n’en ajoute ni n’en retire aucun : il change <strong>des constantes, des signes de comparaison et une permutation d’étiquettes</strong> à l’intérieur des maillons existants.</p>
 
 <div class="card" style="padding:18px">
 <div id="chain"></div>
@@ -286,10 +431,10 @@ m[3][3] =  0.0f;</code></pre>
 
 <h3>5.2 — Distance au plan near, en espace de clip</h3>
 <div class="diff">
-  <div class="hd av">AVANT — la forme canonique Direct3D standard</div>
+  <div class="hd av">AVANT — convention OpenGL (même convention que 5.1)</div>
 <pre><code>float NearDistance(const ClipVertex&amp; v) noexcept
 {
-    <mark class="hlr">return v.clip.z;</mark>        <span class="cm">// near : z &gt;= 0   (far : z &lt;= w)</span>
+    <mark class="hlr">return v.clip.z + v.clip.w;</mark>   <span class="cm">// volume : -w &lt;= z &lt;= w ; near : z + w &gt;= 0</span>
 }</code></pre>
 </div>
 <div class="diff">
@@ -299,7 +444,7 @@ m[3][3] =  0.0f;</code></pre>
     <mark class="hlg">return v.clip.w - v.clip.z;</mark>   <span class="cm">// reverse-Z : w - z est le plan NEAR</span>
 }</code></pre>
 </div>
-<p class="note">Le volume de clip reste <code>0 ≤ z ≤ w</code> dans les deux cas. Ce qui change, c’est <em>lequel des deux bords</em> est le near. En reverse-Z, <code>z = w</code> est le near, donc la distance signée au near est <code>w − z</code>.</p>
+<p class="note">Deux choses changent en même temps. Le volume passe de <code>-w ≤ z ≤ w</code> (OpenGL) à <code>0 ≤ z ≤ w</code> ([0,1]). Et dans ce nouveau volume, c’est le bord <code>z = w</code> qui devient le near. La distance signée au near est donc <code>w − z</code>. (En Direct3D standard, sans inversion, elle vaudrait simplement <code>z</code>.)</p>
 
 <h3>5.3 — Effacement et test du Z-buffer</h3>
 <div class="diff">
@@ -354,6 +499,41 @@ bool DepthTestAndSet(float&amp; dst, float z) noexcept
     Never           <span class="cm">// masque d’occlusion</span>
 };</code></pre>
 </div>
+
+<h3>5.5 — Extraction des plans du frustum (Gribb-Hartmann)</h3>
+<p>Le frustum n’est jamais construit à la main : ses six plans sont <strong>lus dans les colonnes de VP</strong>. Chaque plan est une combinaison de la colonne <code>w</code> et d’une autre colonne. Donc quand le volume canonique change, les combinaisons changent aussi.</p>
+<div class="diff">
+  <div class="hd av">AVANT — volume OpenGL -w ≤ z ≤ w, 6 plans toujours</div>
+<pre><code><span class="kw">void</span> Frustum::Build(<span class="kw">const</span> Matrix44f&amp; M) <span class="kw">noexcept</span>
+{
+    <span class="kw">const</span> Plane cx = col(0), cy = col(1), cz = col(2), cw = col(3);
+    m_planes[Left]   = add(cw, cx);   m_planes[Right] = sub(cw, cx);
+    m_planes[Bottom] = add(cw, cy);   m_planes[Top]   = sub(cw, cy);
+    <mark class="hlr">m_planes[Near]   = add(cw, cz);</mark>   <span class="cm">//  z + w ≥ 0</span>
+    <mark class="hlr">m_planes[Far]    = sub(cw, cz);</mark>   <span class="cm">//  w − z ≥ 0</span>
+    <mark class="hlr">for (<span class="kw">int</span> i = 0; i &lt; 6; ++i)</mark> m_planes[i].Normalize();
+}</code></pre>
+</div>
+<div class="diff">
+  <div class="hd ap">APRÈS — <code>Maths/Geometry/Frustum.cpp</code></div>
+<pre><code><span class="kw">void</span> Frustum::Build(<span class="kw">const</span> Matrix44f&amp; M, <mark class="hlg"><span class="kw">bool</span> reverseZ, <span class="kw">bool</span> infiniteFar</mark>) <span class="kw">noexcept</span>
+{
+    <span class="kw">const</span> Plane cx = col(0), cy = col(1), cz = col(2), cw = col(3);
+    m_planes[Left]   = add(cw, cx);   m_planes[Right] = sub(cw, cx);
+    m_planes[Bottom] = add(cw, cy);   m_planes[Top]   = sub(cw, cy);
+
+    <span class="cm">// Volume [0,1] : les deux conditions sont (z ≥ 0) et (w − z ≥ 0).
+    // En reverse-Z, ce sont les ÉTIQUETTES qui s'échangent, pas les formules.</span>
+    <mark class="hlg">if (reverseZ) { m_planes[Near] = sub(cw, cz); m_planes[Far] = cz; }</mark>
+    <mark class="hlg">else          { m_planes[Near] = cz;          m_planes[Far] = sub(cw, cz); }</mark>
+
+    <span class="cm">// Far infini : m[2][2] = 0, la colonne z a une normale NULLE.
+    // Le plan est dégénéré : on ne le teste pas. Far DOIT rester dernier de l'enum.</span>
+    <mark class="hlg">m_count = infiniteFar ? <span class="kw">int</span>(Far) : <span class="kw">int</span>(PlaneCount);</mark>
+    <span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; m_count; ++i) m_planes[i].Normalize();
+}</code></pre>
+</div>
+<p class="note">Point à retenir : en far <em>fini</em>, échanger les étiquettes Near et Far ne change <strong>rien</strong> au résultat de <code>Classify</code>, qui teste les six plans de toute façon. L’échange ne devient décisif qu’en far infini, où l’un des deux plans est écarté — et il faut que ce soit le bon. C’est le contre-exemple 4 du §8.</p>
 
 <!-- ============================================================ -->
 <h2 id="tech">6. Comment ça marche</h2>
@@ -493,31 +673,43 @@ m32 = f · m22 = n·f / (f - n)</code></pre>
       <div class="b out"><p class="k">Sortie</p><code>clip.z = <span id="o3a">—</span></code><br><code>clip.w = <span id="o3b">—</span></code></div>
     </div>
     <h4>Scalaire</h4>
-<pre><code><span class="cm">// Matrix44f est stockée en ligne : MulRow(v, M) fait v' = v·M.
-// Seules les colonnes 2 et 3 nous intéressent ici.</span>
-<span class="kw">const</span> <span class="kw">float</span> clipZ = zView * m[2][2] + m[3][2];   <span class="cm">// x,y ne contribuent pas : m[0][2]=m[1][2]=0</span>
-<span class="kw">const</span> <span class="kw">float</span> clipW = zView * m[2][3];              <span class="cm">// m[2][3] = -1  ->  clipW = -zView</span></code></pre>
-    <h4>Vectorisé — AVX2, 8 sommets d’un coup</h4>
-<pre><code><span class="cm">// Les 8 z de vue sont déjà en SoA (un tableau de float contigu) : c'est
-// toute la raison d'être du layout DOD. En AoS il faudrait 8 gather.</span>
-<span class="kw">const</span> __m256 vZ   = _mm256_load_ps(zViewSoA + i);   <span class="cm">// 8 z_view, alignés 32 o</span>
-<span class="kw">const</span> __m256 vM22 = _mm256_set1_ps(m[2][2]);        <span class="cm">// broadcast : même scalaire x8</span>
-<span class="kw">const</span> __m256 vM32 = _mm256_set1_ps(m[3][2]);
+<pre><code><span class="cm">// MulRow (ViewData::WorldToClip, VertexStage) — le scalaire de référence.
+// "a + b + c + d" s'évalue de GAUCHE à DROITE : c'est cet ordre-là que
+// le vectorisé devra reproduire au bit près.</span>
+<span class="kw">const</span> <span class="kw">float</span> cz = p.x * m[0][2] + p.y * m[1][2] + p.z * m[2][2] + m[3][2];
+<span class="kw">const</span> <span class="kw">float</span> cw = p.x * m[0][3] + p.y * m[1][3] + p.z * m[2][3] + m[3][3];
+<span class="cm">// Ici p est en espace OBJET et m = MVP : ce sont m22 et m32 de la projection,
+// composés avec model·view, qui rendent cz inversé. MulRow ne le sait pas.</span></code></pre>
+    <h4>Vectorisé — AVX2, 8 sommets : <code>ProjectPositions8</code> (<code>VertexStage.cpp</code>, code du dépôt)</h4>
+<pre><code><span class="cm">// Constantes HORS de la boucle : chaque coefficient diffusé dans les 8 couloirs.</span>
+<span class="kw">const</span> __m256 m02 = _mm256_set1_ps(mvp[0][2]), m12 = _mm256_set1_ps(mvp[1][2]),
+             m22 = _mm256_set1_ps(mvp[2][2]), m32 = _mm256_set1_ps(mvp[3][2]);
+<span class="kw">const</span> __m256 m03 = _mm256_set1_ps(mvp[0][3]), m13 = _mm256_set1_ps(mvp[1][3]),
+             m23 = _mm256_set1_ps(mvp[2][3]), m33 = _mm256_set1_ps(mvp[3][3]);
 
-<span class="cm">// FMA : une seule instruction pour a*b+c, UN seul arrondi au lieu de deux.
-// Plus rapide ET plus précis que mul puis add séparés.</span>
-<span class="kw">const</span> __m256 vClipZ = _mm256_fmadd_ps(vZ, vM22, vM32);
+<span class="kw">for</span> (size_t i = 0; i &lt; paddedCount; i += 8)
+{
+    <span class="cm">// 1. CHARGER : 3 lectures, aucune transposition — la SoA l'a faite au chargement.</span>
+    <span class="kw">const</span> __m256 x = _mm256_load_ps(px + i);
+    <span class="kw">const</span> __m256 y = _mm256_load_ps(py + i);
+    <span class="kw">const</span> __m256 z = _mm256_load_ps(pz + i);
 
-<span class="cm">// clipW = -z : on inverse le bit de signe par XOR avec 0x80000000.
-// Moins cher qu'une soustraction à zéro, et correct sur -0.0f.</span>
-<span class="kw">const</span> __m256 kSign  = _mm256_castsi256_ps(_mm256_set1_epi32(<span class="nb">0x80000000</span>));
-<span class="kw">const</span> __m256 vClipW = _mm256_xor_ps(vZ, kSign);
+    <span class="cm">// 2. MulRow : composante c = ((x*m0c + y*m1c) + z*m2c) + m3c
+    // MÊMES parenthèses que le scalaire. Fusionner une mul et une add
+    // (vfmadd) changerait l'arrondi : INTERDIT.</span>
+    <span class="kw">const</span> __m256 cz = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(
+        _mm256_mul_ps(x, m02), _mm256_mul_ps(y, m12)), _mm256_mul_ps(z, m22)), m32);
+    <span class="kw">const</span> __m256 cw = _mm256_add_ps(_mm256_add_ps(_mm256_add_ps(
+        _mm256_mul_ps(x, m03), _mm256_mul_ps(y, m13)), _mm256_mul_ps(z, m23)), m33);
 
-_mm256_store_ps(clipZOut + i, vClipZ);
-_mm256_store_ps(clipWOut + i, vClipW);</code></pre>
-    <p class="note" style="margin-bottom:6px">Registres, couloir par couloir (8 sommets répartis entre <code>near</code> et <code>far</code>) :</p>
+    <span class="cm">// Contrat Inside : w &gt; 0 dans les 8 couloirs. NaN -&gt; faux -&gt; assertion (voulu).</span>
+    LV3_ASSERT(_mm256_movemask_ps(_mm256_cmp_ps(cw, _mm256_setzero_ps(), _CMP_GT_OQ)) == <span class="nb">0xFF</span>);
+    <span class="cm">// ... suite : étape 5</span>
+}</code></pre>
+    <div class="flat" style="margin-bottom:12px"><p style="margin:0" class="note"><strong>Pourquoi pas de FMA ici, alors que FMA est plus précis ?</strong> Parce que la règle du moteur n’est pas « le plus précis possible » mais « <strong>le vectorisé produit la même image que le scalaire, au bit près</strong> ». Les deux chemins coexistent (Inside vectorisé, Intersect scalaire via <code>ProjectClip</code>), et les tests de non-régression comparent leurs sorties bit à bit. Un FMA arrondit une fois au lieu de deux : le résultat est meilleur, mais <em>différent</em>, et un sommet partagé entre une instance Inside et une instance Intersect ne tomberait plus sur le même pixel. Un seul arrondi de différence suffit à ouvrir un trou d’un pixel le long d’une couture.</p></div>
+    <p class="note" style="margin-bottom:6px">Registres, couloir par couloir (8 sommets répartis entre <code>near</code> et <code>far</code>, sur l’axe de visée) :</p>
     <div class="scroll"><div id="lanes3"></div></div>
-    <p class="fr">AVX-512 : même code avec <code>__m512</code>, <code>_mm512_fmadd_ps</code>, 16 couloirs. La sélection se fait au <em>runtime</em> (le portable n’a pas l’AVX-512), jamais par <code>#ifdef</code> global.</p>
+    <p class="fr">AVX-512 : même structure avec <code>__m512</code>, 16 couloirs, et la même interdiction du FMA. Non implémenté : la machine de référence n’a pas l’AVX-512.</p>
   </div>
 </div>
 
@@ -530,11 +722,12 @@ _mm256_store_ps(clipWOut + i, vClipW);</code></pre>
       <div class="b in"><p class="k">Entrée — de l’étape 3</p><code>clip.z = <span class="i-cz">—</span></code>, <code>clip.w = <span class="i-cw">—</span></code></div>
       <div class="b out"><p class="k">Sortie</p><code>NearDistance = w − z = <span id="o4a">—</span></code><br><span id="o4b">—</span></div>
     </div>
-    <p>Le volume de clip canonique reste <code>0 ≤ z ≤ w</code> dans les deux schémas. Mais le bord qui représente le near change de côté :</p>
+    <p>Trois conventions, trois formules. En <code>[0,1]</code>, le volume <code>0 ≤ z ≤ w</code> est le même en standard et en reverse-Z, mais le bord qui représente le near change de côté :</p>
     <div class="scroll"><table style="min-width:520px">
       <thead><tr><th></th><th>plan near</th><th>plan far</th><th>distance signée au near</th></tr></thead>
       <tbody>
-      <tr><td>Standard</td><td><code>z = 0</code></td><td><code>z = w</code></td><td><code>z</code></td></tr>
+      <tr><td>OpenGL (LibV2)</td><td><code>z = −w</code></td><td><code>z = w</code></td><td><code>z + w</code></td></tr>
+      <tr><td>D3D standard</td><td><code>z = 0</code></td><td><code>z = w</code></td><td><code>z</code></td></tr>
       <tr><td><strong>Reverse-Z</strong></td><td><code>z = w</code></td><td><code>z = 0</code></td><td><code>w − z</code></td></tr>
       </tbody></table></div>
     <h4>Scalaire — <code>Rendering/ClipVertex.h</code></h4>
@@ -575,27 +768,27 @@ _mm256_store_ps(clipWOut + i, vClipW);</code></pre>
       <div class="b in"><p class="k">Entrée — de l’étape 3</p><code>clip.z = <span class="i-cz">—</span></code><br><code>clip.w = <span class="i-cw">—</span></code></div>
       <div class="b out"><p class="k">Sortie</p><code>z_ndc = <span id="o5a">—</span></code><br><code>ulp(z_ndc) = <span id="o5b">—</span></code><br>incertitude monde : <strong><span id="o5c">—</span></strong></div>
     </div>
-    <h4>Scalaire</h4>
-<pre><code><span class="kw">const</span> <span class="kw">float</span> invW  = 1.0f / clipW;      <span class="cm">// calculé UNE fois : sert aussi à x, y, uv</span>
-<span class="kw">const</span> <span class="kw">float</span> zNdc  = clipZ * invW;</code></pre>
-    <h4>Vectorisé — AVX2, 8 sommets</h4>
-<pre><code><span class="cm">// Deux options. _mm256_div_ps est exact (0,5 ulp) mais coûte ~14 cycles de
-// latence et n'est PAS pipeliné (débit ~1 tous les 8 cycles sur Skylake).</span>
-<span class="kw">const</span> __m256 vInvW_exact = _mm256_div_ps(_mm256_set1_ps(1.0f), vClipW);
+    <h4>Scalaire — <code>ProjectClip</code> (<code>VertexStage.h</code>)</h4>
+<pre><code><span class="cm">// LE SEUL endroit du moteur où la division par w a lieu.
+// Appelé par EmitClipTriangle (par COIN, après clipping).
+// Précondition : c.w &gt; 0.</span>
+<span class="kw">const</span> <span class="kw">float</span> invW = 1.0f / c.w;                        <span class="cm">// UNE division</span>
+<span class="kw">const</span> Vec3f r    = vp.ToRaster({ c.x * invW, c.y * invW, c.z * invW });
+<span class="kw">return</span> { r.x, r.y, r.z, invW };   <span class="cm">// r.z = z_ndc reverse-Z, transmis tel quel</span></code></pre>
+    <h4>Vectorisé — AVX2, 8 sommets : suite de <code>ProjectPositions8</code> (code du dépôt)</h4>
+<pre><code><span class="cm">// 3. DIVISION : invW = 1 / w. vdivps est IEEE exact, comme le divss du scalaire.
+// Jamais _mm256_rcp_ps (12 bits justes) : l'image ne serait plus celle du scalaire.</span>
+<span class="kw">const</span> __m256 invW = _mm256_div_ps(one, cw);
 
-<span class="cm">// Option rapide : rcp (12 bits de mantisse, ~4 cycles, pipeliné) + UNE
-// itération de Newton-Raphson -> ~23 bits, soit la précision du float.
-//   x1 = x0 * (2 - w*x0)
-// Obligatoire : sans Newton, 12 bits de profondeur, le z-fighting revient
-// par la porte de derrière après l'avoir chassé par la fenêtre.</span>
-      __m256 r  = _mm256_rcp_ps(vClipW);
-<span class="kw">const</span> __m256 two = _mm256_set1_ps(2.0f);
-r = _mm256_mul_ps(r, _mm256_fnmadd_ps(vClipW, r, two));   <span class="cm">// fnmadd = -(a*b)+c</span>
-
-<span class="kw">const</span> __m256 vZNdc = _mm256_mul_ps(vClipZ, r);</code></pre>
+<span class="cm">// 4. NDC : ProjectClip MULTIPLIE par invW (il ne divise pas par w) : idem ici.</span>
+<span class="kw">const</span> __m256 xn = _mm256_mul_ps(cx, invW);
+<span class="kw">const</span> __m256 yn = _mm256_mul_ps(cy, invW);
+<span class="kw">const</span> __m256 zn = _mm256_mul_ps(cz, invW);   <span class="cm">// reverse-Z, transmis tel quel</span>
+<span class="cm">// 5. ToRaster (x, y seulement) puis écriture des RasterVertex { x, y, zn, invW }.</span></code></pre>
+    <div class="flat" style="margin-bottom:12px"><p style="margin:0" class="note"><strong>Pourquoi « multiplier par 1/w » plutôt que « diviser par w » trois fois ?</strong> Une division coûte bien plus cher qu’une multiplication. Mais surtout, <code>c.z / c.w</code> et <code>c.z * (1/c.w)</code> ne donnent <em>pas</em> toujours le même flottant (deux arrondis contre un). Le scalaire a choisi la multiplication ; le vectorisé doit faire exactement le même choix, sinon les deux branches divergent d’un ulp sur <code>z_ndc</code> — et c’est précisément la grandeur que le reverse-Z cherche à préserver.</p></div>
     <p class="note" style="margin-bottom:6px">Registres, couloir par couloir — <code>z_ndc</code> et l’ulp correspondant :</p>
     <div class="scroll"><div id="lanes5"></div></div>
-    <p class="fr">À vérifier au profiler avant d’adopter la variante rcp+Newton : sur les scènes testées, l’étage sommets n’est pas le goulot. <code>_mm256_div_ps</code> reste le choix par défaut tant que la mesure ne dit pas le contraire.</p>
+    <p class="fr">L’approximation <code>_mm256_rcp_ps</code> ne donne que 12 bits de mantisse : sur <code>z_ndc</code>, cela reviendrait à jeter la moitié des bits que le reverse-Z vient de gagner. Même suivie d’une itération de Newton (≈ 23 bits), elle ne reproduit pas le scalaire au bit près. Elle est donc exclue par deux règles à la fois.</p>
   </div>
 </div>
 
@@ -625,25 +818,34 @@ r = _mm256_mul_ps(r, _mm256_fnmadd_ps(vClipW, r, two));   <span class="cm">// fn
     ClearKernel::StreamFill(m_Data.data(), m_Data.size(), 0.0f);
     ClearKernel::Fence();
 }</code></pre>
-    <h4>Vectorisé — AVX2, 8 pixels d’une ligne</h4>
-<pre><code><span class="cm">// Le Z-buffer est contigu par ligne : Row(y) donne le float* de départ,
-// donc 8 pixels voisins = UN load aligné. C'est la cacheline qui commande.</span>
-<span class="kw">const</span> __m256 vDst = _mm256_load_ps(depthRow + x);        <span class="cm">// profondeurs déjà écrites</span>
-
-<span class="cm">// _CMP_GT_OQ : "&gt; , ordonné". Un NaN (triangle dégénéré) échoue le test
-// au lieu de corrompre le buffer. C'est voulu : jamais _CMP_GT_UQ ici.</span>
-<span class="kw">const</span> __m256 vPass = _mm256_cmp_ps(vZ, vDst, _CMP_GT_OQ);
-
-<span class="cm">// On combine avec le masque de couverture du triangle (edge functions) :
-// un pixel n'écrit que s'il est DANS le triangle ET devant.</span>
-<span class="kw">const</span> __m256 vWrite = _mm256_and_ps(vPass, vCoverage);
-
-<span class="cm">// blend + store : écrit les couloirs gagnants, laisse les autres intacts.
-// Préféré à maskstore, nettement plus lent sur plusieurs micro-architectures.</span>
-_mm256_store_ps(depthRow + x, _mm256_blendv_ps(vDst, vZ, vWrite));
-
-<span class="kw">const</span> int32_t writeMask = _mm256_movemask_ps(vWrite);   <span class="cm">// -> shading des 8 pixels</span></code></pre>
-    <p class="note" style="margin-bottom:6px">Couloir par couloir, un cas réel (le triangle couvre 6 pixels sur 8, 2 sont cachés) :</p>
+    <h4>Vectorisé — AVX2, 8 pixels : <code>DepthTestAndSet8</code> (<code>Fragment.h</code>, code du dépôt)</h4>
+<pre><code><span class="cm">// DepthTestAndSet voie par voie. Rend le masque des voies qui PASSENT.
+//   scalaire : if (z &lt;= dst) return false;   donc   passe  &lt;=&gt;  NON (z &lt;= dst)
+//   _CMP_NLE_UQ = « non (inférieur ou égal) », VRAI si une valeur est NaN :
+//   exactement le comportement scalaire, NaN compris (dette relevée en C1).
+//   _CMP_GT_OQ serait FAUX pour NaN : bits différents (contre-exemple C2).
+// Chargement et écritures MASQUÉS : une voie hors couverture n'est ni lue ni
+// écrite, donc jamais d'accès au-delà de la fin de ligne ou du tampon.</span>
+[[nodiscard]] LV3_FORCEINLINE __m256 DepthTestAndSet8(<span class="kw">float</span>* depth, __m256 z, __m256 cover) <span class="kw">noexcept</span>
+{
+    <span class="kw">const</span> __m256 dst  = _mm256_maskload_ps(depth, _mm256_castps_si256(cover));   <span class="cm">// voies masquées : 0</span>
+    <span class="kw">const</span> __m256 pass = _mm256_and_ps(cover, _mm256_cmp_ps(z, dst, _CMP_NLE_UQ));
+    _mm256_maskstore_ps(depth, _mm256_castps_si256(pass), z);
+    <span class="kw">return</span> pass;
+}</code></pre>
+    <div class="flat" style="margin-bottom:12px">
+      <p style="margin:0 0 8px" class="note"><strong>Le piège du prédicat.</strong> Le réflexe est de traduire « GREATER » par <code>_CMP_GT_OQ</code>. Ce serait faux — pas mathématiquement, mais <em>vis-à-vis du scalaire</em>. Le scalaire n’écrit pas <code>z &gt; dst</code>, il écrit « rejeter si <code>z &lt;= dst</code> ». Pour tout couple de nombres ordinaires, c’est équivalent. Pour un <code>NaN</code>, non :</p>
+      <div class="scroll"><table style="min-width:480px;margin:0">
+        <thead><tr><th><code>z</code></th><th>scalaire <code>!(z &lt;= dst)</code></th><th><code>_CMP_NLE_UQ</code></th><th><code>_CMP_GT_OQ</code></th></tr></thead>
+        <tbody>
+          <tr><td>0,6 (dst = 0,4)</td><td>passe</td><td>passe</td><td>passe</td></tr>
+          <tr><td>0,4 (dst = 0,4)</td><td>rejeté</td><td>rejeté</td><td>rejeté</td></tr>
+          <tr style="background:var(--nobg)"><td><code>NaN</code></td><td><strong>passe</strong></td><td><strong>passe</strong></td><td><strong style="color:var(--no)">rejeté</strong></td></tr>
+        </tbody></table></div>
+      <p style="margin:8px 0 0" class="note">Que le NaN passe est une <strong>dette</strong> connue (relevée en C1). Mais on ne la corrige pas en douce dans le vectorisé : on la corrige dans le scalaire, la source unique, puis on aligne le vectorisé. Sinon les deux chemins dessinent des images différentes et plus aucun test bit à bit n’est fiable.</p>
+    </div>
+    <p class="note" style="margin-bottom:12px"><strong>Pourquoi <code>maskload</code>/<code>maskstore</code> et pas un <code>load</code> + <code>blendv</code> + <code>store</code> plein ?</strong> Parce qu’en bout de ligne ou de tampon, les voies hors couverture pointeraient au-delà de la mémoire valide. Le chargement masqué ne lit pas ces voies (il y met 0), et l’écriture masquée ne touche que les voies qui passent. La sécurité mémoire prime ici sur le coût, plus élevé, des instructions masquées.</p>
+    <p class="note" style="margin-bottom:6px">Couloir par couloir, un cas réel : le triangle couvre 6 pixels sur 8. Les voies 2 et 7, hors du triangle, ne sont ni lues ni écrites ; parmi les 6 couvertes, les voies 1 et 4 ont déjà une surface plus proche (valeur plus grande) et la gardent.</p>
     <div class="scroll"><div id="lanes6"></div></div>
   </div>
 </div>
@@ -698,10 +900,25 @@ _mm256_store_ps(depthRow + x, _mm256_blendv_ps(vDst, vZ, vWrite));
 <tbody>
 <tr><td><code>Clear()</code> reste à <code>1.0f</code></td><td>Écran entièrement vide. Aucun triangle n’apparaît.</td><td>« Mon rasterizer ne couvre aucun pixel » → on passe trois heures dans les edge functions.</td></tr>
 <tr><td>Test reste <code>z &lt; dst</code></td><td>La scène s’affiche, mais <strong>à l’envers en profondeur</strong> : on voit à travers les murs, les objets lointains passent devant.</td><td>« Mon culling est inversé » → on retourne le signe de l’aire signée, et on casse le culling qui était juste.</td></tr>
-<tr><td><code>NearDistance</code> reste <code>clip.z</code></td><td>Tout va bien… jusqu’au jour où la caméra frôle un objet : le triangle se retourne violemment et balaie l’écran.</td><td>« Bug d’interpolation » → on cherche dans les barycentriques.</td></tr>
+<tr><td><code>NearDistance</code> reste <code>clip.z + clip.w</code> (OpenGL)</td><td>Tout va bien… jusqu’au jour où la caméra frôle un objet : le triangle se retourne violemment et balaie l’écran.</td><td>« Bug d’interpolation » → on cherche dans les barycentriques.</td></tr>
 <tr><td><code>m22 = -n/(f-n)</code></td><td>Profondeur inversée <em>et</em> clipping near qui rejette tout.</td><td>« La matrice est fausse » — seule bonne nouvelle : ce diagnostic-là est le bon.</td></tr>
 </tbody></table></div>
-<div class="flat"><p style="margin:0"><strong>Leçon de méthode :</strong> ces quatre lignes vivent dans quatre fichiers différents (<code>Projection.cpp</code>, <code>ClipVertex.h</code>, <code>DepthBuffer.h</code>, <code>RenderTypes.h</code>). C’est précisément pour ça que le reverse-Z est une <strong>décision dictatoriale prise une fois</strong> et jamais rediscutée : il n’existe pas d’état intermédiaire fonctionnel entre les deux schémas.</p></div>
+<div class="flat"><p style="margin:0"><strong>Leçon de méthode :</strong> ces lignes vivent dans six fichiers différents (<code>Projection.cpp</code>, <code>Frustum.cpp</code>, <code>ClipVertex.h</code>, <code>DepthBuffer.h</code>, <code>Fragment.h</code>, <code>RenderTypes.h</code>). C’est précisément pour ça que le reverse-Z est une <strong>décision dictatoriale prise une fois</strong> et jamais rediscutée : il n’existe pas d’état intermédiaire fonctionnel entre les deux schémas.</p></div>
+
+<h3>Contre-exemple 4 — Le drapeau qui ne fait rien… jusqu’au far infini</h3>
+<p><code>ViewData</code> porte un champ <code>bool reverseZ = true;</code>, transmis à <code>Frustum::Build</code>. Supposons qu’un jour une vue soit construite avec <code>reverseZ = false</code> par erreur — un constructeur oublié, une sérialisation qui met le champ à zéro.</p>
+<div class="scroll"><table style="min-width:620px">
+<thead><tr><th>Configuration</th><th>Plans réellement testés</th><th>Conséquence</th></tr></thead>
+<tbody>
+<tr><td>far fini, <code>reverseZ = false</code></td><td>les 6, étiquettes Near/Far inversées</td><td><strong>Aucune.</strong> <code>Classify</code> teste les 6 plans sans regarder leur nom. Le bug est invisible.</td></tr>
+<tr style="background:var(--nobg)"><td>far infini, <code>reverseZ = false</code></td><td>Left, Right, Bottom, Top, et « Near » = colonne <code>z</code></td><td>Le vrai plan near (<code>w − z</code>) est celui qu’on écarte. Le plan conservé a une normale nulle et <code>d = n &gt; 0</code> : il ne rejette jamais rien.</td></tr>
+</tbody></table></div>
+<p>Chiffrons. <code>n = 0,1 m</code>, un rocher à <strong>5 cm</strong> devant l’œil, donc entre l’œil et le near. Avec la projection infinie :</p>
+<pre><code>w     = 0,05                       <span class="cm">// &gt; 0 : l'assertion Inside de ProjectPositions8 PASSE</span>
+z_ndc = n / d = 0,1 / 0,05 = <mark class="hlr">2,0</mark>     <span class="cm">// hors de [0,1]</span>
+DepthTestAndSet : 2,0 &gt; toute valeur du buffer  →  <mark class="hlr">passe partout</mark></code></pre>
+<p>Le rocher est classé <em>Inside</em>, donc ne passe même pas par le test near. Il se dessine <strong>par-dessus toute la scène</strong>, et comme il est à 5 cm, il peut couvrir la moitié de l’écran. Le diagnostic naturel serait « bug de culling » ou « bug de LOD » — alors que la cause est un booléen dans une structure de vue.</p>
+<div class="flat"><p style="margin:0"><strong>Le vrai défaut n’est pas l’oubli, c’est l’existence du drapeau.</strong> Tout le reste du moteur (<code>NearDistance</code>, <code>DepthBuffer</code>, <code>DepthTestAndSet8</code>, <code>EDepthTest</code>) est <em>câblé</em> en reverse-Z, sans option. Un drapeau qui laisse croire qu’on peut revenir en Z standard sur une seule vue est une fausse option : il ne peut produire qu’un état incohérent. Point Z-7 en roadmap.</p></div>
 
 <!-- ============================================================ -->
 <h2 id="verif">9. Vérifier</h2>
@@ -741,7 +958,25 @@ LV3_ASSERT(NdcZi(1e6f) &gt; 0.0f &amp;&amp; NdcZi(1e6f) &lt; 1e-6f);   <span cla
 
 <span class="cm">// Test 5 — le clipping near, forme canonique.</span>
 LV3_ASSERT(NearDistance(ClipVertex{MulRow(Vec4f{0,0,-0.05f,1}, P)}) &lt; 0.0f);  <span class="cm">// devant le near -> rejeté</span>
-LV3_ASSERT(NearDistance(ClipVertex{MulRow(Vec4f{0,0,-500.f,1}, P)}) &gt; 0.0f);  <span class="cm">// dans le frustum -> gardé</span></code></pre>
+LV3_ASSERT(NearDistance(ClipVertex{MulRow(Vec4f{0,0,-500.f,1}, P)}) &gt; 0.0f);  <span class="cm">// dans le frustum -> gardé</span>
+
+<span class="cm">// Test 6 — le frustum en far infini écarte le BON plan.
+// Un point à 5 cm de l'œil (entre l'œil et le near) doit être dehors.</span>
+Frustum fr;
+fr.Build(Pi, <span class="cm">/*reverseZ*/</span> <span class="kw">true</span>, <span class="cm">/*infiniteFar*/</span> <span class="kw">true</span>);
+LV3_ASSERT(fr.Count() == 5);
+LV3_ASSERT(!fr.Contains(Vec3f{0, 0, -0.05f}));   <span class="cm">// devant le near -&gt; dehors</span>
+LV3_ASSERT( fr.Contains(Vec3f{0, 0, -1.0e5f}));  <span class="cm">// très loin -&gt; dedans (pas de far)</span>
+
+<span class="cm">// Test 7 — scalaire et AVX2 donnent le MÊME masque, NaN compris.</span>
+<span class="kw">alignas</span>(32) <span class="kw">float</span> ref[8], simd[8];   <span class="cm">// mêmes valeurs initiales</span>
+<span class="cm">// ... remplir z[8] avec des valeurs ordinaires, des égalités ET un NaN ...</span>
+<span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; 8; ++i) passRef[i] = DepthTestAndSet(ref[i], z[i]);
+<span class="kw">const</span> <span class="kw">int</span> m = _mm256_movemask_ps(DepthTestAndSet8(simd, _mm256_load_ps(z), allOnes));
+<span class="kw">for</span> (<span class="kw">int</span> i = 0; i &lt; 8; ++i) {
+    LV3_ASSERT(((m &gt;&gt; i) &amp; 1) == passRef[i]);
+    LV3_ASSERT(std::bit_cast&lt;uint32_t&gt;(ref[i]) == std::bit_cast&lt;uint32_t&gt;(simd[i]));
+}</code></pre>
 
 <h3>9.2 — Filets en Debug</h3>
 <pre><code><span class="cm">// Dans le chemin rasterizer, sous _DEBUG uniquement : le Z-buffer ne doit
@@ -755,10 +990,13 @@ LV3_ASSERT(z &gt;= 0.0f &amp;&amp; z &lt;= 1.0f &amp;&amp; <span class="cm">"z_n
 LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reverse-Z : Clear doit remplir à 0"</span>);</code></pre>
 
 <h3>9.3 — Vérification visuelle</h3>
+<div class="flat"><p style="margin:0" class="note"><strong>Faux suspects à connaître.</strong> Les modes <code>ERenderMode::Depth</code> et <code>LinearDepth</code> ne lisent <strong>pas</strong> le Z-buffer : ils recalculent la distance par pixel avec <code>dist = 1 / InterpolateInvW(...)</code>, c’est-à-dire à partir de <code>1/w</code>. Ils affichent exactement la même image en Z standard et en reverse-Z. Ils sont donc excellents pour vérifier la correction de perspective, et <em>inutiles</em> pour vérifier le reverse-Z.</p></div>
+<p>Ce qui vérifie réellement le lot à l’écran :</p>
 <ul>
-<li><code>ERenderMode::Depth</code> — en reverse-Z, le proche est <strong>clair</strong> et le lointain <strong>sombre</strong>. Si c’est l’inverse, un signe a sauté. (En Z standard c’était le contraire : voilà pourquoi ce mode de debug doit être relu après ce lot.)</li>
-<li><code>ERenderMode::LinearDepth</code> — reconstruit la distance réelle depuis <code>z_ndc</code> : <code>d = n·f / (z·(f−n) + ... )</code>. Il doit donner un dégradé <em>visuellement linéaire</em> entre near et far. Un dégradé qui s’écrase près de la caméra signale que la formule de reconstruction est restée celle du Z standard.</li>
-<li>Deux quads coplanaires séparés de 1 mm, placés à 500 m : en Z standard ils clignotent, en reverse-Z ils sont nets et stables. C’est le test de non-régression le plus parlant à garder dans la scène de debug.</li>
+<li><strong>L’ordre d’occlusion</strong> en <code>ERenderMode::Solid</code> : un objet proche doit masquer un objet lointain. Si l’arrière passe devant, le test est resté LESS ou le <code>Clear</code> est resté à 1.</li>
+<li><strong>Deux quads coplanaires</strong> séparés de 1 mm, placés à 500 m : en Z standard ils clignotent, en reverse-Z ils sont nets et stables. C’est le test de non-régression le plus parlant à garder dans la scène de debug.</li>
+<li><strong>Caméra qui frôle un objet</strong> : approcher la caméra à moins de <code>near</code> d’un rocher. Le rocher doit être découpé proprement, jamais se retourner ni recouvrir l’écran. Ce test couvre <code>NearDistance</code> et, en far infini, le choix du plan écarté par <code>Frustum::Build</code>.</li>
+<li><strong>Un visualiseur de <code>z_ndc</code> brut</strong> (à créer, point Z-8) : afficher <code>depth[p]</code> directement en niveau de gris. En reverse-Z, le proche est blanc et tout le reste quasi noir — l’écrasement en <code>1/z</code> rendu visible.</li>
 </ul>
 
 <h3>9.4 — Prédictions du lot appairé (L04 P2 — Z-buffer / L05 — caméra)</h3>
@@ -768,7 +1006,7 @@ LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reve
 <tr><td>Les coefficients <code>m22</code>, <code>m32</code> sont positifs</td><td><code>Orthographic()</code> aussi : <code>m22 = 1/(f−n)</code>, <code>m32 = f/(f−n)</code> — cohérents, et le gizmo de caméra ortho s’affiche du bon côté</td></tr>
 <tr><td><code>NearDistance = w − z</code></td><td>Le clipper rejette les sommets derrière l’œil sans jamais produire de <code>w = 0</code> en division</td></tr>
 <tr><td><code>Clear()</code> remplit à <code>0.0f</code></td><td>Le chantier Clear mesure bien des <code>float</code> à zéro — <code>StreamFill</code> avec <code>0.0f</code> se réduit d’ailleurs à un <code>memset</code> de zéros, le cas le plus rapide</td></tr>
-<tr><td>Le test est <code>GREATER</code></td><td>Les shaders de <code>Fragment.h</code> et le chemin générique <code>TestAndSet</code> appellent <strong>tous deux</strong> <code>DepthTestAndSet</code> — source unique, vérifiée par <code>grep</code></td></tr>
+<tr><td>Le test est <code>GREATER</code></td><td>Les shaders scalaires et le chemin générique <code>TestAndSet</code> appellent <strong>tous</strong> <code>DepthTestAndSet</code> ; les shaders 8 voies appellent <code>DepthTestAndSet8</code>, son jumeau bit à bit (test 7). Aucun autre <code>&lt;</code> ou <code>&gt;</code> sur une profondeur dans le moteur — vérifiable par <code>grep</code></td></tr>
 </tbody></table></div>
 
 <h3>9.5 — État constaté dans le dépôt</h3>
@@ -776,8 +1014,12 @@ LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reve
 <div class="chk done"><span class="bx"></span><span><code>Maths/Projection.cpp</code> — <code>m[2][2] = n/(f-n)</code>, <code>m[3][2] = (n*f)/(f-n)</code>, commentaires « REVERSE-Z »</span></div>
 <div class="chk done"><span class="bx"></span><span><code>Projection::Orthographic</code> — <code>m[2][2] = 1/(f-n)</code>, <code>m[3][2] = f/(f-n)</code>, cohérent</span></div>
 <div class="chk done"><span class="bx"></span><span><code>Projection::PerspectiveInfinite</code> — <code>m[2][2] = 0</code>, <code>m[3][2] = n</code></span></div>
+<div class="chk done"><span class="bx"></span><span><code>Maths/Geometry/Frustum.cpp</code> — <code>Build(VP, reverseZ, infiniteFar)</code> : Near = <code>w − z</code>, Far = <code>z</code>, <code>m_count = 5</code> en far infini</span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/ViewData.h</code> — <code>hasFarPlane</code>, <code>reverseZ = true</code> (voir Z-7)</span></div>
 <div class="chk done"><span class="bx"></span><span><code>Rendering/ClipVertex.h</code> — <code>NearDistance()</code> renvoie <code>v.clip.w - v.clip.z</code></span></div>
 <div class="chk done"><span class="bx"></span><span><code>Rendering/DepthBuffer.h</code> — <code>Clear()</code> à <code>0.0f</code>, <code>DepthTestAndSet</code> en <code>if (z &lt;= dst) return false</code></span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/Fragment.h</code> — <code>DepthTestAndSet8</code> : <code>_CMP_NLE_UQ</code> + <code>maskload</code>/<code>maskstore</code>, jumeau du scalaire</span></div>
+<div class="chk done"><span class="bx"></span><span><code>Rendering/VertexStage.cpp</code> — <code>ProjectPositions8</code> : <code>zn = cz · invW</code> sans remap, ni FMA ni <code>rcp</code></span></div>
 <div class="chk done"><span class="bx"></span><span><code>Rendering/RenderTypes.h</code> — <code>EDepthTest { Always, Greater, GreaterEqual, Never }</code></span></div>
 <p class="note" style="margin:10px 0 0">Le lot est <strong>intégralement en place et cohérent de bout en bout</strong>. Aucune correction à appliquer.</p>
 </div>
@@ -815,10 +1057,10 @@ LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reve
   <td>Évolution</td>
 </tr>
 <tr>
-  <td><span class="tag t-ac">Z-5</span></td>
-  <td>Variante <code>rcp + Newton</code> pour la division par <code>w</code> (étape 5) : à mesurer sur l’i7 avant adoption, ou à écarter explicitement.</td>
-  <td>Sans itération de Newton, la profondeur retombe à 12 bits de mantisse — on annulerait le gain du lot par une optimisation.</td>
-  <td>Mesure à faire</td>
+  <td><span class="tag" style="background:var(--card2);color:var(--tx3)">Z-5</span></td>
+  <td><del>Variante <code>rcp + Newton</code> pour la division par <code>w</code>.</del> <strong>Retiré le 11/11.</strong></td>
+  <td>Déjà tranché dans le code : <code>ProjectPositions8</code> interdit <code>_mm256_rcp_ps</code> au nom de l’égalité bit à bit avec le scalaire. Ce point contredisait une règle existante ; il n’avait pas lieu d’être.</td>
+  <td>Sans objet</td>
 </tr>
 <tr>
   <td><span class="tag t-ac">Z-6</span></td>
@@ -826,7 +1068,32 @@ LV3_ASSERT(m_Data.empty() || m_Data[0] == 0.0f &amp;&amp; <span class="cm">"reve
   <td>Le jour où quelqu’un passera en <code>uint16</code> pour la bande passante, tout le raisonnement du lot s’effondre silencieusement (contre-exemple 2).</td>
   <td>Garde-fou</td>
 </tr>
+<tr>
+  <td><span class="tag t-wa">Z-7</span></td>
+  <td><code>ViewData::reverseZ</code> est une <strong>fausse option</strong> : seul <code>Frustum::Build</code> la lit, tout le reste du moteur est câblé en reverse-Z. Décider : la supprimer (et le paramètre de <code>Build</code>), ou la remplacer par une constante <code>static constexpr bool kReverseZ = true;</code> documentée.</td>
+  <td>À <code>false</code> en far infini, elle écarte le vrai plan near : un objet entre l’œil et le near passe tous les tests et couvre l’écran (contre-exemple 4). Invisible en far fini.</td>
+  <td>Décision</td>
+</tr>
+<tr>
+  <td><span class="tag t-ac">Z-8</span></td>
+  <td>Ajouter un mode de debug qui affiche le Z-buffer <strong>brut</strong> (<code>depth[p]</code> en niveau de gris, éventuellement en échelle log).</td>
+  <td>Les modes Depth et LinearDepth lisent <code>1/w</code> : aucun mode actuel ne montre ce que contient réellement le Z-buffer. C’est pourtant le seul qui verrait une erreur de <code>Clear</code> ou de remap.</td>
+  <td>Évolution</td>
+</tr>
+<tr>
+  <td><span class="tag" style="background:var(--card2);color:var(--tx3)">rappel</span></td>
+  <td>Un fragment de profondeur <code>NaN</code> passe le test, en scalaire comme en AVX2.</td>
+  <td>Déjà suivi (dette relevée en C1). Mentionné ici parce que le prédicat du test de profondeur appartient à ce lot : toute correction doit modifier <code>DepthTestAndSet</code> <em>et</em> <code>DepthTestAndSet8</code> ensemble.</td>
+  <td>Renvoi C1</td>
+</tr>
 </tbody></table></div>
+
+<h3>Journal de révision</h3>
+<div class="rev"><ul style="margin:0">
+<li><strong>08/11</strong> — création du lot.</li>
+<li><strong>11/11</strong> — courbe de précision : échantillonnage hors des bornes du frustum (ulp dénormal en <code>d = near</code>), axe borné à 8 décades ; chaîne du §5 recalculée pour tenir dans le cadre.</li>
+<li><strong>11/11</strong> — ajout du §0 (algorithme global interactif, carte des fichiers, algorithme détaillé avant/après) ; ajout de <code>Frustum::Build</code> comme point de contact (§5.5, contre-exemple 4) ; étapes 3, 5 et 6 alignées sur le code du dépôt (pas de FMA, pas de <code>rcp</code>, <code>_CMP_NLE_UQ</code> + écritures masquées) ; §9.3 corrigé (Depth et LinearDepth lisent <code>1/w</code>) ; roadmap : Z-5 retiré, Z-7 et Z-8 ajoutés.</li>
+</ul></div>
 
 <hr>
 <p class="note">Lot L02-C — Reverse-Z. Dépôts : <code>onkover/LibraryV3</code> (LIB), <code>onkover/RefactoNouvelleLibrairieV3</code> (EXE). Tous les chiffres sont calculés en float32 dans la page ; aucun n’est pré-écrit.</p>
@@ -1014,10 +1281,11 @@ function drawChart(){
 function drawChain(){
   var items=[
     ["1. Matrice P","m22, m32","chg"],
-    ["2. v · P","clip.z, clip.w","same"],
-    ["3. Clip near","w − z ≥ 0","chg"],
-    ["4. ÷ w","z_ndc","same"],
-    ["5. Test Z","Clear 0, GREATER","chg"]
+    ["2. Frustum","Near ↔ Far","chg"],
+    ["3. v · P","clip.z, clip.w","same"],
+    ["4. Clip near","w − z ≥ 0","chg"],
+    ["5. ÷ w","z_ndc","same"],
+    ["6. Test Z","Clear 0 · >","chg"]
   ];
   /* Largeur calculée, pas devinée : 5 boîtes + 4 gaps doivent tenir dans
      la zone utile (680 moins 2 x 18 de marge), sinon la dernière déborde. */
@@ -1040,6 +1308,150 @@ function drawChain(){
   s+='<text x="160" y="88" font-size="11" fill="var(--tx3)">■ inchangé</text>';
   s+='</svg>';
   document.getElementById("chain").innerHTML=s;
+}
+
+/* ---------- algorithme global du moteur (§0.1) ---------- */
+var GNODES = [
+ {id:"g1", r:0,  c:"s", st:"none",  t:"Chargement", s:"EngineConfig · scène JSON · ResourceManager", lvl:"init",
+  f:"Core/EngineConfig, Scene/Serializer, Resources/ResourceManager", lot:"L03, A6, A17, A18",
+  role:"Lit engine.json et la scène, charge maillages et matériaux une seule fois.",
+  rz:"Aucun. near et far sont lus ici depuis la caméra JSON, mais ce sont des distances monde : leur sens ne dépend pas de la convention de profondeur."},
+ {id:"g2", r:1,  c:"s", st:"none",  t:"Systèmes ECS", s:"WorldTransformSystem · CameraSystem", lvl:"par frame",
+  f:"ECS/Systems", lot:"L03, L05",
+  role:"Compose les matrices monde, met à jour les caméras et leurs gizmos.",
+  rz:"Aucun."},
+ {id:"g3", r:2,  c:"s", st:"mod",   t:"BuildViewData", s:"View · Projection · VP · frustum.Build", lvl:"par frame",
+  f:"Rendering/ViewData.h, Maths/Projection.cpp, Maths/Geometry/Frustum.cpp", lot:"L05",
+  role:"Construit pour chaque vue la matrice de vue, la projection, leur produit VP et les plans du frustum.",
+  rz:"Cœur du lot. T1 : coefficients m22/m32 positifs. T2 : PerspectiveInfinite. T3/T4 : Frustum::Build échange Near et Far, et ne garde que 5 plans en far infini. Champs ViewData::reverseZ et hasFarPlane."},
+ {id:"g4", r:3,  c:"s", st:"mod",   t:"Clean_Render", s:"FrameBuffer · DepthBuffer::Clear", lvl:"par frame",
+  f:"main.cpp, Rendering/Renderer.h, DepthBuffer.h, ClearKernels.h", lot:"L04 P2, chantier Clear",
+  role:"Un seul effacement par frame, avant la première vue.",
+  rz:"T5 : le Z-buffer est rempli à 0.0f, la valeur du far. Rempli à 1.0f, plus aucun fragment ne passerait le test GREATER : écran vide."},
+ {id:"g5", r:4,  c:"s", st:"none",  t:"RenderView", s:"SetViewport · SetMode · depthDisplayRange", lvl:"par vue",
+  f:"ECS/Systems/RenderSystem.cpp", lot:"L05, A11",
+  role:"Installe l’état du Renderer pour une vue : viewport, mode de rendu, callback de fragment.",
+  rz:"Aucun. depthDisplayRange est une distance d’affichage en unités monde, pas une valeur de Z-buffer."},
+ {id:"g6", r:5,  c:"s", st:"carry", t:"Frustum::Classify", s:"Inside · Intersect · Outside", lvl:"par instance",
+  f:"Maths/Geometry/Frustum.cpp, RenderSystem.cpp", lot:"L05",
+  role:"Classe l’AABB monde de chaque instance par p-vertex / n-vertex : 1 à 2 produits scalaires par plan.",
+  rz:"Code inchangé, mais il parcourt m_count plans — 6, ou 5 en far infini — construits en amont par Build. C’est ici qu’une erreur de T3 deviendrait visible."},
+ {id:"g7", r:6,  c:"s", st:"none",  t:"LOD + constantes d’instance", s:"mvp · vis · rayon apparent", lvl:"par instance",
+  f:"ECS/Systems/RenderSystem.cpp", lot:"A13, A14",
+  role:"Choisit le maillage selon la taille apparente, prépare mvp et la garde de capacité.",
+  rz:"Aucun. La taille apparente se calcule avec w (la distance), jamais avec z_ndc."},
+ {id:"g8", r:7,  c:"l", st:"carry", t:"ProjectPositions8", s:"MulRow · 1/w · ToRaster", lvl:"par sommet",
+  f:"Rendering/VertexStage.cpp", lot:"L04, B3, 2b",
+  role:"Branche Inside : projette 8 sommets d’un coup en AVX2, jusqu’aux pixels.",
+  rz:"Transporte. zn = cz · invW est écrit tel quel dans RasterVertex.z, sans remap (T7 supprimé). Aucun test near : le contrat Inside garantit w > 0, vérifié par assertion."},
+ {id:"g9", r:7,  c:"r", st:"none",  t:"TransformPositions", s:"MulRow seul → espace clip", lvl:"par sommet",
+  f:"Rendering/VertexStage.cpp", lot:"2b",
+  role:"Branche Intersect : garde l’espace clip, car le clipping en a besoin.",
+  rz:"Aucun : produit clip.z et clip.w avec la matrice de T1, sans rien savoir de leur sens."},
+ {id:"g10",r:8,  c:"r", st:"mod",   t:"Test near + clip", s:"NearDistance = w − z", lvl:"par face",
+  f:"Rendering/ClipVertex.h, Clipper.cpp", lot:"L04 P2",
+  role:"allIn / allOut sur les trois sommets ; découpage Sutherland-Hodgman pour les faces mixtes.",
+  rz:"T6 : NearDistance renvoie w − z. ClipTriangleNear n’a pas changé (T10) : il ne consomme que le signe et le rapport des distances."},
+ {id:"g11",r:9,  c:"r", st:"carry", t:"ProjectClip", s:"le seul ÷ w du moteur", lvl:"par coin",
+  f:"Rendering/VertexStage.h", lot:"2b",
+  role:"Projette chaque coin après clipping. Même formule que la branche Inside : image identique au bit près.",
+  rz:"Transporte z_ndc ∈ [0,1], déjà inversé par la matrice."},
+ {id:"g12",r:10, c:"s", st:"none",  t:"EmitRasterTriangle", s:"backface · rejet boîte serrée (3b)", lvl:"par triangle",
+  f:"ECS/Systems/RenderSystem.cpp", lot:"3b, B4",
+  role:"Aval unique des deux branches : élimine les faces arrière et les triangles qui ne couvrent aucun centre de pixel.",
+  rz:"Aucun : n’utilise que x et y."},
+ {id:"g13",r:11, c:"s", st:"none",  t:"Setup raster", s:"aire · boîte serrée · top-left", lvl:"par triangle",
+  f:"Rendering/Rasterizer.cpp", lot:"L04 P1, 3a, D-a1",
+  role:"Prépare la traversée des pixels candidats.",
+  rz:"Aucun."},
+ {id:"g14",r:12, c:"s", st:"mod",   t:"InterpolateDepth + DepthTestAndSet", s:"early-Z · GREATER · scalaire et AVX2", lvl:"par pixel",
+  f:"Rendering/DepthBuffer.h, Fragment.h", lot:"L04 P2, C1, C2",
+  role:"Interpole z affinement, puis teste et écrit la profondeur AVANT tout calcul de couleur.",
+  rz:"T8 : on garde le plus GRAND. DepthTestAndSet (scalaire) et DepthTestAndSet8 (AVX2, _CMP_NLE_UQ) donnent le même résultat au bit près. T9 : l’interpolation affine ne change pas."},
+ {id:"g15",r:13, c:"s", st:"none",  t:"Shading + SetPixel", s:"ShaderSolid · Depth · LinearDepth…", lvl:"par pixel",
+  f:"Rendering/Fragment.h, Fragment.cpp", lot:"L04, C2",
+  role:"Calcule la couleur des fragments qui ont passé le test.",
+  rz:"Aucun. Attention, faux suspect : les modes Depth et LinearDepth lisent 1/w (la distance), pas z_ndc. Ils s’affichent pareil en Z standard et en reverse-Z."},
+ {id:"g16",r:14, c:"s", st:"none",  t:"Présentation", s:"FrameBuffer → fenêtre", lvl:"fin de frame",
+  f:"main.cpp", lot:"—", role:"Affiche l’image.", rz:"Aucun."}
+];
+function drawGlobal(){
+  var W=680, NH=44, STEP=60, Y0=12, sx=140, sw=420, lx=140, lw=200, rx=360, rw=200;
+  var H = Y0 + 14*STEP + NH + 14;
+  var yOf=function(r){ return Y0 + r*STEP; };
+  var geo=function(n){
+    if (n.c==="l") return {x:lx,w:lw}; if (n.c==="r") return {x:rx,w:rw}; return {x:sx,w:sw};
+  };
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Algorithme global d’une frame du moteur LibraryV3, avec les maillons touchés par le reverse-Z en surbrillance">';
+  s+='<title>Algorithme global d’une frame</title>';
+  s+='<defs><marker id="ga" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>';
+  /* bandes de niveau */
+  var lastLvl="";
+  for (var r=0;r<=14;r++){
+    var n=null; for (var k=0;k<GNODES.length;k++) if (GNODES[k].r===r){ n=GNODES[k]; break; }
+    if (n && n.lvl!==lastLvl){
+      s+='<text x="12" y="'+(yOf(r)+NH/2+4)+'" font-size="11" fill="var(--tx3)" font-family="var(--mono)">'+n.lvl+'</text>';
+      if (r>0) s+='<line x1="10" y1="'+(yOf(r)-8)+'" x2="'+(W-10)+'" y2="'+(yOf(r)-8)+'" stroke="var(--bd)" stroke-width="0.6" stroke-dasharray="2 4"/>';
+      lastLvl=n.lvl;
+    }
+  }
+  /* connecteurs */
+  var L=function(x1,y1,x2,y2,arrow){ return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="var(--tx3)" stroke-width="1.1"'+(arrow?' marker-end="url(#ga)"':'')+'/>'; };
+  var cx=sx+sw/2, cl=lx+lw/2, cr=rx+rw/2;
+  for (r=0;r<6;r++) s+=L(cx, yOf(r)+NH, cx, yOf(r+1)-2, true);
+  var ys=yOf(6)+NH+8;
+  s+=L(cx, yOf(6)+NH, cx, ys, false);
+  s+=L(cl, ys, cr, ys, false);
+  s+=L(cl, ys, cl, yOf(7)-2, true);
+  s+=L(cr, ys, cr, yOf(7)-2, true);
+  s+='<text x="'+(cl-6)+'" y="'+(ys-4)+'" font-size="10.5" text-anchor="end" fill="var(--tx3)">vis == Inside</text>';
+  s+='<text x="'+(cr+6)+'" y="'+(ys-4)+'" font-size="10.5" fill="var(--tx3)">vis == Intersect</text>';
+  s+=L(cr, yOf(7)+NH, cr, yOf(8)-2, true);
+  s+=L(cr, yOf(8)+NH, cr, yOf(9)-2, true);
+  var ym=yOf(10)-8;
+  s+=L(cl, yOf(7)+NH, cl, ym, false);
+  s+=L(cr, yOf(9)+NH, cr, ym, false);
+  s+=L(cl, ym, cr, ym, false);
+  s+=L(cx, ym, cx, yOf(10)-2, true);
+  s+='<text x="'+(cl+8)+'" y="'+(yOf(8)+NH/2+4)+'" font-size="10.5" fill="var(--tx3)">aucune division,</text>';
+  s+='<text x="'+(cl+8)+'" y="'+(yOf(8)+NH/2+18)+'" font-size="10.5" fill="var(--tx3)">aucun test near</text>';
+  for (r=10;r<14;r++) s+=L(cx, yOf(r)+NH, cx, yOf(r+1)-2, true);
+  /* nœuds */
+  for (var i=0;i<GNODES.length;i++){
+    var g=GNODES[i], q=geo(g), y=yOf(g.r);
+    var fill="var(--card2)", stroke="var(--bd)", tc="var(--tx)", sc="var(--tx2)", dash="", sw2=0.8;
+    if (g.st==="mod"){ fill="var(--wabg)"; stroke="var(--wa)"; tc="var(--wa)"; sc="var(--wa)"; sw2=1.5; }
+    if (g.st==="carry"){ fill="var(--acbg)"; stroke="var(--ac)"; tc="var(--ac)"; sc="var(--ac)"; dash=' stroke-dasharray="5 3"'; sw2=1.2; }
+    s+='<g class="gn" data-i="'+i+'" tabindex="0" role="button" aria-label="'+g.t+'">';
+    s+='<rect x="'+q.x+'" y="'+y+'" width="'+q.w+'" height="'+NH+'" rx="8" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw2+'"'+dash+'/>';
+    s+='<text x="'+(q.x+q.w/2)+'" y="'+(y+18)+'" font-size="12.5" font-weight="600" text-anchor="middle" fill="'+tc+'">'+g.t+'</text>';
+    s+='<text x="'+(q.x+q.w/2)+'" y="'+(y+34)+'" font-size="10.8" text-anchor="middle" fill="'+sc+'">'+g.s+'</text>';
+    s+='</g>';
+  }
+  s+='</svg>';
+  var host=document.getElementById("global");
+  host.innerHTML=s;
+  var nodes=host.querySelectorAll(".gn");
+  var show=function(i){
+    for (var j=0;j<nodes.length;j++) nodes[j].classList.toggle("sel", +nodes[j].getAttribute("data-i")===i);
+    var g=GNODES[i];
+    var tag = g.st==="mod" ? '<span class="tag t-wa">modifié par ce lot</span>'
+            : g.st==="carry" ? '<span class="tag t-ac">transporte la profondeur inversée</span>'
+            : '<span class="tag" style="background:var(--card2);color:var(--tx3)">non concerné</span>';
+    document.getElementById("g-info").innerHTML =
+      '<p style="margin:0 0 6px"><strong style="font-size:15px">'+g.t+'</strong> &nbsp;'+tag+'</p>'+
+      '<p class="note" style="margin:0 0 8px"><code>'+g.f+'</code> · lot(s) '+g.lot+'</p>'+
+      '<p style="margin:0 0 6px;font-size:14px"><strong>Rôle :</strong> '+g.role+'</p>'+
+      '<p style="margin:0;font-size:14px"><strong>Reverse-Z :</strong> '+g.rz+'</p>';
+  };
+  for (var j=0;j<nodes.length;j++){
+    (function(el){
+      var i=+el.getAttribute("data-i");
+      el.addEventListener("click", function(){ show(i); });
+      el.addEventListener("keydown", function(e){ if (e.key==="Enter"||e.key===" "){ e.preventDefault(); show(i); } });
+    })(nodes[j]);
+  }
+  show(2);
 }
 
 /* ---------- couloirs SIMD ---------- */
@@ -1107,10 +1519,10 @@ function render(){
     cw.push((dd<1?dd.toFixed(2):Math.round(dd)).toString());
   }
   document.getElementById("lanes3").innerHTML = lanes([
-    {lab:"vZ   = _mm256_load_ps(zViewSoA)", v:vz},
-    {lab:"vM22 = _mm256_set1_ps(m22)", v:new Array(8).fill(sci(m22).slice(0,8))},
-    {lab:"vClipZ = _mm256_fmadd_ps(vZ, vM22, vM32)", v:cz},
-    {lab:"vClipW = _mm256_xor_ps(vZ, signbit)", v:cw}
+    {lab:"z   = _mm256_load_ps(pz + i)        (x = y = 0 : sommets sur l’axe de visée)", v:vz},
+    {lab:"m22 = _mm256_set1_ps(mvp[2][2])", v:new Array(8).fill(sci(m22).slice(0,8))},
+    {lab:"cz  = ((x·m02 + y·m12) + z·m22) + m32     — mul puis add, jamais fmadd", v:cz},
+    {lab:"cw  = ((x·m03 + y·m13) + z·m23) + m33     — m23 = −1 : cw = −z", v:cw}
   ]);
 
   /* étape 4 */
@@ -1121,7 +1533,7 @@ function render(){
     : '<span class="tag t-no">rejeté</span> — le sommet est devant le near';
 
   /* étape 5 */
-  var zndc = f32(clipZ/clipW);
+  var zndc = f32(clipZ * f32(1/clipW));   /* comme ProjectClip : multiplier par 1/w */
   document.getElementById("o5a").textContent = sci(zndc);
   document.getElementById("o5b").textContent = sci(ulp(zndc));
   document.getElementById("o5c").textContent = fmtMM(ulp(zndc)/slope(d,n,f)*1000);
@@ -1135,7 +1547,7 @@ function render(){
   }
   document.getElementById("lanes5").innerHTML = lanes([
     {lab:"distance (m)", v:ds.map(function(x){return x<1?x.toFixed(2):Math.round(x).toString();})},
-    {lab:"vZNdc = _mm256_mul_ps(vClipZ, rcp(vClipW))", v:zn},
+    {lab:"zn = _mm256_mul_ps(cz, _mm256_div_ps(one, cw))", v:zn},
     {lab:"ulp(z) — densité du float à cet endroit", v:up}
   ]);
 
@@ -1143,24 +1555,25 @@ function render(){
   var zcand=[], zdst=[], pass=[], cov=[], cls=[], out=[];
   var base=f32(zRev(d,n,f));
   for (i=0;i<8;i++){
-    var zc = f32(base*(1+(i-3.5)*0.004));
-    var zd = f32(base*(1+(i-5)*0.006));
-    zcand.push(zc.toFixed(6).slice(0,8));
-    zdst.push(zd.toFixed(6).slice(0,8));
     var cvr = (i!==2 && i!==7);
+    var zc = f32(base*(1+(i-3.5)*0.004));
+    /* voies 1 et 4 : une surface plus proche est déjà écrite (dst plus GRAND) */
+    var zd = !cvr ? 0 : (i===1 || i===4) ? f32(zc*1.01) : f32(zc*0.99);   /* maskload : voie masquée -> 0 */
     cov.push(cvr?"1":"0");
-    var p = zc>zd;
+    zcand.push(zc.toFixed(6).slice(0,8));
+    zdst.push(cvr ? zd.toFixed(6).slice(0,8) : "0 (non lu)");
+    var p = !(zc <= zd);                              /* _CMP_NLE_UQ = !(z <= dst) */
     pass.push(p?"1":"0");
     var w = p && cvr;
-    out.push(w?"écrit":"garde");
+    out.push(w?"écrit":(cvr?"caché":"hors tri."));
     cls.push(w?"act":"dead");
   }
   document.getElementById("lanes6").innerHTML = lanes([
-    {lab:"vZ      — z_ndc des 8 fragments candidats", v:zcand},
-    {lab:"vDst    — _mm256_load_ps(depthRow + x)", v:zdst},
-    {lab:"vPass   — _mm256_cmp_ps(vZ, vDst, _CMP_GT_OQ)", v:pass},
-    {lab:"vCov    — masque de couverture (edge functions)", v:cov},
-    {lab:"vWrite  — _mm256_and_ps(vPass, vCov)", v:out, cls:cls}
+    {lab:"cover — masque de couverture (edge functions)", v:cov},
+    {lab:"z     — z_ndc des 8 fragments candidats", v:zcand},
+    {lab:"dst   — _mm256_maskload_ps(depth, cover)   (voie masquée : 0)", v:zdst},
+    {lab:"cmp   — _mm256_cmp_ps(z, dst, _CMP_NLE_UQ)", v:pass},
+    {lab:"pass  — _mm256_and_ps(cover, cmp)  →  maskstore", v:out, cls:cls}
   ]);
 
   /* étape 7 */
@@ -1224,6 +1637,7 @@ seg("b-int","intBuf","ndcSym");
 seg("b-ndc","ndcSym","intBuf");
 
 state.d = state.n * Math.pow(state.f/state.n, 0.66);
+drawGlobal();
 render();
 })();
 </script>

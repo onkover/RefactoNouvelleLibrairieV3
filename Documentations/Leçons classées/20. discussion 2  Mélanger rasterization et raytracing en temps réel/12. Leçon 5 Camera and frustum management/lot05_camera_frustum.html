@@ -204,6 +204,79 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-size:12.6px}
 .ce .h{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:650;
   color:var(--bad);margin-bottom:7px}
 .ce pre{background:#fff;border-color:#f0c9c9;margin:8px 0}
+
+/* ── carte globale du moteur ───────────────────────── */
+.map{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:16px 0}
+.map .mh{padding:9px 18px;background:#fafbfc;border-bottom:1px solid var(--line);
+  font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:650;color:var(--ink3)}
+.map .ph{padding:10px 18px 4px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  font-weight:700;color:var(--ink2);background:#f4f6f9;border-bottom:1px solid var(--line)}
+.map .row{display:grid;grid-template-columns:30px 1fr 128px;gap:0;align-items:stretch;
+  border-bottom:1px solid #f1f4f8;transition:background .15s,opacity .15s}
+.map .row:last-child{border-bottom:none}
+.map .row .st{display:grid;place-items:center;font-family:var(--mono);font-size:11px;
+  color:var(--ink3);background:#fafbfc;border-right:1px solid #f1f4f8}
+.map .row .ct{padding:8px 14px;min-width:0}
+.map .row .nm{font-family:var(--mono);font-size:12.8px;font-weight:620}
+.map .row .ds{font-size:12.4px;color:var(--ink2);margin-top:1px}
+.map .row .lo{display:grid;place-items:center;font-size:11px;font-weight:650;
+  border-left:1px solid #f1f4f8;letter-spacing:.02em}
+.map .row.cur{background:var(--accent-bg);box-shadow:inset 4px 0 0 var(--accent)}
+.map .row.cur .st{background:#dde9fc;color:var(--accent);font-weight:700}
+.map .row.cur .nm{color:#13388a}
+.map .row.cur .lo{background:var(--accent);color:#fff}
+.map .row.soon{opacity:.52}
+.map .row.soon .lo{color:var(--warn)}
+.map .row.dim2{opacity:.3}
+.map .row .lo.l01{color:#7b5ea7} .map .row .lo.l02{color:#2a7f8f}
+.map .row .lo.l03{color:#8a6a2a} .map .row .lo.l04{color:#2a9d6a}
+.lotfilter{display:flex;flex-wrap:wrap;gap:6px;padding:12px 18px;background:#fafbfc;
+  border-bottom:1px solid var(--line)}
+.lotfilter button{padding:5px 12px;border:1px solid var(--line2);background:var(--panel);
+  border-radius:20px;font-size:12.3px;cursor:pointer;color:var(--ink2);font-weight:600}
+.lotfilter button:hover{border-color:var(--ink3)}
+.lotfilter button.on{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+
+/* ── algorithme annoté ─────────────────────────────── */
+.algo{background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  overflow:hidden;margin:14px 0;font-family:var(--mono);font-size:12.3px}
+.algo .ah{padding:9px 16px;background:#fafbfc;border-bottom:1px solid var(--line);
+  font-family:-apple-system,"Segoe UI",sans-serif;font-size:12px;font-weight:650;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--ink3)}
+.algo .ln{display:grid;grid-template-columns:30px 1fr;border-bottom:1px solid #f4f6f9}
+.algo .ln:last-child{border-bottom:none}
+.algo .tg2{display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;
+  font-family:-apple-system,sans-serif}
+.algo .tg2.a{background:#2a9d6a}.algo .tg2.m{background:#e0a92a}
+.algo .tg2.s{background:#e4e8ee;color:var(--ink3)}.algo .tg2.d{background:#d44}
+.algo .tx{padding:6px 13px;white-space:pre-wrap;line-height:1.5}
+.algo .ln.a{background:#f4fbf7}.algo .ln.m{background:#fffcf3}
+.algo .ln.d{background:#fdf4f4}
+.algo .ln.d .tx{text-decoration:line-through;opacity:.62}
+.algo .i1{padding-left:28px}.algo .i2{padding-left:48px}.algo .i3{padding-left:68px}
+.algo .cmt{color:#8a93a1;font-style:italic}
+.algo .hd2{background:#f4f6f9;font-weight:700;font-family:-apple-system,sans-serif;
+  font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.algolegend{display:flex;flex-wrap:wrap;gap:16px;font-size:12.2px;color:var(--ink2);margin:8px 0 0}
+.algolegend span{display:inline-flex;align-items:center;gap:6px}
+.algolegend i{width:17px;height:15px;border-radius:3px;display:grid;place-items:center;
+  font-size:10px;font-weight:800;color:#fff;font-style:normal}
+
+/* ── avant / après compact ─────────────────────────── */
+.ba{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:12px 0}
+.ba .bah{padding:8px 14px;background:#fafbfc;border-bottom:1px solid var(--line);
+  font-size:13px;font-weight:650}
+.ba .bab{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+@media(max-width:900px){.ba .bab{grid-template-columns:1fr}}
+.ba .bc{background:var(--panel);padding:11px 14px}
+.ba .bc .t2{font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+  margin-bottom:6px}
+.ba .bc.av .t2{color:var(--bad)}.ba .bc.ap .t2{color:var(--ok)}
+.ba .bc pre{margin:0;font-size:12px;background:#fbfcfd}
+.ba .bc.av pre{background:#fdf6f6;border-color:#f3d5d5}
+.ba .bc.ap pre{background:#f5fbf8;border-color:#cfe8dc}
+.ba .why{padding:9px 14px;background:#fafbfc;border-top:1px solid var(--line);
+  font-size:12.6px;color:var(--ink2);font-family:-apple-system,sans-serif}
 </style>
 </head>
 <body>
@@ -216,9 +289,13 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-size:12.6px}
   <div class="grp">Avant la technique</div>
   <a href="#s0" class="on">Pourquoi ce lot</a>
   <a href="#s1">Où on en est</a>
+  <a href="#sg">Vue d'ensemble du moteur</a>
   <a href="#s2">Objectif fonctionnel</a>
   <a href="#s3">Schéma dynamique</a>
-  <a href="#s4">Algorithme : avant / après</a>
+
+  <div class="grp">Ce que le lot change</div>
+  <a href="#s4">Avant / après — survol</a>
+  <a href="#sd">L'apport en détail</a>
 
   <div class="grp">Technique</div>
   <a href="#s5">Les règles</a>
@@ -361,14 +438,171 @@ td.num,th.num{text-align:right;font-family:var(--mono);font-size:12.6px}
     <span class="t">Le point de départ réel</span>
     <p>Le code dont part ce lot n'est pas vierge : c'est une classe <code>Camera</code> de
     400 lignes et une classe <code>Frustum</code> de 700, héritées de LibV2. Elles
-    <b>fonctionnaient</b>. Elles n'étaient pas récupérables — on verra pourquoi en §4,
+    <b>fonctionnaient</b>. Elles n'étaient pas récupérables — on verra pourquoi en §5,
     et le relevé complet des 18 bugs trouvés en §13.</p>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════ -->
+<section id="sg">
+  <h2><span class="n">2</span>Vue d'ensemble — où se situe ce lot</h2>
+
+  <p class="lede">Le moteur commence à être dense. Voici <b>l'algorithme complet</b>, du
+  démarrage au pixel présenté, avec le lot courant en surbrillance. Les boutons filtrent par
+  lot : clique sur un numéro pour isoler ce qu'il a apporté.</p>
+
+  <div class="map" id="engineMap">
+    <div class="lotfilter" id="lotFilter">
+      <button data-lot="all" class="on">Tout le moteur</button>
+      <button data-lot="01">Lot 01 · Config</button>
+      <button data-lot="02">Lot 02 · Maths</button>
+      <button data-lot="03">Lot 03 · ECS</button>
+      <button data-lot="04">Lot 04 · Rasterizer</button>
+      <button data-lot="05">Lot 05 · Caméra &amp; Frustum</button>
+    </div>
+
+    <div class="ph">A · Démarrage — une seule fois</div>
+
+    <div class="row" data-lot="01"><div class="st">A1</div>
+      <div class="ct"><div class="nm">PCH + EngineSettings</div>
+        <div class="ds">constantes gravées, drapeaux de compilation</div></div>
+      <div class="lo l01">Lot 01</div></div>
+
+    <div class="row" data-lot="01"><div class="st">A2</div>
+      <div class="ct"><div class="nm">engine.json → EngineConfig</div>
+        <div class="ds">valeurs réglables au démarrage, sans recompilation</div></div>
+      <div class="lo l01">Lot 01</div></div>
+
+    <div class="row" data-lot="04"><div class="st">A3</div>
+      <div class="ct"><div class="nm">SDL : fenêtre + texture ARGB8888</div>
+        <div class="ds">format figé, <code>SDL_TEXTUREACCESS_STREAMING</code></div></div>
+      <div class="lo l04">Lot 04 P1</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">A4</div>
+      <div class="ct"><div class="nm">DepthBuffer.Resize()</div>
+        <div class="ds">Z-buffer reverse-Z — seule cible qui possède sa mémoire</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row" data-lot="03"><div class="st">A5</div>
+      <div class="ct"><div class="nm">ResourceManager : OBJ/MTL → MeshClass</div>
+        <div class="ds">SoA indexé, handles, <code>std::expected</code></div></div>
+      <div class="lo l03">Lot 03</div></div>
+
+    <div class="row" data-lot="03"><div class="st">A6</div>
+      <div class="ct"><div class="nm">SceneSerializer : JSON → entités</div>
+        <div class="ds">composants, hiérarchie, résolution différée des références</div></div>
+      <div class="lo l03">Lot 03</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">A7</div>
+      <div class="ct"><div class="nm">Parsing Camera / CameraFPS / CameraFollow</div>
+        <div class="ds">lentille et contrôleurs, séparés ; cible du suivi résolue en 2<sup>e</sup> passe</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="ph">B · Boucle de jeu — à chaque frame</div>
+
+    <div class="row cur" data-lot="05"><div class="st">B1</div>
+      <div class="ct"><div class="nm">BuildInputState()</div>
+        <div class="ds">SDL → <code>InputState</code> ; le moteur ignore SDL</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row" data-lot="03"><div class="st">B2</div>
+      <div class="ct"><div class="nm">AnimationSystem</div>
+        <div class="ds">orbites et rotations propres → écrit <code>m_local</code></div></div>
+      <div class="lo l03">Lot 03</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">B3</div>
+      <div class="ct"><div class="nm">FPSControllerSystem · CameraFollowSystem</div>
+        <div class="ds">un seul actif ; écrit <code>m_local</code> comme n'importe quel contrôleur</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row" data-lot="02"><div class="st">B4</div>
+      <div class="ct"><div class="nm">LocalTransformSystem</div>
+        <div class="ds"><code>m_local</code> → <code>m_localMatrix</code> (S·R·T), consomme <code>m_dirty</code></div></div>
+      <div class="lo l02">Lot 02</div></div>
+
+    <div class="row" data-lot="03"><div class="st">B5</div>
+      <div class="ct"><div class="nm">WorldTransformSystem</div>
+        <div class="ds">propagation descendante depuis les racines, O(n)</div></div>
+      <div class="lo l03">Lot 03</div></div>
+
+    <div class="row" data-lot="03"><div class="st">B6</div>
+      <div class="ct"><div class="nm">TriggerSystem + EventBus</div>
+        <div class="ds">détection, publication d'événements</div></div>
+      <div class="lo l03">Lot 03</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">B7</div>
+      <div class="ct"><div class="nm">FindActiveCamera → BuildViewData</div>
+        <div class="ds"><b>étapes 1 à 5</b> : View, Projection, V·P, 6 plans normalisés</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">B8</div>
+      <div class="ct"><div class="nm">Culling — frustum.Classify(AABB)</div>
+        <div class="ds"><b>étape 6</b> : p-vertex / n-vertex, trois états</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">B9</div>
+      <div class="ct"><div class="nm">Géométrie — RenderView</div>
+        <div class="ds"><b>étapes 7 à 12</b> : M·V·P, rejet near, /w, flip Y, backface</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row soon" data-lot="04"><div class="st">B10</div>
+      <div class="ct"><div class="nm">Clipping near en espace de clip</div>
+        <div class="ds">découpage exact — aujourd'hui remplacé par un rejet du triangle</div></div>
+      <div class="lo">Lot 04 P2 ⏳</div></div>
+
+    <div class="row cur" data-lot="05"><div class="st">B11</div>
+      <div class="ct"><div class="nm">Renderer — état de rendu</div>
+        <div class="ds">cibles, viewport, mode ; choisit le chemin de fragment</div></div>
+      <div class="lo">Lot 05</div></div>
+
+    <div class="row" data-lot="04"><div class="st">B12</div>
+      <div class="ct"><div class="nm">Rasterizer — Pineda</div>
+        <div class="ds">bounding box, règle top-left, coordonnées barycentriques</div></div>
+      <div class="lo l04">Lot 04 P1</div></div>
+
+    <div class="row" data-lot="04"><div class="st">B13</div>
+      <div class="ct"><div class="nm">Fragment — Z-buffer + couleur</div>
+        <div class="ds">test GREATER (reverse-Z), écriture pixel</div></div>
+      <div class="lo l04">Lot 04 P1</div></div>
+
+    <div class="row soon" data-lot="04"><div class="st">B14</div>
+      <div class="ct"><div class="nm">Interpolation perspective-correcte</div>
+        <div class="ds">UV et couleurs via <code>1/w</code> — le <code>z</code>, lui, reste linéaire</div></div>
+      <div class="lo">Lot 04 P2 ⏳</div></div>
+
+    <div class="row" data-lot="04"><div class="st">B15</div>
+      <div class="ct"><div class="nm">Présentation</div>
+        <div class="ds"><code>Unbind</code> → <code>SDL_UnlockTexture</code> → <code>RenderCopy</code> → <code>Present</code></div></div>
+      <div class="lo l04">Lot 04 P1</div></div>
+  </div>
+
+  <h3>Ce que ce lot occupe dans l'ensemble</h3>
+
+  <div class="tw"><table>
+    <thead><tr><th>Étage</th><th>Avant ce lot</th><th>Après</th></tr></thead>
+    <tbody>
+      <tr><td><b>Démarrage</b></td><td>2 étapes sur 5</td><td>2 étapes <b>ajoutées</b> (A4, A7)</td></tr>
+      <tr><td><b>Simulation</b></td><td>animation + transformations + triggers</td><td>+ entrées et contrôleurs caméra (B1, B3)</td></tr>
+      <tr><td><b>Point de vue</b></td><td><span class="b no">inexistant</span></td><td>B7 — <b>créé</b></td></tr>
+      <tr><td><b>Filtrage</b></td><td><span class="b no">inexistant</span></td><td>B8 — <b>créé</b></td></tr>
+      <tr><td><b>Géométrie</b></td><td><span class="b no">inexistant</span></td><td>B9 — <b>créé</b></td></tr>
+      <tr><td><b>Rendu</b></td><td>rasterizer 2D isolé, sans état</td><td>B11 — <b>Renderer devient propriétaire de l'état</b></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <span class="t">La lecture à retenir</span>
+    <p>Le Lot 04 P1 savait remplir un triangle dont on lui <em>donnait</em> les pixels. Ce lot
+    construit <b>toute la chaîne qui produit ces pixels</b> — sept étages sur quinze — et
+    transforme le rasterizer d'une fonction isolée en dernier maillon d'un pipeline.
+    <br>Les deux étages grisés (B10, B14) sont les seuls trous restants avant un rendu
+    complet : c'est exactement le périmètre du Lot 04 P2.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
 <section id="s2">
-  <h2><span class="n">2</span>Contexte et objectif fonctionnel</h2>
+  <h2><span class="n">3</span>Contexte et objectif fonctionnel</h2>
 
   <p class="lede">Avant toute matrice : qu'est-ce que l'utilisateur du moteur doit pouvoir
   faire à la fin de ce lot qu'il ne pouvait pas faire avant ?</p>
@@ -442,7 +676,7 @@ mêmes objets.</code></pre>
 
 <!-- ══════════════════════════════════════════════════ -->
 <section id="s3">
-  <h2><span class="n">3</span>Schéma dynamique d'introduction</h2>
+  <h2><span class="n">4</span>Schéma dynamique d'introduction</h2>
 
   <p class="lede">Comprendre la méthode <em class="k">en la voyant</em>, avant d'ouvrir une
   seule ligne de code. Tout ce qui suit dans ce document est recalculé en direct depuis ces
@@ -546,10 +780,11 @@ mêmes objets.</code></pre>
 
 <!-- ══════════════════════════════════════════════════ -->
 <section id="s4">
-  <h2><span class="n">4</span>L'algorithme : avant / après</h2>
+  <h2><span class="n">5</span>L'algorithme : avant / après — survol</h2>
 
   <p class="lede">L'ancien pipeline fonctionnait. Comparons-le au nouveau avant d'entrer dans
-  le détail : les différences ne sont pas cosmétiques, chacune corrige un défaut nommé.</p>
+  le détail : les différences ne sont pas cosmétiques, chacune corrige un défaut nommé.
+  <br><span class="dim">Le détail fichier par fichier suit en §6.</span></p>
 
   <div class="diff">
     <div class="col old">
@@ -649,8 +884,346 @@ mêmes objets.</code></pre>
 </section>
 
 <!-- ══════════════════════════════════════════════════ -->
+<section id="sd">
+  <h2><span class="n">6</span>L'apport du lot, en détail</h2>
+
+  <p class="lede">Le survol précédent compare deux pipelines. Celui-ci descend au niveau du
+  fichier et de la ligne : ce qui est <b>créé</b>, ce qui est <b>modifié</b>, ce qui est
+  <b>supprimé</b> — et, quand un fonctionnement est remis en cause, un avant/après.</p>
+
+  <h3>6.1 · Inventaire</h3>
+
+  <div class="tw"><table>
+    <thead><tr><th>Fichier</th><th>Nature</th><th>Contenu / changement</th></tr></thead>
+    <tbody>
+      <tr><td><code>Maths/Projection.h/.cpp</code></td><td><span class="b ok">créé</span></td>
+        <td>fabriques <b>pures</b> : <code>Perspective</code>, <code>PerspectiveOffCenter</code>,
+            <code>PerspectiveInfinite</code>, <code>Orthographic</code>,
+            <code>PerspectiveFilmback</code>, conversions focale ↔ FOV</td></tr>
+      <tr><td><code>Maths/geometry/Plane.h</code></td><td><span class="b ok">créé</span></td>
+        <td><code>SignedDistance</code>, <code>Normalize</code> (garde anti-division),
+            <code>EPlaneSide</code>, <code>IntersectSegment</code></td></tr>
+      <tr><td><code>Maths/geometry/Frustum.h/.cpp</code></td><td><span class="b ok">créé</span></td>
+        <td><code>Build</code> (Gribb-Hartmann), <code>Classify</code> à 3 états,
+            <code>Contains</code>, <code>Intersects(sphère)</code></td></tr>
+      <tr><td><code>Rendering/Viewport.h</code></td><td><span class="b ok">créé</span></td>
+        <td>NDC ↔ raster, <b>flip Y</b>, <code>ClampBox</code> (scissor), <code>FullScreen</code></td></tr>
+      <tr><td><code>Rendering/ViewData.h</code></td><td><span class="b ok">créé</span></td>
+        <td>instantané d'un point de vue ; <code>InvViewProjection</code> <b>paresseux</b></td></tr>
+      <tr><td><code>Rendering/DepthBuffer.h</code></td><td><span class="b ok">créé</span></td>
+        <td>reverse-Z, <code>TestAndSet</code> (test + écriture, un seul index)</td></tr>
+      <tr><td><code>Scene/RenderSystem.h/.cpp</code></td><td><span class="b ok">créé</span></td>
+        <td><code>RenderView</code> — géométrie → soumission. Header sans aucun <code>#include</code></td></tr>
+      <tr><td><code>Core/InputState.h</code></td><td><span class="b ok">créé</span></td>
+        <td>POD rempli par l'application ; le moteur ignore SDL</td></tr>
+      <tr><td><code>Core/EventNames.h</code></td><td><span class="b ok">créé</span></td>
+        <td>constantes d'événements — une faute de frappe devient une erreur de compilation</td></tr>
+      <tr><td><code>Maths/geometry/AABB3d.h</code></td><td><span class="b wa">modifié</span></td>
+        <td>+ <code>PVertex</code>, <code>NVertex</code>, <code>Transformed</code> (centre/extent)</td></tr>
+      <tr><td><code>Maths/MatrixLib.h</code></td><td><span class="b wa">modifié</span></td>
+        <td>+ <code>inverseRigid()</code> ; <b>retrait</b> de <code>LookAt</code>,
+            <code>Perspective</code>, <code>Orthographic</code></td></tr>
+      <tr><td><code>Maths/QuaternionLib.h</code></td><td><span class="b wa">modifié</span></td>
+        <td>+ <code>LookRotation</code> / <code>LookAt</code> (Shepperd, cas dégénéré traité)</td></tr>
+      <tr><td><code>Maths/Vectorlib.h</code></td><td><span class="b wa">modifié</span></td>
+        <td><code>Forward()</code> passe de <code>+Z</code> à <code>-Z</code> ·
+            3 <code>static_assert</code> verrouillent le repère</td></tr>
+      <tr><td><code>Maths/Transform.h</code></td><td><span class="b wa">modifié</span></td>
+        <td><code>ToLocalMatrix()</code> inline ; <b>retrait</b> de <code>ToWorldMatrix(parent*)</code></td></tr>
+      <tr><td><code>Scene/Components/Component.hpp</code></td><td><span class="b wa">modifié</span></td>
+        <td><code>CameraComponent</code> réduit à la lentille · +
+            <code>CameraFollowComponent</code>, <code>FPSControllerComponent</code> ·
+            <code>TransformComponent</code> embarque <code>LV3::Transform</code></td></tr>
+      <tr><td><code>Rendering/Renderer.h/.cpp</code></td><td><span class="b wa">modifié</span></td>
+        <td>devient le <b>propriétaire de l'état</b> : cibles, viewport, mode</td></tr>
+      <tr><td><code>Rendering/Rasterizer.h/.cpp</code></td><td><span class="b wa">modifié</span></td>
+        <td><code>EdgeFunction</code> en noyau + 2 gabarits ·
+            <code>RasterizeTriangle</code> prend un <code>Viewport</code> ·
+            règle top-left sans constante magique</td></tr>
+      <tr><td><code>Rendering/Fragment.h/.cpp</code></td><td><span class="b wa">modifié</span></td>
+        <td>un <b>seul</b> <code>FragmentContext</code> ; <code>ShadeFragment_Solid</code> ajouté</td></tr>
+      <tr><td><code>Scene/Serializer.cpp</code></td><td><span class="b wa">modifié</span></td>
+        <td>Transform parsé <b>en premier</b> · parsing caméra scindé en 3 ·
+            résolution différée des références</td></tr>
+      <tr><td><code>Scene/System.cpp</code></td><td><span class="b wa">modifié</span></td>
+        <td><code>LocalTransformSystem</code> réduit à une ligne ·
+            <code>AnimationSystem</code> complété · + <code>BuildViewData</code>,
+            <code>FindActiveCamera</code></td></tr>
+      <tr><td><code>Camera.h/.cpp</code> (LibV2)</td><td><span class="b no">supprimé</span></td>
+        <td>400 lignes, 8 représentations de l'orientation, 4 fonctions de déplacement</td></tr>
+      <tr><td><code>Frustum.h/.cpp</code> (LibV2)</td><td><span class="b no">supprimé</span></td>
+        <td>700 lignes, 7 fonctions de classification, 3 énumérations pour un concept</td></tr>
+      <tr><td><code>Maths/Transform.cpp</code></td><td><span class="b no">vidé</span></td>
+        <td>tout est passé inline dans le header</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>6.2 · L'algorithme détaillé, annoté</h3>
+
+  <div class="algolegend">
+    <span><i style="background:#2a9d6a">+</i> fonctionnalité ajoutée</span>
+    <span><i style="background:#e0a92a">~</i> comportement modifié</span>
+    <span><i style="background:#e4e8ee;color:#767f8d">=</i> inchangé, réutilisé tel quel</span>
+    <span><i style="background:#d44">−</i> supprimé</span>
+  </div>
+
+  <div class="algo">
+    <div class="ah">A · Démarrage</div>
+    <div class="ln"><div class="tg2 s">=</div><div class="tx">charger engine.json → EngineConfig<span class="cmt">   // Lot 01</span></div></div>
+    <div class="ln"><div class="tg2 s">=</div><div class="tx">créer fenêtre SDL + texture ARGB8888<span class="cmt">   // Lot 04 P1</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">db.Resize(W, H)<span class="cmt">                        // DepthBuffer : seule cible qui POSSÈDE sa mémoire</span></div></div>
+    <div class="ln"><div class="tg2 s">=</div><div class="tx">SceneSerializer::LoadSceneGraph(...)</div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i1">POUR CHAQUE nœud du JSON :</div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i2">ParseTransform() <b>EN PREMIER</b>, hors de la boucle<span class="cmt">   // json itère par ordre ALPHABÉTIQUE</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">m_local.rotation = Quatf(eulerDeg, <b>true</b>)<span class="cmt">   // UNE seule conversion deg→rad</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">m_initialRotation = m_local.rotation<span class="cmt">   // référence figée pour l'animation</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i2">ParseMesh() → m_orbitRadius figé (plan XZ seulement)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">ParseCamera()       → CameraComponent<span class="cmt">   // la LENTILLE seule</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">ParseCameraFPS()    → FPSControllerComponent<span class="cmt">   // yaw/pitch dérivés du Transform</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">ParseCameraFollow() → CameraFollowComponent + référence différée</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1">ResolveDeferredReferences()<span class="cmt">   // "target":"Earth" → Entity, toutes créées</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">CheckAnimationBaseline()<span class="cmt">                // dt = 0 ⇒ rien ne doit bouger</span></div></div>
+
+    <div class="ln hd2"><div class="tg2 s">&nbsp;</div><div class="tx">B · Frame — simulation</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">input = BuildInputState()<span class="cmt">               // SDL → InputState ; le moteur ignore SDL</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx">AnimationSystem(registry, dt)<span class="cmt">           // accumule ET applique ; fmod(2π)</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i1">rotation = m_initialRotation * spin<span class="cmt">    // ordre : axe propre, pas de précession</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">FPSControllerSystem(registry, input, dt)<span class="cmt">   // souris SANS dt, clavier AVEC dt</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">CameraFollowSystem(registry, dt)<span class="cmt">           // lissage 1−exp(−k·dt), indépendant du framerate</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx">LocalTransformSystem()<span class="cmt">                  // réduit à : m_localMatrix = m_local.ToLocalMatrix()</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx">WorldTransformSystem()<span class="cmt">                  // descente depuis les racines, O(n) et non O(n·profondeur)</span></div></div>
+    <div class="ln"><div class="tg2 s">=</div><div class="tx">TriggerSystem(registry, eventBus)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">CheckSceneInvariants()<span class="cmt">                  // #if LV3_DEBUG — quaternion unitaire, rayon, échelle</span></div></div>
+
+    <div class="ln hd2"><div class="tg2 s">&nbsp;</div><div class="tx">C · Frame — rendu</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx">SI SDL_LockTexture(...) réussit :<span class="cmt">        // UNE fois par frame, jamais par pixel</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1">fb.Bind(pixels, pitch, W, H)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1">fb.Clear(couleur) ; db.Clear()<span class="cmt">        // reverse-Z : la profondeur s'efface à 0</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1">renderer.BeginFrame(fb, db)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1"><b>POUR CHAQUE VUE</b> (1, 2, N — écran splitté) :</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">renderer.SetMode(mode)<span class="cmt">             // le mode est un ÉTAT, pas un argument</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">cam = FindActiveCamera() | FindCameraByName()</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">view = BuildViewData(transform, camera, viewport)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">viewMatrix = world.inverseRigid()<span class="cmt">        // ① isométrie, pas Gauss-Jordan</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">projectionMatrix = Projection::Perspective(…)<span class="cmt">   // ② [0,1] reverse-Z</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">viewProjectionMatrix = view * projection<span class="cmt">   // ③ vecteur-ligne</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">frustum.Build(vp, reverseZ, infiniteFar)<span class="cmt">   // ④⑤ 6 plans normalisés</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i2">RenderView(registry, rm, renderer, view)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">renderer.SetViewport(view.viewport)</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3"><b>POUR CHAQUE</b> entité (Mesh + Transform) :</div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;mesh = rm.GetMesh(handle)<span class="cmt">        // handle, plus de shared_ptr</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;worldAABB = mesh→GetMeshAABB().Transformed(model)<span class="cmt">   // 9 mult, pas 8 points</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;SI Classify(worldAABB) == Outside → entité suivante<span class="cmt">   // ⑥ 3 états</span></div></div>
+    <div class="ln d"><div class="tg2 d">−</div><div class="tx i3">&nbsp;&nbsp;invModelMatrix = model.inverse()</div></div>
+    <div class="ln d"><div class="tg2 d">−</div><div class="tx i3">&nbsp;&nbsp;camPos → espace objet</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">&nbsp;&nbsp;mvp = model * viewProjectionMatrix<span class="cmt">   // ⑦ UNE matrice, une passe</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;<b>POUR CHAQUE</b> face :</div></div>
+    <div class="ln d"><div class="tg2 d">−</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;Objectspace_ComputeBackfaceCulling(...)</div></div>
+    <div class="ln d"><div class="tg2 d">−</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;TransformLocalMesh(poly, model)<span class="cmt">   // écrivait DANS le mesh partagé</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;clip[k] = MulRow(mvp, vertexPositions[indices[base+k]])<span class="cmt">   // ⑧ SoA indexé</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;SI un clip[k].w ≤ near → face suivante<span class="cmt">   // ⑨ AVANT toute division</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;ndc = clip / w<span class="cmt">                    // ⑩</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;raster = viewport.ToRaster(ndc)<span class="cmt">   // ⑪ le SEUL flip Y</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;area = EdgeFunction(r0, r1, r2)<span class="cmt">   // ⑫ backface GRATUIT</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;SI area ≤ 0 → face suivante</div></div>
+    <div class="ln d"><div class="tg2 d">−</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;Clip3DAndProject(poly, frustum, …)<span class="cmt">   // clippait 6 plans en espace MONDE</span></div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;renderer.DrawTriangle(Triangle2D{…}, couleur)</div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ RasterizeTriangle(…, <b>viewport</b>, fragment, &amp;ctx)<span class="cmt">   // scissor</span></div></div>
+    <div class="ln m"><div class="tg2 m">~</div><div class="tx i3">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ ShadeFragment_Solid : db.TestAndSet + SetPixelUnchecked</div></div>
+    <div class="ln a"><div class="tg2 a">+</div><div class="tx i1">renderer.EndFrame() ; fb.Unbind()<span class="cmt">      // le pointeur SDL cesse d'exister</span></div></div>
+    <div class="ln"><div class="tg2 s">=</div><div class="tx i1">SDL_UnlockTexture → RenderCopy → Present</div></div>
+  </div>
+
+  <p class="dim">Les cercles ①…⑫ renvoient aux étapes détaillées plus bas. Les quatre lignes
+  <span class="b no">supprimées</span> représentent, à elles seules, deux parcours complets de
+  la géométrie et une inversion de matrice 4×4 par mesh et par frame.</p>
+
+  <h3>6.3 · Les six fonctionnements remis en cause</h3>
+
+  <div class="ba">
+    <div class="bah">① Qui détient la position de la caméra</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>class Camera {
+  Vec3f CameraPos, TO;
+  Vec3f forward, right, UP;
+  float theta, phi, Yaw, Pitch, Roll;
+  Quat&lt;float&gt; camera_rotation;
+  Matrix44f rotation_mat;
+  float script3D[3];
+};</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>struct CameraComponent {   // la LENTILLE
+  EProjectionType m_projection;
+  float m_fovYDeg, m_nearPlane, m_farPlane;
+  bool  m_infiniteFar;
+  int   m_priority;
+};
+// la position ? dans le TransformComponent
+// de l'entité, comme tout le monde.</code></pre></div>
+    </div>
+    <div class="why"><b>Pourquoi :</b> huit représentations concurrentes d'une seule
+    orientation, aucune source de vérité. Le composant <code>Camera</code> d'Unity ne contient
+    pas de position non plus. <b>Conséquence :</b> la logique de déplacement devient de la
+    logique de <code>Transform</code>, mutualisable avec tout objet.</div>
+  </div>
+
+  <div class="ba">
+    <div class="bah">② Comment on calcule la matrice de vue</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>void Camera::SetViewMatrix() {
+  forward = (CameraPos - TO).normalize();
+  right   = UPtmp.cross(forward).normalize();
+  UP      = forward.cross(right);
+  // ... remplit ViewMatrix ...
+  CameraMatrix = rotation_mat * ViewMatrix;
+  CameraMatrix = CameraMatrix.inverse();
+}   // Gauss-Jordan 4x4, chaque frame</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>v.viewMatrix = world.inverseRigid();
+
+//   M   = [ R | 0 ]
+//         [ t | 1 ]
+//
+//   M⁻¹ = [  Rᵀ   | 0 ]
+//         [ -t·Rᵀ | 1 ]
+//
+// 9 mult, 6 add. Exact.</code></pre></div>
+    </div>
+    <div class="why"><b>Pourquoi :</b> deux sources d'orientation composées — base lookAt
+    <em>et</em> quaternion — ne fonctionnaient que parce que la base initiale valait l'identité
+    par hasard. Et une matrice de vue est une <b>isométrie</b> : son inverse est analytique.</div>
+  </div>
+
+  <div class="ba">
+    <div class="bah">③ Où vivent les fabriques de matrices</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>// Membres de Matrix44 :
+Matrix44::LookAt(eye, target, up)
+Matrix44::Perspective(fov, asp, n, f)
+Matrix44::Orthographic(l,r,b,t,n,f)
+
+// et, côté Frustum :
+void Frustum::setProjectionMatrixV2();
+// aucun argument, mute un membre</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>namespace LV3::Projection {
+  Matrix44f Perspective(fovY, aspect, n, f);
+  Matrix44f PerspectiveInfinite(fovY, asp, n);
+  Matrix44f Orthographic(l, r, b, t, n, f);
+}
+// fonctions LIBRES et PURES
+// Quat::LookRotation(dir, up) pour l'orientation
+// Matrix44 ne garde que inverseRigid()</code></pre></div>
+    </div>
+    <div class="why"><b>La règle qui tranche :</b> <code>Matrix44</code> ne connaît que
+    l'algèbre linéaire. Dès qu'une fonction doit connaître une <b>convention de rendu</b> —
+    near/far, plage NDC, main droite, reverse-Z — elle sort du type matrice. C'est ce que
+    font GLM, DirectXMath et Unreal ; Unity est l'exception.
+    <b>Bénéfice concret :</b> une shadow map ou une face de cubemap peut produire une
+    projection sans instancier de caméra.</div>
+  </div>
+
+  <div class="ba">
+    <div class="bah">④ Comment on désigne « visible »</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>bool isVisible =
+    isAABBVisibleIntoWorldSpace(aabb, frustum);
+
+if (isVisible) { /* tout traiter */ }
+
+// 2 états. L'information « ENTIÈREMENT
+// dedans » est produite puis jetée.</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>enum class EIntersect : uint8_t
+{ Outside = 0, Intersect = 1, Inside = 2 };
+
+switch (frustum.Classify(aabb)) {
+  case Outside:   continue;              // 0 calcul
+  case Inside:    /* aucun clipping */   break;
+  case Intersect: /* clipper le near */  break;
+}</code></pre></div>
+    </div>
+    <div class="why"><b>Pourquoi :</b> le troisième état est <em>gratuit</em> — le n-vertex se
+    teste dans la même boucle que le p-vertex. Il remplace aussi trois énumérations du legacy
+    (<code>PointVSPlane</code>, <code>FrustumInside</code>, <code>PlaneSide</code>) qui
+    décrivaient le même concept. <b>Conséquence au Lot 04 P2 :</b> un mesh <code>Inside</code>
+    ne verra aucun de ses triangles testé contre le plan near.</div>
+  </div>
+
+  <div class="ba">
+    <div class="bah">⑤ Où s'écrivent les sommets transformés</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>TransformLocalMesh(poly, modelMatrix);
+  → poly->Vertex(i)->xtransf = dst.x;
+  → poly->Vertex(i)->ytransf = dst.y;
+  → poly->Vertex(i)->ztransf = dst.z;
+
+Clip3DAndProject(poly, …);   // RELIT xtransf
+
+// 2 passes. Écriture DANS le mesh partagé.</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>const Matrix44f mvp = model * viewProjection;
+
+Vec4f c[4];
+for (uint8_t k = 0; k &lt; vpf; ++k)
+    c[k] = MulRow(mvp, mesh->vertexPositions[
+                       mesh->indices[base + k] ]);
+
+// 1 passe. Le mesh reste const.</code></pre></div>
+    </div>
+    <div class="why"><b>Ce n'est pas une optimisation, c'est une correction.</b> Deux entités
+    partageant le même <code>MeshHandle</code> s'écrasaient mutuellement les sommets
+    transformés. Et tant que le mesh était muté pendant le rendu, l'étage géométrie était
+    structurellement non-parallélisable — ce qui condamnait le rendu par tuiles multithreadé.</div>
+  </div>
+
+  <div class="ba">
+    <div class="bah">⑥ Qui décide du mode d'affichage</div>
+    <div class="bab">
+      <div class="bc av"><div class="t2">Avant</div>
+<pre><code>class Renderer {   // sans état
+  void DrawTriangle(const Triangle2D&amp; tri,
+                    FrameBuffer&amp; fb,
+                    ERenderMode mode,
+                    Color c);
+};
+// switch(mode) réévalué à CHAQUE triangle
+// contexte de fragment reconstruit à chaque appel</code></pre></div>
+      <div class="bc ap"><div class="t2">Après</div>
+<pre><code>renderer.BeginFrame(fb, db);     // par FRAME
+renderer.SetViewport(vp);        // par VUE
+renderer.SetMode(mode);          // par VUE
+  → résout le callback UNE fois
+
+renderer.DrawTriangle(tri, color);  // par TRIANGLE
+  → 4 écritures dans m_ctx, zéro construction</code></pre></div>
+    </div>
+    <div class="why"><b>Pourquoi :</b> le mode est constant pour toute une vue ; le rebrancher
+    par triangle est du gaspillage gratuit à supprimer. Mais surtout : tant que
+    <code>Renderer</code> était sans état, il n'était qu'un <code>switch</code> déguisé et
+    paraissait inutile. <b>Conséquence :</b> l'écran splitté coûte un appel de plus, et
+    <code>ECullMode</code> / <code>EDepthTest</code> / <code>EBlendMode</code> trouvent enfin
+    leur propriétaire.</div>
+  </div>
+
+  <div class="note g">
+    <span class="t">Le fil conducteur des six</span>
+    <p>Chacune de ces remises en cause consiste à <b>déplacer une donnée vers son propriétaire
+    légitime</b> : la position vers le Transform, les fabriques hors de la matrice, l'état de
+    rendu dans le Renderer, les sommets transformés nulle part. Aucune ne cherche d'abord la
+    performance — elle vient par surcroît, parce qu'une donnée au bon endroit n'a pas besoin
+    d'être recopiée, resynchronisée ou recalculée.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════ -->
 <section id="s5">
-  <h2><span class="n">5</span>Les règles — comment ça fonctionne</h2>
+  <h2><span class="n">7</span>Les règles — comment ça fonctionne</h2>
 
   <p class="lede">Maintenant la technique. Six règles structurent tout le lot ; les étapes
   qui suivent ne font que les appliquer.</p>
@@ -720,7 +1293,7 @@ Et comme c'est une ISOMÉTRIE, cet inverse est analytique :
   <ol>
     <li><b>La correction.</b> Un sommet derrière l'œil a <code>w &lt; 0</code>. Diviser avant de
     clipper inverse le signe : le point traverse l'écran et réapparaît en miroir.
-    <span class="dim">(coche les deux derniers interrupteurs du §3 pour le voir)</span></li>
+    <span class="dim">(coche les deux derniers interrupteurs du §4 pour le voir)</span></li>
     <li><b>Le coût.</b> En clip space les six plans sont <b>canoniques</b> :
     <code>-w ≤ x ≤ w</code>, <code>0 ≤ z ≤ w</code>. Une comparaison de deux flottants, contre
     trois multiplications par plan et par sommet en espace monde.</li>
@@ -788,7 +1361,7 @@ Et comme c'est une ISOMÉTRIE, cet inverse est analytique :
 
 <!-- ══════════════════════════════════════════════════ -->
 <section id="s6">
-  <h2><span class="n">6</span>NDC et reverse-Z — la décision qui coûte deux coefficients</h2>
+  <h2><span class="n">8</span>NDC et reverse-Z — la décision qui coûte deux coefficients</h2>
 
   <p class="lede">Le mot « NDC » recouvre deux notions selon la source. Levons l'ambiguïté
   avant d'entrer dans les étapes, parce que deux coefficients de matrice en dépendent.</p>
@@ -865,7 +1438,7 @@ Et comme c'est une ISOMÉTRIE, cet inverse est analytique :
 <section id="steps">
   <h2>Les étapes, pas à pas</h2>
   <p class="lede">Treize étapes, du point de vue jusqu'au pixel. <b>Tous les nombres affichés
-  sont recalculés en direct</b> depuis les réglages du §3, en <code>float32</code> —
+  sont recalculés en direct</b> depuis les réglages du §4, en <code>float32</code> —
   <code>Math.fround()</code> à chaque opération, comme le CPU. Remonte modifier un curseur et
   redescends : les valeurs auront changé.</p>
 
@@ -1218,7 +1791,7 @@ _mm_storeu_ps(&amp;planes[Top  ].nx, _mm_sub_ps(cw, cy));</code></pre>
       utilisait la forme <code>[0,1]</code> (<code>col(2)</code> seule) sur une matrice de
       projection OpenGL <code>[-1,1]</code>. Le plan near était faux depuis le premier jour.</p>
       <div class="note" style="margin:12px 0 0">
-        <span class="t">Décoche reverse-Z au §3</span>
+        <span class="t">Décoche reverse-Z au §4</span>
         <p>Les lignes NEAR et FAR du tableau ci-dessous s'échangent, et le volume dessiné à
         droite s'inverse verticalement. La géométrie monde, elle, n'a pas bougé.</p>
       </div>
@@ -1648,7 +2221,7 @@ if (_mm_movemask_ps(inLeft) == 0) return; // les 4 à gauche du plan gauche</cod
         <tbody id="e9ce"></tbody>
       </table></div>
       <p style="margin:10px 0 0">Coche <b>« objet derrière l'œil »</b> puis
-      <b>« /w avant le test »</b> au §3 : le volume rouge en pointillés qui apparaît dans le
+      <b>« /w avant le test »</b> au §4 : le volume rouge en pointillés qui apparaît dans le
       panneau NDC est de la géométrie située <em>derrière la caméra</em>, dessinée devant.
       C'est le bug du « triangle qui explose quand on recule dedans ».</p>
     </div>
@@ -2938,6 +3511,20 @@ refresh();
   addEventListener('scroll', sync, {passive:true});
   addEventListener('resize', sync);
   sync();
+})();
+
+/* ═══════════════════════════════════════════════════════════
+   Carte du moteur : filtrage par lot
+   ═══════════════════════════════════════════════════════════ */
+(function(){
+  const bar  = document.getElementById('lotFilter');
+  const rows = [...document.querySelectorAll('#engineMap .row')];
+  bar.addEventListener('click', ev=>{
+    const b = ev.target.closest('button'); if(!b) return;
+    const lot = b.dataset.lot;
+    bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on', x===b));
+    rows.forEach(r=>r.classList.toggle('dim2', lot!=='all' && r.dataset.lot!==lot));
+  });
 })();
 
 /* ═══════════════════════════════════════════════════════════

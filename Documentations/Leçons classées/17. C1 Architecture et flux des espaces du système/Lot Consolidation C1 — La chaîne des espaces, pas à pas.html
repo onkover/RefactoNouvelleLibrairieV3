@@ -142,6 +142,34 @@
   details[open] summary{margin-bottom:9px}
   ul,ol{padding-left:21px;margin:8px 0} li{margin:4px 0}
   .small{font-size:12.5px;color:var(--dim)}
+  /* §0 — pipeline global */
+  .pipe{display:flex;flex-direction:column;gap:5px;margin:12px 0}
+  .pphase{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--faint);margin:14px 0 2px;font-weight:650}
+  .pstage{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:4px 10px;padding:7px 11px;background:var(--panel);
+    border:1px solid var(--line);border-radius:8px;font-size:13px;opacity:.5}
+  .pstage.lot{opacity:1;background:var(--accent-soft);border:2px solid var(--accent)}
+  .pstage .pn{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .pstage .pt{font-weight:650}
+  .pstage .pd{grid-column:2 / 3;color:var(--dim);font-size:12px}
+  .pstage .sp{grid-row:1 / span 2;grid-column:3;font-family:var(--mono);font-size:11px;font-weight:650;color:var(--accent);text-align:right;white-space:nowrap}
+  .pstage .px{grid-column:2 / 4;font-size:12px;color:var(--dim);border-top:1px dashed var(--line);padding-top:5px;margin-top:3px;line-height:1.5}
+  .pbadge{display:inline-block;font-size:10px;font-weight:650;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:1px;letter-spacing:.03em}
+  .pbadge.new{background:var(--okbg);color:var(--ok)} .pbadge.mod{background:var(--warnbg);color:var(--warn)} .pbadge.keep{background:var(--panel2);color:var(--dim)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--dim);margin:8px 0}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+  tr.lotrow td{background:var(--accent-soft)}
+  tr.lotrow td:first-child{border-left:3px solid var(--accent)}
+  .ba{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  @media (max-width:760px){.ba{grid-template-columns:1fr}}
+  .ba>div{border:1px solid var(--line);border-radius:9px;padding:11px 13px;font-size:13px;min-width:0}
+  .ba .before{border-left:4px solid var(--bad);background:var(--badbg)}
+  .ba .after{border-left:4px solid var(--ok);background:var(--okbg)}
+  .ba .after.prop{border-left-color:var(--warn);background:var(--warnbg)}
+  .ba h5{margin:0 0 6px;font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+  .ba .before h5{color:var(--bad)} .ba .after h5{color:var(--ok)} .ba .after.prop h5{color:var(--warn)}
+  .ba pre{margin:6px 0 0;font-size:11.5px}
+  .pc .t{color:#93c5fd;font-weight:600}
   .hiA{color:var(--cA);font-weight:650}.hiB{color:var(--cB);font-weight:650}.hiC{color:var(--cC);font-weight:650}
 </style>
 </head>
@@ -159,6 +187,7 @@
 <div class="wrap">
 
 <nav class="toc">
+  <a href="#vue">0 · Vue d’ensemble</a>
   <a href="#pourquoi">1 · Pourquoi ce lot</a>
   <a href="#methode">2 · La méthode</a>
   <a href="#schema">3 · Schéma dynamique</a>
@@ -169,6 +198,38 @@
   <a href="#verifier">8 · Vérifier</a>
   <a href="#roadmap">9 · Décisions &amp; dettes</a>
 </nav>
+
+<!-- ═══════════════ 0 ═══════════════ -->
+<section id="vue">
+  <h2><span class="num">0</span>Vue d’ensemble — où se situe ce lot dans le moteur</h2>
+  <p class="lead">Le moteur est devenu dense. Avant d’entrer dans le lot : la boucle complète du moteur telle qu’elle tourne dans le dépôt, la carte des fichiers, puis l’algorithme détaillé de ce que le lot apporte.</p>
+
+  <h3>0.1 — L’algorithme global du projet</h3>
+  <p class="small">Chaque étage porte, à droite, l’espace (ou la frontière d’espaces) où il travaille. <b>En surbrillance : ce que couvre ce lot.</b> Une consolidation ne couvre pas un étage mais une <b>traversée</b> : elle suit un sommet de l’import jusqu’au pixel, et retour. Les étages hors surbrillance n’ont pas d’espace géométrique propre (entrées, contrôleurs, gizmos, triggers) ou ne font que lire le résultat. Les badges indiquent ce qui a changé <b>depuis la carte d’origine</b> de la consolidation.</p>
+  <div class="seg" id="pipeSeg" style="max-width:640px">
+    <button class="btn on" data-v="all">Tout le moteur</button>
+    <button class="btn" data-v="lot">Seulement ce que couvre le lot</button>
+    <button class="btn" data-v="diff">Écarts depuis la carte d’origine</button>
+  </div>
+  <label class="chk"><input type="checkbox" id="pipeDetail"> Afficher le détail de chaque étage</label>
+  <div class="pipe" id="pipeline"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--accent-soft);border:2px solid var(--accent)"></i> couvert par le lot</span>
+    <span><i class="sw" style="background:var(--panel);border:1px solid var(--line);opacity:.5"></i> hors lot</span>
+    <span><span class="pbadge new" style="margin:0">apparu</span> depuis la carte d’origine</span>
+    <span><span class="pbadge mod" style="margin:0">modifié</span> depuis la carte d’origine</span>
+    <span><span class="pbadge keep" style="margin:0">inchangé</span></span>
+  </div>
+  <div class="note"><b>Lecture.</b> La surbrillance couvre deux moments : le <b>chargement</b> (E0 → E1, une fois) et l’intérieur de <code>RenderView</code> (E3 → E8, par vue). Entre les deux, seuls <code>LocalTransformSystem</code>, <code>WorldTransformSystem</code> (E1 → E2 → E3) et <code>BuildViewData</code> (E3 → E4 → E5, en matrices) appartiennent à la chaîne. Les écarts sont tous concentrés dans <code>RenderView</code> : c’est là que la phase G a travaillé, et c’est là que la carte d’origine avait vieilli.</div>
+
+  <h3>0.2 — La carte des fichiers</h3>
+  <p class="small">Les fichiers de la LIB qui possèdent un espace sont en surbrillance. Les autres existent, mais ne transforment aucune coordonnée.</p>
+  <div class="card tight tw"><table id="fileMap"></table></div>
+
+  <h3>0.3 — L’algorithme détaillé de l’apport du lot</h3>
+  <p class="small">Une consolidation n’ajoute pas de code au moteur. Elle apporte trois choses : <b>un outil de lecture</b> (A), <b>une carte à jour</b> de la traversée (B), et <b>des remises en question</b> de la carte et des règles d’origine (C), chacune avec son avant / après.</p>
+  <div id="lotAlgo"></div>
+</section>
 
 <!-- ═══════════════ 1 ═══════════════ -->
 <section id="pourquoi">
@@ -1575,6 +1636,236 @@ $('rmHost').innerHTML = `
 
 // lancement du schéma
 updateSchema();
+// ═════════════════════════ §0 VUE D’ENSEMBLE ═════════════════════════
+// [phase, nom, résumé, espaces, couvert par le lot, statut depuis la carte d’origine (keep|mod|new|null), détail]
+const PIPE = [
+  ['Démarrage — une fois', 'EngineConfig::LoadFromJson, ContentRoot', 'réglages du moteur, racine des contenus', '—', false, null,
+    'Aucune coordonnée. Fixe seulement les chemins et les plafonds (dont kMaxMeshVerticesHard, qui borne les tampons de l’étage sommets).'],
+  ['Démarrage — une fois', 'Serializer : Parse*, ParseHierarchy', 'entités, composants, liens parent / enfant', '—', false, null,
+    'Crée les entités. Les Transform lus ici sont la SOURCE de E2 ; aucune matrice n’est encore calculée.'],
+  ['Démarrage — une fois', 'ResourceManager : LoadMeshChecked / LoadLodChainChecked → OBJLoader', 'clé canonique, cache, lecture du fichier', 'E0 → E1', true, 'mod',
+    'L’import est la première frontière irréversible : le repère et les unités du DCC disparaissent. Les chaînes de LOD (A13/A14) chargent plusieurs E1 pour un même objet.'],
+  ['Démarrage — une fois', 'ResourceManager::RegisterMesh — porte unique', 'plafond de sommets, BakePositionsSoA, BakeFacePlanesSoA', 'E1', true, 'new',
+    'B3 : E1 devient SoA (px, py, pz alignés 32 o). B5 : les plans de face (n, d) sont cuits ici. Manque encore ComputeMeshAABB (point C1-6).'],
+  ['Démarrage — une fois', 'SpawnCameraGizmos', 'une entité gizmo par caméra, enfant de sa caméra', '—', false, null,
+    'Hors lot : le gizmo traverse ensuite la chaîne des espaces comme n’importe quel mesh.'],
+  ['Boucle — par frame', 'PollEvents', 'clavier, souris, taille de fenêtre figée pour la frame', '—', false, null, 'Hors lot.'],
+  ['Boucle — par frame', 'FPSControllerSystem / CameraFollowSystem', 'écrivent m_local (position, rotation)', '—', false, null,
+    'Écrivent la source de E2 ; ne calculent aucune matrice.'],
+  ['Boucle — par frame', 'BuildCameraBindings', '(caméra, viewport, mode) × N', 'origine de E7', true, null,
+    'Ne transforme aucun point, mais fixe l’origine et la taille de E7 pour chaque vue : le coin haut-gauche du viewport. C’est ce qui rend le split-screen gratuit.'],
+  ['Boucle — par frame', 'CameraGizmoSystem', 'forme, mesh et couleur des gizmos', '—', false, null, 'Hors lot (lot A5).'],
+  ['Boucle — par frame', 'LocalTransformSystem', 'm_local → m_localMatrix (S · R · T)', 'E1 → E2', true, 'keep',
+    'Honore m_dirty. Le signe de det(S) décide ici de la « main » de E1 par rapport à son parent.'],
+  ['Boucle — par frame', 'WorldTransformSystem', 'm_worldMatrix = m_localMatrix · parent.m_worldMatrix', 'E2 → E3', true, 'mod',
+    'L06 : la pile de parents est réelle. Elle est repliée en une seule matrice par entité ; rien en aval ne voit la profondeur de la hiérarchie.'],
+  ['Boucle — par frame', 'TriggerSystem', 'collisions', '(E3)', false, null, 'Lit des positions monde ; ne produit pas de coordonnées pour le rendu.'],
+  ['Boucle — par frame', 'BuildViewData × N', 'V = inverseRigid, P, VP, frustum, invVP paresseuse', 'E3 → E4 → E5', true, 'keep',
+    'Aucun sommet : seulement des matrices et six plans. La frontière E3 → E4 et E4 → E5 est franchie une fois par vue, en matrice.'],
+  ['Boucle — par frame', 'Clear (une fois, avant la première vue)', 'couleur + profondeur à 0.0f (reverse-Z)', 'E8', true, 'keep',
+    'Initialise E8. Le clear à 0 est la moitié du contrat reverse-Z ; l’autre moitié est le test GREATER.'],
+  ['RenderView — par vue', 'État de vue', 'SetViewport, SetMode, callback de fragment', 'origine de E7', true, 'keep', 'Le Renderer reçoit l’origine de E7 et le mode.'],
+  ['RenderView — par instance', 'Filtre + Frustum::Classify', 'AABB monde → Outside / Inside / Intersect', 'E3', true, 'keep',
+    'La décision la plus structurante de la chaîne : Inside autorise la division par sommet, Intersect l’interdit.'],
+  ['RenderView — par instance', 'Sélection du niveau de LOD', 'taille apparente en pixels', 'E1 → E7 (mesure)', true, 'new',
+    'Une mesure qui saute directement de E1 à E7 : AABB locale + mvp → rayon en pixels. Aucun sommet n’est transformé.'],
+  ['RenderView — par instance', 'mvp = model · VP', 'une matrice par (instance, vue)', 'E1 → E5', true, 'keep', 'Traverse E3 et E4 sans s’y arrêter.'],
+  ['RenderView — par instance', 'Inside : ProjectPositions8', 'MulRow, ÷w, ToRaster, accrochage — 8 sommets par registre', 'E1 → E7·g', true, 'new',
+    'Chantier 2b + B3 + D-a1. E5 et E6 ne vivent que dans des registres. Sortie : RasterVertex[] {x, y, z_ndc, invW}.'],
+  ['RenderView — par instance', 'Intersect : TransformPositions, near, ClipTriangleNear, ProjectClip', 'E5 en mémoire, clipping, puis division par coin', 'E5 → E7·g', true, 'mod',
+    'Le seul chemin où E5 est stocké. Toujours scalaire (point C1-11).'],
+  ['RenderView — par lot de 8 faces', 'Étage faces : B5, B4, C3', 'pré-filtre arrière en objet, aire + boîte serrée, pixel unique', 'E1 + E7', true, 'new',
+    'Le même prédicat « la face regarde-t-elle l’œil ? » évalué dans deux espaces ; E7 garde le dernier mot.'],
+  ['RenderView — par triangle', 'EmitRasterTriangle → SetupTriangleFx', 'arêtes entières, top-left, boîte entière', 'E7·g → E7·fx', true, 'new',
+    'D-a1 : X = x · 256 exact, garde |x| < 2^20 px, sinon repli flottant.'],
+  ['RenderView — par pixel', 'Arêtes par blocs de 8, barycentriques, early-Z, écriture', 'Rasterizer, PixelStage8, Fragment', 'E7·fx → E8', true, 'mod',
+    'Centres x + ½ (3a/3b), test GREATER avant tout shading, FrameBuffer en y·pitch, DepthBuffer en y·W + x.'],
+  ['Fin de frame', 'Present (EXE)', 'SDL : mise à jour de la texture, affichage', 'E8 → écran', false, null, 'Hors LIB, hors lot.'],
+  ['À la demande', 'Picking / reconstruction', 'ToNDC + invViewProjection + ÷w', 'E8 → E3', true, 'keep', 'Le seul chemin de retour ; ne peut pas annuler la quantification.'],
+];
+function renderPipe() {
+  const v = document.querySelector('#pipeSeg .on').dataset.v, det = $('pipeDetail').checked;
+  let rows = PIPE.map((r, i) => ({ r, i }));
+  if (v === 'lot') rows = rows.filter(x => x.r[4]);
+  if (v === 'diff') rows = rows.filter(x => x.r[5] === 'new' || x.r[5] === 'mod');
+  let html = '', phase = '';
+  for (const { r, i } of rows) {
+    if (r[0] !== phase) { phase = r[0]; html += `<div class="pphase">${phase}</div>`; }
+    const badge = r[5] === 'new' ? '<span class="pbadge new">apparu</span>' : r[5] === 'mod' ? '<span class="pbadge mod">modifié</span>' : r[5] === 'keep' ? '<span class="pbadge keep">inchangé</span>' : '';
+    html += `<div class="pstage${r[4] ? ' lot' : ''}"><span class="pn">${i + 1}</span><span class="pt">${r[1]}${badge}</span><span class="sp">${r[3]}</span><span class="pd">${r[2]}</span>${det ? `<span class="px">${r[6]}</span>` : ''}</div>`;
+  }
+  $('pipeline').innerHTML = html;
+}
+document.querySelectorAll('#pipeSeg button').forEach(b => b.onclick = () => { document.querySelectorAll('#pipeSeg button').forEach(x => x.classList.toggle('on', x === b)); renderPipe(); });
+$('pipeDetail').addEventListener('change', renderPipe);
+renderPipe();
+
+// carte des fichiers
+const FILES = [
+  ['Core/', 'config.h', 'commutateurs LV3_SIMD, LV3_RASTER_FIXED, plafonds', '—', false],
+  ['Core/', 'EngineConfig, ContentRoot, JsonReader', 'réglages, chemins', '—', false],
+  ['Ressources/', 'OBJLoader, MTLLoader, LodChainLoader', 'lecture des actifs', 'E0 → E1', true],
+  ['Ressources/', 'ResourceManager (RegisterMesh, LodChain)', 'porte unique des meshes, cuissons', 'E1', true],
+  ['Geometry/', 'MeshClass', 'positions SoA, plans de face, AABB locale', 'E1', true],
+  ['Maths/', 'Transform, QuaternionLib, MatrixLib (inverseRigid)', 'TRS, matrices, inverses', 'E1 → E2 → E3 → E4', true],
+  ['Maths/', 'Projection', 'reverse-Z, far infini, ortho, filmback', 'E4 → E5', true],
+  ['Maths/Geometry/', 'Plane, AABB3d, Frustum', 'plans, boîtes, Classify 3 états', 'E3', true],
+  ['Scene/', 'Hierarchy, System (Local / WorldTransformSystem)', 'pile de parents, propagation', 'E1 → E2 → E3', true],
+  ['Scene/', 'System (BuildViewData), CameraBinding', 'ViewData par vue, associations caméra / viewport', 'E3 → E5, origine E7', true],
+  ['Scene/', 'RenderSystem (RenderView, EmitRasterTriangle)', 'boucle d’instances, choix du chemin, LOD', 'E3 → E7', true],
+  ['Scene/', 'Serializer, Registry, SparseSet, DebugGizmos', 'ECS, scène, gizmos', '—', false],
+  ['Rendering/', 'ViewData, Viewport', 'V, P, VP, frustum ; ToRaster, flip Y, SnapToSubpixel', 'E3 → E5 ; E6 → E7·g', true],
+  ['Rendering/', 'VertexStage (ProjectClip, ProjectPositions(8), TransformPositions)', 'le seul « ÷ w » du moteur', 'E1 → E7·g', true],
+  ['Rendering/', 'ClipVertex, Clipper', 'clipping near homogène', 'E5', true],
+  ['Rendering/', 'FaceStage (B4, B5, C3)', 'face arrière, boîte serrée, pixel unique', 'E1 + E7', true],
+  ['Rendering/', 'Rasterizer, PixelStage8', 'setup virgule fixe, arêtes, barycentriques', 'E7·fx → E8', true],
+  ['Rendering/', 'Fragment, FrameBuffer, DepthBuffer, ClearKernels', 'early-Z, écriture, effacement', 'E8', true],
+  ['Rendering/', 'Renderer, RenderTypes', 'état : viewport, mode, callback', 'origine E7', true],
+  ['EXE', 'main.cpp (SDL)', 'fenêtre, texture, Present', 'E8 → écran', false],
+];
+$('fileMap').innerHTML = '<tr><th>Dossier</th><th>Fichiers</th><th>Rôle</th><th>Espace(s) possédé(s)</th></tr>' +
+  FILES.map(f => `<tr class="${f[4] ? 'lotrow' : ''}"><td class="n">${f[0]}</td><td><code>${f[1]}</code></td><td>${f[2]}</td><td class="n">${f[3]}</td></tr>`).join('');
+
+// algorithme détaillé de l’apport
+const ba = (bt, bh, at, ah, prop) => `<div class="ba"><div class="before"><h5>${bt}</h5>${bh}</div><div class="after${prop ? ' prop' : ''}"><h5>${at}</h5>${ah}</div></div>`;
+$('lotAlgo').innerHTML = `
+  <h4>A — Ce que le lot ajoute : un outil de lecture</h4>
+  <p class="small">Le premier apport n’est pas une carte, c’est une <b>procédure</b> : comment vérifier qu’un calcul, n’importe où dans le moteur, est écrit dans le bon espace. C’est elle qu’on applique en relisant une leçon, et elle qui a trouvé les écarts du §4.</p>
+  ${pre(`VerifierUnCalcul(expression, fichier)
+    // 1. NOMMER l'espace de chaque entree
+    pour chaque operande x
+        espace(x) = espace du TYPE qui le porte          // RasterVertex -> E7, Vec4f clip -> E5 ...
+        si le type ne suffit pas (Vec3f, float) :
+            remonter a la derniere frontiere franchie     // quelle matrice, quelle division ?
+
+    // 2. MEME CONTRAT : origine, base, main, unite, domaine
+    si deux operandes n'ont pas le meme espace         -> ERREUR D'ESPACE   (contre-exemples 4, 8)
+    si l'espace a une main variable (det < 0 possible)  -> verifier la convention (contre-exemple 7)
+
+    // 3. DOMAINE : le calcul a-t-il un sens ici ?
+    si l'operation est une division par w :
+        exiger w > 0 PROUVE (Inside) ou garanti (apres clipping)   (contre-exemple 1)
+
+    // 4. FRONTIERE : est-elle reversible ?
+    si le resultat doit etre relu plus tard (picking, reconstruction) :
+        verifier que le passager necessaire survit (invW, z_ndc)
+
+    // 5. PROPRIETAIRE UNIQUE : la formule existe-t-elle ailleurs ?
+    grep de la formule -> 1 occurrence (+ sa copie AVX2 gardee par une TNR)
+    sinon : deux sources de verite, elles divergeront
+
+    // 6. FREQUENCE : le calcul est-il au niveau le moins frequent ou il est constant ?
+    par vue | par instance | par sommet | par face | par pixel   (annexe A12, regle de frequence)`)}
+  <p class="small">Plus les six règles <b>C1.1 à C1.6</b> (§9 du document d’origine) et les <b>règles grepables</b> du §8.</p>
+
+  <h4>B — La carte à jour : la traversée complète, annotée espace par espace</h4>
+  <p class="small">C’est l’algorithme que décrit le §0.1, déplié au niveau des appels. Chaque ligne indique l’espace de ce qu’elle <b>produit</b>. Les lignes marquées <code>// ★</code> sont celles que la carte d’origine décrivait autrement (détails en C).</p>
+  ${pre(`// ── CHARGEMENT ─────────────────────────────────────────────────────────────────
+LoadMeshChecked(chemin, options)                          // E0 : fichier
+    OBJLoader::Load -> MeshClass AoS                      // E0 -> E1   irreversible
+    RegisterMesh(mesh)                                    // ★ porte unique
+        verifier vertexCount <= kMaxMeshVerticesHard
+        BakePositionsSoA()   -> px[], py[], pz[]          // E1 en SoA, alignes 32 o
+        BakeFacePlanesSoA()  -> nx[], ny[], nz[], d[]     // E1 : plans de face (B5)
+        // ComputeMeshAABB : PAS ici (C1-6)                // E1 : AABB locale
+
+// ── PAR FRAME ──────────────────────────────────────────────────────────────────
+LocalTransformSystem   : m_local -> m_localMatrix = S.R.T                 // E1 -> E2
+WorldTransformSystem   : m_worldMatrix = m_localMatrix . parent.world     // E2 -> E3 (pile repliee)
+BuildCameraBindings    : (camera, viewport, mode) x N                     // origine de E7
+pour chaque vue v
+    BuildViewData(binding)                                                // E3 -> E4 -> E5, en matrices
+        V   = cam.m_worldMatrix.inverseRigid()            // contrat : isometrie (C1-13)
+        P   = Projection(fov, aspect, near)               // reverse-Z, far infini
+        VP  = V . P ;  frustum = GribbHartmann(VP)        // 6 plans, en E3
+Clear(couleur, profondeur = 0.0f)                                         // E8
+
+// ── PAR VUE : RenderView ───────────────────────────────────────────────────────
+pour chaque instance i
+    vis = frustum.Classify(AABB(i).Transformed(model))   // E3 : Outside | Inside | Intersect
+    si vis == Outside : suivante
+    niveau = SelectLod(taille apparente)                  // ★ mesure E1 -> E7, sans sommet
+    mvp = model . VP                                      // E1 -> E5, une matrice
+
+    si vis == Inside                                      // ★ chemin par SOMMET
+        pour chaque lot de 8 sommets                      // ProjectPositions8
+            c   = MulRow(mvp, p)                          // E5  (registres)
+            iw  = 1 / c.w           ; assert(w > 0)       // E5 -> E6 (registres)
+            r   = ToRaster(c . iw)                        // E6 -> E7  flip Y
+            rv  = Snap(r, 1/256)                          // ★ E7 -> E7.g
+            RasterVertex[k] = { rv.x, rv.y, z_ndc, iw }   // E7.g en memoire
+        pour chaque lot de 8 faces                        // FaceStage
+            objBack = (L . E < -tau)                      // ★ E1 : pre-filtre prudent (B5)
+            front, nonVide = Aire(E7), BoiteSerree(E7)    // E7 : dernier mot (B4)
+            survivantes -> EmitRasterTriangle
+    sinon                                                 // Intersect : chemin par COIN
+        c[k] = TransformPositions(mvp, p)                 // E5 en memoire
+        pour chaque triangle
+            d = w - z  ;  si tout < 0 : rejet             // E5 : domaine
+            poly = ClipTriangleNear(tri)                  // E5 -> E5 (0, 3 ou 4 sommets)
+            pour l'eventail : ProjectClip x 3             // E5 -> E7.g  (le seul "/ w")
+            EmitRasterTriangle
+
+EmitRasterTriangle(a, b, c)
+    si aire >= 0 : rejet                                  // E7 : face avant = aire < 0
+    boite = [ceil(min - 1/2), floor(max - 1/2) + 1[       // ★ E7 -> centres de pixel
+    si boite vide : rejet (3b)
+    SetupTriangleFx : X = x . 256 (entier exact)          // ★ E7.g -> E7.fx
+    pour chaque bloc de 8 pixels                          // E7.fx -> E8
+        couverture = (e0 | e1 | e2) >= 0                  // top-left entier
+        z = bary(z_ndc)  ; si z > depth[y.W + x]          // E8 : early-Z GREATER
+            color[y.pitch + 4x] = shade(bary . invW)      // E8 : octets, pas elements
+
+// ── RETOUR, A LA DEMANDE ───────────────────────────────────────────────────────
+Pick(px, py, z_ndc) : ToNDC -> (ndc, 1) . invVP -> / w   // E8 -> E3`)}
+
+  <h4>C — Ce que le lot remet en question</h4>
+  <p class="small">Six points. Les quatre premiers corrigent la <b>carte</b> (le code a évolué, la carte non) ; les deux derniers touchent des <b>règles</b>. Vert : état du dépôt, constaté. Ambre : proposition, <b>non actée</b>.</p>
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.1 — La liste des espaces : de 9 à 11</h5>
+  ${ba('Carte d’origine', `<p style="margin:0">E0 actif · E1 objet · E2 parent · E3 monde · E4 vue · E5 clip · E6 NDC · <b>E7 raster, « 2,5D continu »</b> · E8 mémoire.</p>`,
+    'Dépôt actuel', `<p style="margin:0">Les mêmes, plus <b>E7·g</b> (grille 1/256 px, valeurs float multiples de 1/256, domaine |x| &lt; 2<sup>20</sup> px) et <b>E7·fx</b> (entiers X = x·256 au setup). Sous <code>LV3_RASTER_FIXED = 0</code>, la carte d’origine redevient exacte.</p>`)}
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.2 — Où vivent E5 et E6</h5>
+  ${ba('Carte d’origine', pre(`pour chaque face, pour chaque COIN
+    clip = MulRow(mvp, p)     // E5
+    test near, clip
+    ndc  = clip / w           // E6
+    r    = ToRaster(ndc)      // E7
+// E5 et E6 : des valeurs par coin,
+// recalculees 3 a 6 fois par sommet`),
+    'Dépôt actuel (chantier 2b)', pre(`Inside : pour chaque SOMMET, 8 a la fois
+    E5, E6 : registres ymm seulement
+    -> RasterVertex[] (E7.g) en memoire
+Intersect : E5 en memoire (ClipSpaceBuffer)
+    -> ProjectClip par coin, apres clip
+// legitime parce que Inside prouve w > 0`))}
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.3 — La frontière E7 → E8</h5>
+  ${ba('Carte d’origine', `<p style="margin:0"><code>floor(x), floor(y)</code> + adressage <code>pitch</code>. Répond à « dans quel pixel tombe ce <i>point</i> ? ».</p>`,
+    'Dépôt actuel (3a / 3b)', `<p style="margin:0">Centres <code>x + ½</code>, boîte serrée <code>[ceil(min − ½), floor(max − ½) + 1[</code>. Répond à « quels <i>centres</i> ce <i>triangle</i> couvre-t-il ? ». <code>floor</code> reste juste pour l’adresse d’un pixel déjà choisi.</p>`)}
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.4 — Le document <code>Consolidation_C1_Espaces.md</code></h5>
+  ${ba('Document d’origine', `<p style="margin:0">§3 et §5 : division « par coin », E7 continu, <code>floor</code>. §10 : 7 dettes ouvertes.</p>`,
+    'À amender', `<p style="margin:0">Reprendre §3, §5, §8 avec C.1 à C.3 ; mettre à jour §10 avec l’état constaté au 08/11 (C1-6 à C1-10). Aucune modification faite : le fichier du projet est en lecture seule ici.</p>`, true)}
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.5 — Règle C1.3 et écart L4-4 : où se teste la face arrière</h5>
+  ${ba('Règle d’origine + roadmap L04', `<p style="margin:0"><b>C1.3 :</b> « on teste le winding en E7 : l’aire y est déjà calculée, le test est gratuit ».<br><b>L4-4 :</b> « culling en espace objet <b>rejeté</b> » (12 o par triangle, cas du scale négatif, winding encodé à deux endroits).</p>`,
+    'Dépôt actuel (B5) — formulation proposée', `<p style="margin:0"><b>C1.3 amendée :</b> un test peut avoir un <b>pré-filtre conservatif</b> dans un espace plus en amont, si l’espace d’origine garde le dernier mot.<br><b>L4-4 réécrit :</b> « rejeté en <i>remplacement</i>, adopté en <i>pré-filtre SIMD</i> (B5) : 4 lectures contiguës au lieu de 24 dispersées ». Rédaction à acter.</p>`, true)}
+
+  <h5 style="margin:16px 0 4px;font-size:13.5px">C.6 — La clause « main » : une convention de face avant qui dépend de det(model)</h5>
+  ${ba('Aujourd’hui (dépôt)', pre(`// convention FIXE
+front = (aireRaster < 0)            // B4
+objBack = (L . E < -tau)            // B5
+// det(model) < 0 : les deux tests
+// s'inversent ENSEMBLE -> objet "en creux"`),
+    'Proposé (dette « Miroir »), non acté', pre(`// la main de E1 fait partie du contrat
+signe = (det(model) < 0) ? -1 : +1  // par instance
+front   = (signe * aireRaster < 0)
+objBack = (signe * (L . E) < -tau)
+// a traiter avant / pendant la L06 :
+// un parent miroir contamine sa descendance`), true)}
+`;
 
 </script>
 </body>

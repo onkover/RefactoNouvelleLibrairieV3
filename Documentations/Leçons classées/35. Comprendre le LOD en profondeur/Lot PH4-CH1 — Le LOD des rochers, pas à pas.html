@@ -1,0 +1,1355 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH4-CH1 — Le LOD des rochers, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+.bar{display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin:8px 0; background:var(--surface2)}
+.bar>span{display:block; height:100%; min-width:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px}
+.kv>dt{color:var(--ink3); font-family:var(--mono); font-size:12.5px}
+.kv>dd{margin:0; font-family:var(--mono); font-size:12.5px; overflow-wrap:anywhere}
+input[type=text].cmd{width:100%; font-family:var(--mono); font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.tag{font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.zone-chip{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+
+/* Ajouts PH4-CH2 et PH4-CH3b. */
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:3px; margin:6px 0}
+.lanes>div{font-family:var(--mono); font-size:11px; background:var(--surface2); border:1px solid var(--line); border-radius:4px; padding:3px 4px; text-align:right; overflow-wrap:anywhere; min-width:0}
+.lanes>div.h{background:var(--hl); border-color:var(--hl-line)}
+.reg{font-family:var(--mono); font-size:11.5px; color:var(--ink3); margin-top:8px}
+.bits{font-family:var(--mono); font-size:11.5px; color:var(--ink2)}
+.ports{display:grid; gap:3px; margin:8px 0}
+.ports>div{display:flex; height:22px; border-radius:4px; overflow:hidden; border:1px solid var(--line); background:var(--surface2)}
+.ports>div>span{display:block; height:100%}
+.ports .lbl{font-size:11.5px; color:var(--ink3); font-family:var(--mono)}
+.mesh{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0}
+.cell{font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); border-radius:5px; padding:6px 4px; text-align:center; background:var(--surface2)}
+.cell.a{background:var(--ok-bg); border-color:var(--ok); color:var(--ok)}
+.cell.b{background:var(--bad-bg); border-color:var(--bad); color:var(--bad)}
+.cell.p{outline:2px solid var(--accent); outline-offset:1px}
+</style>
+<style>
+/* Ajouts PH4-CH3b : couleurs des trois boîtes du laboratoire de couverture. */
+:root{ --loose:#b36b00; --tight:#0b7d70; --cov:#2f5bd3; --zone:#e9e4da; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; } }
+:root[data-theme="dark"]{ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; }
+.trio{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:10px 0}
+@media(max-width:620px){ .trio{grid-template-columns:1fr} }
+.trio>div{border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:var(--surface); min-width:0; font-size:13.5px}
+.trio b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3); margin-bottom:3px}
+.hbars{display:grid; gap:6px; margin:10px 0}
+.hbars>div{display:grid; grid-template-columns:minmax(90px,150px) 1fr 76px; gap:8px; align-items:center; font-size:13px}
+.hbars .tr{height:14px; background:var(--surface2); border:1px solid var(--line); border-radius:3px; overflow:hidden}
+.hbars .fl{height:100%; background:var(--accent)}
+.hbars .fl.bad{background:var(--bad)} .hbars .fl.ok{background:var(--ok)} .hbars .fl.cov{background:var(--cov)} .hbars .fl.tight{background:var(--tight)} .hbars .fl.loose{background:var(--loose)}
+.stats .v.ok,.stats .v.bad,.stats .v.warn{border:0;background:none;padding:0;margin:0;border-radius:0}
+.hbars .vv{font-family:var(--mono); font-size:12px; text-align:right; font-variant-numeric:tabular-nums}
+</style>
+<style>
+/* Ajouts PH4-CH2b : couleurs des deux chemins et du laboratoire de latence. */
+:root{ --inside:#2f6b46; --inter:#2563a8; --div:#9a3024; --lat:#8a6a12; --loose:#b36b00; --tight:#0b7d70; --cov:#2f5bd3; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --inside:#7fc49a; --inter:#6aa8ec; --div:#e38a7c; --lat:#d9bb6a; --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; } }
+:root[data-theme="dark"]{ --inside:#7fc49a; --inter:#6aa8ec; --div:#e38a7c; --lat:#d9bb6a; --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; }
+.two{display:grid; grid-template-columns:1fr; gap:12px}
+@media(min-width:820px){ .two{grid-template-columns:3fr 2fr} }
+.two>div{min-width:0}
+.badge{display:inline-block; font-family:var(--mono); font-size:11px; padding:0 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.badge.in{border-color:var(--inside); color:var(--inside)} .badge.it{border-color:var(--inter); color:var(--inter)}
+</style>
+
+<header>
+  <div class="t">Lot PH4-CH1 — Le LOD des rochers, pas à pas</div>
+  <div class="s">LibraryV3 · phase G, chantier 1 du plan de la consolidation C2 (« LOD ») · leçon LOD (annexes A13, A13 bis), instrument de taille apparente, chaînes de niveaux <code>.lod.json</code>, <code>LodChain</code>, <code>SelectLodLevel</code>, <code>LodChainLoader</code>, τ par vue, mesure M13 et Référence I · annexe A14 · échange du 30/09 au 04/10/2026 · reconstruction du 13/11/2026 (remplace la page « Niveaux de détail LV3 » du 28/09, à la même adresse)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">Méthode</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">À la fin du chantier 2b, une face coûtait moins cher, mais la scène « ceinture » en soumettait toujours <b>275 000 par frame</b>. Le run de comptage a montré pourquoi : <b>99 % des objets visibles faisaient moins d’un pixel de rayon</b>, et chacun envoyait ses 168 faces au pipeline. On payait cinquante faces par pixel affiché. Ce lot apprend au moteur à dessiner un objet <b>avec le nombre de faces que l’écran peut montrer</b>, et pas davantage : c’est le <i>niveau de détail</i>, ou LOD.</p>
+
+<p>Le LOD n’est pas une astuce de performance plaquée sur le moteur. C’est une idée de traitement du signal : l’écran est une grille d’échantillonnage (un point par pixel), et tout détail plus fin que l’espacement des pixels est soit invisible, soit source de scintillement. Un niveau de détail est une version <b>pré-filtrée</b> du maillage, comme une mipmap l’est pour une texture. Le gain est double : moins de calcul, et une image plus stable.</p>
+
+<p>Le lot raconte six choses, dans l’ordre de l’échange :</p>
+<ol>
+<li><b>La leçon</b> (A13, A13 bis) : ce qu’est un LOD, quand il se justifie, comment on fabrique les niveaux, et surtout comment on <b>range</b> ses données pour un CPU.</li>
+<li><b>La mesure avant le code</b> : un instrument de taille apparente, retrouvé mort dans du code commenté, réinstallé, validé, et une règle de décision écrite avant l’implémentation.</li>
+<li><b>La fabrication des niveaux</b> : ré-échantillonnage exact des rochers, mesure de l’erreur ε (et la découverte qu’un tirage aléatoire la sous-estimait de 46 %), descripteur <code>.lod.json</code>.</li>
+<li><b>La structure de données</b> : une chaîne de 64 octets, une sélection sans branche par comptage, un stockage indexé par l’identifiant.</li>
+<li><b>L’intégration</b> : changer le <i>type</i> du composant pour que le compilateur fasse l’inventaire, τ dans la vue, la sélection dans <code>RenderView</code>, trois runs identiques avant de brancher la scène.</li>
+<li><b>La mesure finale</b> : un premier lot non recevable (i9, non épinglé), puis le lot M13 de l’i7 : <b>Render −71 %, frame −51 %</b>, la prédiction tenue, et la <b>Référence I</b>.</li>
+</ol>
+
+<div class="rule"><b>En une phrase.</b> Le niveau de détail n’est pas une propriété de l’objet, mais de l’objet <i>dans une vue</i> : il se calcule par paire (instance, vue), à chaque frame, à partir d’une erreur mesurée hors ligne, et il ne se stocke jamais.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Avant ce lot, le moteur avait parcouru le chemin suivant (chaque étape a son lot reconstruit dans la même série) :</p>
+<div class="scroll"><table>
+<thead><tr><th>Étape</th><th>Ce qu’elle a apporté</th><th>Ce qu’elle laisse à ce lot</th></tr></thead>
+<tbody>
+<tr><td>L01 à L05</td><td>Configuration, mathématiques, ECS et <code>ResourceManager</code>, rasterizer, caméra et frustum</td><td>Les handles de ressources (<code>MeshHandle</code>), l’AABB, le frustum <code>Classify</code></td></tr>
+<tr><td>A6, A17</td><td><code>JsonReader</code> (clés tracées, <code>WarnUnread</code>), <code>EngineConfig</code></td><td>Le lecteur qui servira à lire les descripteurs de chaînes</td></tr>
+<tr><td>L06, PH1</td><td>Graphe de scène, boucle principale, caméras multiples, 4 vues</td><td>Le fait que chaque objet est rendu <b>quatre fois</b> par frame</td></tr>
+<tr><td>Campagne de mesure (PH4-G, consolidation C2)</td><td><code>Profiler</code>, CSV, protocoles M1 à M13, règle M12 (« règle écrite avant la mesure »)</td><td>La méthode de mesure de ce lot</td></tr>
+<tr><td>PH4-CH2, PH4-CH3b</td><td>Pré-transformation des sommets, compteur de couverture et rejet précoce</td><td>Le constat : le coût est <b>en amont</b> du rasterizer</td></tr>
+<tr><td>PH4-CH2b (28-30/09)</td><td>Projection une fois par sommet (Render −33,5 %), instrument de taille apparente <code>LV3_LOD_STATS</code>, décision « 2b avant LOD », Référence H (Render 5,14 ms)</td><td>L’instrument, la décision d’attaquer le LOD ensuite, la Référence H</td></tr>
+</tbody></table></div>
+
+<p>Le plan de la consolidation C2 listait les chantiers par numéro ; le LOD y portait le n° 1. D’où le nom de ce lot, <b>PH4-CH1</b> (phase 4 du carnet, chantier 1), dans la lignée de PH4-CH2, PH4-CH2b et PH4-CH3b, bien qu’il ait été mené <b>après</b> eux.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que veut dire « niveau de détail »</h3>
+<p>Un même objet existe en plusieurs versions : la version complète (L0) et des versions de plus en plus grossières (L1, L2, L3). Quand l’objet est petit à l’écran, le moteur dessine une version grossière. L’œil ne voit pas la différence, à condition que la différence de silhouette reste <b>sous une fraction de pixel</b>. Trois grandeurs suffisent à le décider :</p>
+<ul>
+<li><b>ε<sub>k</sub></b>, l’erreur géométrique du niveau k par rapport à L0, mesurée <b>une fois, hors ligne</b>, en unités locales du mesh ;</li>
+<li><b>q</b>, le nombre de pixels par unité locale de <i>cette</i> instance dans <i>cette</i> vue (il dépend de la distance, de l’échelle, de la focale et de la résolution) ;</li>
+<li><b>τ</b>, la tolérance en pixels (0,5 px), réglage de qualité de la vue.</li>
+</ul>
+<p>Un niveau k est <b>admis</b> si son erreur à l’écran reste sous la tolérance : <code>ε<sub>k</sub> × q ≤ τ</code>. On dessine le niveau admis le plus grossier.</p>
+
+<h3>Le besoin, en termes fonctionnels</h3>
+<ul>
+<li><b>Image inchangée à l’œil</b> : aucune transition visible quand un objet change de niveau (pas de « popping »).</li>
+<li><b>Tout mesh peut avoir ou non des niveaux</b>, sans code particulier : un objet sans niveaux se comporte exactement comme avant.</li>
+<li><b>Plusieurs vues</b> : la même roche peut être L0 dans une vue proche et L3 dans une vue lointaine, dans la même frame.</li>
+<li><b>Des données vérifiables</b> : les niveaux et leur erreur sont produits hors ligne, versionnés, et contrôlés au chargement.</li>
+<li><b>Un gain mesuré</b>, prédit avant d’être mesuré.</li>
+</ul>
+
+<h3>Les objectifs du lot</h3>
+<div class="scroll"><table>
+<thead><tr><th>Objectif</th><th>Critère</th><th>Résultat</th></tr></thead>
+<tbody>
+<tr><td>Retirer le travail inutile</td><td><code>FacesSubmitted</code> ≤ 107 000 par frame (prédit avant)</td><td><span class="pill ok">82 988</span></td></tr>
+<tr><td>Faire descendre les roches minuscules</td><td><code>LodLevel3</code> ≥ 1 053 paires (prédit avant)</td><td><span class="pill ok">1 200</span></td></tr>
+<tr><td>Ne pas changer l’image</td><td>aucun popping en vol, compteurs identiques quand aucune chaîne n’est branchée</td><td><span class="pill ok">tenu</span></td></tr>
+<tr><td>Mesurer proprement</td><td>lot M13 (épinglé, A B B A, témoins stables)</td><td><span class="pill ok">Render −71 %</span> <span class="pill warn">réserve B2</span></td></tr>
+</tbody></table></div>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll"><table>
+<thead><tr><th>Question</th><th>Décision</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Quand calculer les niveaux ?</td><td>Hors ligne, par le script de génération</td><td>Un simplificateur n’a rien à faire dans la LIB ; un résultat calculé hors ligne s’inspecte et se versionne.</td></tr>
+<tr><td>Où ranger τ ?</td><td>Dans la <b>vue</b></td><td>Une chaîne partagée par 4 vues ne peut pas porter un seuil qui dépend de la vue.</td></tr>
+<tr><td>Que porte le composant ?</td><td>Un handle de <b>chaîne</b>, en remplacement du handle de mesh</td><td>Changer le type force le compilateur à signaler chaque lecteur.</td></tr>
+<tr><td>Comment ranger les chaînes ?</td><td>Un vecteur indexé par l’identifiant, 64 octets par chaîne</td><td>Un seul accès mémoire par lecture, 2 580 lectures par frame.</td></tr>
+<tr><td>Quels niveaux garder ?</td><td>L0 à L3, L2 compris</td><td>L2 est dominé, mais ne coûte rien ; la scène de mesure n’exerce aucun niveau intermédiaire.</td></tr>
+</tbody></table></div>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>La chaîne complète du moteur à la clôture de l’échange (04/10). <span class="tag" style="background:var(--hl);border-color:var(--hl-line)">surligné</span> = étage <b>créé ou modifié</b> par ce lot ; <span class="tag" style="border-style:dashed;border-color:var(--accent)">tireté</span> = étage inchangé mais <b>traversé différemment</b> (il reçoit moins de travail).</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 960" role="img" aria-label="Chaîne complète du moteur. Étages créés ou modifiés par le lot PH4-CH1 : génération hors ligne des niveaux et des descripteurs, configuration lod.tolerancePx, Serializer qui reconnaît .lod.json, ResourceManager avec chaînes décrites et implicites, MeshComponent qui porte une chaîne, BuildViewData qui calcule lodParams, RenderView avec culling sur l'union des boîtes, sélection du niveau et compteurs LodLevel.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>
+.bx{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.bxh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}
+.bxo{fill:var(--surface2);stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 3}
+.lb{fill:var(--ink);font:600 12.5px var(--sans)}
+.sb{fill:var(--ink3);font:11px var(--mono)}
+.ph{fill:var(--ink3);font:600 10.5px var(--sans);letter-spacing:.09em}
+.ln{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}
+</style>
+<text class="ph" x="16" y="20">0 · HORS LIGNE (avant toute compilation)</text>
+<rect class="bxh" x="16" y="30" width="420" height="56" rx="8"/><text class="lb" x="28" y="52">gen_rock_lod.py (étapes 3, 4c-1, 4c-3)</text><text class="sb" x="28" y="70">ré-échantillonne rock() → L1..L3, mesure ε</text>
+<rect class="bxh" x="450" y="30" width="434" height="56" rx="8"/><text class="lb" x="462" y="52">rock_x_Lk.obj + rock_x.lod.json</text><text class="sb" x="462" y="70">ε × 1,1 arrondi haut, sommets comptés comme le moteur</text>
+<line class="ln" x1="436" y1="58" x2="446" y2="58" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="118">1 · COMPILATION ET LANCEMENT (une fois)</text>
+<rect class="bxh" x="16" y="128" width="268" height="56" rx="8"/><text class="lb" x="28" y="150">engine.json → EngineConfig</text><text class="sb" x="28" y="168">lod.tolerancePx = 0,5 (4d-3a)</text>
+<rect class="bxh" x="298" y="128" width="270" height="56" rx="8"/><text class="lb" x="310" y="150">Serializer::ParseMesh (4d-2, 4d-4)</text><text class="sb" x="310" y="168">.lod.json → chaîne ; .obj → implicite</text>
+<rect class="bxh" x="582" y="128" width="302" height="56" rx="8"/><text class="lb" x="594" y="150">ResourceManager (4b, 4c, 4d-1)</text><text class="sb" x="594" y="168">LoadLodChainChecked, RegisterLodChain</text>
+<line class="ln" x1="284" y1="156" x2="294" y2="156" marker-end="url(#ar)"/><line class="ln" x1="568" y1="156" x2="578" y2="156" marker-end="url(#ar)"/>
+<rect class="bxh" x="298" y="196" width="270" height="44" rx="8"/><text class="lb" x="310" y="216">MeshComponent::m_lodChain (4d-2)</text><text class="sb" x="310" y="232">un handle de chaîne, jamais un niveau</text>
+<rect class="bxh" x="582" y="196" width="302" height="44" rx="8"/><text class="lb" x="594" y="216">GizmoAssets : chaînes implicites</text><text class="sb" x="594" y="232">un instrument ne se dégrade jamais</text>
+<path class="ln" d="M433 184 L433 192" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="272">2 · UNE FRAME</text>
+<rect class="bx" x="16" y="282" width="210" height="50" rx="8"/><text class="lb" x="28" y="303">dt, horloge, Input</text><text class="sb" x="28" y="320">Animation</text>
+<rect class="bx" x="240" y="282" width="200" height="50" rx="8"/><text class="lb" x="252" y="303">Cuissons des transforms</text><text class="sb" x="252" y="320">Local, World</text>
+<rect class="bx" x="454" y="282" width="200" height="50" rx="8"/><text class="lb" x="466" y="303">Trigger</text><text class="sb" x="466" y="320">témoins de calcul</text>
+<rect class="bxh" x="668" y="282" width="216" height="50" rx="8"/><text class="lb" x="680" y="303">BuildViewData × 4 (4d-3a)</text><text class="sb" x="680" y="320">τ résolu, lodParams.kPx / τ</text>
+<line class="ln" x1="226" y1="307" x2="236" y2="307" marker-end="url(#ar)"/><line class="ln" x1="440" y1="307" x2="450" y2="307" marker-end="url(#ar)"/><line class="ln" x1="654" y1="307" x2="664" y2="307" marker-end="url(#ar)"/>
+<path class="ln" d="M776 332 L776 346 L114 346 L114 356" marker-end="url(#ar)"/>
+<rect class="bx" x="16" y="360" width="868" height="40" rx="8"/><text class="lb" x="28" y="384">{Clear} puis {Render} : pour chaque vue, RenderView(…)</text>
+
+<text class="ph" x="16" y="430">3 · DANS RenderView, POUR CHAQUE INSTANCE</text>
+<rect class="bxh" x="16" y="440" width="268" height="56" rx="8"/><text class="lb" x="28" y="462">① GetLodChain (4d-2)</text><text class="sb" x="28" y="480">un accès : id = index</text>
+<rect class="bxh" x="298" y="440" width="270" height="56" rx="8"/><text class="lb" x="310" y="462">② Frustum sur chain-&gt;bounds</text><text class="sb" x="310" y="480">union des niveaux ; Outside → suivante</text>
+<rect class="bxh" x="582" y="440" width="302" height="56" rx="8"/><text class="lb" x="594" y="462">③ mvp, q′, SelectLodLevel (4d-3b)</text><text class="sb" x="594" y="480">3 comparaisons, LodLevel[k] += 1</text>
+<line class="ln" x1="284" y1="468" x2="294" y2="468" marker-end="url(#ar)"/><line class="ln" x1="568" y1="468" x2="578" y2="468" marker-end="url(#ar)"/>
+<path class="ln" d="M733 496 L733 510 L150 510 L150 522" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="526" width="420" height="56" rx="8"/><text class="lb" x="28" y="548">④ GetMesh(levels[k]) + gardes</text><text class="sb" x="28" y="566">FacesSubmitted = faces du niveau CHOISI</text>
+<rect class="bxh" x="450" y="526" width="434" height="56" rx="8"/><text class="lb" x="462" y="548">[LOD_STATS] tranches de taille (étape 2)</text><text class="sb" x="462" y="566">réinstallé ; mêmes rW et wC que la sélection</text>
+<line class="ln" x1="436" y1="554" x2="446" y2="554" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="614">4 · ÉTAGE SOMMETS (13 au lieu de 115 par roche)</text>
+<rect class="bxo" x="16" y="624" width="430" height="52" rx="8"/><text class="lb" x="28" y="646">Inside : ProjectPositions (2b)</text><text class="sb" x="28" y="664">par sommet, RasterSpaceBuffer</text>
+<rect class="bxo" x="460" y="624" width="424" height="52" rx="8"/><text class="lb" x="472" y="646">Intersect : TransformPositions</text><text class="sb" x="472" y="664">espace clip, clipping near</text>
+<path class="ln" d="M400 582 L400 620" marker-end="url(#ar)"/><path class="ln" d="M672 582 L672 620" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="706">5 · FACES (8 au lieu de 168 par roche)</text>
+<rect class="bxo" x="16" y="716" width="868" height="52" rx="8"/><text class="lb" x="28" y="738">EmitRasterTriangle → rejet précoce (3b) → Rasterizer → DrawTriangle</text><text class="sb" x="28" y="756">inchangés : ils reçoivent 70 % de travail en moins</text>
+<path class="ln" d="M600 676 L600 712" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="798">6 · FIN DE FRAME ET MESURE</text>
+<rect class="bx" x="16" y="808" width="268" height="52" rx="8"/><text class="lb" x="28" y="830">Present</text><text class="sb" x="28" y="848">hors budget moteur</text>
+<rect class="bxh" x="298" y="808" width="586" height="52" rx="8"/><text class="lb" x="310" y="830">Profiler : LodLevel0..3 en fin d’enum (4d-4)</text><text class="sb" x="310" y="848">Σ LodLevel = MeshesTested − MeshesCulled ; static_assert = kMaxLevels</text>
+<line class="ln" x1="284" y1="834" x2="294" y2="834" marker-end="url(#ar)"/>
+<text class="sb" x="16" y="900">Les numéros entre parenthèses renvoient aux étapes de la section 3.</text>
+<text class="sb" x="16" y="920">Après ce lot, A20 insère le « dessin en point » entre ② et ③ (voir amendement AM2).</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll"><table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Changement</th><th>Étape</th></tr></thead>
+<tbody>
+<tr><td><code>gen_rock_lod.py</code>, <code>rock_x_L1..L3.obj</code>, <code>rock_x.lod.json</code></td><td>EXE (assets, hors ligne)</td><td>créés</td><td>3, 4c-1, 4c-3</td></tr>
+<tr><td><code>Scene/RenderSystem.cpp</code></td><td>LIB</td><td>comptage réinstallé, chaîne, culling sur l’union, sélection, <code>LodLevel</code></td><td>2, 4d-2, 4d-3b, 4d-4</td></tr>
+<tr><td><code>Ressources/LodChain.h</code></td><td>LIB</td><td>créé : structure, <code>SelectLodLevel</code></td><td>4a</td></tr>
+<tr><td><code>Ressources/ResourceHandle.h</code></td><td>LIB</td><td><code>LodChainHandle</code></td><td>4b</td></tr>
+<tr><td><code>Ressources/ResourceManager.h/.cpp</code></td><td>LIB</td><td>stockage, porte d’entrée, cache, chaînes implicites, options</td><td>4b, 4c-3, 4d-1, 4d-4</td></tr>
+<tr><td><code>Ressources/LodChainLoader.h/.cpp</code></td><td>LIB</td><td>créés : lecture du descripteur</td><td>4c-2, 4d-4</td></tr>
+<tr><td><code>Core/JsonReader.h</code></td><td>LIB</td><td>bug de <code>ForEachElement</code> corrigé</td><td>4c-1</td></tr>
+<tr><td><code>Scene/Components/Component.hpp</code></td><td>LIB</td><td><code>m_lodChain</code> ; <code>m_lodTolerancePx</code> sur la caméra</td><td>4d-2, 4d-3a</td></tr>
+<tr><td><code>Scene/Serializer.cpp</code></td><td>LIB</td><td>chaîne implicite, aiguillage <code>.lod.json</code>, options uniques, <code>lodTolerancePx</code></td><td>4d-2, 4d-3a, 4d-4</td></tr>
+<tr><td><code>Scene/DebugGizmos.hpp/.cpp</code>, test des gizmos</td><td>LIB / EXE</td><td>gizmos en chaînes implicites, test « longueur 1 »</td><td>4d-2</td></tr>
+<tr><td><code>Scene/System.cpp</code></td><td>LIB</td><td><code>DrawHierarchySystem</code> (L0), <code>BuildViewData</code> (τ, <code>lodParams</code>)</td><td>4d-2, 4d-3a</td></tr>
+<tr><td><code>Rendering/ViewData.h</code></td><td>LIB</td><td><code>ScreenSizeParams</code> déplacée, <code>lodTolerancePx</code>, <code>lodParams</code></td><td>4d-3a</td></tr>
+<tr><td><code>Core/EngineSettings.h</code>, <code>EngineConfig.h/.cpp</code>, <code>engine.json</code></td><td>LIB / EXE</td><td>section <code>lod</code></td><td>4d-3a</td></tr>
+<tr><td><code>Core/Profiler.h</code></td><td>LIB</td><td><code>LodLevel0..3</code></td><td>4d-4</td></tr>
+<tr><td><code>TestLodChain_Load</code></td><td>EXE</td><td>créé</td><td>4c-3, 4d-1, 4d-4</td></tr>
+<tr><td><code>solar_system_v1compat_belt_lod.json</code></td><td>EXE</td><td>copie de la scène de référence, roches en <code>.lod.json</code></td><td>4d-4</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+<p>Cette section suit le parcours d’un objet, du disque à l’écran, et montre pour chaque étape ce qui change. Le détail du code est en section 2 ; les étapes de l’échange en section 3.</p>
+
+<h3>A · Ce qu’un objet référence</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>scène : "model": "assets/Meshes/rock_a.obj"
+ParseMesh → LoadMeshChecked → MeshHandle
+MeshComponent { MeshHandle m_meshHandle; ... }
+→ un objet = UN maillage, toujours le même</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>scène : "model": "assets/Meshes/rock_a.lod.json"   (ou .obj)
+ParseMesh : .lod.json → LoadLodChainChecked
+            .obj      → LoadMeshChecked → GetOrCreateSingleLevelChain
+MeshComponent { LodChainHandle m_lodChain; ... }
+→ un objet = UNE CHAÎNE (longueur 1 si aucun niveau)</code></pre></div></div>
+
+<h3>B · Ce que le ResourceManager possède</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>m_meshes : unordered_map&lt;id, unique_ptr&lt;MeshClass&gt;&gt;
+m_pathToMesh, m_meshIdToPath</code></pre></div>
+<div class="ap"><div class="t">Après (ajouts)</div><pre><code>m_lodChains : vector&lt;LodChain&gt;   (index = id, case 0 sentinelle,
+              jamais rétréci, case vide = levelCount 0)
+m_pathToLodChain    : chemin canonique → chaîne décrite
+m_meshToSingleChain : id du mesh → chaîne implicite
+RegisterLodChain    : porte d'entrée unique, 7 invariants</code></pre></div></div>
+
+<h3>C · Ce que la vue sait</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>ViewData : matrices, frustum, viewport, depthDisplayRange
+[LOD_STATS] MakeScreenSizeParams, une fois par vue</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>+ lodTolerancePx  : τ résolu (caméra, sinon engine.json)
++ lodParams       : MakeScreenSizeParams avec kPx DÉJÀ divisé par τ
+  → la division par τ est faite 4 fois par frame, pas 2 580</code></pre></div></div>
+
+<h3>D · Ce que fait RenderView pour une instance</h3>
+<div class="ab"><div class="av"><div class="t">Avant (Référence H)</div><pre><code>mesh = GetMesh(m_meshHandle)
+gardes (faces, capacité)
+vis = Classify(AABB du MESH)
+MeshesTested / MeshesCulled
+FacesSubmitted += faces du mesh
+mvp = model × VP
+→ sommets, faces, pixels</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>chain = GetLodChain(m_lodChain)
+vis = Classify(chain-&gt;bounds)          // UNION des niveaux
+MeshesTested / MeshesCulled
+mvp = model × VP                       // remonté
+q'  = ProjectedRadiusPx(lodParams, wC, rW) / rayon local
+k   = SelectLodLevel(*chain, q')       // 3 comparaisons
+LodLevel[k] += 1
+mesh = GetMesh(chain-&gt;levels[k]) ; gardes
+FacesSubmitted += faces du niveau k
+→ sommets, faces, pixels (inchangés)</code></pre></div></div>
+
+<h3>E · Ce que dit un fichier de mesure</h3>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>colonnes … VertsInside, TrisEmittedInside
+[LOD_STATS] InstPx*, FacesPx* (code MORT : bloc commenté)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>… + LodLevel0, LodLevel1, LodLevel2, LodLevel3 (en fin)
+invariant : Σ LodLevel = MeshesTested − MeshesCulled
+[LOD_STATS] réinstallé : Σ FacesPx = FacesSubmitted</code></pre></div></div>
+
+<h3>F · La référence de performance</h3>
+<div class="ab"><div class="av"><div class="t">Avant — Référence H (i7, ceinture)</div><pre><code>Render 5,14 à 5,16 ms
+FacesSubmitted 274 988</code></pre></div>
+<div class="ap"><div class="t">Après — Référence I (i7 épinglé, M13)</div><pre><code>Render 1,67 à 1,69 ms   (−71 % en ABBA)
+Frame  3,87 ms          (≈ 258 fps, −51 %)
+FacesSubmitted 82 988, LodLevel3 = 1 200</code></pre></div></div>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="methode">
+<h2>M · La méthode : le niveau de détail piloté par l’erreur à l’écran</h2>
+
+<h3>M.1 · L’idée, vulgarisée</h3>
+<p>Imagine une photo d’un arbre prise de loin : on ne distingue plus les feuilles, seulement la silhouette. Dessiner chaque feuille coûterait autant que de près, pour un résultat identique à l’œil. Le LOD remplace l’arbre détaillé par un arbre simplifié <b>dès que la différence devient invisible</b>. Toute la difficulté est de définir « invisible » par un chiffre, et non par une distance fixée à la main.</p>
+
+<h3>M.2 · D’où elle vient, et qui l’utilise</h3>
+<ul>
+<li><b>James H. Clark</b>, « Hierarchical Geometric Models for Visible Surface Algorithms », <i>Communications of the ACM</i>, 19(10), 1976 : l’article fondateur, qui propose de choisir la résolution d’un modèle selon sa taille à l’écran.</li>
+<li><b>Michael Garland et Paul S. Heckbert</b>, « Surface Simplification Using Quadric Error Metrics », SIGGRAPH 1997 : le simplificateur de référence (QEM), toujours utilisé pour fabriquer les niveaux d’un mesh qui ne vient d’aucune fonction.</li>
+<li><b>David Luebke et al.</b>, <i>Level of Detail for 3D Graphics</i>, Morgan Kaufmann, 2002 : le livre de synthèse ; il formalise le critère « erreur géométrique projetée en pixels » utilisé ici.</li>
+<li><b>Unity</b> (<code>LODGroup</code>, seuils en hauteur relative à l’écran ; « Mesh LOD » à partir de Unity 6.2, niveaux dans le même tampon de sommets), <b>Unreal</b> (niveaux rangés dans l’asset <code>StaticMesh</code>, sélection par taille à l’écran), et la plupart des moteurs de terrain (erreur projetée, à la Lindstrom ou Hoppe).</li>
+</ul>
+
+<h3>M.3 · L’explication complète</h3>
+<p><b>1. L’erreur d’un niveau, mesurée une fois.</b> On compare chaque niveau à L0 par un écart <b>radial</b> : depuis le centre, on lance des rayons dans de nombreuses directions, on mesure la distance à la surface de L0 et à celle de L<sub>k</sub>, et on garde le plus grand écart. C’est ε<sub>k</sub>, en unités locales. On l’augmente de 10 % (sécurité) et on l’arrondit vers le haut.</p>
+<p><b>2. La conversion en pixels, à chaque frame.</b> Une unité locale vaut q pixels à l’écran, au point le plus proche de l’objet : <code>q = k<sub>Px</sub> × échelle / w<sub>min</sub></code>, avec <code>k<sub>Px</sub> = P[1][1] × H / 2</code>. L’erreur à l’écran du niveau k vaut <code>ε<sub>k</sub> × q</code> pixels.</p>
+<p><b>3. La règle.</b> Un niveau est admis si <code>ε<sub>k</sub> × q ≤ τ</code>. Comme ε croît avec k, les niveaux admis forment toujours un <b>préfixe</b> (1, 2, …, m) : on dessine L<sub>m</sub>.</p>
+<p><b>4. La forme utilisée par le moteur.</b> On divise les deux membres par ε<sub>k</sub> et par τ : <code>q / τ ≤ 1 / ε<sub>k</sub></code>, soit <code>q′ ≤ invEps[k]</code>. La chaîne stocke <code>invEps</code> (une propriété de l’asset), la vue stocke <code>k<sub>Px</sub> / τ</code> (une propriété de la vue). Plus aucune division par objet, plus aucune multiplication par τ.</p>
+
+<h3>M.4 · Comparaison avec les autres façons de choisir un niveau</h3>
+<div class="scroll"><table>
+<thead><tr><th>Méthode</th><th>Critère</th><th>Défaut</th><th>Dans LV3</th></tr></thead>
+<tbody>
+<tr><td>Distance fixe (« L1 au-delà de 50 m »)</td><td>distance caméra-objet</td><td>ignore la focale, la résolution, l’échelle, l’orthographique</td><td>contre-exemple (voir laboratoire 1.6 du lot PH4-CH2b)</td></tr>
+<tr><td>Hauteur relative à l’écran (Unity <code>LODGroup</code>)</td><td>part de l’écran occupée</td><td>seuil réglé à l’œil par l’artiste, sans lien avec l’erreur réelle</td><td>non retenue</td></tr>
+<tr><td><b>Erreur projetée (ce lot)</b></td><td><code>ε × q ≤ τ</code></td><td>exige de mesurer ε hors ligne</td><td><b>retenue</b> : seuils dérivés, un seul bouton (τ)</td></tr>
+<tr><td>Maillage progressif (Hoppe, 1996)</td><td>erreur, à la granularité d’un sommet</td><td>transitions continues, mais structure complexe et mise à jour par instance</td><td>hors périmètre</td></tr>
+</tbody></table></div>
+
+<h3>M.5 · Les indicateurs du lot</h3>
+<div class="scroll"><table>
+<thead><tr><th>Indicateur</th><th>Où le lire</th><th>Ce qu’il prouve</th></tr></thead>
+<tbody>
+<tr><td><code>FacesSubmitted</code>, <code>VertsTransformed</code></td><td>CSV de mesure</td><td>le travail retiré, à comparer à la comptabilité 1 200 × (168 − 8)</td></tr>
+<tr><td><code>LodLevel0..3</code></td><td>CSV de mesure</td><td>la répartition des niveaux ; leur somme égale les paires non cullées</td></tr>
+<tr><td><code>MeshesCulled</code></td><td>CSV de mesure</td><td>que l’union des boîtes ne change pas le culling</td></tr>
+<tr><td>Render, frame (médiane, p95)</td><td>lot M13</td><td>le gain de temps, et sa stabilité</td></tr>
+<tr><td>Témoins <code>Clear</code>, <code>Animation</code>, <code>LocalXform1</code></td><td>lot M13</td><td>que la machine n’a pas dérivé pendant le lot</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir avant le code</h2>
+<p>Chaque laboratoire calcule réellement ce qu’il affiche, en <code>float32</code> (<code>Math.fround</code>) là où le moteur calcule en <code>float</code>. Les rochers sont générés par la même fonction que <code>gen_meshes.py</code> (même générateur pseudo-aléatoire, mêmes graines).</p>
+
+<h3>1.1 · Un rocher, quatre maillages, rasterisés au centre des pixels</h3>
+<p>Le rocher <code>rock_a</code> à ses quatre niveaux, projeté et rasterisé pixel par pixel (règle du centre de pixel). Les pixels <span style="color:var(--bad)">perdus</span> ou <span style="color:var(--ok)">ajoutés</span> par rapport à L0 sont colorés. En mode automatique, le sélecteur choisit le niveau le plus grossier dont l’erreur à l’écran reste sous τ, avec les ε réels du descripteur.</p>
+<div class="ctl">
+<label>Rayon à l’écran <input type="range" id="r1R" min="0.5" max="30" step="0.5" value="3"><span id="r1RV" class="num"></span></label>
+<label>Rotation <input type="range" id="r1Rot" min="0" max="360" step="5" value="30"><span id="r1RotV" class="num"></span></label>
+<label>τ <select id="r1Tau"><option value="0.5" selected>0,5 px</option><option value="1">1 px</option><option value="0.25">0,25 px</option></select></label>
+<label>Niveau <select id="r1K"><option value="-1" selected>Auto</option><option value="0">L0</option><option value="1">L1</option><option value="2">L2</option><option value="3">L3</option></select></label>
+<label>Rocher <select id="r1Rock"><option value="0" selected>rock_a</option><option value="1">rock_b</option><option value="2">rock_c</option></select></label>
+</div>
+<canvas id="r1Cv" style="width:100%"></canvas>
+<div class="stats" id="r1Stats"></div>
+<div id="r1Tab"></div>
+
+<h3>1.2 · Mesurer ε : pourquoi 400 directions aléatoires ne suffisent pas</h3>
+<p>L’écart entre deux surfaces faites de triangles n’est pas régulier : sur un rocher, il forme des <b>pics étroits</b> près des sommets. Ce laboratoire trace l’écart radial entre deux silhouettes (analogue 2D d’un rocher à 40 et à 7 sommets) et cherche son maximum avec des directions tirées au hasard, puis avec des directions <b>ciblées</b> sur les sommets. Pour garder l’espacement d’un vrai tirage en 3D, N directions sur la sphère deviennent ≈ √N directions sur cette coupe (400 directions sur une sphère, c’est environ 20 sur un grand cercle, soit un rayon tous les 18°).</p>
+<div class="ctl">
+<label>Directions sur la sphère N <input type="range" id="e2N" min="100" max="100000" step="100" value="400"><span id="e2NV" class="num"></span></label>
+<label><input type="checkbox" id="e2Tgt"> ajouter les directions ciblées (sommets)</label>
+<button id="e2Seed">Nouveau tirage</button>
+</div>
+<canvas id="e2Cv" style="width:100%"></canvas>
+<div class="stats" id="e2Stats"></div>
+<div id="e2Verdict"></div>
+
+<h3>1.3 · La sélection sans branche : compter au lieu de chercher</h3>
+<p>Fais varier q′ (le nombre de pixels par unité locale, déjà divisé par τ). Les trois comparaisons <code>q′ ≤ invEps[i]</code> sont évaluées en <code>float32</code> avec les inverses réels de <code>rock_a</code>. Le niveau dessiné est le <b>nombre</b> de comparaisons vraies. En dessous, le même calcul pour <b>8 instances à la fois</b>, couloir par couloir, comme le ferait une version AVX2.</p>
+<div class="ctl">
+<label>q′ <input type="range" id="s3Q" min="0" max="3.5" step="0.01" value="1.70"><span id="s3QV" class="num"></span></label>
+<button id="s3Inf">q′ = +∞ (near)</button><button id="s3Nan">q′ = NaN</button><button id="s3Rand">8 instances au hasard</button>
+<label>Chaîne <select id="s3Chain"><option value="a" selected>rock_a (4 niveaux)</option><option value="one">chaîne implicite (1 niveau)</option></select></label>
+</div>
+<canvas id="s3Cv" style="width:100%"></canvas>
+<div class="stats" id="s3Stats"></div>
+<h4>Huit instances, couloir par couloir (pendant AVX2)</h4>
+<div id="s3Lanes"></div>
+
+<h3>1.4 · Ranger les chaînes : une ligne de cache, un vecteur, et le piège ABA</h3>
+<p>Le ResourceManager range les chaînes dans un vecteur indexé par l’identifiant. Enregistre des chaînes, garde un handle dans un « composant », puis appelle <code>UnloadAll</code> avec l’une ou l’autre politique, et réenregistre : regarde ce que désigne le vieux handle.</p>
+<div class="ctl">
+<button id="a4Reg">RegisterLodChain</button>
+<button id="a4Keep">Garder un handle (composant)</button>
+<button id="a4Unl">UnloadAll</button>
+<label>Politique <select id="a4Pol"><option value="cases" selected>vider les cases (retenu)</option><option value="clear">clear() (contre-exemple)</option></select></label>
+<button id="a4Reset">Recommencer</button>
+</div>
+<div id="a4Vec"></div>
+<div id="a4Log"></div>
+
+<h3>1.5 · Charger un descripteur : lire, puis décider</h3>
+<p>Coche une erreur dans le descripteur, et suis les cinq phases du chargeur. Un défaut <b>empoisonné</b> (NaN, 0, chaîne vide) garantit qu’une clé manquante fait échouer le chargement, avec un message qui nomme la cause.</p>
+<div class="ctl">
+<label><input type="checkbox" id="c5Eps"> <code>epsilon</code> absent en L2</label>
+<label><input type="checkbox" id="c5Vtx"> <code>vertices</code> = 117 (lignes du fichier)</label>
+<label><input type="checkbox" id="c5Six"> 6 niveaux</label>
+<label><input type="checkbox" id="c5Ver"> <code>version</code> = 2</label>
+<label><input type="checkbox" id="c5Ord"> ε de L3 &lt; ε de L2</label>
+<label><input type="checkbox" id="c5Abs"> fichier absent</label>
+<label><input type="checkbox" id="c5Def"> défauts « plausibles » (contre-exemple)</label>
+</div>
+<div id="c5Out"></div>
+
+<h3>1.6 · La mesure : deux lots, un seul recevable</h3>
+<p>Les médianes des deux lots <code>Release</code> de l’échange. Le lot de l’i9 (non épinglé, A B A B) établit que le LOD réussit, pas de combien ; le lot M13 de l’i7 (épinglé, A B B A) fixe la Référence I.</p>
+<div class="ctl">
+<button id="m6I7" aria-pressed="true">i7 · M13 (recevable)</button><button id="m6I9" aria-pressed="false">i9 · non épinglé (refusé)</button>
+<label>Grandeur <select id="m6Z"><option value="Render" selected>Render</option><option value="Frame">Frame</option><option value="Clear">Clear (témoin)</option></select></label>
+</div>
+<canvas id="m6Cv" style="width:100%"></canvas>
+<div class="stats" id="m6Stats"></div>
+<div id="m6Verdict"></div>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<h3>2.1 · La chaîne : 64 octets, dans l’ordre des lectures</h3>
+<p><code>LodChain</code> contient ce que trois moments de <code>RenderView</code> lisent : la boîte englobante (culling), les inverses de ε (sélection), les handles des niveaux (dessin). Tout tient dans <b>une ligne de cache</b>. La règle « séparer le chaud du froid » de la leçon n’est donc <b>pas</b> appliquée : séparer une structure qui tient dans une ligne ferait charger deux lignes au lieu d’une.</p>
+<pre><code>// Ressources/LodChain.h
+#if defined(_MSC_VER)
+#   pragma warning(push)
+#   pragma warning(disable : 4324)   // remplissage VOULU : 60 -> 64 octets
+#endif
+struct alignas(64) LodChain
+{
+    static constexpr uint32_t kMaxLevels = 4;
+    AABB3d     bounds;                               // 24 o : UNION des niveaux (culling)
+    float      invEps[kMaxLevels] = { +inf, -inf, -inf, -inf };   // 16 o : 1/epsilon (selection)
+    MeshHandle levels[kMaxLevels] = {};              // 16 o : un mesh complet par niveau (dessin)
+    uint32_t   levelCount = 0;                       //  4 o  (+ 4 o de remplissage)
+};
+#if defined(_MSC_VER)
+#   pragma warning(pop)
+#endif
+static_assert(std::is_trivially_copyable_v&lt;LodChain&gt;, "donnee pure");
+static_assert(sizeof(LodChain) == 64, "une ligne de cache");</code></pre>
+<ul>
+<li><b>Pourquoi l’union des boîtes.</b> Les sommets de L3 sont posés sur la surface continue du rocher, pas sur les triangles de L0 : ils peuvent déborder de la boîte de L0. Culler avec la boîte de L0 un objet dessiné en L3 pourrait le rejeter à tort au bord de l’écran.</li>
+<li><b>Pourquoi <code>alignas(64)</code>.</b> Sans alignement, des chaînes de 60 octets contiguës chevaucheraient presque toutes deux lignes (chaîne n° 1 : octets 60 à 119, lignes 0 et 1).</li>
+<li><b>Pourquoi le <code>pragma</code> local.</b> MSVC signale le remplissage (C4324). On le coupe sur <i>cette</i> structure seulement : désactivé globalement, il ne signalerait plus les remplissages non voulus ailleurs.</li>
+<li><b>Pourquoi les deux <code>static_assert</code>.</b> Si un jour <code>Vec3f</code> passe à 16 octets pour le SIMD, <code>AABB3d</code> grandit, la chaîne dépasse 64 octets, et la compilation s’arrête au lieu de doubler silencieusement le coût mémoire.</li>
+</ul>
+
+<h3>2.2 · <code>SelectLodLevel</code> : scalaire et pendant AVX2</h3>
+<p>Comme <code>invEps</code> décroît, les niveaux admis forment un préfixe : leur <b>nombre</b> est l’indice du niveau. Trois comparaisons, trois additions, aucune branche, aucune division. Les cases inutilisées valent −∞ (jamais admises) : une chaîne de longueur 1 rend toujours 0 sans test particulier.</p>
+<div class="ab"><div class="av" style="border-color:var(--line)"><div class="t" style="background:var(--surface2);color:var(--ink2)">Scalaire — dans le moteur</div><pre><code>[[nodiscard]] LV3_FORCEINLINE
+uint32_t SelectLodLevel(const LodChain&amp; c, float qOverTau) noexcept
+{
+    uint32_t k = 0;
+    for (uint32_t i = 1; i &lt; LodChain::kMaxLevels; ++i)
+        k += uint32_t(qOverTau &lt;= c.invEps[i]);   // vrai = 1
+    return k;   // +inf ou NaN : aucune comparaison vraie -&gt; L0
+}
+// Asm Release non relu pendant l'echange : a verifier en /FAs
+// (attendu : 3 comparaisons scalaires, aucun saut conditionnel).</code></pre></div>
+<div class="pr"><div class="t">Pendant AVX2 — pédagogique, non appliqué</div><pre><code>// 8 instances a la fois. Les chaines vivent dans un vector
+// indexe par id, 64 o = 16 float chacune. bounds occupe les
+// 6 premiers float (24 o) : invEps[i] de la chaine d'id c est
+// a l'adresse base + c*16 + 6 + i (en floats).
+// -&gt; un GATHER par niveau suffit, sans indirection.
+__m256i SelectLodLevel8(__m256 qOverTau,      // 8 q'
+                        __m256i chainId,       // 8 ids
+                        const float* base)     // (const float*)m_lodChains.data()
+{
+    // Indice en floats : id * 16 (chaine) + 6 (offset d'invEps)
+    const __m256i row = _mm256_add_epi32(
+        _mm256_slli_epi32(chainId, 4), _mm256_set1_epi32(6));
+    __m256i k = _mm256_setzero_si256();
+    for (int i = 1; i &lt; 4; ++i)
+    {
+        // invEps[i] des 8 chaines (8 lectures en un gather)
+        const __m256 inv = _mm256_i32gather_ps(base + i, row, 4);
+        // _CMP_LE_OQ : ORDONNE, NaN -&gt; faux (comme le scalaire)
+        const __m256 m = _mm256_cmp_ps(qOverTau, inv, _CMP_LE_OQ);
+        // vrai = 0xFFFFFFFF = -1 en entier : k - (-1) = k + 1
+        k = _mm256_sub_epi32(k, _mm256_castps_si256(m));
+    }
+    return k;   // 8 niveaux, un par couloir
+}</code></pre></div></div>
+<div class="note"><b>Pourquoi le pendant AVX2 n’est pas appliqué.</b> Dans <code>RenderView</code>, la sélection est faite instance par instance, entre le culling et le dessin. La vectoriser demanderait de couper la boucle en deux passes (sélectionner toutes les instances visibles, puis dessiner), ce que la leçon (A13 bis § 5) range en évolution « après mesure ». La mesure a tranché : la sélection est noyée dans le reste (voir § 2.7 et l’amendement AM8). Le pendant reste ici pour comprendre ce qu’une version par lots ferait, et pourquoi le rangement en vecteur indexé par id la rendrait possible (un <i>gather</i> au lieu d’un pointeur par instance).</div>
+
+<h3>2.3 · Le stockage dans le ResourceManager</h3>
+<p>Un <code>unordered_map</code> de <code>unique_ptr</code> coûte trois accès mémoire dépendants par lecture (seau, nœud, objet). Les chaînes, lues par chaque paire (instance, vue), sont rangées dans un <b><code>std::vector</code> indexé directement par l’identifiant</b> : un seul accès.</p>
+<pre><code>const LodChain* ResourceManager::GetLodChain(LodChainHandle h) const noexcept
+{
+    if (h.id &gt;= m_lodChains.size()) return nullptr;      // couvre un vecteur vide
+    const LodChain&amp; c = m_lodChains[h.id];               // UN acces : l'id EST l'index
+    return (c.levelCount != 0) ? &amp;c : nullptr;          // couvre la sentinelle (id 0)
+}</code></pre>
+<p>Trois règles en découlent, chacune écrite dans le code :</p>
+<ol>
+<li><b>Le pointeur est temporaire</b> : un vecteur qui grandit réalloue. Le handle est la référence durable ; le pointeur se relit au moment de s’en servir.</li>
+<li><b><code>UnloadAll</code> vide les cases, jamais le vecteur</b> : sa taille est le prochain identifiant ; la ramener à zéro recyclerait les ids (problème ABA, laboratoire 1.4).</li>
+<li><b>Une porte d’entrée unique</b>, <code>RegisterLodChain</code>, vérifie tous les invariants dont <code>SelectLodLevel</code> dépend : la boucle de rendu n’en teste aucun.</li>
+</ol>
+<div class="scroll"><table>
+<thead><tr><th>Invariant vérifié par <code>RegisterLodChain</code></th><th>Ce qu’il protège</th></tr></thead>
+<tbody>
+<tr><td><code>1 ≤ levelCount ≤ 4</code></td><td>les tableaux de taille fixe</td></tr>
+<tr><td><code>invEps[0] == +inf</code></td><td>L0 toujours admis</td></tr>
+<tr><td><code>bounds.IsValid()</code></td><td>un objet invisible au culling, sans un message</td></tr>
+<tr><td>chaque niveau a un mesh chargé</td><td>aucun pointeur nul au dessin</td></tr>
+<tr><td><code>!(invEps[k] &gt; 0 &amp;&amp; invEps[k] &lt; invEps[k−1])</code> → refus</td><td>la propriété de préfixe ; la forme niée rejette aussi NaN</td></tr>
+<tr><td>cases inutilisées à −∞ et handles invalides</td><td>une chaîne courte ne dessine jamais un niveau absent</td></tr>
+</tbody></table></div>
+
+<h3>2.4 · Le chargeur : cinq phases, des défauts empoisonnés</h3>
+<p><code>LodChainLoader::Load</code> lit le fichier sans exception, vérifie l’en-tête (<code>lv3.lodchain</code>, version 1, unités locales), lit <b>tous</b> les niveaux dans une petite structure sans rien charger, puis seulement charge les meshes, compare leurs dimensions au descripteur, accumule l’union des boîtes, calcule <code>invEps</code>, et passe par la porte d’entrée. Un descripteur mal formé est refusé <b>avant</b> le moindre effet de bord.</p>
+<div class="scroll"><table>
+<thead><tr><th>Clé</th><th>Défaut empoisonné</th><th>Qui le refuse</th><th>Erreur</th></tr></thead>
+<tbody>
+<tr><td><code>format</code>, <code>version</code>, <code>units</code></td><td><code>""</code>, <code>0</code>, <code>""</code></td><td>phase 2</td><td><code>BadHeader</code></td></tr>
+<tr><td><code>mesh</code></td><td><code>""</code></td><td>phase 4, refus explicite</td><td><code>BadLevels</code></td></tr>
+<tr><td><code>vertices</code>, <code>faces</code></td><td><code>0</code></td><td>phase 4, comparaison au mesh chargé</td><td><code>LevelMismatch</code></td></tr>
+<tr><td><code>epsilon</code></td><td>NaN</td><td>phase 5 : 1/NaN = NaN, refusé par la porte</td><td><code>Rejected</code></td></tr>
+</tbody></table></div>
+<p>Le cache (<code>LoadLodChainChecked</code>) reprend le patron de <code>LoadMeshChecked</code> : clé canonique, recherche, délégation, et mise en cache <b>des seuls succès</b> (un fichier corrigé sur disque peut être rechargé).</p>
+
+<h3>2.5 · L’intégration : changer le type pour que le compilateur fasse l’inventaire</h3>
+<p>Ajouter un handle de chaîne à côté du handle de mesh n’aurait rien cassé, et c’est son défaut : tout code qui lisait le mesh aurait continué de compiler en lisant L0 en silence. Remplacer <code>MeshHandle m_meshHandle</code> par <code>LodChainHandle m_lodChain</code> transforme chaque lecteur en erreur de compilation : sept sites ont été trouvés et corrigés (Serializer, gizmos ×3, test des gizmos, <code>DrawHierarchySystem</code>, <code>RenderView</code>).</p>
+<p>Les meshes sans descripteur reçoivent une <b>chaîne implicite</b> (longueur 1, <code>bounds</code> = boîte du mesh), créée une fois par mesh par <code>GetOrCreateSingleLevelChain</code>, et elle aussi enregistrée par la porte d’entrée.</p>
+
+<h3>2.6 · τ dans la vue : le chemin de <code>depthDisplayRange</code></h3>
+<pre><code>// engine.json                 "lod": { "tolerancePx": 0.5 }       (section lod, pas debug)
+// CameraComponent             float m_lodTolerancePx = -1.0f;      (-1 = non defini)
+// BuildViewData, etape 5 :
+v.lodTolerancePx = (cam.m_lodTolerancePx &gt; 0.0f) ? cam.m_lodTolerancePx
+                                                 : EngineConfig::Get().lod.tolerancePx;
+v.lodParams      = MakeScreenSizeParams(v);   // apres P, V.P et viewport
+v.lodParams.kPx /= v.lodTolerancePx;          // la division par tau, UNE fois par vue</code></pre>
+<p>Ce mécanisme de surcharge a été refondu ensuite par A16 (amendement AM3).</p>
+
+<h3>2.7 · Le calcul de q′ dans <code>RenderView</code></h3>
+<pre><code>const AABB3d&amp; box = chain-&gt;bounds;
+const float rW = BoundingRadiusWorld(box, modelMatrix);   // |Extent| x plus grande echelle d'axe
+const float wC = MulRow(mvp, box.Center()).w;             // w clip du centre
+// ProjectedRadiusPx(lodParams, wC, rW) = rW * kPx / (tau * wMin)   (+inf si touche le near)
+const float    qOverTau = ProjectedRadiusPx(view.lodParams, wC, rW) / box.Extent().length();
+const uint32_t level    = SelectLodLevel(*chain, qOverTau);
+LV3_PROF_COUNT(EProfCounter(uint8_t(EProfCounter::LodLevel0) + level), 1);</code></pre>
+<p>Diviser le rayon apparent par le rayon local donne exactement <code>échelle × k<sub>Px</sub> / (τ × w<sub>min</sub>) = q / τ</code>. L’échelle non uniforme des roches (0,074 × 0,066 × 0,060 par exemple) est prise par sa plus grande composante : q′ est surestimé, la sélection reste du côté fin. Coût par instance non cullée : une <code>MulRow</code>, une racine, une longueur, deux divisions, trois comparaisons.</p>
+
+<h3>2.8 · Instrument et compteurs</h3>
+<p>Deux familles de compteurs, deux statuts différents :</p>
+<ul>
+<li><b><code>InstPx*</code>, <code>FacesPx*</code></b> (sous <code>LV3_LOD_STATS</code>) : un <b>diagnostic</b>, coupé en production. Identité : Σ <code>InstPx</code> = <code>MeshesTested − MeshesCulled</code>, Σ <code>FacesPx</code> = <code>FacesSubmitted</code>.</li>
+<li><b><code>LodLevel0..3</code></b> (dès <code>LV3_PROFILE</code>) : le <b>résultat</b> de la fonctionnalité. Ajoutés en fin d’énumération (les colonnes des CSV de référence ne bougent pas), et reliés à la chaîne par un <code>static_assert</code> placé là où les deux sont connus (<code>RenderSystem.cpp</code> : le cœur ne dépend pas des ressources).</li>
+</ul>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange (30/09 → 04/10)</h2>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> La leçon : ce qu’est un LOD, et comment le ranger (A13 bis)</div><div class="b">
+<p><b>Objectif</b> : comprendre la méthode avant d’écrire une ligne, et fixer les principes de stockage pour un CPU.</p>
+<div class="io"><div><h5>Entrée</h5>Annexe A13 (formules ε, q, τ) ; décision « 2b avant LOD » du lot PH4-CH2b ; instrument <code>LV3_LOD_STATS</code>.</div>
+<div><h5>Résultat</h5>Annexe A13 bis (PDF, 7 pages) : LOD = pré-filtrage ; critère « faces par pixel » ; cinq couches de données (asset, table de sélection, instance, vue, paire instance-vue) ; quatre dispositions des sommets (A à D), dont le piège B (tampon partagé, projeté en entier par <code>ProjectPositions</code>) ; recommandation : A puis D. Questions d’Onky : les niveaux sont-ils calculés par le moteur ? (non : hors ligne, le script joue le rôle de l’étape de build) ; le ResourceManager est-il utilisé ? (oui : il charge les niveaux comme des meshes et construit la chaîne).</div></div>
+<div class="note"><b>Amendement dans l’échange.</b> A13 § 6.4 précalculait <code>qMax = τ / ε</code> dans la chaîne. Incompatible avec τ par vue : la chaîne stocke <code>1/ε</code>, la vue <code>k<sub>Px</sub>/τ</code>.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Retrouver et réinstaller l’instrument de taille apparente</div><div class="b">
+<p><b>Objectif</b> : savoir combien de travail le LOD peut retirer, avant de l’écrire (M12).</p>
+<div class="io"><div><h5>Entrée (étape 1)</h5>Commutateurs de comptage tous à 0. Lecture de <code>RenderSystem.cpp</code> : le bloc de comptage est <b>dans le code commenté</b> de l’ancienne boucle ; le code actif calcule <code>ssp</code> et ne s’en sert jamais.</div>
+<div><h5>Résultat</h5>Bloc réinstallé au point ① LOD (après le frustum, avant Inside/Intersect), sans <code>VertsInside</code> ni <code>TrisEmittedInside</code> (devenus sans objet).</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — code actif</div><pre><code>#if LV3_LOD_STATS
+  const ScreenSizeParams ssp = MakeScreenSizeParams(view);
+#endif
+// ... plus aucune lecture de ssp : instrument MORT</code></pre></div>
+<div class="ap"><div class="t">Après — après mvp et nFaces</div><pre><code>#if LV3_LOD_STATS
+{
+    const AABB3d&amp; box = mesh-&gt;GetMeshAABB();
+    const float rW  = BoundingRadiusWorld(box, modelMatrix);
+    const float wC  = MulRow(mvp, box.Center()).w;
+    const float rPx = ProjectedRadiusPx(ssp, wC, rW);
+    LV3_ASSERT(rPx &gt;= 0.0f);   // echoue sur NaN
+    const uint8_t b = uint8_t(rPx &gt;= 1.0f) + uint8_t(rPx &gt;= 4.0f)
+                    + uint8_t(rPx &gt;= 16.0f);
+    LV3_PROF_COUNT(EProfCounter(uint8_t(InstPx0to1) + b), 1);
+    LV3_PROF_COUNT(EProfCounter(uint8_t(FacesPx0to1) + b), nFaces);
+}
+#endif</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Valider l’instrument, puis lire ses chiffres</div><div class="b">
+<p><b>Objectif</b> : un compteur muet ressemble à une tranche vide ; on vérifie ses identités avant de le croire.</p>
+<div class="io"><div><h5>Entrée (étape 2)</h5>Run <code>RelWithAsserts</code>, <code>LV3_LOD_STATS=1</code>, ceinture, 4 vues, 240 frames.</div>
+<div><h5>Résultat</h5>Σ <code>InstPx</code> = <code>MeshesTested − MeshesCulled</code> et Σ <code>FacesPx</code> = <code>FacesSubmitted</code> : <b>240/240</b>. Tranches (médianes) : &lt; 1 px : 1 278 instances, 241 768 faces ; 1-4 px : 14 / 20 724 ; 4-16 px : 3 / 11 904 (trois <code>sphere_hi</code>) ; ≥ 16 px : 2 / 304. <b>99 % des instances, 88 % des faces</b> sous un pixel.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> Écrire la règle de décision avant d’implémenter</div><div class="b">
+<p><b>Objectif</b> : une prédiction falsifiable, écrite avant le code.</p>
+<div class="io"><div><h5>Entrée (étape 3)</h5>1 278 instances sous 1 px ; 241 768 faces ; 189 faces par instance en moyenne (roches 168, sphères ≥ 288).</div>
+<div><h5>Résultat</h5>Borne basse : au moins <b>1 053 roches</b> dans la tranche (si les autres meshes ont ≥ 288 faces). <b>GO</b> si le gain garanti dépasse 25 % de <code>FacesSubmitted</code>. Prédiction : <code>FacesSubmitted</code> ≤ <b>107 000</b>, <code>LodLevel3</code> ≥ <b>1 053</b>.</div></div>
+<div class="warn"><b>Correction en route.</b> La première version assimilait le rayon compté (sphère circonscrite à l’AABB, demi-diagonale ≈ 1,8) au facteur q. Une roche comptée sous 1 px a en fait q &lt; 1/1,8 ≈ 0,56 : son erreur en L3 reste sous 0,646 × 0,56 ≈ 0,36 px. Toutes descendent en L3, pas seulement en L2. La prédiction passe de « ≥ L2 » à « L3 » (≤ 107 000 faces).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Fabriquer les niveaux par ré-échantillonnage</div><div class="b">
+<p><b>Objectif</b> : des niveaux exacts, sans simplificateur. Onky ne lance pas de Python : Claude génère les fichiers.</p>
+<div class="io"><div><h5>Entrée (étape 4)</h5><code>rock()</code> de <code>gen_meshes.py</code> déforme une sphère selon la <b>normale</b> (pas l’indice du sommet) ; L0 = grille 12 × 8.</div>
+<div><h5>Résultat</h5>Même graine, grilles plus grossières : L1 8 × 5 (64 faces), L2 4 × 3 (16), L3 4 × 2 (8, un octaèdre déformé). Neuf <code>.obj</code> (L0 n’est pas régénéré). Niveaux <b>non emboîtés</b> : chacun garde ses sommets (disposition A).</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Mesurer ε, et découvrir que 400 directions mentent</div><div class="b">
+<p><b>Objectif</b> : une erreur jamais optimiste.</p>
+<div class="io"><div><h5>Entrée (étape 5)</h5>Méthode d’A13 : 400 directions aléatoires, × 1,1. Reproduit au millième : <code>rock_a</code> 0,235 / 0,484 / 0,537.</div>
+<div><h5>Résultat</h5>Avec 20 000 directions, L1 monte à 0,327 ; avec des directions <b>ciblées sur les sommets</b> des deux maillages + 100 000 aléatoires : <b>0,344 (+46 %)</b>. Convergence vérifiée (20 000 → 100 000 : rien ne bouge au-delà du millième). Stocké : mesure × 1,1, arrondi vers le haut au 1/10 000.</div></div>
+<div class="scroll"><table><thead><tr><th>ε max (avant sécurité)</th><th>L1</th><th>L2</th><th>L3</th></tr></thead><tbody>
+<tr><td><code>rock_a</code></td><td class="num">0,3437</td><td class="num">0,5105</td><td class="num">0,5753</td></tr>
+<tr><td><code>rock_b</code></td><td class="num">0,3854</td><td class="num">0,5202</td><td class="num">0,5869</td></tr>
+<tr><td><code>rock_c</code></td><td class="num">0,2901</td><td class="num">0,4454</td><td class="num">0,5700</td></tr></tbody></table></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> Le descripteur <code>.lod.json</code></div><div class="b">
+<p><b>Objectif</b> : un fichier qui décrit la chaîne, se versionne, et se contrôle au chargement.</p>
+<div class="io"><div><h5>Entrée (étape 6)</h5>ε mesurés ; noms des <code>.obj</code>.</div>
+<div><h5>Résultat</h5><code>format</code>, <code>version</code>, <code>units: "local"</code>, et par niveau <code>mesh</code> (relatif au descripteur), <code>vertices</code>, <code>faces</code> (contrôles), <code>epsilon</code>. Ni τ ni AABB (l’un dépend de la vue, l’autre se recalcule).</div></div>
+<pre><code>{ "format": "lv3.lodchain", "version": 1, "name": "rock_a", "units": "local",
+  "_errorMetric": { "method": "radial", "randomDirections": 100000, "vertexTargeted": true, "safety": 1.1 },
+  "levels": [
+    { "mesh": "rock_a.obj",    "vertices": 115, "faces": 168, "epsilon": 0.0,    "_measure": { ... } },
+    { "mesh": "rock_a_L1.obj", "vertices": 52,  "faces": 64,  "epsilon": 0.3781, "_measure": { ... } },
+    { "mesh": "rock_a_L2.obj", "vertices": 18,  "faces": 16,  "epsilon": 0.5616, "_measure": { ... } },
+    { "mesh": "rock_a_L3.obj", "vertices": 13,  "faces": 8,   "epsilon": 0.6329, "_measure": { ... } } ] }</code></pre>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> (4a) La structure <code>LodChain</code> et ses deux verrous</div><div class="b">
+<p><b>Objectif</b> : une donnée pure de 64 octets, et la fonction de sélection qui justifie sa forme.</p>
+<div class="io"><div><h5>Entrée (étape 7)</h5><code>AABB3d</code> = deux <code>Vec3f</code> ; <code>MeshHandle{}</code> = id 0 = invalide (vérifié sur <code>ResourceHandle.h</code>).</div>
+<div><h5>Résultat</h5><code>LodChain.h</code> (section 2.1) et <code>SelectLodLevel</code> (section 2.2). Expérience d’Onky : des variables ajoutées à <code>AABB3d</code> font échouer l’assertion de taille <b>à la compilation</b> (après inclusion dans un <code>.cpp</code> compilé). Puis dix C4324, traités par un <code>pragma</code> local.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — inclusion devinée</div><pre><code>#include "../Maths/geometry/Frustum.h"   // AABB3d ?</code></pre></div>
+<div class="ap"><div class="t">Après — l'en-tête exact</div><pre><code>#include "../Maths/geometry/AABB3d.h"    // AABB3d</code></pre></div></div>
+<div class="note"><b>Soulignement rouge mais compilation correcte ?</b> IntelliSense analyse le <code>.h</code> ouvert, le compilateur ne voit un <code>static_assert</code> que si un <code>.cpp</code> compilé inclut l’en-tête. Et <code>alignas(64)</code> absorbe jusqu’à 4 octets ajoutés (60 → 64) : au 5ᵉ, la taille saute à 128. Astuce pour lire une taille vue par le compilateur : <code>char (*t)[sizeof(LodChain)] = 1;</code> (erreur volontaire qui affiche le type).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> (4b) Le stockage et la porte d’entrée</div><div class="b">
+<p><b>Objectif</b> : un accès par lecture, des identifiants jamais recyclés, des invariants vérifiés une fois.</p>
+<div class="io"><div><h5>Entrée (étape 8)</h5>Patron des meshes : <code>unordered_map</code>, ids monotones (<code>m_nextMeshId</code> commence à 1).</div>
+<div><h5>Résultat</h5><code>LodChainHandle</code> (tag distinct), <code>m_lodChains</code> (vecteur indexé par id), <code>GetLodChain</code> const seulement, <code>RegisterLodChain</code> (invariants de la section 2.3), <code>UnloadAll</code> qui vide les cases. Ajouté après lecture d’<code>AABB3d.h</code> : l’invariant <code>bounds.IsValid()</code> (une boîte vide ferait disparaître l’objet au culling).</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — ResourceHandle.h</div><pre><code>using TextureHandle  = ResourceHandle&lt;TextureTag&gt;;</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>using TextureHandle  = ResourceHandle&lt;TextureTag&gt;;
+struct LodChainTag{};
+using LodChainHandle = ResourceHandle&lt;LodChainTag&gt;;</code></pre></div></div>
+<div class="warn"><code>AABB3d::kInf</code> vaut <code>numeric_limits&lt;float&gt;::max()</code>, le plus grand flottant <i>fini</i> : ne jamais l’utiliser pour remplir <code>invEps</code>.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> (4c-1) Un bug du lecteur JSON, et la convention « _ »</div><div class="b">
+<p><b>Objectif</b> : rendre le lecteur capable d’itérer le tableau <code>levels</code>, et parler la langue du projet.</p>
+<div class="io"><div><h5>Entrée (étape 9)</h5><code>JsonReader::ForEachElement</code> ; clés de documentation <code>errorMetric</code>, <code>measure</code> dans les descripteurs.</div>
+<div><h5>Résultat</h5>Premier garde supprimé ; descripteurs régénérés avec <code>_errorMetric</code> et <code>_measure</code> (ignorés par <code>WarnUnread</code>), vérifiés octet par octet contre le script.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>if (!m_j.is_object()) { warn("attendu comme objet");  return; }
+if (!m_j.is_array())  { warn("attendu comme tableau"); return; }
+// aucune valeur n'est les deux : boucle JAMAIS atteinte</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>if (!m_j.is_array())  { warn("attendu comme tableau"); return; }</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 11</span> (4c-2) <code>LodChainLoader</code></div><div class="b">
+<p><b>Objectif</b> : un chargement strict avec un lecteur tolérant.</p>
+<div class="io"><div><h5>Entrée (étape 10)</h5><code>MeshClass::vertexCount()</code> existe (avenant C2) ; projets en <code>/fp:precise</code> (avenant C4) : la stratégie NaN tient.</div>
+<div><h5>Résultat</h5><code>ELodChainLoadError</code> (7 catégories), <code>ToString</code>, <code>Load</code> en cinq phases (section 2.4), défauts empoisonnés. Compilation sans avertissement.</div></div>
+<div class="note"><b>Correction dans l’échange.</b> Un appel <code>Read("mesh", "")</code> ne crée pas de pointeur pendant silencieux, comme d’abord annoncé : avec <code>T = const char*</code>, <code>value</code> rend un <code>std::string</code> que <code>Read</code> ne peut pas convertir ; la compilation échoue. La règle reste : <code>Read&lt;std::string&gt;(…)</code>, type explicite.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 12</span> (4c-3) Le cache, le test, et 117 contre 115</div><div class="b">
+<p><b>Objectif</b> : ne charger chaque chaîne qu’une fois, et le prouver par un test qui vérifie aussi un échec.</p>
+<div class="io"><div><h5>Entrée (étape 11)</h5><code>CanonicalKey</code> ; patron <code>LoadMeshChecked</code>.</div>
+<div><h5>Résultat</h5><code>LoadLodChainChecked</code> + <code>m_pathToLodChain</code> (vidé dans <code>UnloadAll</code>). Premier run du test : <code>LevelMismatch</code> « 115 sommets / 168 faces, le descripteur annonce 117 ». Descripteurs régénérés (115 / 52 / 18 / 13). Puis <code>[TestLodChain] OK (0 echec(s))</code>.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — gen_rock_lod.py</div><pre><code>"vertices": len(V)          # lignes v du fichier : 117</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code># comme le moteur : triplets v/vt/vn REFERENCES par une face
+used = len({i for f in F for i in f})   # 115
+"vertices": used</code></pre></div></div>
+<p>Cause : la grille écrit (seg + 1) × (rings + 1) sommets ; au pôle nord la colonne 12 n’est utilisée par aucune face, au pôle sud la colonne 0. L’<code>OBJLoader</code> ne crée que les sommets cités. Quant au <code>FileNotFound</code> du test 6, il est <b>voulu</b> : on teste aussi les chemins d’échec (un message l’annonce désormais).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 13</span> (4d-1) Les chaînes implicites</div><div class="b">
+<p><b>Objectif</b> : que tout mesh soit une chaîne, sans cas particulier.</p>
+<div class="io"><div><h5>Entrée (étape 12)</h5>Planètes, vaisseau, gizmos : aucun descripteur.</div>
+<div><h5>Résultat</h5><code>GetOrCreateSingleLevelChain(MeshHandle)</code>, cache <code>m_meshToSingleChain</code> (une chaîne par mesh, partagée), passage par <code>RegisterLodChain</code>. Test : partagée, longueur 1, <code>SelectLodLevel(…, 0.0f) == 0</code> (cases à −∞).</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 14</span> (4d-2) Changer le type du composant — run identique n° 1</div><div class="b">
+<p><b>Objectif</b> : brancher les chaînes sans changer un pixel.</p>
+<div class="io"><div><h5>Entrée (étape 13)</h5>Inventaire des lecteurs de <code>m_meshHandle</code> (sept sites).</div>
+<div><h5>Résultat</h5><code>LodChainHandle m_lodChain</code> (même position : contrats d’agrégat et d’<code>emplaceComponent</code> intacts) ; <code>GizmoAssets</code> en chaînes ; <code>RenderView</code> : L0 + culling sur <code>chain-&gt;bounds</code>. Run de la ceinture : <b>tous les compteurs identiques, 240/240 frames</b> (sur deux machines différentes : la simulation est déterministe).</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — Component.hpp</div><pre><code>MeshHandle m_meshHandle;</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>LodChainHandle m_lodChain;   // TOUJOURS une chaine</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 15</span> (4d-3a) τ dans la vue — run identique n° 2</div><div class="b">
+<p><b>Objectif</b> : une tolérance par vue, divisée une fois.</p>
+<div class="io"><div><h5>Entrée (étape 14)</h5>Modèle R12 de <code>depthDisplayRange</code> ; <code>ScreenSizeParams</code> déclarée après <code>ViewData</code>.</div>
+<div><h5>Résultat</h5><code>LV3_DEFAULT_LOD_TOLERANCE_PX</code>, <code>LodConfig</code> (section <code>lod</code>, garde <code>!(τ &gt; 0) || !isfinite(τ)</code>), <code>m_lodTolerancePx</code> caméra, <code>ScreenSizeParams</code> remontée, <code>lodTolerancePx</code> et <code>lodParams</code> dans la vue (section 2.6). Compteurs identiques. Deux dettes notées sur le Serializer (avertissements de clés optionnelles, surcharges invalides silencieuses).</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 16</span> (4d-3b) La sélection — run identique n° 3</div><div class="b">
+<p><b>Objectif</b> : choisir le niveau, dans le bon ordre.</p>
+<div class="io"><div><h5>Entrée (étape 15)</h5>Ordre de Référence H : mesh, gardes, culling, compteurs, <code>mvp</code>.</div>
+<div><h5>Résultat</h5>Ordre chaîne → culling → <code>mvp</code> → q′ → niveau → mesh → gardes → <code>FacesSubmitted</code> (section 0.5 D) ; l’instrument réutilise <code>rW</code> et <code>wC</code>. Aucune chaîne décrite dans la scène : compteurs <b>identiques</b> une troisième fois.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 17</span> (4d-4) Compteurs, aiguillage de la scène, options de chargement</div><div class="b">
+<p><b>Objectif</b> : brancher les descripteurs dans une <b>copie</b> de la scène, et compter les niveaux.</p>
+<div class="io"><div><h5>Entrée (étape 16)</h5><code>Profiler.h</code> (ajouts en fin d’enum, table de noms) ; scène : <code>"model": "assets/Meshes/rock_x.obj"</code>, échelles non uniformes.</div>
+<div><h5>Résultat</h5><code>LodLevel0..3</code> + <code>static_assert</code> ; <code>ParseMesh</code> : <code>.lod.json</code> → chaîne ; <code>solar_system_v1compat_belt_lod.json</code> (trois « Remplacer tout »). Puis un bug trouvé en lisant <code>OBJLoadOptions.h</code> : le défaut <code>flipUVsVertically = true</code> ≠ celui de la scène (<code>false</code>).</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — LodChainLoader</div><pre><code>rm.LoadMeshChecked(meshPath);   // options PAR DEFAUT
+// UV retournees sur les seuls niveaux de LOD (invisible
+// aujourd'hui : FaceColor ne lit pas les UV)</code></pre></div>
+<div class="ap"><div class="t">Après — sans valeur par défaut</div><pre><code>Load(path, rm, const OBJLoadOptions&amp; opts);
+LoadLodChainChecked(path, const OBJLoadOptions&amp; opts);
+rm.LoadMeshChecked(meshPath, opts);
+// ParseMesh : UNE definition des options, avant le if</code></pre></div></div>
+<p>Dette restante notée : le cache de <code>LoadMeshChecked</code> est indexé par le chemin seul, sans les options (corrigée plus tard, AM4).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 18</span> Mesurer : un lot refusé, un lot recevable, la Référence I</div><div class="b">
+<p><b>Objectif</b> : un chiffre fiable, comparable à la Référence H.</p>
+<div class="io"><div><h5>Entrée (étape 17)</h5>Run LOD <code>RelWithAsserts</code> : <code>FacesSubmitted</code> 82 988, <code>LodLevel3</code> = 1 200 chaque frame, <code>LodLevel1</code> = <code>LodLevel2</code> = 0, culling identique. Comptabilité exacte : 192 000 = 1 200 × 160 faces ; 122 400 = 1 200 × 102 sommets.</div>
+<div><h5>Résultat</h5>Lot i9 (A B A B, non épinglé) : Render −49 %, <b>non recevable</b> (p95/médiane 1,39-1,54 ; témoin <code>Clear</code> +38 % en B2). Lot i7 M13 (jetable, A B B A, <code>affinity 4</code>) : Render <b>5,81 → 1,68 ms (−71 %)</b>, frame <b>15,94 → 7,75 ms pour deux runs (−51 %)</b>. Compteurs identiques entre configurations et machines. Popping : aucun, en vol.</div></div>
+<div class="note"><b>Deux erreurs de protocole reconnues dans l’échange</b> : la Référence H vient de l’i7 (pas de l’i9), et le protocole M13 (jetable, A B B A, épinglage) n’avait pas été suivi pour le premier lot. Réserve déclarée sur B2 (p95/médiane 1,166) : même dispersion absolue (0,28 ms) qu’en A, critère relatif trop sévère pour un Render de 1,7 ms.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 19</span> L’annexe A14 et le plan</div><div class="b">
+<p><b>Objectif</b> : une leçon à relire, et la suite écrite.</p>
+<div class="io"><div><h5>Entrée (étape 18)</h5>Référence I ; seize processus modifiés ; douze contre-exemples.</div>
+<div><h5>Résultat</h5>Annexe A14 (PDF, 13 pages) ; plan : LOD des sphères (tout mesh peut avoir ou non une chaîne), puis <code>Clear</code>, puis les dettes ; <code>Plan_Phase_G_LibraryV3.md</code> (markdown).</div></div>
+</div></div>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>✗ Instrumenter dans un bloc qu’on remplace.</b> Le comptage de taille apparente vivait dans l’ancienne boucle de <code>RenderView</code> ; le chantier 2b l’a commentée en bloc. Un run de comptage aurait affiché <b>0</b> instance dans chaque tranche, au lieu de 1 278 / 14 / 3 / 2. Le compilateur ne disait rien (une variable inutilisée, et seulement quand le commutateur vaut 1).</div>
+
+<div class="bad"><b>✗ Prendre un maximum tiré au hasard pour le maximum.</b> 400 directions : ε<sub>1</sub>(<code>rock_a</code>) = 0,235. Directions ciblées : 0,344, soit <b>+46 %</b>. La sécurité de 10 % d’A13 n’aurait couvert que 0,259. À τ = 0,5, L1 aurait été admis jusqu’à q = 1,93 pixel par unité locale au lieu de 1,32 : entre ces deux valeurs, des roches auraient été dessinées en L1 avec une erreur réelle jusqu’à 0,34 × 1,93 ≈ <b>0,66 px</b>, au-delà de la tolérance.</div>
+
+<div class="bad"><b>✗ Compter la même chose avec deux définitions.</b> Le descripteur annonçait 117 sommets (lignes <code>v</code>), le moteur en chargeait 115 (sommets cités par une face). Les deux nombres étaient justes ; leur comparaison était fausse. Sans la vérification, un descripteur réellement périmé serait passé de la même manière.</div>
+
+<div class="bad"><b>✗ Vider le vecteur des chaînes dans <code>UnloadAll</code>.</b> Après <code>clear()</code>, la chaîne suivante reçoit à nouveau l’id 1 ; un ancien <code>LodChainHandle{1}</code> désigne alors une autre chaîne, sans erreur ni assertion (laboratoire 1.4).</div>
+
+<div class="bad"><b>✗ Écrire <code>a &lt;= 0 || a &gt;= b</code> sur des flottants.</b> Avec <code>a = NaN</code>, les deux comparaisons sont fausses : le test <b>accepte</b> la valeur, et la chaîne entre avec un <code>invEps</code> NaN. La forme <code>!(a &gt; 0 &amp;&amp; a &lt; b)</code> la refuse.</div>
+
+<div class="bad"><b>✗ Deux gardes qui excluent chacune la moitié des cas.</b> <code>ForEachElement</code> : « pas un objet → sortir », puis « pas un tableau → sortir ». Le chargeur aurait lu <b>0 niveau</b> pour chaque descripteur et les aurait tous refusés en <code>BadLevels</code>, avec un message faux (« attendu comme objet »).</div>
+
+<div class="bad"><b>✗ Des défauts plausibles dans un chargeur strict.</b> L’<code>epsilon</code> de L2 de <code>rock_a</code> oublié et remplacé par 0,5 : <code>invEps[2]</code> = 2,0 au lieu de 1,78. La suite reste décroissante (2,64 &gt; 2,0 &gt; 1,58) : la chaîne est <b>acceptée</b>. L2 est alors admis jusqu’à q′ = 2,0, soit une erreur réelle jusqu’à 0,51 × 1,0 ≈ <b>0,51 px</b> à τ = 0,5 (0,56 px avec la marge de sécurité que la chaîne était censée garantir), sans un mot. Avec NaN : refus <code>Rejected</code> (laboratoire 1.5).</div>
+
+<div class="bad"><b>✗ Ajouter un champ là où il faut changer un type.</b> Avec un <code>m_lodChain</code> <i>à côté</i> de <code>m_meshHandle</code>, les sept lecteurs auraient compilé ; <code>DrawHierarchySystem</code> et les gizmos auraient lu L0, et un futur système de boîtes englobantes aurait utilisé la boîte de L0 au lieu de l’union.</div>
+
+<div class="bad"><b>✗ Une option par défaut là où l’appelant doit décider.</b> <code>flipUVsVertically</code> : <code>true</code> par défaut, <code>false</code> dans la scène. Les roches en LOD auraient eu leur texture à l’envers dès l’arrivée des textures (L09), et elles seules.</div>
+
+<div class="bad"><b>✗ Comparer des temps entre deux machines ou deux séances (M14).</b> A sur l’i9 : 9,1 ms ; Référence H sur l’i7 : 5,14 ms. Conclure à une régression de 77 % aurait été faux : ce sont deux machines.</div>
+
+<div class="bad"><b>✗ Mesurer sans épingler, en A B A B.</b> Lot de l’i9 : p95/médiane de Render 1,39 à 1,54, témoin <code>Clear</code> +38 % en B2 : le gain mesuré (−49 %) est très loin de celui du lot recevable (−71 %).</div>
+
+<div class="bad"><b>✗ Ranger un réglage de qualité dans la section <code>debug</code>.</b> τ change ce que le moteur dessine ; sous « debug », il serait supprimé avec le reste le jour où l’on nettoie une configuration de production.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>5.1 · Donner des niveaux de détail à un nouveau mesh</h3>
+<ol>
+<li>Si le mesh vient d’une fonction (sphère, rocher, terrain), la régénérer avec des grilles plus grossières (voie « resample », décision A14a). Sinon, simplificateur QEM hors ligne, couture UV et pôles verrouillés (voie « qem », sous-chantier à venir).</li>
+<li>Mesurer ε en ciblant l’endroit où le maximum peut se trouver (sommets sur un rocher, centre des faces sur une sphère), vérifier la convergence, × 1,1 arrondi vers le haut.</li>
+<li>Écrire <code>mon_objet.lod.json</code> à côté des <code>.obj</code> ; compter <code>vertices</code> comme le moteur.</li>
+<li>Dans la scène : <code>"Mesh": { "model": "assets/Meshes/mon_objet.lod.json" }</code>. Rien d’autre ne change.</li>
+</ol>
+
+<h3>5.2 · Une vue plus tolérante (vue de surveillance, vue secondaire)</h3>
+<pre><code>"Camera": { ..., "lodTolerancePx": 1.0 }     // forme de l'echange (sentinelle -1 = moteur)
+// apres A16/A17 : la delegation au moteur s'ecrit "lodTolerancePx": null</code></pre>
+<p>Les roches de cette vue descendent plus tôt ; les autres vues ne sont pas affectées (τ appartient à la vue).</p>
+
+<h3>5.3 · Lire un summary après un run</h3>
+<pre><code>vérifier d'abord l'en-tête : scene=…_lod.json ; config=Release ; affinity=4 ; lodstats=0
+puis   Σ LodLevel0..3 == MeshesTested − MeshesCulled     (chaque frame)
+       (après A20 : Σ LodLevel + PointSplats == MeshesTested − MeshesCulled)
+puis   FacesSubmitted, LodLevel3, et seulement ensuite Render (médiane, p95)</code></pre>
+
+<h3>5.4 · Écrire une règle de décision avant de mesurer (M12)</h3>
+<pre><code>Mesure prévue    : run de comptage LV3_LOD_STATS=1, ceinture, 4 vues
+Borne basse      : ≥ 1 053 roches sous 1 px  →  gain garanti ≥ 168 000 faces
+Décision         : GO si gain garanti ≥ 25 % de FacesSubmitted
+Prédiction       : FacesSubmitted ≤ 107 000 ; LodLevel3 ≥ 1 053 ; image inchangée
+Si la mesure s'en écarte : une hypothèse est fausse (composition, formule, ε)</code></pre>
+
+<h3>5.5 · Vérifier la taille d’une structure vue par le compilateur</h3>
+<pre><code>static_assert(sizeof(LodChain) == 64, "une ligne de cache");   // permanent
+char (*kTailleLodChain)[sizeof(LV3::LodChain)] = 1;          // TEMPORAIRE : l'erreur affiche char (*)[64]</code></pre>
+
+<h3>5.6 · Tester un chemin d’échec</h3>
+<pre><code>Logger::info("[TestLodChain] Test 6 : l'erreur FileNotFound qui suit est VOLONTAIRE");
+const auto missing = rm.LoadLodChainChecked(dir + "/absent.lod.json", kSceneOpts);
+check(!missing &amp;&amp; missing.error() == ELodChainLoadError::FileNotFound, "absent -&gt; FileNotFound");</code></pre>
+</section>
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Le LOD des sphères (A14a), les dettes (A16, A17, A18), le coût fixe et le dessin en point (A19, A20), puis les chantiers B, C et D ont modifié ou corrigé plusieurs pièces de ce lot. Chaque amendement donne l’avant (04/10) et l’après. Relevé fait sur les documents du projet ; <b>à vérifier sur le dépôt</b> avant toute modification.</p>
+
+<div class="amend"><div class="h">AM1 · Les sphères ont leur chaîne, et une chaîne ne monte jamais (A14a, 4-5/10)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — ce lot</div><pre><code>chaînes : les 3 rochers seulement
+sphères : sphere_hi / mid / lo choisies par l'auteur, en L0
+question ouverte : une chaîne peut-elle MONTER au-dessus
+du choix de l'auteur ? méthode pour un mesh sans fonction ?</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>3 descripteurs sphere_hi/mid/lo.lod.json, une même famille
+L0 = résolution choisie par l'auteur = PLAFOND (jamais monter :
+  « le LOD ne change jamais l'image de plus de τ »)
+fabrication en deux voies : "resample" (fonction génératrice),
+  "qem" (le reste, sous-chantier à venir, couture UV verrouillée)
+FacesSubmitted 82 988 → 14 752 ; Render 1,52 → 0,58 ms (Réf. J)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM2 · Un objet sous-pixel est dessiné comme un point, avant la sélection (A20)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>culling → q' → SelectLodLevel → mesh du niveau
+roche sous 1 px : L3, 8 faces, 13 sommets
+Σ LodLevel = MeshesTested − MeshesCulled</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>culling → rOverTau = ProjectedRadiusPx(lodParams, wC, rW)  (UNE fois)
+if (Inside &amp;&amp; rOverTau &lt; view.pointRadiusOverTau) → UN point
+else q' = rOverTau / rayon local → SelectLodLevel (inchangé)
+lod.pointRadiusPx = 1.0 (0 = désactivé) ; compteur PointSplats
+Σ LodLevel + PointSplats = MeshesTested − MeshesCulled
+« on ne supprime pas un objet sous-pixel, on change sa façon d'être dessiné »</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM3 · Les surcharges de caméra sont validées une fois, à l’entrée (A16, A17)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 15</div><pre><code>float m_lodTolerancePx = -1.0f;   // -1 = non défini
+BuildViewData : (cam.m_lodTolerancePx &gt; 0) ? cam : config
+  → une valeur invalide retombe EN SILENCE sur la config
+EngineConfig : if (r.Has("lod")) { ... }   // bloc absent muet</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>scène : "lodTolerancePx": null = délégation écrite (info)
+ReadPositiveOverride au parsing ; bool m_hasX + float m_X
+BuildViewData : ASSERTION (le chemin chaud n'est plus un correcteur)
+Child absent = souci ; une clé absente est un trou dans la donnée
+→ dettes Serializer 1 et 2 de ce lot : RÉSOLUES</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM4 · Les caches ont une clé complète, et un seul MTL par asset (A16, A18)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 17</div><pre><code>clé des meshes et des chaînes = chemin canonique seul
+(dette : mêmes options imposées partout pour contourner)
+niveaux : mtllib planet.mtl</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>clé = chemin + OBJLoadOptions::CacheKey()  (meshes ET chaînes)
+un MTL par ASSET : rock_a_L1..L3.obj → rock_a.mtl ; sphere.mtl
+invariant : un changement de niveau change la géométrie,
+  JAMAIS l'apparence (sinon popping de matériau)
+résolution de texture : le mipmap (L09), pas un MTL par niveau
+surcharge future possible : "material" dans un niveau du .lod.json</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM5 · Le test gardait un pointeur à travers un enregistrement (A16 § 6)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — TestLodChain_Load</div><pre><code>const LodChain* a = rm.GetLodChain(h[0]);
+... (une 4e chaîne est enregistrée : push_back, réallocation)
+rm.FindMesh(...) == a-&gt;levels[0]   // lu 0xDDDDDDDD en Debug</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>on garde le HANDLE, on relit le pointeur au moment de s'en servir
+(exactement le contrat écrit à l'étape 9 : pointeur TEMPORAIRE)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM6 · Où se trouve le maximum de ε dépend de la forme (A14a § 3)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — A14 § 3.2</div><pre><code>« l'écart entre deux surfaces triangulées est maximal
+  près des sommets » (règle générale)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>rocher : pics étroits près des sommets → directions ciblées
+sphère : la flèche est maximale au CENTRE DES FACES
+→ « ce n'est pas la méthode qui décide où se trouve le
+   maximum, c'est la forme » ; ε d'une sphère : R ≤ τ / ε_k</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM7 · Le critère de dispersion devient relatif OU absolu (A14a)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 18</div><pre><code>recevable si p95 / médiane &lt; 1,15
+B2 (1,166) : réserve déclarée ; amendement SUGGÉRÉ</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>appliqué dès A14a : p95 / médiane &lt; 1,15 OU p95 − médiane &lt; 0,3 ms
+(A14a : p95/médiane jusqu'à 1,35, p95 − médiane ≤ 0,28 ms → recevable)
+numérotation dans architecture-rules.md : à vérifier (PH4CH1-11)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM8 · « 20 ns par face » était un rapport, pas une pente (A14a § 8)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — étape 18 et A14 § 8.3</div><pre><code>A : 21,1 ns / face ; B : 20,2 ns / face
+« le coût par face est constant : la sélection est gratuite »</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>modèle Render = a + b × F, b frame par frame, jamais Render ÷ F
+Référence I : 20,2 ns = 13,5 ns de pente + 6,7 ns de coût fixe réparti
+le coût fixe ≈ 26 % de Render à I ; les deux tiers à J
+→ l'argument « rapport constant ⇒ sélection gratuite » n'est PAS
+  démontré : la sélection fait partie du coût fixe a, non décomposé
+  (A14a : « décomposer a », non prioritaire) — voir PH4CH1-9</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM9 · Les références qui ont suivi la Référence I</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>Référence I : Render 1,67-1,69 ms, frame 3,87 ms (ceinture LOD rochers)</code></pre></div>
+<div class="ap"><div class="t">Après (i7 épinglé)</div><pre><code>J (A14a) : sphères en LOD, Render 0,57-0,59 ms, frame ≈ 3,0 ms
+K (A15)  : Clear par stores non temporels
+L (A20)  : dessin en point, Render 201-209 µs
+le LOD a « retiré ce qu'il pouvait » : le poste suivant fut Clear</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM10 · L’aval a été vectorisé ; la sélection est restée par instance (chantiers B, C, D)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>RenderView : sélection, puis ProjectPositions / EmitRasterTriangle
+face par face, scalaires</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>sommets en SoA (B3), faces par lots de 8 (B4, B5, C3),
+pixels par blocs de 8 (C2), arêtes en virgule fixe (D-a1)
+sélection du niveau : inchangée, scalaire, par instance
+(A20 § 4 reprend le même calcul de q') ; scène V1 = scène de
+stress qui CONTOURNE le LOD (.obj sans .lod.json)</code></pre></div></div></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>7.1 · Tests hors moteur</h3>
+<ul>
+<li><b>Descripteurs reproductibles</b> : <code>gen_rock_lod.py</code> régénère les trois <code>.lod.json</code> octet par octet ; les neuf <code>.obj</code> sont identiques après chaque correction (seul <code>vertices</code> a changé à l’étape 12).</li>
+<li><b>Convergence de ε</b> : 20 000 puis 100 000 directions avec ciblage des sommets, aucun écart au-delà du millième.</li>
+<li><b><code>TestLodChain_Load</code></b> (EXE) : chargement des trois chaînes, contenu de <code>rock_a</code> (4 niveaux, boîte non vide contenant L0), sélection sur q′ = 3,0 / 2,0 / 1,7 / 1,0 / +∞ / NaN → 0 / 1 / 2 / 3 / 0 / 0, cache (chemin écrit autrement → même handle), partage de L0, chaîne implicite (partagée, longueur 1, q′ = 0 → L0), et l’échec <code>FileNotFound</code>.</li>
+<li><b>Gizmos</b> : <code>Test_GizmoMatchesFrustum</code> vérifie qu’un gizmo a une chaîne de longueur 1.</li>
+</ul>
+
+<h3>7.2 · Filets à la compilation et en Debug</h3>
+<ul>
+<li><code>static_assert(sizeof(LodChain) == 64)</code> et <code>is_trivially_copyable</code> : testés par l’expérience d’Onky (étape 8).</li>
+<li><code>static_assert</code> nombre de compteurs <code>LodLevel</code> = <code>LodChain::kMaxLevels</code> (<code>RenderSystem.cpp</code>).</li>
+<li><code>RegisterLodChain</code> : six invariants, refus loggé avec la case fautive.</li>
+<li><code>LV3_ASSERT(rPx &gt;= 0.0f)</code> dans l’instrument (échoue sur NaN) ; <code>LV3_ASSERT(τ &gt; 0 &amp;&amp; isfinite(τ))</code> dans <code>BuildViewData</code>.</li>
+<li>Identités par frame : Σ <code>InstPx</code>, Σ <code>FacesPx</code>, Σ <code>LodLevel</code> (240/240 sur chaque run de l’échange).</li>
+</ul>
+
+<h3>7.3 · Prédictions écrites avant les mesures, et leur sort</h3>
+<div class="scroll"><table>
+<thead><tr><th>Prédiction</th><th>Écrite</th><th>Mesuré</th><th>Sort</th></tr></thead>
+<tbody>
+<tr><td>Compteurs identiques après le changement de type, τ dans la vue, la sélection sans chaîne décrite</td><td>étapes 14 à 16</td><td>240/240 frames, trois fois</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td><code>FacesSubmitted</code> ≤ 107 000</td><td>étape 4</td><td>82 988</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td><code>LodLevel3</code> ≥ 1 053</td><td>étape 4</td><td>1 200 chaque frame</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td>Culling quasi inchangé (union un peu plus grande)</td><td>étape 17</td><td><code>MeshesCulled</code> identique (médiane, min, max)</td><td><span class="pill ok">tenue</span></td></tr>
+<tr><td>Image indiscernable</td><td>étape 17</td><td>aucun popping en vol</td><td><span class="pill ok">tenue à l’œil</span></td></tr>
+<tr><td>A du lot i7 ≈ Référence H</td><td>étape 18</td><td>+12 à +14 %, témoins de calcul +8 à +14 %</td><td><span class="pill warn">séance différente</span></td></tr>
+</tbody></table></div>
+
+<h3>7.4 · Ce qui n’a pas été vérifié</h3>
+<ul>
+<li>L’assembleur Release de <code>SelectLodLevel</code> (absence de branche supposée, non lue).</li>
+<li>Les niveaux L1 et L2 : jamais choisis par la scène de mesure ; transitions vérifiées à l’œil en vol seulement.</li>
+<li>Une comparaison d’images pixel à pixel entre la scène de référence et la scène LOD (A20 en fait une règle ensuite).</li>
+<li>Le coût propre de la sélection (AM8) ; le lot M13 sur l’i9 (hypothèse d’un coût fixe propre à cette machine).</li>
+<li>Le binaire de la Référence H relancé dans la même séance que le lot i7 (seule preuve d’absence de toute régression de quelques pourcents).</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p><b>Rien n’est acté.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH4-CH1 ». Les décisions <b>prises</b> pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH4CH1_LOD_Rochers.md</code>. Les sujets sont à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody id="rmBody"></tbody></table></div>
+</section>
+
+<p><b>Renvois sans nouveau numéro</b> : Compteurs morts <code>VertsInside</code> / <code>TrisEmittedInside</code> (PH4CH2b-2) ; annexe A13 dépassée par A14 (PH4CH2b-9) ; sous-chantier QEM (« Pistes rangées », A14a) ; dettes du Serializer et du cache de ce lot : résolues par A16 à A18 (amendements AM3 et AM4).</p>
+<footer>Lot PH4-CH1 · LibraryV3 · reconstruction du 13/11/2026 · remplace la page « Niveaux de détail LV3 » du 28/09 (même adresse) · sources : échange du 30/09 au 04/10/2026, annexes A13, A13 bis, A14, avenant A14a, annexes A16 à A20.</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const fr = (v, d=2) => Number(v).toLocaleString("fr-FR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const nf = v => Math.round(v).toLocaleString("fr-FR");
+function fit(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = Math.max(280, cv.clientWidth || 640);
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+function stat(k, v, cls){ return `<div><div class="k">${k}</div><div class="v ${cls||""}">${v}</div></div>`; }
+const mono = "11px ui-monospace,Consolas,monospace";
+
+/* ═══════════ Générateur identique à gen_meshes.py ═══════════ */
+function LCG(seed){ let s = seed >>> 0; return { next(){ s = (1664525 * s + 1013904223) % 4294967296; return s / 4294967296; }, rng(a,b){ return a + (b - a) * this.next(); } }; }
+function rock(seed, seg, rings, amp){
+  amp = amp || 0.30; const r = LCG(seed), waves = [];
+  for (let k = 0; k < 4; k++) waves.push([r.rng(1,4), r.rng(1,4), r.rng(1,4), r.rng(0,6.28), r.rng(0.4,1.0)]);
+  const V = [], F = [];
+  for (let j = 0; j <= rings; j++){ const phi = Math.PI*j/rings, sp = Math.sin(phi), cp = Math.cos(phi);
+    for (let i = 0; i <= seg; i++){ const th = 2*Math.PI*i/seg, n = [sp*Math.cos(th), cp, sp*Math.sin(th)];
+      let d = 0; for (const [a,b,c,ph,w] of waves) d += w*Math.sin(a*n[0]*3.1 + b*n[1]*3.1 + c*n[2]*3.1 + ph);
+      const rr = 1 + amp*d/4; V.push([n[0]*rr, n[1]*rr, n[2]*rr]); } }
+  const idx = (i,j) => j*(seg+1) + i;
+  for (let j = 0; j < rings; j++) for (let i = 0; i < seg; i++){
+    const a = idx(i,j), b = idx(i+1,j), c = idx(i,j+1), d = idx(i+1,j+1);
+    if (j !== rings-1) F.push([a,d,c]); if (j !== 0) F.push([a,b,d]); }
+  return {V, F};
+}
+const SEEDS = [0xA5701, 0xA5701 + 7919, 0xA5701 + 2*7919], GRIDS = [[12,8],[8,5],[4,3],[4,2]];
+const EPS = [[0,0.3781,0.5616,0.6329],[0,0.424,0.5723,0.6457],[0,0.3191,0.4899,0.627]];
+const ROCKS = SEEDS.map(s => GRIDS.map(([a,b]) => rock(s, a, b)));
+
+/* ═══════════ 1.1 · rocher rasterisé ═══════════ */
+function project(m, rot, R, G){
+  const c = Math.cos(rot), s = Math.sin(rot), t = 0.35, ct = Math.cos(t), st = Math.sin(t);
+  return m.V.map(([x,y,z]) => { const x1 = c*x + s*z, z1 = -s*x + c*z, y1 = ct*y - st*z1; return [G/2 + R*x1, G/2 - R*y1]; });
+}
+function cover(P, F, G){
+  const m = new Uint8Array(G*G);
+  for (const [a,b,c] of F){
+    const A = P[a], B = P[b], C = P[c];
+    const x0 = Math.max(0, Math.floor(Math.min(A[0],B[0],C[0]))), x1 = Math.min(G-1, Math.ceil(Math.max(A[0],B[0],C[0])));
+    const y0 = Math.max(0, Math.floor(Math.min(A[1],B[1],C[1]))), y1 = Math.min(G-1, Math.ceil(Math.max(A[1],B[1],C[1])));
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++){
+      const px = x + 0.5, py = y + 0.5;
+      const e0 = (B[0]-A[0])*(py-A[1]) - (B[1]-A[1])*(px-A[0]);
+      const e1 = (C[0]-B[0])*(py-B[1]) - (C[1]-B[1])*(px-B[0]);
+      const e2 = (A[0]-C[0])*(py-C[1]) - (A[1]-C[1])*(px-C[0]);
+      if ((e0 >= 0 && e1 >= 0 && e2 >= 0) || (e0 <= 0 && e1 <= 0 && e2 <= 0)) m[y*G + x] = 1;
+    }
+  }
+  return m;
+}
+function r1Draw(){
+  const R = +$("r1R").value, rot = +$("r1Rot").value * Math.PI/180, tau = +$("r1Tau").value, force = +$("r1K").value, ri = +$("r1Rock").value;
+  $("r1RV").textContent = fr(R,1) + " px"; $("r1RotV").textContent = $("r1Rot").value + "°";
+  const eps = EPS[ri];
+  let k = 0; for (let i = 3; i >= 1; i--) if (f(eps[i]*R) <= tau){ k = i; break; }
+  const auto = k; if (force >= 0) k = force;
+  const G = Math.max(8, Math.ceil(2*1.35*R + 4));
+  const P0 = project(ROCKS[ri][0], rot, R, G), Pk = project(ROCKS[ri][k], rot, R, G);
+  const m0 = cover(P0, ROCKS[ri][0].F, G), mk = cover(Pk, ROCKS[ri][k].F, G);
+  const cv = $("r1Cv"), w0 = Math.max(280, cv.clientWidth || 640), cell = Math.max(3, Math.min(26, Math.floor(Math.min(w0, 520) / G)));
+  const {g, w, h} = fit(cv, G*cell + 16);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const ox = Math.round((w - G*cell)/2), oy = 8; let n0 = 0, diff = 0;
+  for (let y = 0; y < G; y++) for (let x = 0; x < G; x++){
+    const a = m0[y*G+x], b = mk[y*G+x]; n0 += a;
+    let col = null; if (a && b) col = css("--ghost"); else if (a){ col = css("--bad"); diff++; } else if (b){ col = css("--ok"); diff++; }
+    if (cell >= 6){ g.strokeStyle = css("--line"); g.lineWidth = 0.5; g.strokeRect(ox + x*cell, oy + y*cell, cell, cell); }
+    if (col){ g.fillStyle = col; g.fillRect(ox + x*cell + 0.5, oy + y*cell + 0.5, cell - 1, cell - 1); }
+  }
+  g.strokeStyle = css("--accent"); g.lineWidth = 1;
+  for (const [a,b,c] of ROCKS[ri][k].F){ g.beginPath(); [a,b,c,a].forEach((q,i) => { const X = ox + Pk[q][0]*cell, Y = oy + Pk[q][1]*cell; i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.stroke(); }
+  const errPx = eps[k]*R, fc = ROCKS[ri][k].F.length;
+  $("r1Stats").innerHTML = stat("niveau dessiné", "L" + k + (force < 0 ? " (auto)" : (k === auto ? "" : " (forcé ; auto = L" + auto + ")")), force >= 0 && k !== auto ? "bad" : "")
+    + stat("faces", fc + " / 168") + stat("erreur à l’écran ε·q", fr(errPx,3) + " px", errPx <= tau ? "ok" : "bad")
+    + stat("pixels L0", nf(n0)) + stat("pixels différents", nf(diff), diff ? "warn" : "ok");
+  let t = `<div class="scroll"><table><thead><tr><th>Niveau</th><th>Grille</th><th>Faces</th><th>ε (descripteur)</th><th>ε · q (px)</th><th>Admis (≤ τ)</th></tr></thead><tbody>`;
+  for (let i = 0; i < 4; i++){ const e = f(eps[i]*R); t += `<tr${i===k?' style="background:var(--hl)"':""}><td>L${i}</td><td>${GRIDS[i][0]} × ${GRIDS[i][1]}</td><td class="num">${ROCKS[ri][i].F.length}</td><td class="num">${fr(eps[i],4)}</td><td class="num">${fr(e,3)}</td><td>${e <= tau ? '<span class="pill ok">oui</span>' : '<span class="pill bad">non</span>'}</td></tr>`; }
+  $("r1Tab").innerHTML = t + `</tbody></table></div><div class="note">Ici q = rayon à l’écran (le rocher a un rayon local ≈ 1). Force L3 vers 15 px : le sélecteur l’aurait refusé, et l’image le montre. Les pixels qui changent à petite taille sont ceux que le centre de pixel « attrape » d’un côté ou de l’autre de la silhouette : c’est exactement ce que τ borne.</div>`;
+}
+["r1R","r1Rot","r1Tau","r1K","r1Rock"].forEach(id => $(id).addEventListener("input", r1Draw));
+
+/* ═══════════ 1.2 · échantillonnage de ε ═══════════ */
+const prof = t => 1 + 0.25*(0.5*Math.sin(3*t+0.4) + 0.3*Math.sin(5*t+1.3) + 0.2*Math.sin(8*t+2.1));
+const poly = n => Array.from({length:n}, (_,i) => { const t = 2*Math.PI*i/n, r = prof(t); return [r*Math.cos(t), r*Math.sin(t)]; });
+const P40 = poly(40), P7 = poly(7);
+function radAt(p, t){ const n = p.length, s = 2*Math.PI/n, u = ((t % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI), i = Math.floor(u/s) % n, a = p[i], b = p[(i+1)%n];
+  const dx = Math.cos(u), dy = Math.sin(u), ex = b[0]-a[0], ey = b[1]-a[1]; return (a[0]*ey - a[1]*ex) / (dx*ey - dy*ex); }
+const dev = t => Math.abs(radAt(P7, t) - radAt(P40, t));
+const DENSE = Array.from({length:4000}, (_,i) => 2*Math.PI*i/4000);
+let TRUE = 0; DENSE.forEach(t => TRUE = Math.max(TRUE, dev(t)));
+[P40, P7].forEach(p => p.forEach(([x,y]) => { const t = Math.atan2(y,x); [-1e-4,0,1e-4].forEach(j => TRUE = Math.max(TRUE, dev(t+j))); }));
+let e2seed = 12345;
+function e2Draw(){
+  const N = +$("e2N").value, tgt = $("e2Tgt").checked; $("e2NV").textContent = N;
+  // 3D -> 2D : N directions sur la sphere ~ sqrt(N) sur un grand cercle (meme espacement angulaire)
+  const n1 = Math.max(3, Math.round(Math.sqrt(N))), r = LCG(e2seed), S = []; for (let i = 0; i < n1; i++) S.push(2*Math.PI*r.next());
+  if (tgt) [P40, P7].forEach(p => p.forEach(([x,y]) => { const t = Math.atan2(y,x); S.push(t + 1e-4, t - 1e-4); }));
+  let found = 0, at = 0; S.forEach(t => { const d = dev(t); if (d > found){ found = d; at = t; } });
+  const {g, w, h} = fit($("e2Cv"), 220);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const X = t => 30 + (((t % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI)) / (2*Math.PI) * (w - 40), Y = d => h - 24 - d / (TRUE*1.1) * (h - 40);
+  g.strokeStyle = css("--ink3"); g.lineWidth = 1; g.beginPath(); DENSE.forEach((t,i) => i ? g.lineTo(X(t), Y(dev(t))) : g.moveTo(X(t), Y(dev(t)))); g.stroke();
+  g.fillStyle = css("--accent"); S.forEach(t => { g.beginPath(); g.arc(X(t), Y(dev(t)), 1.6, 0, 7); g.fill(); });
+  g.setLineDash([5,4]); g.strokeStyle = css("--ok"); g.beginPath(); g.moveTo(30, Y(TRUE)); g.lineTo(w-10, Y(TRUE)); g.stroke();
+  g.strokeStyle = css("--bad"); g.beginPath(); g.moveTo(30, Y(found)); g.lineTo(w-10, Y(found)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--ink3"); g.font = mono; g.fillText("angle (0 → 360°)", w/2 - 50, h - 6); g.fillText("écart radial |r7 − r40|", 34, 14);
+  const under = 1 - found / TRUE;
+  $("e2Stats").innerHTML = stat("maximum réel", fr(TRUE,4)) + stat("maximum trouvé", fr(found,4), under > 0.01 ? "bad" : "ok") + stat("sous-estimation", fr(under*100,1) + " %", under > 0.01 ? "bad" : "ok") + stat("directions sur la coupe", nf(S.length) + " (≈ √" + nf(N) + ")");
+  $("e2Verdict").innerHTML = under > 0.1 ? `<div class="bad">Le tirage a manqué un pic étroit : ε serait <b>sous-estimé de ${fr(under*100,0)} %</b>. Une marge de sécurité de 10 % ne le couvrirait pas.</div>`
+    : under > 0.005 ? `<div class="warn">Proche, mais pas atteint : sans ciblage, le résultat dépend du tirage. Relance « Nouveau tirage ».</div>`
+    : `<div class="ok">Maximum atteint${tgt ? " : les directions ciblées tombent sur les sommets, là où se trouvent les pics" : ""}.</div>`;
+}
+$("e2N").addEventListener("input", e2Draw); $("e2Tgt").addEventListener("change", e2Draw); $("e2Seed").onclick = () => { e2seed = (e2seed * 7 + 1013) >>> 0; e2Draw(); };
+
+/* ═══════════ 1.3 · sélection sans branche ═══════════ */
+const INVA = [Infinity, f(1/0.3781), f(1/0.5616), f(1/0.6329)], INV1 = [Infinity, -Infinity, -Infinity, -Infinity];
+let s3q = 1.70, lanesQ = [3.0, 2.0, 1.7, 1.0, 0.2, Infinity, NaN, 1.6];
+const sel = (inv, q) => { let k = 0; for (let i = 1; i < 4; i++) k += (q <= inv[i]) ? 1 : 0; return k; };
+const fq = q => Number.isNaN(q) ? "NaN" : q === Infinity ? "+∞" : fr(q,3);
+function s3Draw(){
+  const inv = $("s3Chain").value === "a" ? INVA : INV1, q = f(s3q);
+  $("s3QV").textContent = fq(q);
+  const {g, w, h} = fit($("s3Cv"), 120);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const X = v => 20 + Math.min(v, 3.5) / 3.5 * (w - 40), edges = [0, inv[3] > 0 ? inv[3] : 0, inv[2] > 0 ? inv[2] : 0, inv[1] > 0 ? inv[1] : 0, 3.5];
+  const cols = ["--ok-bg","--accent-bg","--warn-bg","--bad-bg"], labs = ["L3","L2","L1","L0"];
+  for (let i = 0; i < 4; i++){ const a = X(edges[i]), b = X(edges[i+1]); if (b - a < 1) continue; g.fillStyle = css(cols[i]); g.fillRect(a, 30, b - a, 40); g.fillStyle = css("--ink2"); g.font = "600 12px sans-serif"; g.fillText(labs[i], (a+b)/2 - 8, 55); }
+  g.fillStyle = css("--ink3"); g.font = mono; for (let i = 1; i < 4; i++) if (inv[i] > 0 && inv[i] < 3.5){ g.fillText("invEps[" + i + "]=" + fr(inv[i],3), X(inv[i]) - 40, i === 2 ? 11 : 23); g.fillRect(X(inv[i]), 26, 1, 48); }
+  if (Number.isFinite(q)){ g.fillStyle = css("--accent"); g.beginPath(); g.moveTo(X(q), 74); g.lineTo(X(q)-6, 88); g.lineTo(X(q)+6, 88); g.fill(); g.fillText("q′", X(q) - 5, 102); }
+  else { g.fillStyle = css("--accent"); g.fillText(Number.isNaN(q) ? "q′ = NaN : toutes les comparaisons sont fausses" : "q′ = +∞ (hors échelle, à droite)", 20, 102); }
+  const c = [1,2,3].map(i => q <= inv[i]), k = c.filter(Boolean).length;
+  $("s3Stats").innerHTML = [1,2,3].map(i => stat(`q′ ≤ invEps[${i}] (${inv[i] === -Infinity ? "−∞" : fr(inv[i],3)})`, c[i-1] ? "vrai → +1" : "faux → +0", c[i-1] ? "ok" : "")).join("") + stat("niveau dessiné k", "L" + k, "warn");
+  // couloirs
+  const lanes = lanesQ.map(v => f(v));
+  const row = (lab, arr, hl) => `<div class="reg">${lab}</div><div class="lanes">${arr.map((v,i) => `<div class="${hl && hl[i] ? "h" : ""}">${v}</div>`).join("")}</div>`;
+  let html = row("q′ (ymm0, 8 × float32)", lanes.map(fq));
+  let K = [0,0,0,0,0,0,0,0];
+  for (let i = 1; i < 4; i++){
+    const m = lanes.map(v => v <= inv[i]); K = K.map((x,j) => x + (m[j] ? 1 : 0));
+    html += row(`cmp_ps(q′, invEps[${i}] = ${inv[i] === -Infinity ? "−∞" : fr(inv[i],3)}, _CMP_LE_OQ)`, m.map(b => b ? "FFFFFFFF" : "00000000"), m);
+    html += row(`k = k − masque (après niveau ${i})`, K.map(String));
+  }
+  html += `<div class="note">Un masque vrai vaut 0xFFFFFFFF, soit −1 en entier : soustraire le masque ajoute 1. <code>_CMP_LE_OQ</code> est <b>ordonné</b> : un NaN donne faux, comme en scalaire. Les huit couloirs n’ont aucune branche à prédire, même quand leurs niveaux diffèrent.</div>`;
+  $("s3Lanes").innerHTML = html;
+}
+$("s3Q").addEventListener("input", e => { s3q = +e.target.value; s3Draw(); });
+$("s3Inf").onclick = () => { s3q = Infinity; s3Draw(); };
+$("s3Nan").onclick = () => { s3q = NaN; s3Draw(); };
+$("s3Chain").addEventListener("input", s3Draw);
+$("s3Rand").onclick = () => { const r = LCG((Date.now() & 0xffff) + 7); lanesQ = lanesQ.map(() => { const u = r.next(); return u < 0.06 ? Infinity : u < 0.1 ? NaN : r.rng(0, 3.4); }); s3Draw(); };
+
+/* ═══════════ 1.4 · stockage et ABA ═══════════ */
+let a4 = { vec: [], kept: null, log: [], names: "ABCDEFGHIJ".split(""), n: 0 };
+function a4Draw(){
+  const v = a4.vec;
+  let h = `<div class="mesh" style="grid-template-columns:repeat(${Math.max(4, v.length)},minmax(0,1fr))">`;
+  v.forEach((c,i) => { h += `<div class="cell ${i === 0 ? "" : c ? "a" : ""} ${a4.kept === i ? "p" : ""}">id ${i}<br>${i === 0 ? "sentinelle" : c ? "chaîne " + c : "vide"}</div>`; });
+  h += `</div><div class="reg">taille du vecteur = prochain id = ${Math.max(1, v.length)}${a4.kept !== null ? " · le composant garde LodChainHandle{" + a4.kept + "}" : ""}</div>`;
+  $("a4Vec").innerHTML = h;
+  $("a4Log").innerHTML = a4.log.map(l => `<div class="${l[0]}">${l[1]}</div>`).join("");
+}
+$("a4Reg").onclick = () => { if (!a4.vec.length) a4.vec.push(null); const nm = a4.names[a4.n++ % 10]; a4.vec.push(nm);
+  const id = a4.vec.length - 1; let msg = `RegisterLodChain → chaîne ${nm}, id ${id}.`;
+  if (a4.kept !== null){ const c = a4.vec[a4.kept]; msg += ` Le vieux handle {${a4.kept}} désigne maintenant : <b>${c ? "chaîne " + c : "rien (nullptr)"}</b>.`;
+    a4.log.unshift([c && a4.keptName !== c ? "bad" : "ok", msg + (c && a4.keptName !== c ? " ✗ ABA : il désignait la chaîne " + a4.keptName + " !" : " ✓")]); }
+  else a4.log.unshift(["note", msg]); a4Draw(); };
+$("a4Keep").onclick = () => { if (a4.vec.length < 2) return; a4.kept = a4.vec.length - 1; a4.keptName = a4.vec[a4.kept]; a4.log.unshift(["note", `Un composant garde LodChainHandle{${a4.kept}} (chaîne ${a4.keptName}).`]); a4Draw(); };
+$("a4Unl").onclick = () => { if ($("a4Pol").value === "clear"){ a4.vec = []; a4.log.unshift(["warn", "UnloadAll : m_lodChains.clear() — la taille retombe à 0 : le prochain id sera de nouveau 1."]); }
+  else { a4.vec = a4.vec.map((c,i) => i === 0 ? null : null); a4.log.unshift(["ok", "UnloadAll : chaque case vidée (levelCount = 0), taille conservée : les ids continuent de croître."]); } a4Draw(); };
+$("a4Reset").onclick = () => { a4 = { vec: [], kept: null, log: [], names: a4.names, n: 0 }; a4Draw(); };
+
+/* ═══════════ 1.5 · chargeur ═══════════ */
+function c5Draw(){
+  const o = id => $(id).checked, plaus = o("c5Def");
+  const ph = []; let err = null, note = "";
+  const step = (name, ok, msg) => { ph.push([name, ok, msg]); if (!ok && !err) err = msg; };
+  if (o("c5Abs")) step("1 · fichier → JSON", false, "[FileNotFound] fichier introuvable ou illisible");
+  else step("1 · fichier → JSON", true, "JSON valide, racine objet");
+  if (!err){ if (o("c5Ver")) step("2 · en-tête", false, "[BadHeader] attendu lv3.lodchain v1, lu 'lv3.lodchain' v2"); else step("2 · en-tête", true, "lv3.lodchain v1, units = local"); }
+  if (!err){ const n = o("c5Six") ? 6 : 4; if (n > 4) step("3 · lecture brute", false, "[BadLevels] 6 niveau(x), attendu 1 a 4 — AUCUN mesh chargé"); else step("3 · lecture brute", true, "4 niveaux lus" + (o("c5Eps") ? (plaus ? " ; epsilon absent → défaut 0,5 (plausible)" : " ; epsilon absent → défaut NaN (empoisonné) + avertissement « clé absente »") : "")); }
+  if (!err){ if (o("c5Vtx")) step("4 · construction", false, "[LevelMismatch] niveau 0 : le .obj a 115 sommets / 168 faces, le descripteur annonce 117 / 168 (descripteur perime ?)"); else step("4 · construction", true, "4 meshes chargés, dimensions conformes, union des boîtes, invEps calculés"); }
+  if (!err){
+    let inv = [Infinity, f(1/0.3781), f(1/0.5616), f(1/0.6329)];
+    if (o("c5Eps")) inv[2] = plaus ? f(1/0.5) : NaN;
+    if (o("c5Ord")) inv[3] = f(1/0.40);
+    let bad = 0; for (let k = 1; k < 4; k++) if (!(inv[k] > 0 && inv[k] < inv[k-1])){ bad = k; break; }
+    if (bad) step("5 · RegisterLodChain", false, `[Rejected] invEps[${bad}] doit etre > 0 et < invEps[${bad-1}] (lu ${fq(inv[bad])})`);
+    else { step("5 · RegisterLodChain", true, "chaîne enregistrée, mise en cache");
+      if (o("c5Eps") && plaus) note = `<div class="bad"><b>✗ Accepté — et faux.</b> invEps = [+∞ ; ${fr(inv[1],3)} ; <b>${fr(inv[2],3)}</b> ; ${fr(inv[3],3)}] reste décroissant : la chaîne passe toutes les vérifications. L2 est admis jusqu’à q′ = 2,0 au lieu de 1,78 : erreur réelle jusqu’à 0,51 px à τ = 0,5. Un défaut plausible transforme une erreur de données en comportement silencieusement faux.</div>`; }
+  }
+  let h = `<div class="scroll"><table><thead><tr><th>Phase</th><th>Résultat</th></tr></thead><tbody>`;
+  ph.forEach(([n, ok, m]) => h += `<tr><td>${n}</td><td>${ok ? '<span class="pill ok">ok</span>' : '<span class="pill bad">refus</span>'} <code>${m}</code></td></tr>`);
+  h += `</tbody></table></div>`;
+  h += err ? `<div class="ok"><b>Refus franc, avant tout effet de bord inutile</b>${/Mismatch|Rejected/.test(err) ? " (les meshes déjà chargés restent dans le cache : effet assumé, sans danger)" : ""}. Le cache ne retient pas l’échec : un fichier corrigé sur disque se rechargera.</div>` : (note || `<div class="ok">Chaîne enregistrée : <code>LodChainLoader : 4 niveaux</code>.</div>`);
+  $("c5Out").innerHTML = h;
+}
+["c5Eps","c5Vtx","c5Six","c5Ver","c5Ord","c5Abs","c5Def"].forEach(id => $(id).addEventListener("change", c5Draw));
+
+/* ═══════════ 1.6 · mesure ═══════════ */
+const M6 = {
+  i7: { order: ["A1","B1","B2","A2"], Render: [5.737,1.672,1.688,5.890], Frame: [7.885,3.873,3.877,8.052], Clear: [1.060,1.077,1.091,1.071], p95: [1.048,1.140,1.166,1.043] },
+  i9: { order: ["A1","B1","A2","B2"], Render: [9.219,4.493,9.021,4.824], Frame: [12.596,7.873,12.274,8.778], Clear: [0.964,1.011,0.874,1.207], p95: [1.416,1.535,1.462,1.387] } };
+let m6m = "i7";
+function m6Draw(){
+  const d = M6[m6m], z = $("m6Z").value, v = d[z];
+  const {g, w, h} = fit($("m6Cv"), 230);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const mx = Math.max(...v) * 1.15, bw = (w - 80) / 4;
+  d.order.forEach((n,i) => { const x = 50 + i*bw + bw*0.15, bh = v[i]/mx * (h - 50);
+    g.fillStyle = css(n[0] === "A" ? "--ghost" : "--accent"); g.fillRect(x, h - 26 - bh, bw*0.7, bh);
+    g.fillStyle = css("--ink2"); g.font = mono; g.fillText(fr(v[i],3) + " ms", x, h - 30 - bh); g.fillText(n + " · p95/méd " + fr(d.p95[i],2), x - 4, h - 10); });
+  const A = d.order.map((n,i) => n[0] === "A" ? v[i] : 0).reduce((a,b)=>a+b,0), B = d.order.map((n,i) => n[0] === "B" ? v[i] : 0).reduce((a,b)=>a+b,0);
+  const cl = d.Clear, clv = (Math.max(...cl) - Math.min(...cl)) / Math.min(...cl);
+  $("m6Stats").innerHTML = stat("B ÷ A (" + z + ")", fr(B/A,3), z === "Clear" ? "" : "ok") + stat("écart " + z, fr((B/A - 1)*100,1) + " %") + stat("témoin Clear : écart max", fr(clv*100,0) + " %", clv > 0.1 ? "bad" : "ok") + stat("p95 ÷ médiane max", fr(Math.max(...d.p95),2), Math.max(...d.p95) > 1.15 ? "warn" : "ok");
+  $("m6Verdict").innerHTML = m6m === "i7"
+    ? `<div class="ok"><b>Recevable (M13)</b> : épinglé, A B B A, témoins stables. Réserve sur B2 (1,166) : même dispersion absolue qu’en A (≈ 0,28 ms) ; c’est Render qui a rétréci. <b>Référence I</b> : Render 1,67-1,69 ms, frame 3,87 ms.</div>`
+    : `<div class="bad"><b>Non recevable</b> : non épinglé (<code>affinity=fffff</code>), ordre A B A B, p95/médiane jusqu’à 1,54, témoin <code>Clear</code> +38 % en B2. Il établit que le LOD réussit, pas de combien. Et ses temps ne se comparent pas à la Référence H (autre machine, M14).</div>`;
+}
+$("m6I7").onclick = () => { m6m = "i7"; $("m6I7").setAttribute("aria-pressed","true"); $("m6I9").setAttribute("aria-pressed","false"); m6Draw(); };
+$("m6I9").onclick = () => { m6m = "i9"; $("m6I9").setAttribute("aria-pressed","true"); $("m6I7").setAttribute("aria-pressed","false"); m6Draw(); };
+$("m6Z").addEventListener("input", m6Draw);
+
+/* ═══════════ roadmap ═══════════ */
+const RM = [["PH4CH1-1", "<code>LodChainLoader</code> lit <code>vertices</code> et <code>faces</code> en <code>uint32_t</code> : nlohmann convertit sans erreur <code>2.7</code> en 2 et <code>-1</code> en 4 294 967 295 (relevé par A16)", "Dette (chargement)", "Lire en entier signé ou en double, puis refuser une valeur négative ou non entière ; ou une garde générale dans <code>JsonReader</code> (rejoint les points A6)."], ["PH4CH1-2", "Les niveaux L1 et L2 ne sont jamais choisis par les scènes de mesure ; les transitions n'ont été vérifiées qu'à l'œil, en vol", "Dette (test)", "Une trajectoire de caméra qui s'approche d'une roche avec contrôle <code>LodLevel1</code> et <code>LodLevel2</code> &gt; 0, ou un test hors moteur de <code>SelectLodLevel</code> autour de chaque seuil de chaque chaîne."], ["PH4CH1-3", "Aucune comparaison d'images entre la scène de référence et la scène LOD (A20 en a fait une règle pour le dessin en point)", "Proposée", "Comparaison pixel à pixel A/B, écarts attendus bornés aux silhouettes, à ajouter au protocole d'un lot LOD."], ["PH4CH1-4", "Hystérésis et fondu non implémentés (aucun popping observé à τ = 0,5)", "Évolution", "À déclencher si une scène proche (niveau FPS V3, vol dans la ceinture) montre un popping : un octet par paire (instance, vue), possédé par la vue."], ["PH4CH1-5", "Disposition A (un <code>MeshClass</code> par niveau) conservée ; la disposition D (une allocation par chaîne) recommandée par A13 bis n'est pas faite", "Évolution", "Si le nombre de chaînes grandit (sous-chantier QEM, assets importés)."], ["PH4CH1-6", "<code>UnloadMesh</code> ne retire pas la chaîne implicite du mesh ; ni <code>UnloadLodChain</code> ni miroir id → chemin pour les chaînes", "Dette (latente)", "À traiter avec le premier appelant réel de <code>UnloadMesh</code> (aucun aujourd'hui)."], ["PH4CH1-7", "Sélection par lots (deux passes, *gather* AVX2, pendant de la section 2.2) et rayon local rangé dans le remplissage de <code>LodChain</code>", "Évolution", "Seulement si la décomposition du coût fixe <code>a</code> (A14a § 8) montre la sélection."], ["PH4CH1-8", "Assembleur Release de <code>SelectLodLevel</code> jamais relu (absence de saut supposée)", "À vérifier", "<code>/FAs</code> sur <code>RenderSystem.cpp</code> : trois comparaisons, aucun saut conditionnel."], ["PH4CH1-9", "A14 § 8.3 conclut « coût par face constant, donc sélection gratuite » : le rapport Render ÷ faces n'est pas une pente (A14a § 8, amendement AM8)", "Documentation", "Annoter A14 § 8.3 et renvoyer à A14a § 8 ; la question du coût de la sélection rejoint PH4CH1-7."], ["PH4CH1-10", "A14 § 3.2 énonce comme règle générale « le maximum de ε est près des sommets » ; A14a montre qu'il dépend de la forme (centre des faces sur une sphère)", "Documentation", "Annoter A14 § 3.2 (amendement AM6)."], ["PH4CH1-11", "Critère de dispersion « p95 ÷ médiane &lt; 1,15 OU p95 − médiane &lt; 0,3 ms » appliqué depuis A14a, sur une suggestion de ce lot", "Décision", "Vérifier qu'il est numéroté (M13 complétée) dans <code>architecture-rules.md</code>, sinon l'y inscrire."], ["PH4CH1-12", "CSV de l'échange non versionnés dans <code>Mesures/</code> : run de comptage, <code>belt_lod</code>, <code>belt_release_run1/2</code>, lot i9 (A1, B1, A2, B2), lot i7 M13 (A1, B1, B2, A2)", "Dette (M2)", "Les retrouver et les versionner, le lot i9 marqué « refusé » ; rejoint PH4CH2b-1."], ["PH4CH1-13", "Les tranches de l'instrument (1, 4, 16 px) ne correspondent plus à aucune décision (point à 1 px depuis A20, seuils propres à chaque chaîne)", "Évolution", "Les garder pour la comparabilité des runs, ou les réaligner sur les seuils actifs."], ["PH4CH1-14", "<code>ParseMesh</code> aiguille par <code>ends_with(\".lod.json\")</code>, sensible à la casse : <code>ROCK.LOD.JSON</code> serait lu comme un <code>.obj</code>", "Mineur", "Comparaison insensible à la casse, ou refus explicite d'une extension inconnue."], ["PH4CH1-15", "Si <code>RegisterLodChain</code> refuse une chaîne, les meshes chargés en phase 4 restent dans le cache (effet assumé dans l'échange, non écrit dans le code)", "Documentation", "Une ligne dans <code>ResourceManager.h</code> ou dans A14 § 6."], ["PH4CH1-16", "Le nombre de colonnes <code>LodLevel*</code> est lié à <code>LodChain::kMaxLevels</code> = 4 ; augmenter <code>kMaxLevels</code> ajoute des colonnes au CSV", "Décision future", "Règle : <code>kMaxLevels</code> ne change qu'avec des compteurs ajoutés en fin d'énumération (le <code>static_assert</code> le force déjà)."], ["PH4CH1-17", "La scène <code>solar_system_v1compat_belt_lod.json</code> (ce lot) est dépassée par <code>solar_system_v1compat_belt_lod_spheres.json</code> (A14a)", "Documentation", "La garder comme témoin de la Référence I, ou la retirer du dépôt."]];
+$("rmBody").innerHTML = RM.map(r => `<tr><td class="num">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("");
+
+
+function all(){ r1Draw(); e2Draw(); s3Draw(); a4Draw(); c5Draw(); m6Draw(); }
+all();
+let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(all, 120); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", all);
+new MutationObserver(all).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+})();
+</script>
+</body></html>

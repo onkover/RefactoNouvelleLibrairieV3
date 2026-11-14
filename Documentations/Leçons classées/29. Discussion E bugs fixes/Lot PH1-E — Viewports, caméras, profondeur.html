@@ -1,0 +1,1101 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH1-E — Viewports, caméras, profondeur</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : gabarit de la série « Lot … pas à pas » (PH1-C, PH1-D) — colonne 1000 px, en-tête collant avec sommaire,
+   étapes en cartes, avant/après en deux colonnes. Ajout PH1-E : plan des viewports, rampe de profondeur. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --game:#2563a8; --dbg:#b5651d; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --game:#6aa8ec; --dbg:#e09a55; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --game:#6aa8ec; --dbg:#e09a55; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:560px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:16px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad,.stats .v.ok,.stats .v.warn{border:0; background:none; padding:0; margin:0; border-radius:0}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.sc{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .sc{grid-template-columns:1fr 1fr} }
+.sc>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.sc>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.sc pre{margin:0; border:0; border-radius:0}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:4px; margin:8px 0; font-family:var(--mono); font-size:11.5px}
+.lanes>div{background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:4px 5px; text-align:center; overflow-wrap:anywhere}
+.lanes .lh{background:var(--surface2); color:var(--ink3); font-size:10.5px}
+.lanes .sat{border-color:var(--bad); color:var(--bad)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header>
+  <div class="t">Lot PH1-E — Viewports, caméras et profondeur, pas à pas</div>
+  <div class="s">LibraryV3 · phase 1 du carnet de route, discussions E et J · bugs 55, 56, 61 (puis son évolution), 66 · Annexe A11 · règles R12, R20 · création (aucun artefact n’existait)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+<p class="lede">Le moteur savait dessiner deux vues côte à côte. Dès qu’on a voulu en afficher quatre, chaque hypothèse « il y a deux caméras » cachée dans le code est devenue un défaut visible : un tableau trop court, un plafond écrit en dur à trois endroits, un réglage de lisibilité partagé entre des caméras qui n’ont rien en commun. Ce lot remplace ces hypothèses par des règles écrites.</p>
+
+<p>Tout est parti d’une question d’Onky : pourquoi limiter le nombre de caméras dans <code>engine.json</code> alors qu’on peut en ajouter autant qu’on veut dans la scène ? La réponse a fait apparaître que deux nombres différents portaient le même nom : le nombre de <b>caméras</b> que la scène contient, et le nombre de <b>viewports</b> que l’écran affiche.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Bug / sujet</th><th>Le défaut</th><th>Ce qu’on voyait</th></tr></thead>
+<tbody>
+<tr><td><b>55</b></td><td><code>LoadGizmoAssets</code> : garde en <code>||</code>, corps en <code>&amp;&amp;</code> implicite</td><td>Rien tant que les deux meshes chargent ; déréférencement nul si un seul charge</td></tr>
+<tr><td><b>56</b></td><td><code>dbg.m_visible = isActive</code> : la teinte grise calculée juste au-dessus devient inobservable si le filtre de <code>RenderView</code> est réactivé</td><td>Un état à mi-chemin entre A5 (tous visibles) et A9 §11.2 (un seul visible)</td></tr>
+<tr><td><b>61</b></td><td><code>capacity</code> / <code>slotCount</code> reçus et jamais lus ; <code>8</code> en dur dans trois fonctions ; off-by-one <code>n &gt;= LV3_MAX_VIEWPORT</code></td><td>Le layout à quatre vues était refusé à tort</td></tr>
+<tr><td><b>61, évolution</b></td><td>Le nombre de viewports dépendait du nombre de caméras actives de la scène</td><td>Mettre trois caméras à <code>"active": false</code> faisait quand même chercher quatre vues, puis arrêtait le programme ; après un retour à 2 viewports, la bascule FPS ↔ Follow ne fonctionnait plus</td></tr>
+<tr><td><b>66</b></td><td><code>SetDepthDisplayRange</code> appelé une fois avant la boucle des vues</td><td>Le rendu <code>Depth</code> n’était lisible que pour <code>Overview_Camera</code>, les autres caméras saturaient</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « Le rendu Depth des caméras Top, Bottom, Left et Right ne s’affiche pas : c’est un bug du mode Depth. » <b>Non.</b> Même piège que le 18/09 (lot PH1-D) et que le « F4 efface l’écran » : le mode, la bascule et le code de rendu étaient justes. La première cause était une constante globale qui convenait à une seule caméra (bug 66) ; l’autre, une caméra calibrée « par analogie » qui ne regardait rien de visible. Les journaux <code>[Diag]</code> d’Onky ont montré que les bascules fonctionnaient ; c’est en lisant <i>quelle donnée</i> chaque vue recevait qu’on a trouvé.
+</div>
+</section>
+
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+<p>Le lot s’appuie sur cinq lots antérieurs. Chacun a posé une pièce que la discussion E/J remet en ordre.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH1-E en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L05</b> — caméra</td><td>Repère main droite, Y haut, la vue regarde vers −Z ; reverse-Z, far infini ; <code>InputState</code> défini par le moteur.</td><td>Le sens de <code>Forward()</code>, dont dépendent les caméras cardinales (étape 8).</td></tr>
+<tr><td><b>A5 / A9</b> — gizmos</td><td>Un frustum visible par caméra, teinte ambre (active) ou grise ; A9 §11.2 esquissait « un seul frustum visible ».</td><td>Bug 56 : on garde A5, la politique A9 §11.2 n’est pas retenue.</td></tr>
+<tr><td><b>L06</b> — graphe de scène</td><td>Catégories de caméra, <code>CollectActiveCameras</code>, panneaux ; AM7 prévoit « jusqu’à 4 panneaux ».</td><td>AM7 devient réel avec A11.</td></tr>
+<tr><td><b>PH1-C</b></td><td>Patron « assertion + repli » (PH1C.b) : un garde-fou qui doit protéger la Release.</td><td><code>BuildCameraBindings</code> : <code>Logger::warn</code> + <code>return 0</code>, pas d’assertion seule.</td></tr>
+<tr><td><b>PH1-D</b></td><td>Ordre de frame S13 et seconde cuisson ciblée sur les <i>caméras rendues</i> (<code>roots</code>).</td><td>Les caméras rendues ne sont plus « toutes les caméras actives » : la question PH1D-2 devient plus nette (amendement AM4).</td></tr>
+</tbody>
+</table>
+</div>
+<div class="note">
+<b>État de départ, lu dans le carnet de route.</b> La boucle de <code>main.cpp</code> pilotait deux panneaux (<code>Panel panels[2]</code>, <code>g_cycleCam[2]</code>, <code>g_cycleMode[2]</code>). Le plafond de <code>BuildCameraBindings</code> venait de <code>LV3_MAX_VIEWPORT</code> (4) ; <code>EngineConfig::CameraConfig::maxCameras</code> n’était lu nulle part où il comptait.
+</div>
+</section>
+
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce qu’est un viewport, côté éditeur de jeu</h3>
+<p>Dans Unity ou Unreal, une fenêtre de scène montre le jeu vu par la caméra de gameplay, et des vues d’édition (dessus, côté, perspective) le montrent sous d’autres angles. Le nombre de vues affichées est un choix de présentation. Le nombre de caméras dans la scène est un fait de contenu. Si on les confond, ajouter une caméra de debug dans le JSON change la mise en page, et désactiver une caméra arrête le programme.</p>
+
+<h3>Les objectifs du lot</h3>
+<ol>
+<li><b>Choisir le nombre de vues indépendamment du nombre de caméras</b> (<code>viewport.maxViewport</code>), et pouvoir changer de caméra quand il y en a plus que de vues.</li>
+<li><b>Garder la vue de jeu</b> : le slot 0 montre toujours une caméra de catégorie Gameplay ; sans caméra de jeu active, le programme s’arrête avec un message.</li>
+<li><b>Ne jamais afficher deux fois la même caméra de debug</b>, et dégrader proprement (avertissement une seule fois) quand il manque des caméras.</li>
+<li><b>Chaque caméra a sa propre plage de lisibilité Depth</b>, avec un défaut global dans <code>engine.json</code> (bug 66).</li>
+<li><b>Poser une caméra sur un axe sans deviner</b> : la rotation se dérive de <code>Forward()</code>.</li>
+<li><b>Les gizmos</b> : un asset manquant n’éteint pas toute la scène (55) et la teinte grise reste observable (56).</li>
+</ol>
+
+<h3>Les décisions, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Que compte le plafond d’<code>engine.json</code></td><td>caméras · viewports</td><td>viewports : <code>viewport.maxViewport</code></td><td>« maxCameras » promettait de limiter la scène alors qu’il limitait l’écran. Renommé, borné une seule fois au chargement.</td></tr>
+<tr><td>Rôle des slots</td><td>toutes caméras mêlées · slot 0 jeu, slots 1.. debug</td><td>slot 0 jeu, le reste debug</td><td>Onky : « Oui, c’est exactement ça ».</td></tr>
+<tr><td>Nombre de slots rendus</td><td>variable · exactement 1 slot de rendu</td><td>toujours exactement 1 slot rendu (jeu)</td><td>Onky : « Toujours exactement 1 slot rendu ».</td></tr>
+<tr><td>Quand recalculer</td><td>au chargement · chaque frame</td><td>chaque frame</td><td>Onky : « Recalcul en direct ». Une caméra qui passe active/inactive change les vues sans relancer.</td></tr>
+<tr><td>Bornes</td><td><code>vector</code> local · tampon fixe</td><td><code>kMaxCamerasHard</code> (<code>constexpr</code>) pour les tampons, plafond configuré pour l’usage</td><td>Jamais d’allocation dans un système appelé par frame.</td></tr>
+<tr><td>Politique des gizmos (56)</td><td>A5 · A9 §11.2</td><td>A5</td><td>Tous visibles, la teinte distingue l’active. A9 §11.2 reste une dette visible.</td></tr>
+<tr><td>Lisibilité Depth (66)</td><td>globale · par caméra · calculée depuis <code>farPlane</code></td><td>par caméra, défaut global (R20)</td><td>Une valeur de lisibilité n’est pas une valeur géométrique : elles partagent l’unité, pas la nature.</td></tr>
+<tr><td>Style de rendu par viewport</td><td>maintenant · avec une interface</td><td>avec une interface</td><td>Onky : le cycle clavier suffit tant qu’aucune UI n’existe.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+<p>La chaîne du moteur, du lancement à l’image. <b>Les cases en surbrillance sont celles que ce lot touche.</b> Le lot ne modifie aucun étage de rastérisation : il règle quelles caméras sont rendues, dans quels viewports, avec quelle donnée de lisibilité.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 560" role="img" aria-label="Chaîne du moteur avec les étages touchés par le lot PH1-E en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+</style>
+<text class="ph" x="16" y="20">1 · LANCEMENT (une fois)</text>
+<rect class="bx" x="16" y="30" width="150" height="58" rx="8"/>
+<text class="lb" x="28" y="52">ResolveContentRoot</text><text class="sb" x="28" y="69">env → appli → exe</text><text class="sb" x="28" y="82">(lot PH1-D)</text>
+<rect class="bxh" x="180" y="30" width="200" height="58" rx="8"/>
+<text class="lb" x="192" y="52">EngineConfig (61)</text><text class="sb" x="192" y="69">viewport.maxViewport</text><text class="sb" x="192" y="82">borné UNE fois, LoadFromJson</text>
+<rect class="bx" x="394" y="30" width="150" height="58" rx="8"/>
+<text class="lb" x="406" y="52">LoadSceneGraph</text><text class="sb" x="406" y="69">Camera, depthDisplay…</text><text class="sb" x="406" y="82">Serializer (66)</text>
+<rect class="bxh" x="558" y="30" width="170" height="58" rx="8"/>
+<text class="lb" x="570" y="52">LoadGizmoAssets (55)</text><text class="sb" x="570" y="69">assets partiels admis</text><text class="sb" x="570" y="82">IsValid = un des deux</text>
+<rect class="bxh" x="742" y="30" width="142" height="58" rx="8"/>
+<text class="lb" x="754" y="52">SpawnGizmos (56)</text><text class="sb" x="754" y="69">repli par caméra</text><text class="sb" x="754" y="82">plus de m_visible</text>
+<line class="ln" x1="166" y1="59" x2="176" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="380" y1="59" x2="390" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="544" y1="59" x2="554" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="728" y1="59" x2="738" y2="59" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="124">2 · UNE FRAME — ENTRÉES, MONDE, CUISSON 1 (lot PH1-D, inchangé)</text>
+<rect class="bx" x="16" y="134" width="190" height="52" rx="8"/>
+<text class="lb" x="28" y="156">BuildInputState</text><text class="sb" x="28" y="173">F2…F9 = demandes de cycle</text>
+<rect class="bx" x="220" y="134" width="190" height="52" rx="8"/>
+<text class="lb" x="232" y="156">Player, Animation</text><text class="sb" x="232" y="173">realDt, simDt</text>
+<rect class="bx" x="424" y="134" width="190" height="52" rx="8"/>
+<text class="lb" x="436" y="156">Cuisson n°1</text><text class="sb" x="436" y="173">Local + World, tout</text>
+<rect class="bx" x="628" y="134" width="256" height="52" rx="8"/>
+<text class="lb" x="640" y="156">Systèmes caméra</text><text class="sb" x="640" y="173">FPS, Follow, Zoom</text>
+<line class="ln" x1="206" y1="160" x2="216" y2="160" marker-end="url(#ar)"/>
+<line class="ln" x1="410" y1="160" x2="420" y2="160" marker-end="url(#ar)"/>
+<line class="ln" x1="614" y1="160" x2="624" y2="160" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="214">3 · CHOISIR QUOI RENDRE ET OÙ (S13 étapes 6-7) — LE CŒUR DU LOT</text>
+<path class="ln" d="M756 186 L756 198 L110 198 L110 232" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="236" width="200" height="74" rx="8"/>
+<text class="lb" x="28" y="258">CollectActiveCameras</text><text class="sb" x="28" y="275">filtre catégorie + active</text><text class="sb" x="28" y="288">tri par priorité</text><text class="sb" x="28" y="301">Gameplay | Debug</text>
+<rect class="bxh" x="230" y="236" width="230" height="74" rx="8"/>
+<text class="lb" x="242" y="258">Attribution des slots (61)</text><text class="sb" x="242" y="275">slot 0 = Gameplay (F2)</text><text class="sb" x="242" y="288">slots 1.. = Debug, sans doublon</text><text class="sb" x="242" y="301">0 Gameplay actif → arrêt</text>
+<rect class="bxh" x="474" y="236" width="210" height="74" rx="8"/>
+<text class="lb" x="486" y="258">BuildCameraBindings (61)</text><text class="sb" x="486" y="275">n == slotCount sinon</text><text class="sb" x="486" y="288">warn + return 0</text><text class="sb" x="486" y="301">BuildLayout → 1, 2 ou 4</text>
+<rect class="bxh" x="698" y="236" width="186" height="74" rx="8"/>
+<text class="lb" x="710" y="258">CameraGizmoSystem (56)</text><text class="sb" x="710" y="275">une seule affectation</text><text class="sb" x="710" y="288">m_color (ambre / gris)</text><text class="sb" x="710" y="301">cuisson n°2 ensuite</text>
+<line class="ln" x1="216" y1="273" x2="226" y2="273" marker-end="url(#ar)"/>
+<line class="ln" x1="460" y1="273" x2="470" y2="273" marker-end="url(#ar)"/>
+<line class="ln" x1="684" y1="273" x2="694" y2="273" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="344">4 · VUES ET IMAGE (S13 étapes 8-9)</text>
+<path class="ln" d="M790 310 L790 328 L110 328 L110 362" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="366" width="230" height="74" rx="8"/>
+<text class="lb" x="28" y="388">BuildViewData × N (66)</text><text class="sb" x="28" y="405">mode ← Panel (session)</text><text class="sb" x="28" y="418">depthDisplayRange ← caméra</text><text class="sb" x="28" y="431">sinon engine.json (auteur)</text>
+<rect class="bxh" x="260" y="366" width="230" height="74" rx="8"/>
+<text class="lb" x="272" y="388">RenderView × N (66)</text><text class="sb" x="272" y="405">SetMode(view.mode)</text><text class="sb" x="272" y="418">SetDepthDisplayRange(view)</text><text class="sb" x="272" y="431">une plage PAR vue</text>
+<rect class="bx" x="504" y="366" width="200" height="74" rx="8"/>
+<text class="lb" x="516" y="388">Rastérisation</text><text class="sb" x="516" y="405">B3 → D-a1d</text><text class="sb" x="516" y="418">ShadeFragment_Depth</text><text class="sb" x="516" y="431">lit la plage de la vue</text>
+<rect class="bx" x="718" y="366" width="166" height="74" rx="8"/>
+<text class="lb" x="730" y="388">Present</text><text class="sb" x="730" y="405">séparateurs d’écran</text><text class="sb" x="730" y="418">(codés en dur, dette)</text>
+<line class="ln" x1="246" y1="403" x2="256" y2="403" marker-end="url(#ar)"/>
+<line class="ln" x1="490" y1="403" x2="500" y2="403" marker-end="url(#ar)"/>
+<line class="ln" x1="704" y1="403" x2="714" y2="403" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="478">CE QUE LE LOT NE TOUCHE PAS</text>
+<rect class="bx" x="16" y="488" width="868" height="60" rx="8"/>
+<text class="sb" x="28" y="510">Étage sommets et faces, noyaux de pixels, LOD, ordre de frame S13, graphe de scène, horloge, TriggerSystem.</text>
+<text class="sb" x="28" y="530">Le lot change QUELLES caméras arrivent au rendu et AVEC QUELLE plage de lisibilité, pas COMMENT on rastérise.</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Sujet</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Core/EngineSettings.h</code></td><td>LIB</td><td>61</td><td><code>kMaxCamerasHard</code> = <code>LV3_MAX_VIEWPORT</code> (4), borne des tampons</td></tr>
+<tr><td><code>Core/EngineConfig.h/.cpp</code>, <code>engine.json</code></td><td>LIB</td><td>61</td><td><span class="pill warn">renommé</span> <code>camera.maxCameras</code> → <code>viewport.maxViewport</code>, borné au chargement</td></tr>
+<tr><td><code>Scene/CameraBinding.CPP</code></td><td>LIB</td><td>61</td><td>garde <code>n &gt; kMaxCamerasHard</code>, <code>n == slotCount</code>, <code>SnapToSupportedViewportCount</code></td></tr>
+<tr><td><code>Scene/DebugGizmos.cpp/.hpp</code></td><td>LIB</td><td>55, 56</td><td>logs gardés par booléen de chargement ; une affectation de couleur ; <code>IsValid()</code> en <code>||</code> ; repli par caméra</td></tr>
+<tr><td><code>Scene/Components/Component.hpp</code></td><td>LIB</td><td>56, 66</td><td>retrait de <code>m_visible</code> ; ajout <code>m_depthDisplayRange</code></td></tr>
+<tr><td><code>Scene/Serializer.cpp</code>, <code>Rendering/ViewData.h</code></td><td>LIB</td><td>66</td><td>lecture de la clé ; champ <code>depthDisplayRange</code></td></tr>
+<tr><td><code>Scene/System.cpp</code> (<code>BuildViewData</code>), <code>Scene/RenderSystem.cpp</code> (<code>RenderView</code>)</td><td>LIB</td><td>66</td><td>résolution caméra → défaut global ; appel par vue</td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>61, 66</td><td><code>Panel panels[kMaxCamerasHard]</code>, <code>g_cycle*[kMaxCamerasHard]</code>, attribution des slots, F2-F9 ; appel global de <code>SetDepthDisplayRange</code> supprimé</td></tr>
+<tr><td><code>solar_system.json</code></td><td>EXE</td><td>cardinales</td><td>Top, Right, Bottom, Left (priorités 7, 6, 5, 4), <code>depthDisplayRange</code> par caméra</td></tr>
+<tr><td><code>architecture-rules.md</code>, <code>Carnet_de_route</code>, <code>Annexe_A11</code></td><td>projet</td><td>tous</td><td><span class="pill ok">ajout</span> règles R12 (résolue), R20, séparation donnée de session / d’auteur</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+<p>Six fonctionnements sont remis en question. Les lignes surlignées sont celles qui changent. Les extraits repris du carnet et de l’annexe A11 sont cités tels quels ; les autres sont des <b>formes de lecture</b> (pseudo-code) : le texte exact est dans le dépôt.</p>
+
+<h3>A · Ce que compte le plafond (61, évolution)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — un plafond de « caméras »</div>
+<pre><code>engine.json
+<span class="hl">  "camera": { "maxCameras": 2 }</span>
+
+EngineConfig::CameraConfig::maxCameras
+<span class="hl">  = min(valeur, kMaxCamerasHard)   // au chargement</span>
+
+scène : 2 caméras actives, 3 inactives
+<span class="hl">  → le programme « trouve » 4 caméras,</span>
+<span class="hl">    veut 4 viewports, et s'arrête si maxCameras = 2</span></code></pre></div>
+<div class="ap"><div class="t">Après — un plafond de viewports désirés</div>
+<pre><code>engine.json
+<span class="hl">  "viewport": { "maxViewport": 4 }</span>
+
+EngineConfig::ViewportConfig::maxViewport
+<span class="hl">  = min(valeur, kMaxCamerasHard)   // UNE fois</span>
+
+nombre de viewports =
+<span class="hl">  Snap(min(maxViewport, 1 + nbCamerasDebugActives))</span>
+caméras en trop → disponibles par F4/F6/F8
+caméras en moins → dégradation + 1 avertissement</code></pre></div>
+</div>
+
+<h3>B · Qui voit quoi : la fin de <code>Panel[2]</code> (61, évolution)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — deux panneaux, cycles à deux cases</div>
+<pre><code><span class="hl">Panel panels[2];</span>
+<span class="hl">static bool g_cycleCam [2];</span>
+<span class="hl">static bool g_cycleMode[2];</span>
+
+// avec 4 viewports : p = 2 → accès hors limites
+//   g_cycleCam[p] = false;        // RangeChecks : exception
+// F4 / F6 / F8 : bascule « inutile »,
+//   l'écran s'efface une frame (voir 1.1 ci-dessous)</code></pre></div>
+<div class="ap"><div class="t">Après — taille dérivée de la borne dure</div>
+<pre><code><span class="hl">Panel panels[kMaxCamerasHard];   // {Entity camera; ERenderMode mode;}</span>
+<span class="hl">static bool g_cycleCam [kMaxCamerasHard] = {};</span>
+<span class="hl">static bool g_cycleMode[kMaxCamerasHard] = {};</span>
+<span class="hl">static_assert(std::size(panels) == kMaxCamerasHard);</span>
+
+slot 0       : Gameplay, F2 (caméra) / F3 (mode)
+slots 1 à 3  : Debug, F4-F5, F6-F7, F8-F9
+IsCameraUsedByOtherDebugSlot → jamais de doublon</code></pre></div>
+</div>
+
+<h3>C · La plage de lisibilité Depth (66)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — une plage pour toutes les vues</div>
+<pre><code>// main.cpp, avant la boucle des vues
+<span class="hl">renderer.SetDepthDisplayRange(</span>
+<span class="hl">   EngineConfig::Get().debug.depthDisplayRange); // 80</span>
+
+pour chaque vue :
+    RenderView(view)        // SetMode(...) seulement
+
+// Right_Camera à 120 u : dist/80 &gt; 1 → tout à 255</code></pre></div>
+<div class="ap"><div class="t">Après — la plage voyage avec la vue</div>
+<pre><code>// Component.hpp, CameraComponent
+<span class="hl">float m_depthDisplayRange = -1.0f;  // -1 = non défini</span>
+// Serializer.cpp
+<span class="hl">c.m_depthDisplayRange = r.Read("depthDisplayRange", -1.0f);</span>
+// System.cpp, BuildViewData
+<span class="hl">v.depthDisplayRange = (cam.m_depthDisplayRange &gt; 0.0f)</span>
+<span class="hl">    ? cam.m_depthDisplayRange</span>
+<span class="hl">    : LV3::EngineConfig::Get().debug.depthDisplayRange;</span>
+// RenderSystem.cpp, RenderView, après SetMode
+<span class="hl">renderer.SetDepthDisplayRange(view.depthDisplayRange);</span></code></pre></div>
+</div>
+
+<h3>D · Les gizmos (55, 56)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>LoadGizmoAssets :
+    si (perspective OU ortho a chargé) :
+<span class="hl">        mg  = GetMesh(a.m_perspective)   // nul si absent</span>
+<span class="hl">        mg2 = GetMesh(a.m_orthographic)  // nul si absent</span>
+<span class="hl">        log(mg-&gt;faceCount(), mg2-&gt;faceCount())</span>
+
+CameraGizmoSystem :
+<span class="hl">    dbg.m_color   = ...;  // première affectation, morte</span>
+<span class="hl">    dbg.m_color   = isActive ? ambre : gris;</span>
+<span class="hl">    dbg.m_visible = isActive;  // le filtre de RenderView est</span>
+<span class="hl">                               // commenté : état intermédiaire</span></code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>LoadGizmoAssets :
+    <span class="hl">si (resultPerspect.has_value()) { LV3_ASSERT(mg);  log(...) }</span>
+    <span class="hl">si (resultOrthogr .has_value()) { LV3_ASSERT(mg2); log(...) }</span>
+GizmoAssets::IsValid() = persp.IsValid() <span class="hl">||</span> ortho.IsValid()
+SpawnCameraGizmos :
+    <span class="hl">want = assets.For(cam.m_projection)</span>
+    <span class="hl">si !want.IsValid() : warn ; continue   // CETTE caméra seule</span>
+
+CameraGizmoSystem :
+    <span class="hl">dbg.m_color = isActive ? ambre : gris;   // une seule fois</span>
+    // m_visible supprimé du composant ; A9 §11.2 : dette visible</code></pre></div>
+</div>
+
+<h3>E · Poser une caméra cardinale (rotation)</h3>
+<div class="ab">
+<div class="pr"><div class="t">Avant — par analogie avec une caméra sœur</div>
+<pre><code>TopDown_Camera : rotation copiée d'une caméra voisine
+<span class="hl">  → ne regarde rien d'utile : écran vide</span>
+<span class="hl">  → pris pour un bug de bascule (le switch « inutile »)</span></code></pre></div>
+<div class="ap"><div class="t">Après — dérivée de Forward()</div>
+<pre><code>Forward() = (0, 0, -1) ; q = q_yaw · q_pitch · q_roll
+<span class="hl">pitch θ : Forward → (0, sin θ, -cos θ)     // voir amendement AM2</span>
+<span class="hl">yaw   θ : Forward → (-sin θ, 0, -cos θ)</span>
+Top    (0,120,0)  : pitch -90      Bottom (0,-120,0) : pitch +90
+Right  (120,0,0)  : yaw   +90      Left   (-120,0,0) : yaw   -90</code></pre></div>
+</div>
+</section>
+
+<section id="labos">
+<h2>1 · Laboratoires — voir les règles avant le code</h2>
+<div class="note">
+Les laboratoires sont des <b>modèles</b> : ils appliquent les règles écrites dans le carnet et A11, avec les mêmes noms, mais ne sont pas le code du moteur. Les calculs sont en float32 (<code>Math.fround</code>) comme le CPU. L’ordre de tri des priorités (croissant ici) est un choix du modèle : les règles testées n’en dépendent pas.
+</div>
+
+<h3 id="lab-slots">1.1 · Les slots : combien de vues, quelle caméra dans chacune</h3>
+<p>Règle (A11) : nombre désiré = <code>min(maxViewport, kMaxCamerasHard)</code> ; possible = 1 slot de jeu + une vue par caméra debug active ; la mise en page n’existe qu’à 1, 2 ou 4 vues, donc on arrondit vers le bas. Aucune caméra de jeu active : arrêt. Les boutons <span class="kbd">F2</span> à <span class="kbd">F8</span> avancent la caméra du slot à la suivante, en sautant celles déjà affichées dans un autre slot.</p>
+<div class="ctl">
+  <label for="sM">maxViewport :
+    <select id="sM"><option>1</option><option>2</option><option>3</option><option selected>4</option><option>6</option></select>
+  </label>
+  <label for="sG">caméras Gameplay actives :
+    <select id="sG"><option>0</option><option>1</option><option selected>2</option><option>3</option></select>
+  </label>
+  <label for="sD">caméras Debug actives :
+    <select id="sD"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option selected>5</option></select>
+  </label>
+  <label><input type="checkbox" id="sOld"> contre-exemple : ancien comportement (nombre de vues = nombre de caméras actives)</label>
+</div>
+<div class="ctl">
+  <button type="button" id="bF2">F2 — jeu</button>
+  <button type="button" id="bF4">F4 — slot 1</button>
+  <button type="button" id="bF6">F6 — slot 2</button>
+  <button type="button" id="bF8">F8 — slot 3</button>
+  <button type="button" id="bReset">Réinitialiser</button>
+</div>
+<div class="lab">
+  <div>
+    <canvas id="sCanvas" width="640" height="300" aria-label="Plan des viewports et des caméras attribuées"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--game)"></i>slot 0 — Gameplay</span>
+      <span><i style="background:var(--dbg)"></i>slots 1.. — Debug</span>
+    </div>
+  </div>
+  <div>
+    <div class="stats" id="sStats"></div>
+  </div>
+</div>
+<h4>Journal de l’attribution</h4>
+<div class="console" id="sLog" aria-live="polite"></div>
+<div class="note">
+<b>Ce qu’il faut essayer.</b> (1) Réglage par défaut : 4 vues, jeu = FPS, debug = Overview, Left, Bottom. <span class="kbd">F4</span> donne Right, pas Left ni Bottom, qui sont déjà affichées : c’est <code>IsCameraUsedByOtherDebugSlot</code>. (2) Caméras Debug = 2 : trois vues possibles, la mise en page n’en a pas : arrondi à 2 avec un avertissement. (3) Caméras Gameplay = 0 : arrêt. (4) Cocher le contre-exemple, caméras Debug = 2, maxViewport = 2 : l’ancien code compte 4 caméras, veut 4 vues, et s’arrête parce que le plafond est 2.
+</div>
+
+<h3 id="lab-rot">1.2 · Poser une caméra sur un axe</h3>
+<p>Une caméra est placée à 120 unités de l’origine et doit la regarder. Le laboratoire calcule <code>Forward</code> et <code>Up</code> avec la composition <code>q_yaw · q_pitch · q_roll</code> (float32), puis le produit scalaire de <code>Forward</code> avec la direction caméra → origine : 1 signifie « l’origine est pile au centre de l’image », −1 « la caméra tourne le dos ».</p>
+<div class="ctl">
+  <label for="rPre">Position :
+    <select id="rPre">
+      <option value="Top" selected>Top (0, 120, 0)</option>
+      <option value="Bottom">Bottom (0, −120, 0)</option>
+      <option value="Right">Right (120, 0, 0)</option>
+      <option value="Left">Left (−120, 0, 0)</option>
+    </select>
+  </label>
+  <label for="rP">pitch (°) <input type="range" id="rP" min="-180" max="180" step="15" value="-90"><span id="rPv" class="num">−90</span></label>
+  <label for="rY">yaw (°) <input type="range" id="rY" min="-180" max="180" step="15" value="0"><span id="rYv" class="num">0</span></label>
+  <button type="button" id="rDeriv">Valeurs dérivées</button>
+  <button type="button" id="rGuess">Valeur « par analogie »</button>
+</div>
+<div class="lab">
+  <div><canvas id="rCanvas" width="640" height="280" aria-label="Vue de côté : caméra, direction de visée et origine"></canvas></div>
+  <div><div class="stats" id="rStats"></div></div>
+</div>
+<div class="console" id="rLog" aria-live="polite"></div>
+
+<h3 id="lab-depth">1.3 · La plage de lisibilité Depth : une constante pour tous, ou une par vue</h3>
+<p>Le mode <code>Depth</code> affiche <code>t = Saturate(dist / depthDisplayRange)</code>, puis un gamma 1/2,2. Au-delà de la plage, <code>t</code> vaut 1 et tous les pixels sont blancs : l’image ne contient plus d’information. Une constante unique de 80 (le défaut d’<code>engine.json</code>) ne convient pas à une caméra dont la scène est à 120 unités.</p>
+<div class="ctl">
+  <label for="dCam">Caméra :
+    <select id="dCam">
+      <option value="120" selected>Right_Camera (centre de la scène à 120 u)</option>
+      <option value="60">caméra rapprochée (centre à 60 u)</option>
+    </select>
+  </label>
+  <label for="dR">plage de la caméra <input type="range" id="dR" min="20" max="300" step="10" value="150"><span id="dRv" class="num">150</span></label>
+  <label><input type="checkbox" id="dGlobal"> contre-exemple : plage globale 80 pour toutes les vues</label>
+  <label for="dD">distance d’un pixel <input type="range" id="dD" min="0" max="300" step="1" value="120"><span id="dDv" class="num">120</span></label>
+</div>
+<canvas id="dCanvas" width="640" height="190" aria-label="Rampe de gris selon la distance, plage globale contre plage par caméra"></canvas>
+<div class="stats" id="dStats"></div>
+<h4>Huit pixels dans un registre AVX2 (une voie par pixel)</h4>
+<div class="lanes" id="dLanes"></div>
+</section>
+
+<section id="technique">
+<h2>2 · La technique, expliquée</h2>
+
+<h3>2.1 · Deux nombres, deux plafonds</h3>
+<p>Le moteur a besoin de deux bornes qui ne s’appliquent pas au même moment. <code>kMaxCamerasHard</code> (<code>constexpr</code>, 4) dimensionne les tableaux : <code>Panel panels[...]</code>, <code>bindings</code>, <code>views</code>, <code>renderedCameras</code>, et le tampon de <code>BuildCameraBindings</code>. Un tableau dont la taille se connaît à la compilation ne coûte aucune allocation par frame. <code>viewport.maxViewport</code> est le choix de l’utilisateur ; il est lu et borné par <code>std::min</code> <b>une seule fois</b>, à <code>LoadFromJson</code>. Aucun site d’usage ne répète le <code>min</code> : un plafond répété est un plafond qu’on oublie.</p>
+
+<h3>2.2 · Pourquoi 1, 2 ou 4 et jamais 3</h3>
+<p><code>BuildLayout</code> produit cinq dispositions (<code>Single, SplitH, SplitV, Quad, MainSide</code>) : 1, 2 ou 4 rectangles. Il n’existe pas de disposition à trois vues. <code>SnapToSupportedViewportCount</code> ramène donc toute demande à la valeur supportée inférieure (3 → 2). C’est un contournement assumé, pas une absence de décision : le troisième layout est reporté (roadmap PH1E-3).</p>
+
+<h3>2.3 · Le contrat de <code>BuildCameraBindings</code></h3>
+<p>La fonction reçoit <code>slotCount</code> et le nombre de caméras <code>n</code> à placer. Le contrat tranché est <code>n == slotCount</code> : un <code>n</code> plus petit voudrait dire qu’une vue demandée n’a pas de caméra, silencieusement. La fonction tourne à chaque frame ; en cas de violation elle fait <code>Logger::warn</code> et <code>return 0</code>, jamais un <code>assert</code> seul, qui n’existe pas en Release (patron PH1C.b). L’off-by-one corrigé : <code>n &gt;= LV3_MAX_VIEWPORT</code> rejetait <code>Quad</code> qui remplit exactement les 4 cases ; la garde correcte est <code>n &gt; kMaxCamerasHard</code>.</p>
+
+<h3>2.4 · Attribution des slots, chaque frame</h3>
+<p>Le slot 0 reçoit une caméra Gameplay active ; seule <code>panels[0].camera</code> est touchée par <code>F2</code> (une première version balayait toutes les caméras de jeu et faisait osciller FPS et Follow). Les slots 1 à <code>slotCount − 1</code> reçoivent des caméras Debug actives, triées par priorité. <code>IsCameraUsedByOtherDebugSlot</code> interdit qu’une même caméra occupe deux slots ; un <code>assert</code> en <code>_DEBUG</code> dans <code>BuildCameraBindings</code> garde le même invariant. Si une caméra devient inactive en cours d’exécution, son slot en prend une autre au prochain recalcul. Le message de dégradation n’est émis que sur le <b>changement</b> d’état (front), pas à chaque frame.</p>
+
+<h3>2.5 · Donnée de session, donnée d’auteur</h3>
+<p>Ce qui vit dans le JSON (<code>depthDisplayRange</code>, <code>far</code>, <code>priority</code>) est une donnée d’<b>auteur</b> : elle suit <code>CameraComponent → ViewData</code> dans <code>BuildViewData</code>. Ce que l’utilisateur change en jouant (le mode de rendu d’un slot, la caméra choisie) est une donnée de <b>session</b> : elle suit <code>Panel → CameraBinding → ViewData</code>. Le bug 66 se corrigeait dans le premier trajet ; l’écrire dans le second aurait fonctionné et mélangé deux responsabilités. Même idée pour R20 : <code>depthDisplayRange</code> est un choix de lisibilité, jamais dérivé de <code>farPlane</code>, parce que partager l’unité (des unités monde) ne fait pas de deux grandeurs la même grandeur.</p>
+
+<h3>2.6 · Gizmos : ne pas éteindre toute la scène pour un asset</h3>
+<p>Le bug 55 était une garde en <code>||</code> suivie d’un corps qui supposait <code>&amp;&amp;</code>. Le correctif garde chaque bloc par le booléen qui l’a rempli. <code>GizmoAssets::IsValid()</code> vaut « au moins un des deux » ; <code>SpawnCameraGizmos</code> saute une caméra dont l’asset de <i>sa</i> projection manque (avertissement nommé), pas toute la scène ; <code>Test_GizmoCountMatchesCameras(Registry&amp;, const GizmoAssets&amp;)</code> compte pareil. Pour le 56, <code>m_visible</code> a été retiré du composant : un champ écrit et jamais lu par un filtre actif ment sur le comportement.</p>
+
+<h3>2.7 · Rotation : la formule, pas l’œil</h3>
+<p>Un angle d’Euler en degrés (JSON) devient <code>Quatf(eulerDeg, true)</code> avec <code>x = pitch</code>, <code>y = yaw</code>, <code>z = roll</code>, composé en <code>q_yaw · q_pitch · q_roll</code>. On applique ce quaternion à <code>Forward() = (0, 0, −1)</code> et on exige que le résultat pointe vers l’origine. Pour le pitch : une rotation θ autour de X envoie <code>(0, 0, −1)</code> sur <code>(0, sin θ, −cos θ)</code>. L’annexe A11 écrit <code>−sin θ</code> ; c’est une erreur de signe de la formule (amendement AM2), sans effet sur les valeurs livrées qui, elles, sont justes (Top = −90°).</p>
+</section>
+
+<section id="etapes">
+<h2>3 · Les étapes, une par une</h2>
+<p>Chaque étape donne son objectif, le résultat de l’étape précédente qu’elle utilise, le résultat qu’elle produit, le code scalaire et, quand il existe, l’équivalent vectorisé. Les exemples suivent le réglage par défaut du laboratoire 1.1 : <code>maxViewport = 4</code>, jeu = <code>FPS_Camera</code> et <code>Follow_Camera</code>, debug = <code>Overview</code> (priorité 3), <code>Left</code> (4), <code>Bottom</code> (5), <code>Right</code> (6), <code>Top</code> (7).</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Lire et borner le réglage de viewports</div><div class="b">
+<p><b>Objectif.</b> Obtenir le nombre de vues désiré, une fois, sans qu’aucun site d’usage ne répète le plafond.</p>
+<div class="io"><div><h5>Entrée (étape précédente)</h5><code>engine.json</code>, clé <code>viewport.maxViewport</code> (peut manquer).</div><div><h5>Résultat</h5>Valeur 6 → <b>4</b> ; clé absente → <b>4</b> ; valeur 2 → <b>2</b> ; valeur 0 → voir la roadmap (PH1E-7 : ≤ 0).</div></div>
+<div class="sc"><div><div class="t">Scalaire (forme de lecture)</div><pre><code>cfg.viewport.maxViewport =
+    std::min&lt;std::size_t&gt;(
+        r.Child("viewport").Read("maxViewport", kMaxCamerasHard),
+        kMaxCamerasHard);   // UNE fois, au chargement</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun équivalent : une valeur, lue une fois au
+// lancement. Rien à gagner.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Poser une caméra cardinale</div><div class="b">
+<p><b>Objectif.</b> Qu’une caméra posée sur un axe regarde l’origine, par calcul et non par essai.</p>
+<div class="io"><div><h5>Entrée</h5><code>Forward() = (0, 0, −1)</code>, composition <code>q_yaw · q_pitch · q_roll</code>.</div><div><h5>Résultat (float32, laboratoire 1.2)</h5>Top −90° : <code>Forward = (0, −0,99999994, 0)</code> · Bottom +90° : <code>(0, +0,99999994, 0)</code> · Right yaw +90° : <code>(−0,99999994, 0, 0)</code> · Left yaw −90° : <code>(+0,99999994, 0, 0)</code>. Produit scalaire avec la direction vers l’origine : 0,99999994 pour les quatre.</div></div>
+<div class="sc"><div><div class="t">Scalaire</div><pre><code>// Quatf q = Quatf({pitch, yaw, roll}, true);
+Vec3f fwd = q.rotate(Vec3f::Forward());   // (0,0,-1)
+float d   = fwd.dot((origin - camPos).Normalized());
+LV3_ASSERT(d &gt; 0.9999f);   // test hors moteur, voir Vérifier</code></pre></div>
+<div><div class="t">Vectorisé (8 vecteurs, même quaternion)</div><pre><code>// v' = v + 2w(u×v) + 2u×(u×v), u = (qx,qy,qz) diffusé.
+// Une voie = un vecteur ; utile pour un lot de points, pas
+// pour une caméra. Montré pour mémoire.
+__m256 cx = _mm256_sub_ps(_mm256_mul_ps(uy, vz), _mm256_mul_ps(uz, vy));
+__m256 cy = _mm256_sub_ps(_mm256_mul_ps(uz, vx), _mm256_mul_ps(ux, vz));
+__m256 cz = _mm256_sub_ps(_mm256_mul_ps(ux, vy), _mm256_mul_ps(uy, vx));
+// t = 2 * c ; v' = v + w*t + u × t   (mêmes opérations, pas de FMA)</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Collecter les caméras actives par catégorie</div><div class="b">
+<p><b>Objectif.</b> Savoir ce qui est disponible avant de décider de la mise en page.</p>
+<div class="io"><div><h5>Entrée</h5>Le registre après la cuisson n°1 : 7 composants <code>CameraComponent</code>, dont 2 Gameplay et 5 Debug actifs.</div><div><h5>Résultat</h5><code>G = [FPS, Follow]</code>, <code>D = [Overview(3), Left(4), Bottom(5), Right(6), Top(7)]</code>. <code>G.size() ≥ 1</code> sinon arrêt.</div></div>
+<div class="sc"><div><div class="t">Scalaire (forme de lecture)</div><pre><code>for (auto&amp;&amp; [e, cam] : registry.ViewGroup&lt;CameraComponent&gt;()) {
+    if (!cam.m_isActive) continue;
+    (cam.m_category == ECameraCategory::Gameplay ? G : D).push_back(e);
+}
+std::sort(D.begin(), D.end(), byPriority);   // tampon fixe, pas de vector local
+if (G.empty()) { Logger::error("aucune caméra Gameplay active"); stop(); }</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun : quelques caméras, filtre à branches, tri.
+// Hors chemin chaud.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> Choisir le nombre de slots</div><div class="b">
+<p><b>Objectif.</b> Le nombre de vues vient du choix de l’utilisateur, borné par ce qui est possible, arrondi à une mise en page qui existe.</p>
+<div class="io"><div><h5>Entrée (étapes 1 et 3)</h5><code>maxViewport = 4</code>, <code>|G| = 2</code>, <code>|D| = 5</code>.</div><div><h5>Résultat</h5>désiré = min(4, 4) = 4 ; possible = 1 + 5 = 6 ; slotCount = Snap(min(4, 6)) = <b>4</b> (<code>Quad</code>).</div></div>
+<table><thead><tr><th>maxViewport</th><th>|D|</th><th>possible</th><th>min</th><th>slotCount</th><th>Message</th></tr></thead><tbody>
+<tr><td class="num">4</td><td class="num">5</td><td class="num">6</td><td class="num">4</td><td class="num"><b>4</b></td><td>aucun</td></tr>
+<tr><td class="num">4</td><td class="num">2</td><td class="num">3</td><td class="num">3</td><td class="num"><b>2</b></td><td>dégradé : 4 demandés, 3 possibles, arrondi à 2 (aucune mise en page à 3)</td></tr>
+<tr><td class="num">4</td><td class="num">0</td><td class="num">1</td><td class="num">1</td><td class="num"><b>1</b></td><td>dégradé : 4 demandés, 1 possible</td></tr>
+<tr><td class="num">2</td><td class="num">5</td><td class="num">6</td><td class="num">2</td><td class="num"><b>2</b></td><td>aucun (4 caméras debug en réserve)</td></tr></tbody></table>
+<div class="sc"><div><div class="t">Scalaire (forme de lecture)</div><pre><code>inline std::size_t SnapToSupportedViewportCount(std::size_t n) {
+    return n &gt;= 4 ? 4 : (n &gt;= 2 ? 2 : 1);   // pas de layout à 3
+}
+const std::size_t want = std::min(cfg.viewport.maxViewport, kMaxCamerasHard);
+const std::size_t can  = 1 + D.size();
+const std::size_t slotCount = SnapToSupportedViewportCount(std::min(want, can));</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun : trois entiers, une fois par frame.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Attribuer les caméras aux slots, sans doublon</div><div class="b">
+<p><b>Objectif.</b> Chaque slot de debug montre une caméra distincte ; <code>F4/F6/F8</code> avance vers la suivante <i>libre</i>.</p>
+<div class="io"><div><h5>Entrée (étapes 3 et 4)</h5><code>slotCount = 4</code>, <code>G</code>, <code>D</code> triée.</div><div><h5>Résultat</h5>slot 0 = FPS ; slot 1 = Overview ; slot 2 = Left ; slot 3 = Bottom. Après <span class="kbd">F4</span> : slot 1 = <b>Right</b> (Left et Bottom sont prises ; Right est la suivante libre).</div></div>
+<div class="sc"><div><div class="t">Scalaire (forme de lecture)</div><pre><code>panels[0].camera = G[iGame];                  // F2 : seulement le slot 0
+for (std::size_t s = 1; s &lt; slotCount; ++s) {
+    if (g_cycleCam[s]) {                      // demande de F4/F6/F8
+        panels[s].camera = NextCamera(D, panels[s].camera,
+            [&amp;](Entity c){ return !IsCameraUsedByOtherDebugSlot(panels, slotCount, s, c); });
+        g_cycleCam[s] = false;
+    }
+}</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun : ≤ 4 slots, comparaisons d'identifiants d'entités.
+// Un balayage SIMD coûterait plus que la boucle.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Construire les liaisons caméra ↔ rectangle</div><div class="b">
+<p><b>Objectif.</b> Poser chaque caméra dans son rectangle, et refuser proprement une demande incohérente, y compris en Release.</p>
+<div class="io"><div><h5>Entrée (étape 5)</h5><code>n = 4</code> caméras, <code>slotCount = 4</code>.</div><div><h5>Résultat</h5>Layout <code>Quad</code> ; 4 <code>CameraBinding</code> ; retour 4. Avec l’ancienne garde <code>n &gt;= 4</code> : retour 0 et un avertissement à tort.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant (garde fausse)</div><pre><code><span class="hl">if (n &gt;= LV3_MAX_VIEWPORT) {</span>   // 4 &gt;= 4 : Quad refusé
+    Logger::warn(...); return 0;
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">if (n &gt; kMaxCamerasHard) {</span>
+    Logger::warn(...); return 0;
+}
+<span class="hl">if (n != slotCount) {</span>        // contrat : n == slotCount
+    Logger::warn(...); return 0;
+}</code></pre></div></div>
+<p class="small">Vectorisé : aucun.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> Gizmos : un asset manquant ne coupe pas la scène</div><div class="b">
+<p><b>Objectif.</b> Les gizmos des caméras dont l’asset a chargé s’affichent ; le défaut d’un seul asset ne se transforme pas en déréférencement nul (55) ; la teinte ambre/grise reste observable (56).</p>
+<div class="io"><div><h5>Entrée</h5><code>GizmoAssets</code> avec perspective chargé, orthographique absent.</div><div><h5>Résultat</h5><code>IsValid() = true</code> ; les caméras perspective reçoivent un gizmo ; chaque caméra orthographique donne <code>Logger::warn</code> + <code>continue</code> ; aucun déréférencement nul.</div></div>
+<div class="sc"><div><div class="t">Scalaire (extrait du carnet)</div><pre><code>const MeshHandle want = assets.For(cam.m_projection);
+if (!want.IsValid()) { Logger::warn(...); continue; }
+// CameraGizmoSystem : une seule affectation
+dbg.m_color = isActive ? kAmber : kGrey;</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun : un gizmo par caméra, à la création.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> Résoudre la plage de lisibilité de chaque vue</div><div class="b">
+<p><b>Objectif.</b> Chaque <code>ViewData</code> porte sa propre plage Depth, du JSON de la caméra ou, à défaut, d’<code>engine.json</code>.</p>
+<div class="io"><div><h5>Entrée (étape 6)</h5>4 bindings : Right_Camera avec <code>"depthDisplayRange": 150</code> ; les trois autres sans clé (<code>m_depthDisplayRange = −1</code>) ; défaut global 80.</div><div><h5>Résultat</h5><code>views[i].depthDisplayRange</code> = 150, 80, 80, 80.</div></div>
+<div class="sc"><div><div class="t">Scalaire (code du lot)</div><pre><code>v.depthDisplayRange = (cam.m_depthDisplayRange &gt; 0.0f)
+    ? cam.m_depthDisplayRange
+    : LV3::EngineConfig::Get().debug.depthDisplayRange;</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// Aucun : un choix par vue (≤ 4 par frame).</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Donner la plage au renderer, puis colorier</div><div class="b">
+<p><b>Objectif.</b> La plage de <i>cette</i> vue s’applique aux pixels de <i>cette</i> vue, et à elle seule.</p>
+<div class="io"><div><h5>Entrée (étape 8)</h5><code>view.depthDisplayRange</code> ; distance <code>dist</code> par pixel.</div><div><h5>Résultat (float32, laboratoire 1.3)</h5>dist 120 : plage 80 → t = 1, octet 255 ; plage 150 → t = 0,8 (0,800000012), g = 0,903545, octet 230. dist 80 : 255 contre 192.</div></div>
+<div class="sc"><div><div class="t">Scalaire (forme de lecture de <code>ShadeFragment_Depth</code>)</div><pre><code>// RenderView, après SetMode :
+renderer.SetDepthDisplayRange(view.depthDisplayRange);
+// par pixel :
+const float t = Saturate(dist / depthDisplayRange);   // [0, 1]
+const float g = std::pow(t, 1.0f / 2.2f);
+const uint8_t byte = uint8_t(g * 255.0f + 0.5f);</code></pre></div>
+<div><div class="t">Vectorisé AVX2, 8 pixels (division et bornes)</div><pre><code>__m256 t = _mm256_div_ps(dist, range);              // vdivps
+t = _mm256_min_ps(_mm256_max_ps(t, zero), one);     // Saturate
+// gamma : pas de pow en AVX2 ; appel scalaire par voie,
+// ou table de 256 entrées (choix non fait, mode debug).
+// Attention : _mm256_max_ps(NaN, zero) rend zero, un NaN
+// scalaire resterait NaN selon la définition de Saturate.</code></pre></div></div>
+</div></div>
+</section>
+
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés : ce qu’il ne faut pas faire</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Erreur</th><th>Calcul</th><th>Conséquence</th></tr></thead>
+<tbody>
+<tr><td>Rotation « par analogie » : Top en pitch <b>+90°</b></td><td><code>Forward = (0, +0,99999994, 0)</code>, direction vers l’origine <code>(0, −1, 0)</code> ; produit scalaire <b>−0,99999994</b></td><td>La caméra regarde le ciel. Écran vide, pris pour un bug de bascule.</td></tr>
+<tr><td>Plage globale <b>80</b> pour une caméra à 120 u</td><td>Pour 80 ≤ dist ≤ 300 : t = 1, octet <b>255</b> partout. Avec 150 : dist 80 → 192, 120 → 230, 150 → 255.</td><td>Sur les distances entières de 0 à 300 (301 valeurs), la plage 80 donne 81 niveaux distincts et met 221 distances sur 301 (73 %) au même blanc ; la plage 150 donne 144 niveaux et 151 distances sur 301 (50 %) au blanc. Valeurs calculées en float32, laboratoire 1.3.</td></tr>
+<tr><td><code>Panel panels[2]</code> avec 4 vues</td><td>indices utilisés : 0, 1, 2, 3 ; cases valides : 0, 1</td><td>Accès hors limites dès <code>p = 2</code> : exception <code>RangeChecks</code> aux touches F6-F9.</td></tr>
+<tr><td>Garde <code>n &gt;= 4</code></td><td><code>Quad</code> : n = 4 ; <code>4 &gt;= 4</code> vrai</td><td>La mise en page à 4 vues est refusée avec un avertissement, alors qu’elle est valide.</td></tr>
+<tr><td>Nombre de vues = nombre de caméras trouvées</td><td>scène : 2 Gameplay + 5 Debug ≥ 4 trouvées ; plafond 2 ; 4 &gt; 2</td><td>Arrêt du programme, alors que 3 caméras sont inactives.</td></tr>
+<tr><td>Cycle sans test d’occupation</td><td>slots 1-3 = Overview, Left, Bottom ; <code>F4</code> suit la liste : suivante = Left</td><td>Slots 1 et 2 montrent la même caméra : une vue gaspillée, silencieusement.</td></tr>
+<tr><td><code>m_visible = isActive</code> + filtre réactivé</td><td>gizmos visibles seulement si actifs : tous les gizmos gris disparaissent</td><td>La teinte grise (A5) devient inobservable : code à moitié A5, à moitié A9 §11.2.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+<h3>Régler le nombre de vues (<code>engine.json</code>)</h3>
+<pre><code>"viewport": { "maxViewport": 4 },
+"debug":    { "depthDisplayRange": 80.0 }     // défaut global</code></pre>
+<h3>Une caméra cardinale avec sa propre plage (scène JSON, valeurs dérivées)</h3>
+<pre><code>{ "id": "Top_Camera",   "Transform": { "translation": [0, 120, 0],  "rotation": [-90, 0, 0] }, "priority": 7 },
+{ "id": "Right_Camera", "Transform": { "translation": [120, 0, 0],  "rotation": [0, 90, 0] },  "priority": 6,
+  "Camera": { "category": "debug", "projection": "perspective", "far": 2000, "infiniteFar": true,
+              "depthDisplayRange": 150.0 } }</code></pre>
+<h3>Les touches</h3>
+<div class="scroll"><table><thead><tr><th>Touche</th><th>Effet</th></tr></thead><tbody>
+<tr><td><span class="kbd">F2</span> / <span class="kbd">F3</span></td><td>slot 0 : caméra de jeu suivante / mode de rendu suivant</td></tr>
+<tr><td><span class="kbd">F4</span> / <span class="kbd">F5</span></td><td>slot 1 : caméra debug libre suivante / mode suivant</td></tr>
+<tr><td><span class="kbd">F6</span> / <span class="kbd">F7</span></td><td>slot 2 (idem)</td></tr>
+<tr><td><span class="kbd">F8</span> / <span class="kbd">F9</span></td><td>slot 3 (idem)</td></tr></tbody></table></div>
+<p class="small">Un cycle vers un slot qui n’existe pas (moins de viewports que de touches) est ignoré : c’est la raison pour laquelle les tableaux <code>g_cycle*</code> ont la taille de la borne dure.</p>
+</section>
+
+<section id="amend">
+<h2>6 · Amendements : ce que ce lot remet en question</h2>
+
+<div class="amend"><div class="h">AM1 · Le carnet parle encore de <code>camera.maxCameras</code> (bug 61)</div><div class="b">
+<div class="ab"><div class="av"><div class="t">Avant (carnet, note du bug 61)</div><pre><code>EngineConfig::CameraConfig::maxCameras
+engine.json["camera"]["maxCameras"], défaut kMaxCamerasHard
+« extension à plus de 2 viewports non faite »</code></pre></div>
+<div class="ap"><div class="t">Après (Discussion J)</div><pre><code>EngineConfig::ViewportConfig::maxViewport
+engine.json["viewport"]["maxViewport"], défaut kMaxCamerasHard
+nombre de viewports découplé du nombre de caméras (A11)</code></pre></div></div>
+<p class="small">Le carnet signale déjà l’évolution sous la note ; le texte d’origine reste comme historique. Une relecture documentaire est inscrite (PH1E-15).</p></div></div>
+
+<div class="amend"><div class="h">AM2 · Annexe A11 §6.3 et <code>architecture-rules.md</code> : signe de la formule du pitch</div><div class="b">
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>Rotate_X(Forward, θ) = (0, <span class="hl">-sinθ</span>, -cosθ)
+Top : (y,z) = (-1,0) → pitch = -90°       // la conclusion
+                                          // contredit la formule</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>Rotate_X(Forward, θ) = (0, <span class="hl">+sinθ</span>, -cosθ)
+Top : (y,z) = (-1,0) → sinθ = -1 → pitch = -90°
+Rotate_Y(Forward, θ) = (-sinθ, 0, -cosθ)   // inchangée</code></pre></div></div>
+<p class="small">Contrôle : avec <code>−sinθ</code>, pitch −90° donnerait <code>(0, +1, 0)</code>, une caméra qui regarde en haut ; or Top_View à −90° fonctionne. La rotation droite d’angle θ autour de X envoie <code>(0, 0, −1)</code> sur <code>(0, sinθ, −cosθ)</code>. Les valeurs livrées (−90, +90, +90, −90) sont justes ; seule la formule écrite est à corriger. Calcul fait hors moteur avec la composition standard : à confirmer contre <code>Quat::rotate</code> du dépôt avant de modifier A11 (PH1E-6).</p></div></div>
+
+<div class="amend"><div class="h">AM3 · L06 AM7 : « jusqu’à 4 panneaux » devient réel</div><div class="b">
+<p>AM7 du lot L06 annonçait jusqu’à quatre panneaux, la catégorie par position et l’arrêt sans caméra de jeu. Ce lot est la réalisation : <code>Panel[kMaxCamerasHard]</code>, slot 0 = jeu, slots 1.. = debug. Aucun texte à changer dans L06 ; le renvoi à A11 suffit.</p></div></div>
+
+<div class="amend"><div class="h">AM4 · PH1-D : « caméras rendues » n’est plus « caméras actives »</div><div class="b">
+<div class="ab"><div class="av"><div class="t">Avant (PH1-D, S13 étape 7)</div><pre><code>roots = caméras des vues rendues (2 panneaux)
+≈ toutes les caméras actives</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>roots = caméras des slots (≤ kMaxCamerasHard)
+caméras debug actives non affichées : non re-cuites
+→ 1 frame de retard à leur 1ʳᵉ apparition (F4)</code></pre></div></div>
+<p class="small">Le retard n’apparaît qu’à la bascule, une frame. PH1D-2 le décrivait pour un cas voisin ; il est précisé dans PH1E-9. Rien n’est décidé.</p></div></div>
+
+<div class="amend"><div class="h">AM5 · A5 / A9 : la politique « un seul frustum » (A9 §11.2) reste une dette visible</div><div class="b">
+<p>Le bug 56 retient A5 (tous les gizmos visibles, teinte distinctive). La ligne de filtre commentée dans <code>RenderSystem.cpp</code> renvoie à cette décision. Si A9 §11.2 est un jour tranchée, le champ devra revenir dans le composant avec son filtre, pas l’un sans l’autre.</p></div></div>
+</section>
+
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+<h3>7.1 · Tests hors moteur, exécutés par cette page</h3>
+<p>Ces tests tournent dans la page, avec les mêmes modèles que les laboratoires. Ils vérifient les <b>règles</b> ; les mêmes tests sont à écrire en C++ pour le moteur (PH1E-13).</p>
+<div class="scroll"><table id="tTable"><thead><tr><th>Test</th><th>Attendu</th><th>Obtenu</th><th>Verdict</th></tr></thead><tbody></tbody></table></div>
+<div class="stats" id="tStats"></div>
+
+<h3>7.2 · Filets Debug et vérifications dans le moteur</h3>
+<ul>
+<li>Compiler Debug et Release sans avertissement ; <code>static_assert(std::size(panels) == kMaxCamerasHard)</code> présent à côté de <code>Panel panels[...]</code>.</li>
+<li>Lancer avec 1, 2 et 4 viewports ; F2 à F9 sans exception <code>RangeChecks</code>.</li>
+<li>Scène avec une seule caméra debug active et <code>maxViewport = 4</code> : un avertissement de dégradation, une seule fois (front), pas à chaque frame.</li>
+<li>Aucune caméra Gameplay active : arrêt avec message.</li>
+<li>Mode Depth sur chaque caméra : un dégradé visible, pas un aplat blanc ; modifier <code>depthDisplayRange</code> dans le JSON d’une seule caméra ne change que sa vue.</li>
+<li><code>[Diag] slot…</code> reste commenté (PH1E-1).</li>
+</ul>
+
+<h3>7.3 · Prédictions pour le lot appairé (PH1-D)</h3>
+<div class="scroll"><table><thead><tr><th>Quantité</th><th>Prédiction</th></tr></thead><tbody>
+<tr><td>Racines de la cuisson n°2 avec 4 viewports</td><td>4 (une par slot), pas 7 : les caméras debug non affichées ne sont pas re-cuites (AM4).</td></tr>
+<tr><td>Appels à <code>SetDepthDisplayRange</code> par frame</td><td>1 par vue, soit 4 avec 4 vues ; un stockage d’un float, coût non mesurable à l’échelle de <code>Render</code>.</td></tr>
+<tr><td>Avertissements de dégradation par frame stable</td><td>0 (émis au changement d’état seulement).</td></tr>
+<tr><td>Temps de rendu</td><td>aucune prédiction chiffrée : ce lot ne mesure pas de temps. Le coût de quatre vues relève du chantier de mesure (phase G).</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="roadmap">
+<h2>8 · Roadmap — points relevés, rien n’est acté</h2>
+<p>Ces points sont aussi inscrits dans <code>Plan_Phase_G_LibraryV3.md</code> (section « lot PH1-E »). <b>Aucune décision à ce stade.</b> Plusieurs sont à vérifier sur le dépôt avant toute modification, parce qu’ils viennent du carnet ou d’un ancien clone.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th></tr></thead>
+<tbody>
+<tr><td>PH1E-1</td><td>Log <code>[Diag] slot…</code> commenté : retirer, laisser commenté, ou le placer sous <code>LV3_DEBUG</code></td><td>Décision</td></tr>
+<tr><td>PH1E-2</td><td><code>config.json</code> pointe vers <code>solar_system_v1compat.json</code> : éditer <code>solar_system.json</code> est sans effet</td><td>Piège connu</td></tr>
+<tr><td>PH1E-3</td><td>Pas de mise en page à 3 vues (<code>Snap</code> arrondit à 2)</td><td>Évolution</td></tr>
+<tr><td>PH1E-4</td><td>Séparateurs codés en dur (<code>cfg.mapViewports["left"]</code>, <code>["title"]</code>) faux en <code>Single</code> et <code>Quad</code></td><td>Dette</td></tr>
+<tr><td>PH1E-5</td><td>Style de rendu par viewport (UI) ; commandes qui ne suivent pas la caméra affichée (L6-12, L6-13)</td><td>Évolution</td></tr>
+<tr><td>PH1E-6</td><td>Signe du pitch dans A11 §6.3 et <code>architecture-rules.md</code> (AM2)</td><td>Documentation</td></tr>
+<tr><td>PH1E-7</td><td>Sentinelle <code>−1</code> de <code>m_depthDisplayRange</code> ; clé ≤ 0 non signalée ; défaut 80 écrit dans <code>ViewData</code> <i>et</i> <code>engine.json</code></td><td>Dette</td></tr>
+<tr><td>PH1E-8</td><td>Vérifier que <code>static_assert</code> sur les tailles de <code>panels</code>, <code>g_cycleCam</code>, <code>g_cycleMode</code> est en place</td><td>À vérifier</td></tr>
+<tr><td>PH1E-9</td><td>Cuisson n°2 : caméras debug non affichées non re-cuites (AM4, PH1D-2)</td><td>Dette</td></tr>
+<tr><td>PH1E-10</td><td>Données de scène : <code>"category": "game"</code> (non reconnue) dans <code>SceneBasicTest.json</code> ; priorités égales (Overview, Bottom_View) ; commentaire périmé sur <code>Top_Camera</code></td><td>À vérifier</td></tr>
+<tr><td>PH1E-11</td><td><code>SwitchCameraMode</code> peut-être inutilisé (constat sur un clone ancien)</td><td>À vérifier</td></tr>
+<tr><td>PH1E-12</td><td>Priorités égales : <code>CollectActiveCameras</code> avertit à chaque appel (L6-15)</td><td>Dette connue</td></tr>
+<tr><td>PH1E-13</td><td>Aucune TNR de l’attribution des slots, de <code>BuildCameraBindings</code>, de la rotation cardinale</td><td>Proposée</td></tr>
+<tr><td>PH1E-14</td><td>Les quatre caméras cardinales n’existent que dans la scène d’Onky ; scène modèle à décider</td><td>Décision</td></tr>
+<tr><td>PH1E-15</td><td>Carnet : notes du bug 61 (maxCameras, « question ouverte ») et « Prochaines actions » à relire à la lumière de ce lot</td><td>Documentation</td></tr>
+</tbody></table></div>
+<footer>Lot PH1-E · LibraryV3 · nom « PH1-E » (phase 1, discussions E et J) pour éviter la collision avec le chantier C, le jalon D et les lots de leçons. Décisions prises pendant l’échange : <code>Résultats/Résultats_Lot_PH1E_Gizmos_Cameras_Viewports.md</code>.</footer>
+</section>
+
+</main>
+
+<script>
+(function(){
+"use strict";
+var f = Math.fround;
+function $(id){ return document.getElementById(id); }
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888"; }
+function fmt(x,d){ d = d===undefined?6:d; var s = (Math.abs(x)<5e-7 ? 0 : x).toFixed(d); return s.replace("-","−"); }
+
+/* ───────── modèle : slots (règles de A11) ───────── */
+var K_HARD = 4;
+var DBG_ALL = [["Overview_Camera",3],["Left_Camera",4],["Bottom_Camera",5],["Right_Camera",6],["Top_Camera",7]];
+var GAME_ALL = ["FPS_Camera","Follow_Camera","Gameplay_3"];
+function snap(n){ return n>=4?4:(n>=2?2:1); }
+function layoutName(n){ return n===1?"Single":(n===2?"MainSide":"Quad"); }
+
+function makeState(M,G,D){
+  return {M:M,G:G,D:D,gIdx:0,slots:[],warnCount:0,lastMsg:"",log:[]};
+}
+function activeDebug(st){ return DBG_ALL.slice(0,st.D).map(function(c){return c[0];}); }
+function activeGame(st){ return GAME_ALL.slice(0,st.G); }
+function usedByOther(st,s,name){
+  for(var i=1;i<st.slots.length;i++){ if(i!==s && st.slots[i]===name) return true; }
+  return false;
+}
+/* recalcul chaque frame : renvoie {fatal, slotCount, desired, possible, msg} */
+function recompute(st){
+  var G = activeGame(st), D = activeDebug(st);
+  var r = {fatal:null, slotCount:0, desired:Math.min(st.M,K_HARD), possible:1+D.length, msg:""};
+  if(G.length===0){ r.fatal="aucune caméra Gameplay active : arrêt"; st.slots=[]; return r; }
+  var m = Math.min(r.desired, r.possible);
+  r.slotCount = snap(m);
+  if(m < r.desired) r.msg = "dégradé : "+r.desired+" demandés, "+m+" possible"+(m>1?"s":"")+(r.slotCount<m?", arrondi à "+r.slotCount+" (aucune mise en page à "+m+")":"");
+  else if(r.slotCount < m) r.msg = "dégradé : "+m+" demandés, arrondi à "+r.slotCount+" (aucune mise en page à "+m+")";
+  if(st.gIdx >= G.length) st.gIdx = 0;
+  var next = [G[st.gIdx]];
+  for(var s=1;s<r.slotCount;s++){
+    var keep = st.slots[s];
+    var ok = keep && D.indexOf(keep)>=0 && next.indexOf(keep)<0;
+    if(ok){ next.push(keep); continue; }
+    var pick = null;
+    for(var i=0;i<D.length;i++){ if(next.indexOf(D[i])<0){ pick=D[i]; break; } }
+    next.push(pick);
+  }
+  st.slots = next;
+  if(r.msg !== st.lastMsg){ if(r.msg) st.warnCount++; st.lastMsg = r.msg; }
+  return r;
+}
+function pressDebug(st,s){
+  var D = activeDebug(st);
+  if(s>=st.slots.length){ return "slot "+s+" absent : touche ignorée"; }
+  var cur = D.indexOf(st.slots[s]), found=null;
+  for(var k=1;k<=D.length;k++){
+    var c = D[(cur+k+D.length)%D.length];
+    if(st.slots.indexOf(c)<0){ found=c; break; }
+  }
+  if(!found) return "slot "+s+" : aucune caméra libre";
+  st.slots[s]=found; return "slot "+s+" : "+found;
+}
+function pressGame(st){
+  var G = activeGame(st);
+  if(G.length<2) return "slot 0 : une seule caméra de jeu";
+  st.gIdx=(st.gIdx+1)%G.length; st.slots[0]=G[st.gIdx]; return "slot 0 : "+G[st.gIdx];
+}
+
+/* ───────── laboratoire 1.1 ───────── */
+var S = makeState(4,2,5);
+function syncSlotInputs(){ S.M=+$("sM").value; S.G=+$("sG").value; S.D=+$("sD").value; }
+function slotLog(lines){ $("sLog").innerHTML = lines.join("\n"); }
+var sLines = [];
+function drawSlots(){
+  var cv=$("sCanvas"), c=cv.getContext("2d"), W=cv.width, H=cv.height;
+  c.clearRect(0,0,W,H); c.fillStyle=css("--surface"); c.fillRect(0,0,W,H);
+  var old = $("sOld").checked;
+  var r = old ? null : recompute(S);
+  var stats = [], rects=[];
+  if(old){
+    var found = Math.min(S.G+5,K_HARD);
+    if(found > S.M){
+      c.fillStyle=css("--bad"); c.font="600 15px "+css("--sans");
+      c.fillText("Arrêt : "+found+" caméras trouvées, plafond maxCameras = "+S.M, 20, H/2);
+      c.font="13px "+css("--sans"); c.fillStyle=css("--ink2");
+      c.fillText("(dont "+(S.G+5-S.D-S.G)+" inactives dans la scène)", 20, H/2+22);
+      stats=[["Mode","ancien","bad"],["Caméras trouvées",String(found),"bad"],["Plafond",String(S.M),"bad"],["Résultat","arrêt","bad"]];
+      $("sStats").innerHTML = stats.map(function(s){return '<div><div class="k">'+s[0]+'</div><div class="v '+s[2]+'">'+s[1]+'</div></div>';}).join("");
+      slotLog(['<span class="e">ancien code : le nombre de vues suit le nombre de caméras trouvées ('+found+'), pas celui des vues voulues</span>']);
+      return;
+    }
+    r = {slotCount:snap(found), desired:found, possible:found, fatal:null, msg:""};
+    var a = ["FPS_Camera"].concat(DBG_ALL.map(function(x){return x[0];})).slice(0,r.slotCount);
+    S.slots = a;
+  }
+  if(r.fatal){
+    c.fillStyle=css("--bad"); c.font="600 15px "+css("--sans"); c.fillText(r.fatal, 20, H/2);
+    $("sStats").innerHTML='<div><div class="k">Résultat</div><div class="v bad">arrêt</div></div>';
+    slotLog(['<span class="e">'+r.fatal+'</span>']); return;
+  }
+  var n=r.slotCount, pad=8, i;
+  if(n===1) rects=[[pad,pad,W-2*pad,H-2*pad]];
+  else if(n===2){ var mw=Math.round((W-3*pad)*2/3); rects=[[pad,pad,mw,H-2*pad],[2*pad+mw,pad,W-3*pad-mw,H-2*pad]]; }
+  else { var w=(W-3*pad)/2, h=(H-3*pad)/2; rects=[[pad,pad,w,h],[2*pad+w,pad,w,h],[pad,2*pad+h,w,h],[2*pad+w,2*pad+h,w,h]]; }
+  for(i=0;i<n;i++){
+    var R=rects[i], col = i===0?css("--game"):css("--dbg");
+    c.fillStyle=css("--surface2"); c.fillRect(R[0],R[1],R[2],R[3]);
+    c.strokeStyle=col; c.lineWidth=2; c.strokeRect(R[0]+1,R[1]+1,R[2]-2,R[3]-2);
+    c.fillStyle=col; c.font="600 13px "+css("--sans");
+    c.fillText("slot "+i+(i===0?" · Gameplay":" · Debug"), R[0]+10, R[1]+22);
+    c.fillStyle=css("--ink"); c.font="14px "+css("--mono");
+    c.fillText(S.slots[i]||"(aucune)", R[0]+10, R[1]+44);
+  }
+  var cols=[["Mise en page",layoutName(n),"ok"],["Slots",String(n),"ok"],["Désiré",String(r.desired),""],["Possible",String(r.possible),""],["Avertissements émis",String(S.warnCount),S.warnCount?"warn":"ok"]];
+  if(old) cols[0]=["Mode","ancien","warn"];
+  $("sStats").innerHTML = cols.map(function(s){return '<div><div class="k">'+s[0]+'</div><div class="v '+s[2]+'">'+s[1]+'</div></div>';}).join("");
+  var out = sLines.slice(-6);
+  if(r.msg) out.push('<span class="w">'+r.msg+'</span>');
+  if(!out.length) out.push('<span class="i">appuyer sur F2, F4, F6, F8</span>');
+  slotLog(out);
+}
+["sM","sG","sD","sOld"].forEach(function(id){ $(id).addEventListener("change",function(){ syncSlotInputs(); S.slots=[]; S.lastMsg=""; S.warnCount=0; sLines=[]; drawSlots(); }); });
+function press(msg){ sLines.push('<span class="o">'+msg+'</span>'); drawSlots(); }
+$("bF2").addEventListener("click",function(){ if($("sOld").checked) return; press("F2 → "+pressGame(S)); });
+[["bF4",1],["bF6",2],["bF8",3]].forEach(function(p){ $(p[0]).addEventListener("click",function(){ if($("sOld").checked) return; press("F"+(2*p[1]+2)+" → "+pressDebug(S,p[1])); }); });
+$("bReset").addEventListener("click",function(){ S=makeState(+$("sM").value,+$("sG").value,+$("sD").value); sLines=[]; drawSlots(); });
+
+/* ───────── rotations (float32) ───────── */
+function qmul(a,b){ return {w:f(f(f(a.w*b.w)-f(a.x*b.x))-f(f(a.y*b.y)+f(a.z*b.z))),
+  x:f(f(f(a.w*b.x)+f(a.x*b.w))+f(f(a.y*b.z)-f(a.z*b.y))),
+  y:f(f(f(a.w*b.y)-f(a.x*b.z))+f(f(a.y*b.w)+f(a.z*b.x))),
+  z:f(f(f(a.w*b.z)+f(a.x*b.y))+f(f(a.z*b.w)-f(a.y*b.x)))}; }
+function qaxis(deg,ax){ var h=f(f(f(deg*Math.PI/180))*0.5), s=f(Math.sin(h)), c=f(Math.cos(h));
+  return {w:c,x:ax==="x"?s:0,y:ax==="y"?s:0,z:ax==="z"?s:0}; }
+function qrot(q,v){ var qv={w:0,x:v[0],y:v[1],z:v[2]}, qc={w:q.w,x:-q.x,y:-q.y,z:-q.z};
+  var r=qmul(qmul(q,qv),qc); return [f(r.x),f(r.y),f(r.z)]; }
+function basis(pitch,yaw,roll){ var q=qmul(qmul(qaxis(yaw,"y"),qaxis(pitch,"x")),qaxis(roll,"z"));
+  return {F:qrot(q,[0,0,-1]),U:qrot(q,[0,1,0])}; }
+var PRESET = {Top:{pos:[0,120,0],p:-90,y:0,gp:90,gy:0},Bottom:{pos:[0,-120,0],p:90,y:0,gp:-90,gy:0},
+              Right:{pos:[120,0,0],p:0,y:90,gp:0,gy:-90},Left:{pos:[-120,0,0],p:0,y:-90,gp:0,gy:90}};
+function aimDot(name,p,y){ var P=PRESET[name].pos, b=basis(p,y,0);
+  var d=[-P[0]/120,-P[1]/120,-P[2]/120];
+  return f(f(b.F[0]*d[0])+f(b.F[1]*d[1])+f(b.F[2]*d[2])); }
+
+function drawRot(){
+  var name=$("rPre").value, p=+$("rP").value, y=+$("rY").value;
+  $("rPv").textContent=String(p).replace("-","−"); $("rYv").textContent=String(y).replace("-","−");
+  var b=basis(p,y,0), dot=aimDot(name,p,y), P=PRESET[name].pos;
+  var cv=$("rCanvas"), c=cv.getContext("2d"), W=cv.width, H=cv.height;
+  c.clearRect(0,0,W,H); c.fillStyle=css("--surface"); c.fillRect(0,0,W,H);
+  var cx=W/2, cy=H/2, sc=1.05;
+  c.strokeStyle=css("--line"); c.lineWidth=1; c.beginPath(); c.moveTo(0,cy); c.lineTo(W,cy); c.moveTo(cx,0); c.lineTo(cx,H); c.stroke();
+  c.fillStyle=css("--ink3"); c.font="11px "+css("--mono"); c.fillText("+X →",W-52,cy-6); c.fillText("+Y ↑",cx+6,14);
+  c.fillStyle=css("--ink"); c.beginPath(); c.arc(cx,cy,6,0,7); c.fill(); c.fillText("origine",cx+10,cy+16);
+  var px=cx+P[0]*sc, py=cy-P[1]*sc;
+  var good = dot>0.9999;
+  var col = good?css("--ok"):css("--bad");
+  c.fillStyle=css("--dbg"); c.beginPath(); c.arc(px,py,8,0,7); c.fill();
+  var L=90; c.strokeStyle=col; c.lineWidth=3; c.beginPath(); c.moveTo(px,py); c.lineTo(px+b.F[0]*L, py-b.F[1]*L); c.stroke();
+  var ax=px+b.F[0]*L, ay=py-b.F[1]*L; c.fillStyle=col; c.beginPath(); c.arc(ax,ay,5,0,7); c.fill();
+  c.fillStyle=css("--ink"); c.font="12px "+css("--mono"); c.fillText(name+" ("+P.join(", ")+")", Math.min(Math.max(px+12,4),W-170), Math.min(Math.max(py-12,14),H-6));
+  var z = Math.abs(b.F[2])>0.3 ? '<div><div class="k">Composante z</div><div class="v warn">'+fmt(b.F[2])+'</div></div>' : "";
+  $("rStats").innerHTML =
+    '<div><div class="k">Forward x, y, z</div><div class="v">'+fmt(b.F[0])+', '+fmt(b.F[1])+', '+fmt(b.F[2])+'</div></div>'+
+    '<div><div class="k">Up x, y, z</div><div class="v">'+fmt(b.U[0])+', '+fmt(b.U[1])+', '+fmt(b.U[2])+'</div></div>'+
+    '<div><div class="k">Forward · vers l’origine</div><div class="v '+(good?"ok":"bad")+'">'+fmt(dot,8)+'</div></div>';
+  var pm = Math.sin(p*Math.PI/180);
+  var lines = ['<span class="i">pitch pur θ : Forward = (0, sin θ, −cos θ) = (0, '+fmt(pm,4)+', '+fmt(-Math.cos(p*Math.PI/180),4)+') pour θ = '+p+'° ; doc A11 (−sin θ) donnerait y = '+fmt(-pm,4)+'</span>'];
+  lines.push(good? '<span class="o">la caméra regarde l’origine</span>' : (dot<0? '<span class="e">la caméra tourne le dos à l’origine : écran vide, pris à tort pour un bug de bascule</span>' : '<span class="w">l’origine est hors de l’axe de visée</span>'));
+  $("rLog").innerHTML = lines.join("\n");
+}
+$("rPre").addEventListener("change",function(){ var P=PRESET[this.value]; $("rP").value=P.p; $("rY").value=P.y; drawRot(); });
+$("rP").addEventListener("input",drawRot); $("rY").addEventListener("input",drawRot);
+$("rDeriv").addEventListener("click",function(){ var P=PRESET[$("rPre").value]; $("rP").value=P.p; $("rY").value=P.y; drawRot(); });
+$("rGuess").addEventListener("click",function(){ var P=PRESET[$("rPre").value]; $("rP").value=P.gp; $("rY").value=P.gy; drawRot(); });
+
+/* ───────── profondeur ───────── */
+function depthByte(d,range){
+  var t=f(d/range); if(t<0)t=0; if(t>1)t=1;
+  var g=f(Math.pow(t,f(1/2.2)));
+  return {t:t,g:g,b:Math.floor(g*255+0.5)};
+}
+function distinct(range,max){ var seen={},n=0; for(var d=0; d<=max; d++){ var b=depthByte(d,range).b; if(!seen[b]){seen[b]=1;n++;} } return n; }
+function drawDepth(){
+  var Rr=+$("dR").value, glob=$("dGlobal").checked, dC=+$("dCam").value, dd=+$("dD").value;
+  $("dRv").textContent=Rr; $("dDv").textContent=dd;
+  var used = glob?80:Rr;
+  var cv=$("dCanvas"), c=cv.getContext("2d"), W=cv.width, H=cv.height, X0=40, X1=W-16, MAXD=300;
+  c.clearRect(0,0,W,H); c.fillStyle=css("--surface"); c.fillRect(0,0,W,H);
+  function xOf(d){ return X0+(X1-X0)*d/MAXD; }
+  function strip(y,range,label){
+    for(var px=X0; px<X1; px++){ var d=(px-X0)/(X1-X0)*MAXD, b=depthByte(d,range).b; c.fillStyle="rgb("+b+","+b+","+b+")"; c.fillRect(px,y,1,34); }
+    c.strokeStyle=css("--line"); c.strokeRect(X0+.5,y+.5,X1-X0,34);
+    c.fillStyle=css("--ink2"); c.font="12px "+css("--sans"); c.fillText(label,X0,y-5);
+  }
+  strip(34,80,"plage globale 80 (avant le bug 66)");
+  strip(98,used,"plage de la vue : "+used+(glob?" (contre-exemple)":""));
+  c.strokeStyle=css("--accent"); c.lineWidth=2; c.beginPath(); c.moveTo(xOf(dd),20); c.lineTo(xOf(dd),140); c.stroke();
+  c.strokeStyle=css("--game"); c.setLineDash([4,3]); c.beginPath(); c.moveTo(xOf(dC),20); c.lineTo(xOf(dC),140); c.stroke(); c.setLineDash([]);
+  c.fillStyle=css("--game"); c.font="11px "+css("--mono"); c.fillText("centre de la scène "+dC+" u",Math.min(xOf(dC)+4,W-150),156);
+  c.fillStyle=css("--ink3");
+  for(var t=0;t<=300;t+=50){ c.fillText(String(t),xOf(t)-8,178); }
+  var a=depthByte(dd,80), b=depthByte(dd,used);
+  $("dStats").innerHTML =
+    '<div><div class="k">t, plage 80</div><div class="v '+(a.t>=1?"bad":"")+'">'+fmt(a.t,9)+'</div></div>'+
+    '<div><div class="k">octet, plage 80</div><div class="v '+(a.t>=1?"bad":"")+'">'+a.b+'</div></div>'+
+    '<div><div class="k">t, plage '+used+'</div><div class="v '+(b.t>=1?"bad":"ok")+'">'+fmt(b.t,9)+'</div></div>'+
+    '<div><div class="k">octet, plage '+used+'</div><div class="v">'+b.b+'</div></div>'+
+    '<div><div class="k">niveaux distincts sur [0, 300], plage 80</div><div class="v">'+distinct(80,300)+'</div></div>'+
+    '<div><div class="k">niveaux distincts sur [0, 300], plage '+used+'</div><div class="v">'+distinct(used,300)+'</div></div>';
+  var D8=[5,20,40,80,120,150,300,1000], h='<div class="lh">voie</div>'.repeat(0), html="";
+  var rows=["voie","dist","t","octet"];
+  for(var r=0;r<4;r++){ for(var i=0;i<8;i++){
+    var q=depthByte(D8[i],used), sat=q.t>=1;
+    var v = r===0? ("v"+i) : r===1? String(D8[i]) : r===2? fmt(q.t,6) : String(q.b);
+    html+='<div class="'+(r===0?"lh":(sat?"sat":""))+'">'+v+'</div>'; } }
+  $("dLanes").innerHTML=html;
+}
+["dR","dD"].forEach(function(id){ $(id).addEventListener("input",drawDepth); });
+["dGlobal","dCam"].forEach(function(id){ $(id).addEventListener("change",drawDepth); });
+
+/* ───────── tests hors moteur ───────── */
+function runTests(){
+  var rows=[], ok=0;
+  function T(name,exp,got,pass){ rows.push([name,exp,got,pass]); if(pass) ok++; }
+  var names=["Top","Bottom","Right","Left"], minDot=9;
+  names.forEach(function(n){ var P=PRESET[n]; var d=aimDot(n,P.p,P.y); if(d<minDot) minDot=d; });
+  T("Caméras cardinales regardent l’origine","produit scalaire > 0,9999",fmt(minDot,8),minDot>0.9999);
+  var maxWrong=-9; names.forEach(function(n){ var P=PRESET[n]; var d=aimDot(n,P.gp,P.gy); if(d>maxWrong) maxWrong=d; });
+  T("Valeurs « par analogie » (signe inversé) : toutes aveugles","produit scalaire < 0",fmt(maxWrong,8),maxWrong<0);
+  var b=basis(-90,0,0), nd = Math.abs(b.U[2])>0.9;
+  T("Up non dégénéré à pitch −90°","|Up| ≈ 1",fmt(Math.hypot(b.U[0],b.U[1],b.U[2]),6),nd);
+  var bad=0, cases=0, minDeb=9;
+  var seed=12345; function rnd(){ seed=(seed*1664525+1013904223)>>>0; return seed/4294967296; }
+  [1,2,3,4,6].forEach(function(M){ for(var G=0;G<=3;G++){ for(var D=0;D<=5;D++){
+    var st=makeState(M,G,D), r=recompute(st); cases++;
+    if(G===0){ if(!r.fatal) bad++; continue; }
+    for(var k=0;k<200;k++){
+      var u=rnd(); if(u<0.2) pressGame(st); else pressDebug(st,1+Math.floor(rnd()*3));
+      r=recompute(st);
+      var n=r.slotCount, dbg=st.slots.slice(1,n);
+      if([1,2,4].indexOf(n)<0 || n>Math.min(M,K_HARD) || n>1+D) bad++;
+      if(st.slots.length!==n) bad++;
+      if(GAME_ALL.indexOf(st.slots[0])<0 || GAME_ALL.indexOf(st.slots[0])>=G) bad++;
+      for(var i=0;i<dbg.length;i++){ if(!dbg[i] || activeDebug(st).indexOf(dbg[i])<0) bad++; if(dbg.indexOf(dbg[i])!==i) bad++; }
+    }
+    if(D<n-1 && n>1) bad++;
+  }}});
+  T("Slots : 1, 2 ou 4 ; slot 0 = jeu ; aucun doublon debug ; caméras actives (120 jeux de réglages × 200 touches)","0 violation",bad+" violation(s) sur "+cases+" jeux",bad===0);
+  var st0=makeState(4,0,3), r0=recompute(st0);
+  T("Aucune caméra Gameplay active","arrêt",r0.fatal?"arrêt":"continue",!!r0.fatal);
+  function bcb(n,slotCount,oldGuard){ if(oldGuard? n>=K_HARD : n>K_HARD) return 0; if(n!==slotCount) return 0; return n; }
+  T("BuildCameraBindings : Quad (n = 4) accepté","4",String(bcb(4,4,false)),bcb(4,4,false)===4);
+  T("Ancienne garde n >= 4 : Quad refusé à tort","0",String(bcb(4,4,true)),bcb(4,4,true)===0);
+  T("n = 5 refusé ; n ≠ slotCount refusé","0 et 0",bcb(5,4,false)+" et "+bcb(3,2,false),bcb(5,4,false)===0 && bcb(3,2,false)===0);
+  var ra=depthByte(120,150), rb=depthByte(120,80);
+  T("Plage par vue : même distance, deux plages, deux octets","230 et 255",ra.b+" et "+rb.b,ra.b===230 && rb.b===255);
+  var mono=true, prev=-1; for(var d=0; d<=400; d++){ var q=depthByte(d,150); if(q.t<prev||q.t<0||q.t>1) mono=false; prev=q.t; }
+  T("t est monotone et dans [0, 1] (plage 150, 0 à 400)","vrai",mono?"vrai":"faux",mono);
+  var s150=depthByte(150,150).t, s149=depthByte(149,150).t;
+  T("t = 1 exactement à dist = plage, < 1 juste avant","1 et < 1",s150+" et "+fmt(s149,9),s150===1 && s149<1);
+  var tb=$("tTable").querySelector("tbody"); tb.innerHTML="";
+  rows.forEach(function(r){ var tr=document.createElement("tr");
+    [r[0],r[1],r[2]].forEach(function(x){ var td=document.createElement("td"); td.textContent=x; tr.appendChild(td); });
+    var td=document.createElement("td"); td.innerHTML='<span class="pill '+(r[3]?"ok":"bad")+'">'+(r[3]?"OK":"ÉCHEC")+'</span>'; tr.appendChild(td); tb.appendChild(tr); });
+  $("tStats").innerHTML='<div><div class="k">Tests</div><div class="v">'+rows.length+'</div></div><div><div class="k">Réussis</div><div class="v '+(ok===rows.length?"ok":"bad")+'">'+ok+'</div></div>';
+}
+
+function redraw(){ drawSlots(); drawRot(); drawDepth(); }
+redraw(); runTests();
+try{ window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",redraw); }catch(e){}
+try{ new MutationObserver(redraw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]}); }catch(e){}
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,3025 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot A5 — Les gizmos de caméra, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eee9; --surface3:#e7e4dd;
+  --ink:#1c1b18; --ink2:#4a4740; --ink3:#78746a;
+  --line:#ddd9d0; --line2:#c8c3b7;
+  --accent:#b8860b; --accent2:#8a6508; --accentBg:#fdf6e3;
+  --ok:#2d6a4f; --okBg:#e8f3ed;
+  --bad:#9b2226; --badBg:#fbeaea;
+  --info:#1f5673; --infoBg:#e8f1f6;
+  --code:#2b2a26; --codeBg:#f3f1ec;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+    --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+    --line:#333139; --line2:#454350;
+    --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+    --ok:#6ac095; --okBg:#17291f;
+    --bad:#e8777c; --badBg:#2c1619;
+    --info:#7cb8d8; --infoBg:#132430;
+    --code:#dcd9e2; --codeBg:#232228;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+  --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+  --line:#333139; --line2:#454350;
+  --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+  --ok:#6ac095; --okBg:#17291f;
+  --bad:#e8777c; --badBg:#2c1619;
+  --info:#7cb8d8; --infoBg:#132430;
+  --code:#dcd9e2; --codeBg:#232228;
+}
+*{box-sizing:inherit}
+html{scroll-behavior:smooth; scroll-padding-top: calc(54px + env(safe-area-inset-top, 0px));}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.65;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px);
+  background:var(--surface); z-index:50;}
+
+/* ---- barre de navigation ---- */
+#nav{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:.5rem; padding:.45rem .7rem;
+  overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap;
+}
+#nav a{
+  color:var(--ink2); text-decoration:none; font-size:.78rem; font-weight:600;
+  padding:.3rem .55rem; border-radius:6px; flex:0 0 auto;
+}
+#nav a:hover{background:var(--surface2); color:var(--ink)}
+#nav a.on{background:var(--accentBg); color:var(--accent2)}
+#themeBtn{
+  margin-left:auto; flex:0 0 auto; background:var(--surface2); color:var(--ink2);
+  border:1px solid var(--line); border-radius:6px; padding:.3rem .5rem;
+  font-size:.78rem; cursor:pointer; font-family:inherit;
+}
+
+main{max-width:980px; margin:0 auto; padding:1.2rem 1rem 5rem}
+
+/* ---- titres ---- */
+h1{font-size:1.85rem; line-height:1.2; margin:.4rem 0 .3rem; letter-spacing:-.02em}
+h2{font-size:1.3rem; margin:2.6rem 0 .5rem; padding-top:.9rem; border-top:2px solid var(--line);
+   letter-spacing:-.01em}
+h3{font-size:1.05rem; margin:1.8rem 0 .4rem; color:var(--ink)}
+h4{font-size:.93rem; margin:1.2rem 0 .3rem; color:var(--ink2); text-transform:uppercase;
+   letter-spacing:.06em}
+.sub{color:var(--ink3); font-size:.9rem; margin:0 0 1.4rem}
+.kicker{display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--accent2); background:var(--accentBg);
+  padding:.2rem .5rem; border-radius:4px; margin-bottom:.5rem}
+p{margin:.7rem 0}
+ul,ol{margin:.6rem 0; padding-left:1.3rem}
+li{margin:.3rem 0}
+strong{font-weight:650}
+code{font-family:var(--mono); font-size:.86em; background:var(--codeBg); color:var(--code);
+  padding:.1em .34em; border-radius:4px}
+pre{background:var(--codeBg); border:1px solid var(--line); border-radius:8px;
+  padding:.8rem .9rem; overflow-x:auto; margin:.8rem 0; font-size:.8rem; line-height:1.55}
+pre code{background:none; padding:0; font-size:inherit}
+.cm{color:var(--ink3)}
+.kw{color:var(--accent2); font-weight:600}
+.st{color:var(--ok)}
+.nb{color:var(--info)}
+
+/* ---- blocs ---- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:1rem 1.1rem; margin:1rem 0}
+.note, .warn, .good, .info{
+  border-left:4px solid; border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0;
+  font-size:.92rem}
+.note{border-color:var(--accent); background:var(--accentBg)}
+.warn{border-color:var(--bad); background:var(--badBg)}
+.good{border-color:var(--ok); background:var(--okBg)}
+.info{border-color:var(--info); background:var(--infoBg)}
+.rule{background:var(--surface2); border:1px solid var(--line2); border-left:4px solid var(--accent);
+  border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.rule b{color:var(--accent2)}
+.counter{border:1px dashed var(--bad); background:var(--badBg); border-radius:8px;
+  padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.counter .lbl{font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--bad); display:block; margin-bottom:.3rem}
+
+/* ---- tableaux ---- */
+.tw{overflow-x:auto; margin:1rem 0; border:1px solid var(--line); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:.84rem; background:var(--surface)}
+th,td{padding:.5rem .65rem; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+th{background:var(--surface2); font-weight:650; font-size:.76rem; text-transform:uppercase;
+  letter-spacing:.04em; color:var(--ink2); white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num{font-family:var(--mono); white-space:nowrap}
+
+/* ---- contrôles ---- */
+.ctl{display:flex; flex-wrap:wrap; gap:.85rem; align-items:flex-end; margin:.8rem 0;
+  padding:.8rem; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.fld{display:flex; flex-direction:column; gap:.2rem; min-width:128px; flex:1 1 128px}
+.fld label{font-size:.72rem; font-weight:650; color:var(--ink2); text-transform:uppercase;
+  letter-spacing:.05em}
+.fld .val{font-family:var(--mono); font-size:.8rem; color:var(--accent2); font-weight:600}
+input[type=range]{width:100%; accent-color:var(--accent); margin:0}
+input[type=number],select{font-family:var(--mono); font-size:.82rem; padding:.3rem .4rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2); border-radius:5px;
+  width:100%}
+.seg{display:flex; gap:.25rem; flex-wrap:wrap}
+.seg button{font-family:inherit; font-size:.76rem; font-weight:600; padding:.32rem .6rem;
+  background:var(--surface); color:var(--ink2); border:1px solid var(--line2);
+  border-radius:5px; cursor:pointer}
+.seg button.on{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.btn{font-family:inherit; font-size:.8rem; font-weight:600; padding:.4rem .75rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2);
+  border-radius:6px; cursor:pointer}
+.btn:hover{background:var(--surface3)}
+.btn.pri{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.chk{display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--ink2);
+  cursor:pointer; user-select:none}
+
+/* ---- canvas / sorties ---- */
+canvas{display:block; width:100%; max-width:100%; background:var(--surface);
+  border:1px solid var(--line); border-radius:8px; touch-action:none}
+.out{font-family:var(--mono); font-size:.79rem; line-height:1.55; background:var(--codeBg);
+  border:1px solid var(--line); border-radius:8px; padding:.7rem .85rem; margin:.7rem 0;
+  overflow-x:auto; white-space:pre; color:var(--code)}
+.out .g{color:var(--ok); font-weight:600}
+.out .r{color:var(--bad); font-weight:600}
+.out .a{color:var(--accent2); font-weight:600}
+.out .d{color:var(--ink3)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
+@media (max-width:720px){ .grid2{grid-template-columns:1fr} }
+
+/* ---- étapes ---- */
+.step{border:1px solid var(--line); border-radius:10px; margin:1.1rem 0; overflow:hidden;
+  background:var(--surface)}
+.step>summary{cursor:pointer; padding:.75rem 1rem; background:var(--surface2);
+  font-weight:650; font-size:.95rem; list-style:none; display:flex; align-items:center; gap:.6rem}
+.step>summary::-webkit-details-marker{display:none}
+.step>summary::before{content:"▸"; color:var(--accent); font-size:.8rem; flex:0 0 auto}
+.step[open]>summary::before{content:"▾"}
+.step>summary .n{background:var(--accent); color:#1c1b18; font-family:var(--mono);
+  font-size:.72rem; font-weight:700; padding:.1rem .4rem; border-radius:4px; flex:0 0 auto}
+.step .body{padding:.9rem 1rem 1.1rem; border-top:1px solid var(--line)}
+.io{display:grid; grid-template-columns:auto 1fr; gap:.3rem .7rem; font-size:.83rem;
+  margin:.7rem 0; padding:.6rem .7rem; background:var(--surface2); border-radius:7px}
+.io dt{font-weight:650; color:var(--ink2); white-space:nowrap}
+.io dd{margin:0; font-family:var(--mono); font-size:.78rem}
+.goal{font-size:.9rem; color:var(--ink2); border-left:3px solid var(--accent);
+  padding-left:.7rem; margin:.5rem 0 .8rem; font-style:italic}
+
+/* ---- pipeline ---- */
+.pipe{display:flex; flex-direction:column; gap:.3rem; margin:1rem 0}
+.pstage{display:flex; align-items:center; gap:.6rem; padding:.45rem .7rem;
+  background:var(--surface2); border:1px solid var(--line); border-radius:7px; font-size:.84rem}
+.pstage .pn{font-family:var(--mono); font-size:.72rem; color:var(--ink3); width:1.6rem;
+  flex:0 0 auto}
+.pstage .pt{font-weight:600}
+.pstage .pd{color:var(--ink3); font-size:.78rem; margin-left:auto; text-align:right}
+.pstage.hot{background:var(--accentBg); border-color:var(--accent); border-width:2px}
+.pstage.hot .pt{color:var(--accent2)}
+.pstage.new{border-style:dashed; border-color:var(--ok); background:var(--okBg)}
+.pstage.new .pt{color:var(--ok)}
+.pbadge{font-size:.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:.1rem .35rem; border-radius:3px; background:var(--accent); color:#1c1b18; flex:0 0 auto}
+.pbadge.n{background:var(--ok); color:#fff}
+
+.legend{display:flex; flex-wrap:wrap; gap:.8rem; font-size:.75rem; color:var(--ink3); margin:.5rem 0}
+.legend span{display:flex; align-items:center; gap:.3rem}
+.sw{width:.8rem; height:.8rem; border-radius:3px; display:inline-block}
+
+.ba{display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0}
+@media (max-width:720px){ .ba{grid-template-columns:1fr} }
+.ba>div{border:1px solid var(--line); border-radius:8px; padding:.7rem .8rem; font-size:.84rem}
+.ba .before{border-left:4px solid var(--bad); background:var(--badBg)}
+.ba .after{border-left:4px solid var(--ok); background:var(--okBg)}
+.ba h5{margin:0 0 .4rem; font-size:.74rem; text-transform:uppercase; letter-spacing:.07em}
+.ba .before h5{color:var(--bad)}
+.ba .after h5{color:var(--ok)}
+.ba pre{margin:.4rem 0 0; background:var(--surface); font-size:.74rem}
+
+.foot{margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
+  color:var(--ink3); font-size:.8rem}
+.tag{display:inline-block; font-family:var(--mono); font-size:.7rem; padding:.1rem .4rem;
+  border-radius:3px; background:var(--surface3); color:var(--ink2); margin-right:.3rem}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#s0">Pourquoi</a>
+  <a href="#s1">Rappel</a>
+  <a href="#s2">Objectif</a>
+  <a href="#s3">Algo global</a>
+  <a href="#s4">Algo du lot</a>
+  <a href="#s5">Technique</a>
+  <a href="#s6">Étapes</a>
+  <a href="#s7">Vérifier</a>
+  <a href="#s8">Exemples</a>
+  <a href="#s9">Bugs</a>
+  <a href="#s10">Règles</a>
+  <a href="#s11">Décisions</a>
+  <button id="themeBtn">◐ Thème</button>
+</nav>
+
+<main>
+
+<span class="kicker">LibraryV3 · Annexe A5 · rattachée à la Leçon 05</span>
+<h1>Lot A5 — Les gizmos de caméra, pas à pas</h1>
+<p class="sub">Rendre les caméras visibles dans la scène, distinguer celle qui rend la vue,
+et découvrir au passage que « ça s’affiche » ne prouve rien.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s0">0 · Pourquoi ce lot</h2>
+
+<p>Depuis la Leçon 04, l’écran est coupé en deux. À gauche, l’image produite par la caméra
+FPS ou Follow. À droite, une caméra d’observation qui montre la scène entière, de loin.
+Ce découpage sert à déboguer : on voit en même temps <em>ce que le joueur voit</em> et
+<em>où il se trouve</em>.</p>
+
+<p>Sauf qu’il manque quelque chose d’essentiel dans la vue de droite : <strong>les caméras
+elles-mêmes n’y figurent pas</strong>. On observe la scène sans voir d’où on l’observe. Quand
+la caméra Follow se décale, quand la FPS regarde à côté, quand un objet disparaît du cadre
+sans raison apparente, on n’a aucun repère visuel pour comprendre pourquoi.</p>
+
+<p>C’est un manque banal au début d’un moteur, et qui devient paralysant dès que la scène
+grossit. Un moteur professionnel — Unity, Unreal, Godot — affiche systématiquement ses
+caméras sous forme de <strong>gizmo</strong> : un petit volume filaire qui matérialise la
+position, la direction du regard, et l’étendue réelle du champ de vision.</p>
+
+<div class="note">
+<b>Le pari de ce lot.</b> Un gizmo n’est pas une décoration. C’est un
+<strong>instrument de mesure</strong> : il doit dire la vérité sur la caméra qu’il décrit,
+sinon il devient lui-même une source d’erreur. Tout le chantier tourne autour de cette
+exigence — et c’est elle qui, à la fin, aura révélé quatre bugs invisibles à l’œil.
+</div>
+
+<p>Deux questions à résoudre, posées dans cet ordre :</p>
+<ol>
+<li><strong>Afficher toutes les caméras existantes</strong>, car ce sont des objets de la
+scène comme les autres et les voir aide à comprendre ce qui s’y passe.</li>
+<li><strong>Dissocier la caméra utilisée</strong> dans la vue de gauche des autres — par une
+couleur, ou une autre astuce à déterminer.</li>
+</ol>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s1">1 · Rappel — où en est le moteur</h2>
+
+<p>Ce lot ne part pas de rien. Il s’appuie sur tout ce que les cinq premières leçons ont
+posé, et il n’aurait été possible dans aucune d’elles. Voici les briques qu’il consomme.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Leçon</th><th>Ce qu’elle a construit</th><th>Ce que le lot A5 en utilise</th></tr></thead>
+<tbody>
+<tr><td><b>L01</b><br>Config &amp; Enums</td>
+    <td><code>EngineConfig</code>, <code>engine.json</code>, <code>LV3_ASSERT</code>,
+        les énumérations fortes</td>
+    <td>Les filets <code>LV3_ASSERT</code> de chaque étape ; la règle « les valeurs
+        ajustables vivent dans le JSON »</td></tr>
+<tr><td><b>L02</b><br>Mathématiques</td>
+    <td><code>Vec3f</code>, <code>Matrix44f</code> en lignes
+        (<code>v′ = v·M</code>), <code>Quatf</code>, <code>inverseRigid()</code>,
+        reverse-Z</td>
+    <td>La matrice de scale du gizmo, et surtout la <b>contrainte de rigidité</b> :
+        <code>inverseRigid()</code> suppose R orthonormale</td></tr>
+<tr><td><b>L03</b><br>ECS</td>
+    <td><code>Registry</code>, <code>SparseSet</code>, <code>ViewGroup</code>,
+        <code>ResourceManager</code>, <code>MeshHandle</code></td>
+    <td>Le gizmo est une <b>entité</b> comme une autre ; le mesh canonique est partagé par
+        handle ; le piège de création pendant l’itération</td></tr>
+<tr><td><b>L04</b><br>Rasterizer</td>
+    <td><code>RenderView</code>, clipping near, <code>ERenderMode</code>
+        (Solid / Wireframe), <code>FaceColor</code></td>
+    <td>Le gizmo passe par le rendu <b>sans aucun cas particulier</b> ; le mode Wireframe
+        rend le frustum filaire gratuitement</td></tr>
+<tr><td><b>L05</b><br>Caméra &amp; Frustum</td>
+    <td><code>CameraComponent</code>, <code>ViewData</code>, <code>BuildViewData</code>,
+        <code>Frustum::Build</code>, <code>Viewport</code></td>
+    <td>Tous les paramètres dont le gizmo <b>dérive</b> : fov, orthoHeight, projection,
+        near/far</td></tr>
+<tr><td><b>C1</b><br>Chaîne des espaces</td>
+    <td>E1 Objet → E2 Monde → E3 Vue → E4 Clip → E5 NDC → E6 Raster</td>
+    <td>Le test de validation parcourt exactement cette chaîne et vérifie qu’on retombe sur
+        les coins du NDC</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="info">
+<b>Ce qui n’existait pas encore et que ce lot va créer.</b> Rien dans le moteur ne dit
+aujourd’hui <em>quelle caméra est rendue dans quel viewport</em>. <code>BuildViewData</code>
+reçoit un viewport en paramètre, le rendu en reçoit un autre, et personne ne garantit que
+ce soit le même. Cette association manquante est la cause du quatrième bug du lot — et elle
+deviendra <code>CameraBinding</code>.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s2">2 · Contexte et objectif fonctionnel</h2>
+
+<h3>2.1 Ce qu’on veut voir à l’écran</h3>
+
+<p>Formulé sans une ligne de code : dans la vue de droite, chaque caméra de la scène doit
+apparaître comme un <strong>volume filaire planté à sa position</strong>, ouvert dans la
+direction de son regard, et dont la forme correspond réellement à son champ de vision. La
+caméra dont l’image est affichée à gauche doit se distinguer des autres au premier coup
+d’œil.</p>
+
+<div class="grid2">
+<div class="card">
+<h4>Critères de réussite fonctionnels</h4>
+<ul style="font-size:.88rem">
+<li>Les trois caméras de la scène sont visibles dans la vue de droite</li>
+<li>Chaque gizmo est à la bonne position et pointe dans la bonne direction</li>
+<li>La forme du gizmo change si l’on change le <code>fov</code></li>
+<li>La caméra active se distingue des inactives</li>
+<li>La caméra qui rend une vue ne voit pas son propre gizmo</li>
+<li>Une caméra orthographique montre une <b>boîte</b>, pas une pyramide</li>
+</ul>
+</div>
+<div class="card">
+<h4>Critères de réussite techniques</h4>
+<ul style="font-size:.88rem">
+<li>Un seul mesh en mémoire par type de projection, quel que soit le nombre de caméras</li>
+<li>Aucun cas particulier « caméra » dans la couche de rendu</li>
+<li>Le gizmo ne perturbe ni la matrice de vue ni le culling</li>
+<li>Le JSON décrit l’intention, jamais la géométrie</li>
+<li>Un test numérique prouve que le gizmo <em>est</em> le frustum de sa caméra</li>
+</ul>
+</div>
+</div>
+
+<h3>2.2 Les deux notions à ne pas confondre</h3>
+
+<p>Avant toute chose, une distinction qui porte toute la suite du lot. Deux caméras
+interviennent dans chaque image, et ce ne sont pas les mêmes :</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Notion</th><th>Définition</th><th>Rôle dans le lot</th></tr></thead>
+<tbody>
+<tr><td><b>Caméra de rendu</b><br><span class="tag">sourceCamera</span></td>
+    <td>Celle qui produit l’image du viewport courant. À gauche la FPS, à droite
+        l’observateur.</td>
+    <td>Son propre gizmo doit être <b>masqué</b> dans sa vue, sinon on rend l’intérieur de
+        son frustum.</td></tr>
+<tr><td><b>Caméra active</b><br><span class="tag">activeCamera</span></td>
+    <td>Celle dont l’image est affichée à gauche, choisie par <code>active</code> +
+        <code>priority</code> dans le JSON.</td>
+    <td>C’est <b>elle</b> qu’on surligne en ambre dans la vue de droite.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Toute la réponse à la question 2 (« dissocier la caméra utilisée ») tient dans la
+comparaison de ces deux pointeurs. Toute la réponse au problème du frustum vu de
+l’intérieur tient dans la comparaison du premier avec le propriétaire du gizmo.</p>
+
+<div class="rule">
+<b>Règle de cadrage.</b> Un objet de debug qui ment est pire que pas d’objet de debug : il
+transforme un outil de diagnostic en source d’erreur. Un gizmo dérivé de paramètres doit
+être validé <b>numériquement</b> contre ces paramètres, jamais à l’œil.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s3">3 · Algorithme global du moteur — où se situe ce lot</h2>
+
+<p>Le moteur commence à être dense. Avant de parler du lot, voici la boucle de jeu
+complète telle qu’elle existe à la fin de la Leçon 05, et telle qu’elle sera après ce lot.
+Les étages touchés sont surlignés.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto">
+    <label>Vue du pipeline</label>
+    <div class="seg" id="pipeSeg">
+      <button data-v="before" class="on">Avant le lot (fin L05)</button>
+      <button data-v="after">Après le lot A5</button>
+      <button data-v="diff">Différences seules</button>
+    </div>
+  </div>
+  <label class="chk"><input type="checkbox" id="pipeDetail"> Afficher le détail de chaque étage</label>
+</div>
+
+<div class="pipe" id="pipeline"></div>
+
+<div class="legend">
+  <span><i class="sw" style="background:var(--surface2);border:1px solid var(--line)"></i> inchangé</span>
+  <span><i class="sw" style="background:var(--accentBg);border:2px solid var(--accent)"></i> modifié par le lot</span>
+  <span><i class="sw" style="background:var(--okBg);border:1px dashed var(--ok)"></i> créé par le lot</span>
+</div>
+
+<div class="info">
+<b>Lecture.</b> Le lot ne touche que quatre endroits de la boucle : il <em>insère</em> deux
+étages (<code>BuildCameraBindings</code> et <code>CameraGizmoSystem</code>), il
+<em>modifie</em> la signature de <code>BuildViewData</code>, et il ajoute deux lignes dans
+<code>RenderView</code>. Tout le reste — contrôleurs, transforms, triggers, rasterizer —
+est strictement inchangé. C’est la mesure de la qualité du découpage ECS : un objet
+entièrement nouveau traverse le rendu sans que le rendu ait besoin d’apprendre ce qu’il est.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s4">4 · Algorithme détaillé du lot</h2>
+
+<p>Le lot se décompose en trois apports distincts. Le premier crée des entités, le deuxième
+les anime chaque frame, le troisième les rend. Un quatrième, non prévu au départ, a été
+imposé par un bug : la réification de l’association <em>(caméra, viewport)</em>.</p>
+
+<h3>4.1 Apport A — création des entités gizmo (une fois, au chargement)</h3>
+
+<pre><code><span class="cm">// Au chargement de la scene, APRES ParseHierarchy</span>
+LoadGizmoAssets(rm)
+    charger camera_gizmo.obj      -> handle perspective
+    charger camera_gizmo_box.obj  -> handle orthographique
+    si l'un des deux echoue : journaliser, pas de gizmos, le moteur continue
+
+SpawnCameraGizmos(registry, assets)
+    <span class="cm">// 1. COLLECTER (ne pas creer pendant l'iteration d'un ViewGroup)</span>
+    pour chaque entite ayant CameraComponent
+        si m_gizmoLength &gt; 0 : ajouter a la liste
+
+    <span class="cm">// 2. CREER</span>
+    pour chaque camera de la liste
+        g = nouvelle entite
+        g += NameComponent("__gizmo(nom de la camera)")
+        g += TransformComponent{}
+        g += MeshComponent{ assets.For(projection de la camera) }
+        g += CameraGizmoComponent{ proprietaire = camera, length }
+        g += DebugVisualComponent{ couleur, hideForCamera = camera }
+        LinkChildToParent(g, camera)</code></pre>
+
+<h3>4.2 Apport B — entretien chaque frame</h3>
+
+<pre><code>CameraGizmoSystem(registry, activeCamera, bindings, n, assets)
+    pour chaque entite ayant CameraGizmoComponent
+        cam = composant camera du proprietaire
+
+        <span class="cm">// a) trouver LE viewport ou CETTE camera est rendue</span>
+        b = binding dont la camera == proprietaire     <span class="cm">// peut etre absent</span>
+        aspect = b ? b.viewport.Aspect() : 0
+
+        <span class="cm">// b) FORME : ecrire dans la SOURCE m_local</span>
+        si aspect &gt; 0
+            si projection == Orthographique
+                halfH  = orthoHeight / 2
+                voulu  = ( halfH * aspect , halfH , L )     <span class="cm">// L absent de x,y</span>
+            sinon
+                tanHalf = tan( CameraFovY(cam) / 2 )
+                voulu   = ( L*tanHalf*aspect , L*tanHalf , L )
+
+            si voulu != m_local.scale
+                m_local.scale = voulu
+                m_dirty = vrai                 <span class="cm">// contrat avec LocalTransformSystem</span>
+
+        <span class="cm">// c) MESH : suit le type de projection, meme a l'execution</span>
+        si m_meshHandle != assets.For(projection) : le remplacer
+
+        <span class="cm">// d) ETAT : hors du bloc conditionnel</span>
+        couleur = (proprietaire == activeCamera) ? AMBRE : GRIS</code></pre>
+
+<h3>4.3 Apport C — rendu (deux lignes)</h3>
+
+<pre><code>RenderView(registry, rm, renderer, view)
+    renderer.SetViewport(view.viewport)
+    renderer.SetMode(view.mode)                        <span class="cm">// AJOUT</span>
+
+    pour chaque entite ayant MeshComponent + TransformComponent
+        dbg = DebugVisualComponent de l'entite (peut etre absent)
+        si dbg et dbg.hideForCamera == view.sourceCamera : passer   <span class="cm">// AJOUT</span>
+
+        ... culling, MVP, clipping : INCHANGES ...
+
+        couleur = dbg ? dbg.couleur : FaceColor(f)      <span class="cm">// MODIFIE</span></code></pre>
+
+<h3>4.4 Apport D — ce que le lot a remis en question</h3>
+
+<p>Trois décisions de la Leçon 05 ont dû être défaites. Voici l’avant / après de chacune.</p>
+
+<h4>D1 — L’aspect ratio : d’un paramètre global à une association</h4>
+<div class="ba">
+<div class="before"><h5>Avant (L05)</h5>
+<p style="margin:0">L’aspect est un nombre que l’appelant calcule et distribue. Chaque
+consommateur reçoit sa copie.</p>
+<pre><code>vpLeft  = Viewport{0,0,W/2,H}
+vpRight = Viewport{W/2,0,W/2,H}
+views[0] = BuildViewData(trL, camL, vpLeft,  camLeft)
+views[1] = BuildViewData(trR, camR, vpRight, camRight)
+CameraGizmoSystem(reg, active, <b>aspect</b>, assets)
+                               <b>^ un seul float</b></code></pre></div>
+<div class="after"><h5>Après (A5)</h5>
+<p style="margin:0">L’association <em>(caméra, viewport, mode)</em> devient une donnée.
+Tout le monde lit la même.</p>
+<pre><code>n = BuildCameraBindings(layout, slots, W, H, bindings)
+CameraGizmoSystem(reg, active, <b>bindings, n</b>, assets)
+pour i : views[i] = BuildViewData(reg, <b>bindings[i]</b>)
+pour i : RenderView(..., views[i])
+    <b>-&gt; une seule verite sur l'aspect</b></code></pre></div>
+</div>
+
+<h4>D2 — L’ordre des systèmes : la source avant sa cuisson</h4>
+<div class="ba">
+<div class="before"><h5>Avant (tentative initiale)</h5>
+<pre style="margin:0"><code>FPSController / Follow
+<b>CameraGizmoSystem</b>     <span class="cm">// ecrit m_local</span>
+LocalTransformSystem   <span class="cm">// ECRASE</span>
+WorldTransformSystem
+
+<span class="cm">// puis, corrige a l'envers :</span>
+LocalTransformSystem
+<b>CameraGizmoSystem</b>     <span class="cm">// JAMAIS CUIT</span>
+WorldTransformSystem</code></pre></div>
+<div class="after"><h5>Après</h5>
+<pre style="margin:0"><code>FPSController / Follow
+BuildCameraBindings    <span class="cm">// aucune matrice</span>
+<b>CameraGizmoSystem</b>     <span class="cm">// ecrit la source</span>
+LocalTransformSystem   <span class="cm">// cuit</span>
+WorldTransformSystem   <span class="cm">// propage</span>
+BuildViewData x N      <span class="cm">// lit CETTE frame</span></code></pre></div>
+</div>
+
+<h4>D3 — <code>ViewData</code> : trois champs ajoutés, une sentinelle retirée</h4>
+<div class="ba">
+<div class="before"><h5>Avant</h5>
+<pre style="margin:0"><code>struct ViewData {
+  Viewport  viewport;
+  bool      reverseZ;
+  float     nearPlane;
+  float     farPlane;   <span class="cm">// = 1e30f si infini</span>
+  Matrix44f viewMatrix, projectionMatrix,
+            viewProjectionMatrix;
+  Frustum   frustum;
+};</code></pre></div>
+<div class="after"><h5>Après</h5>
+<pre style="margin:0"><code>struct ViewData {
+  <b>Entity      sourceCamera;</b>  <span class="cm">// d'ou vient la vue</span>
+  Viewport    viewport;
+  <b>ERenderMode mode;</b>          <span class="cm">// Solid / Wireframe</span>
+  bool        reverseZ;
+  float       nearPlane;
+  <b>bool        hasFarPlane;</b>   <span class="cm">// plus de sentinelle</span>
+  float       farPlane;
+  ... <span class="cm">// inchange</span>
+};</code></pre></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s5">5 · La technique</h2>
+
+<h3>5.1 Dériver, ne pas modéliser</h3>
+
+<div class="counter">
+<span class="lbl">Contre-exemple — ce qu’il ne faut pas faire</span>
+<p style="margin:.2rem 0">La première idée consiste à modéliser une caméra dans un logiciel 3D
+et à l’accrocher comme n’importe quel mesh :</p>
+<pre style="margin:.5rem 0"><code>"components": {
+  "Camera": { "fov": 45.0 },
+  "Mesh":   { "source": "assets/meshes/camera_body.obj" }
+}</code></pre>
+<p style="margin:.2rem 0"><b>Pourquoi c’est faux :</b> l’asset est figé. Il ne connaît ni le
+<code>fov</code>, ni l’aspect, ni le type de projection. Passez le <code>fov</code> à 90° —
+le gizmo affiche toujours la même pyramide. L’objet censé décrire la caméra ne décrit plus
+rien, et il le fait <em>silencieusement</em>.</p>
+<p style="margin:.2rem 0">Pire encore : le jour où une géométrie disparaît du cadre sans
+raison, vous déboguerez le <b>culling</b> en vous fiant à un gizmo qui ment.</p>
+</div>
+
+<p>La forme du gizmo doit donc être <strong>calculée</strong> à partir des paramètres de la
+caméra, chaque frame. Mais faut-il générer un mesh par caméra ? Non — et c’est le cœur de
+la méthode.</p>
+
+<h3>5.2 Le mesh canonique, et pourquoi il suffit</h3>
+
+<p>La projection perspective possède une propriété décisive :
+<strong>tronquer une pyramide à n’importe quelle distance produit une figure
+semblable</strong>. Les angles sont conservés. Un frustum coupé à 3 unités et le même coupé
+à 1000 racontent exactement la même chose sur le <code>fov</code> et l’aspect.</p>
+
+<p>On peut donc fabriquer <em>un seul</em> mesh pour tout le moteur — apex à l’origine, quad
+lointain en <code>z = −1</code>, demi-extensions <code>(1, 1)</code> — et laisser une matrice
+de scale produire la forme réelle :</p>
+
+<div class="out">Sx = length · tan(fovY/2) · aspect
+Sy = length · tan(fovY/2)
+Sz = length</div>
+
+<div class="note">
+<b><code>length</code> n’est pas le <code>farPlane</code>.</b> C’est une longueur
+d’<em>affichage</em>, choisie pour la lisibilité. Un <code>far = 1000</code> produirait un
+gizmo qui écrase la scène entière ; et nos caméras sont de toute façon en
+<code>infiniteFar</code>, donc le far n’existe même pas.
+</div>
+
+<h3>5.3 Perspective contre orthographique — deux natures, pas deux variantes</h3>
+
+<p>Le volume orthographique n’est pas une pyramide déformée. Sa section transversale est
+<strong>constante</strong>, là où celle du frustum croît linéairement avec <code>z</code>.
+Ce n’est pas une variation de forme, c’est une différence de nature — et elle se lit dans
+les formules.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th></th><th>Perspective</th><th>Orthographique</th><th>Conséquence</th></tr></thead>
+<tbody>
+<tr><td><b>Sx</b></td><td class="num">L · tanHalf · aspect</td>
+    <td class="num">(orthoHeight/2) · aspect</td>
+    <td>En ortho, allonger le gizmo ne l’élargit pas</td></tr>
+<tr><td><b>Sy</b></td><td class="num">L · tanHalf</td>
+    <td class="num">orthoHeight/2</td>
+    <td><code>L</code> est absent de x et y</td></tr>
+<tr><td><b>Sz</b></td><td class="num">L</td><td class="num">L</td>
+    <td>Identique</td></tr>
+<tr><td><b>Mesh</b></td><td>pyramide, 8 faces</td><td>boîte, 14 faces</td>
+    <td>Deux assets canoniques, pas un</td></tr>
+<tr><td><b>clip.w</b></td><td class="num">= L</td><td class="num">= 1 toujours</td>
+    <td>La matrice ortho ne divise pas</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>5.4 Schéma dynamique — la forme réelle sort de la matrice</h3>
+
+<p>Manipulez les réglages : le mesh canonique ne change jamais, seule la matrice de scale
+change. Le panneau de droite montre les sommets avant et après, et la vérification NDC
+qui servira de test.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto">
+    <label>Projection</label>
+    <div class="seg" id="gzProj">
+      <button data-v="persp" class="on">Perspective</button>
+      <button data-v="ortho">Orthographique</button>
+    </div>
+  </div>
+  <div class="fld" id="gzFovFld">
+    <label>fovY <span class="val" id="gzFovV">45,0°</span></label>
+    <input type="range" id="gzFov" min="10" max="150" step="1" value="45">
+  </div>
+  <div class="fld" id="gzOhFld" style="display:none">
+    <label>orthoHeight <span class="val" id="gzOhV">120,0</span></label>
+    <input type="range" id="gzOh" min="4" max="200" step="2" value="120">
+  </div>
+  <div class="fld">
+    <label>length (L) <span class="val" id="gzLenV">3,0</span></label>
+    <input type="range" id="gzLen" min="1" max="40" step="0.5" value="3">
+  </div>
+  <div class="fld">
+    <label>aspect du viewport <span class="val" id="gzAspV">0,96</span></label>
+    <input type="range" id="gzAsp" min="0.3" max="3" step="0.01" value="0.96">
+  </div>
+</div>
+<div class="ctl">
+  <div class="fld">
+    <label>rotation (yaw) <span class="val" id="gzYawV">35°</span></label>
+    <input type="range" id="gzYaw" min="-180" max="180" step="1" value="35">
+  </div>
+  <div class="fld">
+    <label>inclinaison (pitch) <span class="val" id="gzPitV">18°</span></label>
+    <input type="range" id="gzPit" min="-80" max="80" step="1" value="18">
+  </div>
+  <div class="fld" style="flex:0 0 auto">
+    <label>Afficher</label>
+    <div class="seg">
+      <button id="gzCanonBtn">Mesh canonique</button>
+      <button id="gzUpBtn" class="on">Marqueur « up »</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <canvas id="gzCanvas" height="340"></canvas>
+  <div class="out" id="gzOut"></div>
+</div>
+
+<div class="info" style="font-size:.86rem">
+<b>À remarquer.</b> Passez en orthographique puis faites varier <code>length</code> : la
+section ne bouge pas, seule la profondeur change. En perspective, elle s’ouvre
+proportionnellement. C’est toute la différence entre les deux formules — et la raison pour
+laquelle un seul mesh ne pouvait pas couvrir les deux cas.
+</div>
+
+<h3>5.5 Le gizmo doit être un nœud <em>enfant</em> — ce n’est pas négociable</h3>
+
+<p>La tentation est de poser le scale sur le nœud de la caméra elle-même. C’est interdit, et
+pas pour des raisons esthétiques.</p>
+
+<div class="warn">
+<b>Pourquoi.</b> La matrice de vue est <code>world.inverseRigid()</code> — un inverse
+<em>rigide</em>, qui suppose la partie rotation orthonormale. Un scale sur la matrice monde
+de la caméra casserait <code>inverseRigid()</code> <strong>silencieusement</strong> : pas
+d’assertion, pas de NaN, juste une projection tordue qu’aucun symptôme ne désigne.
+</div>
+
+<pre><code>CameraNode     <span class="cm">// T x R pur, AUCUN scale</span>
+ └── GizmoNode  <span class="cm">// scale calcule + MeshComponent</span></code></pre>
+
+<p>Bénéfice secondaire : la propagation de transform existante fait tout le travail. Le
+gizmo traverse <code>RenderView</code> comme un cube, sans aucun cas particulier dans la
+boucle de traversée.</p>
+
+<h3>5.6 L’association (caméra, viewport) — schéma dynamique</h3>
+
+<p>Voici le bug le plus instructif du lot, et vous pouvez le reproduire ci-dessous.
+Choisissez un découpage de fenêtre, puis basculez entre « aspect unique » et « aspect par
+binding ». Avec deux viewports de même taille, les deux donnent le même résultat : le bug
+est <strong>invisible</strong>. Choisissez <em>MainSide</em> et il saute aux yeux.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto">
+    <label>Découpage (ELayout)</label>
+    <div class="seg" id="lySeg">
+      <button data-v="SplitH" class="on">SplitH</button>
+      <button data-v="MainSide">MainSide</button>
+      <button data-v="SplitV">SplitV</button>
+      <button data-v="Quad">Quad</button>
+      <button data-v="Single">Single</button>
+    </div>
+  </div>
+  <div class="fld">
+    <label>Largeur fenêtre <span class="val" id="lyWV">1536</span></label>
+    <input type="range" id="lyW" min="400" max="2560" step="8" value="1536">
+  </div>
+  <div class="fld">
+    <label>Hauteur fenêtre <span class="val" id="lyHV">800</span></label>
+    <input type="range" id="lyH" min="300" max="1600" step="8" value="800">
+  </div>
+  <div class="fld" style="flex:0 0 auto">
+    <label>Source de l’aspect</label>
+    <div class="seg" id="lyMode">
+      <button data-v="bug" >Aspect unique (bug 31)</button>
+      <button data-v="ok" class="on">Aspect par binding</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <canvas id="lyCanvas" height="300"></canvas>
+  <div class="out" id="lyOut"></div>
+</div>
+
+<div class="rule">
+<b>Règle R3 — données de paire.</b> Une donnée qui dépend d’une paire ne peut pas être
+stockée sur l’un des deux membres. Tenter de l’y loger produit un moteur qui fonctionne
+tant qu’il n’y a qu’un observateur, puis casse silencieusement au second.
+</div>
+
+<h3>5.7 Le faux cycle, et comment il se dissout</h3>
+
+<p>Première tentative de correction : faire consommer les <code>ViewData</code> au système
+du gizmo, puisqu’ils contiennent déjà le viewport. Mais <code>ViewData</code> contient aussi
+les matrices, produites plus tard par <code>WorldTransformSystem</code>. Cycle apparent,
+résolu par une <strong>frame de retard</strong>.</p>
+
+<p>Cette dette était inacceptable. Ce qu’elle aurait coûté :</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Conséquence</th><th>Symptôme observable</th></tr></thead>
+<tbody>
+<tr><td>Follow amortie (<code>smoothSpeed</code>)</td>
+    <td>Judder : à 60 Hz et 20 u/s, l’image est rendue 0,33 unité en arrière</td></tr>
+<tr><td>Culling sur un frustum périmé</td>
+    <td>Des objets <b>apparaissent</b> au bord de l’écran, un frame trop tard</td></tr>
+<tr><td>Hiérarchies profondes</td>
+    <td>L’erreur devient la somme des mouvements de tous les parents</td></tr>
+<tr><td>Première frame</td>
+    <td><code>m_worldMatrix</code> vaut l’identité : flash d’une frame au démarrage</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Le cycle n’en était pas un. Les deux besoins ne portent pas sur la même chose :</p>
+
+<div class="out"><span class="a">CameraGizmoSystem</span> a besoin de  ->  l'ASPECT du viewport    <span class="g">(statique)</span>
+<span class="a">BuildViewData</span>     a besoin de  ->  la MATRICE MONDE        <span class="d">(derivee)</span></div>
+
+<div class="rule">
+<b>Principe méthodologique n°12.</b> Une dépendance circulaire entre systèmes est presque
+toujours le symptôme d’une donnée trop grosse. Séparez ce qui est statique de ce qui est
+dérivé, et le cycle disparaît.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s6">6 · Les étapes</h2>
+
+<p>Dix étapes, dans l’ordre d’exécution. Chacune indique son <em>objectif</em> (pourquoi ce
+calcul), ce qu’elle reçoit de l’étape précédente, et ce qu’elle produit — valeurs réelles,
+calculées en float32 comme le CPU.</p>
+
+<div class="note" style="font-size:.86rem">
+<b>Sur la vectorisation.</b> Ce lot ne comporte pas de volet SIMD, et ce n’est pas un oubli.
+Une scène contient trois à cinq caméras ; le système du gizmo traite donc trois à cinq
+entités par frame, soit quelques dizaines de multiplications. Vectoriser coûterait plus en
+transposition SoA qu’en calcul économisé. La règle du moteur s’applique :
+<b>on ne vectorise que ce que le profileur désigne</b>. Les chemins chauds du lot sont ceux
+du rasterizer, déjà traités au Chantier B.
+</div>
+
+<details class="step" open>
+<summary><span class="n">1</span> L’asset canonique, et sa vérification immédiate</summary>
+<div class="body">
+<p class="goal">Objectif — disposer d’une géométrie de référence commune à toutes les
+caméras, et prouver qu’elle est chargée correctement <em>avant</em> d’écrire quoi que ce
+soit d’autre. Un test qui échoue tôt vaut mieux qu’un bug qui se tait.</p>
+
+<p>Deux fichiers, deux conventions identiques : main droite, Y up, regard vers
+<code>−Z</code>, winding CCW vu de l’extérieur, triangles uniquement (le
+<code>vertsPerFace</code> de <code>MeshClass</code> est unique pour tout le mesh — pas de
+quad mélangé à des triangles).</p>
+
+<pre><code><span class="cm"># camera_gizmo.obj — PERSPECTIVE — apex a l'origine, quad far en z = -1</span>
+v  0.0  0.0  0.0     <span class="cm"># 1 : apex = position de l'oeil</span>
+v -1.0 -1.0 -1.0     <span class="cm"># 2 : far bas-gauche</span>
+v  1.0 -1.0 -1.0     <span class="cm"># 3 : far bas-droit</span>
+v  1.0  1.0 -1.0     <span class="cm"># 4 : far haut-droit</span>
+v -1.0  1.0 -1.0     <span class="cm"># 5 : far haut-gauche</span>
+v -0.35 1.05 -1.0    <span class="cm"># 6 : marqueur "up"</span>
+v  0.35 1.05 -1.0    <span class="cm"># 7</span>
+v  0.00 1.60 -1.0    <span class="cm"># 8</span>
+<span class="cm"># 6 normales, 8 faces triangulaires (4 laterales + 2 quad far + 2 marqueur)</span></code></pre>
+
+<dl class="io">
+<dt>Entrée</dt><dd>deux fichiers .obj dans assets/meshes/</dd>
+<dt>Sortie</dt><dd>perspective : 8 v, 6 vn, <b>8 faces</b> — ortho : 11 v, 6 vn, <b>14 faces</b></dd>
+</dl>
+
+<pre><code>MeshHandle h = rm.LoadMesh(<span class="st">"assets/meshes/camera_gizmo.obj"</span>, {});
+LV3_ASSERT(h.IsValid());
+<span class="kw">const</span> MeshClass* m = rm.GetMesh(h);
+LV3_ASSERT(m-&gt;vertsPerFace == <span class="nb">3</span> &amp;&amp; m-&gt;faceCount() == <span class="nb">8</span>);</code></pre>
+
+<div class="counter">
+<span class="lbl">Contre-exemple vécu — deux fois dans la même session</span>
+<p style="margin:.2rem 0">Le fichier édité dans le projet n’est pas celui que l’exécutable
+lit. Visual Studio ne recopie un asset vers le répertoire de sortie que si sa propriété de
+copie est réglée. Résultat observé : une boîte qui s’affichait en pyramide, puis un
+<code>faceCount()</code> obsolète qui faisait sauter une assertion correcte.</p>
+<p style="margin:.2rem 0"><b>Remède :</b> propriété <em>Copier si plus récent</em>, ou étape
+post-build qui synchronise <code>assets/</code>. Plus un log au chargement, pour que
+l’incident se voie au démarrage et pas trois systèmes plus loin.</p>
+</div>
+
+<h4>Le marqueur « up » — pourquoi il existe</h4>
+<p>Les deux meshes sont symétriques en Y. Tournez une caméra de 180° autour de son axe de
+visée (un <em>roll</em>) et le gizmo est <strong>pixel pour pixel identique</strong>. Le
+petit triangle asymétrique posé sur l’arête supérieure lève l’ambiguïté. Il est doublé à
+winding inversé pour rester visible malgré le backface culling.</p>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">2</span> Deux composants, dont un volontairement générique</summary>
+<div class="body">
+<p class="goal">Objectif — donner au gizmo de quoi retrouver sa caméra, et au rendu de quoi
+teinter et masquer, <em>sans</em> que la couche de rendu apprenne ce qu’est une caméra.</p>
+
+<pre><code><span class="cm">// Le gizmo sait quelle camera il decrit.</span>
+<span class="kw">struct</span> CameraGizmoComponent {
+    Entity m_owner  = NULL_ENTITY;
+    <span class="kw">float</span>  m_length = <span class="nb">3.0f</span>;        <span class="cm">// longueur d'affichage, PAS le farPlane</span>
+};
+
+<span class="cm">// GENERIQUE : la couche rendu ignore ce qu'est une camera.</span>
+<span class="kw">struct</span> DebugVisualComponent {
+    Color  m_color;
+    Entity m_hideForCamera = NULL_ENTITY;  <span class="cm">// masque si la vue vient de cette camera</span>
+};</code></pre>
+
+<div class="rule">
+<b>Règle de couche.</b> <code>RenderView</code> n’apprend jamais le mot « caméra ». Il ne
+connaît que <code>DebugVisualComponent</code>. C’est ce qui permettra de réutiliser
+exactement le même mécanisme pour afficher les AABB du futur BVH (L11), les normales, ou
+les axes de repère — sans retoucher le rendu.
+</div>
+
+<div class="counter">
+<span class="lbl">Contre-exemple</span>
+<p style="margin:.2rem 0">Donner à <code>RenderView</code> un
+<code>if (registry.Has&lt;CameraGizmoComponent&gt;(e)) { ... }</code> fonctionnerait aujourd’hui
+et coûterait cher demain : chaque nouveau type de visuel de debug ajouterait une branche
+dans la boucle chaude du rendu, et la couche rendu dépendrait de la couche scène.</p>
+</div>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">3</span> <code>GizmoAssets</code> — un point de décision unique</summary>
+<div class="body">
+<p class="goal">Objectif — centraliser le choix « quel mesh pour quelle projection » en un
+seul endroit, pour qu’aucun site n’ait à réécrire le <code>if</code>.</p>
+
+<pre><code><span class="kw">struct</span> GizmoAssets
+{
+    MeshHandle m_perspective;    <span class="cm">// camera_gizmo.obj      (pyramide,  8 faces)</span>
+    MeshHandle m_orthographic;   <span class="cm">// camera_gizmo_box.obj (boite,    14 faces)</span>
+
+    [[nodiscard]] <span class="kw">bool</span> IsValid() <span class="kw">const noexcept</span>
+    { <span class="kw">return</span> m_perspective.IsValid() &amp;&amp; m_orthographic.IsValid(); }
+
+    [[nodiscard]] MeshHandle For(EProjectionType p) <span class="kw">const noexcept</span>
+    {
+        LV3_ASSERT(IsValid());
+        <span class="kw">return</span> (p == EProjectionType::Orthographic) ? m_orthographic : m_perspective;
+    }
+};</code></pre>
+
+<h4>Pourquoi pas <code>std::expected</code> pour l’échec de chargement</h4>
+<div class="rule">
+<b>Critère.</b> <code>std::expected</code> se justifie quand l’appelant peut agir
+<em>différemment</em> selon la cause de l’échec. Si toutes les causes mènent à la même
+action, un état booléen suffit et la raison appartient au journal, pas au type de retour.
+</div>
+<p>Fichier introuvable, OBJ malformé, mesh vide : même conséquence — pas de gizmos. Mais le
+mode dégradé doit être <strong>bruyant</strong> :</p>
+<pre><code><span class="kw">if</span> (gizmoAssets.IsValid())
+    SpawnCameraGizmos(registry, gizmoAssets);
+<span class="kw">else</span>
+    Logger::warn(<span class="st">"[Gizmo] assets absents : aucun gizmo de camera ne sera affiche"</span>);</code></pre>
+<p>C’est la contrepartie de la règle sur les garde-fous du parse : <b>dégrader et parler</b>,
+jamais dégrader en silence.</p>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">4</span> Le JSON et <code>JsonReader::Child</code></summary>
+<div class="body">
+<p class="goal">Objectif — décrire dans le JSON l’<em>intention</em> (« cette caméra a un
+gizmo de longueur 3 ») sans jamais y décrire la géométrie, et sans faire mentir le TNR
+(<code>WarnUnread</code>).</p>
+
+<pre><code>"Camera": {
+  "projection": "perspective",
+  "lens": "fov",
+  "fov": 45.0,
+  "near": 0.1,
+  "infiniteFar": true,
+  "active": true,
+  "priority": 10,
+  <b>"gizmo": { "length": 3.0 }</b>
+}</code></pre>
+
+<p><code>"gizmo"</code> est un <b>sous-objet</b> du composant <code>Camera</code>, pas un
+composant frère : il n’a aucun sens sans elle. Mais <code>"gizmo"</code> et
+<code>"length"</code> n’appartiennent pas au même nœud JSON, et un
+<code>JsonReader</code> est attaché à <em>un</em> nœud. Il en faut donc deux, et un moyen de
+descendre de l’un à l’autre <strong>en marquant la clé au passage</strong>.</p>
+
+<pre><code><span class="cm">// Descente dans un sous-objet. NON const : elle consomme une cle.</span>
+[[nodiscard]] JsonReader Child(<span class="kw">const char</span>* key)
+{
+    m_seen.insert(key);          <span class="cm">// "gizmo" est lue ICI, en tant que CONTENEUR</span>
+
+    <span class="cm">// Objet vide de repli : duree de vie statique, donc jamais pendant.</span>
+    <span class="kw">static const</span> json s_empty = json::object();
+
+    <span class="kw">const auto</span> it = m_j.find(key);
+    <span class="kw">const</span> json&amp; sub = (it != m_j.end() &amp;&amp; it-&gt;is_object()) ? *it : s_empty;
+
+    <span class="kw">return</span> JsonReader(sub, m_comp + <span class="st">"."</span> + key, m_owner);
+}</code></pre>
+
+<div class="tw">
+<table>
+<thead><tr><th>Ligne</th><th>Raison</th></tr></thead>
+<tbody>
+<tr><td><code>m_seen.insert(key)</code></td>
+    <td>Sans lui, le <code>WarnUnread()</code> du parent signalerait « clé ignorée
+        <code>gizmo</code> » alors qu’on vient de la lire. <code>Child()</code> est un
+        <code>Read()</code> dont la valeur est un nœud.</td></tr>
+<tr><td><code>static const json s_empty</code></td>
+    <td><code>m_j</code> est une <b>référence</b>. Si la clé manque, il faut la lier à
+        quelque chose qui survit au <code>return</code> — une locale non statique donnerait
+        une référence pendante.</td></tr>
+<tr><td><code>find()</code> et non <code>operator[]</code></td>
+    <td>Sur un <code>json</code> non-const, <code>operator[]</code> <b>insère</b> un
+        <code>null</code> quand la clé manque.</td></tr>
+<tr><td><code>m_comp + "." + key</code></td>
+    <td>Le préfixe devient <code>Camera.gizmo</code> : l’avertissement dira exactement où
+        chercher la faute de frappe.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="counter">
+<span class="lbl">Contre-exemple — désarmer le TNR sans s’en apercevoir</span>
+<pre style="margin:.4rem 0"><code>c.m_gizmoLength = r.Read(compJson.value(<span class="st">"length"</span>, <span class="nb">3.0f</span>));   <span class="cm">// FAUX</span></code></pre>
+<p style="margin:.2rem 0"><code>compJson.value(...)</code> fait la recherche
+<em>lui-même</em> et retourne un <code>float</code>. <code>JsonReader</code> reçoit
+<code>3.0f</code> — un nombre nu. Il n’a jamais vu la chaîne <code>"length"</code>, ne peut
+rien enregistrer, et son <code>WarnUnread()</code> déclarera <code>"length"</code> comme
+clé ignorée alors qu’on vient de la lire.</p>
+</div>
+
+<div class="rule">
+<b>Règle R5.</b> Une clé JSON n’est jamais lue par <code>contains()</code> +
+<code>operator[]</code> + <code>.value()</code>. Elle est lue <b>uniquement</b> par
+<code>Read()</code>, à qui l’on passe <b>le nom de la clé</b>, jamais sa valeur. Le nom est
+la seule chose que le lecteur peut enregistrer.
+</div>
+
+<h4>Le couple <code>Has()</code> / <code>Child()</code> n’est pas redondant</h4>
+<pre><code><span class="kw">if</span> (r.Has(<span class="st">"gizmo"</span>))
+{
+    JsonReader rg = r.Child(<span class="st">"gizmo"</span>);            <span class="cm">// ou lire ses champs</span>
+    c.m_gizmoLength = std::max(<span class="nb">0.0f</span>, rg.Read(<span class="st">"length"</span>, <span class="nb">2.0f</span>));
+    rg.WarnUnread();                             <span class="cm">// TNR du sous-objet</span>
+}
+<span class="kw">else</span>
+    c.m_gizmoLength = <span class="nb">0.0f</span>;                      <span class="cm">// 0 = pas de gizmo</span></code></pre>
+<p><code>Has()</code> décide <b>s’il y a</b> un gizmo, <code>Child()</code> décide
+<b>où lire</b> ses champs. Sans le <code>Has()</code>, une caméra sans bloc
+<code>gizmo</code> recevrait la longueur par défaut et se verrait affublée d’un gizmo non
+demandé. Et le <code>max(0, …)</code> : une longueur négative retournerait le frustum vers
+<code>+Z</code> — un gizmo qui pointe à l’envers, et le test final qui saute sur
+<code>clip.w &gt; 0</code>.</p>
+
+<h4>Au passage, sept défauts accumulés dans <code>ParseCamera</code></h4>
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Défaut</th><th>Correction</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><code>contains("focalLength")</code> <b>+</b> <code>lensModel</code> :
+    deux discriminants concurrents, dont l’un peut contredire l’autre</td>
+    <td>une clé <code>"lens"</code> unique et explicite</td></tr>
+<tr><td>2</td><td><code>focalLength</code> lu deux fois, <code>infiniteFar</code> lu deux
+    fois</td><td>une lecture par clé</td></tr>
+<tr><td>3</td><td><code>orthoHeight</code> lu inconditionnellement — il coche la clé même en
+    perspective, donc <code>WarnUnread</code> ne signalera jamais un
+    <code>orthoHeight</code> égaré</td><td>déplacé dans la branche ortho</td></tr>
+<tr><td>4</td><td><code>clamp(m_fovYDeg)</code> en fin de fonction : s’applique aussi aux
+    caméras Filmback, où le champ n’a même pas été lu</td>
+    <td>déplacé dans la branche <code>fov</code></td></tr>
+<tr><td>5</td><td>garde-fous muets : <code>far &lt;= near</code> corrigé en silence</td>
+    <td>garde-fous qui journalisent</td></tr>
+<tr><td>6</td><td><code>active</code> par défaut à <code>true</code></td>
+    <td>défaut <code>false</code> : l’activité se déclare</td></tr>
+<tr><td>7</td><td><code>m_lensModel</code> non écrit sur tous les chemins</td>
+    <td>chaque branche assigne tous ses champs</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="warn">
+<b>Le mensonge silencieux le plus vicieux.</b> Les trois caméras portaient
+<code>"far": 30.0</code> à côté de <code>"infiniteFar": true</code>. Le <code>far</code>
+était lu, clampé, garde-fouté… puis <b>jeté</b> par <code>BuildViewData</code> qui appelle
+<code>PerspectiveInfinite</code>. Aucun avertissement, puisque la clé avait bien été lue.
+<br><br>
+<b>Corollaire du principe n°9 :</b> une donnée <em>lue et jamais consommée</em> est un
+mensonge que le TNR valide. Le lecteur prouve qu’on a regardé la clé, jamais qu’on en a
+fait quelque chose.
+</div>
+
+<h4>Et une source unique pour l’angle</h4>
+<p><code>BuildViewData</code> et <code>CameraGizmoSystem</code> calculaient tous deux le FOV
+vertical. Deux chemins vers la même grandeur, donc deux vérités possibles :</p>
+<pre><code>[[nodiscard]] <span class="kw">inline float</span> CameraFovY(<span class="kw">const</span> CameraComponent&amp; cam) <span class="kw">noexcept</span>
+{
+    LV3_ASSERT(cam.m_lensModel == ELensModel::Filmback ||
+               (cam.m_fovYDeg &gt;= <span class="nb">1.0f</span> &amp;&amp; cam.m_fovYDeg &lt;= <span class="nb">179.0f</span>));
+    <span class="kw">return</span> (cam.m_lensModel == ELensModel::Filmback)
+        ? Projection::FovYFromFocal(cam.m_focalLengthMm, cam.m_filmHeightMm)
+        : cam.m_fovYDeg * TO_RADIAN;
+}</code></pre>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">5</span> <code>SpawnCameraGizmos</code> — et le piège qui coûte une soirée</summary>
+<div class="body">
+<p class="goal">Objectif — créer une entité gizmo par caméra qui en demande un, liée à sa
+caméra par la hiérarchie, et dans un état <em>déjà cohérent</em>.</p>
+
+<dl class="io">
+<dt>Entrée</dt><dd>les CameraComponent remplis par l’étape 4 ; les deux handles de l’étape 3</dd>
+<dt>Sortie</dt><dd>N entités « __gizmo(nom) », enfants de leur caméra</dd>
+</dl>
+
+<pre><code><span class="kw">void</span> SpawnCameraGizmos(Registry&amp; registry, <span class="kw">const</span> GizmoAssets&amp; assets)
+{
+    LV3_ASSERT(assets.IsValid());
+
+    <span class="cm">// 1. COLLECTER d'abord : creer des entites pendant l'iteration</span>
+    <span class="cm">//    d'un ViewGroup invalide les tableaux denses du SparseSet.</span>
+    std::vector&lt;Entity&gt; cameras;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [e, cam] : registry.ViewGroup&lt;CameraComponent&gt;())
+        <span class="kw">if</span> (cam.m_gizmoLength &gt; <span class="nb">0.0f</span>) cameras.push_back(e);
+
+    <span class="cm">// 2. CREER ensuite.</span>
+    <span class="kw">for</span> (Entity camEntity : cameras)
+    {
+        <span class="kw">const</span> CameraComponent&amp; cam = registry.getComponent&lt;CameraComponent&gt;(camEntity);
+
+        Entity g = registry.CreateEntity();
+        registry.addComponent(g, NameComponent{
+            <span class="st">"__gizmo("</span> + EntityLabel(registry, camEntity) + <span class="st">")"</span> });
+        registry.addComponent(g, TransformComponent{});
+        registry.addComponent(g, MeshComponent{ assets.For(cam.m_projection) });
+        registry.addComponent(g, CameraGizmoComponent{ camEntity, cam.m_gizmoLength });
+        registry.addComponent(g, DebugVisualComponent{ Color{}, camEntity });
+        LinkChildToParent(registry, g, camEntity);
+    }
+}</code></pre>
+
+<div class="counter">
+<span class="lbl">Contre-exemple — créer le gizmo dans <code>ParseCamera</code></span>
+<p style="margin:.2rem 0">C’est l’endroit naturel : on vient de lire le bloc
+<code>gizmo</code>, autant créer l’entité tout de suite. <b>Et c’est un piège.</b></p>
+<p style="margin:.2rem 0"><code>LinkChildToParent</code> crée un
+<code>HierarchyComponent</code> sur le parent. Si <code>ParseCamera</code> liait un gizmo
+immédiatement, la caméra recevrait un
+<code>HierarchyComponent{parent vide, [gizmo], isRoot=true}</code>. Puis
+<code>ParseHierarchy</code>, qui tourne <b>après tous les nœuds</b>, l’écraserait pour y
+mettre son vrai parent — <b>emportant la liste <code>m_children</code></b>.</p>
+<p style="margin:.2rem 0">Résultat : gizmo orphelin, jamais transformé, invisible. Aucun
+message, aucune assertion. D’où la règle : le spawn se fait dans une passe séparée,
+<b>après</b> <code>ParseHierarchy</code>.</p>
+</div>
+
+<div class="rule">
+<b>Règle R10 — état initial.</b> Une entité est créée dans un état déjà cohérent. Un système
+entretient un invariant, il ne le fabrique pas. Sinon la validité de l’état initial devient
+une propriété de l’ordonnancement — donc invisible et fragile.
+</div>
+<p>C’est pourquoi <code>assets.For(cam.m_projection)</code> apparaît ici <em>et</em> dans le
+système : le premier établit l’invariant, le second le maintient. Compter sur le système
+pour corriger un mauvais handle à la première frame reviendrait à faire dépendre la
+correction de l’ordre d’exécution — qu’on va justement déplacer deux fois.</p>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">6</span> <code>CameraBinding</code> — réifier l’association</summary>
+<div class="body">
+<p class="goal">Objectif — faire exister comme donnée ce qui n’était qu’une convention :
+quelle caméra est rendue dans quel viewport, et dans quel mode. Sans cela, l’aspect ratio
+n’a pas de propriétaire.</p>
+
+<pre><code><span class="cm">// L'association (camera, viewport, mode). AUCUNE matrice : construite</span>
+<span class="cm">// avant les transforms, donc disponible pour tout consommateur.</span>
+<span class="kw">struct</span> CameraBinding
+{
+    Entity      camera = NULL_ENTITY;
+    Viewport    viewport;
+    ERenderMode mode   = ERenderMode::Solid;
+};</code></pre>
+
+<h4>Géométrie et politique, séparées</h4>
+<p><code>BuildLayout</code> découpe un rectangle. Il ne connaît aucune entité :</p>
+
+<pre><code><span class="kw">enum class</span> ELayout : uint8_t { Single, SplitH, SplitV, Quad, MainSide };
+
+size_t BuildLayout(ELayout layout, <span class="kw">int</span> w, <span class="kw">int</span> h, Viewport* out, size_t capacity)
+{
+    LV3_ASSERT(out);
+
+    <span class="kw">if</span> (w &lt; <span class="nb">8</span> || h &lt; <span class="nb">8</span>)   <span class="cm">// degrader ET parler</span>
+    {
+        Logger::warn(<span class="st">"[Layout] fenetre trop petite, vue unique forcee"</span>);
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>, <span class="nb">0</span>, (w &gt; <span class="nb">0</span> ? w : <span class="nb">1</span>), (h &gt; <span class="nb">0</span> ? h : <span class="nb">1</span>) };
+        <span class="kw">return</span> <span class="nb">1</span>;
+    }
+
+    <span class="kw">const int</span> hw = w / <span class="nb">2</span>, hh = h / <span class="nb">2</span>;
+
+    <span class="kw">switch</span> (layout)
+    {
+    <span class="kw">case</span> ELayout::Single:
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>, <span class="nb">0</span>, w, h };                   <span class="kw">return</span> <span class="nb">1</span>;
+    <span class="kw">case</span> ELayout::SplitH:                                <span class="cm">// cote a cote</span>
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>,  <span class="nb">0</span>, hw,     h };
+        out[<span class="nb">1</span>] = { hw, <span class="nb">0</span>, w - hw, h };               <span class="kw">return</span> <span class="nb">2</span>;
+    <span class="kw">case</span> ELayout::SplitV:                                <span class="cm">// l'un au-dessus de l'autre</span>
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>, <span class="nb">0</span>,  w, hh     };
+        out[<span class="nb">1</span>] = { <span class="nb">0</span>, hh, w, h - hh };               <span class="kw">return</span> <span class="nb">2</span>;
+    <span class="kw">case</span> ELayout::MainSide:                              <span class="cm">// 75 % principal, 25 % lateral</span>
+    {
+        <span class="kw">const int</span> mainW = (w * <span class="nb">3</span>) / <span class="nb">4</span>;
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>,     <span class="nb">0</span>, mainW,     h };
+        out[<span class="nb">1</span>] = { mainW, <span class="nb">0</span>, w - mainW, h };        <span class="kw">return</span> <span class="nb">2</span>;
+    }
+    <span class="kw">case</span> ELayout::Quad:
+        out[<span class="nb">0</span>] = { <span class="nb">0</span>,  <span class="nb">0</span>,  hw,     hh     };
+        out[<span class="nb">1</span>] = { hw, <span class="nb">0</span>,  w - hw, hh     };
+        out[<span class="nb">2</span>] = { <span class="nb">0</span>,  hh, hw,     h - hh };
+        out[<span class="nb">3</span>] = { hw, hh, w - hw, h - hh };        <span class="kw">return</span> <span class="nb">4</span>;
+    }
+    <span class="kw">return</span> <span class="nb">0</span>;   <span class="cm">// enum hors domaine</span>
+}</code></pre>
+
+<div class="tw">
+<table>
+<thead><tr><th>Détail</th><th>Raison</th></tr></thead>
+<tbody>
+<tr><td><code>w - hw</code> et non un second <code>hw</code></td>
+    <td>Sur une largeur impaire, le pixel orphelin est attribué plutôt que perdu.</td></tr>
+<tr><td>Pas de <code>default:</code></td>
+    <td>Le jour où <code>ELayout::PictureInPicture</code> est ajouté, MSVC signale le
+        <code>switch</code> incomplet (C4062). Un <code>default</code> échangerait une
+        erreur de compilation contre un bug silencieux.</td></tr>
+<tr><td>Garde-fou qui journalise</td>
+    <td>Réduire la fenêtre à quelques pixels produirait un viewport dégénéré, donc un
+        <code>Aspect()</code> nul, donc un NaN dans toute la projection.</td></tr>
+</tbody>
+</table>
+</div>
+
+<p><code>BuildCameraBindings</code> associe ensuite caméras et modes aux cases produites :</p>
+
+<pre><code><span class="kw">struct</span> ViewSlot { Entity camera; ERenderMode mode; };
+
+size_t BuildCameraBindings(ELayout layout, <span class="kw">const</span> ViewSlot* slots, size_t slotCount,
+                           <span class="kw">int</span> w, <span class="kw">int</span> h, CameraBinding* out, size_t capacity)
+{
+    Viewport vps[<span class="nb">8</span>];
+    <span class="kw">const</span> size_t n = BuildLayout(layout, w, h, vps, std::size(vps));
+
+    LV3_ASSERT(n == slotCount &amp;&amp; n &lt;= capacity);
+
+    <span class="kw">for</span> (size_t i = <span class="nb">0</span>; i &lt; n; ++i)
+    {
+        LV3_ASSERT(slots[i].camera != NULL_ENTITY);
+        out[i] = { slots[i].camera, vps[i], slots[i].mode };
+    }
+
+    <span class="cm">// Aucune camera deux fois : son gizmo porte m_hideForCamera et serait</span>
+    <span class="cm">// masque dans TOUTES les vues ou elle apparait, donc invisible partout.</span>
+<span class="kw">#ifdef</span> _DEBUG
+    <span class="kw">for</span> (size_t i = <span class="nb">0</span>; i &lt; n; ++i)
+        <span class="kw">for</span> (size_t j = i + <span class="nb">1</span>; j &lt; n; ++j)
+            LV3_ASSERT(out[i].camera != out[j].camera);
+<span class="kw">#endif</span>
+
+    <span class="kw">return</span> n;
+}</code></pre>
+
+<div class="rule">
+<b>Règle R13 — postconditions.</b> Une postcondition s’asserte dans la fonction qui produit
+le résultat, pas dans un test qui le consulte plus tard. La proximité au site de la faute
+est la moitié de la valeur d’une assertion.
+</div>
+
+<div class="counter">
+<span class="lbl">Contre-exemple — deux paramètres morts</span>
+<p style="margin:.2rem 0">La première version de cette fonction prenait un
+<code>const Registry&amp;</code> et un <code>FrameBuffer&amp;</code>. Elle ne lit aucun composant
+(c’est de la géométrie pure) et n’a besoin que de deux entiers. Pire : <code>fb</code> ne
+connaît ses dimensions qu’entre <code>Bind()</code> et <code>Unbind()</code>, donc l’appeler
+en début de frame donnait une taille nulle.</p>
+<p style="margin:.2rem 0"><b>Règle R4 :</b> la signature d’une fonction déclare ce dont elle
+dépend. Un paramètre inutilisé est un mensonge sur ce contrat ; il interdit de raisonner sur
+l’ordonnancement et masque la pureté réelle de la fonction.</p>
+</div>
+</div>
+</details>
+
+<details class="step" open>
+<summary><span class="n">7</span> <code>CameraGizmoSystem</code> — la forme, calculée en float32</summary>
+<div class="body">
+<p class="goal">Objectif — écrire dans <code>m_local.scale</code> la matrice qui transforme
+le mesh canonique en frustum réel de la caméra. C’est l’étape où toute l’information
+géométrique du lot est produite.</p>
+
+<dl class="io">
+<dt>Entrée (étape 4)</dt><dd>cam.m_fovYDeg, cam.m_projection, cam.m_orthoHeight, giz.m_length</dd>
+<dt>Entrée (étape 6)</dt><dd>bindings[i].viewport.Aspect() pour la caméra propriétaire</dd>
+<dt>Sortie</dt><dd>tr.m_local.scale  +  tr.m_dirty = true</dd>
+</dl>
+
+<h4>Le calcul, pas à pas, en float32</h4>
+<p>Choisissez une caméra de la scène et suivez chaque opération. Les valeurs sont arrondies
+en simple précision à chaque étape, comme le CPU le fait réellement.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:1 1 180px">
+    <label>Caméra</label>
+    <select id="scCam">
+      <option value="fps">FPS_Camera — persp, fov 45, L 3</option>
+      <option value="follow">Follow_Camera — persp, fov 45, L 3</option>
+      <option value="top">Top_Camera — ORTHO, orthoHeight 120, L 30</option>
+      <option value="custom">Personnalisée…</option>
+    </select>
+  </div>
+  <div class="fld">
+    <label>Viewport <span class="val" id="scVpV">768 × 800</span></label>
+    <div class="seg" id="scVp">
+      <button data-w="768" data-h="800" class="on">768×800 (SplitH)</button>
+      <button data-w="1152" data-h="800">1152×800 (MainSide G)</button>
+      <button data-w="384" data-h="800">384×800 (MainSide D)</button>
+      <button data-w="500" data-h="400">500×400</button>
+    </div>
+  </div>
+  <div class="fld" style="flex:0 0 auto">
+    <label>Variante</label>
+    <div class="seg" id="scBug">
+      <button data-v="ok" class="on">Correcte</button>
+      <button data-v="b28">Bug 28 — tan(fov)</button>
+      <button data-v="b29">Bug 29 — sans aspect</button>
+      <button data-v="b30">Bug 30 — scale perdu</button>
+    </div>
+  </div>
+</div>
+<div class="ctl" id="scCustom" style="display:none">
+  <div class="fld"><label>fovY (°) <span class="val" id="scFovV">45</span></label>
+    <input type="range" id="scFov" min="10" max="150" step="1" value="45"></div>
+  <div class="fld"><label>length <span class="val" id="scLenV">3</span></label>
+    <input type="range" id="scLen" min="1" max="40" step="0.5" value="3"></div>
+</div>
+
+<div class="out" id="scOut"></div>
+
+<h4>Le code</h4>
+<pre><code><span class="cm">// ── a) FORME : ecriture dans la SOURCE m_local ────────────────</span>
+<span class="kw">const float</span> L = giz.m_length;
+Vec3f wanted;
+
+<span class="kw">if</span> (cam-&gt;m_projection == EProjectionType::Orthographic)
+{
+    <span class="kw">const float</span> halfH = cam-&gt;m_orthoHeight * <span class="nb">0.5f</span>;
+    wanted = { halfH * aspect, halfH, L };          <span class="cm">// L absent de x et y</span>
+}
+<span class="kw">else</span>
+{
+    <span class="kw">const float</span> tanHalf = std::tan(CameraFovY(*cam) * <span class="nb">0.5f</span>);
+    wanted = { L * tanHalf * aspect, L * tanHalf, L };
+}
+
+<span class="kw">if</span> (std::fabs(wanted.x - tr.m_local.scale.x) &gt; <span class="nb">1e-6f</span> ||
+    std::fabs(wanted.y - tr.m_local.scale.y) &gt; <span class="nb">1e-6f</span> ||
+    std::fabs(wanted.z - tr.m_local.scale.z) &gt; <span class="nb">1e-6f</span>)
+{
+    tr.m_local.scale = wanted;
+    tr.m_dirty       = <span class="kw">true</span>;      <span class="cm">// le contrat avec LocalTransformSystem</span>
+}</code></pre>
+
+<div class="tw">
+<table>
+<thead><tr><th>Choix</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Seuil <code>1e-6f</code> <b>absolu</b></td>
+    <td>Les composantes valent quelques unités, jamais 1e-9 ni 1e9. Un seuil relatif serait
+        plus rigoureux en général mais inutile ici, et il coûterait une division.</td></tr>
+<tr><td>Ne rien écrire si rien ne change</td>
+    <td>Un gizmo dont le fov ne bouge pas ne mérite pas une recuisson par frame.</td></tr>
+<tr><td><code>tr.m_dirty = true</code> dans le même bloc</td>
+    <td>Lever le drapeau <em>et</em> écrire, ou ni l’un ni l’autre. Les dissocier
+        produirait soit un recalcul inutile, soit un scale jamais cuit.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="rule">
+<b>Règle R11 — le drapeau <code>dirty</code> est un contrat.</b> Entre l’écrivain et le
+cuiseur. Tout système qui écrit dans la source et ne lève pas le drapeau introduit un bug
+<b>différé</b> : correct à la première frame, faux à toutes les suivantes. C’est la pire
+catégorie, parce que le test de démarrage passe au vert.
+</div>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">8</span> <code>CameraGizmoSystem</code> — le mesh et la couleur</summary>
+<div class="body">
+<p class="goal">Objectif — faire suivre le mesh au type de projection même s’il change à
+l’exécution, et répondre à la question 2 du lot : dissocier visuellement la caméra active.</p>
+
+<pre><code><span class="cm">// ── b) MESH : suit le type de projection, meme a l'execution ──</span>
+<span class="kw">const</span> MeshHandle want = assets.For(cam-&gt;m_projection);
+<span class="kw">if</span> (mc.m_meshHandle.id != want.id) mc.m_meshHandle = want;
+
+<span class="cm">// ── c) ETAT : HORS du bloc conditionnel sur l'aspect ──────────</span>
+dbg.m_color = (giz.m_owner == activeCamera)
+            ? Color{ <span class="nb">255</span>, <span class="nb">216</span>,  <span class="nb">26</span> }    <span class="cm">// ACTIVE   : ambre</span>
+            : Color{ <span class="nb">110</span>, <span class="nb">112</span>, <span class="nb">128</span> };   <span class="cm">// inactive : gris froid</span></code></pre>
+
+<div class="warn" style="font-size:.88rem">
+<b>Détail de placement qui compte.</b> La couleur est <em>hors</em> du <code>if (aspect &gt; 0)</code>
+de l’étape 7, et c’est volontaire : une caméra non rendue cette frame voit quand même sa
+couleur mise à jour. Si on la mettait dans le bloc, la troisième caméra ne changerait plus
+jamais de teinte en devenant active — bug conditionnel, visible une fois sur trois.
+<br><br>
+Même raison pour le <code>if (aspect &gt; 0)</code> plutôt qu’un <code>continue</code> : seule
+la <em>forme</em> est gelée faute d’aspect, pas tout le reste.
+</div>
+
+<h4>Les autres marqueurs possibles, et pourquoi la couleur d’abord</h4>
+<div class="tw">
+<table>
+<thead><tr><th>Marqueur</th><th>Ce qu’il révèle</th><th>Coût</th><th>Retenu</th></tr></thead>
+<tbody>
+<tr><td>Teinte ambre / gris</td><td>Quelle caméra est active</td><td>un champ Color</td>
+    <td><b>oui</b></td></tr>
+<tr><td>Quad du near rempli translucide</td><td>Le plan d’entrée du volume</td>
+    <td>un mesh de plus + blending</td><td>plus tard</td></tr>
+<tr><td>Trait plein / pointillé</td><td>Actif / inactif sans couleur</td>
+    <td>rasterizer de lignes à motif</td><td>non</td></tr>
+<tr><td>Triangle « up »</td><td>Le <b>roll</b>, qu’aucune couleur ne montre</td>
+    <td>2 triangles dans l’OBJ</td><td><b>oui</b></td></tr>
+<tr><td>Rayon d’axe apex → centre far</td><td>La direction exacte du regard</td>
+    <td>2 sommets</td><td>plus tard</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">9</span> <code>RenderView</code> — deux lignes, bien placées</summary>
+<div class="body">
+<p class="goal">Objectif — empêcher une caméra de rendre son propre gizmo, et appliquer la
+teinte sans toucher au reste de la boucle.</p>
+
+<h4>Ligne 1 — le filtre de vue, tout en haut</h4>
+<pre><code><span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [entity, meshComp, transform] :
+     registry.ViewGroup&lt;MeshComponent, TransformComponent&gt;())
+{
+    <span class="cm">// ── 0. FILTRE DE VUE ─────────────────────────────────────────</span>
+    <span class="kw">const</span> DebugVisualComponent* dbg = registry.TryGet&lt;DebugVisualComponent&gt;(entity);
+    <span class="kw">if</span> (dbg &amp;&amp; dbg-&gt;m_hideForCamera == view.sourceCamera) <span class="kw">continue</span>;
+
+    <span class="kw">const</span> MeshClass* mesh = rm.GetMesh(meshComp.m_meshHandle);
+    ...</code></pre>
+<p><b>Avant</b> le <code>rm.GetMesh()</code> : c’est un rejet d’entité, autant éviter le
+hachage de la map de meshes, la classification du frustum et la construction de la MVP pour
+une entité qu’on ne dessinera pas. Sans ce <code>continue</code>, la vue de gauche rendrait
+l’intérieur de son propre frustum — géométrie tranchée par le near plane, plein écran.</p>
+
+<h4>Ligne 2 — la teinte, hissée hors de la boucle des faces</h4>
+<pre><code><span class="kw">const</span> Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;
+<span class="kw">const</span> uint8_t   vpf = mesh-&gt;vertsPerFace;
+
+<span class="cm">// Teinte : invariante pour toute l'entite, evaluee UNE fois.</span>
+<span class="kw">const bool</span>  hasTint = (dbg != <span class="kw">nullptr</span>);
+<span class="kw">const</span> Color tint    = hasTint ? dbg-&gt;m_color : Color{};
+
+<span class="kw">for</span> (size_t f = <span class="nb">0</span>; f &lt; mesh-&gt;faceCount(); ++f)
+{
+    ...
+    <span class="kw">const</span> Color col = hasTint ? tint : FaceColor(<span class="kw">int</span>(f));
+}</code></pre>
+<p><code>dbg</code> est invariant par entité : le relire à chaque face referait le test pour
+rien. Le pointeur déclaré à l’étape 0 sert aux deux usages — ne le redéclarez pas.</p>
+
+<h4>Ligne 3 — le mode de rendu, à côté du viewport</h4>
+<pre><code>renderer.SetViewport(view.viewport);
+renderer.SetMode(view.mode);        <span class="cm">// l'etat de la VUE, pas du renderer</span></code></pre>
+<p>Les deux lignes sont voisines parce qu’elles disent la même chose : <em>voici l’état
+propre à cette vue</em>.</p>
+
+<div class="rule">
+<b>Règle R12 — objets stateful partagés.</b> Chaque consommateur pose son état <b>complet</b>
+en entrée. Ce qui n’est pas explicitement affecté est hérité — et l’héritage silencieux
+d’état est indiagnosticable. <code>Renderer</code> vivant hors de la boucle, une assertion
+de fin verrouille le contrat : <code>LV3_ASSERT(renderer.GetMode() == view.mode);</code>
+</div>
+
+<div class="good" style="font-size:.88rem">
+<b>Le bénéfice inattendu.</b> La vue de droite tourne déjà en
+<code>ERenderMode::Wireframe</code> depuis la L05. Le frustum s’affiche donc
+<b>en fil de fer gratuitement</b> : aucun rasterizer de lignes à écrire, aucune passe
+overlay. Ce qui semblait l’obstacle technique majeur du lot était déjà résolu.
+</div>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">10</span> L’ordre des systèmes — schéma dynamique</summary>
+<div class="body">
+<p class="goal">Objectif — placer <code>CameraGizmoSystem</code> au seul endroit où son
+écriture survit : après le producteur de <code>m_local</code>, avant son cuiseur.</p>
+
+<p>Déplacez le système et observez ce qui arrive au scale dans
+<code>m_worldMatrix</code>. Deux des trois positions échouent — et elles échouent de deux
+manières opposées.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:1 1 100%">
+    <label>Position de <code>CameraGizmoSystem</code> dans la boucle</label>
+    <div class="seg" id="ordSeg">
+      <button data-v="0">① avant les contrôleurs</button>
+      <button data-v="1">② après Local, avant World</button>
+      <button data-v="2" class="on">③ après les bindings, avant Local</button>
+    </div>
+  </div>
+</div>
+
+<div class="pipe" id="ordPipe"></div>
+<div class="out" id="ordOut"></div>
+<div class="info" id="ordWhy" style="font-size:.88rem"></div>
+
+<div class="rule">
+<b>Principe méthodologique n°11.</b> Quand deux positions opposées dans l’ordonnancement
+échouent toutes les deux, la cause n’est pas l’ordre : c’est la donnée écrite, ou l’étape
+qui la consomme.
+</div>
+
+<div class="info" style="font-size:.88rem">
+<b>Le diagnostic final.</b> <code>m_local</code> (un <code>Transform</code> : position,
+<code>Quatf</code>, scale) <b>est</b> la source. <code>m_localMatrix</code> et
+<code>m_worldMatrix</code> sont les dérivés. Écrire <code>m_local.scale</code> était correct
+depuis le début — le défaut était la <b>position</b> de l’écriture dans le pipeline.
+<br><br>
+<b>Règle R1 :</b> une source est toujours écrite <b>avant</b> l’étape qui la cuit. Écrire
+après produit un dérivé jamais recalculé ; écrire dans le dérivé lui-même produit un
+écrasement. Aucune des deux ne génère d’erreur.
+</div>
+</div>
+</details>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s7">7 · Vérifier</h2>
+
+<h3>7.1 Trois fenêtres, pas une</h3>
+
+<p>Tous les tests du lot ont d’abord été placés au même endroit — à l’initialisation — et
+deux d’entre eux ne pouvaient structurellement rien prouver là. Ce qui distingue les
+fenêtres n’est pas la chronologie mais la <strong>durée de vie de la donnée</strong>.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>Fenêtre</th><th>Ce qui est vrai</th><th>Fréquence</th><th>Tests</th></tr></thead>
+<tbody>
+<tr><td><b>A</b> — après chargement</td>
+    <td>Assets et structure de scène. Immuables ensuite.</td><td>une fois</td>
+    <td>1 (asset), 2 (comptage)</td></tr>
+<tr><td><b>B</b> — fin de frame, avant le rendu</td>
+    <td>États dérivés : <code>m_local</code>, <code>m_worldMatrix</code>,
+        <code>ViewData</code>. Reconstruits chaque frame.</td><td>chaque frame</td>
+    <td>3 (rigidité), 4 (frustum)</td></tr>
+<tr><td><b>C</b> — dans le système</td>
+    <td>Préconditions locales au point d’écriture.</td><td>chaque écriture</td>
+    <td>assertions inline</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="rule">
+<b>Règle de placement.</b> Un test s’appelle à l’instant où son invariant devient vrai, et
+il se répète tant que quelque chose peut le rendre faux. Pas là où c’est commode.
+</div>
+
+<p>Un <code>MeshHandle</code> chargé une fois reste valide : le tester une fois suffit. Une
+<code>m_worldMatrix</code> est réécrite 60 fois par seconde : la tester une fois ne prouve
+rien sur les 59 autres.</p>
+
+<h3>7.2 Les quatre tests</h3>
+
+<details class="step">
+<summary><span class="n">T1</span> L’asset — fenêtre A</summary>
+<div class="body">
+<pre><code><span class="kw">void</span> Test_GizmoAssetLoads(ResourceManager&amp; rm, <span class="kw">const</span> GizmoAssets&amp; a)
+{
+    <span class="kw">const</span> MeshClass* p = rm.GetMesh(a.m_perspective);
+    <span class="kw">const</span> MeshClass* o = rm.GetMesh(a.m_orthographic);
+    LV3_ASSERT(p &amp;&amp; o);
+    LV3_ASSERT(p-&gt;vertsPerFace == <span class="nb">3</span> &amp;&amp; p-&gt;faceCount() == kGizmoFacesPersp);  <span class="cm">// 8</span>
+    LV3_ASSERT(o-&gt;vertsPerFace == <span class="nb">3</span> &amp;&amp; o-&gt;faceCount() == kGizmoFacesOrtho);  <span class="cm">// 14</span>
+}</code></pre>
+<p>Les constantes sont nommées à côté du chargement : si un OBJ est retouché, il n’y a
+qu’un endroit à corriger.</p>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">T2</span> Le comptage — fenêtre A</summary>
+<div class="body">
+<pre><code><span class="kw">void</span> Test_GizmoCountMatchesCameras(Registry&amp; registry)
+{
+    size_t expected = <span class="nb">0</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [e, cam] : registry.ViewGroup&lt;CameraComponent&gt;())
+        <span class="kw">if</span> (cam.m_gizmoLength &gt; <span class="nb">0.0f</span>) ++expected;
+
+    size_t actual = <span class="nb">0</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [e, giz] : registry.ViewGroup&lt;CameraGizmoComponent&gt;())
+    {
+        ++actual;
+        LV3_ASSERT(registry.hasComponent&lt;CameraComponent&gt;(giz.m_owner));  <span class="cm">// pas d'orphelin</span>
+        LV3_ASSERT(registry.hasComponent&lt;DebugVisualComponent&gt;(e));
+    }
+    LV3_ASSERT(actual == expected);
+}</code></pre>
+<p>L’assertion sur <code>giz.m_owner</code> est celle qui attraperait la régression du piège
+de l’étape 5 : si quelqu’un redéplaçait le spawn avant <code>ParseHierarchy</code>, le lien
+casserait et le test parlerait.</p>
+</div>
+</details>
+
+<details class="step">
+<summary><span class="n">T3</span> L’invariant rigide — fenêtre B, chaque frame</summary>
+<div class="body">
+<p class="goal">Objectif — garantir qu’aucun scale ne s’est glissé sur une matrice monde de
+caméra, car <code>inverseRigid()</code> mentirait sans planter.</p>
+<pre><code><span class="kw">void</span> Test_CameraWorldMatrixIsRigid(Registry&amp; registry)
+{
+    <span class="kw">constexpr float</span> kEps = <span class="nb">1e-4f</span>;
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [e, cam, tr] :
+         registry.ViewGroup&lt;CameraComponent, TransformComponent&gt;())
+    {
+        <span class="kw">const</span> Matrix44f&amp; w = tr.m_worldMatrix;
+        <span class="kw">const</span> Vec3f X{ w[<span class="nb">0</span>][<span class="nb">0</span>], w[<span class="nb">0</span>][<span class="nb">1</span>], w[<span class="nb">0</span>][<span class="nb">2</span>] };
+        <span class="kw">const</span> Vec3f Y{ w[<span class="nb">1</span>][<span class="nb">0</span>], w[<span class="nb">1</span>][<span class="nb">1</span>], w[<span class="nb">1</span>][<span class="nb">2</span>] };
+        <span class="kw">const</span> Vec3f Z{ w[<span class="nb">2</span>][<span class="nb">0</span>], w[<span class="nb">2</span>][<span class="nb">1</span>], w[<span class="nb">2</span>][<span class="nb">2</span>] };
+
+        LV3_ASSERT(std::fabs(V3Len(X) - <span class="nb">1.0f</span>) &lt; kEps);   <span class="cm">// normes unitaires</span>
+        LV3_ASSERT(std::fabs(V3Len(Y) - <span class="nb">1.0f</span>) &lt; kEps);
+        LV3_ASSERT(std::fabs(V3Len(Z) - <span class="nb">1.0f</span>) &lt; kEps);
+
+        LV3_ASSERT(std::fabs(V3Dot(X, Y)) &lt; kEps);        <span class="cm">// orthogonalite</span>
+        LV3_ASSERT(std::fabs(V3Dot(X, Z)) &lt; kEps);
+        LV3_ASSERT(std::fabs(V3Dot(Y, Z)) &lt; kEps);
+    }
+}</code></pre>
+</div>
+</details>
+
+<details class="step" open>
+<summary><span class="n">T4</span> Le seul qui prouve la sémantique — fenêtre B</summary>
+<div class="body">
+<p class="goal">Objectif — prouver que le gizmo <b>est</b> le frustum de sa caméra. Les trois
+tests précédents vérifient de la plomberie ; celui-ci vérifie le sens.</p>
+
+<p><b>Principe :</b> les 4 coins lointains du mesh, passés en monde par la matrice du gizmo
+puis projetés par le <code>viewProjection</code> de sa caméra, doivent atterrir exactement
+sur les coins du NDC — <code>x = ±1</code>, <code>y = ±1</code>.</p>
+
+<pre><code><span class="kw">void</span> Test_GizmoMatchesFrustum(Registry&amp; registry, ResourceManager&amp; rm,
+                              <span class="kw">const</span> ViewData* views, size_t count,
+                              <span class="kw">const</span> GizmoAssets&amp; assets)
+{
+    <span class="kw">constexpr float</span> kEps = <span class="nb">1e-4f</span>;
+    <span class="kw">static const</span> Vec3f kCorners[<span class="nb">4</span>] = { {-<span class="nb">1</span>,-<span class="nb">1</span>,-<span class="nb">1</span>}, {<span class="nb">1</span>,-<span class="nb">1</span>,-<span class="nb">1</span>}, {<span class="nb">1</span>,<span class="nb">1</span>,-<span class="nb">1</span>}, {-<span class="nb">1</span>,<span class="nb">1</span>,-<span class="nb">1</span>} };
+
+    size_t checked = <span class="nb">0</span>;
+
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp;&amp; [e, giz, trGiz, mcGiz] :
+         registry.ViewGroup&lt;CameraGizmoComponent, TransformComponent, MeshComponent&gt;())
+    {
+        <span class="kw">const auto</span>&amp; cam     = registry.getComponent&lt;CameraComponent&gt;(giz.m_owner);
+        <span class="kw">const bool</span>  isOrtho = (cam.m_projection == EProjectionType::Orthographic);
+
+        <span class="cm">// ── NIVEAU ENTITE ────────────────────────────────────────────</span>
+        <span class="cm">// 1. Le handle designe le bon asset.</span>
+        LV3_ASSERT(mcGiz.m_meshHandle.id == assets.For(cam.m_projection).id);
+
+        <span class="cm">// 2. L'asset contient bien la geometrie attendue.</span>
+        <span class="cm">//    Un handle correct ne prouve RIEN sur le contenu du fichier.</span>
+        <span class="kw">const</span> MeshClass* mg = rm.GetMesh(mcGiz.m_meshHandle);
+        LV3_ASSERT(mg &amp;&amp; mg-&gt;vertsPerFace == <span class="nb">3</span>);
+        LV3_ASSERT(mg-&gt;faceCount() == (isOrtho ? kGizmoFacesOrtho : kGizmoFacesPersp));
+
+        <span class="kw">const float</span> expectedW = isOrtho ? <span class="nb">1.0f</span> : giz.m_length;
+
+        <span class="kw">const</span> ViewData* vd = <span class="kw">nullptr</span>;
+        <span class="kw">for</span> (size_t i = <span class="nb">0</span>; i &lt; count; ++i)
+            <span class="kw">if</span> (views[i].sourceCamera == giz.m_owner) { vd = &amp;views[i]; <span class="kw">break</span>; }
+
+        <span class="kw">if</span> (!vd) <span class="kw">continue</span>;   <span class="cm">// camera non rendue cette frame : rien a comparer</span>
+
+        <span class="cm">// ── NIVEAU COIN ──────────────────────────────────────────────</span>
+        <span class="kw">for</span> (<span class="kw">const</span> Vec3f&amp; c : kCorners)
+        {
+            <span class="cm">// local -> MONDE. Matrice AFFINE : w vaut 1 par construction.</span>
+            <span class="kw">const</span> Vec4f w4 = MulRow(trGiz.m_worldMatrix, c);
+            LV3_ASSERT(std::fabs(w4.w - <span class="nb">1.0f</span>) &lt; kEps);
+
+            <span class="kw">const</span> Vec3f world{ w4.x, w4.y, w4.z };   <span class="cm">// legitime PARCE QUE w == 1</span>
+            <span class="kw">const</span> Vec4f clip = MulRow(vd-&gt;viewProjectionMatrix, world);
+
+            LV3_ASSERT(std::fabs(clip.w - expectedW) &lt; kEps);   <span class="cm">// L, ou 1 en ortho</span>
+            LV3_ASSERT(std::fabs(std::fabs(clip.x / clip.w) - <span class="nb">1.0f</span>) &lt; kEps);
+            LV3_ASSERT(std::fabs(std::fabs(clip.y / clip.w) - <span class="nb">1.0f</span>) &lt; kEps);
+        }
+        ++checked;
+    }
+
+    LV3_ASSERT(checked &gt; <span class="nb">0</span>);   <span class="cm">// un test qui n'a rien verifie n'est pas vert</span>
+}</code></pre>
+
+<div class="good">
+<b>Ce test attrape six bugs distincts</b>, dont aucun ne se voit à l’écran : mauvais fov,
+mauvais aspect, signe de Z inversé, scale posé sur le nœud caméra, ordre de composition de
+matrices erroné, et asset ne correspondant pas à la projection.
+</div>
+
+<h4>Trois décisions de conception dans ce test</h4>
+<div class="tw">
+<table>
+<tbody>
+<tr><td><b><code>ndcZ</code> n’est pas testé</b></td>
+    <td>Le quad du gizmo est à <code>m_gizmoLength</code>, pas au far plane — c’est voulu.
+        Tester Z reviendrait à exiger que le gizmo couvre tout le volume, ce qu’on a
+        explicitement refusé.</td></tr>
+<tr><td><b><code>clip.w</code> comparé à une valeur attendue</b></td>
+    <td>Pas à <code>&gt; 0</code>. La matrice ortho ne divise pas : son <code>w</code> reste
+        à 1 quelle que soit la distance. Là où <code>clipW = L</code> prouve la perspective,
+        <code>clipW = 1</code> prouve l’ortho. La version molle <code>&gt; 0</code> avait
+        laissé passer le bug 30.</td></tr>
+<tr><td><b><code>checked &gt; 0</code></b></td>
+    <td>La boucle commence par un <code>continue</code> conditionnel. Si le rapprochement
+        par <code>sourceCamera</code> échouait, le corps ne s’exécuterait jamais et le test
+        serait <b>vert sans avoir rien testé</b>.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="rule">
+<b>Règle R16.</b> Tout test dont la boucle peut ne rien parcourir doit compter ce qu’il a
+vérifié et asserter que ce compte n’est pas nul. Un test vert qui n’a rien exécuté est pire
+qu’un test absent : il consomme la confiance sans rien garantir.
+</div>
+
+<div class="rule">
+<b>Règle R15.</b> Une assertion sur un identifiant ne prouve rien sur la donnée qu’il
+désigne. Vérifier le handle, c’est vérifier l’étiquette du bocal ; il faut aussi ouvrir le
+bocal — d’où le <code>rm.GetMesh()</code> et le <code>faceCount()</code>.
+</div>
+</div>
+</details>
+
+<h3>7.3 Le protocole de non-régression de la dette D1</h3>
+
+<p>Avec deux viewports identiques (768 × 800), le bug de l’aspect unique était
+<strong>strictement invisible</strong>. Un test qui n’a jamais échoué ne prouve rien.</p>
+
+<ol>
+<li><b>Produire le défaut.</b> Remettre <code>const float aspect = 1536.0f / 800.0f;</code>
+dans le système, layout <code>MainSide</code> (1152 × 800 et 384 × 800, aspects 1,44 et
+0,48). Le test doit <b>sauter</b>, avec <code>ndcX</code> faux d’un facteur 1,33 sur une vue
+et 4,0 sur l’autre.</li>
+<li><b>Corriger.</b> Rétablir <code>b-&gt;viewport.Aspect()</code>.
+<code>ndcX = ndcY = ±1.000000</code> sur les deux.</li>
+</ol>
+
+<p>C’est le <b>principe méthodologique n°4</b> : pour valider une correction, il faut
+pouvoir produire le défaut à volonté.</p>
+
+<h3>7.4 Ce que les tests ne couvrent pas</h3>
+
+<div class="warn" style="font-size:.88rem">
+<b>Le roll.</b> Les quatre coins occupent les mêmes positions après une rotation de 180°
+autour de l’axe de visée, seulement permutés — et <code>fabs()</code> écrase les signes. Le
+marqueur « up » couvre le cas à l’œil, pas le test.
+<br><br>
+Tester le roll exigerait de comparer les positions <b>signées</b>, donc de connaître l’ordre
+canonique des sommets dans le mesh chargé : une hypothèse jamais vérifiée sur
+<code>OBJLoader</code>. Dette mineure, reportée.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s8">8 · Exemples d’utilisation</h2>
+
+<p>Deux axes <strong>indépendants</strong>, à ne jamais confondre :
+<code>Camera.active</code> / <code>Camera.priority</code> choisissent la lentille qui rend la
+vue ; <code>CameraFPS.enabled</code> / <code>CameraFollow.enabled</code> autorisent à écrire
+dans le transform. Une caméra peut être <code>active: false</code> avec un contrôleur
+<code>enabled: true</code> : elle bouge sans être regardée. L’inverse est valide aussi.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:1 1 100%">
+    <label>Cas de caméra</label>
+    <div class="seg" id="exSeg">
+      <button data-v="1" class="on">1 · persp + FPS</button>
+      <button data-v="2">2 · persp + Follow</button>
+      <button data-v="3">3 · sténopé statique</button>
+      <button data-v="4">4 · ortho dessus</button>
+      <button data-v="5">5 · ortho + FPS</button>
+      <button data-v="6">6 · ortho iso + Follow</button>
+      <button data-v="7">7 · observateur</button>
+      <button data-v="8">8 · ⚠ interdits</button>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <pre id="exJson" style="margin:0"><code></code></pre>
+  <div>
+    <div class="card" id="exNote" style="margin:0"></div>
+  </div>
+</div>
+
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Projection</th><th>Lentille</th><th>Contrôleur</th><th>Parent</th>
+<th>Gizmo</th><th>Statut</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>perspective</td><td>fov</td><td>FPS</td><td>interdit</td><td>oui</td><td>valide</td></tr>
+<tr><td>2</td><td>perspective</td><td>fov</td><td>Follow</td><td>interdit</td><td>oui</td><td>valide</td></tr>
+<tr><td>3</td><td>perspective</td><td>filmback</td><td>aucun</td><td>permis</td><td>oui</td><td>valide</td></tr>
+<tr><td>4</td><td>orthographic</td><td>—</td><td>aucun</td><td>permis</td><td>oui</td><td>valide</td></tr>
+<tr><td>5</td><td>orthographic</td><td>—</td><td>FPS</td><td>interdit</td><td>oui</td><td>valide</td></tr>
+<tr><td>6</td><td>orthographic</td><td>—</td><td>Follow</td><td>interdit</td><td>oui</td><td>valide</td></tr>
+<tr><td>7</td><td>perspective</td><td>fov</td><td>aucun</td><td>permis</td><td><b>non</b></td><td>observateur</td></tr>
+<tr><td>8</td><td>—</td><td>—</td><td>FPS <b>+</b> Follow</td><td>—</td><td>—</td><td><b>interdit</b></td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s9">9 · Les quatre bugs, et comment les nombres les ont désignés</h2>
+
+<p>Le gizmo « fonctionnait bien et à priori bien orienté » dès le premier lancement, avec
+<strong>quatre bugs dedans</strong>. Il était 2,4 fois trop ouvert et au mauvais ratio.
+Aucun repère externe ne dit à l’œil quelle <em>devrait</em> être l’ouverture d’un frustum.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Bug</th><th>Détecté par</th><th>Cause</th></tr></thead>
+<tbody>
+<tr><td><b>28</b></td><td><code>tan(fov)</code> au lieu de <code>tan(fov/2)</code></td>
+    <td><code>ndcY = 2,414213 = 1/tan(22,5°)</code></td><td>demi-angle omis</td></tr>
+<tr><td><b>29</b></td><td>aspect ratio jamais appliqué au gizmo</td>
+    <td><code>ndcX/ndcY = 0,8 = 1/1,25</code></td><td>pas de source unique pour l’aspect</td></tr>
+<tr><td><b>30</b></td><td>scale du gizmo absent de <code>m_worldMatrix</code></td>
+    <td><code>clipW = 1</code> au lieu de 3</td>
+    <td>écriture de la source <b>après</b> sa cuisson</td></tr>
+<tr><td><b>31</b></td><td>aspect unique pour N viewports</td>
+    <td>layout <code>MainSide</code> (viewports asymétriques)</td>
+    <td>l’aspect appartient au couple (caméra, viewport)</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>9.1 Les deux identités qui séparent les causes</h3>
+
+<p>Les nombres ne disaient pas « c’est faux ». Ils donnaient le <strong>facteur d’erreur
+exact</strong>. Tout vient de deux identités, exactes et non approximatives :</p>
+
+<div class="out">ndcY        =  tanHalf_gizmo / tanHalf_proj      <span class="d">&lt;- ne depend QUE du fov</span>
+ndcX / ndcY =  aspect_gizmo  / aspect_proj       <span class="d">&lt;- ne depend QUE de l'aspect</span></div>
+
+<p>Le reste se simplifie : <code>L</code> disparaît des deux côtés, d’où l’indépendance du
+test à la longueur d’affichage.</p>
+
+<h3>9.2 Outil de diagnostic</h3>
+
+<p>Entrez les deux valeurs relevées dans votre log, et l’aspect du viewport de la vue.
+L’outil applique la table de décision.</p>
+
+<div class="ctl">
+  <div class="fld"><label>ndcX relevé</label>
+    <input type="number" id="dgX" step="0.000001" value="-1.931371"></div>
+  <div class="fld"><label>ndcY relevé</label>
+    <input type="number" id="dgY" step="0.000001" value="-2.414213"></div>
+  <div class="fld"><label>clip.w relevé</label>
+    <input type="number" id="dgW" step="0.000001" value="3"></div>
+  <div class="fld"><label>aspect du viewport</label>
+    <input type="number" id="dgA" step="0.001" value="1.25"></div>
+  <div class="fld"><label>length (L) attendu</label>
+    <input type="number" id="dgL" step="0.1" value="3"></div>
+  <div class="fld"><label>fovY attendu (°)</label>
+    <input type="number" id="dgF" step="1" value="45"></div>
+  <div class="fld" style="flex:0 0 auto">
+    <label>Jeux relevés</label>
+    <div class="seg" id="dgPre">
+      <button data-v="p1">Relevé n°1</button>
+      <button data-v="p2">Relevé n°2</button>
+      <button data-v="p3">Relevé n°3</button>
+      <button data-v="p4">Final</button>
+    </div>
+  </div>
+</div>
+
+<div class="out" id="dgOut"></div>
+
+<h3>9.3 Les bugs 30 et 31 sont symétriques</h3>
+
+<p>Le bug 30 s’est manifesté sous deux formes <em>opposées</em> selon la position du
+système :</p>
+
+<div class="out">AVANT LocalTransform  ->  scale ecrit, puis <span class="r">ECRASE</span>       ->  scale = (1,1,1)
+APRES LocalTransform  ->  scale ecrit, mais <span class="r">JAMAIS CUIT</span>  ->  monde = identite</div>
+
+<p>Deux positions, deux échecs. C’est la signature d’une erreur de conception, pas d’une
+faute de frappe.</p>
+
+<h3>9.4 Deux incidents de déploiement</h3>
+
+<p>Deux fois dans la même session, le fichier <code>.obj</code> du répertoire d’exécution
+n’était pas celui édité dans le projet : d’abord une boîte qui s’affichait en pyramide,
+puis un <code>faceCount()</code> obsolète.</p>
+
+<div class="note" style="font-size:.88rem">
+<b>Remède structurel.</b> Propriété <em>Copier si plus récent</em> sur les assets, ou étape
+post-build synchronisant <code>assets/</code>. Plus un log au chargement, pour que
+l’incident soit détectable au démarrage plutôt que trois systèmes plus loin :
+<code>Logger::log("[Gizmo] persp=" + … + " faces, ortho=" + … + " faces")</code>.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s10">10 · Les règles dégagées</h2>
+
+<p>Vingt règles numérotées, issues de ce seul chantier. Elles sont contraignantes pour la
+suite du moteur.</p>
+
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Règle</th><th>Née de</th></tr></thead>
+<tbody>
+<tr><td><b>R1</b></td><td>Une source est toujours écrite <b>avant</b> l’étape qui la cuit.
+  Écrire après produit un dérivé jamais recalculé ; écrire dans le dérivé produit un
+  écrasement. Aucune des deux ne génère d’erreur.</td><td>bug 30</td></tr>
+<tr><td><b>R2</b></td><td>Un gizmo dérivé de paramètres doit être validé <b>numériquement</b>
+  contre ces paramètres. Un objet de debug qui ment transforme l’outil de diagnostic en
+  source d’erreur.</td><td>bugs 28–29</td></tr>
+<tr><td><b>R3</b></td><td>Une donnée qui dépend d’une <b>paire</b> ne peut pas être stockée
+  sur l’un des deux membres.</td><td>bug 31, dette D2</td></tr>
+<tr><td><b>R4</b></td><td>La signature d’une fonction déclare ce dont elle dépend. Un
+  paramètre inutilisé est un mensonge sur ce contrat.</td><td><code>BuildCameraBindings</code></td></tr>
+<tr><td><b>R5</b></td><td>Une clé JSON n’est jamais lue par <code>contains()</code> +
+  <code>operator[]</code> + <code>.value()</code>, mais uniquement par
+  <code>Read(nom)</code>.</td><td><code>JsonReader::Child</code></td></tr>
+<tr><td><b>R6</b></td><td>Un choix de branche a un seul discriminant, explicite et nommé. La
+  <b>présence</b> d’une clé n’en est jamais un.</td><td><code>lens</code> vs
+  <code>focalLength</code></td></tr>
+<tr><td><b>R7</b></td><td>Un garde-fou corrige <b>et</b> parle. Corriger sans dire transforme
+  une erreur d’auteur en comportement inexplicable.</td><td><code>ParseCamera</code></td></tr>
+<tr><td><b>R8</b></td><td>Pas de <code>default:</code> dans un <code>switch</code> sur
+  <code>enum class</code> : il échange une erreur de compilation contre un bug
+  silencieux.</td><td><code>ELayout</code>, <code>ToString</code></td></tr>
+<tr><td><b>R9</b></td><td>Une sentinelle dans un champ numérique est un booléen déguisé qui
+  <b>se propage dans l’arithmétique</b>. <code>1e30f</code> est validée par
+  <code>isfinite()</code> mais déborde au premier carré ; <code>infinity()</code> est le
+  moindre mal, mais <code>inf − inf</code> et <code>0 × inf</code> donnent
+  <code>NaN</code>, et une normalisation par <code>inf</code> rend <b>0 partout, sans
+  symptôme</b>.</td><td><code>farPlane</code></td></tr>
+<tr><td><b>R10</b></td><td>Une entité est créée dans un état déjà cohérent. Un système
+  entretient un invariant, il ne le fabrique pas.</td><td><code>SpawnCameraGizmos</code></td></tr>
+<tr><td><b>R11</b></td><td>Le drapeau <code>dirty</code> est un contrat entre l’écrivain et le
+  cuiseur. L’oublier introduit un bug <b>différé</b> : correct à la première frame, faux
+  ensuite.</td><td><code>m_dirty</code></td></tr>
+<tr><td><b>R12</b></td><td>Un objet stateful partagé exige que chaque consommateur pose son
+  état <b>complet</b> en entrée.</td><td><code>Renderer::SetMode</code></td></tr>
+<tr><td><b>R13</b></td><td>Une postcondition s’asserte dans la fonction qui produit le
+  résultat, pas dans un test qui le consulte plus tard.</td><td>doublon de caméra</td></tr>
+<tr><td><b>R14</b></td><td>Une grandeur structurelle se dérive de la donnée structurelle,
+  jamais d’un attribut optionnel.</td><td><code>faceCount()</code></td></tr>
+<tr><td><b>R15</b></td><td>Une assertion sur un identifiant ne prouve rien sur la donnée
+  qu’il désigne.</td><td>pyramide affichée pour une ortho</td></tr>
+<tr><td><b>R16</b></td><td>Tout test dont la boucle peut être vide doit compter ce qu’il a
+  vérifié et asserter que ce compte n’est pas nul.</td><td><code>checked &gt; 0</code></td></tr>
+<tr><td><b>R17</b></td><td>Une méthode publique sans appelant est une promesse d’API que
+  personne ne tient.</td><td><code>Viewport::Resize</code></td></tr>
+<tr><td><b>R18</b></td><td>Une donnée non consommée aujourd’hui se vérifie quand même : son
+  inexactitude n’a aucun symptôme jusqu’au jour où un consommateur la lit — et le bug est
+  alors attribué au consommateur.</td><td>normales du marqueur « up »</td></tr>
+<tr><td><b>R19</b></td><td>Un gestionnaire d’événement ne modifie jamais une ressource en
+  cours d’utilisation. Il lève un drapeau ; le point stable de la boucle applique le
+  changement.</td><td>bug 27, resize SDL</td></tr>
+<tr><td><b>R20</b></td><td>Une valeur d’affichage debug ne se dérive pas d’une valeur
+  géométrique. Les lier revient à faire dépendre l’outil de mesure de ce qu’il mesure.</td>
+  <td><code>depthDisplayRange</code></td></tr>
+</tbody>
+</table>
+</div>
+
+<h4>Principes méthodologiques ajoutés</h4>
+<div class="rule">
+<b>11.</b> Quand deux positions opposées dans l’ordonnancement échouent toutes les deux, la
+cause n’est pas l’ordre : c’est la donnée écrite, ou l’étape qui la consomme.
+</div>
+<div class="rule">
+<b>12.</b> Une dépendance circulaire entre systèmes est presque toujours le symptôme d’une
+donnée trop grosse. Séparez ce qui est statique de ce qui est dérivé, et le cycle disparaît.
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s11">11 · Décisions, dettes et roadmap</h2>
+
+<h3>11.1 Décisions prises dans cet échange — actées</h3>
+
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Décision</th><th>Alternative écartée</th></tr></thead>
+<tbody>
+<tr><td>A5-D1</td><td>Le gizmo est <b>dérivé</b> des paramètres, jamais modélisé</td>
+    <td>Un <code>camera_body.obj</code> décoratif accroché en <code>MeshComponent</code></td></tr>
+<tr><td>A5-D2</td><td><b>Un mesh canonique par type de projection</b>, partagé par toutes les
+    caméras ; la forme sort de la matrice de scale</td>
+    <td>Un mesh généré par caméra, régénéré au changement de fov</td></tr>
+<tr><td>A5-D3</td><td>Le gizmo est une <b>entité enfant</b> de la caméra ; le scale ne touche
+    jamais le nœud caméra</td>
+    <td>Un scale sur la caméra, qui casserait <code>inverseRigid()</code></td></tr>
+<tr><td>A5-D4</td><td><code>DebugVisualComponent</code> <b>générique</b> : la couche rendu
+    ignore le mot « caméra »</td>
+    <td>Un <code>if (Has&lt;CameraGizmoComponent&gt;)</code> dans <code>RenderView</code></td></tr>
+<tr><td>A5-D5</td><td><code>CameraBinding</code> + <code>BuildLayout</code> /
+    <code>BuildCameraBindings</code> : point de décision unique de la configuration
+    d’affichage</td>
+    <td>Un <code>float aspect</code> global, correct par hasard</td></tr>
+<tr><td>A5-D6</td><td>Ordonnancement <b>sans retard de frame</b> : les bindings (statiques)
+    avant les transforms, les <code>ViewData</code> (dérivées) après</td>
+    <td>Consommer les <code>ViewData</code> dans le système, au prix d’une frame</td></tr>
+<tr><td>A5-D7</td><td>Échec de chargement des assets : <b>booléen</b> + journal, pas
+    <code>std::expected</code></td>
+    <td>Propager une cause que personne ne peut traiter différemment</td></tr>
+<tr><td>A5-D8</td><td><code>JsonReader::Child()</code> consomme la clé conteneur sur le
+    parent et ouvre un lecteur sur le sous-objet</td>
+    <td><code>.value()</code> en argument de <code>Read()</code>, qui désarme le TNR</td></tr>
+<tr><td>A5-D9</td><td><code>active</code> par défaut à <b><code>false</code></b> : l’activité
+    se déclare</td><td>Défaut <code>true</code>, qui laisse une caméra voler la vue</td></tr>
+<tr><td>A5-D10</td><td><code>ViewData.farPlane</code> : <b><code>hasFarPlane</code></b>
+    explicite, pas de sentinelle</td>
+    <td><code>1e30f</code>, puis <code>infinity()</code> — les deux écartés</td></tr>
+<tr><td>A5-D11</td><td><code>faceCount()</code> dérive de
+    <code>indices.size() / vertsPerFace</code></td>
+    <td><code>faceNormals.size()</code>, qui rend 0 sur un mesh sans normales</td></tr>
+<tr><td>A5-D12</td><td>Pas de volet SIMD : 3 à 5 entités par frame, le profileur ne désigne
+    rien ici</td><td>Vectoriser par principe</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>11.2 Dettes fermées par ce lot</h3>
+<ul>
+<li><b>Bug 26</b> — clés JSON écrites et jamais lues (<code>active</code>,
+<code>priority</code>) : fermé par le <code>ParseCamera</code> refondu.</li>
+<li><b>Nommage <code>m_</code> incohérent dans <code>ViewData</code></b> : fermé — préfixe
+supprimé sur les structures de passage, conservé sur les composants.</li>
+<li><b><code>Viewport::Resize</code> orphelin</b> : supprimé (R17).</li>
+</ul>
+
+<h3>11.3 Dette D2, reformulée et reportée en leçon</h3>
+
+<div class="warn">
+<p style="margin:.2rem 0"><b>Formulation initiale :</b> « <code>gizmo.length</code> en unités
+monde devrait donner une taille constante à l’écran ».</p>
+<p style="margin:.2rem 0"><b>Reformulation.</b> Une taille écran-constante exige
+<code>L = distance(observateur, gizmo) · k</code>. Mais l’<em>observateur</em> est la caméra
+qui <b>regarde</b> le gizmo, pas celle qu’il décrit — et un même gizmo peut être vu par
+plusieurs viewports simultanément, à des distances différentes.</p>
+<p style="margin:.2rem 0"><code>L</code> devient donc un attribut de la <b>paire (gizmo, vue
+observatrice)</b>. Il ne peut plus vivre dans <code>m_local.scale</code>, puisqu’une entité
+n’a qu’un transform. C’est le cas général de la règle R3.</p>
+<p style="margin:.2rem 0"><b>Trois issues, toutes structurantes :</b> une entité gizmo par
+vue observatrice (N×M entités, lourd) ; un scale appliqué <b>au moment du rendu</b>, hors du
+transform ; ou renoncer. La deuxième est la porte d’entrée du <b>billboarding</b>, des
+<b>LOD</b> et du <b>sprite scaling</b>. Ce n’est pas une correction, c’est une leçon.</p>
+</div>
+
+<h3>11.4 Points ouverts à porter en roadmap — rien n’est acté</h3>
+
+<div class="tw">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>A5-1</td><td><code>depthDisplayRange</code> en dur dans la boucle
+    (<code>SetDepthDisplayRange(80)</code>)</td><td>Dette L01 (valeur ajustable hors JSON)</td>
+    <td>Porter dans <code>engine.json</code> / <code>EngineConfig</code>. Ne <b>pas</b> la
+    dériver de <code>farPlane</code> (R20).</td></tr>
+<tr><td>A5-2</td><td><code>depthDisplayRange</code> posé hors de la boucle de vues, sur un
+    <code>Renderer</code> stateful</td><td>Fuite d’état (R12), sans conséquence aujourd’hui</td>
+    <td>Le faire rejoindre <code>CameraBinding</code> le jour où deux vues en auront des
+    valeurs différentes.</td></tr>
+<tr><td>A5-3</td><td>Accès indexés par face (<code>faceNormals[f]</code>,
+    <code>faceSmoothingGroups[f]</code>) après le changement de
+    <code>faceCount()</code></td><td>Risque de dépassement silencieux en Release</td>
+    <td>Recherche globale + assertions d’invariant après chargement :
+    <code>LV3_ASSERT(faceNormals.empty() || faceNormals.size() == faceCount())</code>.</td></tr>
+<tr><td>A5-4</td><td>Le roll n’est couvert par aucun test</td><td>Dette mineure</td>
+    <td>Exigerait de connaître l’ordre canonique des sommets après <code>OBJLoader</code> —
+    hypothèse à vérifier d’abord.</td></tr>
+<tr><td>A5-5</td><td>Copie des assets vers le répertoire de sortie</td>
+    <td>Incident de déploiement, survenu deux fois</td>
+    <td><em>Copier si plus récent</em> sur chaque <code>.obj</code>, ou étape post-build sur
+    <code>assets/</code>. Plus un log de <code>faceCount()</code> au chargement.</td></tr>
+<tr><td>A5-6</td><td>Bug 27 — <code>SDL_LockTexture</code> « Invalid call » au resize</td>
+    <td>Forme du remède identifiée (R19), non implémentée</td>
+    <td>Drapeau différé + dimensions figées pour la frame
+    (<code>const int frameW = WinW;</code>).</td></tr>
+<tr><td>A5-7</td><td><code>ClipVertex</code> sans <code>uv</code> ni <code>normal</code> ;
+    <code>GetFaceView</code> suppose les sommets contigus</td>
+    <td>Bloquent le Phong sur la vue principale</td>
+    <td>Déjà en dette au Carnet ; le lot confirme qu’ils bloquent le passage de la vue
+    gauche en éclairé.</td></tr>
+<tr><td>A5-8</td><td><code>AssertNear</code> / <code>ScaledEps</code> partagés</td>
+    <td>Question laissée ouverte lors du bug du gizmo démesuré</td>
+    <td>L’epsilon mis à l’échelle de <code>camPos.length()</code> a été intégré à
+    <code>Test_GizmoMatchesFrustum</code>. Vérifier si <code>TestCameraMath</code> a la même
+    faiblesse à grande distance.</td></tr>
+<tr><td>A5-9</td><td><code>Test_GizmoMatchesFrustum</code> retourne <code>checked</code> au
+    lieu d’asserter <code>checked &gt; 0</code></td><td>Écart entre l’artefact et le dépôt</td>
+    <td>Vérifier que l’appelant teste bien la valeur de retour — sinon R16 n’est plus
+    appliquée.</td></tr>
+</tbody>
+</table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s12">12 · Synthèse</h2>
+
+<div class="grid2">
+<div class="card">
+<h4>Ce que le lot a produit</h4>
+<ul style="font-size:.88rem">
+<li><b>2 assets canoniques</b>, un seul mesh partagé par type de projection</li>
+<li><b>2 composants génériques</b> qui laissent <code>RenderView</code> ignorer ce qu’est
+une caméra</li>
+<li><b>1 structure</b> — <code>CameraBinding</code> — devenue le point de décision unique de
+la configuration d’affichage</li>
+<li><b>1 ordonnancement</b> sans retard de frame, obtenu en dissolvant un faux cycle</li>
+<li><b>4 tests</b>, dont deux ont réellement trouvé quelque chose</li>
+<li><b>20 règles</b> et 2 principes méthodologiques</li>
+</ul>
+</div>
+<div class="card">
+<h4>Ce que ça débloque</h4>
+<ul style="font-size:.88rem">
+<li>Un split à quatre, une minimap, un picture-in-picture : <b>une ligne</b> dans
+<code>BuildLayout</code></li>
+<li>Les AABB du BVH (L11), les normales, les axes : même
+<code>DebugVisualComponent</code></li>
+<li>Un mode <code>Depth</code> sur une seule vue : <code>CameraBinding.mode</code></li>
+<li>La dette D2 clairement posée comme leçon future (billboarding / LOD)</li>
+</ul>
+</div>
+</div>
+
+<div class="note" style="font-size:.95rem">
+<b>L’enseignement central.</b> Le gizmo « fonctionnait bien et à priori bien orienté » dès le
+premier lancement, avec quatre bugs dedans. Il était 2,4 fois trop ouvert et au mauvais
+ratio. Rien ne clochait visuellement, parce qu’aucun repère externe ne dit à l’œil quelle
+<em>devrait</em> être l’ouverture d’un frustum.
+<br><br>
+C’est la démonstration la plus nette du <b>principe méthodologique n°1</b> produite depuis
+la Leçon 04 :
+<br><br>
+<b>« Ça s’affiche » n’est jamais un critère de validation.</b> Un cube rendu à l’envers
+ressemble à un cube. Un frustum au mauvais fov ressemble à un frustum.
+</div>
+
+<div class="foot">
+<p><b>Lot A5 — Les gizmos de caméra.</b> Annexe rattachée à la Leçon 05 (Caméra &amp;
+Frustum). Document markdown associé : <code>Annexe_A5_Gizmos_Camera.md</code>. Décisions :
+<code>Résultats/Lot_A5_Gizmos_Camera.md</code>. Points ouverts A5-1 à A5-9 :
+<code>Plan_Phase_G_LibraryV3.md</code>.</p>
+<p>Prochaine étape : <b>Leçon 06 — Scenegraph</b>, qui reprendra le contrat de
+<code>HierarchyComponent</code>, la cascade de <code>DestroyEntity</code> et la composition
+du scale non uniforme.</p>
+</div>
+
+</main>
+
+<script>
+"use strict";
+const f32 = Math.fround;
+const $  = (id) => document.getElementById(id);
+const fx = (v, n) => (Number.isFinite(v) ? v.toFixed(n) : "—");
+const fr = (v, n) => fx(v, n).replace(".", ",");
+
+/* ═══════════ thème ═══════════ */
+(function(){
+  const b = $("themeBtn");
+  b.addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const dark = cur ? cur === "dark"
+                     : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+    redrawAll();
+  });
+})();
+
+/* ═══════════ nav active ═══════════ */
+(function(){
+  const links = [...document.querySelectorAll("#nav a")];
+  const secs  = links.map(a => $(a.getAttribute("href").slice(1))).filter(Boolean);
+  const obs = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (!e.isIntersecting) return;
+      links.forEach(a => a.classList.toggle("on",
+        a.getAttribute("href").slice(1) === e.target.id));
+    });
+  }, { rootMargin: "-20% 0px -70% 0px" });
+  secs.forEach(s => obs.observe(s));
+})();
+
+/* ═══════════ util : groupes de boutons ═══════════ */
+function seg(el, cb){
+  el.addEventListener("click", ev => {
+    const b = ev.target.closest("button");
+    if (!b) return;
+    [...el.querySelectorAll("button")].forEach(x => x.classList.toggle("on", x === b));
+    cb(b);
+  });
+}
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+/* ════════════════════════════════════════════════════════════
+   1 · PIPELINE GLOBAL
+   ════════════════════════════════════════════════════════════ */
+const PIPE_BEFORE = [
+  ["PollEvents","SDL : clavier, souris, redimensionnement","keep",
+   "Met à jour WinW / WinH. Rien n’est figé : un resize en cours de frame change la taille sous les pieds des étages suivants."],
+  ["FPSControllerSystem / CameraFollowSystem","écrivent m_local (position, rotation)","keep",
+   "Un seul contrôleur par caméra (CheckControllerExclusivity, bug 25)."],
+  ["LocalTransformSystem","cuit m_local → m_localMatrix","keep",
+   "Honore m_dirty : ne recuit que ce qui a changé."],
+  ["WorldTransformSystem","compose m_localMatrix · parent → m_worldMatrix","keep",
+   "Parcours hiérarchique depuis les racines."],
+  ["TriggerSystem","détection de collision N²","keep","Hors sujet du lot."],
+  ["BuildViewData × 2","(TransformComponent, CameraComponent, Viewport, Entity)","keep",
+   "Le viewport est passé à la main par l’appelant. Rien ne garantit que ce soit le même que celui du rendu."],
+  ["RenderView × 2","culling, MVP, clipping near, rasterisation","keep",
+   "Mode de rendu posé une fois, hors de la boucle de vues."]
+];
+const PIPE_AFTER = [
+  ["PollEvents","+ frameW / frameH figées pour la frame","mod",
+   "const int frameW = WinW, frameH = WinH; — un resize survenu en cours de frame prend effet à la suivante. Moitié du remède au bug 27."],
+  ["FPSControllerSystem / CameraFollowSystem","écrivent m_local","keep",
+   "Inchangé."],
+  ["BuildCameraBindings","(caméra, viewport, mode) × N — AUCUNE matrice","new",
+   "BuildLayout découpe le rectangle (géométrie pure), BuildCameraBindings y associe caméras et modes (politique). Point de décision unique de la configuration d’affichage."],
+  ["CameraGizmoSystem","lit l’aspect du binding, écrit m_local.scale + m_dirty","new",
+   "Forme (scale), mesh (selon la projection) et couleur (active / inactive). Doit tourner AVANT LocalTransformSystem : il écrit la source."],
+  ["LocalTransformSystem","cuit m_local → m_localMatrix","keep",
+   "Reçoit maintenant le scale du gizmo, posé juste avant."],
+  ["WorldTransformSystem","propage m_worldMatrix","keep",
+   "Le gizmo étant enfant de sa caméra, il hérite automatiquement de sa position et de sa rotation."],
+  ["TriggerSystem","détection de collision","keep","Inchangé."],
+  ["BuildViewData × N","(Registry, CameraBinding)","mod",
+   "Va chercher les composants lui-même, à l’instant où ils sont à jour. Remplit sourceCamera, mode, hasFarPlane. Lit les matrices de CETTE frame : zéro retard."],
+  ["Tests (_DEBUG)","T3 rigidité, T4 frustum","new",
+   "Fenêtre B : après les systèmes, après BuildViewData, AVANT le rendu. Si une assertion saute, aucune texture n’est verrouillée."],
+  ["RenderView × N","+ SetMode, + filtre de vue, + teinte","mod",
+   "Trois lignes ajoutées en tout. Le gizmo traverse le rendu comme un cube : aucun cas particulier."]
+];
+function renderPipe(){
+  const v = document.querySelector("#pipeSeg button.on").dataset.v;
+  const detail = $("pipeDetail").checked;
+  let list = v === "before" ? PIPE_BEFORE : PIPE_AFTER;
+  if (v === "diff") list = PIPE_AFTER.filter(s => s[2] !== "keep");
+  const host = $("pipeline");
+  host.innerHTML = "";
+  list.forEach((s, i) => {
+    const d = document.createElement("div");
+    d.className = "pstage" + (s[2] === "mod" ? " hot" : s[2] === "new" ? " new" : "");
+    let badge = "";
+    if (s[2] === "mod") badge = '<span class="pbadge">modifié</span>';
+    if (s[2] === "new") badge = '<span class="pbadge n">créé</span>';
+    d.innerHTML = '<span class="pn">' + (i + 1) + '</span>' +
+                  '<span class="pt">' + s[0] + '</span>' + badge +
+                  '<span class="pd">' + s[1] + '</span>';
+    host.appendChild(d);
+    if (detail){
+      const e = document.createElement("div");
+      e.style.cssText = "font-size:.78rem;color:var(--ink3);padding:.1rem .7rem .5rem 2.3rem;line-height:1.5";
+      e.textContent = s[3];
+      host.appendChild(e);
+    }
+  });
+}
+seg($("pipeSeg"), renderPipe);
+$("pipeDetail").addEventListener("change", renderPipe);
+
+/* ════════════════════════════════════════════════════════════
+   2 · GIZMO 3D
+   ════════════════════════════════════════════════════════════ */
+const MESH_P = {
+  v: [[0,0,0],[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],
+      [-0.35,1.05,-1],[0.35,1.05,-1],[0,1.6,-1]],
+  e: [[0,1],[0,2],[0,3],[0,4],[1,2],[2,3],[3,4],[4,1]],
+  m: [[5,6],[6,7],[7,5]], nUp: 5
+};
+const MESH_O = {
+  v: [[-1,-1,0],[1,-1,0],[1,1,0],[-1,1,0],
+      [-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],
+      [-0.35,1.05,-1],[0.35,1.05,-1],[0,1.6,-1]],
+  e: [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]],
+  m: [[8,9],[9,10],[10,8]], nUp: 8
+};
+const G = { proj:"persp", fov:45, oh:120, len:3, asp:0.96, yaw:35, pit:18,
+            canon:false, up:true };
+
+function gzScale(){
+  if (G.proj === "ortho"){
+    const halfH = f32(G.oh * 0.5);
+    return [f32(halfH * G.asp), halfH, G.len];
+  }
+  const tanHalf = f32(Math.tan(f32(f32(G.fov * Math.PI / 180) * 0.5)));
+  return [f32(f32(G.len * tanHalf) * G.asp), f32(G.len * tanHalf), G.len];
+}
+function rot(p, yaw, pit){
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cp = Math.cos(pit), sp = Math.sin(pit);
+  let [x,y,z] = p;
+  let x1 =  cy*x + sy*z, z1 = -sy*x + cy*z;
+  let y2 =  cp*y - sp*z1, z2 = sp*y + cp*z1;
+  return [x1, y2, z2];
+}
+function drawGizmo(){
+  const cv = $("gzCanvas"), ctx = cv.getContext("2d");
+  const dpr = devicePixelRatio || 1;
+  const W = cv.clientWidth, H = 340;
+  cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+
+  const M = G.proj === "ortho" ? MESH_O : MESH_P;
+  const S = G.canon ? [1,1,1] : gzScale();
+  const yaw = G.yaw*Math.PI/180, pit = G.pit*Math.PI/180;
+
+  const pts = M.v.map(p => rot([p[0]*S[0], p[1]*S[1], p[2]*S[2]], yaw, pit));
+  let mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9,mnz=1e9,mxz=-1e9;
+  pts.forEach(p=>{mnx=Math.min(mnx,p[0]);mxx=Math.max(mxx,p[0]);
+                  mny=Math.min(mny,p[1]);mxy=Math.max(mxy,p[1]);
+                  mnz=Math.min(mnz,p[2]);mxz=Math.max(mxz,p[2]);});
+  const span = Math.max(mxx-mnx, mxy-mny, mxz-mnz, 1e-3);
+  const cx=(mnx+mxx)/2, cy=(mny+mxy)/2, cz=(mnz+mxz)/2;
+  const dist = span*2.6;
+  const scr = pts.map(p=>{
+    const z = p[2]-cz + dist;
+    const k = (Math.min(W,H)*0.33) / Math.max(z, 1e-3) * (span>0?span/span:1) * (dist/span)*0.9;
+    return [W/2 + (p[0]-cx)*k, H/2 - (p[1]-cy)*k];
+  });
+
+  const line = css("--line2"), ink = css("--ink"), acc = css("--accent"), ok = css("--ok");
+  ctx.lineWidth = 1.6; ctx.strokeStyle = acc;
+  M.e.forEach(([a,b])=>{ ctx.beginPath();
+    ctx.moveTo(scr[a][0],scr[a][1]); ctx.lineTo(scr[b][0],scr[b][1]); ctx.stroke(); });
+  if (G.up){ ctx.strokeStyle = ok; ctx.lineWidth = 2.2;
+    M.m.forEach(([a,b])=>{ ctx.beginPath();
+      ctx.moveTo(scr[a][0],scr[a][1]); ctx.lineTo(scr[b][0],scr[b][1]); ctx.stroke(); }); }
+
+  /* apex / œil */
+  const eyeIdx = G.proj === "ortho" ? null : 0;
+  ctx.fillStyle = ink;
+  if (eyeIdx !== null){
+    ctx.beginPath(); ctx.arc(scr[0][0],scr[0][1],4,0,7); ctx.fill();
+    ctx.font = "11px system-ui"; ctx.fillStyle = css("--ink3");
+    ctx.fillText("œil (apex)", scr[0][0]+8, scr[0][1]-6);
+  }
+  ctx.font = "11px system-ui"; ctx.fillStyle = css("--ink3");
+  ctx.fillText(G.canon ? "mesh canonique (scale 1,1,1)"
+                       : (G.proj==="ortho" ? "boîte orthographique" : "frustum perspectif"), 10, 18);
+  ctx.fillText("Sx " + fr(S[0],3) + "   Sy " + fr(S[1],3) + "   Sz " + fr(S[2],3), 10, H-12);
+}
+function gzUpdate(){
+  const S = gzScale();
+  const tanHalf = f32(Math.tan(f32(f32(G.fov*Math.PI/180)*0.5)));
+  const halfH   = f32(G.oh*0.5);
+  const isO = G.proj === "ortho";
+
+  /* coin (1,1,-1) canonique -> monde (camera a l'origine, sans rotation) */
+  const wx = f32(1*S[0]), wy = f32(1*S[1]), wz = f32(-1*S[2]);
+  /* projection */
+  let p00, p11, clipw;
+  if (isO){ p00 = f32(1/f32(halfH*G.asp)); p11 = f32(1/halfH); clipw = 1; }
+  else    { p00 = f32(1/f32(tanHalf*G.asp)); p11 = f32(1/tanHalf); clipw = f32(-wz); }
+  const cx = f32(wx*p00), cyy = f32(wy*p11);
+  const ndx = f32(cx/clipw), ndy = f32(cyy/clipw);
+  const ok = Math.abs(Math.abs(ndx)-1) < 1e-4 && Math.abs(Math.abs(ndy)-1) < 1e-4;
+
+  let s = "";
+  s += '<span class="a">── PARAMETRES ──</span>\n';
+  s += 'projection   : ' + (isO ? "Orthographique" : "Perspective") + '\n';
+  if (isO) s += 'orthoHeight  : ' + fr(G.oh,1) + '   halfH = ' + fr(halfH,4) + '\n';
+  else     s += 'fovY         : ' + fr(G.fov,1) + '°   tanHalf = tan(' + fr(G.fov/2,2) + '°) = ' + fr(tanHalf,8) + '\n';
+  s += 'length (L)   : ' + fr(G.len,2) + '\n';
+  s += 'aspect       : ' + fr(G.asp,4) + '\n\n';
+  s += '<span class="a">── SCALE (ecrit dans m_local.scale) ──</span>\n';
+  if (isO){
+    s += 'Sx = halfH * aspect   = ' + fr(halfH,4) + ' * ' + fr(G.asp,4) + ' = <span class="g">' + fr(S[0],6) + '</span>\n';
+    s += 'Sy = halfH            = <span class="g">' + fr(S[1],6) + '</span>\n';
+    s += 'Sz = L                = <span class="g">' + fr(S[2],6) + '</span>   <span class="d">(L absent de Sx et Sy)</span>\n\n';
+  } else {
+    s += 'Sx = L * tanHalf * aspect = <span class="g">' + fr(S[0],6) + '</span>\n';
+    s += 'Sy = L * tanHalf          = <span class="g">' + fr(S[1],6) + '</span>\n';
+    s += 'Sz = L                    = <span class="g">' + fr(S[2],6) + '</span>\n\n';
+  }
+  s += '<span class="a">── VERIFICATION NDC (coin +1,+1,-1) ──</span>\n';
+  s += 'canonique    : ( +1.000000, +1.000000, -1.000000 )\n';
+  s += 'x scale      : ( ' + fr(wx,6) + ', ' + fr(wy,6) + ', ' + fr(wz,6) + ' )\n';
+  s += 'P[0][0]      : ' + fr(p00,8) + '      P[1][1] : ' + fr(p11,8) + '\n';
+  s += 'clip.x / w   : ' + fr(cx,6) + ' / ' + fr(clipw,6) + '\n';
+  s += 'clip.y / w   : ' + fr(cyy,6) + ' / ' + fr(clipw,6) + '\n';
+  s += 'ndcX         : <span class="' + (Math.abs(Math.abs(ndx)-1)<1e-4?'g':'r') + '">' + fr(ndx,6) + '</span>\n';
+  s += 'ndcY         : <span class="' + (Math.abs(Math.abs(ndy)-1)<1e-4?'g':'r') + '">' + fr(ndy,6) + '</span>\n';
+  s += 'clip.w attendu : ' + (isO ? '1 (ortho ne divise pas)' : 'L = ' + fr(G.len,2)) + '\n\n';
+  s += ok ? '<span class="g">✓ Le gizmo EST le frustum de sa camera.</span>'
+          : '<span class="r">✗ Le gizmo ne correspond pas.</span>';
+  $("gzOut").innerHTML = s;
+  drawGizmo();
+}
+seg($("gzProj"), b => {
+  G.proj = b.dataset.v;
+  $("gzFovFld").style.display = G.proj === "ortho" ? "none" : "";
+  $("gzOhFld").style.display  = G.proj === "ortho" ? "" : "none";
+  if (G.proj === "ortho" && G.len === 3){ G.len = 30; $("gzLen").value = 30; $("gzLenV").textContent = "30,0"; }
+  if (G.proj === "persp" && G.len === 30){ G.len = 3; $("gzLen").value = 3; $("gzLenV").textContent = "3,0"; }
+  gzUpdate();
+});
+function bindR(id, key, lbl, dec, suff){
+  $(id).addEventListener("input", e => {
+    G[key] = parseFloat(e.target.value);
+    $(lbl).textContent = fr(G[key], dec) + (suff || "");
+    gzUpdate();
+  });
+}
+bindR("gzFov","fov","gzFovV",1,"°");
+bindR("gzOh","oh","gzOhV",1,"");
+bindR("gzLen","len","gzLenV",1,"");
+bindR("gzAsp","asp","gzAspV",2,"");
+bindR("gzYaw","yaw","gzYawV",0,"°");
+bindR("gzPit","pit","gzPitV",0,"°");
+$("gzCanonBtn").addEventListener("click", e => {
+  G.canon = !G.canon; e.target.classList.toggle("on", G.canon); gzUpdate(); });
+$("gzUpBtn").addEventListener("click", e => {
+  G.up = !G.up; e.target.classList.toggle("on", G.up); gzUpdate(); });
+
+/* glisser pour tourner */
+(function(){
+  const cv = $("gzCanvas"); let drag = null;
+  cv.addEventListener("pointerdown", e => { drag = {x:e.clientX, y:e.clientY, yaw:G.yaw, pit:G.pit};
+    cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener("pointermove", e => {
+    if (!drag) return;
+    G.yaw = drag.yaw + (e.clientX - drag.x) * 0.5;
+    G.pit = Math.max(-80, Math.min(80, drag.pit - (e.clientY - drag.y) * 0.5));
+    $("gzYaw").value = G.yaw; $("gzYawV").textContent = fr(G.yaw,0)+"°";
+    $("gzPit").value = G.pit; $("gzPitV").textContent = fr(G.pit,0)+"°";
+    gzUpdate();
+  });
+  cv.addEventListener("pointerup", () => drag = null);
+  cv.addEventListener("pointercancel", () => drag = null);
+})();
+
+/* ════════════════════════════════════════════════════════════
+   3 · LAYOUT / ASPECT PAR BINDING
+   ════════════════════════════════════════════════════════════ */
+const LY = { layout:"SplitH", w:1536, h:800, mode:"ok" };
+const CAMS = [
+  {n:"FPS_Camera",      m:"Solid",     a:true},
+  {n:"Overview_Camera", m:"Wireframe", a:false},
+  {n:"Top_Camera",      m:"Wireframe", a:false},
+  {n:"Iso_Camera",      m:"Solid",     a:false}
+];
+function buildLayout(l, w, h){
+  if (w < 8 || h < 8) return [[0,0,Math.max(w,1),Math.max(h,1)]];
+  const hw = Math.floor(w/2), hh = Math.floor(h/2);
+  switch(l){
+    case "Single":   return [[0,0,w,h]];
+    case "SplitH":   return [[0,0,hw,h],[hw,0,w-hw,h]];
+    case "SplitV":   return [[0,0,w,hh],[0,hh,w,h-hh]];
+    case "MainSide": { const m = Math.floor(w*3/4); return [[0,0,m,h],[m,0,w-m,h]]; }
+    case "Quad":     return [[0,0,hw,hh],[hw,0,w-hw,hh],[0,hh,hw,h-hh],[hw,hh,w-hw,h-hh]];
+  }
+  return [];
+}
+function drawLayout(){
+  const cv = $("lyCanvas"), ctx = cv.getContext("2d");
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = 300;
+  cv.width = W*dpr; cv.height = H*dpr; cv.style.height = H+"px";
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+
+  const vps = buildLayout(LY.layout, LY.w, LY.h);
+  const pad = 16, aw = W-2*pad, ah = H-2*pad;
+  const k = Math.min(aw/LY.w, ah/LY.h);
+  const ox = (W - LY.w*k)/2, oy = (H - LY.h*k)/2;
+
+  const acc = css("--accent"), line = css("--line2"), ink3 = css("--ink3");
+  ctx.strokeStyle = line; ctx.lineWidth = 1;
+  ctx.strokeRect(ox, oy, LY.w*k, LY.h*k);
+
+  const single = aspectOf(vps[0]);
+  vps.forEach((v,i)=>{
+    const cam = CAMS[i] || {n:"(aucune)", a:false};
+    const x = ox + v[0]*k, y = oy + v[1]*k, w = v[2]*k, h = v[3]*k;
+    ctx.fillStyle = cam.a ? css("--accentBg") : css("--surface2");
+    ctx.fillRect(x+1, y+1, w-2, h-2);
+    ctx.strokeStyle = cam.a ? acc : line; ctx.lineWidth = cam.a ? 2 : 1;
+    ctx.strokeRect(x+1, y+1, w-2, h-2);
+
+    /* forme du quad far du gizmo de CETTE camera */
+    const aProj = aspectOf(v);
+    const aGiz  = LY.mode === "bug" ? single : aProj;
+    const r = aGiz;                       /* largeur / hauteur de la section */
+    const bh = Math.min(h*0.42, 70), bw = bh*r;
+    const bx = x + w/2 - bw/2, by = y + h/2 - bh/2 + 6;
+    const good = Math.abs(aGiz/aProj - 1) < 1e-4;
+    ctx.strokeStyle = good ? css("--ok") : css("--bad"); ctx.lineWidth = 2;
+    if (bw < w-10) ctx.strokeRect(bx, by, bw, bh);
+
+    ctx.fillStyle = ink3; ctx.font = "11px system-ui";
+    ctx.fillText(cam.n, x+7, y+15);
+    ctx.fillText(v[2]+"×"+v[3]+"  asp "+fr(aProj,3), x+7, y+29);
+  });
+  ctx.fillStyle = ink3; ctx.font = "11px system-ui";
+  ctx.fillText("rectangle = section du gizmo · vert = ratio juste · rouge = faux", pad, H-6);
+}
+function aspectOf(v){ return v[3] > 0 ? v[2]/v[3] : 0; }
+function lyUpdate(){
+  const vps = buildLayout(LY.layout, LY.w, LY.h);
+  const single = aspectOf(vps[0]);
+  let s = '<span class="a">── BuildLayout(' + LY.layout + ', ' + LY.w + ', ' + LY.h + ') ──</span>\n';
+  s += 'n = ' + vps.length + ' viewport(s)\n\n';
+  let allOk = true;
+  vps.forEach((v,i)=>{
+    const cam = CAMS[i] || {n:"(aucune)"};
+    const aProj = aspectOf(v);
+    const aGiz  = LY.mode === "bug" ? single : aProj;
+    const ndcX  = aProj > 0 ? aGiz/aProj : 0;
+    const ok = Math.abs(ndcX-1) < 1e-4;
+    if (!ok) allOk = false;
+    s += '[' + i + '] ' + cam.n + '\n';
+    s += '    viewport      : x=' + v[0] + ' y=' + v[1] + ' w=' + v[2] + ' h=' + v[3] + '\n';
+    s += '    aspect_proj   : ' + fr(aProj,6) + '   <span class="d">(ce que BuildViewData utilise)</span>\n';
+    s += '    aspect_gizmo  : ' + fr(aGiz,6) + '   <span class="d">(ce que CameraGizmoSystem utilise)</span>\n';
+    s += '    => |ndcX|     : <span class="' + (ok?'g':'r') + '">' + fr(ndcX,6) + '</span>' +
+         (ok ? '  <span class="g">✓</span>' : '  <span class="r">✗ facteur ' + fr(ndcX,3) + '</span>') + '\n\n';
+  });
+  if (LY.mode === "bug" && allOk)
+    s += '<span class="a">Le bug est INVISIBLE ici : tous les viewports ont le meme aspect.</span>\n' +
+         '<span class="a">Choisissez MainSide ou Quad pour le faire apparaitre.</span>';
+  else if (!allOk)
+    s += '<span class="r">Bug 31 reproduit : un aspect unique ne peut pas servir N viewports.</span>';
+  else
+    s += '<span class="g">Chaque gizmo lit l’aspect du viewport ou SA camera est rendue.</span>';
+  $("lyOut").innerHTML = s;
+  drawLayout();
+}
+seg($("lySeg"), b => { LY.layout = b.dataset.v; lyUpdate(); });
+seg($("lyMode"), b => { LY.mode = b.dataset.v; lyUpdate(); });
+$("lyW").addEventListener("input", e => { LY.w = +e.target.value; $("lyWV").textContent = LY.w; lyUpdate(); });
+$("lyH").addEventListener("input", e => { LY.h = +e.target.value; $("lyHV").textContent = LY.h; lyUpdate(); });
+
+/* ════════════════════════════════════════════════════════════
+   4 · CALCUL PAS A PAS (float32)
+   ════════════════════════════════════════════════════════════ */
+const SC_CAMS = {
+  fps:    {n:"FPS_Camera",    ortho:false, fov:45, oh:0,   L:3},
+  follow: {n:"Follow_Camera", ortho:false, fov:45, oh:0,   L:3},
+  top:    {n:"Top_Camera",    ortho:true,  fov:0,  oh:120, L:30},
+  custom: {n:"Personnalisée", ortho:false, fov:45, oh:0,   L:3}
+};
+const SC = { cam:"fps", w:768, h:800, bug:"ok" };
+function scUpdate(){
+  const c = Object.assign({}, SC_CAMS[SC.cam]);
+  if (SC.cam === "custom"){ c.fov = +$("scFov").value; c.L = +$("scLen").value; }
+  const aspect = f32(SC.w / SC.h);
+  const isO = c.ortho;
+
+  /* ---- scale selon la variante ---- */
+  const tanHalfOk = f32(Math.tan(f32(f32(c.fov*Math.PI/180)*0.5)));
+  const tanHalfB28 = f32(Math.tan(f32(c.fov*Math.PI/180)));      /* demi-angle omis */
+  let tanHalf = SC.bug === "b28" ? tanHalfB28 : tanHalfOk;
+  let aGiz    = SC.bug === "b29" ? 1.0 : aspect;
+  const halfH = f32(c.oh*0.5);
+
+  let S;
+  if (isO) S = [f32(halfH*aGiz), halfH, c.L];
+  else     S = [f32(f32(c.L*tanHalf)*aGiz), f32(c.L*tanHalf), c.L];
+  if (SC.bug === "b30") S = [1,1,1];                              /* scale jamais cuit */
+
+  /* ---- projection (toujours correcte : elle vient de BuildViewData) ---- */
+  let p00, p11;
+  if (isO){ p00 = f32(1/f32(halfH*aspect)); p11 = f32(1/halfH); }
+  else    { p00 = f32(1/f32(tanHalfOk*aspect)); p11 = f32(1/tanHalfOk); }
+
+  /* ---- coin (-1,-1,-1) ---- */
+  const wx = f32(-1*S[0]), wy = f32(-1*S[1]), wz = f32(-1*S[2]);
+  const clipw = isO ? 1 : f32(-wz);
+  const cx = f32(wx*p00), cy = f32(wy*p11);
+  const ndx = f32(cx/clipw), ndy = f32(cy/clipw);
+  const expW = isO ? 1 : c.L;
+
+  const okW = Math.abs(clipw-expW) < 1e-4;
+  const okX = Math.abs(Math.abs(ndx)-1) < 1e-4;
+  const okY = Math.abs(Math.abs(ndy)-1) < 1e-4;
+
+  const V = (b,v,d) => '<span class="' + (b?'g':'r') + '">' + fr(v,d) + '</span>';
+  let s = '';
+  s += '<span class="a">╭─ ETAPE 4 — ce que ParseCamera a produit ─────────────╮</span>\n';
+  s += '  ' + c.n + '\n';
+  s += '  projection   = ' + (isO ? 'Orthographique' : 'Perspective') + '\n';
+  if (isO) s += '  orthoHeight  = ' + fr(c.oh,1) + '\n';
+  else     s += '  m_fovYDeg    = ' + fr(c.fov,1) + '\n';
+  s += '  m_gizmoLength = ' + fr(c.L,1) + '\n\n';
+
+  s += '<span class="a">╭─ ETAPE 6 — le binding de cette camera ───────────────╮</span>\n';
+  s += '  viewport = ' + SC.w + ' x ' + SC.h + '\n';
+  s += '  aspect   = ' + SC.w + ' / ' + SC.h + ' = ' + fr(aspect,8) + '\n\n';
+
+  s += '<span class="a">╭─ ETAPE 7 — CameraGizmoSystem, en float32 ────────────╮</span>\n';
+  if (SC.bug === "b30"){
+    s += '  <span class="r">[bug 30] m_local.scale est ecrit APRES LocalTransformSystem :</span>\n';
+    s += '  <span class="r">il n’est jamais cuit. La matrice monde reste a l’identite.</span>\n';
+    s += '  scale vu par le monde = ( 1.000000, 1.000000, 1.000000 )\n\n';
+  } else if (isO){
+    s += '  halfH   = orthoHeight * 0.5 = ' + fr(c.oh,1) + ' * 0.5 = ' + fr(halfH,6) + '\n';
+    s += '  Sx      = halfH * aspect    = ' + fr(halfH,4) + ' * ' + fr(aGiz,6) + ' = ' + fr(S[0],6) + '\n';
+    s += '  Sy      = halfH             = ' + fr(S[1],6) + '\n';
+    s += '  Sz      = L                 = ' + fr(S[2],6) + '\n';
+    if (SC.bug === "b29") s += '  <span class="r">[bug 29] aspect_gizmo force a 1 : Sx est faux.</span>\n';
+    s += '\n';
+  } else {
+    const ang = SC.bug === "b28" ? c.fov : c.fov/2;
+    s += '  tanHalf = tan(' + fr(ang,2) + '°)' + (SC.bug==="b28" ? ' <span class="r">[bug 28 : demi-angle omis]</span>' : '') + '\n';
+    s += '          = ' + fr(tanHalf,8) + '\n';
+    s += '  Sy      = L * tanHalf          = ' + fr(c.L,1) + ' * ' + fr(tanHalf,8) + ' = ' + fr(S[1],6) + '\n';
+    s += '  Sx      = Sy * aspect          = ' + fr(S[1],6) + ' * ' + fr(aGiz,6) + ' = ' + fr(S[0],6) + '\n';
+    if (SC.bug === "b29") s += '  <span class="r">[bug 29] aspect_gizmo force a 1 : Sx = Sy.</span>\n';
+    s += '  Sz      = L                    = ' + fr(S[2],6) + '\n\n';
+  }
+
+  s += '<span class="a">╭─ ETAPES 5+6 — le coin far bas-gauche ────────────────╮</span>\n';
+  s += '  canonique        ( -1.000000, -1.000000, -1.000000 )\n';
+  s += '  x m_worldMatrix  ( ' + fr(wx,6) + ', ' + fr(wy,6) + ', ' + fr(wz,6) + ' )\n\n';
+
+  s += '<span class="a">╭─ TEST T4 — projection par la camera ─────────────────╮</span>\n';
+  s += '  P[0][0]  = ' + (isO ? '1 / (halfH*aspect)' : '1 / (tanHalf*aspect)') + ' = ' + fr(p00,8) + '\n';
+  s += '  P[1][1]  = ' + (isO ? '1 / halfH' : '1 / tanHalf') + '          = ' + fr(p11,8) + '\n';
+  s += '  clip.x   = ' + fr(wx,6) + ' * ' + fr(p00,6) + ' = ' + fr(cx,6) + '\n';
+  s += '  clip.y   = ' + fr(wy,6) + ' * ' + fr(p11,6) + ' = ' + fr(cy,6) + '\n';
+  s += '  clip.w   = ' + V(okW, clipw, 6) + '   <span class="d">(attendu ' + fr(expW,2) + (isO?' — ortho ne divise pas':' = L') + ')</span>\n';
+  s += '  ndcX     = ' + V(okX, ndx, 6) + '\n';
+  s += '  ndcY     = ' + V(okY, ndy, 6) + '\n\n';
+
+  if (okW && okX && okY)
+    s += '<span class="g">✓ LV3_ASSERT passe. Le gizmo EST le frustum de sa camera.</span>';
+  else {
+    s += '<span class="r">✗ LV3_ASSERT saute.</span>\n';
+    const rY = Math.abs(ndy), rXY = Math.abs(ndy)>0 ? Math.abs(ndx)/Math.abs(ndy) : 0;
+    s += '  |ndcY|        = ' + fr(rY,6) + '  = tanHalf_gizmo / tanHalf_proj\n';
+    s += '  |ndcX|/|ndcY| = ' + fr(rXY,6) + '  = aspect_gizmo / aspect_proj\n';
+    if (!okW) s += '  <span class="r">clip.w != attendu : le scale n’atteint pas la matrice monde.</span>';
+  }
+  $("scOut").innerHTML = s;
+  $("scVpV").textContent = SC.w + " × " + SC.h;
+}
+$("scCam").addEventListener("change", e => {
+  SC.cam = e.target.value;
+  $("scCustom").style.display = SC.cam === "custom" ? "" : "none";
+  scUpdate();
+});
+seg($("scVp"), b => { SC.w = +b.dataset.w; SC.h = +b.dataset.h; scUpdate(); });
+seg($("scBug"), b => { SC.bug = b.dataset.v; scUpdate(); });
+$("scFov").addEventListener("input", e => { $("scFovV").textContent = e.target.value; scUpdate(); });
+$("scLen").addEventListener("input", e => { $("scLenV").textContent = e.target.value; scUpdate(); });
+
+/* ════════════════════════════════════════════════════════════
+   5 · ORDRE DES SYSTEMES
+   ════════════════════════════════════════════════════════════ */
+const ORD_BASE = [
+  "PollEvents",
+  "FPSController / CameraFollow",
+  "BuildCameraBindings",
+  "LocalTransformSystem",
+  "WorldTransformSystem",
+  "BuildViewData × N",
+  "Tests + RenderView × N"
+];
+const ORD_POS = [1, 4, 3];   /* index d'insertion pour les 3 options */
+const ORD_RES = [
+  { ok:false,
+    t:"Le binding n'existe pas encore : b == nullptr, donc aspect = 0.",
+    sc:"(1.000000, 1.000000, 1.000000)", lm:"identite", wm:"identite", w:1,
+    why:"Le bloc <code>if (aspect &gt; 0)</code> est sauté : la forme n'est jamais écrite. Le mesh et la couleur, eux, sont bien mis à jour — c'est pour cela qu'on voit un gizmo, mais toujours cubique." },
+  { ok:false,
+    t:"m_local.scale est écrit APRÈS sa cuisson : m_localMatrix ne le contient pas.",
+    sc:"(1.192935, 1.242641, 3.000000)", lm:"identite", wm:"identite", w:1,
+    why:"C'est le <b>bug 30 réel</b>. Le dump de <code>m_local.scale</code> affiche la bonne valeur — ce qui a égaré le diagnostic pendant trois échanges — alors que la matrice, elle, ment. Seul <code>clip.w = 1</code> au lieu de 3 l'a révélé." },
+  { ok:true,
+    t:"La source est écrite avant sa cuisson. Tout le pipeline suit.",
+    sc:"(1.192935, 1.242641, 3.000000)", lm:"scale present", wm:"scale present", w:3,
+    why:"L'aspect vient du binding construit juste avant ; le scale est cuit puis propagé ; <code>BuildViewData</code> lit les matrices de cette frame. Zéro retard." }
+];
+function ordUpdate(){
+  const v = +document.querySelector("#ordSeg button.on").dataset.v;
+  const list = ORD_BASE.slice();
+  list.splice(ORD_POS[v], 0, "CameraGizmoSystem");
+  const host = $("ordPipe"); host.innerHTML = "";
+  list.forEach((n,i)=>{
+    const d = document.createElement("div");
+    const isG = n === "CameraGizmoSystem";
+    const r = ORD_RES[v];
+    d.className = "pstage" + (isG ? (r.ok ? " new" : " hot") : "");
+    if (isG && !r.ok){ d.style.borderColor = css("--bad"); d.style.background = css("--badBg"); }
+    d.innerHTML = '<span class="pn">' + (i+1) + '</span><span class="pt">' + n + '</span>' +
+      (isG ? '<span class="pbadge' + (r.ok?' n':'') + '">ici</span>' : '');
+    host.appendChild(d);
+  });
+  const r = ORD_RES[v];
+  let s = '';
+  s += (r.ok ? '<span class="g">✓ ' : '<span class="r">✗ ') + r.t + '</span>\n\n';
+  s += 'm_local.scale    : ' + r.sc + '\n';
+  s += 'm_localMatrix    : ' + r.lm + '\n';
+  s += 'm_worldMatrix    : ' + r.wm + '\n';
+  s += 'clip.w mesure    : <span class="' + (r.ok?'g':'r') + '">' + fr(r.w,6) + '</span>' +
+       '   <span class="d">(attendu 3.000000 = L)</span>\n';
+  $("ordOut").innerHTML = s;
+  $("ordWhy") && ($("ordWhy").innerHTML = r.why);
+}
+seg($("ordSeg"), ordUpdate);
+
+/* ════════════════════════════════════════════════════════════
+   6 · EXEMPLES JSON
+   ════════════════════════════════════════════════════════════ */
+const EX = {
+"1": [`{
+  "id": "FPS_Camera",
+  "_note": "PAS de parent : le controleur ecrit en local",
+  "components": {
+    "Transform": {
+      "translation": [ 0.0, 5.0, 40.0 ],
+      "rotation":    [ 0.0, 0.0, 0.0 ],
+      "scale":       [ 1.0, 1.0, 1.0 ]
+    },
+    "Camera": {
+      "projection": "perspective",
+      "lens": "fov",
+      "fov": 45.0,
+      "near": 0.1,
+      "infiniteFar": true,
+      "active": true,
+      "priority": 10,
+      "gizmo": { "length": 3.0 }
+    },
+    "CameraFPS": {
+      "enabled": true,
+      "moveSpeed": 15.0,
+      "mouseSensitivity": 0.15,
+      "lockVertical": false,
+      "pitchLimit": 89.0
+    }
+  }
+}`, `<h4>Perspective + FPS</h4>
+<p>Le cas de référence. <b>Pas de <code>far</code></b> : <code>infiniteFar</code> le rend
+inopérant et le parse vous avertit s'il traîne — c'était le mensonge silencieux des trois
+caméras d'origine.</p>
+<p><b>Pas de parent.</b> Le contrôleur écrit un transform absolu ; un parent y composerait
+sa matrice par-dessus. Dérive silencieuse.</p>
+<p><code>priority: 10</code> : la plus haute gagne la vue active.</p>`],
+
+"2": [`"Camera": {
+  "projection": "perspective",
+  "lens": "fov",
+  "fov": 45.0,
+  "near": 0.1,
+  "far": 2000.0,
+  "infiniteFar": false,
+  "active": true,
+  "priority": 5,
+  "gizmo": { "length": 3.0 }
+},
+"CameraFollow": {
+  "enabled": true,
+  "target": "Cube1",
+  "offset": [ 0.0, 5.0, -35.0 ],
+  "smoothSpeed": 5.0,
+  "lookAtHeight": 0.0
+}`, `<h4>Perspective + Follow</h4>
+<p><code>priority: 5</code> contre 10 pour la FPS : les deux sont <code>active</code>, la FPS
+gagne. Baissez-la à 1 pour basculer.</p>
+<p>Ici <code>far</code> est réel (<code>infiniteFar: false</code>), donc consommé par
+<code>Projection::Perspective</code>.</p>
+<p><code>smoothSpeed</code> est la raison pour laquelle le retard d'une frame était
+inacceptable : l'amortissement rend le judder visible.</p>`],
+
+"3": [`"Camera": {
+  "projection": "perspective",
+  "lens": "filmback",
+  "focalLength": 50.0,
+  "filmHeight": 24.0,
+  "gateFit": "fill",
+  "near": 0.1,
+  "far": 500.0,
+  "infiniteFar": false,
+  "active": false,
+  "priority": 0,
+  "gizmo": { "length": 4.0 }
+}`, `<h4>Perspective sténopé, statique</h4>
+<p><b>Pas de <code>fov</code></b> : <code>CameraFovY()</code> le dérive de la focale et de la
+hauteur de pellicule. L'écrire déclencherait <code>WarnUnread</code>.</p>
+<p><code>"lens"</code> est le <b>discriminant unique</b> (R6). L'ancienne version branchait
+sur la <em>présence</em> de <code>focalLength</code> puis relisait <code>lensModel</code> —
+deux discriminants qui pouvaient se contredire.</p>
+<p>Le gizmo fonctionne sans changement : il passe par <code>CameraFovY()</code>, pas par
+<code>m_fovYDeg</code>.</p>`],
+
+"4": [`"Transform": {
+  "translation": [ 0.0, 150.0, 0.0 ],
+  "rotation":    [ -90.0, 0.0, 0.0 ],
+  "scale":       [ 1.0, 1.0, 1.0 ]
+},
+"Camera": {
+  "projection": "orthographic",
+  "orthoHeight": 120.0,
+  "near": 1.0,
+  "far": 400.0,
+  "active": false,
+  "priority": 0,
+  "gizmo": { "length": 30.0 }
+}`, `<h4>Orthographique, vue de dessus</h4>
+<p><code>orthoHeight</code> remplace <code>fov</code> : c'est la hauteur totale du volume
+visible, en unités monde. La largeur en découle par l'aspect du viewport — on ne la déclare
+jamais.</p>
+<p><b><code>far</code> redevient obligatoire</b> et réellement consommé par
+<code>OrthographicCentered</code>. Ni <code>fov</code>, ni <code>lens</code>, ni
+<code>infiniteFar</code> : <code>WarnUnread</code> les signalerait.</p>
+<p><b><code>length: 30</code> et non 3.</b> Une boîte de 120 unités de haut sur 3 de
+profondeur est une dalle illisible. Prenez <code>L</code> du même ordre que
+<code>orthoHeight</code>, environ un quart.</p>
+<p><code>rotation: [-90, 0, 0]</code> : le <code>forward</code> étant <code>−Z</code>, un
+pitch de −90° l'amène sur <code>−Y</code>.</p>`],
+
+"5": [`"Camera": {
+  "projection": "orthographic",
+  "orthoHeight": 60.0,
+  "near": 0.5,
+  "far": 500.0,
+  "active": false,
+  "priority": 0,
+  "gizmo": { "length": 15.0 }
+},
+"CameraFPS": {
+  "enabled": true,
+  "moveSpeed": 20.0,
+  "mouseSensitivity": 0.15,
+  "lockVertical": false,
+  "pitchLimit": 89.0
+}`, `<h4>Orthographique + FPS</h4>
+<p>Combinaison légitime mais <b>contre-intuitive</b> : avancer ne grossit rien, puisque la
+section est constante. C'est <code>orthoHeight</code> qui joue le rôle du zoom — et c'est
+exactement ce que <code>CameraZoomSystem</code> (annexe A7) manipule.</p>
+<p>Le gizmo le montre bien : allongez <code>length</code>, la boîte s'approfondit sans
+s'élargir.</p>`],
+
+"6": [`"Transform": { "rotation": [ -35.264, 45.0, 0.0 ] },
+"Camera": {
+  "projection": "orthographic",
+  "orthoHeight": 30.0,
+  "near": 1.0,
+  "far": 300.0,
+  "active": false,
+  "priority": 0,
+  "gizmo": { "length": 10.0 }
+},
+"CameraFollow": {
+  "enabled": true,
+  "target": "Cube1",
+  "offset": [ 60.0, 60.0, -60.0 ],
+  "smoothSpeed": 5.0,
+  "lookAtHeight": 1.0
+}`, `<h4>Orthographique isométrique + Follow</h4>
+<p><code>−35,264°</code> est <code>atan(1/√2)</code> — l'angle isométrique exact. Combiné à
+45° de yaw, il produit la projection des jeux de stratégie classiques.</p>
+<p>Le gizmo de cette caméra est une boîte vue de trois quarts : c'est le cas où l'on
+distingue le mieux une boîte d'une pyramide, et donc le meilleur contrôle visuel du choix
+de mesh.</p>`],
+
+"7": [`"Camera": {
+  "projection": "perspective",
+  "lens": "fov",
+  "fov": 60.0,
+  "near": 1.0,
+  "infiniteFar": true,
+  "active": false,
+  "priority": 0
+}`, `<h4>L'observateur — sans bloc <code>gizmo</code></h4>
+<p>C'est la caméra qui rend le viewport de droite. <b>L'absence de bloc
+<code>gizmo</code></b> met <code>m_gizmoLength</code> à 0 : aucune entité n'est créée.</p>
+<p>Ce n'est pas une économie cosmétique. Son gizmo porterait
+<code>m_hideForCamera = elle-même</code> et serait donc masqué dans la seule vue où il
+pourrait apparaître : <b>invisible partout</b>. On évite le cas dégénéré plutôt que de le
+gérer.</p>
+<p>C'est aussi ce que vérifie l'assertion N² de <code>BuildCameraBindings</code> : une même
+caméra ne doit pas occuper deux cases.</p>`],
+
+"8": [`// ⚠ 1 — DEUX CONTROLEURS SUR LA MEME ENTITE
+"CameraFPS":    { "enabled": true, "moveSpeed": 15.0 },
+"CameraFollow": { "enabled": true, "target": "Cube1" }
+
+// ⚠ 2 — UN PARENT SOUS UN CONTROLEUR
+"parent": "Player",
+"components": { "CameraFPS": { "enabled": true } }
+
+// ⚠ 3 — CLES HORS BRANCHE
+"projection": "orthographic",
+"fov": 45.0,            // sans objet en ortho
+"infiniteFar": true,    // sans objet en ortho
+"orthoHeight": 120.0`, `<h4>Les trois interdits</h4>
+<p><b>1 — Deux contrôleurs.</b> <code>CheckControllerExclusivity</code> doit sauter
+(bug 25). Les deux écriraient dans <code>m_local</code>, le dernier gagnerait, et l'ordre
+des systèmes déciderait du comportement.</p>
+<p><b>2 — Un parent sous un contrôleur.</b> Le contrôleur écrit un transform absolu ;
+<code>WorldTransformSystem</code> y composerait la matrice du parent. Dérive silencieuse,
+d'autant plus trompeuse que l'image reste plausible.</p>
+<p><b>3 — Clés hors branche.</b> <code>WarnUnread</code> doit parler pour chacune. C'est
+tout l'intérêt du TNR : une clé lue dans la mauvaise branche serait cochée et donc
+invisible.</p>`]
+};
+function exUpdate(v){
+  $("exJson").innerHTML = "<code>" + EX[v][0]
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") + "</code>";
+  $("exNote").innerHTML = EX[v][1];
+}
+seg($("exSeg"), b => exUpdate(b.dataset.v));
+
+/* ════════════════════════════════════════════════════════════
+   7 · DIAGNOSTIC ndcX / ndcY
+   ════════════════════════════════════════════════════════════ */
+const DG_PRE = {
+  p1: { x:-1.931371, y:-2.414213, w:3,  a:1.25, L:3, F:45 },
+  p2: { x:-1.257403, y:-2.414213, w:1,  a:1.92, L:3, F:45 },
+  p3: { x:-2.514806, y:-2.414213, w:1,  a:0.96, L:3, F:45 },
+  p4: { x:-1.000000, y:-1.000000, w:3,  a:0.96, L:3, F:45 }
+};
+function dgUpdate(){
+  const x = +$("dgX").value, y = +$("dgY").value, w = +$("dgW").value;
+  const a = +$("dgA").value, L = +$("dgL").value, F = +$("dgF").value;
+  const tanHalfProj = Math.tan(F*Math.PI/360);
+  const rY  = Math.abs(y);
+  const rXY = rY > 1e-9 ? Math.abs(x)/rY : 0;
+  const okW = Math.abs(w - L) < 1e-4;
+  const okY = Math.abs(rY - 1) < 1e-4;
+  const okX = Math.abs(rXY - 1) < 1e-4;
+
+  const tanHalfGiz = rY * tanHalfProj;
+  const aspGiz     = rXY * a;
+
+  let s = '';
+  s += '<span class="a">── MESURES ──</span>\n';
+  s += '  ndcX = ' + fr(x,6) + '      ndcY = ' + fr(y,6) + '      clip.w = ' + fr(w,6) + '\n';
+  s += '  aspect_proj = ' + fr(a,6) + '   L attendu = ' + fr(L,2) + '   fovY = ' + fr(F,1) + '°\n\n';
+
+  s += '<span class="a">── IDENTITES ──</span>\n';
+  s += '  |ndcY|        = tanHalf_gizmo / tanHalf_proj = ' +
+       '<span class="' + (okY?'g':'r') + '">' + fr(rY,6) + '</span>\n';
+  s += '  |ndcX|/|ndcY| = aspect_gizmo  / aspect_proj  = ' +
+       '<span class="' + (okX?'g':'r') + '">' + fr(rXY,6) + '</span>\n';
+  s += '  clip.w        = ' + '<span class="' + (okW?'g':'r') + '">' + fr(w,6) + '</span>' +
+       '   <span class="d">(attendu ' + fr(L,2) + ' en perspective, 1 en ortho)</span>\n\n';
+
+  s += '<span class="a">── DIAGNOSTIC ──</span>\n';
+  let found = 0;
+  if (!okW){
+    found++;
+    s += '  <span class="r">[BUG 30] clip.w != L.</span> Le scale n’atteint pas m_worldMatrix.\n';
+    s += '           Rapport L / clip.w = ' + fr(w>1e-9 ? L/w : 0, 4) + '\n';
+    if (Math.abs(w-1) < 1e-4)
+      s += '           clip.w = 1 exactement : la matrice monde est a l’IDENTITE.\n' +
+           '           -> CameraGizmoSystem ecrit la source APRES LocalTransformSystem.\n';
+    s += '\n';
+  }
+  if (!okY){
+    found++;
+    s += '  <span class="r">[BUG 28 ou fov errone] |ndcY| != 1.</span>\n';
+    s += '           tanHalf_gizmo = |ndcY| * tanHalf_proj = ' + fr(tanHalfGiz,8) + '\n';
+    if (Math.abs(tanHalfGiz - 1) < 1e-3)
+      s += '           tanHalf_gizmo = 1 : signature de <b>tan(fov) au lieu de tan(fov/2)</b>\n' +
+           '           pour fov = 45° exactement (1/tan(22,5°) = 2,414213 = 1+V2).\n';
+    else if (Math.abs(tanHalfGiz - Math.tan(F*Math.PI/180)) < 1e-3)
+      s += '           tanHalf_gizmo = tan(fov) : <b>demi-angle omis</b>.\n';
+    else
+      s += '           Ni 1 ni tan(fov) : le gizmo utilise une AUTRE source de fov\n' +
+           '           (m_lensModel = Filmback ? CameraFovY() non partagee ?).\n';
+    s += '\n';
+  }
+  if (!okX){
+    found++;
+    s += '  <span class="r">[BUG 29 ou 31] |ndcX|/|ndcY| != 1.</span>\n';
+    s += '           aspect_gizmo = rapport * aspect_proj = ' + fr(aspGiz,6) + '\n';
+    if (Math.abs(aspGiz - 1) < 1e-3)
+      s += '           aspect_gizmo = 1 : <b>l’aspect n’est pas applique du tout</b> (bug 29).\n';
+    else
+      s += '           aspect_gizmo != aspect_proj : le systeme lit l’aspect d’un AUTRE\n' +
+           '           viewport (bug 31) — verifier que b->viewport vient bien du binding\n' +
+           '           de CETTE camera.\n';
+    s += '\n';
+  }
+  if (Math.abs(x) < 1e-6 && Math.abs(y) < 1e-6)
+    s += '  <span class="r">[SCALE NUL] ndcX = ndcY = 0 : m_local.scale vaut (0,0,0).</span>\n\n';
+
+  if (!found) s += '  <span class="g">✓ Aucun ecart. Le gizmo EST le frustum de sa camera.</span>';
+  else        s += '  <span class="d">Rappel : les trois causes sont independantes. Corrigez-les</span>\n' +
+                   '  <span class="d">une par une et relancez — chaque nombre isole la sienne.</span>';
+  $("dgOut").innerHTML = s;
+}
+["dgX","dgY","dgW","dgA","dgL","dgF"].forEach(id =>
+  $(id).addEventListener("input", dgUpdate));
+seg($("dgPre"), b => {
+  const p = DG_PRE[b.dataset.v];
+  $("dgX").value = p.x; $("dgY").value = p.y; $("dgW").value = p.w;
+  $("dgA").value = p.a; $("dgL").value = p.L; $("dgF").value = p.F;
+  dgUpdate();
+});
+
+/* ═══════════ init ═══════════ */
+function redrawAll(){ drawGizmo(); drawLayout(); }
+renderPipe(); gzUpdate(); lyUpdate(); scUpdate(); ordUpdate(); exUpdate("1"); dgUpdate();
+addEventListener("resize", redrawAll);
+</script>
+</body>
+</html>

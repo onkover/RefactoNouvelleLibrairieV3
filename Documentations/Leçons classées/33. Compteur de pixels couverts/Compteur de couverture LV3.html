@@ -1,0 +1,236 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Compteur de couverture LV3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#F2F4F6; --panel:#FFFFFF; --ink:#15202A; --mute:#5B6873; --line:#D3DAE0; --grid:#E3E8EC;
+  --loose:#C27A00; --tight:#0B8074; --cov:#2F5BD3; --tri:#15202A; --bad:#B4372B; --good:#1C7C3A;
+  --sans:"IBM Plex Sans",system-ui,sans-serif; --cond:"IBM Plex Sans Condensed","Arial Narrow",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E141A; --panel:#151D25; --ink:#E3E9EF; --mute:#93A0AB; --line:#2A3641; --grid:#1D2731;
+  --loose:#F0A83A; --tight:#35C2B2; --cov:#6F95FF; --tri:#E3E9EF; --bad:#F07A6E; --good:#5CCB7E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E141A; --panel:#151D25; --ink:#E3E9EF; --mute:#93A0AB; --line:#2A3641; --grid:#1D2731;
+  --loose:#F0A83A; --tight:#35C2B2; --cov:#6F95FF; --tri:#E3E9EF; --bad:#F07A6E; --good:#5CCB7E; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);padding-inline:16px;padding-block:28px 48px}
+main{max-width:1080px;margin:0 auto;display:grid;gap:28px}
+h1,h2{font-family:var(--cond);font-weight:600;text-wrap:balance;margin:0}
+h1{font-size:30px;line-height:1.15}
+h2{font-size:20px}
+p{margin:0;max-width:68ch}
+.eyebrow{font:600 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+header{display:grid;gap:10px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;display:grid;gap:16px}
+.two{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+canvas{width:100%;height:auto;display:block;touch-action:none;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mute)}
+.legend i{display:inline-block;width:14px;height:10px;margin-right:6px;vertical-align:-1px;border-radius:2px}
+table{border-collapse:collapse;width:100%;font:13px var(--mono);font-variant-numeric:tabular-nums}
+td,th{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+td:first-child,th:first-child{text-align:left;font-family:var(--sans)}
+th{font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:500 13px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--cov);outline-offset:2px}
+label{font-size:13px;color:var(--mute);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=range]{flex:1;min-width:160px;accent-color:var(--cov)}
+.val{font:600 13px var(--mono);color:var(--ink)}
+.bars{display:grid;gap:8px}
+.bar{display:grid;grid-template-columns:70px 1fr 56px;gap:10px;align-items:center;font:13px var(--mono)}
+.bar .track{height:14px;background:var(--grid);border-radius:2px;overflow:hidden}
+.bar .fill{height:100%;background:var(--cov)}
+.bar .fill.z{background:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:620px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border-left:3px solid var(--line);padding:2px 0 2px 10px}
+.kpi b{display:block;font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--mute)}
+.verdict{border:1px solid var(--line);border-radius:4px;padding:12px 14px;display:grid;gap:4px}
+.verdict .tag{font:600 12px var(--mono);letter-spacing:.06em}
+pre{margin:0;overflow-x:auto;font:12.5px/1.5 var(--mono);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:12px}
+.note{font-size:13px;color:var(--mute)}
+</style>
+
+<main>
+<header>
+  <div class="eyebrow">LibraryV3 · Phase G · Chantier 2 → 2b ou 3</div>
+  <h1>Compteur de couverture</h1>
+  <p>Un triangle traverse trois zones : la boîte que <code>RasterizeTriangle</code> parcourt aujourd'hui, la plus petite boîte qui contient des centres de pixels, et les pixels réellement couverts. L'écart entre les trois mesure le travail perdu.</p>
+</header>
+
+<section>
+  <div class="two">
+    <div style="display:grid;gap:10px">
+      <canvas id="cv" width="720" height="540" aria-label="Grille de pixels avec un triangle déplaçable"></canvas>
+      <div class="legend">
+        <span><i style="background:var(--loose)"></i>boîte actuelle : floor(min) … ceil(max)+1</span>
+        <span><i style="background:var(--tight)"></i>boîte serrée : ceil(min−½) … floor(max−½)</span>
+        <span><i style="background:var(--cov)"></i>pixel couvert (règle top-left)</span>
+      </div>
+    </div>
+    <div style="display:grid;gap:14px">
+      <h2>Un triangle</h2>
+      <p class="note">Faites glisser les sommets. Un pixel est couvert si son <em>centre</em> (x+½, y+½) passe les trois fonctions d'arête.</p>
+      <div class="btns">
+        <button id="bMicro">Micro-triangle (≈1 px)</button>
+        <button id="bSliver">Aiguille</button>
+        <button id="bBig">Triangle de 5 px</button>
+      </div>
+      <table>
+        <thead><tr><th>Compteur</th><th>Valeur</th></tr></thead>
+        <tbody>
+          <tr><td>PixelsTested (boucle actuelle)</td><td id="tLoose">–</td></tr>
+          <tr><td>PixelsTight</td><td id="tTight">–</td></tr>
+          <tr><td>PixelsCovered</td><td id="tCov">–</td></tr>
+          <tr><td>Tests inutiles</td><td id="tWaste">–</td></tr>
+          <tr><td>Aire (px²)</td><td id="tArea">–</td></tr>
+        </tbody>
+      </table>
+      <p class="note">Même un triangle qui ne couvre rien fait tourner la boucle sur au moins 2×2 pixels : le <code>+1</code> et le <code>floor</code>/<code>ceil</code> élargissent la boîte d'une à trois colonnes.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Une population de triangles</h2>
+  <p class="note">20 000 triangles tirés au hasard, sommets à ±<span class="val" id="sizeV">1.0</span> px d'un point, soit des astéroïdes vus de loin. C'est une <strong>prédiction</strong> : le compteur branché dans le moteur dira laquelle de ces tailles ressemble à la ceinture.</p>
+  <label for="size">Demi-étendue des sommets (px)
+    <input id="size" type="range" min="0.3" max="6" step="0.1" value="1">
+  </label>
+  <div class="kpis">
+    <div class="kpi"><b id="kRho">–</b><span>ρ = PixelsTested / tri</span></div>
+    <div class="kpi"><b id="kTau">–</b><span>τ = PixelsTight / PixelsTested</span></div>
+    <div class="kpi"><b id="kF0">–</b><span>f₀ = TrisCov0 / tri</span></div>
+    <div class="kpi"><b id="kFe">–</b><span>boîte serrée vide / tri</span></div>
+  </div>
+  <div class="bars" id="bars"></div>
+  <div class="verdict" id="verdict"></div>
+</section>
+
+<section>
+  <h2>Règle de décision, fixée avant la mesure</h2>
+  <pre>1. τ ≤ 0,5  et  ρ ≥ 6   →  chantier 3a : resserrer la boîte (exact, 2 lignes)
+                             les boîtes serrées vides sortent alors en O(1)
+2. sinon, f₀ ≥ 0,4       →  chantier 3b : rejet précoce avant DrawTriangle
+3. sinon                 →  chantier 2b : division par w + ToRaster par sommet
+
+Dans tous les cas : gain vérifié en ABBA sur P-core (M8, M9), contre la Référence F.</pre>
+</section>
+</main>
+
+<script>
+(function(){
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const E=(ax,ay,bx,by,px,py)=>(ax-px)*(by-py)-(ay-py)*(bx-px);
+const TL=(a,b)=>{const ex=b[0]-a[0],ey=b[1]-a[1];return (ey===0&&ex<0)||ey>0;};
+const W=12,H=9;
+
+function analyse(v, keep){
+  let p=[v[0].slice(),v[1].slice(),v[2].slice()];
+  let area=E(p[0][0],p[0][1],p[1][0],p[1][1],p[2][0],p[2][1]);
+  if(area===0) return {loose:0,tight:0,cov:0,area:0,pix:[],lb:null,tb:null};
+  if(area<0){[p[1],p[2]]=[p[2],p[1]];area=-area;}
+  const xs=p.map(q=>q[0]),ys=p.map(q=>q[1]);
+  const lb=[Math.floor(Math.min(...xs)),Math.floor(Math.min(...ys)),Math.ceil(Math.max(...xs))+1,Math.ceil(Math.max(...ys))+1];
+  const tb=[Math.ceil(Math.min(...xs)-.5),Math.ceil(Math.min(...ys)-.5),Math.floor(Math.max(...xs)-.5)+1,Math.floor(Math.max(...ys)-.5)+1];
+  const t0=TL(p[1],p[2]),t1=TL(p[2],p[0]),t2=TL(p[0],p[1]);
+  let cov=0; const pix=[];
+  for(let y=lb[1];y<lb[3];++y)for(let x=lb[0];x<lb[2];++x){
+    const px=x+.5,py=y+.5;
+    const w0=E(p[1][0],p[1][1],p[2][0],p[2][1],px,py);
+    const w1=E(p[2][0],p[2][1],p[0][0],p[0][1],px,py);
+    const w2=E(p[0][0],p[0][1],p[1][0],p[1][1],px,py);
+    if(!(w0>0||(w0===0&&t0)))continue;
+    if(!(w1>0||(w1===0&&t1)))continue;
+    if(!(w2>0||(w2===0&&t2)))continue;
+    ++cov; if(keep) pix.push([x,y]);
+  }
+  const tight=Math.max(0,tb[2]-tb[0])*Math.max(0,tb[3]-tb[1]);
+  return {loose:(lb[2]-lb[0])*(lb[3]-lb[1]),tight,cov,area:area/2,pix,lb,tb};
+}
+
+/* ---------- canvas ---------- */
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const S=cv.width/W;
+let V=[[4.3,3.2],[5.6,4.9],[3.9,4.6]];
+let drag=-1;
+
+function draw(){
+  const r=analyse(V,true);
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.fillStyle=css('--bg');ctx.fillRect(0,0,cv.width,cv.height);
+  const covC=css('--cov');
+  ctx.globalAlpha=.85;ctx.fillStyle=covC;
+  r.pix.forEach(([x,y])=>ctx.fillRect(x*S+1,y*S+1,S-2,S-2));
+  ctx.globalAlpha=1;
+  ctx.strokeStyle=css('--grid');ctx.lineWidth=1;
+  for(let x=0;x<=W;++x){ctx.beginPath();ctx.moveTo(x*S+.5,0);ctx.lineTo(x*S+.5,cv.height);ctx.stroke();}
+  for(let y=0;y<=H;++y){ctx.beginPath();ctx.moveTo(0,y*S+.5);ctx.lineTo(cv.width,y*S+.5);ctx.stroke();}
+  ctx.fillStyle=css('--mute');
+  for(let y=0;y<H;++y)for(let x=0;x<W;++x){ctx.beginPath();ctx.arc((x+.5)*S,(y+.5)*S,2.2,0,7);ctx.fill();}
+  const box=(b,col,dash,inset)=>{ if(!b)return; const w=b[2]-b[0],h=b[3]-b[1]; if(w<=0||h<=0)return;
+    ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash(dash);
+    ctx.strokeRect(b[0]*S+inset,b[1]*S+inset,w*S-2*inset,h*S-2*inset);ctx.setLineDash([]);};
+  box(r.lb,css('--loose'),[10,6],3);
+  box(r.tb,css('--tight'),[],8);
+  ctx.strokeStyle=css('--tri');ctx.lineWidth=2;ctx.beginPath();
+  ctx.moveTo(V[0][0]*S,V[0][1]*S);ctx.lineTo(V[1][0]*S,V[1][1]*S);ctx.lineTo(V[2][0]*S,V[2][1]*S);ctx.closePath();ctx.stroke();
+  ctx.fillStyle=css('--tri');
+  V.forEach(v=>{ctx.beginPath();ctx.arc(v[0]*S,v[1]*S,7,0,7);ctx.fill();});
+  document.getElementById('tLoose').textContent=r.loose;
+  document.getElementById('tTight').textContent=r.tight;
+  document.getElementById('tCov').textContent=r.cov;
+  document.getElementById('tWaste').textContent=(r.loose-r.cov)+(r.loose?`  (${Math.round((r.loose-r.cov)/r.loose*100)} %)`:'');
+  document.getElementById('tArea').textContent=r.area.toFixed(2);
+}
+const pos=e=>{const b=cv.getBoundingClientRect();return [(e.clientX-b.left)/b.width*W,(e.clientY-b.top)/b.height*H];};
+cv.addEventListener('pointerdown',e=>{const p=pos(e);let best=-1,bd=.6;
+  V.forEach((v,i)=>{const d=Math.hypot(v[0]-p[0],v[1]-p[1]);if(d<bd){bd=d;best=i;}});
+  if(best>=0){drag=best;cv.setPointerCapture(e.pointerId);}});
+cv.addEventListener('pointermove',e=>{if(drag<0)return;const p=pos(e);
+  V[drag]=[Math.min(W-.01,Math.max(.01,p[0])),Math.min(H-.01,Math.max(.01,p[1]))];draw();});
+cv.addEventListener('pointerup',()=>drag=-1);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function around(s){const cx=rnd(4,8),cy=rnd(3,6);V=[0,1,2].map(()=>[cx+rnd(-s,s),cy+rnd(-s,s)]);draw();}
+document.getElementById('bMicro').onclick=()=>around(.7);
+document.getElementById('bBig').onclick=()=>around(2.6);
+document.getElementById('bSliver').onclick=()=>{const y=rnd(3,6);V=[[2.2,y],[9.7,y+rnd(.3,.8)],[6,y+rnd(.05,.25)]];draw();};
+
+/* ---------- population ---------- */
+const labels=['0 px','1 px','2–4 px','> 4 px'];
+function population(){
+  const s=+document.getElementById('size').value; document.getElementById('sizeV').textContent=s.toFixed(1);
+  const N=20000;let loose=0,tight=0,n=0,empty=0;const b=[0,0,0,0];
+  for(let i=0;i<N;++i){
+    const cx=100+Math.random(),cy=100+Math.random();
+    const r=analyse([0,1,2].map(()=>[cx+rnd(-s,s),cy+rnd(-s,s)]),false);
+    if(!r.lb) continue; ++n;
+    loose+=r.loose;tight+=r.tight;if(r.tight===0)++empty;
+    b[r.cov===0?0:r.cov===1?1:r.cov<=4?2:3]++;
+  }
+  const rho=loose/n,tau=tight/loose,f0=b[0]/n,fe=empty/n;
+  document.getElementById('kRho').textContent=rho.toFixed(1);
+  document.getElementById('kTau').textContent=tau.toFixed(2);
+  document.getElementById('kF0').textContent=Math.round(f0*100)+' %';
+  document.getElementById('kFe').textContent=Math.round(fe*100)+' %';
+  document.getElementById('bars').innerHTML=b.map((c,i)=>{const pct=c/n*100;
+    return `<div class="bar"><span>${labels[i]}</span><div class="track"><div class="fill${i===0?' z':''}" style="width:${pct.toFixed(1)}%"></div></div><span style="text-align:right">${Math.round(pct)} %</span></div>`}).join('');
+  let tag,col,txt;
+  if(tau<=.5&&rho>=6){tag='RÈGLE 1 → CHANTIER 3a';col='--good';txt=`${Math.round((1-tau)*100)} % des tours de boucle testent un pixel dont le centre ne peut pas être dans le triangle.`;}
+  else if(f0>=.4){tag='RÈGLE 2 → CHANTIER 3b';col='--loose';txt=`${Math.round(f0*100)} % des triangles ne couvrent rien : un rejet avant DrawTriangle économise leur préparation.`;}
+  else {tag='RÈGLE 3 → CHANTIER 2b';col='--cov';txt='Les triangles couvrent assez de pixels : le coût fixe par coin (division, ToRaster) redevient la cible.';}
+  document.getElementById('verdict').innerHTML=`<span class="tag" style="color:var(${col})">${tag}</span><span>${txt}</span>`;
+}
+document.getElementById('size').addEventListener('input',population);
+draw();population();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',draw);
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body></html>

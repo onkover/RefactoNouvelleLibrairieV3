@@ -1,0 +1,1821 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH0 — Clôture de la phase 0 et rôles de trigger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --zone:#b5651d; --probe:#2563a8; --belt:#7a7466;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --zone:#e09a55; --probe:#6aa8ec; --belt:#9a9384;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --zone:#e09a55; --probe:#6aa8ec; --belt:#9a9384;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:30;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h1{font-size:26px; line-height:1.2; margin:6px 0 8px; text-wrap:balance}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+td.num, .num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:160px}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.out{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; white-space:pre-wrap; overflow-x:auto}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:18px; font-variant-numeric:tabular-nums}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header>
+  <div class="t">Lot PH0 — Clôture de la phase 0 et rôles de trigger, pas à pas</div>
+  <div class="s">LibraryV3 · points 0.1, 0.2, 0.3 du carnet de route + bug 62 (discussion I) · création (aucun artefact n’existait)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#intro">Schéma dynamique</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">La leçon 06 devait se terminer par une mesure : combien coûtent <code>WorldTransformSystem</code>, la rasterisation et <code>TriggerSystem</code> sur les scènes du système solaire. Le lot A10 avait rendu le build Release possible. Il restait trois obstacles avant de pouvoir lire un chiffre honnête, et ce lot les lève.</p>
+
+<p>Le carnet de route les appelait <b>0.1, 0.2 et 0.3</b>. Chacun empêchait la mesure d’une manière différente :</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Point</th><th>Le problème</th><th>Pourquoi il fausse la mesure</th></tr></thead>
+<tbody>
+<tr><td><b>0.1</b> <code>TriggerSystem</code></td><td>Un <code>std::set&lt;Entity&gt;</code> reconstruit à chaque frame pour chaque trigger, plus un <code>std::cout</code> par événement publié, même en Release</td><td>On aurait mesuré l’allocateur et la console Windows, pas la détection de recouvrement</td></tr>
+<tr><td><b>0.2</b> <code>DrawHierarchySystem</code></td><td>Un dump console de toute la hiérarchie, à chaque frame, dès qu’on est en Debug</td><td>Inutilisable pour déboguer autre chose : la console défile sans fin</td></tr>
+<tr><td><b>0.3</b> <code>RelWithAsserts</code></td><td>Aucune configuration « optimisée mais avec filets »</td><td>Choix forcé : mesurer en Release sans aucun invariant, ou valider en Debug où rien n’est représentatif</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>En fermant le point 0.1, les nouveaux journaux ont fait apparaître un quatrième problème, cette fois de <b>comportement</b> et plus de mesure : toutes les zones de danger du système solaire se publiaient <code>TAKING_DAMAGE</code> les unes aux autres, en continu. C’est le <b>bug 62</b>. Onky a demandé de le corriger avant toute nouvelle leçon. Il fait donc partie de ce lot.</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « On mesure tel quel, on retirera le bruit après. » <b>Non.</b> Sur la scène <code>solar_system_v1compat.json</code> à t = 0, l’ancien <code>TriggerSystem</code> trouvait <b>158 recouvrements</b> et publiait <b>45 événements par frame</b>, chacun suivi d’un <code>std::cout</code> synchrone. À 60 images par seconde, cela fait 2 700 écritures console par seconde. Le chiffre « coût de <code>TriggerSystem</code> » aurait mesuré la console. Et une fois le bruit retiré, ce chiffre n’aurait plus voulu rien dire.
+</div>
+
+<p class="small">Ce lot ne produit presque rien de visible à l’écran. Son produit est une <b>chaîne de mesure fiable</b> et un <b>gameplay correct</b> : seul le vaisseau subit les zones, et les zones ne se parlent plus entre elles.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Ce lot s’appuie sur cinq lots antérieurs. Chacun a posé une pièce qui intervient ici.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH0 en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L03</b> — ECS, SparseSet &amp; ResourceManager</td><td>Composants rangés en tableaux denses ; règle « un composant chaud est un POD » ; <code>emplaceComponent</code> qui construit sur place par <code>std::construct_at</code></td><td>Le <code>std::set</code> de <code>TriggerComponent</code> est l’exception à cette règle. Et <code>emplaceComponent</code> impose l’<b>ordre positionnel</b> des membres (étapes 3 et 8).</td></tr>
+<tr><td><b>SG</b> — scénegraphe Système Solaire</td><td>Scènes générées par <code>gen_solar_system.py</code> ; zones de danger <code>HAZARDS</code> ; règles S7/S9 (rayon de trigger en unités monde, jamais hérité de l’échelle)</td><td>Le générateur écrit déjà <code>"role": "zone"</code> et <code>"role": "probe"</code>. Le moteur ne le lisait pas : c’est le bug 62.</td></tr>
+<tr><td><b>A6</b> — JsonReader &amp; EngineConfig</td><td><code>JsonReader</code>, <code>WarnUnread()</code>, les fonctions <code>Read…</code> qui convertissent une chaîne en enum</td><td><code>ReadTriggerRole</code> suit ce patron (étape 8).</td></tr>
+<tr><td><b>A10</b> — build portable Debug/Release</td><td><code>LV3.Common.props</code> (« un seul foyer ») ; quatre commutateurs indépendants dans <code>config.h</code> ; <code>LV3_ASSERT</code> affranchi de <code>assert</code></td><td>La troisième configuration <code>RelWithAsserts</code> exerce enfin ces commutateurs <b>séparément</b>, et révèle deux défauts que Debug et Release cachaient (étape 6).</td></tr>
+<tr><td><b>L06</b> — hiérarchie, <code>SimulationClock</code></td><td>Ordre canonique de la boucle ; <code>TriggerSystem</code> lit les matrices monde finales</td><td>Le système que l’on corrige, et sa place dans la frame.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ, lu dans le code et non supposé.</b> <code>TriggerComponent</code> portait <code>std::set&lt;Entity&gt; overlapping_entities</code> ; <code>TriggerSystem</code> construisait un <code>std::set</code> local par trigger et par frame, le copiait dans le composant, et écrivait chaque événement par <code>std::cout</code> ; <code>main.cpp</code> appelait <code>DrawHierarchySystem</code> à chaque frame sous <code>#if LV3_DEBUG</code> ; la solution comptait deux configurations ; <code>ParseTrigger</code> ne lisait pas la clé <code>role</code>.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que fait un trigger, côté joueur</h3>
+<p>Un trigger est une sphère invisible attachée à une entité. Quand le vaisseau du joueur entre dans la couronne solaire, le jeu doit le savoir une fois (début des dégâts, son de grésillement), le savoir à chaque frame tant qu’il y reste (dégâts continus), et le savoir quand il en sort (fin du son). Ce sont les trois transitions <b>ENTER</b>, <b>STAY</b> et <b>EXIT</b>. Le système de triggers ne fait pas de physique : il ne repousse rien, il <b>signale</b>.</p>
+
+<p>Deux sortes d’objets portent un trigger, et ils n’ont pas le même rôle :</p>
+<ul>
+<li>une <b>zone</b> est un lieu : la couronne du Soleil, l’atmosphère de Vénus, la ceinture d’astéroïdes, la zone de ravitaillement autour de la Terre. Elle décrit ce qui arrive à celui qui y entre ;</li>
+<li>une <b>sonde</b> (<i>probe</i>) est ce qui traverse les lieux : le vaisseau.</li>
+</ul>
+<p>Deux zones qui se recouvrent dans l’espace (l’atmosphère de la Terre et sa zone de gravité) ne « s’entrent » pas l’une dans l’autre. Ça n’a pas de sens de jeu. Seule une paire zone/sonde produit un événement.</p>
+
+<h3>Les quatre objectifs du lot</h3>
+<ol>
+<li><b>Zéro allocation par frame</b> dans <code>TriggerSystem</code>, une fois la scène chargée, sans plafond arbitraire sur le nombre de recouvrements (0.1).</li>
+<li><b>Des outils de debug qui ne s’imposent pas</b> : le dump de hiérarchie existe, mais ne tourne que si on le demande (0.2).</li>
+<li><b>Une configuration optimisée avec filets</b>, <code>RelWithAsserts</code>, où les invariants restent actifs sans le reste de l’outillage (0.3).</li>
+<li><b>Des rôles respectés</b> : seule une paire zone/sonde est testée et peut publier un événement (bug 62).</li>
+</ol>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Conteneur des recouvrements</td><td><code>std::set</code> · tableau fixe <code>kMax = 8</code> · <code>std::vector</code> persistant</td><td><code>std::vector</code> persistant</td><td>Le tableau fixe change un coût en <b>faute de comportement</b> dès qu’une zone dépasse 8 voisins (étape 2). Le vecteur garde sa capacité : il n’alloue plus après le pic.</td></tr>
+<tr><td>Sort de <code>DrawHierarchySystem</code></td><td>supprimer · commenter l’appel · commutateur dédié</td><td>commutateur <code>LV3_DUMP_HIERARCHY</code></td><td>Proposition initiale « supprimer » refusée par Onky : l’outil sert au debug approfondi. Commenter recréerait la dette « code commenté ». Un commutateur coûte trois lignes.</td></tr>
+<tr><td>Où définir <code>LV3_ASSERTS_ENABLED=1</code></td><td>projet EXE · les deux projets · <code>LV3.Common.props</code></td><td><code>LV3.Common.props</code></td><td>Une macro qui change la forme d’un en-tête partagé doit avoir une seule définition pour tous les projets qui l’incluent (étape 6).</td></tr>
+<tr><td>Forme du rôle</td><td><code>bool isProbe</code> · <code>enum class ETriggerRole</code></td><td><code>enum class</code></td><td>Même taille (1 octet), lisible dans les journaux, extensible. Et un <code>enum class</code> refuse toute conversion implicite depuis un <code>bool</code> ou un entier (étape 8).</td></tr>
+<tr><td>Où filtrer</td><td>à la publication · avant le test de distance</td><td>avant le test de distance</td><td>Un seul point de filtrage, et le calcul coûteux n’a pas lieu (étape 9).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>Le moteur est dense. Voici la chaîne complète, du fichier de projet jusqu’à l’image, telle que <code>main.cpp</code> l’exécute aujourd’hui. <b>Les cases en surbrillance sont celles que ce lot touche.</b> Il intervient à trois moments : à la compilation (une troisième configuration), au chargement (lecture du rôle), et dans la frame (détection, publication, dump).</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 640" role="img" aria-label="Chaîne complète du moteur, de la compilation au rendu, avec les étages touchés par le lot PH0 en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+  .lnh{stroke:var(--hl-line); stroke-width:1.6; fill:none; stroke-dasharray:4 3}
+</style>
+
+<!-- 1 · compilation -->
+<text class="ph" x="16" y="20">1 · COMPILATION (une fois)</text>
+<rect class="bx" x="16" y="30" width="196" height="50" rx="8"/>
+<text class="lb" x="28" y="51">LV3.Common.props</text><text class="sb" x="28" y="68">un seul foyer, LIB + EXE</text>
+<rect class="bx" x="236" y="30" width="196" height="50" rx="8"/>
+<text class="lb" x="248" y="51">Debug</text><text class="sb" x="248" y="68">_DEBUG · tout allumé</text>
+<rect class="bxh" x="456" y="30" width="216" height="50" rx="8"/>
+<text class="lb" x="468" y="51">RelWithAsserts (0.3)</text><text class="sb" x="468" y="68">NDEBUG + ASSERTS_ENABLED=1</text>
+<rect class="bx" x="696" y="30" width="188" height="50" rx="8"/>
+<text class="lb" x="708" y="51">Release</text><text class="sb" x="708" y="68">NDEBUG · aucun filet</text>
+<line class="ln" x1="212" y1="55" x2="232" y2="55" marker-end="url(#ar)"/>
+<line class="ln" x1="432" y1="55" x2="452" y2="55" marker-end="url(#ar)"/>
+<line class="ln" x1="672" y1="55" x2="692" y2="55" marker-end="url(#ar)"/>
+
+<!-- 2 · chargement -->
+<text class="ph" x="16" y="112">2 · CHARGEMENT DE LA SCÈNE (une fois)</text>
+<rect class="bx" x="16" y="122" width="196" height="50" rx="8"/>
+<text class="lb" x="28" y="143">gen_solar_system.py</text><text class="sb" x="28" y="160">"role": "zone" | "probe"</text>
+<rect class="bx" x="236" y="122" width="196" height="50" rx="8"/>
+<text class="lb" x="248" y="143">LoadSceneGraph</text><text class="sb" x="248" y="160">ParseNode → Parse*</text>
+<rect class="bxh" x="456" y="122" width="216" height="50" rx="8"/>
+<text class="lb" x="468" y="143">ParseTrigger (62)</text><text class="sb" x="468" y="160">ReadTriggerRole + emplace</text>
+<rect class="bx" x="696" y="122" width="188" height="50" rx="8"/>
+<text class="lb" x="708" y="143">Registry</text><text class="sb" x="708" y="160">TriggerComponent dense</text>
+<line class="ln" x1="212" y1="147" x2="232" y2="147" marker-end="url(#ar)"/>
+<line class="ln" x1="432" y1="147" x2="452" y2="147" marker-end="url(#ar)"/>
+<line class="ln" x1="672" y1="147" x2="692" y2="147" marker-end="url(#ar)"/>
+
+<!-- 3 · frame -->
+<text class="ph" x="16" y="204">3 · UNE FRAME (ordre de main.cpp)</text>
+<rect class="bx" x="16" y="214" width="160" height="50" rx="8"/>
+<text class="lb" x="28" y="235">Input + horloge</text><text class="sb" x="28" y="252">realDt / simDt</text>
+<rect class="bx" x="192" y="214" width="160" height="50" rx="8"/>
+<text class="lb" x="204" y="235">Player, Animation</text><text class="sb" x="204" y="252">écrivent m_local</text>
+<rect class="bx" x="368" y="214" width="160" height="50" rx="8"/>
+<text class="lb" x="380" y="235">Cuisson n°1</text><text class="sb" x="380" y="252">Local + World</text>
+<rect class="bx" x="544" y="214" width="160" height="50" rx="8"/>
+<text class="lb" x="556" y="235">Caméras, gizmos</text><text class="sb" x="556" y="252">FPS, Follow, Zoom</text>
+<rect class="bx" x="720" y="214" width="164" height="50" rx="8"/>
+<text class="lb" x="732" y="235">Cuisson n°2</text><text class="sb" x="732" y="252">ciblée caméras</text>
+<line class="ln" x1="176" y1="239" x2="188" y2="239" marker-end="url(#ar)"/>
+<line class="ln" x1="352" y1="239" x2="364" y2="239" marker-end="url(#ar)"/>
+<line class="ln" x1="528" y1="239" x2="540" y2="239" marker-end="url(#ar)"/>
+<line class="ln" x1="704" y1="239" x2="716" y2="239" marker-end="url(#ar)"/>
+<path class="ln" d="M802 264 L802 284 L96 284 L96 296" marker-end="url(#ar)"/>
+
+<rect class="bxh" x="16" y="300" width="250" height="62" rx="8"/>
+<text class="lb" x="28" y="321">TriggerSystem (0.1 + 62)</text>
+<text class="sb" x="28" y="338">vector persistant · filtre rôle</text>
+<text class="sb" x="28" y="353">ENTER / STAY / EXIT</text>
+<rect class="bxh" x="290" y="300" width="190" height="62" rx="8"/>
+<text class="lb" x="302" y="321">EventBus::publish</text>
+<text class="sb" x="302" y="338">(nom, source, cible)</text>
+<text class="sb" x="302" y="353">synchrone</text>
+<rect class="bx" x="504" y="300" width="180" height="62" rx="8"/>
+<text class="lb" x="516" y="321">HealthSystem</text>
+<text class="sb" x="516" y="338">TAKING_DAMAGE</text>
+<text class="sb" x="516" y="353">→ HP de la CIBLE</text>
+<rect class="bx" x="704" y="300" width="180" height="62" rx="8"/>
+<text class="lb" x="716" y="321">AudioSystem</text>
+<text class="sb" x="716" y="338">STARTED / STOPPED</text>
+<text class="sb" x="716" y="353">grésillement</text>
+<line class="ln" x1="266" y1="331" x2="286" y2="331" marker-end="url(#ar)"/>
+<line class="ln" x1="480" y1="331" x2="500" y2="331" marker-end="url(#ar)"/>
+<path class="ln" d="M592 300 L592 290 L794 290 L794 296" marker-end="url(#ar)"/>
+
+<rect class="bx" x="16" y="394" width="200" height="50" rx="8"/>
+<text class="lb" x="28" y="415">BuildViewData × N</text><text class="sb" x="28" y="432">matrices de la frame</text>
+<rect class="bx" x="236" y="394" width="210" height="50" rx="8"/>
+<text class="lb" x="248" y="415">Invariants</text><text class="sb" x="248" y="432">CheckSceneInvariants…</text>
+<rect class="bxh" x="466" y="394" width="210" height="50" rx="8"/>
+<text class="lb" x="478" y="415">Dump hiérarchie (0.2)</text><text class="sb" x="478" y="432">LV3_DUMP_HIERARCHY</text>
+<rect class="bx" x="696" y="394" width="188" height="50" rx="8"/>
+<text class="lb" x="708" y="415">RenderView × N</text><text class="sb" x="708" y="432">sommets → pixels</text>
+<line class="ln" x1="141" y1="362" x2="141" y2="390" marker-end="url(#ar)"/>
+<line class="ln" x1="216" y1="419" x2="232" y2="419" marker-end="url(#ar)"/>
+<line class="ln" x1="446" y1="419" x2="462" y2="419" marker-end="url(#ar)"/>
+<line class="ln" x1="676" y1="419" x2="692" y2="419" marker-end="url(#ar)"/>
+
+<!-- transverse -->
+<text class="ph" x="16" y="480">TRANSVERSE · LES COMMUTATEURS QUI DÉCIDENT CE QUI EST COMPILÉ</text>
+<rect class="bxh" x="16" y="490" width="208" height="54" rx="8"/>
+<text class="lb" x="28" y="511">LV3_ASSERTS_ENABLED</text><text class="sb" x="28" y="528">filets : LV3_ASSERT, magic</text>
+<rect class="bx" x="240" y="490" width="208" height="54" rx="8"/>
+<text class="lb" x="252" y="511">LV3_DEBUG</text><text class="sb" x="252" y="528">outils, journaux Trigger</text>
+<rect class="bxh" x="464" y="490" width="208" height="54" rx="8"/>
+<text class="lb" x="476" y="511">LV3_DUMP_HIERARCHY</text><text class="sb" x="476" y="528">5ᵉ commutateur, défaut 0</text>
+<rect class="bx" x="688" y="490" width="196" height="54" rx="8"/>
+<text class="lb" x="700" y="511">LV3_DEBUG_LOG / VERBOSE</text><text class="sb" x="700" y="528">journaux</text>
+<path class="lnh" d="M564 80 L564 100 L120 100 L120 486"/>
+<path class="lnh" d="M570 444 L570 486"/>
+
+<rect class="bx" x="16" y="566" width="868" height="56" rx="8"/>
+<text class="lb" x="28" y="588">Ce que le lot NE touche pas : rasterisation, étage sommets, LOD, culling, rendu. Aucune boucle de pixels n’est modifiée.</text>
+<text class="sb" x="28" y="608">La seule boucle de calcul du lot est la narrow-phase de TriggerSystem (étape 9 : pendant scalaire et proposition AVX2).</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Point</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Scene/Components/Component.hpp</code></td><td>LIB</td><td>0.1, 62</td><td><span class="pill warn">modifié</span> <code>overlapping_entities</code> en <code>std::vector</code> ; <code>enum class ETriggerRole</code> ; membre <code>role</code> après <code>radius</code></td></tr>
+<tr><td><code>Scene/System.cpp</code></td><td>LIB</td><td>0.1, 62</td><td><span class="pill warn">réécrit</span> <code>TriggerSystem</code> : tampon <code>static</code> réutilisé, journaux sous <code>LV3_DEBUG</code>, filtre de rôle</td></tr>
+<tr><td><code>Scene/Serializer.cpp</code></td><td>LIB</td><td>0.1, 62</td><td><span class="pill warn">modifié</span> <code>ParseTrigger</code> : <code>std::vector&lt;Entity&gt;{}</code>, puis lecture du rôle, <code>role</code> au bon rang</td></tr>
+<tr><td><code>Scene/SerializerHelpers.hpp</code></td><td>LIB</td><td>62</td><td><span class="pill ok">ajout</span> <code>ReadTriggerRole(r, key, owner)</code> (voir <a href="#amend">amendement A2</a>)</td></tr>
+<tr><td><code>Core/config.h</code></td><td>LIB</td><td>0.2</td><td><span class="pill ok">ajout</span> section 5, <code>LV3_DUMP_HIERARCHY</code> (défaut 0)</td></tr>
+<tr><td><code>Rendering/Fragment.h</code></td><td>LIB</td><td>0.3</td><td><span class="pill bad">bug corrigé</span> <code>kFragmentContextMagic</code> passé de <code>LV3_DEBUG</code> à <code>LV3_ASSERTS_ENABLED</code></td></tr>
+<tr><td><code>build/LV3.Common.props</code></td><td>EXE (partagé)</td><td>0.3</td><td><span class="pill ok">ajout</span> bloc <code>RelWithAsserts</code> : <code>LV3_ASSERTS_ENABLED=1</code> pour les deux projets</td></tr>
+<tr><td><code>LibraryV3.vcxproj</code>, <code>RefactoNouvelleLibrairieV3.vcxproj</code></td><td>LIB, EXE</td><td>0.3</td><td><span class="pill ok">ajout</span> configuration <code>RelWithAsserts</code> (Win32, x64), copiée de Release ; définition locale de l’EXE retirée</td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>0.2</td><td><span class="pill warn">modifié</span> appel de <code>DrawHierarchySystem</code> sous <code>#if LV3_DUMP_HIERARCHY</code></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Trois fonctionnements sont remis en question. Pour chacun, l’algorithme d’avant et celui d’après, ligne par ligne. Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · <code>TriggerSystem</code>, une frame</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — un ensemble neuf par trigger, toutes les paires</div>
+<pre><code>pour chaque trigger T1 (boucle externe) :
+<span class="hl">    nouveaux ← std::set vide           // allocation(s)</span>
+    pour chaque trigger T2 (boucle interne) :
+        si T1 == T2 : suivant
+<span class="hl">        // aucun filtre : zone × zone testée</span>
+<span class="hl">        d ← |pos1 − pos2|               // racine carrée</span>
+        si d &lt; r1 + r2 :
+<span class="hl">            nouveaux.insert(T2)        // 1 nœud alloué</span>
+    pour e dans nouveaux :
+        événement ← (e ∈ anciens) ? STAY : ENTER
+<span class="hl">        std::cout &lt;&lt; …                  // même en Release</span>
+        publier(événement, T1, e)
+    pour e dans anciens, absent de nouveaux :
+<span class="hl">        std::cout &lt;&lt; …</span>
+        publier(EXIT, T1, e)
+<span class="hl">    T1.anciens ← nouveaux               // copie : réallocation</span>
+<span class="hl">    // fin de portée : nouveaux libéré</span></code></pre></div>
+<div class="ap"><div class="t">Après — un tampon réutilisé, paires zone/sonde seulement</div>
+<pre><code><span class="hl">static nouveaux : vector               // vit d'une frame à l'autre</span>
+pour chaque trigger T1 :
+<span class="hl">    nouveaux.clear()                    // garde sa capacité</span>
+    pour chaque trigger T2 :
+        si T1 == T2 : suivant
+<span class="hl">        si T1.role == T2.role : suivant // AVANT la distance</span>
+        d ← |pos1 − pos2|
+        si d &lt; r1 + r2 :
+<span class="hl">            nouveaux.push_back(T2)     // n'alloue qu'au-delà du pic</span>
+    pour e dans nouveaux :
+<span class="hl">        événement ← (find(anciens, e)) ? STAY : ENTER</span>
+<span class="hl">        #if LV3_DEBUG  journal ENTER/STAY + noms</span>
+        publier(événement, T1, e)
+    pour e dans anciens, absent de nouveaux :
+<span class="hl">        #if LV3_DEBUG  journal EXIT + noms</span>
+        publier(EXIT, T1, e)
+<span class="hl">    T1.anciens ← nouveaux               // operator= réutilise la capacité</span></code></pre></div>
+</div>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Mesuré sur <code>solar_system_v1compat.json</code>, t = 0</th><th>Avant</th><th>Après</th></tr></thead>
+<tbody>
+<tr><td>Triggers N (zones Z + sondes P)</td><td class="num" colspan="2">34 = 33 zones + 1 sonde</td></tr>
+<tr><td>Itérations de la boucle interne, N·(N − 1)</td><td class="num">1 122</td><td class="num">1 122 (inchangé, voir <a href="#amend">A1</a>)</td></tr>
+<tr><td>Tests de distance (racine carrée)</td><td class="num">1 122</td><td class="num">66 = 2·Z·P</td></tr>
+<tr><td>Recouvrements trouvés (paires ordonnées)</td><td class="num">158</td><td class="num">8</td></tr>
+<tr><td>Événements publiés par frame</td><td class="num">45</td><td class="num">0 (le vaisseau est dans des zones sans événement)</td></tr>
+<tr><td>Recouvrements de <code>KuiperBelt-Zone</code> / <code>AsteroidBelt-Zone</code></td><td class="num">32 / 17</td><td class="num">1 / 1</td></tr>
+<tr><td>Allocations par frame (régime établi)</td><td class="num">≈ 2 par recouvrement, soit ≈ 300</td><td class="num">0</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Les comptes viennent des positions et rayons réels de la scène (calcul hors moteur sur les 34 triggers, positions monde à t = 0). L’estimation d’allocations suppose un nœud de <code>std::set</code> par insertion et un par élément recopié par <code>operator=</code> ; c’est un ordre de grandeur, pas une mesure de l’allocateur.</p>
+
+<h3>B · <code>ParseTrigger</code>, au chargement</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>radius       ← r.Read("radius", 1.0)
+<span class="hl">// "role" jamais lu : WarnUnread le signale à chaque nœud</span>
+onEnter/onStay/onExit ← r.Read(…) + IsKnownEvent
+emplaceComponent&lt;TriggerComponent&gt;(entity,
+    radius,
+    onEnter, onStay, onExit,
+    false,
+<span class="hl">    std::set&lt;Entity&gt;{})</span></code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>radius       ← r.Read("radius", 1.0)
+<span class="hl">role         ← ReadTriggerRole(r, "role", owner)   // défaut zone</span>
+onEnter/onStay/onExit ← r.Read(…) + IsKnownEvent
+emplaceComponent&lt;TriggerComponent&gt;(entity,
+    radius,
+<span class="hl">    role,                     // MÊME rang que dans le struct</span>
+    onEnter, onStay, onExit,
+    false,
+<span class="hl">    std::vector&lt;Entity&gt;{})</span></code></pre></div>
+</div>
+
+<h3>C · Ce que chaque configuration compile</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — deux configurations, commutateurs liés</div>
+<pre><code>             ASSERTS  DEBUG  dump hiérarchie
+Debug          1        1    à CHAQUE frame
+Release        0        0    —
+
+<span class="hl">→ jamais ASSERTS sans DEBUG : une confusion entre les</span>
+<span class="hl">  deux commutateurs est invisible (ils bougent ensemble)</span></code></pre></div>
+<div class="ap"><div class="t">Après — trois configurations, commutateurs séparés</div>
+<pre><code>             ASSERTS  DEBUG  DUMP
+Debug          1        1     0   (à 1 sur demande)
+<span class="hl">RelWithAsserts 1        0     0   ← props, LIB + EXE</span>
+Release        0        0     0
+
+<span class="hl">→ la 3ᵉ ligne sépare ASSERTS et DEBUG pour la première</span>
+<span class="hl">  fois : elle a démasqué kFragmentContextMagic et l'ODR</span></code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="intro">
+<h2>1 · Schéma dynamique — les 34 triggers du système solaire</h2>
+
+<p>Avant le code, voici ce que voit <code>TriggerSystem</code>. Le schéma reprend les <b>33 zones et la sonde</b> de <code>solar_system_v1compat.json</code>, avec leurs rayons réels, vues de dessus. Déplace le vaisseau, avance le temps, et bascule les deux mécanismes du lot. Les compteurs sous le schéma refont, à chaque image, le calcul exact de la double boucle.</p>
+
+<div class="ctl">
+  <label for="sTime">Temps simulé : <input type="range" id="sTime" min="0" max="720" value="0" step="1"> <span id="sTimeV" class="pill num">0 j</span></label>
+  <label for="sShipX">Vaisseau x : <input type="range" id="sShipX" min="-440" max="500" value="64" step="0.5"> <span id="sShipXV" class="pill num">64</span></label>
+  <label for="sShipZ">z : <input type="range" id="sShipZ" min="-440" max="440" value="0" step="0.5"> <span id="sShipZV" class="pill num">0</span></label>
+  <label for="sZoom">Zoom : <input type="range" id="sZoom" min="0" max="100" value="50" step="1"></label>
+  <label><input type="checkbox" id="sRole" checked> Filtre de rôle (bug 62)</label>
+  <label><input type="checkbox" id="sCap"> Tampon fixe kMax = 8 (essai abandonné)</label>
+  <label><input type="checkbox" id="sFollow" checked> Centrer sur le vaisseau</label>
+  <button type="button" id="sPlay">Lecture</button>
+  <button type="button" id="sReset">Revenir à t = 0</button>
+</div>
+<canvas id="solar" width="960" height="460" aria-label="Vue de dessus des triggers du système solaire"></canvas>
+<div class="legend">
+  <span><i style="background:var(--zone)"></i>zone avec événements</span>
+  <span><i style="background:var(--belt)"></i>zone sans événement (gravité, ceintures, ravitaillement)</span>
+  <span><i style="background:var(--probe)"></i>sonde : Player_Ship</span>
+  <span><i style="background:var(--bad)"></i>paire en recouvrement zone × zone (bruit du bug 62)</span>
+</div>
+<div class="stats" id="sStats"></div>
+<div class="out" id="sLog"></div>
+<p class="small">Positions à t = 0 : exactes (translations du JSON, composées avec l’échelle du parent pour les lunes). Au-delà, les orbites sont animées à partir de <code>orbitalSpeed</code> en degrés par jour, dans le plan XZ, sans la rotation propre du parent : le mouvement est illustratif, les rayons et les règles de test sont ceux du moteur.</p>
+
+<div class="note">
+<b>Trois choses à observer.</b> (1) Filtre coupé : les 158 recouvrements de t = 0 apparaissent, dont 150 entre zones ; <code>KuiperBelt-Zone</code> en compte 32 et <code>AsteroidBelt-Zone</code> 17. (2) Coche le tampon fixe : ces deux zones dépassent 8, le vaisseau, créé en dernier, est le premier tronqué. Il peut traverser la ceinture sans qu’elle le voie jamais. (3) Filtre remis : les itérations ne bougent pas (1 122), mais les tests de distance tombent à 66.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<p>Quatre mécanismes portent tout le lot. Aucun n’est une technique nommée de la littérature : ce sont des propriétés du C++ et de MSBuild qu’il faut connaître précisément, parce qu’elles échouent en silence quand on les connaît à moitié.</p>
+
+<h3 id="t-alloc">2.1 · Un conteneur dans un composant chaud</h3>
+<p>Un composant « chaud » est lu ou écrit à chaque frame par un système. La règle de la leçon 03 dit qu’il doit être un POD : des valeurs posées côte à côte, copiables par <code>memcpy</code>, rangées dans le tableau dense du <code>SparseSet</code>. <code>TriggerComponent</code> était l’exception : il contenait un <code>std::set&lt;Entity&gt;</code>.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th></th><th><code>std::set&lt;Entity&gt;</code></th><th><code>std::vector&lt;Entity&gt;</code> persistant</th></tr></thead>
+<tbody>
+<tr><td>Structure</td><td>Arbre rouge-noir : un nœud alloué par élément (≈ 32 à 48 octets pour 4 octets utiles), reliés par pointeurs</td><td>Un bloc contigu : 4 octets par élément, plus la capacité de réserve</td></tr>
+<tr><td>Insérer</td><td>1 allocation + rééquilibrage</td><td>écriture en fin de bloc ; allocation seulement si <code>size == capacity</code></td></tr>
+<tr><td>Vider</td><td><code>clear()</code> libère chaque nœud</td><td><code>clear()</code> met <code>size</code> à 0, <b>garde la capacité</b></td></tr>
+<tr><td>Copier dans le composant</td><td>réalloue tous les nœuds</td><td><code>operator=</code> recopie dans le bloc existant s’il est assez grand</td></tr>
+<tr><td>Chercher</td><td>O(log k), un saut de pointeur par niveau</td><td><code>std::find</code>, O(k), lecture contiguë</td></tr>
+<tr><td>Après la première seconde de jeu</td><td>des centaines d’allocations par frame, pour toujours</td><td><b>zéro</b> : chaque tampon a atteint son pic</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>Le vecteur n’est pas devenu un POD : <code>TriggerComponent</code> porte encore trois <code>std::string</code> et un <code>std::vector</code>. Ce qui a changé, c’est le <b>régime d’allocation</b>. La règle n’est pas « jamais de conteneur », c’est « jamais d’allocation par frame ». Un conteneur dont la capacité ne redescend jamais la respecte une fois le pic atteint.</p>
+
+<div class="rule"><b>Règle proposée PH0.a (non actée).</b> Un conteneur dynamique est toléré dans un composant chaud ou un tampon de système seulement si sa capacité est conservée d’une frame à l’autre (<code>clear()</code>, jamais de reconstruction ni de <code>shrink_to_fit</code>). Un plafond fixe n’est acceptable que si la cardinalité est bornée par construction, pas par observation.</div>
+
+<p>Le tampon de travail <code>newOverlaps</code> est déclaré <code>static</code> dans la fonction. Il vit donc toute la durée du programme et sa capacité ne retombe jamais. Le prix : <code>TriggerSystem</code> n’est pas réentrant et n’est pas sûr en multithread. Ce n’est pas un problème aujourd’hui (la boucle est mono-thread) ; le commentaire du code le dit, et la roadmap le note (PH0-15).</p>
+
+<h3 id="t-agg">2.2 · L’agrégat et l’ordre positionnel</h3>
+<p><code>TriggerComponent</code> n’a aucun constructeur déclaré : c’est un <b>agrégat</b>. <code>emplaceComponent&lt;T&gt;(entity, args…)</code> le construit par <code>std::construct_at(p, args…)</code>, ce qui, pour un agrégat, est une initialisation par liste parenthésée (C++20, P0960) : <b>le premier argument va au premier membre, le deuxième au deuxième</b>, et ainsi de suite. Aucun nom n’est vérifié. Seuls les types le sont.</p>
+
+<p>Conséquence : le site d’appel (<code>Serializer.cpp</code>) et la déclaration (<code>Component.hpp</code>) forment un seul contrat, écrit dans deux fichiers. Ce que le compilateur fait quand ce contrat est rompu dépend de l’endroit où l’on ajoute un membre. Choisis un cas :</p>
+
+<div class="ctl">
+  <label for="aggCase">Modification de <code>TriggerComponent</code> :
+    <select id="aggCase">
+      <option value="set">0.1 — set → vector, appel non mis à jour</option>
+      <option value="mid">62 — role inséré après radius, appel non mis à jour</option>
+      <option value="end">role ajouté EN FIN de struct, appel non mis à jour</option>
+      <option value="bool">bool isProbe inséré avant is_colliding, appel non mis à jour</option>
+      <option value="ok">62 — role après radius, appel mis à jour (retenu)</option>
+    </select>
+  </label>
+</div>
+<div class="ab">
+<div class="pr"><div class="t">Déclaration et appel</div><pre><code id="aggCode"></code></pre></div>
+<div class="pr"><div class="t">Ce que fait MSVC</div><pre><code id="aggOut"></code></pre></div>
+</div>
+<p class="small">Le cas « en fin de struct » est le seul vraiment dangereux : il compile, et tout trigger chargé devient une zone. C’est exactement le symptôme qu’Onky a obtenu avec sa scène de test (étape 10), pour une autre raison : une clé JSON mal nommée produit, elle aussi, la valeur par défaut sans erreur.</p>
+
+<h3 id="t-odr">2.3 · Les commutateurs, et une macro qui change la forme d’un type</h3>
+<p>Un commutateur de compilation (<code>#if LV3_ASSERTS_ENABLED</code>) retire du code. Quand ce code est une <b>instruction</b>, l’effet est local. Quand c’est un <b>membre de struct</b>, la macro change la taille et la disposition du type. Si deux unités de compilation voient deux valeurs différentes, elles ne parlent plus du même type, sous le même nom. C’est une violation de l’ODR (<i>One Definition Rule</i>, [basic.def.odr]) : comportement indéfini, sans diagnostic obligatoire.</p>
+
+<p><code>FragmentContext</code> (<code>Rendering/Fragment.h</code>) est un tel type : son premier membre <code>magic</code> n’existe que sous <code>LV3_ASSERTS_ENABLED</code>. Choisis une configuration et l’endroit où la macro est définie :</p>
+
+<div class="ctl">
+  <label for="odrCfg">Configuration :
+    <select id="odrCfg">
+      <option value="debug">Debug</option>
+      <option value="rwa" selected>RelWithAsserts</option>
+      <option value="release">Release</option>
+    </select>
+  </label>
+  <label for="odrDef">LV3_ASSERTS_ENABLED=1 posé dans :
+    <select id="odrDef">
+      <option value="exe">les propriétés de l’EXE seul (1ʳᵉ version)</option>
+      <option value="both">les deux projets, à la main</option>
+      <option value="props" selected>LV3.Common.props (retenu)</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="odrMagicBug"> <code>kFragmentContextMagic</code> sous <code>LV3_DEBUG</code> (avant correctif)</label>
+</div>
+<div class="io">
+<div><h5>Côté LIB (Renderer.cpp, RenderSystem.cpp)</h5><pre class="out" id="odrLib" style="margin:0"></pre></div>
+<div><h5>Côté EXE (main.cpp, tests)</h5><pre class="out" id="odrExe" style="margin:0"></pre></div>
+</div>
+<div id="odrVerdict"></div>
+<p class="small">Disposition calculée pour MSVC x64 : pointeurs de 8 octets alignés sur 8, <code>Color</code> de 4 octets, <code>float</code> de 4 octets. Sans <code>LV3_RASTER_STATS</code>.</p>
+
+<div class="rule"><b>Règle proposée PH0.b (non actée).</b> Une macro qui modifie la forme d’un type déclaré dans un en-tête partagé (membre conditionnel, signature conditionnelle) se définit à un seul endroit, lu par tous les projets qui incluent cet en-tête : <code>config.h</code> pour la valeur par défaut, <code>LV3.Common.props</code> pour une surcharge par configuration. Jamais dans les propriétés d’un seul projet.</div>
+
+<p>Le patron a déjà servi une seconde fois : la campagne de mesure de la phase G pose <code>LV3_PROFILE=1</code> dans <code>LV3.Common.props</code>, et <code>main.cpp</code> compare au démarrage la valeur vue par l’EXE à celle compilée dans la LIB (<code>Profiler::CompiledProfileFlag()</code>). Le commentaire de <code>config.h</code> cite explicitement « la quasi-violation d’ODR du bug 0.3 ».</p>
+
+<h3 id="t-role">2.4 · Zone, sonde, et qui publie quoi</h3>
+<p>Le moteur publie un événement <code>(nom, source, cible)</code> où <b>source = T1</b> (le trigger de la boucle externe, celui dont on lit le nom d’événement) et <b>cible = T2</b>. <code>HealthSystem</code> retire 5 points de vie à la <b>cible</b>, si elle a un <code>HealthComponent</code>.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Paire (T1 → T2)</th><th>Avant (sans rôle)</th><th>Après (filtre de rôle)</th><th>Effet de jeu</th></tr></thead>
+<tbody>
+<tr><td>zone → sonde</td><td>testée, publie l’événement de la zone</td><td>testée, publie l’événement de la zone</td><td><b>Le vaisseau subit la zone.</b> C’est le seul cas utile.</td></tr>
+<tr><td>sonde → zone</td><td>testée, publie l’événement de la sonde</td><td>testée, publie l’événement de la sonde</td><td>Rien si la sonde n’a pas d’événement (cas des scènes générées). Sinon, voir PH0-11.</td></tr>
+<tr><td>zone → zone</td><td>testée, <b>publie</b></td><td>sautée avant la distance</td><td>Avant : bruit permanent, 45 événements par frame à t = 0. Sans dégâts seulement parce qu’aucune zone n’a de <code>HealthComponent</code>.</td></tr>
+<tr><td>sonde → sonde</td><td>testée</td><td>sautée</td><td>Deux vaisseaux ne se déclenchent pas l’un l’autre (choix à confirmer le jour où il y aura deux joueurs).</td></tr>
+</tbody>
+</table>
+</div>
+<p>Le filtre <code>trigger1.role == trigger2.role → continue</code> encode les deux dernières lignes en une comparaison d’octets. Il est symétrique : une paire est gardée ou rejetée dans les deux sens à la fois.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes</h2>
+<p>Dix étapes, dans l’ordre où elles ont eu lieu. Chacune dit son objectif, ce qu’elle reprend de l’étape précédente, le code avant/après par fichier, et ce qu’elle produit. Une seule étape contient une boucle de calcul vectorisable (étape 9) ; pour les autres, le pendant vectorisé est sans objet et c’est dit.</p>
+
+<!-- E1 -->
+<div class="step" id="e1">
+<div class="h"><span class="n">Étape 1</span> Lire <code>TriggerSystem</code> avant d’y toucher (0.1)</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Savoir ce qui coûte, au lieu de le deviner. Le carnet disait « allocation dans un système chaud » ; il fallait voir où, et combien de fois par frame.</div>
+<div><h5>Entrée</h5><code>Scene/System.cpp</code> et <code>Component.hpp</code> du dépôt, lus en entier.</div>
+</div>
+<pre><code>// AVANT — Scene/System.cpp (extrait reconstitué d'après l'échange ; commentaires ajoutés)
+void TriggerSystem(Registry&amp; registry, EventBus&amp; eventBus)
+{
+    for (auto&amp;&amp; [entity1, trigger1, transform1] : registry.ViewGroup&lt;TriggerComponent, TransformComponent&gt;())
+    {
+        std::set&lt;Entity&gt; newOverlaps;                 // (1) neuf à CHAQUE trigger, CHAQUE frame
+        for (auto&amp;&amp; [entity2, trigger2, transform2] : registry.ViewGroup&lt;TriggerComponent, TransformComponent&gt;())
+        {
+            if (entity1 == entity2) continue;
+            // (2) aucune notion de rôle : toute paire est testée
+            if ((pos1 - pos2).length() &lt; trigger1.radius + trigger2.radius)
+                newOverlaps.insert(entity2);             // (3) un nœud alloué par recouvrement
+        }
+        // … ENTER / STAY / EXIT …
+        std::cout &lt;&lt; "… " &lt;&lt; ev &lt;&lt; std::endl;         // (4) console synchrone, Release compris
+        trigger1.overlapping_entities = newOverlaps;     // (5) copie : réallocation de l'arbre
+    }
+}</code></pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Quatre coûts distincts : (1)(3)(5) allocations, (4) console. Et un défaut de logique que personne ne cherchait encore : (2). Le parcours en N² lui-même n’est pas traité ici : il relève de la broad-phase (L11, BVH partagée).</div>
+<div><h5>Pendant vectorisé</h5>Sans objet pour cette étape de lecture.</div>
+</div>
+</div>
+</div>
+
+<!-- E2 -->
+<div class="step" id="e2">
+<div class="h"><span class="n">Étape 2</span> Le tampon fixe <code>OverlapSet</code> : essayé, mesuré, abandonné</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Supprimer toute allocation en rendant le composant trivialement copiable : un tableau de 8 entités et un compteur, plus de <code>std::set</code>.</div>
+<div><h5>Entrée (étape 1)</h5>Les allocations (1)(3)(5). La première idée DOD : « un nombre borné de voisins, donc un tableau borné ».</div>
+</div>
+<pre><code>// ESSAI (resté commenté dans Component.hpp) — NE PAS REPRENDRE
+struct OverlapSet
+{
+    static constexpr size_t kMax = 8;
+    Entity  m_entities[kMax]{};
+    uint8_t m_count = 0;
+    bool Insert(Entity e) noexcept { if (m_count &gt;= kMax) return false; m_entities[m_count++] = e; return true; }
+};
+static_assert(std::is_trivially_copyable_v&lt;OverlapSet&gt;);</code></pre>
+
+<p>À l’exécution, l’avertissement « capacité d’overlap dépassée (8) » est sorti dès la scène de base, puis à chaque frame sur la scène ceinture, pour deux triggers seulement : <code>AsteroidBelt-Zone</code> et <code>KuiperBelt-Zone</code>. Le calcul sur la scène réelle l’explique : sans filtre de rôle, ils recouvrent <b>17</b> et <b>32</b> triggers. Une zone de grande taille a un nombre de voisins qui suit la population de la scène, pas une petite constante.</p>
+
+<p>Le vrai problème n’est pas l’avertissement. Un tampon plein garde les 8 <b>premiers</b> dans l’ordre du tableau dense. Si un trigger mieux placé entre, celui du rang 8 sort de la liste alors qu’il est toujours là : <b>EXIT faux</b>. Il rentre à la frame suivante : <b>ENTER faux</b>. Le simulateur ci-dessous refait ce calcul : une zone de rayon 10, K corps en orbite qui la traversent, 3 600 frames.</p>
+
+<div class="ctl">
+  <label for="capK">Corps en orbite K : <input type="range" id="capK" min="4" max="24" value="12" step="1"> <span id="capKV" class="pill num">12</span></label>
+  <label for="capF">Frame affichée : <input type="range" id="capF" min="0" max="3599" value="400" step="1"> <span id="capFV" class="pill num">400</span></label>
+</div>
+<canvas id="capCanvas" width="960" height="170" aria-label="Évolution du nombre de recouvrements réels et retenus par le tampon fixe"></canvas>
+<div class="stats" id="capStats"></div>
+<p class="small">Courbe pleine : recouvrements réels. Courbe en tirets : ce que garde un tampon de 8. Marques rouges : événements faux. Avec K = 12 : 62 ENTER faux, 64 EXIT faux et 7 ENTER jamais émis en 3 600 frames ; avec K = 16 : 171, 172 et 126. Le <code>std::vector</code> donne 0 partout.</p>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Le tampon fixe remplace un défaut de performance par un défaut de <b>comportement</b>. Abandon. L’erreur venait de la conception proposée par Claude, pas du code d’Onky : elle supposait des triggers point à point, alors que les zones de ce jeu sont des volumes de la taille d’une orbite.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E3 -->
+<div class="step" id="e3">
+<div class="h"><span class="n">Étape 3</span> Un <code>std::vector</code> persistant, et le site de construction</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Aucune allocation en régime établi, aucun plafond. La capacité grandit jusqu’au pic réel de chaque trigger, puis ne bouge plus.</div>
+<div><h5>Entrée (étape 2)</h5>La cardinalité n’est pas bornée : un tableau fixe est exclu. Le coût à supprimer est la <b>reconstruction</b> par frame, pas le conteneur en soi.</div>
+</div>
+
+<h4>Component.hpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>struct TriggerComponent
+{
+    float radius = 1.0f;
+    std::string onEnterEvent = "";
+    std::string onStayEvent = "";
+    std::string onExitEvent = "";
+    bool is_colliding = false;
+<span class="hl">    std::set&lt;Entity&gt; overlapping_entities;</span>
+};</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>struct TriggerComponent
+{
+    float radius = 1.0f;
+    std::string onEnterEvent = "", onStayEvent = "", onExitEvent = "";
+    bool is_colliding = false;
+<span class="hl">    // Persistant, capacité JAMAIS relâchée : la cardinalité</span>
+<span class="hl">    // réelle du gameplay décide, pas un plafond arbitraire.</span>
+<span class="hl">    std::vector&lt;Entity&gt; overlapping_entities;</span>
+};</code></pre></div>
+</div>
+
+<h4>System.cpp — TriggerSystem (partie allocation)</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>for (auto&amp;&amp; [entity1, trigger1, transform1] : …)
+{
+<span class="hl">    std::set&lt;Entity&gt; newOverlaps;</span>
+    for (auto&amp;&amp; [entity2, trigger2, transform2] : …)
+        if (… &lt; trigger1.radius + trigger2.radius)
+<span class="hl">            newOverlaps.insert(entity2);</span>
+    auto&amp; old = trigger1.overlapping_entities;
+<span class="hl">    for (Entity e : newOverlaps)</span>
+<span class="hl">        bool wasThere = old.count(e) != 0;  // arbre</span>
+    …
+    trigger1.overlapping_entities = newOverlaps;
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">static std::vector&lt;Entity&gt; newOverlaps;   // vit entre les frames</span>
+for (auto&amp;&amp; [entity1, trigger1, transform1] : …)
+{
+<span class="hl">    newOverlaps.clear();                   // garde la capacité</span>
+    for (auto&amp;&amp; [entity2, trigger2, transform2] : …)
+        if (… &lt; trigger1.radius + trigger2.radius)
+<span class="hl">            newOverlaps.push_back(entity2);  // plus de plafond</span>
+    auto&amp; old = trigger1.overlapping_entities;
+<span class="hl">    auto contains = [](const std::vector&lt;Entity&gt;&amp; v, Entity e) {</span>
+<span class="hl">        return std::find(v.begin(), v.end(), e) != v.end(); };</span>
+    …
+<span class="hl">    trigger1.overlapping_entities = newOverlaps;  // réutilise la capacité</span>
+}</code></pre></div>
+</div>
+
+<h4>Serializer.cpp — ParseTrigger</h4>
+<p>Première compilation après le changement de type : échec, et c’est une bonne nouvelle. Le site d’appel passait encore un <code>std::set</code> au dernier membre de l’agrégat.</p>
+<pre class="out">error C2672: 'std::construct_at' : aucune fonction surchargée correspondante trouvée
+  → Scene/Serializer.cpp(475,16), instanciation de emplaceComponent pour LV3::TriggerComponent
+    dont le dernier argument est std::set&lt;LV3::Entity, …&gt;
+(message abrégé ; le journal complet a été transmis par Onky pendant l'échange)</pre>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>ctx.registry.emplaceComponent&lt;TriggerComponent&gt;(
+    entity, radius,
+    std::move(onEnterEvent), std::move(onStayEvent), std::move(onExitEvent),
+    false,
+<span class="hl">    std::set&lt;Entity&gt;{});</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>ctx.registry.emplaceComponent&lt;TriggerComponent&gt;(
+    entity, radius,
+    std::move(onEnterEvent), std::move(onStayEvent), std::move(onExitEvent),
+    false,                      // is_colliding
+<span class="hl">    std::vector&lt;Entity&gt;{});</span></code></pre></div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Compilation propre ; comportement identique à l’ancien sur les scènes simples (comparaison avant/après d’Onky) ; plus d’avertissement de capacité sur les deux scènes du système solaire.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : le changement porte sur la gestion mémoire, pas sur un calcul.</div>
+</div>
+</div>
+</div>
+
+<!-- E4 -->
+<div class="step" id="e4">
+<div class="h"><span class="n">Étape 4</span> Des journaux qui disent quelle transition, entre qui et qui</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Retirer la console de Release (elle faussait la mesure), et rendre le journal Debug lisible : « <code>TAKING_DAMAGE</code> » répété cent fois ne dit rien.</div>
+<div><h5>Entrée (étape 3)</h5>Le même <code>TriggerSystem</code>, avec ses <code>std::cout</code> anonymes. Premier essai d’Onky : « ce n’est pas super parlant ».</div>
+</div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code><span class="hl">std::cout &lt;&lt; "[TriggerSystem] " &lt;&lt; ev &lt;&lt; std::endl;</span>
+eventBus.publish(ev, entity1, e);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">#if LV3_DEBUG</span>
+    const std::string name1 = registry.hasComponent&lt;NameComponent&gt;(entity1)
+        ? registry.getComponent&lt;NameComponent&gt;(entity1).m_id : "&lt;sans nom&gt;";
+    const std::string name2 = … (même chose pour e) …;
+    Logger::info(std::string("[TriggerSystem] ")
+        + (wasThere ? "STAY  " : "ENTER ") + name1 + " -&gt; " + name2
+        + "  (" + ev + ")");
+<span class="hl">#endif</span>
+eventBus.publish(ev, entity1, e);</code></pre></div>
+</div>
+<p>Le journal enrichi d’Onky (extraits réels) :</p>
+<pre class="out">[TriggerSystem] STAY  Sun-Corona-Zone -&gt; Sun-Heat-Zone  (TAKING_DAMAGE)
+[TriggerSystem] STAY  Jupiter-Radiation-Zone -&gt; Io-Volcanic-Zone  (TAKING_DAMAGE)
+[TriggerSystem] EXIT  Venus-Atmosphere-Zone -&gt; Earth-SafeZone-Zone  (STOPPED_TAKING_DAMAGE)
+[AudioSystem] *Arrête le son de grésillement (fin)*</pre>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Release ne touche plus la console. Et le journal montre deux choses : la mécanique ENTER/STAY/EXIT du vecteur fonctionne (un EXIT réel suivi de l’arrêt du son), et <b>des zones se publient des dégâts entre elles</b>. C’est la découverte du bug 62.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E5 -->
+<div class="step" id="e5">
+<div class="h"><span class="n">Étape 5</span> <code>DrawHierarchySystem</code> : garder l’outil, le mettre sur un interrupteur (0.2)</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Que le dump de hiérarchie ne tourne plus à chaque frame Debug, sans perdre un outil utile au debug approfondi.</div>
+<div><h5>Entrée</h5>Le carnet disait « à supprimer ». Claude l’a d’abord proposé. Onky a refusé : « il affiche en cours de frame la hiérarchie, cela peut être utile si on le demande ».</div>
+</div>
+<p>À la relecture de <code>config.h</code>, l’argument de la suppression ne tenait pas : <code>LV3_DEBUG</code> est documenté comme couvrant « RenderSystem console, dumps… » et vaut 0 en Release comme en <code>RelWithAsserts</code>. Le dump ne pouvait donc jamais polluer la mesure. Le seul défaut réel était qu’il tournait <b>dès qu’on était en Debug</b>, même pour déboguer autre chose. La proposition d’Onky, « commenter l’appel », aurait recréé la dette « code commenté » de la phase 2. D’où un cinquième commutateur.</p>
+<h4>Core/config.h</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>// 4. Journaux verbeux
+#ifndef LV3_VERBOSE_LOG
+    …
+#endif
+<span class="hl">// (rien : le dump suit LV3_DEBUG)</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>// 4. Journaux verbeux
+#ifndef LV3_VERBOSE_LOG
+    …
+#endif
+<span class="hl">// 5. Dump console de la hierarchie, PAR FRAME (DrawHierarchySystem).</span>
+<span class="hl">//    A activer ponctuellement.</span>
+<span class="hl">#ifndef LV3_DUMP_HIERARCHY</span>
+<span class="hl">    #define LV3_DUMP_HIERARCHY 0</span>
+<span class="hl">#endif</span></code></pre></div>
+</div>
+<h4>main.cpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>#if LV3_DEBUG
+<span class="hl">    DrawHierarchySystem(registry, rm);   // chaque frame</span>
+#endif</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>#if LV3_DEBUG
+    …
+<span class="hl">    #if LV3_DUMP_HIERARCHY</span>
+        std::cout &lt;&lt; "--- FRAME " &lt;&lt; frameCount &lt;&lt; " ---" &lt;&lt; std::endl;
+        DrawHierarchySystem(registry, rm);
+<span class="hl">    #endif</span>
+#endif</code></pre></div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Statut 0.2 : OK (Onky). Pour un dump ponctuel : <code>/D LV3_DUMP_HIERARCHY=1</code> dans les propriétés Debug, ou une ligne dans <code>LV3.User.props</code>. Le dump reste imbriqué sous <code>LV3_DEBUG</code> : voir PH0-10.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E6 -->
+<div class="step" id="e6">
+<div class="h"><span class="n">Étape 6</span> <code>RelWithAsserts</code> : la troisième configuration, et ce qu’elle démasque (0.3)</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Mesurer en code optimisé avec les invariants actifs. Release avec <code>LV3_ASSERTS_ENABLED=1</code> et rien d’autre : pas d’outils, pas de journaux Debug.</div>
+<div><h5>Entrée</h5>Les quatre commutateurs indépendants du lot A10. Ils ne l’étaient que sur le papier : Debug les mettait tous à 1, Release tous à 0.</div>
+</div>
+
+<h4>6a · La configuration</h4>
+<p>Dans les deux <code>.vcxproj</code>, Visual Studio a dupliqué <code>Release</code> en <code>RelWithAsserts</code> (Win32 et x64) : mêmes <code>ProjectConfiguration</code>, <code>PropertyGroup Label="Configuration"</code> (<code>UseDebugLibraries=false</code>, <code>WholeProgramOptimization=true</code>), <code>ImportGroup Label="PropertySheets"</code> qui importe <code>$(LV3BuildDir)LV3.Common.props</code>, et <code>PreprocessorDefinitions</code> en <code>NDEBUG;_CONSOLE</code>. Le <code>LV3BuildDir</code> de la LIB pointe sur le même fichier physique que celui de l’EXE : vérifié dans les deux projets.</p>
+
+<h4>6b · Premier défaut démasqué : <code>kFragmentContextMagic</code></h4>
+<p>Trouvé par Onky à la première compilation. La sentinelle était déclarée sous <code>LV3_DEBUG</code>, alors que le membre <code>magic</code> et l’assertion qui la lit vivent sous <code>LV3_ASSERTS_ENABLED</code>. En <code>RelWithAsserts</code> (ASSERTS = 1, DEBUG = 0), le membre existe et l’assertion compile, mais la constante n’existe pas.</p>
+<div class="ab">
+<div class="av"><div class="t">Avant — Rendering/Fragment.h</div><pre><code><span class="hl">#if LV3_DEBUG</span>
+    inline constexpr uint32_t kFragmentContextMagic = 0xF2A9C0DEu;
+#endif
+
+struct FragmentContext
+{
+#if LV3_ASSERTS_ENABLED
+    uint32_t magic = kFragmentContextMagic;   // ← introuvable
+#endif
+    FrameBuffer* fb = nullptr;
+    …</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">#if LV3_ASSERTS_ENABLED</span>
+    // Sentinelle du contexte passé via void* (parade au bug n°17).
+    inline constexpr uint32_t kFragmentContextMagic = 0xF2A9C0DEu;
+#endif
+
+struct FragmentContext
+{
+#if LV3_ASSERTS_ENABLED
+    uint32_t magic = kFragmentContextMagic;
+#endif
+    FrameBuffer* fb = nullptr;
+    …</code></pre></div>
+</div>
+<p class="small">La règle derrière : un <b>filet</b> (sentinelle, assertion, invariant) vit sous <code>LV3_ASSERTS_ENABLED</code> ; un <b>outil</b> (dump, console, trace) sous <code>LV3_DEBUG</code>. Tant que les deux valaient la même chose, se tromper de commutateur ne se voyait pas. Voir aussi l’<a href="#amend">amendement A3</a> : la même confusion existe dans <code>main.cpp</code>.</p>
+
+<h4>6c · Second défaut démasqué : une définition dans un seul projet</h4>
+<p>La première version posait <code>LV3_ASSERTS_ENABLED=1</code> dans les propriétés de l’EXE seul (instruction incomplète de Claude). La LIB compilait donc <code>Fragment.h</code> sans le membre <code>magic</code>, l’EXE avec. Onky a vu « <code>x</code> et <code>color</code> introuvables, seul <code>y</code> existe » autour de <code>SetPixel</code>, et a contourné en ajoutant la définition à la LIB à la main. Cela marchait, mais laissait deux définitions qui peuvent diverger au prochain réglage. Le correctif durable est de la poser là où les deux projets la lisent :</p>
+<div class="ab">
+<div class="av"><div class="t">Avant — build/LV3.Common.props</div><pre><code>&lt;ItemDefinitionGroup&gt;
+  &lt;ClCompile&gt;
+    &lt;LanguageStandard&gt;stdcpp23&lt;/LanguageStandard&gt;
+    …
+  &lt;/ClCompile&gt;
+&lt;/ItemDefinitionGroup&gt;
+<span class="hl">&lt;!-- rien pour RelWithAsserts : définition locale à l'EXE --&gt;</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>&lt;ItemDefinitionGroup&gt; … (inchangé) … &lt;/ItemDefinitionGroup&gt;
+<span class="hl">&lt;ItemDefinitionGroup Condition="'$(Configuration)'=='RelWithAsserts'"&gt;</span>
+<span class="hl">  &lt;ClCompile&gt;</span>
+<span class="hl">    &lt;PreprocessorDefinitions&gt;LV3_ASSERTS_ENABLED=1;%(PreprocessorDefinitions)&lt;/PreprocessorDefinitions&gt;</span>
+<span class="hl">  &lt;/ClCompile&gt;</span>
+<span class="hl">&lt;/ItemDefinitionGroup&gt;</span></code></pre></div>
+</div>
+<p>Puis la définition locale est retirée des propriétés de l’EXE (vérifié dans le dépôt : <code>RelWithAsserts|x64</code> n’y porte plus que <code>NDEBUG;_CONSOLE</code>). La condition porte sur <code>$(Configuration)</code> seul : elle vaut pour Win32 et x64. Et <code>%(PreprocessorDefinitions)</code> en fin de valeur conserve l’héritage (règle R40 du lot A10).</p>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>« Plus de warning. » <code>solar_system_v1compat.json</code> et <code>solar_system_v1compat_belt.json</code> s’animent en <code>RelWithAsserts</code> comme en <code>Release</code>. <code>main.cpp</code> écrit désormais <code>[Build] RelWithAsserts | LV3_ASSERTS_ENABLED=1</code> au démarrage. Réserve : voir l’<a href="#amend">amendement A3</a>, une partie des invariants ne tourne pas dans cette configuration.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : chaîne de compilation.</div>
+</div>
+</div>
+</div>
+
+<!-- E7 -->
+<div class="step" id="e7">
+<div class="h"><span class="n">Étape 7</span> Bug 62 : données de scène ou code ?</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Savoir où corriger. Onky : « toutes les zones infligent <code>TAKING_DAMAGE</code>, cela est un fait de la scène ; seul le vaisseau devrait subir des dommages ». Il fallait le vérifier dans le générateur, pas le croire.</div>
+<div><h5>Entrée (étape 4)</h5>Les lignes <code>STAY zone -&gt; zone</code> du journal, et le dossier <code>Documentations/fichiers de génération/</code> du dépôt EXE.</div>
+</div>
+<pre><code># gen_solar_system.py — chaque zone de HAZARDS
+"Trigger": {
+    "role": "zone",
+    "shape": "sphere",
+    "radius": round(r * mult, 4),
+    "onEnterEvent": …, "onStayEvent": …, "onExitEvent": …
+}
+# le vaisseau
+"Trigger": {"role": "probe", "shape": "sphere", "radius": 0.5}
+
+# to_v1() — rétro-projection vers le schéma consommé aujourd'hui : le rôle passe intact
+nc["Trigger"] = {"role": t.get("role", "zone"), "radius": r, …}</code></pre>
+<p>La scène portait donc déjà l’information : 33 nœuds <code>"role": "zone"</code> et un <code>"role": "probe"</code> dans <code>solar_system_v1compat.json</code>. Côté C++, <code>ParseTrigger</code> ne lisait pas la clé, <code>TriggerComponent</code> n’avait aucun champ pour la ranger, et <code>TriggerSystem</code> testait toutes les paires.</p>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Défaut de <b>code</b>, pas de données. Numéroté <b>62</b>, inscrit au carnet comme « à corriger avant les leçons suivantes » (demande d’Onky). Sans effet visible aujourd’hui (aucune zone n’a de <code>HealthComponent</code>), mais un bug de jeu dès qu’une zone en aura un.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+</div>
+</div>
+
+<!-- E8 -->
+<div class="step" id="e8">
+<div class="h"><span class="n">Étape 8</span> Ranger le rôle : <code>ETriggerRole</code>, <code>ReadTriggerRole</code>, <code>ParseTrigger</code></div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Faire entrer le rôle dans le composant, avec la même discipline de lecture que les autres enums de scène.</div>
+<div><h5>Entrée (étape 7)</h5>La clé <code>"role"</code> vaut <code>"zone"</code> ou <code>"probe"</code> ; défaut du générateur : <code>"zone"</code>. Et le contrat positionnel de l’étape 3.</div>
+</div>
+<h4>Component.hpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>struct TriggerComponent
+{
+    float radius = 1.0f;
+    std::string onEnterEvent = "", onStayEvent = "", onExitEvent = "";
+    bool is_colliding = false;
+    std::vector&lt;Entity&gt; overlapping_entities;
+};</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">enum class ETriggerRole : uint8_t</span>
+<span class="hl">{</span>
+<span class="hl">    Zone  = 0,   // défaut : zone statique (danger, effet, sûreté…)</span>
+<span class="hl">    Probe = 1    // ce qui traverse les zones (vaisseau du joueur)</span>
+<span class="hl">};</span>
+
+struct TriggerComponent
+{
+    float radius = 1.0f;
+<span class="hl">    ETriggerRole role = ETriggerRole::Zone;   // donnée d'auteur, à côté de radius</span>
+    std::string onEnterEvent = "", onStayEvent = "", onExitEvent = "";
+    bool is_colliding = false;               // état : reste en fin
+    std::vector&lt;Entity&gt; overlapping_entities;
+};</code></pre></div>
+</div>
+<p>Pourquoi <b>après <code>radius</code></b> et pas en fin de struct : les données d’auteur (rayon, rôle, noms d’événements) sont groupées avant l’état d’exécution. Et surtout, un membre inséré au milieu <b>casse la compilation</b> de tout appel positionnel non mis à jour (une <code>std::string</code> ne se convertit pas en <code>ETriggerRole</code>), alors qu’un membre ajouté en fin reçoit sa valeur par défaut en silence (§2.2).</p>
+
+<h4>SerializerHelpers.hpp</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>// ReadProjectionType(r, key), ReadCameraCategory(r, key)
+<span class="hl">// aucune lecture du rôle</span></code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">[[nodiscard]] inline ETriggerRole ReadTriggerRole(LV3::JsonReader&amp; r,</span>
+<span class="hl">                          const char* key, const std::string&amp; owner)</span>
+{
+    const std::string roleStr = r.Read(key, std::string("zone"));
+    if (roleStr == "zone")  return ETriggerRole::Zone;
+    if (roleStr == "probe") return ETriggerRole::Probe;
+
+    Logger::warn("[Trigger] " + owner + " : role inconnu '" + roleStr
+                 + "' — traite comme 'zone'.");
+    return ETriggerRole::Zone;
+}</code></pre></div>
+</div>
+
+<h4>Serializer.cpp — ParseTrigger</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>const float radius = r.Read("radius", 1.0f);
+
+std::string onEnterEvent = r.Read("onEnterEvent", std::string{});
+…
+ctx.registry.emplaceComponent&lt;TriggerComponent&gt;(
+    entity,
+    radius,
+    std::move(onEnterEvent),
+    std::move(onStayEvent),
+    std::move(onExitEvent),
+    false,                      // is_colliding
+    std::vector&lt;Entity&gt;{});</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>const float radius = r.Read("radius", 1.0f);
+<span class="hl">const ETriggerRole role = ReadTriggerRole(r, "role", owner);</span>
+
+std::string onEnterEvent = r.Read("onEnterEvent", std::string{});
+…
+// Attention à l'ordre des variables transmises !!!
+ctx.registry.emplaceComponent&lt;TriggerComponent&gt;(
+    entity,
+    radius,
+<span class="hl">    role,                       // MÊME rang que dans TriggerComponent</span>
+    std::move(onEnterEvent),
+    std::move(onStayEvent),
+    std::move(onExitEvent),
+    false,                      // is_colliding
+    std::vector&lt;Entity&gt;{});</code></pre></div>
+</div>
+<div class="io">
+<div><h5>Résultat de l’étape</h5><code>WarnUnread()</code> ne signale plus <code>role</code> sur les 34 nœuds <code>Trigger</code> de la scène. Un rôle mal orthographié produit un avertissement qui nomme l’entité.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet : chargement, une fois par nœud.</div>
+</div>
+</div>
+</div>
+
+<!-- E9 -->
+<div class="step" id="e9">
+<div class="h"><span class="n">Étape 9</span> Le filtre de rôle dans <code>TriggerSystem</code> — scalaire appliqué, vectorisé proposé</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Qu’aucune paire zone/zone ni sonde/sonde n’atteigne le test de distance, ni a fortiori la publication. Un seul point de filtrage.</div>
+<div><h5>Entrée (étape 8)</h5>Chaque <code>TriggerComponent</code> porte son <code>role</code>. Sur la scène : 33 zones, 1 sonde, 1 122 itérations, 1 122 tests de distance, 158 recouvrements.</div>
+</div>
+
+<h4>9a · Scalaire — appliqué (System.cpp)</h4>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>for (auto&amp;&amp; [entity2, trigger2, transform2] : registry.ViewGroup&lt;TriggerComponent, TransformComponent&gt;())
+{
+    if (entity1 == entity2) continue;
+
+    Vec3f pos2{ transform2.m_worldMatrix[3][0],
+                transform2.m_worldMatrix[3][1],
+                transform2.m_worldMatrix[3][2] };
+
+    if ((pos1 - pos2).length() &lt; trigger1.radius + trigger2.radius)
+        newOverlaps.push_back(entity2);
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>for (auto&amp;&amp; [entity2, trigger2, transform2] : registry.ViewGroup&lt;TriggerComponent, TransformComponent&gt;())
+{
+    if (entity1 == entity2) continue;
+<span class="hl">    if (trigger1.role == trigger2.role) continue;   // jamais zone-zone, jamais probe-probe</span>
+
+    Vec3f pos2{ transform2.m_worldMatrix[3][0],
+                transform2.m_worldMatrix[3][1],
+                transform2.m_worldMatrix[3][2] };
+
+    if ((pos1 - pos2).length() &lt; trigger1.radius + trigger2.radius)
+        newOverlaps.push_back(entity2);
+}</code></pre></div>
+</div>
+<p><b>Résultat calculé sur la scène</b> : itérations 1 122 (inchangées), tests de distance 66, recouvrements 8 (4 dans chaque sens : le vaisseau à x = 64 est dans <code>Earth-Gravity</code>, <code>Earth-SafeZone</code>, <code>AsteroidBelt</code> et <code>KuiperBelt</code>), événements publiés 0 (ces quatre zones n’ont pas de nom d’événement).</p>
+
+<div class="warn"><b>Correction d’une affirmation de l’échange.</b> Le message de l’échange et le carnet disaient que le filtre fait passer le narrow-phase « de O(N²) à O(N) ». C’est faux : la double boucle visite toujours les N·(N − 1) paires. Ce qui tombe, c’est le nombre de <b>tests de distance</b> (de N·(N − 1) à 2·Z·P) et de recouvrements stockés. Le parcours lui-même ne devient O(Z·P) qu’en séparant les deux populations avant la boucle (9b ci-dessous). Détail en <a href="#amend">amendement A1</a>.</div>
+
+<h4>9b · Pendant scalaire de la restructuration — proposé, non appliqué (PH0-1)</h4>
+<p>Deux idées, toutes deux exactes au bit près :</p>
+<ul>
+<li><b>Collecter les deux populations une fois par frame</b> (sondes, zones), puis boucler sondes × zones : Z·P itérations au lieu de N·(N − 1).</li>
+<li><b>Un seul test par paire pour les deux sens.</b> Le scalaire actuel teste chaque paire deux fois (zone → sonde, puis sonde → zone). En IEEE 754, <code>a − b</code> vaut exactement <code>−(b − a)</code> : les carrés, leur somme et la racine sont identiques. Et <code>r1 + r2 == r2 + r1</code> au bit près. Les deux tests rendent donc la même décision.</li>
+</ul>
+<pre><code>// PROPOSÉ — pendant scalaire (même résultat, ordre des listes conservé)
+// probes / zones : collectés dans l'ordre DENSE de la vue (ordre des événements inchangé).
+for (size_t p = 0; p &lt; probes.size(); ++p)
+{
+    for (size_t z = 0; z &lt; zones.size(); ++z)
+    {
+        const Vec3f d = probes.pos[p] - zones.pos[z];             // sens sonde − zone
+        if (d.length() &lt; probes.radius[p] + zones.radius[z])      // une seule racine par paire
+        {
+            probes.newOverlaps[p].push_back(zones.entity[z]);     // ce que verrait T1 = sonde
+            zones.newOverlaps[z].push_back(probes.entity[p]);     // ce que verrait T1 = zone
+        }
+    }
+}
+// Puis la phase ENTER/STAY/EXIT, trigger par trigger, dans l'ordre dense comme aujourd'hui.
+// Scène actuelle : 33 itérations et 33 racines par frame (contre 1 122 et 66).</code></pre>
+
+<h4>9c · Pendant vectorisé AVX2 — proposé, non appliqué (PH0-2)</h4>
+<p>Une sonde contre 8 zones par itération, zones rangées en SoA (même <code>SimdVector</code> aligné 64 o que l’étage sommets du chantier B3). La version ci-dessous est <b>exacte au bit près</b> par rapport au scalaire : même sens de soustraction, même parenthésage que <code>Vec3f::norm()</code>, <code>vsqrtps</code> correctement arrondie comme <code>std::sqrt(float)</code>, comparaison ordonnée comme le <code>&lt;</code> scalaire.</p>
+<pre><code>// PROPOSÉ — Scene/TriggerNarrow8.h (n'existe pas dans le dépôt)
+struct ZoneLanes
+{
+    SimdVector&lt;float&gt; x, y, z, r;    // SoA, taille = multiple de 8 (bourrage : x = y = z = 0, r = -inf)
+    std::vector&lt;Entity&gt; entity;       // zones réelles, dans l'ordre DENSE de la vue
+};
+
+// Écrit dans 'hits' les indices des zones recouvertes par la sonde, par ordre croissant.
+inline void ProbeVsZones8(const ZoneLanes&amp; zl, const Vec3f&amp; p, float pr,
+                          std::vector&lt;uint32_t&gt;&amp; hits) noexcept
+{
+    // La sonde est la même pour les 8 couloirs : on diffuse ses 4 valeurs UNE fois.
+    const __m256 px8 = _mm256_set1_ps(p.x);
+    const __m256 py8 = _mm256_set1_ps(p.y);
+    const __m256 pz8 = _mm256_set1_ps(p.z);
+    const __m256 pr8 = _mm256_set1_ps(pr);
+
+    for (size_t i = 0; i &lt; zl.x.size(); i += 8)
+    {
+        // dx = sonde − zone, couloir par couloir : MÊME sens que pos1 − pos2 quand T1 = sonde.
+        const __m256 dx = _mm256_sub_ps(px8, _mm256_load_ps(zl.x.data() + i));
+        const __m256 dy = _mm256_sub_ps(py8, _mm256_load_ps(zl.y.data() + i));
+        const __m256 dz = _mm256_sub_ps(pz8, _mm256_load_ps(zl.z.data() + i));
+
+        // norm() = (x*x + y*y) + z*z — MÊME parenthésage que Vec3f::norm().
+        // Ni FMA (/fp:precise l'interdit déjà), ni réassociation : sinon le dernier bit change.
+        const __m256 d2 = _mm256_add_ps(_mm256_add_ps(_mm256_mul_ps(dx, dx),
+                                                      _mm256_mul_ps(dy, dy)),
+                                        _mm256_mul_ps(dz, dz));
+
+        // vsqrtps : racine arrondie au plus proche (IEEE 754), identique à std::sqrt(float).
+        // Surtout pas _mm256_rsqrt_ps : approximation à 12 bits, décisions différentes.
+        const __m256 d = _mm256_sqrt_ps(d2);
+
+        // s = r_sonde + r_zone (commutatif au bit près). Bourrage : r = -inf → s = -inf.
+        const __m256 s = _mm256_add_ps(pr8, _mm256_load_ps(zl.r.data() + i));
+
+        // _CMP_LT_OQ : « inférieur », FAUX si un opérande est NaN — comme le '&lt;' scalaire.
+        // Couloir de bourrage : d &lt; -inf est faux, il ne sort jamais.
+        uint32_t m = uint32_t(_mm256_movemask_ps(_mm256_cmp_ps(d, s, _CMP_LT_OQ)));
+
+        // Un bit par zone recouverte. tzcnt donne le couloir le plus bas : ordre croissant conservé.
+        while (m != 0)
+        {
+            const uint32_t lane = _tzcnt_u32(m);
+            hits.push_back(uint32_t(i) + lane);
+            m &amp;= m - 1;                            // éteint le bit traité
+        }
+    }
+}</code></pre>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Variante vectorielle</th><th>Coût par lot de 8</th><th>Décisions identiques au scalaire actuel ?</th></tr></thead>
+<tbody>
+<tr><td><code>vsqrtps</code> (ci-dessus)</td><td>3 sub, 3 mul, 2 add, 1 sqrt, 1 add, 1 cmp</td><td><b>Oui, au bit près</b></td></tr>
+<tr><td>distance au carré : <code>d2 &lt; s·s</code></td><td>sans sqrt, + 1 mul</td><td>Non, à quelques ulp du seuil : sur 10 M paires tirées à ±4·10⁻⁷ près du contact, <b>255 641</b> décisions changent (2,6 %), toujours dans le même sens (« touche » au lieu de « ne touche pas ») ; sur 10 M paires uniformes, <b>0</b>. Décision à prendre (PH0-3).</td></tr>
+<tr><td><code>_mm256_rsqrt_ps</code></td><td>le moins cher</td><td>Non : approximation relative ≈ 1,5·2⁻¹², interdite comme en B3</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Chiffres de la ligne « distance au carré » : calcul hors moteur en float32 (numpy), même formule que <code>Vec3f::length()</code>. À la taille actuelle (33 zones, 1 sonde), ce noyau n’a aucun intérêt mesurable : 5 lots de 8 par frame. Il devient pertinent avec des centaines de zones ou plusieurs sondes, et il se mesure d’abord avec la zone <code>Trigger</code> du profileur (G3b).</p>
+
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Le filtre est en place dans le dépôt (la ligne <code>trigger1.role == trigger2.role</code> y figure). Les deux restructurations restent des propositions inscrites en roadmap, à déclencher sur mesure.</div>
+<div><h5>Pendant scalaire / vectorisé</h5>Scalaire : 9a (appliqué) et 9b (proposé). Vectorisé : 9c (proposé). La TNR à écrire compare 9b et 9c à 9a sur des scènes tirées au hasard (voir <a href="#verifier">Vérifier</a>).</div>
+</div>
+</div>
+</div>
+
+<!-- E10 -->
+<div class="step" id="e10">
+<div class="h"><span class="n">Étape 10</span> La scène de test minimale, et la collision qui n’arrivait pas</div>
+<div class="b">
+<div class="io">
+<div><h5>Objectif</h5>Vérifier le filtre dans le moteur, sur une scène construite à la main : une zone, un vaisseau.</div>
+<div><h5>Entrée (étape 9)</h5>Le moteur corrigé. Onky gonfle les deux rayons à 10 000 « pour avoir un hit » : aucun événement.</div>
+</div>
+<div class="ab">
+<div class="av"><div class="t">Scène d’Onky (premier essai)</div><pre><code>"zone-triggering": { … "Trigger": {
+    "radius": 10000.0,
+<span class="hl">    "zone": "zone",</span>
+    "onEnterEvent": "STARTED_TAKING_DAMAGE", … } }
+
+"Player_Ship": { … "Trigger": {
+    "radius": 10000.0,
+<span class="hl">    "zone": "zone",</span>
+    "onEnterEvent": "STARTED_TAKING_DAMAGE", … } }</code></pre></div>
+<div class="ap"><div class="t">Scène corrigée</div><pre><code>"zone-triggering": { … "Trigger": {
+    "radius": 10000.0,
+<span class="hl">    "role": "zone",</span>
+    "onEnterEvent": "STARTED_TAKING_DAMAGE", … } }
+
+"Player_Ship": { … "Trigger": {
+    "radius": 10000.0,
+<span class="hl">    "role": "probe",</span>
+    … } }</code></pre></div>
+</div>
+<p>La clé s’appelait <code>"zone"</code>, pas <code>"role"</code>. <code>ReadTriggerRole</code> ne la trouve pas et rend la valeur par défaut : les deux triggers sont des zones, et le filtre les écarte avant toute distance. Le rayon n’y peut rien. Onky a d’abord corrigé la clé en gardant <code>"zone"</code> pour les deux, « pas mieux » (les deux restent zones), puis a passé le vaisseau en <code>"probe"</code> : la paire se déclenche.</p>
+<div class="io">
+<div><h5>Résultat de l’étape</h5>Confirmation involontaire dans les deux sens : le filtre bloque zone/zone (premier essai) et laisse passer zone/sonde (second). Bug 62 clos dans le carnet, discussion I close.</div>
+<div><h5>Pendant vectorisé</h5>Sans objet.</div>
+</div>
+<p class="small">Remarque relevée en reconstruisant le lot : dans cette scène, le vaisseau porte lui aussi des noms d’événements. Chaque entrée publie alors deux <code>STARTED_TAKING_DAMAGE</code> (zone → vaisseau, puis vaisseau → zone). <code>HealthSystem</code> ne frappe que la cible et la zone n’a pas de points de vie, donc pas de double dégât ; mais <code>AudioSystem</code> démarre son grésillement deux fois. Les scènes générées n’ont pas ce cas (sonde sans événement). Noté PH0-11.</p>
+</div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+<p>Ce qu’il ne faut pas faire, avec le chiffre qui le prouve. Chaque ligne renvoie à l’étape où le cas a été rencontré ou écarté.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Ce qu’il ne faut pas faire</th><th>Le chiffre</th><th>Étape</th></tr></thead>
+<tbody>
+<tr><td>CE1</td><td>Reconstruire un <code>std::set</code> par trigger et par frame</td><td class="num">≈ 300 allocations par frame sur la scène de base sans filtre (158 recouvrements × 2), ≈ 18 000 par seconde à 60 i/s</td><td><a href="#e1">1</a></td></tr>
+<tr><td>CE2</td><td>Plafonner les recouvrements à 8</td><td class="num"><code>KuiperBelt-Zone</code> 32, <code>AsteroidBelt-Zone</code> 17 : le vaisseau, dernier du tableau dense, est toujours tronqué. Simulation K = 12 : 62 ENTER et 64 EXIT faux, 7 ENTER perdus en 3 600 frames</td><td><a href="#e2">2</a></td></tr>
+<tr><td>CE3</td><td>Filtrer les rôles au moment de publier, après la distance</td><td class="num">1 122 racines au lieu de 66 ; 158 entrées dans les listes de recouvrement au lieu de 8 (les zones gardent leurs voisines) ; filtre à dupliquer dans 3 branches ENTER / STAY / EXIT</td><td><a href="#e9">9</a></td></tr>
+<tr><td>CE4</td><td>Ajouter <code>role</code> en fin de struct sans mettre l’appel à jour</td><td class="num">Compile ; 34 triggers sur 34 deviennent des zones ; 0 événement de jeu, 0 avertissement</td><td><a href="#t-agg">2.2</a></td></tr>
+<tr><td>CE5</td><td>Commenter l’appel de <code>DrawHierarchySystem</code> au lieu d’un commutateur</td><td class="num">Une ligne morte de plus dans <code>main.cpp</code>, déjà en tête de la liste « code commenté » de la phase 2 ; réactiver = modifier une source versionnée</td><td><a href="#e5">5</a></td></tr>
+<tr><td>CE6</td><td>Définir <code>LV3_ASSERTS_ENABLED=1</code> dans l’EXE seul</td><td class="num"><code>FragmentContext</code> fait 56 octets côté EXE et 48 côté LIB ; la LIB lit <code>fb</code> à l’offset 0, là où l’EXE a écrit <code>magic</code> et du bourrage</td><td><a href="#e6">6</a></td></tr>
+<tr><td>CE7</td><td>Passer à la distance au carré sans décision</td><td class="num">255 641 décisions changées sur 10 M paires proches du contact (2,6 %) ; 0 sur 10 M paires uniformes</td><td><a href="#e9">9</a></td></tr>
+<tr><td>CE8</td><td>Annoncer un gain de complexité sans compter les itérations</td><td class="num">« O(N²) → O(N) » annoncé ; mesuré : 1 122 itérations avant comme après</td><td><a href="#e9">9</a></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>Une zone de danger et une zone neutre</h3>
+<pre><code>{ "id": "Sun-Corona-Zone", "parent": "Solar-System", "_type": "Trigger",
+  "components": {
+    "Transform": { "translation": [0,0,0], "rotation": [0,0,0], "scale": [1,1,1] },
+    "Trigger": {
+      "role": "zone",
+      "radius": 13.076,                          // unités monde, jamais hérité de l'échelle (S7, S9)
+      "onEnterEvent": "STARTED_TAKING_DAMAGE",   // une fois : son, début des dégâts
+      "onStayEvent":  "TAKING_DAMAGE",           // chaque frame : HealthSystem retire 5 PV à la cible
+      "onExitEvent":  "STOPPED_TAKING_DAMAGE"    // une fois : fin du son
+    } } }
+
+{ "id": "Earth-SafeZone-Zone", "parent": "Earth",
+  "components": { "Transform": { … },
+    "Trigger": { "role": "zone", "radius": 9.0,
+                 "onEnterEvent": "", "onStayEvent": "", "onExitEvent": "" } } }   // détectée, sans effet</code></pre>
+
+<h3>La sonde</h3>
+<pre><code>{ "id": "Player_Ship", "parent": null,
+  "components": { "Transform": { … }, "Health": { "maxHealth": 100, "currentHealth": 100 },
+    "Trigger": { "role": "probe", "radius": 0.5,
+                 "onEnterEvent": "", "onStayEvent": "", "onExitEvent": "" } } }   // les effets sont portés par les zones</code></pre>
+<p class="small">Une sonde sans nom d’événement est la convention des scènes générées. Une sonde qui en porte les publie aussi, dans l’autre sens (PH0-11).</p>
+
+<h3>Construire et lancer en <code>RelWithAsserts</code></h3>
+<pre><code>msbuild &lt;solution&gt;.sln /p:Configuration=RelWithAsserts /p:Platform=x64
+…\RelWithAsserts\RefactoNouvelleLibrairieV3.exe --scene solar_system_v1compat_belt.json
+
+[Build] RelWithAsserts | LV3_PROFILE(exe)=1 | LV3_PROFILE(lib)=1 | LV3_ASSERTS_ENABLED=1 | compile le …</code></pre>
+
+<h3>Allumer le dump de hiérarchie pour une séance</h3>
+<pre><code>&lt;!-- build/LV3.User.props (non versionné), le temps d'un debug --&gt;
+&lt;ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'"&gt;
+  &lt;ClCompile&gt;
+    &lt;PreprocessorDefinitions&gt;LV3_DUMP_HIERARCHY=1;%(PreprocessorDefinitions)&lt;/PreprocessorDefinitions&gt;
+  &lt;/ClCompile&gt;
+&lt;/ItemDefinitionGroup&gt;</code></pre>
+<p class="small"><code>DrawHierarchySystem</code> ne touche que l’EXE (<code>main.cpp</code>) et ne change la forme d’aucun type partagé : une définition par projet est sans risque d’ODR. Pour un commutateur qui change un type, la règle PH0.b s’applique.</p>
+
+<h3>Lire le journal Debug de <code>TriggerSystem</code></h3>
+<pre class="out">[TriggerSystem] ENTER Sun-Corona-Zone -&gt; Player_Ship  (STARTED_TAKING_DAMAGE)
+[AudioSystem] *Joue son de grésillement (début)*
+[TriggerSystem] STAY  Sun-Corona-Zone -&gt; Player_Ship  (TAKING_DAMAGE)
+[HealthSystem] TAKING_DAMAGE sur idx 89 — vie restante : 95
+…
+[TriggerSystem] EXIT  Sun-Corona-Zone -&gt; Player_Ship  (STOPPED_TAKING_DAMAGE)
+[AudioSystem] *Arrête le son de grésillement (fin)*</pre>
+<p class="small">Format : transition, source (la zone, celle dont on lit l’événement), cible (le vaisseau, celui qui subit). Exemple illustratif construit sur le format réel des messages ; l’index d’entité dépend de la scène.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que le dépôt et les lots suivants changent à cet échange</h2>
+<p>En relisant le dépôt de novembre 2026 pour reconstruire ce lot, plusieurs décisions ou affirmations de l’échange se révèlent dépassées, améliorées ou incomplètes. Chacune est donnée en avant / après. Rien ici n’est acté : les points ouverts vont dans la roadmap.</p>
+
+<div class="amend"><div class="h">A1 · Le gain de complexité du filtre <span class="pill bad">erreur de l’échange</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant (échange, carnet)</div><pre><code>« sur une scène à N zones et 1 sonde, le coût passe
+  de O(N²) à O(N) »</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>itérations       : N·(N−1)  inchangé (1 122)
+tests de distance: N·(N−1) → 2·Z·P   (1 122 → 66)
+O(Z·P) itérations seulement avec 9b (PH0-1)</code></pre></div>
+</div>
+<p class="small">Le filtre retire le calcul coûteux, pas le parcours. La roadmap le disait déjà correctement (L3-11 : « le bug 62 a retiré les paires zone-contre-zone, pas le parcours quadratique »).</p>
+</div></div>
+
+<div class="amend"><div class="h">A2 · <code>ReadTriggerRole</code> : emplacement et message <span class="pill ok">amélioré par Onky</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant (proposition de l’échange)</div><pre><code>// dans System.hpp, à côté de ReadProjectionType
+ETriggerRole ReadTriggerRole(JsonReader&amp; r, const char* key);
+Logger::warn("[Trigger] role inconnu '" + s + "' -&gt; zone");
+// « dette déjà acceptée » : l'entité n'est pas nommée</code></pre></div>
+<div class="ap"><div class="t">Après (dépôt)</div><pre><code>// dans Scene/SerializerHelpers.hpp, avec les autres Read*
+ETriggerRole ReadTriggerRole(JsonReader&amp; r, const char* key,
+                             const std::string&amp; owner);
+Logger::warn("[Trigger] " + owner + " : role inconnu '" …);</code></pre></div>
+</div>
+<p class="small">Les fonctions <code>Read…</code> ont quitté <code>System.hpp</code> pour <code>SerializerHelpers.hpp</code> (un système n’a pas à connaître le JSON, règle R20). Et Onky a ajouté l’<code>owner</code> que Claude proposait de laisser de côté par cohérence : la cohérence avec une dette n’est pas un argument. <code>ReadProjectionType</code> et <code>ReadCameraCategory</code> n’ont toujours pas d’<code>owner</code> (PH0-12).</p>
+</div></div>
+
+<div class="amend"><div class="h">A3 · La validation de <code>RelWithAsserts</code> était partielle <span class="pill bad">bug relevé</span></div><div class="b">
+<p>Le carnet note : « tournent et s’animent correctement en <code>RelWithAsserts</code> », et le protocole de la phase 4 attend « aucun invariant ne saute ». Or dans <code>main.cpp</code>, les invariants par frame sont imbriqués <b>sous <code>LV3_DEBUG</code></b>, qui vaut 0 en <code>RelWithAsserts</code> :</p>
+<div class="ab">
+<div class="av"><div class="t">Dépôt actuel — main.cpp</div><pre><code><span class="hl">#if LV3_DEBUG</span>
+    #if LV3_ASSERTS_ENABLED
+        CheckSceneInvariants(registry);    // jamais en RelWithAsserts
+    #endif
+    …
+    Test_CameraWorldMatrixIsRigid(registry);
+    const size_t nGizChecked = Test_GizmoMatchesFrustum(…);
+    LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);
+<span class="hl">#endif</span></code></pre></div>
+<div class="pr"><div class="t">Proposé (PH0-4, non appliqué)</div><pre><code><span class="hl">#if LV3_ASSERTS_ENABLED            // filets : actifs en RelWithAsserts</span>
+    CheckSceneInvariants(registry);
+    Test_CameraWorldMatrixIsRigid(registry);
+    const size_t nGizChecked = Test_GizmoMatchesFrustum(…);
+    …
+    LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);
+#endif
+<span class="hl">#if LV3_DEBUG                      // outils : Debug seulement</span>
+    #if LV3_VERBOSE_LOG
+        DebugDisplaySystem(registry);
+    #endif
+    #if LV3_DUMP_HIERARCHY
+        DrawHierarchySystem(registry, rm);
+    #endif
+#endif</code></pre></div>
+</div>
+<p class="small">C’est la même famille de confusion que <code>kFragmentContextMagic</code> (étape 6b) : un filet rangé sous le commutateur des outils. En <code>RelWithAsserts</code>, seuls les <code>LV3_ASSERT</code> écrits dans la LIB étaient actifs. À vérifier avant correction : que <code>Test_GizmoMatchesFrustum</code> et <code>Test_CameraWorldMatrixIsRigid</code> sont compilés hors Debug (leurs définitions peuvent être gardées par <code>_DEBUG</code>, règle R43 du lot A10). Après correctif, refaire la validation 0.3.</p>
+</div></div>
+
+<div class="amend"><div class="h">A4 · Le numéro du cinquième commutateur <span class="pill warn">incohérence documentaire</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>config.h, en-tête : « QUATRE commutateurs INDEPENDANTS »
+Lot A10 : « LV3_SIMD devient un cinquième commutateur »
+config.h §5 : LV3_DUMP_HIERARCHY « Independant de LV3_DEBUG »</code></pre></div>
+<div class="ap"><div class="t">Constat dans le dépôt</div><pre><code>config.h compte 13 sections : §5 = LV3_DUMP_HIERARCHY (ce lot),
+§6 PROFILE, §7 RASTER_STATS, §8 LOD_STATS, §10 ABLATION_PIXELS,
+§11 LV3_SIMD, §12 RASTER_FIXED, §13 RASTER_SMALL_FLOAT
+main.cpp : #if LV3_DUMP_HIERARCHY est DANS #if LV3_DEBUG (effet ET)</code></pre></div>
+</div>
+<p class="small">Le cinquième commutateur est <code>LV3_DUMP_HIERARCHY</code>, pas <code>LV3_SIMD</code>. L’en-tête de <code>config.h</code> est à réécrire, et le mot « indépendant » est faux tant que l’appel reste imbriqué (choix défendable : un dump est un outil Debug ; il faut alors le dire). PH0-10.</p>
+</div></div>
+
+<div class="amend"><div class="h">A5 · La règle L06 « aucun rappel pendant l’itération » <span class="pill bad">contredite par le code</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Règle (architecture, L06)</div><pre><code>« never execute user code inside collision detection;
+  use a flat event queue with Enter/Stay/Exit and
+  no callbacks during iteration »</code></pre></div>
+<div class="ap"><div class="t">Dépôt</div><pre><code>TriggerSystem → eventBus.publish(ev, e1, e2)
+EventBus::publish → for (auto&amp; cb : m_subscribers[ev]) cb(e1, e2);
+// HealthSystem s'exécute PENDANT la double boucle ViewGroup</code></pre></div>
+</div>
+<p class="small">Sans conséquence aujourd’hui : les abonnés ne font que modifier un <code>HealthComponent</code> et écrire un journal. Le jour où un abonné détruit une entité (vaisseau à 0 PV) ou ajoute un trigger, la vue en cours d’itération est invalidée. Le patron prévu : <code>TriggerSystem</code> remplit une file plate <code>(nom, source, cible)</code>, vidée après la boucle. PH0-5.</p>
+</div></div>
+
+<div class="amend"><div class="h">A6 · Ce que les rôles n’ont pas réglé <span class="pill warn">dettes de gameplay relevées</span></div><div class="b">
+<ul>
+<li><b>Dégâts liés au nombre d’images</b> : <code>TAKING_DAMAGE</code> est publié à chaque frame (STAY) et retire <code>kDamagePerHit = 5</code> PV. À 60 i/s, 300 PV par seconde ; à 240 i/s, 1 200. La doctrine du temps (S10) veut un dégât par seconde multiplié par <code>simDt</code>. PH0-6.</li>
+<li><b>Handles périmés</b> : si une entité est détruite, elle reste dans les <code>overlapping_entities</code> de ses partenaires ; à la frame suivante, l’EXIT est publié vers un handle mort. <code>HealthSystem</code> passe par <code>TryGet</code>, qui doit refuser une génération périmée : à vérifier. PH0-7.</li>
+<li><b><code>is_colliding</code></b> n’est écrit par aucun système : un état mort dans un composant chaud. PH0-8.</li>
+<li><b>Commentaire de <code>TriggerSystem</code></b> : « les zones ne se chevauchent jamais entre elles » est faux (l’atmosphère et la gravité de la Terre se chevauchent) ; il faut lire « ne réagissent jamais entre elles ». PH0-16.</li>
+</ul>
+</div></div>
+
+<div class="amend"><div class="h">A7 · Roadmap L3-3 (valeurs par défaut de <code>TriggerComponent</code>) <span class="pill ok">résolu dans le dépôt</span></div><div class="b">
+<p class="small">La roadmap du lot L03 demandait de vérifier que <code>radius</code> et <code>is_colliding</code> ont une valeur par défaut. Dépôt : <code>radius = 1.0f</code>, <code>role = ETriggerRole::Zone</code>, <code>is_colliding = false</code>. Le point peut être clos (PH0-18).</p>
+</div></div>
+
+<div class="amend"><div class="h">A8 · Un diagnostic de Claude fondé sur un index périmé <span class="pill warn">méthode</span></div><div class="b">
+<p class="small">Pendant l’échange, Claude a signalé un second site de construction de <code>TriggerComponent</code> dans <code>Scene/SceneGraph.cpp</code>, puis a proposé un <code>ParseTrigger</code> « par défaut puis affectations ». Les deux venaient d’un index de recherche du dépôt plus ancien que le code : <code>SceneGraph.cpp</code> n’existait plus, et <code>ParseTrigger</code> utilisait bien <code>JsonReader</code> et <code>emplaceComponent</code>. Onky a fourni le code réel, et la proposition a été refaite. Leçon de méthode : un extrait trouvé par recherche se vérifie contre le fichier lu en entier avant de servir de base à un avant/après.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>Prédictions vérifiables dans le moteur (scène <code>solar_system_v1compat.json</code>, t = 0)</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Situation</th><th>Recouvrements (paires ordonnées)</th><th>Événements par frame</th><th>Ce qu’on doit lire</th></tr></thead>
+<tbody>
+<tr><td>Vaisseau à sa place (x = 64)</td><td class="num">8</td><td class="num">0</td><td>aucune ligne <code>[TriggerSystem]</code> ; tests de distance 66</td></tr>
+<tr><td>Vaisseau au centre (x = 0, z = 0)</td><td class="num">10</td><td class="num">2 STAY après 1 frame d’ENTER</td><td><code>Sun-Corona</code> et <code>Sun-Heat</code> publient ; 10 PV par frame : <b>0 PV après 10 frames de STAY</b> (illustration de PH0-6)</td></tr>
+<tr><td>N’importe où, filtre actif</td><td colspan="2">jamais de paire zone × zone</td><td>aucune ligne <code>Zone -&gt; Zone</code> dans le journal</td></tr>
+<tr><td>Chargement</td><td colspan="2">—</td><td><code>WarnUnread</code> ne cite <code>role</code> sur aucun des 34 nœuds <code>Trigger</code></td></tr>
+<tr><td>Démarrage <code>RelWithAsserts</code></td><td colspan="2">—</td><td><code>[Build] RelWithAsserts | … | LV3_ASSERTS_ENABLED=1</code></td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Le schéma dynamique du §1 recalcule ces chiffres : place le vaisseau à x = 0, z = 0 et lis les compteurs.</p>
+
+<h3>Tests hors moteur à écrire (proposés, PH0-19)</h3>
+<pre><code>// Test/Test_PH0_Trigger.cpp — PROPOSÉ
+// 1. Référence : la double boucle actuelle (9a), copiée telle quelle.
+// 2. Scènes tirées au hasard (graine fixe) : Z ∈ [1, 200] zones, P ∈ [1, 4] sondes,
+//    positions dans [-500, 500]³, rayons dans [0.1, 50].
+// 3. Pour chaque scène, sur 60 frames (positions perturbées) :
+//      - mêmes listes newOverlaps, trigger par trigger, dans le même ordre ;
+//      - même SÉQUENCE d'événements (nom, source, cible) que la référence.
+//    Variantes comparées à la référence : 9b (scalaire restructuré), 9c (AVX2 vsqrtps).
+// 4. Cas limites : rayon 0 ; deux triggers au même point ; position NaN (le '&lt;' ordonné
+//    doit refuser) ; entité détruite entre deux frames (EXIT vers un handle périmé, PH0-7).
+// 5. Mutation attendue en échec : remplacer vsqrtps par rsqrt, ou d &lt; s par d2 &lt; s·s.</code></pre>
+
+<h3>Filets Debug proposés (non appliqués)</h3>
+<pre><code>// À la fin de la boucle externe de TriggerSystem, sous LV3_ASSERTS_ENABLED :
+LV3_ASSERT(std::adjacent_find(newOverlaps.begin(), newOverlaps.end()) == newOverlaps.end()
+           &amp;&amp; "TriggerSystem : doublon dans newOverlaps");
+for (Entity e : newOverlaps)
+    LV3_ASSERT(registry.getComponent&lt;TriggerComponent&gt;(e).role != trigger1.role
+               &amp;&amp; "TriggerSystem : paire de meme role retenue (bug 62 revenu)");</code></pre>
+<p class="small">Le premier test ne voit que des doublons adjacents ; la boucle interne ne visitant chaque entité qu’une fois, un doublon serait de toute façon adjacent.</p>
+
+<h3>Liste de contrôle</h3>
+<ul>
+<li>Debug, <code>RelWithAsserts</code>, Release : compilation sans avertissement, LIB et EXE (<code>Level4</code> + 8 avertissements en erreurs).</li>
+<li><code>RelWithAsserts</code> : la ligne <code>[Build]</code> annonce <code>LV3_ASSERTS_ENABLED=1</code> ; <b>après PH0-4</b>, <code>CheckSceneInvariants</code> tourne aussi dans cette configuration.</li>
+<li>Les deux scènes v1compat s’animent dans les trois configurations ; <code>solar_system_v2.json</code> reste figée par construction (schéma v2 non consommé, différé à dessein).</li>
+<li>Journal Debug : ENTER / STAY / EXIT nommés, jamais deux zones l’une contre l’autre.</li>
+<li>Scène de test minimale : zone + sonde → événements ; zone + zone → rien, quel que soit le rayon.</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — évolutions et dettes à décider plus tard</h2>
+<p>Inscrites dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH0 ». <b>Rien n’est acté.</b> Les décisions prises pendant l’échange sont consignées dans <code>Résultats/Résultats_Lot_PH0_Phase0_Roles_Trigger.md</code>.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th></tr></thead>
+<tbody>
+<tr><td>PH0-1</td><td>Parcours sondes × zones (Z·P itérations) et un seul test par paire pour les deux sens (9b)</td><td><span class="pill">évolution</span></td></tr>
+<tr><td>PH0-2</td><td>Narrow-phase AVX2 en SoA, <code>vsqrtps</code>, exacte au bit (9c) ; sur mesure seulement</td><td><span class="pill">évolution</span></td></tr>
+<tr><td>PH0-3</td><td>Distance au carré au lieu de la racine : change des décisions à quelques ulp du contact</td><td><span class="pill warn">décision</span></td></tr>
+<tr><td>PH0-4</td><td>Invariants par frame imbriqués sous <code>LV3_DEBUG</code> dans <code>main.cpp</code> : inactifs en <code>RelWithAsserts</code> ; refaire ensuite la validation 0.3</td><td><span class="pill bad">bug</span></td></tr>
+<tr><td>PH0-5</td><td>Publication synchrone pendant la double boucle, contraire à la règle L06 ; file d’événements plate</td><td><span class="pill bad">dette</span></td></tr>
+<tr><td>PH0-6</td><td>Dégâts par frame (5 PV par STAY) : dépendants du nombre d’images (S10)</td><td><span class="pill bad">dette</span></td></tr>
+<tr><td>PH0-7</td><td>Handles périmés dans <code>overlapping_entities</code> après destruction ; EXIT vers une entité morte</td><td><span class="pill warn">à vérifier</span></td></tr>
+<tr><td>PH0-8</td><td><code>is_colliding</code> jamais écrit</td><td><span class="pill">dette</span></td></tr>
+<tr><td>PH0-9</td><td>Noms d’événements en <code>std::string</code> sur un composant chaud ; <code>EventBus</code> en <code>std::map&lt;std::string&gt;</code>, deux recherches par publication (recoupe A6-12)</td><td><span class="pill">dette</span></td></tr>
+<tr><td>PH0-10</td><td>En-tête de <code>config.h</code> (« QUATRE commutateurs ») ; <code>LV3_DUMP_HIERARCHY</code> dit indépendant mais imbriqué sous <code>LV3_DEBUG</code> ; numéro du 5ᵉ commutateur dans le lot A10</td><td><span class="pill warn">doc + décision</span></td></tr>
+<tr><td>PH0-11</td><td>Sonde qui porte des événements : double publication à chaque transition</td><td><span class="pill warn">convention</span></td></tr>
+<tr><td>PH0-12</td><td><code>ReadProjectionType</code>, <code>ReadCameraCategory</code> sans <code>owner</code> (contrairement à <code>ReadTriggerRole</code>)</td><td><span class="pill">harmonisation</span></td></tr>
+<tr><td>PH0-13</td><td><code>Component.hpp</code> : <code>#include &lt;set&gt;</code> orphelin, ancien <code>TriggerComponent</code> et <code>OverlapSet</code> commentés, <code>&lt;vector&gt;</code> non inclus explicitement</td><td><span class="pill">hygiène</span></td></tr>
+<tr><td>PH0-14</td><td><code>DrawHierarchySystem</code> : pool non testé, <code>NameComponent</code> lu sans garde, variable <code>ident</code> inutile</td><td><span class="pill">dette mineure</span></td></tr>
+<tr><td>PH0-15</td><td>Tampon <code>static newOverlaps</code> : non réentrant, non sûr en multithread</td><td><span class="pill">à revoir avec le multithread</span></td></tr>
+<tr><td>PH0-16</td><td>Commentaires de <code>TriggerSystem</code> inexacts (« ne se chevauchent jamais », « EXIT implicite »)</td><td><span class="pill">doc</span></td></tr>
+<tr><td>PH0-17</td><td><code>/utf-8</code> posé deux fois dans <code>LV3.Common.props</code></td><td><span class="pill">hygiène</span></td></tr>
+<tr><td>PH0-18</td><td>Roadmap L3-3 résolue dans le dépôt : à clore</td><td><span class="pill ok">clôture</span></td></tr>
+<tr><td>PH0-19</td><td>TNR <code>TriggerSystem</code> hors moteur absente</td><td><span class="pill">proposée</span></td></tr>
+<tr><td>PH0-20</td><td>Carnet de route : « O(N²) → O(N) » à corriger (A1)</td><td><span class="pill">doc</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<footer>
+Lot PH0 · LibraryV3 · reconstruit le 12 novembre 2026 à partir de l’échange de septembre 2026 (phase 0, discussion I) et du dépôt LIB/EXE lu à cette date. Chiffres de scène calculés hors moteur sur les positions et rayons de <code>solar_system_v1compat.json</code> ; chiffres de simulation recalculés par cette page.
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const f32 = Math.fround;
+const fmt = n => n.toLocaleString('fr-FR');
+
+/* ───────────── Données réelles : solar_system_v1compat.json ─────────────
+   Corps : [nom, rayon orbital local, vitesse orbitale (°/jour), parent, échelle du parent]
+   Les lunes : translation locale × échelle du parent (composition de la hiérarchie). */
+const BODIES = {
+  Sun:[0,0,null,1], Mercury:[37.33,4.092351,'Sun',1], Venus:[51.029,1.602129,'Sun',1],
+  Earth:[60,0.98561,'Sun',1], Moon:[6.3279,13.17634,'Earth',1], Mars:[74.062,0.524033,'Sun',1],
+  Ceres:[99.776,0.214078,'Sun',1], Jupiter:[136.871,0.083091,'Sun',1],
+  Io:[2.24496,203.488931,'Jupiter',2.607], Europa:[2.76686,101.374726,'Jupiter',2.607],
+  Saturn:[185.734,0.03346,'Sun',1], Titan:[3.93405,22.577611,'Saturn',2.4232],
+  Uranus:[262.915,0.011731,'Sun',1], Neptune:[328.894,0.005981,'Sun',1], Pluto:[377.007,0.003975,'Sun',1],
+  Vesta:[92.209,0.271544,'Sun',1], Haumea:[394.036,0.003469,'Sun',1], Eris:[494.316,0.001766,'Sun',1]
+};
+/* Triggers dans l'ordre DENSE (ordre du fichier) : [id, corps, rayon, a des événements] */
+const ZONES = [
+ ['Sun-Corona-Zone','Sun',13.076,1],['Sun-Heat-Zone','Sun',29.421,1],['Sun-Gravity-Zone','Sun',39.228,0],
+ ['Mercury-Surface-Zone','Mercury',0.7153,1],['Mercury-Gravity-Zone','Mercury',2.1798,0],
+ ['Venus-Atmosphere-Zone','Venus',1.1755,1],['Venus-Gravity-Zone','Venus',4.4082,0],
+ ['Earth-Atmosphere-Zone','Earth',1.12,1],['Earth-Gravity-Zone','Earth',5.0,0],['Earth-SafeZone-Zone','Earth',9.0,0],
+ ['Moon-Gravity-Zone','Moon',1.7841,0],['Mars-Atmosphere-Zone','Mars',0.8546,1],['Mars-Gravity-Zone','Mars',3.263,0],
+ ['Ceres-Gravity-Zone','Ceres',1.0572,0],['Jupiter-Atmosphere-Zone','Jupiter',2.9981,1],['Jupiter-Radiation-Zone','Jupiter',10.428,1],
+ ['Jupiter-Gravity-Zone','Jupiter',26.07,0],['Io-Volcanic-Zone','Io',1.212,1],['Europa-Gravity-Zone','Europa',1.4243,0],
+ ['Saturn-Atmosphere-Zone','Saturn',2.7867,1],['Saturn-Gravity-Zone','Saturn',19.3856,0],['Titan-Atmosphere-Zone','Titan',0.9744,1],
+ ['Uranus-Atmosphere-Zone','Uranus',1.9985,1],['Uranus-Gravity-Zone','Uranus',11.2957,0],
+ ['Neptune-Atmosphere-Zone','Neptune',1.9749,1],['Neptune-Gravity-Zone','Neptune',11.1624,0],
+ ['Pluto-Gravity-Zone','Pluto',1.5324,0],['Vesta-Gravity-Zone','Vesta',0.6983,0],
+ ['Haumea-Spin-Zone','Haumea',0.9495,1],['Haumea-Gravity-Zone','Haumea',1.2948,0],['Eris-Gravity-Zone','Eris',1.5195,0],
+ ['AsteroidBelt-Zone','Sun',108.499,0],['KuiperBelt-Zone','Sun',424.264,0]
+];
+
+function bodyPos(name, days, cache){
+  if (cache[name]) return cache[name];
+  const b = BODIES[name];
+  let p;
+  if (!b[2]) p = [0,0];
+  else {
+    const par = bodyPos(b[2], days, cache);
+    const R = b[0]*b[3], th = b[1]*days*Math.PI/180;
+    p = [par[0] + R*Math.cos(th), par[1] + R*Math.sin(th)];   // x = R cos, z = R sin (AnimationSystem)
+  }
+  cache[name] = p; return p;
+}
+
+/* La double boucle du moteur, telle quelle : même ordre, mêmes tests, float32. */
+function runTriggers(days, ship, roleFilter, cap){
+  const cache = {};
+  const T = ZONES.map(z => { const p = bodyPos(z[1], days, cache); return {id:z[0], x:f32(p[0]), z:f32(p[1]), r:f32(z[2]), ev:z[3], role:0}; });
+  T.push({id:'Player_Ship', x:f32(ship[0]), z:f32(ship[1]), r:f32(0.5), ev:0, role:1});
+  let iters=0, dist=0, ov=0, zz=0, events=0, trunc=0;
+  const lists = T.map(()=>[]);
+  const zzSet = new Set(), probeHits = [];
+  const shipTruncBy = [];
+  for (let i=0;i<T.length;i++){
+    const a = T[i];
+    for (let j=0;j<T.length;j++){
+      if (i===j) continue;
+      iters++;
+      const b = T[j];
+      if (roleFilter && a.role===b.role) continue;
+      dist++;
+      const dx=f32(a.x-b.x), dz=f32(a.z-b.z);
+      const d=f32(Math.sqrt(f32(f32(dx*dx)+f32(dz*dz))));
+      if (d < f32(a.r+b.r)){ lists[i].push(j); }
+    }
+    let L = lists[i];
+    if (cap && L.length > 8){ trunc++; if (L.includes(T.length-1) && L.indexOf(T.length-1) >= 8) shipTruncBy.push(a.id); L = L.slice(0,8); lists[i]=L; }
+    for (const j of L){ ov++; if (a.ev) events++; if (a.role===0 && T[j].role===0){ zz++; zzSet.add(i); zzSet.add(j); }
+      if (a.role===1) probeHits.push(T[j].id); }
+  }
+  return {T, lists, iters, dist, ov, zz, events, trunc, zzSet, probeHits, shipTruncBy};
+}
+
+/* ───────────── W1 : schéma du système solaire ───────────── */
+const cv = $('solar'), ctx = cv.getContext('2d');
+let playing = false, raf = 0;
+function fitCanvas(c, h){ const w = c.clientWidth || 960; const dpr = Math.min(window.devicePixelRatio||1, 2);
+  c.width = Math.round(w*dpr); c.height = Math.round(h*dpr); return {w, h, dpr}; }
+function drawSolar(){
+  const days = +$('sTime').value, sx = +$('sShipX').value, sz = +$('sShipZ').value;
+  $('sTimeV').textContent = days + ' j'; $('sShipXV').textContent = sx; $('sShipZV').textContent = sz;
+  const role = $('sRole').checked, cap = $('sCap').checked;
+  const R = runTriggers(days, [sx, sz], role, cap);
+  const H = Math.max(300, Math.min(460, Math.round((cv.clientWidth||960)*0.48)));
+  const {w, h, dpr} = fitCanvas(cv, H);
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle = css('--surface'); ctx.fillRect(0,0,w,h);
+  const scale = 0.45*Math.pow(80/0.45, +$('sZoom').value/100);
+  const cx = $('sFollow').checked ? sx : 0, cz = $('sFollow').checked ? sz : 0;
+  const X = x => w/2 + (x-cx)*scale, Y = z => h/2 + (z-cz)*scale;
+  // repère
+  ctx.strokeStyle = css('--line'); ctx.lineWidth = 1; ctx.beginPath();
+  ctx.moveTo(0, Y(0)); ctx.lineTo(w, Y(0)); ctx.moveTo(X(0), 0); ctx.lineTo(X(0), h); ctx.stroke();
+  const shipIdx = R.T.length-1;
+  const shipLinked = new Set(R.lists[shipIdx]);
+  R.lists.forEach((L,i)=>{ if (L.includes(shipIdx)) shipLinked.add(i); });
+  // zones : les grandes d'abord
+  const order = R.T.map((t,i)=>i).filter(i=>i!==shipIdx).sort((a,b)=>R.T[b].r-R.T[a].r);
+  for (const i of order){
+    const t = R.T[i]; const rr = t.r*scale;
+    if (rr < 0.4 && !shipLinked.has(i)) continue;
+    ctx.beginPath(); ctx.arc(X(t.x), Y(t.z), Math.max(rr,1.5), 0, Math.PI*2);
+    const col = t.ev ? css('--zone') : css('--belt');
+    ctx.globalAlpha = 0.07; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1;
+    let stroke = col, lw = 1;
+    if (!role && R.zzSet.has(i)) { stroke = css('--bad'); lw = 1.6; }
+    if (shipLinked.has(i)) { stroke = css('--probe'); lw = 2.4; }
+    ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke();
+    if (rr > 22 || shipLinked.has(i)){
+      ctx.fillStyle = css('--ink2'); ctx.font = '11px ' + css('--sans');
+      const lx = X(t.x) + rr*0.71 + 3, ly = Y(t.z) - rr*0.71 - 3;
+      if (lx > 0 && lx < w-40 && ly > 10 && ly < h) ctx.fillText(t.id.replace('-Zone',''), lx, ly);
+    }
+  }
+  // sonde
+  const s = R.T[shipIdx];
+  ctx.beginPath(); ctx.arc(X(s.x), Y(s.z), Math.max(s.r*scale, 4), 0, Math.PI*2);
+  ctx.fillStyle = css('--probe'); ctx.fill();
+  ctx.fillStyle = css('--ink'); ctx.font = '600 11.5px ' + css('--sans'); ctx.fillText('Player_Ship', X(s.x)+8, Y(s.z)+14);
+  // échelle
+  ctx.fillStyle = css('--ink3'); ctx.font = '11px ' + css('--mono');
+  const unit = [1,2,5,10,20,50,100,200,500].find(u => u*scale > 60) || 500;
+  ctx.fillRect(12, h-18, unit*scale, 2); ctx.fillText(unit + ' u', 12, h-24);
+
+  const setAllocs = 2*R.ov;
+  $('sStats').innerHTML = [
+    ['Itérations internes', fmt(R.iters), ''],
+    ['Tests de distance', fmt(R.dist), role?'ok':'bad'],
+    ['Recouvrements', fmt(R.ov), ''],
+    ['dont zone × zone', fmt(R.zz), R.zz? 'bad':'ok'],
+    ['Événements / frame', fmt(R.events), R.events && !role ? 'bad':''],
+    ['Triggers tronqués (kMax)', cap ? fmt(R.trunc) : '—', R.trunc? 'bad':''],
+    ['Allocations / frame si std::set', '≈ ' + fmt(setAllocs), ''],
+    ['Allocations / frame, vector', '0', 'ok']
+  ].map(([k,v,c]) => `<div><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+  const zonesOnShip = R.lists.map((L,i)=>L.includes(shipIdx)?R.T[i]:null).filter(Boolean);
+  let log = 'Zones qui voient le vaisseau (zone → sonde) : ' + (zonesOnShip.length ? zonesOnShip.map(t=>t.id + (t.ev?' [événements]':'')).join(', ') : 'aucune');
+  log += '\nLe vaisseau voit (sonde → zone)            : ' + (R.probeHits.length ? R.probeHits.join(', ') : 'aucune');
+  if (cap && R.shipTruncBy.length) log += '\nTampon plein : le vaisseau est TRONQUÉ par ' + R.shipTruncBy.join(', ') + ' (rang ≥ 8 dans l’ordre dense)';
+  if (!role) log += '\nFiltre coupé : ' + R.zz + ' paires zone × zone retenues, publiées si la zone source porte un événement.';
+  $('sLog').textContent = log;
+}
+['sTime','sShipX','sShipZ','sZoom'].forEach(id => $(id).addEventListener('input', drawSolar));
+['sRole','sCap','sFollow'].forEach(id => $(id).addEventListener('change', drawSolar));
+$('sReset').addEventListener('click', () => { $('sTime').value = 0; $('sShipX').value = 64; $('sShipZ').value = 0; drawSolar(); });
+$('sPlay').addEventListener('click', () => {
+  playing = !playing; $('sPlay').textContent = playing ? 'Pause' : 'Lecture';
+  const tick = () => { if (!playing) return; const t = $('sTime'); t.value = (+t.value + 1) % 721; drawSolar(); raf = requestAnimationFrame(tick); };
+  if (playing) raf = requestAnimationFrame(tick); else cancelAnimationFrame(raf);
+});
+
+/* ───────────── W2 : tampon fixe contre vector (même code que la simulation hors moteur) ───────────── */
+function capSeries(K, frames){
+  const Rz = 10;
+  const bodies = [];
+  for (let k=0;k<K;k++) bodies.push({cx:f32(3+(k%5)), cy:f32(-2+(k%3)), a:f32(6+(k*0.37)%4), w:f32(0.011+0.0037*k), ph:f32(k*0.9), r:f32(0.3)});
+  let prevTrue = new Set(), prevStored = new Set();
+  const res = {trueEnter:0,trueExit:0,missedEnter:0,spurEnter:0,spurExit:0,trunc:0, nTrue:[], spur:[], sets:[]};
+  for (let t=0;t<frames;t++){
+    const ov = [];
+    for (let k=0;k<K;k++){ const b = bodies[k];
+      const x = f32(b.cx + b.a*Math.cos(b.w*t+b.ph)), y = f32(b.cy + b.a*Math.sin(b.w*t+b.ph));
+      const d = f32(Math.sqrt(f32(f32(x*x)+f32(y*y)))); if (d < f32(Rz+b.r)) ov.push(k); }
+    const tr = new Set(ov), st = new Set(ov.slice(0,8));
+    if (ov.length > 8) res.trunc++;
+    let sp = 0;
+    for (const k of tr) if (!prevTrue.has(k)) res.trueEnter++;
+    for (const k of prevTrue) if (!tr.has(k)) res.trueExit++;
+    for (const k of st) if (!prevStored.has(k) && prevTrue.has(k)) { res.spurEnter++; sp++; }
+    for (const k of prevStored) if (!st.has(k) && tr.has(k)) { res.spurExit++; sp++; }
+    for (const k of tr) if (!prevTrue.has(k) && !st.has(k)) res.missedEnter++;
+    res.nTrue.push(ov.length); res.spur.push(sp); res.sets.push(ov);
+    prevTrue = tr; prevStored = st;
+  }
+  return res;
+}
+const capCv = $('capCanvas'), cctx = capCv.getContext('2d');
+let capCache = {K:-1, S:null};
+function drawCap(){
+  const K = +$('capK').value, F = +$('capF').value;
+  $('capKV').textContent = K; $('capFV').textContent = F;
+  if (capCache.K !== K) capCache = {K, S:capSeries(K, 3600)};
+  const S = capCache.S;
+  const {w, h, dpr} = fitCanvas(capCv, 170);
+  cctx.setTransform(dpr,0,0,dpr,0,0);
+  cctx.fillStyle = css('--surface'); cctx.fillRect(0,0,w,h);
+  const maxN = Math.max(10, ...S.nTrue) + 1, pad = 26;
+  const X = t => pad + t*(w-pad-8)/3599, Y = n => h-18 - n*(h-34)/maxN;
+  cctx.strokeStyle = css('--line'); cctx.lineWidth = 1; cctx.setLineDash([]);
+  cctx.beginPath(); cctx.moveTo(pad, Y(8)); cctx.lineTo(w-8, Y(8)); cctx.stroke();
+  cctx.fillStyle = css('--ink3'); cctx.font = '10.5px ' + css('--mono'); cctx.fillText('8', 8, Y(8)+4); cctx.fillText('0', 8, Y(0)+4);
+  cctx.fillText(String(maxN-1), 4, Y(maxN-1)+4);
+  cctx.strokeStyle = css('--ink2'); cctx.lineWidth = 1.4; cctx.beginPath();
+  S.nTrue.forEach((n,t)=>{ t ? cctx.lineTo(X(t),Y(n)) : cctx.moveTo(X(t),Y(n)); }); cctx.stroke();
+  cctx.strokeStyle = css('--accent'); cctx.setLineDash([4,3]); cctx.beginPath();
+  S.nTrue.forEach((n,t)=>{ const m = Math.min(n,8); t ? cctx.lineTo(X(t),Y(m)) : cctx.moveTo(X(t),Y(m)); }); cctx.stroke(); cctx.setLineDash([]);
+  cctx.fillStyle = css('--bad');
+  S.spur.forEach((s,t)=>{ if (s) cctx.fillRect(X(t)-0.5, h-14, 1.5, 8); });
+  cctx.strokeStyle = css('--probe'); cctx.lineWidth = 1; cctx.beginPath(); cctx.moveTo(X(F), 8); cctx.lineTo(X(F), h-16); cctx.stroke();
+  const ov = S.sets[F];
+  $('capStats').innerHTML = [
+    ['ENTER réels', fmt(S.trueEnter), ''], ['EXIT réels', fmt(S.trueExit), ''],
+    ['ENTER faux (kMax 8)', fmt(S.spurEnter), S.spurEnter?'bad':'ok'], ['EXIT faux (kMax 8)', fmt(S.spurExit), S.spurExit?'bad':'ok'],
+    ['ENTER jamais émis', fmt(S.missedEnter), S.missedEnter?'bad':'ok'], ['Frames tronquées', fmt(S.trunc), ''],
+    ['Frame ' + F + ' : réels', String(ov.length), ''], ['gardés par kMax', ov.slice(0,8).join(' ') || '—', ''],
+    ['std::vector : événements faux', '0', 'ok']
+  ].map(([k,v,c]) => `<div><div class="k">${k}</div><div class="v ${c}" style="font-size:${String(v).length>8?'13px':'18px'}">${v}</div></div>`).join('');
+}
+['capK','capF'].forEach(id => $(id).addEventListener('input', drawCap));
+
+/* ───────────── W3 : commutateurs et ODR ───────────── */
+function layout(hasMagic){
+  const rows = []; let off = 0;
+  const put = (name, size, align) => { off = Math.ceil(off/align)*align; rows.push([name, off, size]); off += size; };
+  if (hasMagic) put('magic', 4, 4);
+  put('fb', 8, 8); put('db', 8, 8); put('color', 4, 1); put('z0', 4, 4); put('z1', 4, 4); put('z2', 4, 4);
+  put('invW0', 4, 4); put('invW1', 4, 4); put('invW2', 4, 4); put('depthDisplayRange', 4, 4);
+  const size = Math.ceil(off/8)*8;
+  return {rows, size};
+}
+function drawOdr(){
+  const cfg = $('odrCfg').value, def = $('odrDef').value, magicBug = $('odrMagicBug').checked;
+  const dbg = cfg === 'debug' ? 1 : 0;
+  let lib, exe;
+  if (cfg === 'debug') { lib = exe = 1; } else if (cfg === 'release') { lib = exe = 0; }
+  else { exe = 1; lib = (def === 'exe') ? 0 : 1; }
+  const side = (name, A) => {
+    const magicDeclared = magicBug ? dbg : A;
+    const err = A && !magicDeclared;
+    const L = layout(!!A);
+    let s = `LV3_ASSERTS_ENABLED = ${A}   LV3_DEBUG = ${dbg}\n`;
+    if (err) return {txt: s + `\nerror C2065: 'kFragmentContextMagic' : identificateur non déclaré\n  (membre magic sous ASSERTS, constante sous DEBUG)`, size: null, err:true};
+    s += `sizeof(FragmentContext) = ${L.size} octets\n`;
+    s += L.rows.slice(0,4).map(r => `  ${r[0].padEnd(6)} offset ${String(r[1]).padStart(2)}  (${r[2]} o)`).join('\n') + '\n  …';
+    return {txt:s, size:L.size, err:false};
+  };
+  const a = side('LIB', lib), b = side('EXE', exe);
+  $('odrLib').textContent = a.txt; $('odrExe').textContent = b.txt;
+  let v;
+  if (a.err || b.err) v = `<div class="bad"><b>Ne compile pas.</b> C’est le premier défaut démasqué par <code>RelWithAsserts</code> (étape 6b) : ASSERTS = 1 et DEBUG = 0 pour la première fois.</div>`;
+  else if (a.size !== b.size) v = `<div class="bad"><b>Compile, et viole l’ODR.</b> La LIB voit ${a.size} octets, l’EXE ${b.size}. Un <code>FragmentContext</code> rempli d’un côté est lu décalé de l’autre : la LIB lit <code>fb</code> à l’offset 0, là où l’EXE a rangé <code>magic</code>. Symptômes possibles : variables « introuvables » au débogueur, pointeurs absurdes, rien de reproductible. C’est le second défaut (étape 6c).</div>`;
+  else if (cfg === 'rwa') v = `<div class="ok"><b>Cohérent.</b> Une seule définition, lue par les deux projets. <code>LV3_ASSERT</code> actif dans la LIB et l’EXE. <span class="small">Mais <code>CheckSceneInvariants</code> et les tests par frame de <code>main.cpp</code> restent sous <code>LV3_DEBUG</code> = 0 : inactifs (amendement A3, PH0-4).</span></div>`;
+  else v = `<div class="ok"><b>Cohérent.</b> Les deux projets voient la même forme de <code>FragmentContext</code>. ${cfg==='debug' ? 'En Debug, filets et outils sont tous actifs.' : 'En Release, aucun filet : c’est voulu.'}</div>`;
+  $('odrVerdict').innerHTML = v;
+}
+['odrCfg','odrDef','odrMagicBug'].forEach(id => $(id).addEventListener('change', drawOdr));
+
+/* ───────────── W4 : agrégat et ordre positionnel ───────────── */
+const AGG = {
+  set: [`struct TriggerComponent {
+    float radius; std::string onEnter, onStay, onExit;
+    bool is_colliding;
+    std::vector<Entity> overlapping_entities;   // était std::set
+};
+emplaceComponent<TriggerComponent>(e, radius,
+    onEnter, onStay, onExit, false,
+    std::set<Entity>{});                        // non mis à jour`,
+  `error C2672: 'std::construct_at' : aucune fonction surchargée
+  correspondante trouvée
+→ std::set<Entity> ne se convertit pas en std::vector<Entity>.
+Bruyant : c'est le cas qu'Onky a rencontré (étape 3).`],
+  mid: [`struct TriggerComponent {
+    float radius;
+    ETriggerRole role;                          // inséré ici
+    std::string onEnter, onStay, onExit;
+    bool is_colliding; std::vector<Entity> overlapping;
+};
+emplaceComponent<TriggerComponent>(e, radius,
+    onEnter, onStay, onExit, false, std::vector<Entity>{});`,
+  `error C2672 : la 2ᵉ valeur (std::string) devrait
+initialiser ETriggerRole. Un enum class n'accepte aucune
+conversion implicite : refus à la compilation.
+Bruyant, donc sûr. C'est pour ça que role est placé là.`],
+  end: [`struct TriggerComponent {
+    float radius; std::string onEnter, onStay, onExit;
+    bool is_colliding; std::vector<Entity> overlapping;
+    ETriggerRole role = ETriggerRole::Zone;     // ajouté EN FIN
+};
+emplaceComponent<TriggerComponent>(e, radius,
+    onEnter, onStay, onExit, false, std::vector<Entity>{});`,
+  `Compile sans un mot.
+Un agrégat initialisé avec moins de valeurs que de membres
+donne aux membres restants leur valeur par défaut :
+role = Zone pour les 34 triggers, vaisseau compris.
+Le filtre écarte alors TOUTES les paires : 0 événement.
+Silencieux : le seul cas dangereux.`],
+  bool: [`struct TriggerComponent {
+    float radius; std::string onEnter, onStay, onExit;
+    bool isProbe = false;                       // inséré avant is_colliding
+    bool is_colliding; std::vector<Entity> overlapping;
+};
+emplaceComponent<TriggerComponent>(e, radius,
+    onEnter, onStay, onExit, false, std::vector<Entity>{});`,
+  `false va dans isProbe, puis std::vector<Entity>{} devrait
+initialiser is_colliding (bool) : aucune conversion, C2672.
+Bruyant ici par chance. Avec un appel qui s'arrêterait à
+"false", isProbe recevrait false et is_colliding sa valeur
+par défaut : silencieux. Un bool ne protège pas comme un
+enum class.`],
+  ok: [`struct TriggerComponent {
+    float radius = 1.0f;
+    ETriggerRole role = ETriggerRole::Zone;
+    std::string onEnter = "", onStay = "", onExit = "";
+    bool is_colliding = false;
+    std::vector<Entity> overlapping_entities;
+};
+emplaceComponent<TriggerComponent>(e, radius, role,
+    std::move(onEnter), std::move(onStay), std::move(onExit),
+    false, std::vector<Entity>{});`,
+  `Compile. Chaque valeur arrive à son membre.
+C'est l'état du dépôt.
+Le commentaire « Attention à l'ordre des variables
+transmises !!! » au-dessus de l'appel reste la seule
+protection documentaire du contrat.`]
+};
+function drawAgg(){ const c = AGG[$('aggCase').value]; $('aggCode').textContent = c[0]; $('aggOut').textContent = c[1]; }
+$('aggCase').addEventListener('change', drawAgg);
+
+/* ───────────── thème et taille ───────────── */
+function redrawAll(){ drawSolar(); drawCap(); }
+drawSolar(); drawCap(); drawOdr(); drawAgg();
+let rt = 0; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(redrawAll, 120); });
+try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', redrawAll); } catch(e) {}
+new MutationObserver(redrawAll).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+})();
+</script>
+
+</body></html>

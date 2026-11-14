@@ -1,0 +1,1760 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lot PH4-CH2 — La pré-transformation des sommets, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+.bar{display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin:8px 0; background:var(--surface2)}
+.bar>span{display:block; height:100%; min-width:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px}
+.kv>dt{color:var(--ink3); font-family:var(--mono); font-size:12.5px}
+.kv>dd{margin:0; font-family:var(--mono); font-size:12.5px; overflow-wrap:anywhere}
+input[type=text].cmd{width:100%; font-family:var(--mono); font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.tag{font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.zone-chip{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+
+/* Ajouts PH4-CH2 : bandes de fréquence, registres SIMD, frise de ports. */
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:3px; margin:6px 0}
+.lanes>div{font-family:var(--mono); font-size:11px; background:var(--surface2); border:1px solid var(--line); border-radius:4px; padding:3px 4px; text-align:right; overflow-wrap:anywhere; min-width:0}
+.lanes>div.h{background:var(--hl); border-color:var(--hl-line)}
+.reg{font-family:var(--mono); font-size:11.5px; color:var(--ink3); margin-top:8px}
+.bits{font-family:var(--mono); font-size:11.5px; color:var(--ink2)}
+.ports{display:grid; gap:3px; margin:8px 0}
+.ports>div{display:flex; height:22px; border-radius:4px; overflow:hidden; border:1px solid var(--line); background:var(--surface2)}
+.ports>div>span{display:block; height:100%}
+.ports .lbl{font-size:11.5px; color:var(--ink3); font-family:var(--mono)}
+.mesh{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0}
+.cell{font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); border-radius:5px; padding:6px 4px; text-align:center; background:var(--surface2)}
+.cell.a{background:var(--ok-bg); border-color:var(--ok); color:var(--ok)}
+.cell.b{background:var(--bad-bg); border-color:var(--bad); color:var(--bad)}
+.cell.p{outline:2px solid var(--accent); outline-offset:1px}
+</style>
+</head>
+<body>
+
+
+<header>
+  <div class="t">Lot PH4-CH2 — La pré-transformation des sommets, pas à pas</div>
+  <div class="s">LibraryV3 · phase G, chantier 2 du plan de la consolidation C2 · étage sommets, <code>ClipSpaceBuffer</code>, <code>TransformPositions</code>, plafond de sommets · trois séances de mesure et l’affaire des cœurs P/E · avenant C2, annexe A12 · échange du 26 au 27/09/2026 · reconstruction du 13/11/2026 (l’artefact « Étage sommets LV3 » du 26/09 n’avait qu’un schéma : il est remplacé par ce lot)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">Méthode</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">La campagne de mesure (lot PH4-G) s’était terminée sur un diagnostic chiffré : le rendu de la scène « ceinture d’astéroïdes » coûtait environ <b>42 ns par face soumise</b>, quel que soit le nombre de pixels. Le temps ne partait pas dans l’écran, il partait dans le <b>nombre de primitives</b>. Et en lisant <code>RenderView</code>, on trouvait un défaut de structure : chaque sommet était transformé plusieurs fois, avec le même résultat.</p>
+
+<pre><code>for (uint8_t k = 0; k &lt; vpf; ++k)
+    cv[k].clip = MulRow(mvp, mesh-&gt;vertexPositions[mesh-&gt;indices[base + k]]);</code></pre>
+
+<p>Cette boucle tourne <b>pour chaque face</b>. Un sommet partagé par six faces est donc multiplié six fois par la matrice <code>mvp</code>, pour chaque vue. Sur la ceinture : <b>824 964 multiplications par frame</b> pour 181 061 sommets réellement différents. Plus des trois quarts du travail de transformation étaient du travail refait.</p>
+
+<p>La consolidation C2 classait quatre chantiers : 1 LOD, 2 pré-transformation des sommets, 3 rejet des triangles sub-pixel, 4 AVX2. Onky a choisi d’ouvrir par le <b>chantier 2</b>, pour trois raisons :</p>
+<ol>
+<li>il ne demande <b>aucune décision d’asset</b> ni de nouveau composant (le LOD, lui, demande des maillages simplifiés, une métrique de taille à l’écran, une règle de bascule) ;</li>
+<li>il est <b>exact</b> : l’image doit rester identique au triangle près, ce qui se vérifie par les compteurs ;</li>
+<li>il est le <b>préalable du chantier 4</b> : il crée le tableau contigu sur lequel une version AVX2 pourra travailler par paquets de huit. Vectoriser d’abord, c’était accélérer un travail qu’on allait de toute façon supprimer.</li>
+</ol>
+
+<p>Ce lot raconte ce chantier en quatre temps : le <b>code</b> (un nouvel étage dans le pipeline), la <b>mesure</b> (qui a demandé trois séances au lieu d’une), les <b>deux fausses pistes</b> rencontrées en route, et la <b>formalisation</b> qui en est sortie : un schéma du pipeline classé par fréquence d’exécution (annexe A12), et cinq règles de mesure (M2, M3, M7, M8, M9).</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « Le rendu est limité par la transformation des sommets : vectorisons <code>MulRow</code> en AVX2 tout de suite. » Le raisonnement saute une étape. Vectorisée, la boucle aurait fait huit multiplications à la fois, mais toujours <b>824 964</b> au lieu de 181 061. On aurait accéléré le gaspillage d’un facteur huit au lieu de le supprimer d’un facteur 4,56. Et la boucle par coin, qui lit des sommets dispersés par indice, ne se vectorise de toute façon pas bien. L’ordre est imposé par la structure : <b>d’abord supprimer le travail inutile, ensuite accélérer ce qui reste</b>.
+</div>
+
+<p class="small">Nom du lot : <b>PH4-CH2</b> (phase 4 du carnet, chantier 2 du plan de C2). « C2 » désigne déjà la consolidation C2, le chantier C2 (arêtes AVX2) et son artefact « Lot C2 pas à pas » (point C1-0 de la roadmap). D’où ce nom distinct.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Le chantier 2 s’appuie sur des pièces posées par les lots précédents. Certaines servent telles quelles ; d’autres ont dû être complétées.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH4-CH2 en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L03</b> — ECS, ResourceManager</td><td><code>MeshClass</code> en SoA (positions, indices), <code>ResourceManager::RegisterMesh</code>, porte d’entrée de tout mesh.</td><td>Le plafond de sommets est vérifié dans <code>RegisterMesh</code>, une fois, au chargement.</td></tr>
+<tr><td><b>L04</b> — rasterizer</td><td><code>ClipVertex</code>, <code>ClipTriangleNear</code>, <code>EmitClipTriangle</code> (seul endroit où l’on divise par w), règle de face avant.</td><td>Rien ne change en aval de l’espace clip : le chantier ne touche que la façon dont les coins reçoivent leurs coordonnées.</td></tr>
+<tr><td><b>L05</b> et <b>L02-C</b> — caméra, reverse-Z</td><td>Matrice de projection : <code>w_clip = −z_vue</code> ; plan near testé par <code>w − z</code>.</td><td>La question « pourquoi un <code>Vec4f</code> et pas un <code>Vec3f</code> » (étape 9) se règle par cette matrice.</td></tr>
+<tr><td><b>Consolidation C1</b> — chaîne des espaces</td><td>E1 objet → E5 clip → E6 NDC → E7 raster ; la frontière clip → NDC est la division par w.</td><td>Le tampon du chantier 2 contient des sommets en <b>E5</b>, jamais au-delà.</td></tr>
+<tr><td><b>PH1-C</b> — intégrité du graphe</td><td>Patron du bug 53 : une précondition s’écrit assertion + repli actif en Release.</td><td>Même patron pour la garde de capacité dans <code>RenderView</code>.</td></tr>
+<tr><td><b>A10</b> — build portable</td><td><code>LV3.Common.props</code>, foyer unique des commutateurs.</td><td>Le commutateur d’ablation <code>LV3_ABLATION_RASTER</code> est posé dans <code>config.h</code>, déclaré dans le CSV.</td></tr>
+<tr><td><b>PH4-G</b> — campagne de mesure</td><td>Harnais <code>Core/Profiler</code>, mode banc, compteurs du rendu, règles M1 à M7, loi <code>Render ≈ 42 ns × faces</code>.</td><td>L’instrument qui jugera le chantier. Il recevra un compteur (<code>VertsTransformed</code>) et trois champs d’en-tête (<code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code>).</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ</b> (fin de la campagne G, 26/09/2026). <code>RenderView</code> parcourt les instances visibles ; pour chaque face, elle calcule <code>MulRow(mvp, position)</code> pour chacun de ses trois coins, puis teste le near, clippe si besoin, et appelle <code>EmitClipTriangle</code>. La macro <code>LV3_MAX_MESH_VERTICES</code> (65 536) existe dans <code>EngineSettings.h</code> mais <b>aucun code ne la vérifie</b>. Les mesures de référence de C2 ont été prises sur une machine désignée « Core 9 ». Le CSV ne dit pas sur quel processeur il a été écrit.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce qu’est l’« étage sommets » d’un pipeline</h3>
+<p>Une carte graphique traite une scène en étages successifs. Le premier étage programmable, le <i>vertex shader</i>, reçoit <b>des sommets</b>, pas des triangles. Il les transforme un par un (position, normale, coordonnées de texture), et ce n’est qu’ensuite qu’un étage fixe, l’<i>assemblage de primitives</i>, relie les sommets transformés par trois pour former les triangles, en suivant le tableau d’indices.</p>
+<p>Cette séparation n’est pas un détail d’implémentation. Un maillage fermé a environ deux fois plus de triangles que de sommets, et chaque triangle a trois coins : chaque sommet est donc utilisé par <b>environ six coins</b>. Transformer par coin, c’est transformer chaque sommet six fois. Les GPU gardent pour cela un petit cache des sommets déjà transformés (le <i>post-transform vertex cache</i>, section M). LibraryV3, qui simule une carte graphique sur le CPU, n’avait pas cet étage : la transformation vivait dans la boucle des faces.</p>
+
+<h3>Le besoin, en termes fonctionnels</h3>
+<ul>
+<li><b>Ce que voit l’utilisateur</b> : rien ne doit changer à l’écran. Le chantier est une réorganisation du calcul, pas une nouvelle fonctionnalité.</li>
+<li><b>Ce que voit le moteur</b> : chaque sommet d’une instance visible est transformé <b>une fois par vue</b>, puis les faces <b>lisent</b> ces sommets transformés. Le travail de transformation passe de 3 × faces à 1 × sommets.</li>
+<li><b>Ce que voit la mesure</b> : un compteur prouve la baisse du travail sans aucun bruit ; le chronomètre dit combien cette baisse rapporte en temps.</li>
+</ul>
+
+<h3>Les objectifs du lot</h3>
+<ol>
+<li><b>Créer l’étage sommets</b> : un tampon de sommets en espace clip, rempli par une boucle plate, sans branche, puis lu par les faces.</li>
+<li><b>Garantir la sûreté mémoire</b> : le tampon a une taille fixe ; aucun mesh plus grand ne doit pouvoir y entrer, même en Release.</li>
+<li><b>Prouver l’exactitude</b> : mêmes faces soumises, mêmes triangles rasterisés, au compteur près.</li>
+<li><b>Mesurer le gain</b>, et le prédire <b>avant</b> de le mesurer, pour pouvoir être contredit.</li>
+<li><b>Formaliser</b> le nouveau pipeline, devenu dense, dans un schéma de référence.</li>
+</ol>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Quel chantier d’abord</td><td>1 LOD · 2 pré-transformation · étape 0 (compteurs manquants)</td><td>2, choisi par Onky</td><td>Interne à <code>RenderView</code>, exact, préalable du 4. Le LOD demande des assets de roches qui n’existaient pas.</td></tr>
+<tr><td>Stratégie de réutilisation</td><td>par coin · cache paresseux (drapeau par sommet) · passe complète</td><td>passe complète</td><td>Sans branche, vectorisable, et chaque sommet sert de toute façon à au moins une face soumise.</td></tr>
+<tr><td>Qui possède le tampon</td><td><code>vector</code> local · <code>static</code> caché · l’appelant</td><td>l’appelant (<code>main.cpp</code>), comme <code>fb</code> et <code>db</code></td><td>Aucune allocation dans la boucle, aucun état global caché, un tampon par thread le jour du multithread.</td></tr>
+<tr><td>Taille du tampon</td><td>redimensionnable · max des meshes chargés · borne dure</td><td>borne dure <code>kMaxMeshVerticesHard</code> = 65 536</td><td>Même patron que le bug 61 : une borne <code>constexpr</code> pour la mémoire, jamais de conteneur redimensionné dans la boucle chaude.</td></tr>
+<tr><td>Où vérifier le plafond</td><td>dans <code>RenderView</code> · dans <code>LoadMeshChecked</code> · dans <code>RegisterMesh</code></td><td><code>RegisterMesh</code>, plus un filet dans <code>RenderView</code></td><td>C’est la seule porte d’entrée de tout mesh, OBJ comme procédural.</td></tr>
+<tr><td>Type stocké</td><td><code>Vec3f</code> (12 o) · <code>Vec4f</code> (16 o)</td><td><code>Vec4f</code></td><td>En espace clip, w varie et porte la profondeur. Diviser avant le clipping est interdit (étape 9).</td></tr>
+<tr><td>Disposition</td><td>AoS (un sommet = 16 o) · SoA (x[], y[], z[], w[])</td><td>AoS</td><td>Les faces lisent les sommets par indice : un chargement de 16 octets par coin. La SoA sera reconsidérée pour l’AVX2.</td></tr>
+<tr><td>Instrument</td><td>chronomètre seul · compteur en plus</td><td>compteur <code>VertsTransformed</code></td><td>Il prouve la réduction du travail sans aucun bruit, ce qu’aucun chronomètre ne peut faire.</td></tr>
+<tr><td>Protocole de comparaison</td><td>contre la référence C2 · avant/après dans la même séance</td><td>même séance, puis ABBA épinglé sur un cœur P</td><td>Décidé en cours de route, après deux fausses pistes (étapes 10 à 15).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>La chaîne complète du moteur, du lancement à l’écriture des mesures, telle qu’elle tourne à la clôture de l’échange (27/09). Deux marquages : <span class="tag" style="background:var(--hl);border-color:var(--hl-line)">surligné</span> = étage <b>créé ou modifié</b> par ce lot (avec la référence de l’étape) ; <span class="tag" style="border-style:dashed;border-color:var(--accent)">tireté</span> = étage <b>observé</b> par le lot (mesuré, ou déplacé sans changer son calcul).</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 880" role="img" aria-label="Chaîne complète du moteur. Les étages créés ou modifiés par le lot PH4-CH2 sont surlignés : plafond dans RegisterMesh, tampon dans main.cpp, étage sommets, assemblage par lecture, compteur et en-tête du CSV.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>
+.bx{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.bxh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}
+.bxo{fill:var(--surface2);stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 3}
+.lb{fill:var(--ink);font:600 12.5px var(--sans)}
+.sb{fill:var(--ink3);font:11px var(--mono)}
+.ph{fill:var(--ink3);font:600 10.5px var(--sans);letter-spacing:.09em}
+.ln{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}
+</style>
+<text class="ph" x="16" y="20">1 · LANCEMENT (une fois)</text>
+<rect class="bx" x="16" y="30" width="180" height="56" rx="8"/><text class="lb" x="28" y="52">ParseArgs, racine</text><text class="sb" x="28" y="70">--scene --bench --csv</text>
+<rect class="bx" x="210" y="30" width="170" height="56" rx="8"/><text class="lb" x="222" y="52">Serializer</text><text class="sb" x="222" y="70">ParseMesh → LoadMeshChecked</text>
+<rect class="bxh" x="394" y="30" width="250" height="56" rx="8"/><text class="lb" x="406" y="52">RegisterMesh — plafond (E6)</text><text class="sb" x="406" y="70">n &gt; 65 536 → erreur, handle invalide</text>
+<rect class="bxh" x="658" y="30" width="226" height="56" rx="8"/><text class="lb" x="670" y="52">main : tampons (E8)</text><text class="sb" x="670" y="70">ClipSpaceBuffer clipBuf (1 Mio)</text>
+<line class="ln" x1="196" y1="58" x2="206" y2="58" marker-end="url(#ar)"/><line class="ln" x1="380" y1="58" x2="390" y2="58" marker-end="url(#ar)"/><line class="ln" x1="644" y1="58" x2="654" y2="58" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="118">2 · UNE FRAME (S13)</text>
+<rect class="bx" x="16" y="128" width="210" height="50" rx="8"/><text class="lb" x="28" y="149">dt, horloge, Input</text><text class="sb" x="28" y="166">Animation (simDt)</text>
+<rect class="bx" x="240" y="128" width="200" height="50" rx="8"/><text class="lb" x="252" y="149">Cuisson n°1</text><text class="sb" x="252" y="166">Local + World</text>
+<rect class="bx" x="454" y="128" width="200" height="50" rx="8"/><text class="lb" x="466" y="149">Caméras, cuisson n°2</text><text class="sb" x="466" y="166">ciblée</text>
+<rect class="bx" x="668" y="128" width="216" height="50" rx="8"/><text class="lb" x="680" y="149">Trigger, BuildViewData</text><text class="sb" x="680" y="166">× N vues</text>
+<line class="ln" x1="226" y1="153" x2="236" y2="153" marker-end="url(#ar)"/><line class="ln" x1="440" y1="153" x2="450" y2="153" marker-end="url(#ar)"/><line class="ln" x1="654" y1="153" x2="664" y2="153" marker-end="url(#ar)"/>
+<path class="ln" d="M776 178 L776 192 L114 192 L114 202" marker-end="url(#ar)"/>
+<rect class="bxo" x="16" y="206" width="210" height="50" rx="8"/><text class="lb" x="28" y="227">{Clear}</text><text class="sb" x="28" y="244">témoin mémoire</text>
+<rect class="bx" x="240" y="206" width="644" height="50" rx="8"/><text class="lb" x="252" y="227">{Render} : pour chaque vue, RenderView(…, clipBuf)  — détail ci-dessous</text><text class="sb" x="252" y="244">SetViewport · SetMode · SetDepthDisplayRange</text>
+<line class="ln" x1="226" y1="231" x2="236" y2="231" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="290">3 · DANS RenderView, POUR CHAQUE INSTANCE (Mesh + Transform)</text>
+<rect class="bx" x="16" y="300" width="200" height="56" rx="8"/><text class="lb" x="28" y="322">Filtre + frustum</text><text class="sb" x="28" y="340">Outside → instance suivante</text>
+<rect class="bxh" x="230" y="300" width="210" height="56" rx="8"/><text class="lb" x="242" y="322">Garde nVerts (E7)</text><text class="sb" x="242" y="340">assert + continue (Release)</text>
+<rect class="bx" x="454" y="300" width="200" height="56" rx="8"/><text class="lb" x="466" y="322">Constantes</text><text class="sb" x="466" y="340">mvp, needsNearClip, teinte</text>
+<rect class="bxh" x="668" y="300" width="216" height="56" rx="8"/><text class="lb" x="680" y="322">Compteurs (E3)</text><text class="sb" x="680" y="340">FacesSubmitted, VertsTransformed</text>
+<line class="ln" x1="216" y1="328" x2="226" y2="328" marker-end="url(#ar)"/><line class="ln" x1="440" y1="328" x2="450" y2="328" marker-end="url(#ar)"/><line class="ln" x1="654" y1="328" x2="664" y2="328" marker-end="url(#ar)"/>
+<path class="ln" d="M776 356 L776 372 L250 372 L250 384" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="388" width="470" height="62" rx="8"/><text class="lb" x="28" y="410">ÉTAGE SOMMETS — TransformPositions (E5, E7)</text><text class="sb" x="28" y="428">dst[i] = MulRow(m, src[i])  pour i &lt; nVerts — une fois par (instance, vue)</text><text class="sb" x="28" y="442">écrit clipBuf[0 .. nVerts−1] (Vec4f, espace clip E5)</text>
+<rect class="bxo" x="500" y="388" width="384" height="62" rx="8"/><text class="lb" x="512" y="410">Données lues</text><text class="sb" x="512" y="428">MeshClass::vertexPositions (lecture seule)</text><text class="sb" x="512" y="442">MeshClass::indices (lecture seule)</text>
+<path class="ln" d="M250 450 L250 468" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="472" width="470" height="56" rx="8"/><text class="lb" x="28" y="494">ASSEMBLAGE — pour chaque face (E7)</text><text class="sb" x="28" y="512">cv[k] = clip[indices[base + k]]  — lecture, aucune multiplication</text>
+<rect class="bxo" x="500" y="472" width="384" height="56" rx="8"/><text class="lb" x="512" y="494">Inchangé : test near (allOut)</text><text class="sb" x="512" y="512">teinte ou FaceColor(f)</text>
+<path class="ln" d="M250 528 L250 546" marker-end="url(#ar)"/>
+<rect class="bxo" x="16" y="550" width="280" height="56" rx="8"/><text class="lb" x="28" y="572">Inside : EmitClipTriangle</text><text class="sb" x="28" y="590">1/w, ToRaster ×3, backface</text>
+<rect class="bxo" x="310" y="550" width="280" height="56" rx="8"/><text class="lb" x="322" y="572">Intersect : ClipTriangleNear</text><text class="sb" x="322" y="590">0/3/4 sommets → éventail → Emit</text>
+<rect class="bxo" x="604" y="550" width="280" height="56" rx="8"/><text class="lb" x="616" y="572">Rasterizer + fragments</text><text class="sb" x="616" y="590">TrisRasterized → DrawTriangle</text>
+<line class="ln" x1="296" y1="578" x2="306" y2="578" marker-end="url(#ar)"/><line class="ln" x1="590" y1="578" x2="600" y2="578" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="640">4 · FIN DE FRAME, FIN DE CAMPAGNE</text>
+<rect class="bx" x="16" y="650" width="260" height="56" rx="8"/><text class="lb" x="28" y="672">{Present}</text><text class="sb" x="28" y="690">témoin, hors budget moteur</text>
+<rect class="bxh" x="290" y="650" width="594" height="56" rx="8"/><text class="lb" x="302" y="672">Profiler::DumpCsv — en-tête cpu=, affinity=, ablation= (E13)</text><text class="sb" x="302" y="690">colonne VertsTransformed en fin de compteurs ; LV3_ABLATION_RASTER déclaré</text>
+<line class="ln" x1="276" y1="678" x2="286" y2="678" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="740">5 · FORMALISATION (documents)</text>
+<rect class="bxh" x="16" y="750" width="430" height="110" rx="8"/><text class="lb" x="28" y="772">Annexe A12 — pipeline par fréquence (E16)</text><text class="sb" x="28" y="792">règle de fréquence ; bandes frame / vue / instance /</text><text class="sb" x="28" y="808">sommet / face / triangle / pixel ; durée de vie du tampon ;</text><text class="sb" x="28" y="824">points d’extension 1, 2b, 3, 4</text><text class="sb" x="28" y="846">artefact « Pipeline LV3 »</text>
+<rect class="bxh" x="460" y="750" width="424" height="110" rx="8"/><text class="lb" x="472" y="772">Avenant C2 — chantier 2 (E16)</text><text class="sb" x="472" y="792">chiffres de clôture, Référence F (P-core)</text><text class="sb" x="472" y="808">M2, M3 complétées ; M7 amendée ; M8, M9 nouvelles</text><text class="sb" x="472" y="824">architecture-rules : étage sommets, série M</text><text class="sb" x="472" y="846">classement des chantiers révisé</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Étape</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Core/Profiler.h</code></td><td>LIB</td><td>E3, E13</td><td><span class="pill ok">ajout</span> compteur <code>VertsTransformed</code> (en fin d’enum) ; champ <code>ProfRunInfo::ablation</code></td></tr>
+<tr><td><code>Core/Profiler.cpp</code></td><td>LIB</td><td>E13</td><td><span class="pill ok">ajout</span> <code>CpuBrand()</code> (CPUID), <code>AffinityMask()</code> ; en-tête <code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code></td></tr>
+<tr><td><code>Core/config.h</code></td><td>LIB</td><td>E13</td><td><span class="pill ok">ajout</span> commutateur <code>LV3_ABLATION_RASTER</code>, défaut 0</td></tr>
+<tr><td><code>Core/EngineSettings.h</code></td><td>LIB</td><td>E4</td><td><span class="pill ok">ajout</span> <code>kMaxMeshVerticesHard = LV3_MAX_MESH_VERTICES</code></td></tr>
+<tr><td><code>Rendering/VertexStage.h</code> / <code>.cpp</code></td><td>LIB</td><td>E5</td><td><span class="pill ok">nouveau</span> <code>ClipSpaceBuffer</code>, <code>TransformPositions</code></td></tr>
+<tr><td><code>Ressources/ResourceManager.cpp</code></td><td>LIB</td><td>E6</td><td><span class="pill warn">modifié</span> <code>RegisterMesh</code> refuse un mesh au-delà du plafond</td></tr>
+<tr><td><code>Scene/RenderSystem.h</code></td><td>LIB</td><td>E7</td><td><span class="pill warn">modifié</span> signature <code>RenderView(…, ClipSpaceBuffer&amp;)</code>, déclaration anticipée</td></tr>
+<tr><td><code>Scene/RenderSystem.cpp</code></td><td>LIB</td><td>E3, E7, E13</td><td><span class="pill warn">modifié</span> garde, passe de transformation, lecture par indice ; ablation par commutateur</td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>E8, E13</td><td><span class="pill warn">modifié</span> <code>ClipSpaceBuffer clipBuf;</code>, appel de <code>RenderView</code>, <code>info.ablation</code></td></tr>
+<tr><td><code>LibraryV3.vcxproj</code> + <code>.filters</code></td><td>LIB</td><td>R29</td><td><span class="pill ok">ajout</span> <code>VertexStage.h/.cpp</code> (vérifié présent dans le dépôt au 13/11)</td></tr>
+<tr><td><code>Avenant_C2_Chantier2_PreTransformation.md</code>, <code>Annexe_A12_Pipeline_Rendu.md</code>, <code>architecture-rules.md</code></td><td>projet</td><td>E16</td><td><span class="pill ok">nouveau</span> / <span class="pill warn">modifié</span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Six fonctionnements changent. Pour chacun, l’algorithme d’avant (état du 26/09) et celui d’après (27/09). Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · Le rendu d’une instance : transformer par coin, ou transformer puis lire</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — la transformation vit dans la boucle des faces</div>
+<pre><code>pour chaque instance visible (vis ≠ Outside) :
+  mvp ← model × VP
+  pour f = 0 .. faces − 1 :
+    pour k = 0 .. 2 :
+<span class="hl">      cv[k].clip ← MulRow(mvp, positions[indices[3f + k]])</span>
+<span class="hl">      // 3 MulRow par face ; un sommet de 6 faces : 6 fois</span>
+    si Intersect : distances au near, allOut → face suivante
+    couleur ; Emit (ou clip puis Emit)</code></pre></div>
+<div class="ap"><div class="t">Après — un étage sommets, puis des faces qui lisent</div>
+<pre><code>pour chaque instance visible (vis ≠ Outside) :
+<span class="hl">  n ← vertexCount() ; assert(n ≤ capacité) ; si n &gt; capacité : suivante</span>
+  mvp ← model × VP
+<span class="hl">  TransformPositions(mvp, positions, n, clipBuf)   // n MulRow</span>
+<span class="hl">  VertsTransformed += n</span>
+  pour f = 0 .. faces − 1 :
+    pour k = 0 .. 2 :
+<span class="hl">      vi ← indices[3f + k] ; assert(vi &lt; n)</span>
+<span class="hl">      cv[k].clip ← clipBuf[vi]                     // lecture</span>
+    si Intersect : distances au near, allOut → face suivante
+    couleur ; Emit (ou clip puis Emit)</code></pre></div>
+</div>
+<p class="small">Sur la ceinture, 4 vues : 824 964 MulRow → 181 061 (÷ 4,56). <code>FacesSubmitted</code> et <code>TrisRasterized</code> inchangés (274 988 et 134 389).</p>
+
+<h3>B · Le chargement d’un mesh : un plafond jamais appliqué, puis appliqué une fois</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — RegisterMesh</div>
+<pre><code>RegisterMesh(mesh) :
+  assert(mesh ≠ nul)
+<span class="hl">  // LV3_MAX_MESH_VERTICES existe, personne ne la lit</span>
+  h ← AllocateMeshHandle()
+  m_meshes[h] ← mesh ; retour h</code></pre></div>
+<div class="ap"><div class="t">Après — RegisterMesh, porte unique de tout mesh</div>
+<pre><code>RegisterMesh(mesh) :
+  assert(mesh ≠ nul)
+<span class="hl">  si mesh.vertexCount() &gt; kMaxMeshVerticesHard :</span>
+<span class="hl">    Logger::error(nom, n, plafond) ; retour Invalid</span>
+  h ← AllocateMeshHandle()
+  m_meshes[h] ← mesh ; retour h</code></pre></div>
+</div>
+
+<h3>C · La propriété du tampon</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — main.cpp</div>
+<pre><code>Renderer renderer;
+…
+RenderView(registry, rm, renderer, views[i]);</code></pre></div>
+<div class="ap"><div class="t">Après — main.cpp</div>
+<pre><code>Renderer renderer;
+<span class="hl">ClipSpaceBuffer clipBuf;   // 1 Mio, alloué une fois, avant la boucle</span>
+…
+RenderView(registry, rm, renderer, views[i]<span class="hl">, clipBuf</span>);</code></pre></div>
+</div>
+
+<h3>D · Ce que dit un fichier de mesure</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — en-tête et compteurs (PH4-G)</div>
+<pre><code># scene ; config ; res ; views ; mesurees ;
+  chauffe ; overhead_ns ; resolution_ns
+compteurs : … FacesSubmitted ; TrisRasterized
+ablation : bloc commenté à la main, invisible
+  dans le fichier</code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code># scene ; config ; <span class="hl">cpu=12th Gen Intel(R) Core(TM) i7-1265U ;</span>
+<span class="hl">  affinity=4 ; ablation=none|raster ;</span> res ; views ; …
+compteurs : … TrisRasterized ; <span class="hl">VertsTransformed</span>
+<span class="hl">ablation : #if LV3_ABLATION_RASTER (config.h, défaut 0)</span>
+<span class="hl">  → déclarée par le binaire lui-même</span></code></pre></div>
+</div>
+
+<h3>E · La façon de comparer deux versions</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — règles M1 à M7 (C2)</div>
+<pre><code><span class="hl">un run « après » comparé à la référence de C2</span>
+<span class="hl">plancher de bruit : 15 % (mesuré sur Clear)</span>
+<span class="hl">un témoin : Clear (mémoire)</span>
+<span class="hl">ablation : coût de l'étage voisin par soustraction</span>
+machine : non déclarée ; cœur : choisi par Windows</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C2 § 7</div>
+<pre><code><span class="hl">M8 : avant et après dans la MÊME séance, ordre ABBA,</span>
+<span class="hl">     verdict sur le rapport au sein de chaque paire</span>
+<span class="hl">M3 : deux témoins, T (calcul) et Clear (mémoire) ;</span>
+<span class="hl">     paire recevable si T varie de moins de 3 %</span>
+<span class="hl">M7 : une ablation mesure un étage ISOLÉ, jamais sa part</span>
+<span class="hl">M9 : sur CPU hybride, banc épinglé (start /affinity 4)</span>
+<span class="hl">M2 : cpu=, affinity=, ablation= dans l'en-tête</span></code></pre></div>
+</div>
+
+<h3>F · La description du pipeline</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — par ordre d’appel</div>
+<pre><code>RenderView : filtre → frustum → mvp → boucle des faces
+  (MulRow, near, Emit, raster)
+// où mettre un calcul ? « là où on en a besoin »</code></pre></div>
+<div class="ap"><div class="t">Après — par fréquence (annexe A12)</div>
+<pre><code><span class="hl">frame ×1 → vue ×4 → instance × vue 1 297 → SOMMET 181 061</span>
+<span class="hl">  → face 274 988 → triangle 134 389 → pixel</span>
+<span class="hl">Règle : un calcul s'exécute au niveau le MOINS fréquent</span>
+<span class="hl">        où son résultat est encore constant.</span></code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="methode">
+<h2>M · La méthode : un étage sommets indexé</h2>
+<p class="lede">La technique utilisée a un nom et une histoire. Elle n’a pas été inventée pour LibraryV3 : c’est la manière dont toutes les cartes graphiques traitent la géométrie depuis la fin des années 1990. Cette section la présente avant le code.</p>
+
+<h3>M.1 · Ce qu’elle est, en une image</h3>
+<p>Imagine un patron de couture découpé en triangles. Chaque point du patron est partagé par plusieurs pièces. Transformer « par coin », c’est déplacer chaque pièce séparément, en recalculant la position de chacun de ses trois coins, alors que les pièces voisines ont déjà calculé les mêmes points. Transformer « par sommet », c’est d’abord déplacer tous les points une fois, puis relire, pour chaque pièce, les trois points dont elle a besoin.</p>
+<p>Le maillage est stocké sous forme <b>indexée</b> : un tableau de positions (chaque point une fois) et un tableau d’indices (trois numéros de points par face). La forme indexée permet de séparer deux étages : le traitement des sommets, puis l’assemblage des faces.</p>
+
+<h3>M.2 · D’où elle vient, et qui l’utilise</h3>
+<ul>
+<li><b>Les GPU</b> : chaque carte a un <i>post-transform vertex cache</i>, un petit cache (historiquement 16 à 32 entrées, en file) qui garde les derniers sommets sortis du vertex shader. Si l’indice suivant est déjà dans le cache, le sommet n’est pas retransformé. L’efficacité dépend de l’<b>ordre des faces</b>.</li>
+<li><b>Hugues Hoppe</b>, « Optimization of mesh locality for transparent vertex caching », SIGGRAPH 1999 (<a href="https://hhoppe.com/tvc.pdf">hhoppe.com/tvc.pdf</a>). Il définit la mesure de référence, l’<b>ACMR</b> (<i>average cache miss ratio</i>) : le nombre de sommets transformés par triangle.</li>
+<li><b>Tom Forsyth</b>, « Linear-Speed Vertex Cache Optimisation », 2006 (<a href="https://tomforsyth1000.github.io/papers/fast_vert_cache_opt.html">tomforsyth1000.github.io</a>). Un algorithme de réordonnancement des faces, utilisé par la plupart des outils d’export (dont la bibliothèque meshoptimizer).</li>
+<li><b>Les rasteriseurs logiciels</b> n’ont pas de contrainte de taille de cache : ils peuvent transformer <b>tout le tableau de sommets</b> d’un maillage avant l’assemblage. C’est le choix de LibraryV3.</li>
+</ul>
+
+<h3>M.3 · L’indicateur : l’ACMR</h3>
+<p>ACMR = sommets transformés ÷ triangles. Il se lit directement dans nos compteurs : <code>VertsTransformed ÷ FacesSubmitted</code>.</p>
+<div class="scroll"><table>
+<thead><tr><th>Stratégie</th><th>ACMR</th><th>Ce qu’elle coûte</th><th>Sur la ceinture</th></tr></thead>
+<tbody>
+<tr><td>Par coin (« soupe de triangles »)</td><td class="num">3,0</td><td>Rien à stocker. Tout sommet est retransformé par chaque face.</td><td class="num">824 964 ÷ 274 988 = 3,00</td></tr>
+<tr><td>Cache en file de 16 à 32 entrées (GPU), faces non ordonnées</td><td class="num">≈ 1 à 2</td><td>Petit cache matériel. Dépend de l’ordre des faces.</td><td>—</td></tr>
+<tr><td>Même cache, faces réordonnées (Forsyth)</td><td class="num">≈ 0,6 à 0,7</td><td>Un prétraitement hors ligne.</td><td>—</td></tr>
+<tr><td><b>Passe complète</b> (LibraryV3)</td><td class="num">V ÷ T, le minimum</td><td>Un tampon de n sommets. Chaque sommet une fois, quel que soit l’ordre.</td><td class="num"><b>181 061 ÷ 274 988 = 0,66</b></td></tr>
+</tbody></table></div>
+<p>Pour un maillage fermé, V ≈ T ÷ 2 : l’ACMR minimal tend vers 0,5. Nos roches (115 sommets, 168 faces) donnent 0,68, les sphères hautes (2 143 sommets, 3 968 faces) 0,54. Les coutures de texture, qui dédoublent les sommets, l’éloignent de 0,5.</p>
+
+<h3>M.4 · Comparaison avec la méthode standard</h3>
+<div class="scroll"><table>
+<thead><tr><th>Critère</th><th>Par coin</th><th>Cache paresseux (drapeau par sommet)</th><th>Passe complète</th></tr></thead>
+<tbody>
+<tr><td>Travail de transformation</td><td>3 × faces</td><td>1 × sommets utilisés</td><td>1 × sommets</td></tr>
+<tr><td>Branche par coin</td><td>non</td><td><b>oui</b> (« déjà fait ? »), imprévisible</td><td>non</td></tr>
+<tr><td>Remise à zéro par instance</td><td>—</td><td>un <code>memset</code> des drapeaux</td><td>—</td></tr>
+<tr><td>Vectorisable (8 sommets à la fois)</td><td>mal (lectures dispersées)</td><td>non</td><td><b>oui</b> (boucle plate)</td></tr>
+<tr><td>Mémoire</td><td>0</td><td>n sommets + n drapeaux</td><td>n sommets (16 o chacun)</td></tr>
+<tr><td>Sommets non utilisés par une face soumise</td><td>jamais transformés</td><td>jamais transformés</td><td>transformés quand même</td></tr>
+</tbody></table></div>
+<p>La dernière ligne est le seul défaut de la passe complète. Dans LibraryV3, toutes les faces d’une instance visible sont soumises : aucun sommet n’est transformé pour rien. Le jour où un étage rejettera des faces <b>avant</b> l’étage sommets (pré-filtre B5, piste B5c), la question se reposera.</p>
+
+<h3>M.5 · La seconde notion du lot : un seul thread, plusieurs instructions à la fois</h3>
+<p>Les mesures ont montré que le gain sur la frame complète était plus petit que le gain sur la géométrie seule. L’explication fait appel au fonctionnement interne d’un cœur moderne, rappelé ici parce qu’elle surprend : le programme n’a qu’un thread.</p>
+<ul>
+<li>Un cœur <b>superscalaire</b> a plusieurs unités d’exécution (calcul entier, calcul flottant, chargements mémoire) qui travaillent en même temps.</li>
+<li>Il est <b>out-of-order</b> : il lit le programme en avance et range jusqu’à environ 512 micro-opérations (cœur P Golden Cove de l’i7-1265U ; environ 256 sur un cœur E Gracemont) dans une file, le <i>reorder buffer</i>. Il exécute chacune dès que ses opérandes sont prêts, puis valide les résultats dans l’ordre du programme.</li>
+<li>Pendant qu’une instruction attend la mémoire (le Z-buffer fait 5,5 Mo, il ne tient pas dans le cache L2), les instructions indépendantes qui suivent, par exemple les <code>MulRow</code> de la face suivante, s’exécutent sur les unités inoccupées.</li>
+</ul>
+<p>Une partie du travail géométrique était donc <b>déjà cachée</b> dans les attentes de la rasterisation. Le supprimer ne fait gagner que la part qui n’était pas cachée. Sources : Agner Fog, <i>The microarchitecture of Intel, AMD and VIA CPUs</i> (<a href="https://www.agner.org/optimize/microarchitecture.pdf">agner.org/optimize</a>) ; Intel, <i>64 and IA-32 Architectures Optimization Reference Manual</i>. Le laboratoire 1.5 en donne un modèle, et l’amendement AM8 précise ce qui reste une hypothèse.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir avant le code</h2>
+<p>Sept schémas interactifs. Les quatre premiers expliquent le besoin et la méthode ; les trois derniers, la mesure. Les chiffres viennent des fichiers <code>_summary.csv</code> de l’échange, ou sont calculés dans la page en float32 (<code>Math.fround</code>, même arrondi que le CPU).</p>
+
+<h3>1.1 · Par coin ou par sommet : compter le travail</h3>
+<p>Chaque disque est un sommet ; son chiffre dit combien de fois il a été transformé. Choisis un maillage, une stratégie, puis rejoue. Le compteur ACMR est celui de la section M.</p>
+<div class="ctl">
+  <label>Maillage <select id="l1Mesh"><option value="grid">grille 6 × 5</option><option value="fan">éventail (pôle d’une sphère)</option><option value="strip">bande (2 lignes)</option></select></label>
+  <label>Stratégie <select id="l1Mode"><option value="corner">avant : par coin</option><option value="vertex">après : par sommet</option><option value="lazy">cache paresseux</option></select></label>
+  <button id="l1Play" type="button">Rejouer</button>
+</div>
+<canvas id="l1Cv" aria-label="Maillage, sommets colorés selon le nombre de transformations"></canvas>
+<div class="legend"><span><i style="background:var(--ghost)"></i>0</span><span><i style="background:var(--ok)"></i>1</span><span><i style="background:var(--warn)"></i>2 à 3</span><span><i style="background:var(--bad)"></i>4 et plus</span></div>
+<div class="stats" id="l1Stats"></div>
+<p class="small" id="l1Txt"></p>
+
+<h3>1.2 · La règle de fréquence : où placer un calcul</h3>
+<p>Un calcul placé dans une bande s’exécute autant de fois que cette bande a d’éléments. Choisis un calcul, puis la bande où tu le places : la page compte les appels par frame (ceinture, 4 vues, Référence F) et compare à la bande correcte. Seul le coût de <code>MulRow</code> est mesuré (3,5 ns, avenant C2 § 4.2) ; les autres coûts unitaires sont des ordres de grandeur.</p>
+<div class="ctl">
+  <label>Calcul <select id="l2Op"></select></label>
+  <label>Placé dans la bande <select id="l2Band"></select></label>
+</div>
+<div class="stats" id="l2Stats"></div>
+<div class="scroll"><table id="l2Tab"></table></div>
+
+<h3>1.3 · Pourquoi un <code>Vec4f</code> : le w d’un sommet derrière la caméra</h3>
+<p>Vue de dessus. La caméra regarde vers −Z. Une arête relie un point A, devant, à un point B que tu déplaces. Quand B passe derrière l’œil, w devient négatif. Compare la projection de B « divisée avant le clipping » (on aurait stocké x/w, y/w dans un <code>Vec3f</code>) et le chemin du moteur : clipper l’arête au near en espace homogène, puis diviser.</p>
+<div class="ctl">
+  <label>Profondeur de B (z vue) <input id="l3Z" type="range" min="-12" max="3" step="0.1" value="-6"> <span id="l3Zv" class="tag"></span></label>
+  <label>x de B <input id="l3X" type="range" min="-4" max="4" step="0.1" value="2.5"> <span id="l3Xv" class="tag"></span></label>
+</div>
+<canvas id="l3Cv" aria-label="Vue de dessus de la caméra, du plan near et d'une arête"></canvas>
+<div class="stats" id="l3Stats"></div>
+
+<h3>1.4 · La copie locale de <code>mvp</code> et l’aliasing</h3>
+<p>Le compilateur ne peut garder une valeur en registre que s’il peut prouver qu’aucune écriture ne la modifie. Or une écriture de <code>float</code> dans <code>dst</code> peut, en droit, modifier un <code>float</code> de la matrice, si celle-ci est passée par référence. Schéma de la boucle compilée, par sommet (illustration, pas le listing exact de MSVC).</p>
+<div class="ctl">
+  <label>Matrice <select id="l4Mode"><option value="ref">par référence : const Matrix44f&amp; mvp</option><option value="loc">copie locale : const Matrix44f m = mvp</option></select></label>
+</div>
+<div class="lab"><div><pre><code id="l4Asm"></code></pre></div><div><div class="stats" id="l4Stats"></div><p class="small" id="l4Txt"></p></div></div>
+
+<h3>1.5 · Le recouvrement dans un seul thread : pourquoi la frame gagne moins que la géométrie</h3>
+<p>Modèle d’un triangle de la ceinture sur un cœur out-of-order. La rasterisation alterne du calcul et des <b>attentes mémoire</b> (Z-buffer hors L2). La géométrie du triangle suivant, indépendante, peut s’exécuter pendant ces attentes. Modèle illustratif : seules la géométrie par face (21,6 ns avant, C2 ; 13,4 ns après, séance 1) et les lignes « mesuré » viennent des fichiers. Réglages par défaut choisis pour retrouver l’ordre de grandeur mesuré sur cœur P (environ 80 % transmis).</p>
+<div class="ctl">
+  <label>Géométrie <select id="l5Geo"><option value="old">avant : MulRow par coin</option><option value="new">après : par sommet</option></select></label>
+  <label>Attente mémoire par triangle <input id="l5S" type="range" min="0" max="60" step="1" value="30"> <span id="l5Sv" class="tag"></span></label>
+  <label>Part des attentes utilisable <input id="l5K" type="range" min="0" max="100" step="5" value="50"> <span id="l5Kv" class="tag"></span></label>
+</div>
+<div class="ports" id="l5Ports"></div>
+<div class="stats" id="l5Stats"></div>
+<div class="scroll"><table>
+<thead><tr><th>Mesuré (même séance)</th><th>Géométrie isolée</th><th>Frame complète</th><th>Part transmise</th></tr></thead>
+<tbody>
+<tr><td>Cœur P, séance 3 (A/P/Aa/Pa)</td><td class="num">6,48 → 3,92 ms (−2,56 ms)</td><td class="num">12,42 → 10,27 ms (−2,15 ms)</td><td class="num"><b>84 %</b></td></tr>
+<tr><td>Cœur E probable, séance 2 (3 paires)</td><td>non mesurée sur ce cœur</td><td class="num">rapport 0,895 (−10,4 %)</td><td>non calculable (AM8)</td></tr>
+</tbody></table></div>
+
+<h3>1.6 · Dépouiller une séance de mesure, comme on l’a fait</h3>
+<p>Les dix-huit runs de l’échange, avec les contrôles appliqués avant de lire un temps. Choisis un run : la page refait les vérifications (témoin T, rapport complet ÷ ablation, p95 ÷ médiane) et donne le verdict. T = Animation + LocalXform1 + WorldXform1 + Trigger (µs).</p>
+<div class="ctl">
+  <label>Run <select id="l6Run"></select></label>
+</div>
+<div class="stats" id="l6Stats"></div>
+<div id="l6Verdict"></div>
+<h4>Les paires recevables, et leur rapport</h4>
+<div class="scroll"><table id="l6Pairs"></table></div>
+
+<h3>1.7 · La durée de vie du tampon : un pointeur gardé trop longtemps</h3>
+<p>Le <code>ClipSpaceBuffer</code> est réécrit à chaque instance. Garde un pointeur vers le sommet 3 de l’instance A, puis passe à l’instance B : le pointeur lit toujours une valeur plausible, mais c’est celle de B. Aucun crash, aucune assertion.</p>
+<div class="ctl">
+  <button id="l7A" type="button">Instance A (roche, 8 sommets)</button>
+  <button id="l7Keep" type="button">Garder &amp;clip[3]</button>
+  <button id="l7B" type="button">Instance B (autre roche)</button>
+  <button id="l7Reset" type="button">Recommencer</button>
+</div>
+<div class="mesh" id="l7Buf"></div>
+<div class="console" id="l7Log"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<h3>2.1 · L’étage sommets : un tampon, une boucle, une lecture</h3>
+<p>Trois pièces, chacune avec une seule responsabilité :</p>
+<ul>
+<li><b><code>ClipSpaceBuffer</code></b> (<code>Rendering/VertexStage.h</code>) : 65 536 <code>Vec4f</code> alloués une fois à la construction, jamais redimensionnés, non copiables. <code>Data()</code> et <code>Capacity()</code>, rien d’autre.</li>
+<li><b><code>TransformPositions(mvp, src, count, dst)</code></b> : <code>dst[i] = MulRow(m, src[i])</code>. Pas de division par w : le clipping near a besoin de l’espace clip.</li>
+<li><b>La lecture</b> dans <code>RenderView</code> : <code>cv[k].clip = clip[indices[base + k]]</code>, sous <code>LV3_ASSERT(vi &lt; nVerts)</code>.</li>
+</ul>
+<p>Pour une roche (115 sommets), le tampon utile fait 115 × 16 o = 1,8 Kio : il reste dans le cache L1 (48 Kio sur un cœur P) pendant tout le parcours des 168 faces. Les 1 Mio réservés ne sont jamais parcourus : seuls les premiers <code>vertexCount()</code> éléments sont touchés.</p>
+
+<h3>2.2 · Pourquoi le tampon appartient à l’appelant</h3>
+<p>Trois propriétaires étaient possibles. Le bon est celui qui existe <b>avant</b> la boucle de frame et qui sait combien de threads rendront :</p>
+<ul>
+<li>un <code>std::vector</code> local par instance : 1 297 allocations et mises à zéro par frame ;</li>
+<li>un <code>static</code> dans <code>RenderView</code> : un état global invisible. Le jour où deux vues seront rendues sur deux threads, elles écriront dans le même tampon ;</li>
+<li><b>l’appelant</b> (<code>main.cpp</code>), comme <code>fb</code> et <code>db</code> : un tampon par contexte de rendu, passé par référence. <code>RenderSystem.h</code> n’inclut toujours rien : une déclaration anticipée <code>class ClipSpaceBuffer;</code> suffit.</li>
+</ul>
+
+<h3>2.3 · Le plafond : une vérification au chargement, un filet au rendu</h3>
+<p>Le tampon a une taille fixe. Un mesh de 70 000 sommets y écrirait hors bornes : en Release, une corruption mémoire silencieuse. Deux protections, de nature différente :</p>
+<ol>
+<li><b><code>RegisterMesh</code></b> refuse le mesh (<code>Logger::error</code> + handle invalide). C’est la seule porte d’entrée de tout mesh : l’OBJLoader l’appelle, un mesh procédural devra l’appeler. La vérification a lieu <b>une fois</b>, au chargement.</li>
+<li><b><code>RenderView</code></b> garde <code>LV3_ASSERT(nVerts &lt;= Capacity())</code> suivi de <code>if (nVerts &gt; Capacity()) continue;</code>. Le <code>if</code> ne coûte qu’une comparaison par instance ; il protège la Release si un jour un mesh entre par une autre porte. C’est le patron du bug 53 (règle proposée PH1C.b).</li>
+</ol>
+<p>Imprécision connue et assumée : <code>LoadMeshChecked</code> classera ce refus en <code>ParseFailed</code>. Le journal dit la vraie cause.</p>
+
+<h3>2.4 · L’aliasing : pourquoi copier la matrice</h3>
+<p><code>Matrix44f</code> stocke <code>float x[4][4]</code> ; <code>dst[i]</code> écrit des <code>float</code>. La règle d’aliasing de C++ autorise deux pointeurs vers <code>float</code> à désigner la même mémoire. Si <code>mvp</code> arrive par référence, le compilateur doit supposer que chaque écriture dans <code>dst</code> a pu modifier un coefficient, et les relire tous au sommet suivant. Une variable locale dont l’adresse ne s’échappe pas ne peut pas être visée par <code>dst</code> : ses 16 coefficients restent en registres (ou sur la pile, relus mais jamais invalidés). Coût de la copie : 64 octets par instance. Laboratoire 1.4.</p>
+
+<h3>2.5 · Pourquoi <code>Vec4f</code> et pas <code>Vec3f</code></h3>
+<ul>
+<li>En <b>espace objet</b>, w vaut toujours 1 : il est implicite, d’où l’entrée en <code>Vec3f</code> (le terme <code>+ m[3][j]</code> de <code>MulRow</code> est la translation multipliée par ce 1).</li>
+<li>En <b>espace clip</b>, la matrice perspective recopie −z dans w (<code>m[2][3] = −1</code>, <code>m[3][3] = 0</code>) : w est la distance à la caméra, différente pour chaque sommet. Il est lu par <code>NearDistance</code> (<code>w − z</code>), <code>Lerp</code>, <code>ClipLess</code>, <code>invW</code> et les fragments.</li>
+<li><b>Diviser avant de stocker est interdit</b> : pour un sommet derrière l’œil, w &lt; 0 et la division renverse x et y (laboratoire 1.3).</li>
+<li>Remarque : en perspective infinie, c’est z_clip qui est constant (= n), pas w ; en orthographique, w = 1. Un format à 3 floats par type de projection a été écarté : un seul pipeline, indifférent à la projection.</li>
+<li>Côté mémoire, 16 octets donnent exactement 4 sommets par ligne de cache de 64 octets et un chargement aligné ; un <code>Vec3f</code> chevauche une ligne une fois sur quatre.</li>
+</ul>
+
+<h3>2.6 · Le compteur, et la place d’une colonne</h3>
+<p><code>VertsTransformed</code> est ajouté <b>en fin</b> d’<code>EProfCounter</code> : les colonnes des CSV de référence déjà versionnés gardent leur position. Le <code>static_assert</code> sur le tableau de noms refuse de compiler si le nom manque. Il est compté une fois par instance (<code>nVerts</code>), hors de la boucle chaude.</p>
+
+<h3>2.7 · La durée de vie du contenu</h3>
+<p>Le contenu du tampon n’est valide que pendant l’itération de l’instance qui l’a rempli. Tout étage futur qui différerait des triangles (tri de transparence, tuiles, file de triangles) devra <b>copier</b> les sommets, jamais garder un pointeur vers le tampon. En multithread : un tampon par thread. Laboratoire 1.7.</p>
+
+<h3>2.8 · L’instrumentation ajoutée en cours de route</h3>
+<ul>
+<li><b><code>cpu=</code></b> : la chaîne de marque lue par <code>__cpuid</code> (feuilles 0x80000002 à 0x80000004), avec les <code>;</code> remplacés par des <code>,</code> (séparateur du CSV réservé).</li>
+<li><b><code>affinity=</code></b> : le masque rendu par <code>GetProcessAffinityMask</code>, en hexadécimal. <code>fff</code> = libre (12 processeurs logiques), <code>4</code> = épinglé sur le processeur logique 2.</li>
+<li><b><code>ablation=</code></b> : <code>none</code> ou <code>raster</code>, écrit par l’EXE d’après <code>LV3_ABLATION_RASTER</code> (<code>config.h</code>, défaut 0). Un run d’ablation se déclare lui-même.</li>
+</ul>
+
+<h3>2.9 · CPU hybride : cœurs P et E</h3>
+<p>L’i7-1265U (Alder Lake, 15 W) a 2 cœurs P Golden Cove (4 processeurs logiques avec l’hyperthreading, en général numérotés 0 à 3) et 8 cœurs E Gracemont (4 à 11). Un programme monothread non épinglé tourne sur le cœur que Windows choisit (Thread Director). Mesuré dans ce lot, pour le même binaire : T ×1,53 et <code>Render</code> ×1,78 sur cœur E. <code>start "" /wait /affinity 4 exe …</code> épingle sur le processeur logique 2 (un cœur P, en évitant le 0, qui traite beaucoup d’interruptions).</p>
+
+<h3>2.10 · Pendants scalaire et vectorisé</h3>
+<p>Le chantier 2 a livré la version <b>scalaire</b> de l’étage sommets ; c’est voulu (section 0.1). Le pendant vectorisé de <code>TransformPositions</code> est donné à l’étape 5, bit-exact, avec les registres couloir par couloir. Il n’a <b>jamais été appliqué</b> sous cette forme : le chantier 2b a déplacé la cible du chantier 4 vers <code>ProjectPositions</code>, vectorisée en B3 (<code>ProjectPositions8</code>, amendements AM1 à AM3). La version de l’étape 5 est celle que demanderait la piste <b>B3c</b> (chemin Intersect, scènes FPS).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange (26 → 27/09)</h2>
+<p>Pour chaque étape : son objectif, ce qu’elle utilise de l’étape précédente, ce qu’elle produit, le code avant/après, et, quand il existe, le pendant vectorisé. Le code est celui de l’échange ; les écarts avec le dépôt actuel sont dans la section 6.</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Choisir le chantier, mesurer le rapport coins ÷ sommets</div><div class="b">
+<p><b>Objectif.</b> Décider par quoi ouvrir, sur un chiffre, pas sur une impression.</p>
+<div class="io"><div><h5>Utilise</h5>Consolidation C2 § 8.2 (quatre chantiers classés) ; les fichiers <code>.obj</code> de la scène.</div><div><h5>Produit</h5>Le rapport coins ÷ sommets de chaque maillage, après la soudure <code>(pos, uv, nrm)</code> de l’OBJLoader ; la décision d’Onky : chantier 2.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Mesh</th><th class="num">Sommets</th><th class="num">Faces</th><th class="num">Coins</th><th class="num">Coins ÷ sommets</th><th>Instances dans la ceinture</th></tr></thead>
+<tbody>
+<tr><td>rock_a / b / c</td><td class="num">115</td><td class="num">168</td><td class="num">504</td><td class="num">4,38</td><td>600 (194 + 214 + 192)</td></tr>
+<tr><td>sphere_lo</td><td class="num">185</td><td class="num">288</td><td class="num">864</td><td class="num">4,67</td><td>22</td></tr>
+<tr><td>sphere_mid</td><td class="num">559</td><td class="num">960</td><td class="num">2 880</td><td class="num">5,15</td><td>15</td></tr>
+<tr><td>sphere_hi</td><td class="num">2 143</td><td class="num">3 968</td><td class="num">11 904</td><td class="num">5,55</td><td>3</td></tr>
+<tr><td>ship_scout</td><td class="num">358</td><td class="num">296</td><td class="num">888</td><td class="num">2,48</td><td>1</td></tr>
+</tbody></table></div>
+<p><b>Constat au passage.</b> Les niveaux de détail existaient déjà pour les sphères (<code>sphere_lo / mid / hi</code>), pas pour les roches. C’était un argument de plus pour ne pas ouvrir par le LOD.</p>
+<p class="small">Pendant vectorisé : sans objet (décision et relevé hors moteur).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Écrire la prédiction avant le code</div><div class="b">
+<p><b>Objectif.</b> Se donner les moyens d’être contredit : une prédiction écrite après la mesure n’est plus une prédiction.</p>
+<div class="io"><div><h5>Utilise</h5>Le rapport de l’étape 1 (≈ 4,4 pour la ceinture) ; l’ablation D de C2 (géométrie seule 5,95 ms).</div><div><h5>Produit</h5>Deux corrections du document C2 et une prédiction chiffrée.</div></div>
+<ul>
+<li><b>Correction 1</b> : C2 parlait de transformer « par (mesh, vue) ». C’est <b>par (instance, vue)</b>, puisque <code>mvp = model × VP</code> dépend de l’entité : 600 roches, 3 meshes, 600 matrices.</li>
+<li><b>Correction 2</b> : C2 annonçait « ×4 sur 5,95 ms, soit ~4,4 ms ». C’est surestimé : la géométrie fait aussi, par coin, la division par w, <code>ToRaster</code>, l’<code>EdgeFunction</code> du backface, <code>FaceColor</code> et des copies. Seule la part <code>MulRow</code> disparaît.</li>
+</ul>
+<div class="scroll"><table>
+<thead><tr><th>Grandeur (ceinture)</th><th>Avant</th><th>Prédit</th></tr></thead>
+<tbody>
+<tr><td><code>VertsTransformed</code></td><td class="num">824 964</td><td class="num">185 000 à 200 000</td></tr>
+<tr><td>Géométrie seule (ablation)</td><td class="num">5,95 ms</td><td class="num">3,5 à 4,5 ms</td></tr>
+<tr><td><code>Render</code></td><td class="num">11,48 ms</td><td class="num">9,0 à 10,0 ms</td></tr>
+</tbody></table></div>
+<div class="warn">Un gain de 1,5 à 2,5 ms sur 11,5 ms est à la limite du plancher de bruit de C2 (15 %). D’où un protocole qui s’appuie sur le <b>compteur</b> (sans bruit) et sur l’<b>ablation</b> (écart relatif plus grand).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Le compteur seul : <code>VertsTransformed</code></div><div class="b">
+<p><b>Objectif.</b> Ajouter l’instrument avant de changer le code (M4 : une seule variable à la fois), pour mesurer l’« avant » du jour avec le même binaire.</p>
+<div class="io"><div><h5>Utilise</h5>Le harnais de PH4-G (<code>EProfCounter</code>, tableau de noms parallèle, <code>static_assert</code>).</div><div><h5>Produit</h5>Une colonne de plus ; attendu avant le chantier : <code>VertsTransformed = 3 × FacesSubmitted = 824 964</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Core/Profiler.h</div><pre><code>		FacesSubmitted,    // faces entrant dans le pipeline
+		TrisRasterized,    // triangles reellement envoyes au rasterizer
+		Count
+	};
+…
+		"MeshesTested", "MeshesCulled", "FacesSubmitted", "TrisRasterized"
+	};</code></pre></div>
+<div class="ap"><div class="t">Après — Core/Profiler.h</div><pre><code>		FacesSubmitted,
+		TrisRasterized,
+<span class="hl">		VertsTransformed,  // appels MulRow (chantier 2). Ajoute EN FIN : les colonnes</span>
+<span class="hl">		                   // des CSV de reference versionnes gardent leur position.</span>
+		Count
+	};
+…
+		"MeshesTested", "MeshesCulled", "FacesSubmitted", "TrisRasterized",
+<span class="hl">		"VertsTransformed"</span>
+	};</code></pre></div>
+</div>
+<div class="ab">
+<div class="av"><div class="t">Avant — RenderView</div><pre><code>LV3_PROF_COUNT(EProfCounter::FacesSubmitted, mesh-&gt;faceCount());</code></pre></div>
+<div class="ap"><div class="t">Après — RenderView (provisoire, étape 3 seulement)</div><pre><code>LV3_PROF_COUNT(EProfCounter::FacesSubmitted, mesh-&gt;faceCount());
+<span class="hl">// l'ancien pipeline appelle MulRow sur CHAQUE coin, y compris ceux</span>
+<span class="hl">// des faces rejetees ensuite par allOut.</span>
+<span class="hl">LV3_PROF_COUNT(EProfCounter::VertsTransformed,</span>
+<span class="hl">               mesh-&gt;faceCount() * mesh-&gt;vertsPerFace);</span></code></pre></div>
+</div>
+<p><b>Résultat.</b> Ce contrôle clôt aussi un point laissé ouvert par C2 (§ 7.2) : <code>vertsPerFace = 3</code> pour toutes les faces de la scène.</p>
+<p class="small">Pendant vectorisé : sans objet (instrumentation).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> La borne dure <code>kMaxMeshVerticesHard</code></div><div class="b">
+<p><b>Objectif.</b> Nommer la borne qui dimensionne le tampon, au même foyer que <code>kMaxCamerasHard</code> (bug 61).</p>
+<div class="io"><div><h5>Utilise</h5><code>LV3_MAX_MESH_VERTICES = 65536</code>, déclarée mais jamais appliquée.</div><div><h5>Produit</h5>Une constante <code>constexpr</code> lue par le tampon et par <code>RegisterMesh</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Core/EngineSettings.h</div><pre><code>    inline constexpr size_t kMaxCamerasHard = LV3_MAX_VIEWPORT;</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>    inline constexpr size_t kMaxCamerasHard = LV3_MAX_VIEWPORT;
+
+<span class="hl">    // Chantier 2 : borne dure qui dimensionne ClipSpaceBuffer (Rendering/VertexStage.h).</span>
+<span class="hl">    // LV3_MAX_MESH_VERTICES existait sans etre applique nulle part (meme etat que</span>
+<span class="hl">    // LV3_MAX_ENTITIES avant le bug 54). Elle est desormais verifiee UNE fois,</span>
+<span class="hl">    // dans ResourceManager::RegisterMesh, porte d'entree unique de tout mesh.</span>
+<span class="hl">    inline constexpr size_t kMaxMeshVerticesHard = LV3_MAX_MESH_VERTICES;</span></code></pre></div>
+</div>
+<p><b>Résultat.</b> 65 536 × 16 o = 1 Mio par tampon. 65 536 sommets numérotés 0 à 65 535 tiennent sur 16 bits (le commentaire « uint16 safe » de la macro) ; les indices du moteur sont pourtant en <code>uint32_t</code> (voir PH4CH2-12).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> L’étage sommets : <code>ClipSpaceBuffer</code> et <code>TransformPositions</code></div><div class="b">
+<p><b>Objectif.</b> Créer le tampon et la boucle qui le remplit, dans un fichier à part : c’est le point unique où vivra une version AVX2.</p>
+<div class="io"><div><h5>Utilise</h5><code>kMaxMeshVerticesHard</code> (étape 4) ; <code>MulRow</code> (<code>Rasterizer.h</code>).</div><div><h5>Produit</h5><code>Rendering/VertexStage.h</code> et <code>.cpp</code>, nouveaux.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>// (fichiers inexistants)
+// la transformation vit dans la boucle des faces de RenderView</code></pre></div>
+<div class="ap"><div class="t">Après — Rendering/VertexStage.h</div><pre><code><span class="hl">class ClipSpaceBuffer</span>
+<span class="hl">{</span>
+<span class="hl">public:</span>
+<span class="hl">    ClipSpaceBuffer() : m_data(std::make_unique&lt;Vec4f[]&gt;(kMaxMeshVerticesHard)) {}</span>
+<span class="hl">    ClipSpaceBuffer(const ClipSpaceBuffer&amp;) = delete;</span>
+<span class="hl">    ClipSpaceBuffer&amp; operator=(const ClipSpaceBuffer&amp;) = delete;</span>
+<span class="hl">    [[nodiscard]] Vec4f*       Data()       noexcept { return m_data.get(); }</span>
+<span class="hl">    [[nodiscard]] const Vec4f* Data() const noexcept { return m_data.get(); }</span>
+<span class="hl">    [[nodiscard]] static constexpr size_t Capacity() noexcept { return kMaxMeshVerticesHard; }</span>
+<span class="hl">private:</span>
+<span class="hl">    std::unique_ptr&lt;Vec4f[]&gt; m_data;</span>
+<span class="hl">};</span>
+<span class="hl">void TransformPositions(const Matrix44f&amp; mvp, const Vec3f* src,</span>
+<span class="hl">                        size_t count, Vec4f* dst) noexcept;</span></code></pre></div>
+</div>
+<h4>Pendant scalaire — Rendering/VertexStage.cpp (livré)</h4>
+<pre><code>void TransformPositions(const Matrix44f&amp; mvp, const Vec3f* src, size_t count, Vec4f* dst) noexcept
+{
+    LV3_ASSERT(count &lt;= ClipSpaceBuffer::Capacity());
+    LV3_ASSERT(src != nullptr || count == 0);
+    const Matrix44f m = mvp;              // copie LOCALE : dst ne peut pas l'aliaser (2.4)
+    for (size_t i = 0; i &lt; count; ++i)
+        dst[i] = MulRow(m, src[i]);       // ((x·m0c + y·m1c) + z·m2c) + m3c, colonne par colonne
+}</code></pre>
+<h4>Pendant vectorisé — <code>TransformPositions8</code> (proposé pour B3c, non appliqué)</h4>
+<pre><code>// Meme resultat que TransformPositions AU BIT PRES, 8 sommets par lot.
+// Entree SoA (MeshClass::positionsSoA, alignee 64 o, bourree a 8 depuis B3).
+// Sortie SoA cx/cy/cz/cw : exige un tampon aligne 32 o (ClipSpaceBuffer ne l'est pas : PH4CH2-3).
+// Regle du bit pres : chaque intrinseque = UNE operation du scalaire, MEME ordre. Pas de FMA.
+void TransformPositions8(const Matrix44f&amp; mvp, const float* px, const float* py, const float* pz,
+                         size_t paddedCount, float* cx, float* cy, float* cz, float* cw) noexcept
+{
+    LV3_ASSERT(paddedCount % 8 == 0);
+    float* out[4] = { cx, cy, cz, cw };
+    for (size_t i = 0; i &lt; paddedCount; i += 8)
+    {
+        const __m256 x = _mm256_load_ps(px + i);       // x des sommets i..i+7, couloir j = sommet i+j
+        const __m256 y = _mm256_load_ps(py + i);
+        const __m256 z = _mm256_load_ps(pz + i);
+        for (int c = 0; c &lt; 4; ++c)                     // colonne c de la matrice = composante c du clip
+        {
+            __m256 a = _mm256_mul_ps(x, _mm256_set1_ps(mvp[0][c]));          // x·m0c   (arrondi 1)
+            a = _mm256_add_ps(a, _mm256_mul_ps(y, _mm256_set1_ps(mvp[1][c]))); // + y·m1c (arrondis 2, 3)
+            a = _mm256_add_ps(a, _mm256_mul_ps(z, _mm256_set1_ps(mvp[2][c]))); // + z·m2c (arrondis 4, 5)
+            a = _mm256_add_ps(a, _mm256_set1_ps(mvp[3][c]));                   // + m3c   (arrondi 6)
+            _mm256_store_ps(out[c] + i, a);
+        }
+    }
+}
+// Les 16 diffusions sont hissees hors de la boucle par le compilateur, mais 16 + 3 &gt; 16 ymm :
+// quelques rechargements depuis la pile (meme constat qu'en B3 ; leve par AVX-512, piste B6).</code></pre>
+<h4>Registres, couloir par couloir (calcul réel en float32, composante x du clip)</h4>
+<div id="simdLanes"></div>
+<p class="small">Huit sommets d’une roche de test, une <code>mvp</code> de vue réaliste. La dernière ligne compare au scalaire <code>MulRow</code> sommet par sommet : identique au bit si l’ordre des opérations est respecté.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Le plafond dans <code>RegisterMesh</code></div><div class="b">
+<p><b>Objectif.</b> Qu’aucun mesh plus grand que le tampon ne puisse entrer dans le moteur, quelle que soit sa provenance.</p>
+<div class="io"><div><h5>Utilise</h5><code>kMaxMeshVerticesHard</code> (étape 4) ; <code>#include "Core/EngineSettings.h"</code> (hors PCH).</div><div><h5>Produit</h5>Un refus journalisé au chargement ; un handle invalide.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — ResourceManager.cpp</div><pre><code>MeshHandle ResourceManager::RegisterMesh(std::unique_ptr&lt;MeshClass&gt; mesh) {
+    LV3_ASSERT(mesh != nullptr);
+    const MeshHandle h = AllocateMeshHandle();
+    m_meshes.emplace(h.id, std::move(mesh));
+    return h;
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>MeshHandle ResourceManager::RegisterMesh(std::unique_ptr&lt;MeshClass&gt; mesh) {
+    LV3_ASSERT(mesh != nullptr);
+<span class="hl">    if (mesh-&gt;vertexCount() &gt; kMaxMeshVerticesHard)</span>
+<span class="hl">    {</span>
+<span class="hl">        Logger::error("RegisterMesh — '" + mesh-&gt;name + "' : "</span>
+<span class="hl">            + std::to_string(mesh-&gt;vertexCount()) + " sommets &gt; plafond "</span>
+<span class="hl">            + std::to_string(kMaxMeshVerticesHard) + " (LV3_MAX_MESH_VERTICES) — mesh refuse");</span>
+<span class="hl">        return MeshHandle::Invalid();</span>
+<span class="hl">    }</span>
+    const MeshHandle h = AllocateMeshHandle();
+    m_meshes.emplace(h.id, std::move(mesh));
+    return h;
+}</code></pre></div>
+</div>
+<p><b>Pourquoi pas dans <code>LoadMeshChecked</code></b> : un mesh procédural n’y passerait pas. <code>RegisterMesh</code> est la porte unique (elle deviendra aussi celle des cuissons SoA de B3 et des plans de B5).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> <code>RenderView</code> : garde, transformation, lecture</div><div class="b">
+<p><b>Objectif.</b> Remplacer la transformation par coin par une passe sur les sommets, puis une lecture par indice.</p>
+<div class="io"><div><h5>Utilise</h5><code>ClipSpaceBuffer</code>, <code>TransformPositions</code> (étape 5) ; la garantie de <code>RegisterMesh</code> (étape 6) ; le compteur (étape 3).</div><div><h5>Produit</h5>Un rendu identique au triangle près, avec 4,56 fois moins de <code>MulRow</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — RenderSystem.h</div><pre><code>void RenderView(Registry&amp; registry, ResourceManager&amp; rm,
+    Renderer&amp; renderer, const ViewData&amp; view);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code><span class="hl">class ClipSpaceBuffer;   // Rendering/VertexStage.h — toujours aucun #include</span>
+void RenderView(Registry&amp; registry, ResourceManager&amp; rm,
+    Renderer&amp; renderer, const ViewData&amp; view<span class="hl">, ClipSpaceBuffer&amp; clipBuf</span>);</code></pre></div>
+</div>
+<div class="ab">
+<div class="av"><div class="t">Avant — RenderSystem.cpp, dans la boucle des instances</div><pre><code>const MeshClass* mesh = rm.GetMesh(meshComp.m_meshHandle);
+if (!mesh || mesh-&gt;faceCount() == 0) continue;
+…
+const Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;
+const uint8_t   vpf = mesh-&gt;vertsPerFace;
+…
+for (size_t f = 0; f &lt; mesh-&gt;faceCount(); ++f)
+{
+    const uint32_t base = uint32_t(f) * vpf;
+    ClipVertex cv[4];
+    for (uint8_t k = 0; k &lt; vpf; ++k)
+        cv[k].clip = MulRow(mvp, mesh-&gt;vertexPositions[mesh-&gt;indices[base + k]]);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>const MeshClass* mesh = rm.GetMesh(meshComp.m_meshHandle);
+if (!mesh || mesh-&gt;faceCount() == 0) continue;
+<span class="hl">const size_t nVerts = mesh-&gt;vertexCount();</span>
+<span class="hl">LV3_ASSERT(nVerts &lt;= ClipSpaceBuffer::Capacity());</span>
+<span class="hl">if (nVerts &gt; ClipSpaceBuffer::Capacity()) continue;   // filet Release (bug 53)</span>
+…
+const Matrix44f mvp = modelMatrix * view.viewProjectionMatrix;
+const uint8_t   vpf = mesh-&gt;vertsPerFace;
+<span class="hl">TransformPositions(mvp, mesh-&gt;vertexPositions.data(), nVerts, clipBuf.Data());</span>
+<span class="hl">const Vec4f* const clip = clipBuf.Data();</span>
+<span class="hl">LV3_PROF_COUNT(EProfCounter::VertsTransformed, nVerts);</span>
+…
+for (size_t f = 0; f &lt; mesh-&gt;faceCount(); ++f)
+{
+    const uint32_t base = uint32_t(f) * vpf;
+    ClipVertex cv[4];
+    for (uint8_t k = 0; k &lt; vpf; ++k)
+<span class="hl">    {</span>
+<span class="hl">        const uint32_t vi = mesh-&gt;indices[base + k];</span>
+<span class="hl">        LV3_ASSERT(vi &lt; nVerts);   // hors bornes = sommet d'une AUTRE instance</span>
+<span class="hl">        cv[k].clip = clip[vi];     // lecture : plus aucune multiplication</span>
+<span class="hl">    }</span></code></pre></div>
+</div>
+<h4>Résultat calculé (float32) : un sommet partagé par six faces</h4>
+<div id="e7Calc"></div>
+<p class="small">Pendant vectorisé de la lecture : un <i>gather</i> de 8 coins (<code>_mm256_i32gather_ps</code>, ou chargements dispersés + transposition) ; c’est ce que fera le chantier B4 (<code>LoadCornerXY8</code>) sur le tampon projeté du 2b. Non fait dans ce lot.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> <code>main.cpp</code> : l’appelant possède le tampon</div><div class="b">
+<p><b>Objectif.</b> Allouer le tampon une fois, avant la boucle, et le passer à chaque vue.</p>
+<div class="io"><div><h5>Utilise</h5>La nouvelle signature de <code>RenderView</code> (étape 7).</div><div><h5>Produit</h5>1 Mio alloué au démarrage, réutilisé par toutes les instances de toutes les vues.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>#include "Rendering/depthbuffer.h"
+…
+	Renderer renderer;
+…
+	RenderView(registry, rm, renderer, views[i]);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>#include "Rendering/depthbuffer.h"
+<span class="hl">#include "Rendering/VertexStage.h"     // ClipSpaceBuffer (chantier 2)</span>
+…
+	Renderer renderer;
+<span class="hl">	ClipSpaceBuffer clipBuf;        // 1 Mio alloue UNE fois, avant la boucle</span>
+…
+	RenderView(registry, rm, renderer, views[i]<span class="hl">, clipBuf</span>);</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Question d’Onky : pourquoi <code>Vec4f</code>, le quatrième élément ne sert à rien ?</div><div class="b">
+<p><b>Objectif.</b> Répondre à une question de fond (section ajoutée à la demande). La réponse est dans la matrice de projection.</p>
+<div class="io"><div><h5>Utilise</h5><code>Projection.cpp</code> (<code>PerspectiveOffCenter</code>, <code>PerspectiveInfinite</code>, <code>Orthographic</code>) ; consommateurs de w dans <code>Clipper.cpp</code>, <code>RenderSystem.cpp</code>, <code>Fragment.cpp</code>.</div><div><h5>Produit</h5>Une règle : on ne stocke pas une composante constante, on ne supprime jamais une composante qui varie.</div></div>
+<pre><code>m[2][3] = -1.0f;   // PerspectiveOffCenter : recopie -z dans w (main droite)
+m[3][3] =  0.0f;   // matrice projective : w_clip = -z_vue, la distance a la camera
+
+m[2][2] = 0.0f;    // PerspectiveInfinite : z_clip = n, CONSTANT
+m[3][2] = n;       //   c'est z qui est redondant ici, pas w</code></pre>
+<div class="scroll"><table>
+<thead><tr><th>Consommateur</th><th>Usage de w</th></tr></thead>
+<tbody>
+<tr><td><code>NearDistance</code> (<code>ClipVertex.h</code>)</td><td><code>w − z</code> : distance signée au plan near, décide du clipping</td></tr>
+<tr><td><code>ClipTriangleNear</code> / <code>Lerp</code></td><td>w interpolé comme x, y, z sur les arêtes coupées</td></tr>
+<tr><td><code>ClipLess</code> (<code>Clipper.cpp</code>)</td><td><code>a.w &lt; b.w</code> : ordre canonique contre les fissures</td></tr>
+<tr><td><code>EmitClipTriangle</code></td><td><code>invW = 1 / w</code> : la division perspective</td></tr>
+<tr><td><code>Fragment.cpp</code></td><td>interpolation perspective-correcte, distance linéaire</td></tr>
+</tbody></table></div>
+<p>Laboratoire 1.3 pour voir ce que donnerait une division avant le clipping.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Séance 1 : B2 et D2 seuls, une contradiction</div><div class="b">
+<p><b>Objectif.</b> Lire les deux premiers fichiers. Onky avait appliqué les étapes 3 et 7 d’un coup : il n’existait pas d’« avant » du même jour.</p>
+<div class="io"><div><h5>Utilise</h5>Les références B (11,48 ms) et D (5,95 ms) de C2.</div><div><h5>Produit</h5>Exactitude prouvée ; un gain de frame sous le bruit ; une contradiction à expliquer.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Grandeur</th><th>C2</th><th>Séance 1</th><th>Lecture</th></tr></thead>
+<tbody>
+<tr><td><code>VertsTransformed</code></td><td class="num">824 964 (par construction)</td><td class="num">181 061</td><td>÷ 4,56 ; prédiction 185 à 200 k, un peu mieux</td></tr>
+<tr><td><code>FacesSubmitted</code> / <code>TrisRasterized</code></td><td class="num">274 988 / 134 389</td><td class="num">identiques</td><td><span class="pill ok">même image</span></td></tr>
+<tr><td>Géométrie seule (D2)</td><td class="num">5,95 ms</td><td class="num">3,70 ms</td><td>−38 %, dans la prédiction</td></tr>
+<tr><td><code>Render</code> (B2)</td><td class="num">11,48 ms</td><td class="num">10,59 ms</td><td>−7,7 %, <span class="pill warn">sous le plancher de 15 %</span></td></tr>
+<tr><td>Rasterisation déduite (B − D)</td><td class="num">5,64 ms</td><td class="num">6,90 ms</td><td><span class="pill bad">+22 % sur un code inchangé</span></td></tr>
+</tbody></table></div>
+<p>Deux hypothèses : <b>H1</b>, la dérive d’un jour à l’autre (on compare deux séances, peut-être deux machines) ; <b>H2</b>, le recouvrement (une partie de la géométrie était cachée dans les attentes de la rasterisation). Elles prédisent des choses différentes pour un « avant » mesuré le même jour.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 11</span> Séance 2 : l’ancien code reconstruit, et deux pièges</div><div class="b">
+<p><b>Objectif.</b> Mesurer l’ancien code dans la même séance. Méthode : <code>git worktree add ..\LibraryV3_avant 97e6191</code> (et l’EXE à <code>5d6c3e1</code>), sans défaire le travail en cours.</p>
+<div class="io"><div><h5>Utilise</h5>Les hypothèses H1 / H2 (étape 10).</div><div><h5>Produit</h5>Un run mal étiqueté détecté ; une séance entière sur une machine ralentie ; un rapport 0,895 sur trois paires.</div></div>
+<ul>
+<li><b>Piège 1 : B1 ≈ D1</b> (5,90 contre 5,96 ms). Un run complet de l’ancien code doit donner ≈ 11,5 ms : B1 avait tourné avec la rasterisation débranchée. Les compteurs ne pouvaient pas le voir (<code>TrisRasterized</code> est compté avant <code>DrawTriangle</code>). D’où le champ <code>ablation=</code> (étape 13).</li>
+<li><b>Piège 2 : six runs alternés tous 1,7 fois plus lents</b>, y compris <code>Trigger</code> (12,6 → 21,7 µs), dont le code n’a pas changé. Attribué sur le moment à une baisse de fréquence thermique. C’était faux (étape 15).</li>
+<li><b>Ce qui reste exploitable</b> : D1 → D2, géométrie 5,96 → 3,62 ms (−39 %) le même jour ; et trois paires alternées dont le témoin T est égal au sein de chaque paire : rapport après ÷ avant 0,8947, 0,8986, 0,8952. Dispersion 0,4 %, contre un plancher de 15 % entre séances.</li>
+</ul>
+<p class="small">Laboratoire 1.6 pour refaire ces contrôles run par run.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 12</span> Question d’Onky : comment, dans un seul thread, une fonction peut-elle en masquer une autre ?</div><div class="b">
+<p><b>Objectif.</b> Expliquer le parallélisme d’instructions (section ajoutée à la demande), et donner un banc reproductible.</p>
+<div class="io"><div><h5>Utilise</h5>Le constat de l’étape 11 : le gain de la frame est plus petit que celui de la géométrie isolée.</div><div><h5>Produit</h5>Le mécanisme (section M.5, laboratoire 1.5) et un micro-banc.</div></div>
+<h4>Pendant scalaire : une chaîne, puis quatre chaînes indépendantes</h4>
+<pre><code>// A : UNE chaine de dependance — chaque addition attend la precedente (~4 cycles de latence)
+float Sum1(const float* a, size_t n) { float s = 0.f; for (size_t i = 0; i &lt; n; ++i) s += a[i]; return s; }
+
+// B : QUATRE chaines independantes — le coeur les execute en parallele
+float Sum4(const float* a, size_t n)
+{
+    float s0 = 0.f, s1 = 0.f, s2 = 0.f, s3 = 0.f;
+    for (size_t i = 0; i &lt; n; i += 4) { s0 += a[i]; s1 += a[i+1]; s2 += a[i+2]; s3 += a[i+3]; }
+    return (s0 + s1) + (s2 + s3);
+}</code></pre>
+<h4>Pendant vectorisé : 4 accumulateurs de 8 couloirs, 32 chaînes</h4>
+<pre><code>float Sum32_AVX2(const float* a, size_t n)              // n multiple de 32, a aligne 32 o
+{
+    __m256 s0 = _mm256_setzero_ps(), s1 = s0, s2 = s0, s3 = s0;   // 4 registres x 8 couloirs
+    for (size_t i = 0; i &lt; n; i += 32)
+    {
+        s0 = _mm256_add_ps(s0, _mm256_load_ps(a + i));       // 8 sommes partielles chacune
+        s1 = _mm256_add_ps(s1, _mm256_load_ps(a + i + 8));   // 4 additions INDEPENDANTES par tour :
+        s2 = _mm256_add_ps(s2, _mm256_load_ps(a + i + 16));  // elles se recouvrent dans le pipeline
+        s3 = _mm256_add_ps(s3, _mm256_load_ps(a + i + 24));
+    }
+    __m256 s = _mm256_add_ps(_mm256_add_ps(s0, s1), _mm256_add_ps(s2, s3));
+    __m128 h = _mm_add_ps(_mm256_castps256_ps128(s), _mm256_extractf128_ps(s, 1)); // 8 → 4
+    h = _mm_add_ps(h, _mm_movehl_ps(h, h));                                       // 4 → 2
+    h = _mm_add_ss(h, _mm_movehdup_ps(h));                                        // 2 → 1
+    return _mm_cvtss_f32(h);
+}</code></pre>
+<p>Compiler en <code>/O2</code> <b>sans</b> <code>/fp:fast</code> (sinon le compilateur fait lui-même la transformation). B est typiquement 3 à 4 fois plus rapide que A, sur un seul thread, avec le même nombre d’additions.</p>
+<div class="warn"><b>Attention : les trois fonctions ne rendent pas le même résultat.</b> Changer l’ordre des additions flottantes change les arrondis. C’est pour cela que <code>/fp:precise</code> interdit au compilateur de le faire, et que les chantiers de vectorisation du moteur (B3, C2) gardent exactement l’ordre du scalaire. Démonstration calculée en float32 :</div>
+<div id="e12Calc"></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 13</span> L’en-tête se complète : <code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code></div><div class="b">
+<p><b>Objectif.</b> Que les deux erreurs du week-end (machine inconnue, ablation non déclarée) deviennent impossibles.</p>
+<div class="io"><div><h5>Utilise</h5>Les pièges de l’étape 11.</div><div><h5>Produit</h5>Un en-tête qui porte la machine, l’affinité et la nature du run (M2).</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Core/Profiler.cpp, DumpCsv</div><pre><code>f &lt;&lt; "# scene=" &lt;&lt; info.scene
+  &lt;&lt; ";config=" &lt;&lt; info.config
+  &lt;&lt; ";res=" &lt;&lt; info.width &lt;&lt; 'x' &lt;&lt; info.height</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>f &lt;&lt; "# scene=" &lt;&lt; info.scene
+  &lt;&lt; ";config=" &lt;&lt; info.config
+<span class="hl">  &lt;&lt; ";cpu=" &lt;&lt; CpuBrand()</span>
+<span class="hl">  &lt;&lt; ";affinity=" &lt;&lt; AffinityMask()</span>
+<span class="hl">  &lt;&lt; ";ablation=" &lt;&lt; info.ablation</span>
+  &lt;&lt; ";res=" &lt;&lt; info.width &lt;&lt; 'x' &lt;&lt; info.height</code></pre></div>
+</div>
+<pre><code>// Nom commercial du CPU (CPUID 0x80000002..4). M2 : la machine est ecrite DANS le fichier.
+static std::string CpuBrand()
+{
+    int regs[4]{}; char brand[49]{};
+    __cpuid(regs, 0x80000000);
+    if (static_cast&lt;unsigned&gt;(regs[0]) &lt; 0x80000004u) return "inconnu";
+    for (int i = 0; i &lt; 3; ++i) { __cpuid(regs, 0x80000002 + i); std::memcpy(brand + i * 16, regs, 16); }
+    std::string s(brand);
+    for (char&amp; c : s) if (c == ';') c = ',';      // separateur du CSV reserve
+    return s;
+}
+// M9 : le type de coeur est une variable de la mesure. "fff" = libre, sinon epingle.
+static std::string AffinityMask()
+{
+    DWORD_PTR proc = 0, sys = 0;
+    if (!GetProcessAffinityMask(GetCurrentProcess(), &amp;proc, &amp;sys)) return "inconnu";
+    char buf[32]; std::snprintf(buf, sizeof(buf), "%llx", static_cast&lt;unsigned long long&gt;(proc));
+    return buf;
+}</code></pre>
+<div class="ab">
+<div class="av"><div class="t">Avant — EmitClipTriangle (ablation à la main)</div><pre><code>// ⚠ ABLATION M7 — A RETIRER IMMEDIATEMENT APRES LA MESURE ⚠
+(void)renderer;
+//renderer.DrawTriangle(RasterTriangle{ ... }, col);</code></pre></div>
+<div class="ap"><div class="t">Après — commutateur déclaré</div><pre><code><span class="hl">#if LV3_ABLATION_RASTER   // M7, declaree dans l'en-tete CSV</span>
+<span class="hl">    (void)renderer; (void)col;</span>
+<span class="hl">#else</span>
+    renderer.DrawTriangle(RasterTriangle{ ... }, col);
+<span class="hl">#endif</span>
+// config.h : #ifndef LV3_ABLATION_RASTER / #define LV3_ABLATION_RASTER 0 / #endif
+// main.cpp : info.ablation = LV3_ABLATION_RASTER ? "raster" : "none";</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 14</span> Séance 3 : le champ <code>cpu=</code> révèle un CPU hybride</div><div class="b">
+<p><b>Objectif.</b> Lire une paire A/P et une paire d’ablation Aa/Pa dans la même séance.</p>
+<div class="io"><div><h5>Utilise</h5>Les champs d’en-tête de l’étape 13 ; l’identification des fichiers par en-tête (les noms <code>a</code>/<code>b</code> ne disaient rien).</div><div><h5>Produit</h5>Gain P-core : géométrie −39,6 %, <code>Render</code> −17,3 % ; 84 % du gain isolé atteint la frame.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Fichier</th><th><code>ablation=</code></th><th><code>VertsTransformed</code></th><th>Donc</th><th class="num">Render</th><th class="num">p95 ÷ médiane</th><th class="num">T (µs)</th></tr></thead>
+<tbody>
+<tr><td>c53790a6</td><td>none</td><td>absent</td><td><b>A</b>, avant</td><td class="num">12,42 ms</td><td class="num">1,05</td><td class="num">101,1</td></tr>
+<tr><td>a87aa604</td><td>none</td><td>présent</td><td><b>P</b>, après</td><td class="num">10,27 ms</td><td class="num">1,10</td><td class="num">101,3</td></tr>
+<tr><td>2b91e09f</td><td>raster</td><td>absent</td><td><b>Aa</b></td><td class="num">6,48 ms</td><td class="num">1,04</td><td class="num">98,9</td></tr>
+<tr><td>e0a753ea</td><td>raster</td><td>présent</td><td><b>Pa</b></td><td class="num">3,92 ms</td><td class="num">1,08</td><td class="num">98,3</td></tr>
+</tbody></table></div>
+<p><b>La découverte</b> : <code>cpu=12th Gen Intel(R) Core(TM) i7-1265U</code>, un processeur hybride (2 cœurs P, 8 cœurs E). Nouvelle hypothèse : à la séance 2, Windows avait placé le thread sur un cœur E.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 15</span> Séance 4 : épingler sur un cœur P, puis sur un cœur E</div><div class="b">
+<p><b>Objectif.</b> Trancher l’hypothèse de l’étape 14 par une expérience décisive.</p>
+<div class="io"><div><h5>Utilise</h5><code>start "" /wait /affinity 4 …</code> (P) et <code>/affinity 100</code> (E) ; le champ <code>affinity=</code>.</div><div><h5>Produit</h5>La confirmation : la séance 2 avait tourné sur un cœur E. La Référence F.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Grandeur (même binaire « après »)</th><th class="num"><code>affinity=4</code> (P)</th><th class="num"><code>affinity=100</code> (E)</th><th class="num">E ÷ P</th></tr></thead>
+<tbody>
+<tr><td>Témoin T</td><td class="num">93,6 µs</td><td class="num">143,3 µs</td><td class="num">×1,53</td></tr>
+<tr><td>Render</td><td class="num">10,19 ms</td><td class="num">18,14 ms</td><td class="num">×1,78</td></tr>
+<tr><td>FRAME</td><td class="num">12,14 ms (82 fps)</td><td class="num">20,38 ms (49 fps)</td><td class="num">×1,68</td></tr>
+<tr><td>Clear</td><td class="num">968 µs</td><td class="num">820 µs</td><td class="num">×0,85</td></tr>
+<tr><td>Present</td><td class="num">813 µs</td><td class="num">1 187 µs</td><td class="num">×1,46</td></tr>
+</tbody></table></div>
+<ul>
+<li>Les runs « après » de la séance 2 donnaient T ≈ 150 à 160 µs et <code>Render</code> ≈ 17,4 à 18,7 ms ; le run épinglé sur cœur E donne 143 µs et 18,1 ms. <b>La séance 2 avait tourné sur un cœur E.</b></li>
+<li><code>Clear</code> va <b>plus vite</b> sur cœur E : limité par la mémoire, il ne suit pas la puissance du cœur. Il ne peut pas servir de témoin de calcul, d’où le témoin T (M3).</li>
+</ul>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 16</span> Clôture : avenant C2, annexe A12, règles M</div><div class="b">
+<p><b>Objectif.</b> Figer le code, les chiffres, les erreurs de méthode et le nouveau schéma du pipeline.</p>
+<div class="io"><div><h5>Utilise</h5>Les quatre séances.</div><div><h5>Produit</h5><code>claude/Avenant_C2_Chantier2_PreTransformation.md</code>, <code>claude/Annexe_A12_Pipeline_Rendu.md</code>, <code>architecture-rules.md</code> mis à jour, artefact « Pipeline LV3 ».</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Référence F</th><th>Valeur</th></tr></thead>
+<tbody>
+<tr><td>Machine</td><td>i7-1265U, cœur P épinglé (<code>affinity=4</code>), secteur, performances élevées</td></tr>
+<tr><td>FRAME / Render</td><td class="num">12,14 ms / 10,19 ms</td></tr>
+<tr><td>Témoins</td><td class="num">T 93,6 µs ; Clear 968 µs</td></tr>
+<tr><td>Loi de coût</td><td class="num">≈ 37 ns par face soumise</td></tr>
+<tr><td><code>WorldXform1</code></td><td class="num">23,9 µs, 2 ‰ : l’abandon d’A3 tient</td></tr>
+</tbody></table></div>
+<p><b>Règle de fréquence</b> (A12) : un calcul s’exécute au niveau le moins fréquent où son résultat est encore constant. <b>Règles de mesure</b> : M2 et M3 complétées, M7 amendée, M8 et M9 nouvelles (section 0.5 E). <b>Classement révisé</b> : 2 clos ; 2b (division et <code>ToRaster</code> par sommet) créé ; 3 remonte ; 4 rétrogradé (≤ 0,6 ms isolée sur <code>TransformPositions</code>).</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>CE1 · Un tampon local par instance.</b>
+<pre><code>std::vector&lt;Vec4f&gt; clip(mesh-&gt;vertexCount());   // dans la boucle des instances</code></pre>
+1 297 instances visibles par frame (cumul des 4 vues) : 1 297 allocations, 1 297 mises à zéro (le constructeur de <code>Vec4f</code> initialise ses membres), 1 297 libérations. Le harnais mesurerait surtout l’allocateur.</div>
+
+<div class="bad"><b>CE2 · Un <code>static</code> caché dans <code>RenderView</code>.</b>
+<pre><code>static std::vector&lt;Vec4f&gt; s_clip;   // « ça marche »</code></pre>
+Ça marche tant qu’un seul thread rend. Avec deux vues sur deux threads, les deux écrivent dans le même tampon : des triangles faux, sans crash ni assertion.</div>
+
+<div class="bad"><b>CE3 · Un cache paresseux par drapeau.</b>
+<pre><code>if (!done[vi]) { clip[vi] = MulRow(mvp, p[vi]); done[vi] = true; }</code></pre>
+Une branche imprévisible par coin (824 964 par frame), un <code>memset</code> de n drapeaux par instance, et une boucle impossible à vectoriser. La passe complète fait le même nombre de <code>MulRow</code> (laboratoire 1.1) sans aucune branche.</div>
+
+<div class="bad"><b>CE4 · Diviser par w avant de stocker, pour un <code>Vec3f</code>.</b>
+<pre><code>dst[i] = Vec3f(c.x / c.w, c.y / c.w, c.z / c.w);   // avant le clipping</code></pre>
+Sommet en x = 2,5, z_vue = +2 (derrière l’œil), focale 1 : w = −2, x/w = −1,25. Le sommet réapparaît de l’autre côté de l’écran ; le triangle qui le contient devient un triangle géant et retourné. Laboratoire 1.3.</div>
+
+<div class="bad"><b>CE5 · <code>mvp</code> par référence dans la boucle.</b>
+<pre><code>for (size_t i = 0; i &lt; count; ++i) dst[i] = MulRow(mvp, src[i]);   // mvp : const Matrix44f&amp;</code></pre>
+Chaque écriture dans <code>dst</code> peut, pour le compilateur, modifier un coefficient de <code>mvp</code> : jusqu’à 16 relectures par sommet. Copie locale : 64 octets par instance. Laboratoire 1.4.</div>
+
+<div class="bad"><b>CE6 · Garder un pointeur vers le tampon au-delà de l’instance.</b>
+<pre><code>const Vec4f* saved = clipBuf.Data() + vi;   // instance A
+// ... instance B : TransformPositions reecrit le tampon
+Use(*saved);                                 // lit un sommet de B</code></pre>
+Ni crash ni assertion : la valeur est plausible. Laboratoire 1.7.</div>
+
+<div class="bad"><b>CE7 · Prédire « ×4 sur toute la géométrie ».</b> C2 annonçait ≈ 4,4 ms gagnées sur 5,95. Mesuré : 2,34 à 2,56 ms en isolé. Le reste de la géométrie (division, <code>ToRaster</code>, backface, <code>FaceColor</code>, copies), environ 3 ms, est payé par coin et n’est pas touché par le chantier. C’est lui que vise le 2b.</div>
+
+<div class="bad"><b>CE8 · Comparer à une référence d’un autre jour.</b> Séance 1 : <code>Render</code> 11,48 → 10,59 ms, −7,7 %, sous le plancher. Avec un « avant » du même jour (séance 3), le gain est de −17,3 %. La comparaison entre jours avait divisé le gain par plus de deux (et mélangé deux machines probables).</div>
+
+<div class="bad"><b>CE9 · Faire confiance au nom d’un binaire.</b> B1 portait le nom « étape 1, complet » et a tourné en ablation : <code>Render</code> 5,90 ms au lieu d’environ 11,5. Seul le rapport B1 ÷ D1 ≈ 1,0 l’a trahi. D’où <code>ablation=</code> dans l’en-tête.</div>
+
+<div class="bad"><b>CE10 · Prendre <code>Clear</code> pour un témoin de calcul.</b> Sur cœur E, <code>Clear</code> varie de −15 % pendant que T varie de +53 %. Pendant la séance 2, <code>Clear</code> n’a bougé que d’environ 20 % alors que tout le calcul ralentissait de 67 %.</div>
+
+<div class="bad"><b>CE11 · Ne pas épingler sur un CPU hybride.</b> Même binaire, même scène : <code>Render</code> 10,19 ms sur cœur P, 18,14 ms sur cœur E. Une séance entière (six runs) a été lue comme un bridage thermique alors que c’était le choix de cœur de Windows.</div>
+
+<div class="bad"><b>CE12 · Déduire la rasterisation par soustraction.</b> Complet − ablation = 5,64 ms avant, 6,90 ms après, sur un code de rasterisation inchangé. Les étages se recouvrent : l’ablation retire aussi les attentes dans lesquelles la géométrie se cachait (M7 amendée).</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>5.1 · Ajouter un mesh procédural</h3>
+<pre><code>auto m = std::make_unique&lt;MeshClass&gt;();
+m-&gt;name = "terrain_256";                 // 257 × 257 = 66 049 sommets
+BuildGrid(*m, 257, 257);                 // remplit positions et indices
+const MeshHandle h = rm.RegisterMesh(std::move(m));
+// Journal : RegisterMesh — 'terrain_256' : 66049 sommets &gt; plafond 65536 (LV3_MAX_MESH_VERTICES) — mesh refuse
+// h.IsValid() == false : le mesh n'entre pas, le rendu ne peut pas deborder du tampon.
+// Remede : decouper en tuiles de 256 × 256 (65 536 sommets), ou relever la borne
+// (deux tampons de n × 16 o chacun aujourd'hui, clip et raster).</code></pre>
+
+<h3>5.2 · Ajouter un attribut par sommet (normales, UV, éclairage)</h3>
+<p>La règle de fréquence s’applique : tout calcul qui ne dépend que du sommet (normale en espace monde, éclairage de Gouraud) entre dans l’étage sommets, pas dans la boucle des faces. Trois conséquences :</p>
+<ul>
+<li>le tampon grossit (un <code>Vec4f</code> clip + les attributs) : c’est le moment de décider AoS ou SoA ;</li>
+<li><code>ClipVertex</code> et <code>Lerp()</code> reçoivent l’attribut <b>en même temps</b> (contrat de <code>ClipVertex.h</code>, point L4-2) ;</li>
+<li>la normale se transforme par <code>(M⁻¹)ᵀ</code>, pas par <code>M</code>, dès qu’une échelle n’est pas uniforme (point L2-8).</li>
+</ul>
+
+<h3>5.3 · Comparer deux versions sur l’i7-1265U</h3>
+<pre><code>:: Deux binaires compiles d'avance (LV3Profile=true), dossiers de banc separes.
+:: Secteur, performances elevees, applications fermees.
+set R=--scene=solar_system_v1compat_belt.json --bench=300
+start "" /wait /affinity 4 B\RefactoNouvelleLibrairieV3.exe "C:\racine" %R% --csv=Mesures/jetable.csv
+start "" /wait /affinity 4 A\RefactoNouvelleLibrairieV3.exe "C:\racine" %R% --csv=Mesures/A1.csv
+start "" /wait /affinity 4 B\RefactoNouvelleLibrairieV3.exe "C:\racine" %R% --csv=Mesures/B1.csv
+start "" /wait /affinity 4 B\RefactoNouvelleLibrairieV3.exe "C:\racine" %R% --csv=Mesures/B2.csv
+start "" /wait /affinity 4 A\RefactoNouvelleLibrairieV3.exe "C:\racine" %R% --csv=Mesures/A2.csv</code></pre>
+
+<h3>5.4 · Lire les résumés avant de conclure</h3>
+<ol>
+<li>En-têtes : même <code>scene</code>, <code>res</code>, <code>views</code>, <code>config</code>, <code>cpu</code>, <code>affinity</code> ; <code>ablation</code> attendu pour chaque run.</li>
+<li>Compteurs : <code>FacesSubmitted</code>, <code>TrisRasterized</code> identiques entre A et B (sinon le chantier a changé l’image).</li>
+<li>Témoin T à ±3 % au sein de chaque paire ; <code>Clear</code> stable.</li>
+<li>p95 de <code>Render</code> &lt; 1,15 × médiane (sinon run bimodal, écarté).</li>
+<li>Complet ÷ ablation cohérent (environ 2 sur la ceinture).</li>
+<li>Puis seulement : le rapport B ÷ A de chaque paire.</li>
+</ol>
+
+<h3>5.5 · Prédire le gain d’un déplacement de bande</h3>
+<p>Un calcul de coût unitaire c placé par coin coûte c × 3 × faces ; par sommet, c × sommets. Gain isolé = c × (3F − V). Pour <code>MulRow</code> : 3,5 ns × (824 964 − 181 061) = 2,25 ms, à comparer aux 2,34 à 2,56 ms mesurés. La part qui atteint la frame dépend du recouvrement (84 % mesurés sur cœur P). Le laboratoire 1.2 fait le calcul pour d’autres opérations.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Les chantiers 2b, B3, D-a1, le LOD et la relecture du 13/11 ont modifié plusieurs pièces et lectures de ce lot. Chaque amendement donne l’avant (27/09) et l’après. Le dépôt lu est LIB <code>e7cae94</code> / EXE <code>5203980</code>.</p>
+
+<div class="amend"><div class="h">AM1 · L’étage sommets a deux branches (chantier 2b, avenant C4)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — 27/09</div><pre><code>toutes les instances :
+  TransformPositions → ClipSpaceBuffer
+  faces : division par w et ToRaster PAR COIN</code></pre></div>
+<div class="ap"><div class="t">Après — 28/09</div><pre><code>Inside (97,6 % des faces) :
+  ProjectPositions : MulRow + 1/w + ToRaster par SOMMET
+  → RasterSpaceBuffer (RasterVertex, pixels)
+Intersect : TransformPositions → ClipSpaceBuffer
+  (inchangé), projection par coin APRÈS clipping
+Render −33,5 % ; ProjectClip = source unique de /w</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM2 · L’étage sommets en SoA, vectorisé (chantier B3)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>entrée : vertexPositions (AoS, Vec3f)
+ClipSpaceBuffer : unique_ptr&lt;Vec4f[]&gt; (16 o)
+TransformPositions scalaire</code></pre></div>
+<div class="ap"><div class="t">Après — dépôt actuel</div><pre><code>MeshClass::positionsSoA (x, y, z alignés 64 o, bourrés à 8),
+  cuits par RegisterMesh (BakePositionsSoA)
+RasterSpaceBuffer : SimdVector&lt;RasterVertex&gt; (64 o)
+ProjectPositions8 : 8 sommets par lot, bit-exact
+ClipSpaceBuffer : INCHANGÉ, 16 o ; TransformPositions
+  toujours scalaire (piste B3c)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM3 · La cible du chantier 4 a changé</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — VertexStage.h, avenant C2</div><pre><code>« TransformPositions est le point UNIQUE où vivra
+  la version AVX2 (chantier 4) »</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C4 § 12, chantier B</div><pre><code>Cible : ProjectPositions (97,6 % des faces), fait en B3.
+TransformPositions ne sert qu'au chemin Intersect.
+Le commentaire d'en-tête de VertexStage.h n'a pas été
+mis à jour (PH4CH2-2).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM4 · L’accrochage à la grille vit dans l’étage sommets (D-a1, D-a1d)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>l'étage sommets ne fait que MulRow</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>ProjectClip : SnapToSubpixel(x, y) au 1/256 px
+  (LV3_RASTER_FIXED = 1) : un sommet, un accrochage.
+Coût mesuré sur V1 : RenderVerts +35 µs (D-a1),
+  réduit par le nombre magique (D-a1d).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM5 · Le LOD choisit le mesh avant l’étage sommets</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>mesh ← GetMesh(meshComp.m_meshHandle)
+garde nVerts</code></pre></div>
+<div class="ap"><div class="t">Après — RenderSystem.cpp actuel</div><pre><code>chaîne ← GetLodChain(...) ; niveau ← SelectLodLevel(…)
+mesh ← GetMesh(chain-&gt;levels[niveau])
+garde nVerts sur le mesh DU NIVEAU choisi
+(le plafond s'applique à chaque niveau, par RegisterMesh)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM6 · L’étage sommets a sa propre zone de mesure</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>coût de l'étage sommets : inconnu, compris dans Render</code></pre></div>
+<div class="ap"><div class="t">Après — chantier B0b</div><pre><code>sous-zone RenderVerts (exclue de RESTE), autour de
+TransformPositions ET ProjectPositions(8) ;
+sert aussi de thermomètre de calcul (rappels du plan)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM7 · Les règles de mesure ont continué de grandir</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — avenant C2</div><pre><code>M1 à M9 ; témoins T et Clear</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>M10 à M14 (C3, C4), M19 (plan) ; témoin ClearDepth et
+règle |A1 − A2| &lt; 3 % (D-a1) ; thermomètre RenderVerts ;
+ordre ABBA/BAAB (C4 § 9). Voir PH4G-11 (dispersion
+des règles M dans trois documents).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM8 · Le recouvrement : ce que les chiffres permettent de dire (relecture du 13/11)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — avenant C2 § 4.2 et § 5</div><pre><code>part transmise : 84 % (P) ; ≈ 53 % (E)
+« la proportion masquée dépend de la taille de la
+fenêtre out-of-order, donc du cœur » (16 % P, 47 % E)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>53 % (E) NON VALIDE : calculé avec le gain de frame E
+  (rapport 0,895) et le gain de géométrie P (2,34 ms) :
+  deux états de machine mélangés (M4). Seuls valides :
+  84 % (P, une séance) et le rapport 0,895 (E, 3 paires).
+Sens de l'explication : une fenêtre PLUS PETITE (E)
+  masquerait MOINS ; si E masque plus, c'est qu'il attend
+  plus (plus de cycles libres), pas sa fenêtre.
+Hypothèse, non démontrée : à vérifier avec VTune.
+Complément de l'avenant C4 § 8 : latence de division
+  et erreurs de prédiction de branche (2b).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM9 · La Référence F a été remplacée</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — 27/09</div><pre><code>Référence F : Render 10,19 ms, ≈ 37 ns par face</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>G (3b) 7,28 à 7,41 ms · H (2b) 5,14 à 5,16 ms, 18,7 ns
+puis I (LOD des roches) : Render 1,67 à 1,69 ms
+Les références sont datées et ne se comparent qu'à des
+runs de leur séance (M14).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM10 · Le schéma A12 a été remplacé par A12a</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — annexe A12 (27/09)</div><pre><code>bande sommet : TransformPositions seule
+points d'extension : 1 LOD, 2b, 3, 4 sur TransformPositions</code></pre></div>
+<div class="ap"><div class="t">Après — avenant A12a (28/09)</div><pre><code>bande sommet à deux branches (Inside / Intersect)
+2b, 3a, 3b faits ; 4 déplacé sur ProjectPositions
+principe de A12 § 1 (règle de fréquence) INCHANGÉ
+L'artefact « Pipeline LV3 » montre encore l'état A12.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM11 · Le patron de la garde est devenu une règle proposée</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>garde de capacité : patron du bug 53, implicite</code></pre></div>
+<div class="ap"><div class="t">Après — lot PH1-C</div><pre><code>PH1C.b (proposée, non actée) : un garde-fou qui protège
+la Release s'écrit LV3_ASSERT(cond) + if (!cond) repli ;
+la garde de ClipSpaceBuffer est citée comme exemple.</code></pre></div></div></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>7.1 · Tests hors moteur</h3>
+<ul>
+<li><b>Aucune TNR n’existe pour <code>TransformPositions</code></b> (vérifié dans <code>Test/</code> au 13/11). Proposée (PH4CH2-1) : pour des maillages aléatoires, comparer au bit près la lecture <code>clip[indices[3f + k]]</code> et la référence par coin <code>MulRow(mvp, positions[indices[3f + k]])</code>. Mutation à détecter : une transformation qui contracte en FMA (0 différence attendue sans FMA, des différences avec).</li>
+<li><b>Pendant vectorisé</b> (si B3c est lancé) : <code>TransformPositions8</code> contre <code>TransformPositions</code>, au bit près, sur des positions aléatoires et des matrices de vue réelles ; plus une référence indépendante en double (règle du lot D-a1d : deux copies d’une même formule ne voient pas une erreur commune).</li>
+<li><b>Plafond</b> : un mesh procédural de 65 536 sommets accepté, de 65 537 refusé avec le message attendu.</li>
+</ul>
+
+<h3>7.2 · Filets à la compilation et en Debug</h3>
+<ul>
+<li><code>static_assert(std::size(kProfCounterNames) == kProfCounterCount)</code> : un compteur sans nom ne compile pas ;</li>
+<li><code>LV3_ASSERT(count &lt;= ClipSpaceBuffer::Capacity())</code> dans <code>TransformPositions</code> ;</li>
+<li><code>LV3_ASSERT(nVerts &lt;= Capacity())</code> + <code>continue</code> dans <code>RenderView</code> ;</li>
+<li><code>LV3_ASSERT(vi &lt; nVerts)</code> à chaque lecture : un indice hors bornes lirait un sommet d’une autre instance ;</li>
+<li>la ligne <code>[Build]</code> et le champ <code>ablation=</code> : un binaire qui se trompe de configuration se dénonce.</li>
+</ul>
+
+<h3>7.3 · Prédictions écrites avant les mesures, et leur sort</h3>
+<div class="scroll"><table>
+<thead><tr><th>Mesure</th><th>Prédiction</th><th>Mesuré</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td><code>VertsTransformed</code></td><td>185 000 à 200 000</td><td>181 061</td><td><span class="pill ok">un peu mieux</span> (vaisseau et sphères moins pesants que supposé)</td></tr>
+<tr><td>Géométrie seule</td><td>3,5 à 4,5 ms</td><td>3,62 à 3,92 ms</td><td><span class="pill ok">confirmé</span></td></tr>
+<tr><td><code>Render</code></td><td>9,0 à 10,0 ms</td><td>10,27 ms (P, séance 3)</td><td><span class="pill warn">un peu au-dessus</span> : la référence 11,48 ms de C2 venait d’une autre machine (avant du jour : 12,42)</td></tr>
+<tr><td>Rapport après ÷ avant, P</td><td>≈ 0,83</td><td>0,827 (1 paire)</td><td><span class="pill ok">confirmé</span>, à reconfirmer</td></tr>
+<tr><td>T sur cœur E</td><td>≈ 160 µs</td><td>143 µs</td><td><span class="pill ok">ordre de grandeur</span></td></tr>
+<tr><td>Rapport après ÷ avant, E</td><td>≈ 0,90</td><td>non remesuré épinglé</td><td><span class="pill warn">reste le 0,895 de la séance 2</span></td></tr>
+<tr><td>Géométrie seule, rapport indépendant du cœur</td><td>≈ 0,60</td><td>0,604 (P) ; E non mesuré</td><td><span class="pill warn">à moitié vérifié</span></td></tr>
+</tbody></table></div>
+
+<h3>7.4 · Ce qui n’a pas été vérifié</h3>
+<ul>
+<li>Le contrôle visuel d’une roche qui frôle le near (chemin <code>Intersect</code>) : demandé, résultat non consigné.</li>
+<li>La séance épinglée complète (12 runs ABBA demandés, 4 puis 2 fournis) : le gain P repose sur une paire.</li>
+<li>Le mécanisme du recouvrement (AM8) : aucun compteur matériel.</li>
+<li>Le versionnement des CSV de la Référence F sous <code>Mesures/</code> : absents du dépôt EXE au 13/11 (seuls ceux du banc 2b sont sauvegardés).</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p><b>Rien n’est acté.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH4-CH2 ». Les décisions <b>prises</b> pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH4CH2_Pretransformation_Sommets.md</code>. Les sujets sont à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>PH4CH2-1</td><td>Aucune TNR de <code>TransformPositions</code> (lecture par indice contre référence par coin, au bit près)</td><td>Proposée</td><td>Écrire <code>Test_CH2_TransformPositions</code> ; mutation FMA en échec.</td></tr>
+<tr><td>PH4CH2-2</td><td>Commentaire d’en-tête de <code>VertexStage.h</code> : « point UNIQUE où vivra la version AVX2 (chantier 4) », périmé depuis 2b et B3</td><td>Documentation</td><td>Réécrire : AVX2 dans <code>ProjectPositions8</code> ; <code>TransformPositions</code> = chemin Intersect.</td></tr>
+<tr><td>PH4CH2-3</td><td><code>ClipSpaceBuffer</code> aligné 16 o (<code>make_unique&lt;Vec4f[]&gt;</code>), contrairement à <code>RasterSpaceBuffer</code> (<code>SimdVector</code>, 64 o)</td><td>Préalable de B3c</td><td>Passer en <code>SimdVector</code> le jour où <code>TransformPositions</code> est vectorisée (et choisir AoS ou SoA en sortie).</td></tr>
+<tr><td>PH4CH2-4</td><td>B3c : <code>TransformPositions8</code> (chemin Intersect), code proposé à l’étape 5</td><td>Évolution (déjà au plan, « Ensuite » 4 ; C1-11)</td><td>Déclencher sur la scène FPS (V3 : un niveau d’un seul mesh est toujours Intersect).</td></tr>
+<tr><td>PH4CH2-5</td><td>Refus du plafond classé <code>ParseFailed</code> par <code>LoadMeshChecked</code></td><td>Dette (rejoint L3-10)</td><td>Ajouter <code>EMeshLoadError::TooManyVertices</code>, ou un retour typé de <code>RegisterMesh</code>.</td></tr>
+<tr><td>PH4CH2-6</td><td>Garde de capacité dans <code>RenderView</code> : repli silencieux en Release (aucun journal)</td><td>Décision</td><td>Journaliser une fois par mesh, ou garder le silence (le cas est impossible par <code>RegisterMesh</code>).</td></tr>
+<tr><td>PH4CH2-7</td><td>Avenant C2 § 4.2 et § 5 : « ≈ 53 % sur E » non valide (états mélangés) ; sens de l’explication par la taille de fenêtre douteux (AM8)</td><td>Documentation + hypothèse</td><td>Corriger l’avenant ; relier au cours VTune (plan, point 24) ; ou mesurer Aa/Pa épinglés sur cœur E.</td></tr>
+<tr><td>PH4CH2-8</td><td>Gain P-core (−17,3 %) sur une seule paire ; la confirmation « au passage » n’est consignée nulle part</td><td>À vérifier</td><td>Rechercher dans les avenants C3/C4 une paire avant/après chantier 2 ; sinon accepter comme indicatif.</td></tr>
+<tr><td>PH4CH2-9</td><td>Durée de vie du contenu des tampons (clip et raster) : invariant écrit, aucun filet</td><td>Évolution</td><td>En Debug, empoisonner le tampon (NaN) avant chaque instance, ou compteur de génération ; utile dès qu’un étage différé apparaît.</td></tr>
+<tr><td>PH4CH2-10</td><td>Multithread : un tampon par thread (clip et raster)</td><td>Rappel (L13)</td><td>À reprendre avec le rendu multithread ; jamais un tampon partagé.</td></tr>
+<tr><td>PH4CH2-11</td><td>Deux tampons de 1 Mio alloués quelle que soit la scène (65 536 × 16 o chacun)</td><td>Évolution mineure</td><td>Garder la borne dure (patron bug 61) ou dimensionner au plus gros mesh chargé ; rien à gagner aujourd’hui.</td></tr>
+<tr><td>PH4CH2-12</td><td><code>LV3_MAX_MESH_VERTICES</code> commentée « uint16 safe » alors que les indices sont en <code>uint32_t</code></td><td>Documentation</td><td>Préciser l’intention (indices 16 bits futurs ?) ou retirer la mention.</td></tr>
+<tr><td>PH4CH2-13</td><td><code>VertsTransformed</code> compte <code>nVerts</code> ; <code>ProjectPositions8</code> traite <code>PaddedCount()</code> couloirs (bourrage)</td><td>Documentation</td><td>Écrire la sémantique dans <code>Profiler.h</code> (« sommets réels, hors bourrage »).</td></tr>
+<tr><td>PH4CH2-14</td><td>CSV de la Référence F et des séances 3 et 4 non versionnés (<code>Mesures/</code>)</td><td>Dette (M2)</td><td>Les retrouver et les versionner, ou noter leur perte dans l’avenant.</td></tr>
+<tr><td>PH4CH2-15</td><td>Consolidation C2 § 8.2 : « ×4 sur 5,95 ms » et « par (mesh, vue) » toujours écrits</td><td>Documentation</td><td>Renvoi vers l’avenant C2 § 1 (corrections de l’étape 2).</td></tr>
+<tr><td>PH4CH2-16</td><td>La règle de fréquence (A12 § 1) n’a pas de numéro dans <code>architecture-rules.md</code></td><td>Décision</td><td>Numéroter (série R ou S) et l’inscrire, ou la laisser dans A12.</td></tr>
+<tr><td>PH4CH2-17</td><td>L’artefact « Pipeline LV3 » montre l’état A12 (avant 2b) ; l’artefact « Étage sommets LV3 » est remplacé par ce lot</td><td>Documentation</td><td>Mettre à jour « Pipeline LV3 » selon A12a, ou le marquer historique.</td></tr>
+<tr><td>PH4CH2-18</td><td>Un binaire compilé avec une ablation active a faussé deux lots : B1 de ce lot (séance 2), puis le R2 du chantier C1 (23/10, <code>config.h</code> poussé avec <code>LV3_ABLATION_RASTER 1</code>)</td><td>Évolution</td><td>Faire échouer la compilation d’une configuration « production » (ex. <code>Release</code> sans <code>LV3Profile</code>) si une ablation est active.</td></tr>
+</tbody></table></div>
+</section>
+
+<footer>
+Lot PH4-CH2 — reconstruction du 13/11/2026 à partir de l’échange du 26 au 27/09/2026 (chantier 2, séances 1 à 4), de l’avenant C2, de l’annexe A12 et de son avenant A12a, de l’avenant C4, du plan de la phase G et du dépôt LibraryV3 <code>e7cae94</code> / RefactoNouvelleLibrairieV3 <code>5203980</code>. Les chiffres des laboratoires sont ceux des fichiers <code>_summary.csv</code> fournis pendant l’échange ; les calculs float32 sont faits dans la page.
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const fr = (v, d=1) => (Object.is(v,-0)?0:v).toLocaleString("fr-FR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const nf = v => Math.round(v).toLocaleString("fr-FR");
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function fit(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 640;
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+function rng(seed){ let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const dv = new DataView(new ArrayBuffer(4));
+const hex = v => { dv.setFloat32(0, v); return "0x" + dv.getUint32(0).toString(16).toUpperCase().padStart(8,"0"); };
+const f6 = v => (Object.is(v,-0)?0:v).toPrecision(7);
+
+/* ═══════════ 1.1 · par coin / par sommet ═══════════ */
+function buildMesh(kind){
+  const V = [], F = [];
+  if (kind === "grid"){
+    const C = 6, R = 5, r = rng(7);
+    for (let y=0;y<R;y++) for (let x=0;x<C;x++) V.push({x:x/(C-1) + ((x&&x<C-1)?(r()-.5)*.08:0), y:y/(R-1) + ((y&&y<R-1)?(r()-.5)*.08:0)});
+    for (let y=0;y<R-1;y++) for (let x=0;x<C-1;x++){ const a=y*C+x,b=a+1,d=a+C,e=d+1; if((x+y)&1){F.push([a,d,b],[b,d,e]);} else {F.push([a,d,e],[a,e,b]);} }
+  } else if (kind === "fan"){
+    const N = 10; V.push({x:.5,y:.5});
+    for (let k=0;k<N;k++){ const t=2*Math.PI*k/N; V.push({x:.5+.22*Math.cos(t), y:.5+.22*Math.sin(t)}); }
+    for (let k=0;k<N;k++){ const t=2*Math.PI*(k+.5)/N; V.push({x:.5+.46*Math.cos(t), y:.5+.46*Math.sin(t)}); }
+    for (let k=0;k<N;k++){ const a=1+k, b=1+(k+1)%N, o=1+N+k; F.push([0,a,b]); F.push([a,o,b]); F.push([b,o,1+N+(k+1)%N]); }
+  } else {
+    const N = 10;
+    for (let k=0;k<N;k++){ V.push({x:k/(N-1), y:.3}); }
+    for (let k=0;k<N;k++){ V.push({x:k/(N-1), y:.7}); }
+    for (let k=0;k<N-1;k++){ F.push([k, N+k, k+1]); F.push([k+1, N+k, N+k+1]); }
+  }
+  return {V, F};
+}
+let L1 = {mesh:null, counts:[], face:0, mul:0, branch:0, timer:null};
+function l1Draw(){
+  const cv = $("l1Cv"); const {g, w, h} = fit(cv, 300);
+  const M = L1.mesh, pad = 24, sx = v => pad + v.x*(w-2*pad), sy = v => pad + v.y*(h-2*pad);
+  g.clearRect(0,0,w,h);
+  M.F.forEach((t,i) => {
+    g.beginPath(); g.moveTo(sx(M.V[t[0]]),sy(M.V[t[0]])); g.lineTo(sx(M.V[t[1]]),sy(M.V[t[1]])); g.lineTo(sx(M.V[t[2]]),sy(M.V[t[2]])); g.closePath();
+    if (i < L1.face){ g.fillStyle = css("--hl"); g.fill(); }
+    g.strokeStyle = (i === L1.face-1) ? css("--hl-line") : css("--line"); g.lineWidth = (i === L1.face-1) ? 2.2 : 1; g.stroke();
+  });
+  M.V.forEach((v,i) => {
+    const c = L1.counts[i];
+    g.beginPath(); g.arc(sx(v), sy(v), 11, 0, 2*Math.PI);
+    g.fillStyle = c===0 ? css("--ghost") : c===1 ? css("--ok") : c<=3 ? css("--warn") : css("--bad"); g.fill();
+    g.fillStyle = "#fff"; g.font = "600 11px ui-monospace,Consolas,monospace"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(String(c), sx(v), sy(v)+.5);
+  });
+  const nV = M.V.length, nF = M.F.length, mode = $("l1Mode").value;
+  const acmr = L1.face ? L1.mul / L1.face : 0;
+  $("l1Stats").innerHTML = `
+    <div><div class="k">Appels MulRow</div><div class="v">${L1.mul}</div></div>
+    <div><div class="k">Sommets uniques</div><div class="v">${nV}</div></div>
+    <div><div class="k">Faces assemblées</div><div class="v">${L1.face} / ${nF}</div></div>
+    <div><div class="k">ACMR (MulRow ÷ faces)</div><div class="v ${acmr>2?'bad':'ok'}">${fr(acmr,2)}</div></div>
+    <div><div class="k">Branches « déjà fait ? »</div><div class="v ${L1.branch?'warn':''}">${L1.branch}</div></div>
+    <div><div class="k">Travail refait</div><div class="v ${L1.mul>nV?'bad':'ok'}">${L1.mul? Math.round(100*Math.max(0,L1.mul-Math.min(L1.mul,nV))/L1.mul):0} %</div></div>`;
+  $("l1Txt").textContent = mode === "corner"
+    ? "Par coin : 3 MulRow par face. Les sommets intérieurs sont transformés autant de fois que de faces les touchent, avec un résultat identique à chaque fois."
+    : mode === "vertex"
+    ? "Par sommet : une passe TransformPositions met tous les sommets à 1 avant l'assemblage, puis chaque face lit 3 Vec4f par indice. ACMR minimal = sommets ÷ faces."
+    : "Cache paresseux : même nombre de MulRow que la passe complète, mais une branche par coin (« déjà transformé ? ») et un memset des drapeaux par instance. Non vectorisable.";
+}
+function l1Step(){
+  const M = L1.mesh, mode = $("l1Mode").value;
+  if (L1.face >= M.F.length){ clearInterval(L1.timer); L1.timer = null; l1Draw(); return; }
+  const t = M.F[L1.face];
+  if (mode === "corner") t.forEach(k => { L1.counts[k]++; L1.mul++; });
+  else if (mode === "lazy") t.forEach(k => { L1.branch++; if (!L1.counts[k]){ L1.counts[k] = 1; L1.mul++; } });
+  L1.face++; l1Draw();
+}
+function l1Start(){
+  if (L1.timer) clearInterval(L1.timer);
+  L1.mesh = buildMesh($("l1Mesh").value); L1.face = 0; L1.mul = 0; L1.branch = 0;
+  L1.counts = L1.mesh.V.map(() => 0);
+  if ($("l1Mode").value === "vertex"){ L1.counts = L1.mesh.V.map(() => 1); L1.mul = L1.mesh.V.length; }
+  if (reduce){ while (L1.face < L1.mesh.F.length) l1Step(); return; }
+  l1Draw(); L1.timer = setInterval(l1Step, 110);
+}
+["l1Mesh","l1Mode"].forEach(id => $(id).addEventListener("change", l1Start));
+$("l1Play").addEventListener("click", l1Start);
+
+/* ═══════════ 1.2 · règle de fréquence ═══════════ */
+const BANDS = [
+  {k:"frame", n:1, t:"par frame"}, {k:"vue", n:4, t:"par vue"}, {k:"inst", n:1297, t:"par instance × vue"},
+  {k:"som", n:181061, t:"par sommet"}, {k:"face", n:274988, t:"par face (triangle assemblé)"}, {k:"coin", n:824964, t:"par coin (3 × faces)"}
+];
+const ORDER = {frame:0, vue:1, inst:2, som:3, face:4, coin:5};
+const OPS = [
+  {id:"cb",  t:"choix du callback de fragment (SetMode)", ok:"vue",  c:2,   src:"ordre de grandeur"},
+  {id:"mvp", t:"mvp = model × VP (64 mul + 48 add)",       ok:"inst", c:20,  src:"ordre de grandeur"},
+  {id:"mul", t:"MulRow (transformation d'un sommet)",      ok:"som",  c:3.5, src:"mesuré (avenant C2 § 4.2)"},
+  {id:"div", t:"division par w + ToRaster (Inside)",       ok:"som",  c:1.5, src:"estimation de l'avenant C4 (sous-estimée)"},
+  {id:"tl",  t:"règle top-left (3 arêtes)",                ok:"face",  c:3,   src:"ordre de grandeur"}
+];
+$("l2Op").innerHTML = OPS.map(o => `<option value="${o.id}">${esc(o.t)}</option>`).join("");
+$("l2Band").innerHTML = BANDS.map(b => `<option value="${b.k}">${esc(b.t)}</option>`).join("");
+$("l2Op").value = "mul"; $("l2Band").value = "coin";
+function l2Draw(){
+  const op = OPS.find(o => o.id === $("l2Op").value), bk = $("l2Band").value;
+  const band = BANDS.find(b => b.k === bk), okb = BANDS.find(b => b.k === op.ok);
+  const tooHigh = ORDER[bk] < ORDER[op.ok];
+  const calls = band.n, cost = calls * op.c / 1e6, okCost = okb.n * op.c / 1e6;
+  $("l2Stats").innerHTML = tooHigh
+    ? `<div style="grid-column:1/-1"><div class="k">Placement impossible</div><div class="v bad" style="font-size:14px">Le résultat de ce calcul n'est pas constant à ce niveau (il dépend de ${esc(okb.t.replace("par ",""))}). Le remonter plus haut donnerait une image fausse.</div></div>`
+    : `<div><div class="k">Appels par frame</div><div class="v">${nf(calls)}</div></div>
+       <div><div class="k">Coût estimé</div><div class="v ${bk===op.ok?'ok':'bad'}">${fr(cost,3)} ms</div></div>
+       <div><div class="k">Bande correcte</div><div class="v" style="font-size:14px">${esc(okb.t)}</div></div>
+       <div><div class="k">Multiplicateur</div><div class="v ${bk===op.ok?'ok':'bad'}">× ${fr(calls/okb.n, 2)}</div></div>
+       <div><div class="k">Coût unitaire</div><div class="v" style="font-size:14px">${fr(op.c,1)} ns · ${esc(op.src)}</div></div>`;
+  $("l2Tab").innerHTML = `<thead><tr><th>Bande</th><th class="num">Effectif (ceinture, 4 vues)</th><th class="num">Coût de « ${esc(op.t)} » ici</th><th>Lecture</th></tr></thead><tbody>` +
+    BANDS.slice().sort((a,b)=>ORDER[a.k]-ORDER[b.k]).map(b => {
+      const hi = ORDER[b.k] < ORDER[op.ok];
+      const note = hi ? '<span class="pill bad">résultat non constant</span>' : b.k===op.ok ? '<span class="pill ok">bande correcte</span>' : `<span class="pill warn">× ${fr(b.n/okb.n,2)}</span>`;
+      return `<tr${b.k===bk?' style="background:var(--hl)"':''}><td>${esc(b.t)}</td><td class="num">${nf(b.n)}</td><td class="num">${hi?"—":fr(b.n*op.c/1e6,3)+" ms"}</td><td>${note}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+["l2Op","l2Band"].forEach(id => $(id).addEventListener("change", l2Draw));
+
+/* ═══════════ 1.3 · w négatif ═══════════ */
+function l3Draw(){
+  const cv = $("l3Cv"); const {g, w, h} = fit(cv, 320);
+  const zB = parseFloat($("l3Z").value), xB = parseFloat($("l3X").value);
+  $("l3Zv").textContent = fr(zB,1); $("l3Xv").textContent = fr(xB,1);
+  const A = {x:-1.5, z:-5}, B = {x:xB, z:zB}, n = 1;
+  // repère : x ∈ [−5, 5] → largeur ; z ∈ [−12, 3] → hauteur (−12 en haut)
+  const X = x => w/2 + x*(w/2-20)/5, Zs = z => 20 + (z + 12)*(h-90)/15;
+  g.clearRect(0,0,w,h);
+  // cône de vue (focale 1 : x = ±z)
+  g.strokeStyle = css("--line"); g.setLineDash([4,3]); g.beginPath(); g.moveTo(X(0),Zs(0)); g.lineTo(X(-12),Zs(-12)); g.moveTo(X(0),Zs(0)); g.lineTo(X(12),Zs(-12)); g.stroke(); g.setLineDash([]);
+  // plan near
+  g.strokeStyle = css("--warn"); g.lineWidth = 2; g.beginPath(); g.moveTo(X(-5),Zs(-n)); g.lineTo(X(5),Zs(-n)); g.stroke(); g.lineWidth = 1;
+  g.fillStyle = css("--warn"); g.font = "11px ui-monospace,Consolas,monospace"; g.fillText("plan near (w = n)", X(-4.9), Zs(-n)-5);
+  // caméra
+  g.fillStyle = css("--cam"); g.beginPath(); g.moveTo(X(0),Zs(0)); g.lineTo(X(-.25),Zs(.6)); g.lineTo(X(.25),Zs(.6)); g.closePath(); g.fill();
+  g.fillStyle = css("--ink3"); g.fillText("œil, regard −Z", X(.35), Zs(.5));
+  // arête
+  g.strokeStyle = css("--ink2"); g.lineWidth = 2; g.beginPath(); g.moveTo(X(A.x),Zs(A.z)); g.lineTo(X(B.x),Zs(B.z)); g.stroke(); g.lineWidth = 1;
+  [[A,"A"],[B,"B"]].forEach(([p,l]) => { g.fillStyle = css("--ship"); g.beginPath(); g.arc(X(p.x),Zs(p.z),5,0,2*Math.PI); g.fill(); g.fillStyle = css("--ink"); g.fillText(l, X(p.x)+7, Zs(p.z)-6); });
+  // projections (focale 1) : clip x = x, w = −z
+  const wA = -A.z, wB = -B.z;
+  const early = wB !== 0 ? xB / wB : NaN;
+  let clipX = null, cut = null;
+  if (wB >= n) clipX = xB / wB;
+  else { const t = (wA - n) / (wA - wB); cut = {x: A.x + t*(B.x - A.x), z: A.z + t*(B.z - A.z)}; clipX = cut.x / n; }
+  if (cut){ g.fillStyle = css("--ok"); g.beginPath(); g.arc(X(cut.x),Zs(cut.z),5,0,2*Math.PI); g.fill(); g.fillText("B'", X(cut.x)+7, Zs(cut.z)+12); }
+  // écran (bande du bas) : x_ndc ∈ [−3, 3]
+  const y1 = h-48, y2 = h-22, S = v => w/2 + Math.max(-3.4, Math.min(3.4, v))*(w/2-20)/3.4;
+  g.fillStyle = css("--surface2"); g.fillRect(S(-1), y1-10, S(1)-S(-1), 44);
+  g.fillStyle = css("--ink3"); g.fillText("écran : x_ndc ∈ [−1, 1]", S(-1)+4, y1-14);
+  const xa = A.x / wA;
+  g.strokeStyle = css("--ok"); g.lineWidth = 4; g.beginPath(); g.moveTo(S(xa), y1); g.lineTo(S(clipX), y1); g.stroke();
+  g.strokeStyle = css("--bad"); g.beginPath(); if (isFinite(early)) { g.moveTo(S(xa), y2); g.lineTo(S(early), y2); } g.stroke(); g.lineWidth = 1;
+  g.fillStyle = css("--ok"); g.fillText("moteur : clip puis ÷w", 8, y1+4);
+  g.fillStyle = css("--bad"); g.fillText("÷w avant clip (Vec3f)", 8, y2+4);
+  const flipped = wB <= 0;
+  $("l3Stats").innerHTML = `
+    <div><div class="k">w de B (= −z vue)</div><div class="v ${wB<=0?'bad':wB<n?'warn':'ok'}">${fr(wB,2)}</div></div>
+    <div><div class="k">x/w de B, divisé tôt</div><div class="v ${flipped?'bad':''}">${isFinite(early)?fr(early,3):"÷ 0"}</div></div>
+    <div><div class="k">x de l'arête au bord, moteur</div><div class="v ok">${fr(clipX,3)}</div></div>
+    <div><div class="k">Verdict</div><div class="v ${flipped?'bad':wB<n?'warn':'ok'}" style="font-size:14px">${flipped ? "B derrière l'œil : la division tôt renverse le signe, l'arête traverse tout l'écran" : wB < n ? "B entre l'œil et le near : le moteur clippe en B' avant de diviser" : "B devant le near : les deux chemins donnent le même point"}</div></div>`;
+}
+["l3Z","l3X"].forEach(id => $(id).addEventListener("input", l3Draw));
+
+/* ═══════════ 1.4 · aliasing ═══════════ */
+function l4Draw(){
+  const ref = $("l4Mode").value === "ref";
+  $("l4Asm").textContent = ref
+? `; boucle de TransformPositions, mvp passée par référence (rcx = &mvp)
+$LL: vmovss  xmm0, [rsi]          ; x   (src[i])
+     vmovss  xmm1, [rsi+4]        ; y
+     vmovss  xmm2, [rsi+8]        ; z
+     vmulss  xmm3, xmm0, [rcx]    ; x * m00   ← relu en mémoire
+     vmulss  xmm4, xmm1, [rcx+16] ; y * m10   ← relu
+     ...                          ; 16 coefficients relus à CHAQUE sommet
+     vmovss  [rdi], xmm3          ; dst[i].x  ← peut modifier *rcx pour le compilateur
+     vmovss  [rdi+4], ...         ; donc rien de *rcx n'est gardé en registre
+     add     rsi, 12 ; add rdi, 16 ; cmp ; jb $LL`
+: `; boucle de TransformPositions, copie locale (const Matrix44f m = mvp)
+     ; avant la boucle : 16 coefficients copiés une fois (64 octets)
+$LL: vmovss  xmm0, [rsi]          ; x
+     vmovss  xmm1, [rsi+4]        ; y
+     vmovss  xmm2, [rsi+8]        ; z
+     vmulss  xmm3, xmm0, xmm6     ; x * m00   ← en registre
+     vmulss  xmm4, xmm1, xmm7     ; y * m10   ← en registre
+     ...                          ; 16 xmm ne suffisent pas toujours :
+     ...                          ; quelques coefficients relus sur la PILE,
+     ...                          ; mais jamais invalidés par dst
+     vmovss  [rdi], xmm3          ; dst[i].x  (ne peut pas viser la pile locale)
+     add     rsi, 12 ; add rdi, 16 ; cmp ; jb $LL`;
+  $("l4Stats").innerHTML = `
+    <div><div class="k">Lectures par sommet</div><div class="v ${ref?'bad':'ok'}">${ref?"3 + 16":"3 (+ quelques relectures de pile)"}</div></div>
+    <div><div class="k">Écritures par sommet</div><div class="v">4</div></div>
+    <div><div class="k">Coût de la copie</div><div class="v">${ref?"0":"64 o par instance"}</div></div>`;
+  $("l4Txt").textContent = ref
+    ? "Une écriture float dans dst peut, en droit, modifier un float de la matrice (même type). Le compilateur doit relire les coefficients après chaque écriture."
+    : "Une variable locale dont l'adresse ne s'échappe pas ne peut pas être visée par dst : ses coefficients peuvent rester en registres. C'est la raison de la ligne « const Matrix44f m = mvp; ».";
+}
+$("l4Mode").addEventListener("change", l4Draw);
+
+/* ═══════════ 1.5 · recouvrement ═══════════ */
+function l5Draw(){
+  const S = +$("l5S").value, K = +$("l5K").value/100; $("l5Sv").textContent = S + " ns"; $("l5Kv").textContent = Math.round(K*100) + " %";
+  const Rc = 25, Gold = 21.6, Gnew = 13.4, H = K*S;     // ns par face ; G mesurés (C2 : 5,95 ms ÷ 274 988 ; séance 1 : 3,70 ms ÷ 274 988)
+  const row = G => { const hid = Math.min(G, H), vis = G - hid; return {hid, vis, tot: Rc + S + vis}; };
+  const o = row(Gold), nw = row(Gnew), cur = $("l5Geo").value === "old" ? o : nw, G = $("l5Geo").value === "old" ? Gold : Gnew;
+  const max = Rc + 60 + Gold, pc = v => (100*v/max).toFixed(2) + "%";
+  $("l5Ports").innerHTML = `
+    <div class="lbl">unités de calcul (le seul thread)</div>
+    <div><span style="width:${pc(Rc)};background:var(--bad)" title="rasterisation : calcul"></span><span style="width:${pc(S)};background:var(--surface)" title="attente mémoire"></span><span style="width:${pc(cur.vis)};background:var(--ship)" title="géométrie non cachée"></span></div>
+    <div class="lbl">pendant l'attente : géométrie cachée (${fr(cur.hid,1)} ns sur ${fr(G,1)})</div>
+    <div><span style="width:${pc(Rc)};background:transparent"></span><span style="width:${pc(cur.hid)};background:var(--ship);opacity:.45" title="géométrie cachée dans l'attente"></span></div>
+    <div class="legend"><span><i style="background:var(--bad)"></i>rasterisation (calcul)</span><span><i style="background:var(--surface);border:1px solid var(--line)"></i>attente mémoire</span><span><i style="background:var(--ship)"></i>géométrie visible</span><span><i style="background:var(--ship);opacity:.45"></i>géométrie cachée</span></div>`;
+  const gIso = Gold - Gnew, gFrame = o.tot - nw.tot;
+  $("l5Stats").innerHTML = `
+    <div><div class="k">Temps par face (modèle)</div><div class="v">${fr(cur.tot,1)} ns</div></div>
+    <div><div class="k">Gain isolé (ablation)</div><div class="v">${fr(gIso,1)} ns</div></div>
+    <div><div class="k">Gain sur la frame</div><div class="v ${gFrame<gIso?'warn':'ok'}">${fr(gFrame,1)} ns</div></div>
+    <div><div class="k">Part transmise</div><div class="v ${gFrame/gIso<0.9?'warn':'ok'}">${Math.round(100*gFrame/gIso)} %</div></div>`;
+}
+["l5Geo","l5S","l5K"].forEach(id => $(id).addEventListener("input", l5Draw));
+
+/* ═══════════ 1.6 · dépouillement ═══════════ */
+const RUNS = [
+ {id:"S1-B2", s:"Séance 1", bin:"après, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:10593.0, p95:11351.4, T:97.3, clr:982.6,
+  v:"Recevable seul (p95 ÷ médiane 1,07), mais sans « avant » du même jour : comparé à C2 (11,48 ms, autre jour, autre machine probable), le gain apparent de −7,7 % est sous le plancher. Erreur de méthode CE8."},
+ {id:"S1-D2", s:"Séance 1", bin:"après, ablation", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:3695.6, p95:4086.3, T:101.6, clr:1015.5,
+  v:"Géométrie seule −38 % contre la D de C2 (5,95 ms) : l'écart dépasse tout bruit. La soustraction B2 − D2 (6,90 ms de rasterisation) est en revanche non valide (M7 amendée)."},
+ {id:"S2-B1", s:"Séance 2", bin:"avant, complet (annoncé)", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:5903.0, p95:6545.0, T:99.4, clr:989.8,
+  v:"REFUSÉ : un complet de l'ancien code doit donner ≈ 11,5 ms ; B1 ≈ D1 (rapport 0,99). Il a tourné avec la rasterisation débranchée. Les compteurs ne pouvaient pas le voir. D'où ablation= dans l'en-tête (CE9)."},
+ {id:"S2-D1", s:"Séance 2", bin:"avant, ablation", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:5962.2, p95:6427.5, T:99.3, clr:990.2,
+  v:"Recevable. Avec D2 de la même séance : géométrie 5,96 → 3,62 ms (−39 %), T égal à 1 %."},
+ {id:"S2-B2", s:"Séance 2", bin:"après, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:10672.3, p95:11258.5, T:95.6, clr:967.1,
+  v:"Recevable ; reproduit le B2 de la séance 1 (10,59 ms) à 0,8 % : première mesure de la dispersion d'un même binaire dans un état stable. Son « avant » (B1) est refusé."},
+ {id:"S2-D2", s:"Séance 2", bin:"après, ablation", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:3622.9, p95:3990.6, T:98.3, clr:1017.3,
+  v:"Recevable, apparié à D1."},
+ {id:"S2-A1", s:"Séance 2 alternée", bin:"avant, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:13618.5, p95:21669.1, T:116.7, clr:1098.9,
+  v:"REFUSÉ : p95 ÷ médiane 1,59, run bimodal. Le changement de régime (passage sur cœur E) a eu lieu pendant ce run."},
+ {id:"S2-P1", s:"Séance 2 alternée", bin:"après, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:18694.0, p95:19976.8, T:160.0, clr:1204.7,
+  v:"Recevable dans son état (cœur E, identifié à la séance 4). T = 160 µs, égal à celui d'A2 : paire A2/P1 possible."},
+ {id:"S2-A2", s:"Séance 2 alternée", bin:"avant, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:20882.3, p95:24859.3, T:159.7, clr:1195.2,
+  v:"À la limite : p95 ÷ médiane 1,19, au-dessus du seuil de 1,15 fixé plus tard (séance 4). Utilisé le 27/09 dans deux paires ; avec le critère d'aujourd'hui, seule la paire A3/P3 reste strictement recevable. Le rapport ne change presque pas (0,895 à 0,899)."},
+ {id:"S2-P2", s:"Séance 2 alternée", bin:"après, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:18683.0, p95:19820.2, T:159.3, clr:1186.3,
+  v:"Recevable dans son état (cœur E)."},
+ {id:"S2-A3", s:"Séance 2 alternée", bin:"avant, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:19406.1, p95:20991.3, T:149.7, clr:1159.1,
+  v:"Recevable dans son état ; T égal à celui de P3 à 1 %."},
+ {id:"S2-P3", s:"Séance 2 alternée", bin:"après, complet", abl:"non déclarée", cpu:"non déclaré", aff:"—", r:17438.8, p95:18910.0, T:151.1, clr:1183.7,
+  v:"Recevable ; paire A3/P3 : rapport 0,8986."},
+ {id:"S3-A", s:"Séance 3", bin:"avant, complet", abl:"none", cpu:"i7-1265U", aff:"fff", r:12420.1, p95:12980.0, T:101.1, clr:979.1,
+  v:"Recevable (non épinglé, mais T ≈ 101 µs : cœur P). Identifié par l'en-tête : ablation=none, pas de colonne VertsTransformed."},
+ {id:"S3-P", s:"Séance 3", bin:"après, complet", abl:"none", cpu:"i7-1265U", aff:"fff", r:10271.3, p95:11317.2, T:101.3, clr:978.3,
+  v:"Recevable ; paire A/P : rapport 0,827 (−17,3 %). Une seule paire : indicatif solide, à reconfirmer."},
+ {id:"S3-Aa", s:"Séance 3", bin:"avant, ablation", abl:"raster", cpu:"i7-1265U", aff:"fff", r:6479.9, p95:6727.6, T:98.9, clr:983.8,
+  v:"Recevable ; complet ÷ ablation = 1,92 : binaire bien étiqueté."},
+ {id:"S3-Pa", s:"Séance 3", bin:"après, ablation", abl:"raster", cpu:"i7-1265U", aff:"fff", r:3916.4, p95:4212.9, T:98.3, clr:1027.3,
+  v:"Recevable ; paire Aa/Pa : 0,604. Part transmise : 2,15 ÷ 2,56 = 84 %."},
+ {id:"S4-P", s:"Séance 4", bin:"après, complet", abl:"none", cpu:"i7-1265U", aff:"4", r:10187.1, p95:10761.2, T:93.6, clr:968.1,
+  v:"Référence F. Épinglé sur le processeur logique 2 (cœur P)."},
+ {id:"S4-E", s:"Séance 4", bin:"après, complet", abl:"none", cpu:"i7-1265U", aff:"100", r:18137.5, p95:18829.3, T:143.3, clr:820.2,
+  v:"Expérience décisive : épinglé sur un cœur E, il reproduit la séance 2 (T 143 µs, Render 18,1 ms). Clear va plus vite (820 µs) : ce n'est pas un témoin de calcul."}
+];
+$("l6Run").innerHTML = RUNS.map(r => `<option value="${r.id}">${esc(r.id + " — " + r.bin)}</option>`).join("");
+$("l6Run").value = "S2-B1";
+function l6Draw(){
+  const r = RUNS.find(x => x.id === $("l6Run").value), q = r.p95 / r.r;
+  $("l6Stats").innerHTML = `
+    <div><div class="k">Render (médiane)</div><div class="v">${fr(r.r/1000,3)} ms</div></div>
+    <div><div class="k">p95 ÷ médiane</div><div class="v ${q>1.15?'bad':'ok'}">${fr(q,3)}</div></div>
+    <div><div class="k">Témoin T</div><div class="v ${r.T>130?'warn':''}">${fr(r.T,1)} µs</div></div>
+    <div><div class="k">Clear</div><div class="v">${fr(r.clr,1)} µs</div></div>
+    <div><div class="k">En-tête</div><div class="v" style="font-size:12.5px">ablation=${esc(r.abl)} · cpu=${esc(r.cpu)} · affinity=${esc(r.aff)}</div></div>
+    <div><div class="k">Séance</div><div class="v" style="font-size:13px">${esc(r.s)}</div></div>`;
+  const cls = /^REFUSÉ/.test(r.v) ? "bad" : /limite/.test(r.v) ? "warn" : "ok";
+  $("l6Verdict").innerHTML = `<div class="${cls}">${esc(r.v)}</div>`;
+}
+$("l6Run").addEventListener("change", l6Draw);
+(function(){
+  const P = [["S2-A2","S2-P2"],["S2-A3","S2-P3"],["S2-A2","S2-P1"],["S3-A","S3-P"],["S3-Aa","S3-Pa"]];
+  const R = id => RUNS.find(x => x.id === id);
+  $("l6Pairs").innerHTML = `<thead><tr><th>Paire</th><th class="num">Avant</th><th class="num">Après</th><th class="num">Après ÷ avant</th><th class="num">ΔT</th><th>p95 ÷ médiane &lt; 1,15</th><th>Statut</th></tr></thead><tbody>` +
+    P.map(([a,b]) => { const A = R(a), B = R(b), dT = Math.abs(B.T - A.T)/A.T, okq = A.p95/A.r < 1.15 && B.p95/B.r < 1.15;
+      return `<tr><td>${a} / ${b}</td><td class="num">${fr(A.r/1000,3)} ms</td><td class="num">${fr(B.r/1000,3)} ms</td><td class="num"><b>${fr(B.r/A.r,4)}</b></td><td class="num">${fr(100*dT,1)} %</td><td>${okq?'<span class="pill ok">oui</span>':'<span class="pill warn">non (A2)</span>'}</td><td>${dT<0.03&&okq?'<span class="pill ok">recevable</span>':dT<0.03?'<span class="pill warn">recevable le 27/09, limite aujourd’hui</span>':'<span class="pill bad">refusée</span>'}</td></tr>`; }).join("") + "</tbody>";
+})();
+
+/* ═══════════ 1.7 · durée de vie du tampon ═══════════ */
+const L7 = {buf: new Array(8).fill(null), keep: -1, inst: ""};
+const instVals = seed => { const r = rng(seed); return Array.from({length:8}, () => f((r()-.5)*4)); };
+function l7Draw(msg){
+  $("l7Buf").innerHTML = L7.buf.map((v,i) => `<div class="cell ${v===null?'':(L7.inst==="A"?'a':'b')} ${i===3&&L7.keep>=0?'p':''}">clip[${i}].x<br>${v===null?"—":f6(v)}</div>`).join("");
+  if (msg) $("l7Log").innerHTML += msg + "\n";
+}
+$("l7A").addEventListener("click", () => { L7.buf = instVals(11); L7.inst = "A"; l7Draw('<span class="i">TransformPositions(instance A) : clip[0..7] écrits</span>'); });
+$("l7Keep").addEventListener("click", () => { if (!L7.inst){ l7Draw('<span class="w">Remplis d’abord le tampon (instance A).</span>'); return; } L7.keep = 3; L7.kept = L7.buf[3]; L7.keptInst = L7.inst; l7Draw(`<span class="i">saved = &amp;clip[3]  (instance ${L7.inst}, x = ${f6(L7.buf[3])})</span>`); });
+$("l7B").addEventListener("click", () => { L7.buf = instVals(97); L7.inst = "B"; let m = '<span class="i">TransformPositions(instance B) : le tampon est réécrit</span>';
+  if (L7.keep >= 0) m += `\n<span class="e">*saved = ${f6(L7.buf[3])} : sommet 3 de B, pas de ${L7.keptInst} (attendu ${f6(L7.kept)}). Aucun crash, aucune assertion.</span>`;
+  l7Draw(m); });
+$("l7Reset").addEventListener("click", () => { L7.buf = new Array(8).fill(null); L7.keep = -1; L7.inst = ""; $("l7Log").innerHTML = ""; l7Draw(); });
+
+/* ═══════════ Étape 5 · registres AVX2 couloir par couloir ═══════════ */
+// mvp row-major (vecteur-ligne) : clip = [x y z 1] · M. Modèle : échelle 0,8, tangage 20° puis lacet 30°, translation (12 ; 0,5 ; −40).
+// Projection perspective reverse-Z (n = 0,1, f = 1000), vue 768 × 450, fov 60°. Coefficients arrondis en float32.
+const MVP = (function(){
+  const s = 0.8, a = Math.PI/6, c = Math.cos(a), sn = Math.sin(a), b = Math.PI/9, cb = Math.cos(b), sb = Math.sin(b);
+  const Rx = [[1,0,0],[0,cb,sb],[0,-sb,cb]], Ry = [[c,0,-sn],[0,1,0],[sn,0,c]], R = [[0,0,0],[0,0,0],[0,0,0]];
+  for (let i=0;i<3;i++) for (let j=0;j<3;j++) for (let k=0;k<3;k++) R[i][j] += Rx[i][k]*Ry[k][j];
+  const Mm = [[s*R[0][0],s*R[0][1],s*R[0][2],0],[s*R[1][0],s*R[1][1],s*R[1][2],0],[s*R[2][0],s*R[2][1],s*R[2][2],0],[12,0.5,-40,1]];
+  const n = 0.1, fa = 1000, t = Math.tan(Math.PI/6)*n, r = t*768/450;
+  const P = [[n/r,0,0,0],[0,n/t,0,0],[0,0,n/(fa-n),-1],[0,0,n*fa/(fa-n),0]];
+  const M = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  for (let i=0;i<4;i++) for (let j=0;j<4;j++){ let acc=0; for (let k=0;k<4;k++) acc += Mm[i][k]*P[k][j]; M[i][j] = f(acc); }
+  return M;
+})();
+const VERTS = (function(){ const r = rng(2026); return Array.from({length:8}, () => { const u = r()*2*Math.PI, v = Math.acos(2*r()-1), rad = 0.85 + 0.3*r();
+  return [f(rad*Math.sin(v)*Math.cos(u)), f(rad*Math.cos(v)), f(rad*Math.sin(v)*Math.sin(u))]; }); })();
+// MulRow, colonne c, dans l'ordre exact de Rasterizer.h : ((x·m0c + y·m1c) + z·m2c) + m3c, arrondi à chaque opération
+const mulRowC = (p, c) => f(f(f(f(p[0]*MVP[0][c]) + f(p[1]*MVP[1][c])) + f(p[2]*MVP[2][c])) + MVP[3][c]);
+const mulRowAlt = (p, c) => f(f(f(p[0]*MVP[0][c]) + f(f(p[1]*MVP[1][c]) + f(p[2]*MVP[2][c]))) + MVP[3][c]);   // parenthésage différent
+(function(){
+  const lane = (vals, hl) => `<div class="lanes">${vals.map(v => `<div class="${hl?'h':''}">${esc(typeof v === "string" ? v : f6(v))}</div>`).join("")}</div>`;
+  const X = VERTS.map(p=>p[0]), Y = VERTS.map(p=>p[1]), Z = VERTS.map(p=>p[2]);
+  const a1 = X.map(x => f(x*MVP[0][0])), b1 = Y.map(y => f(y*MVP[1][0]));
+  const a2 = a1.map((v,i) => f(v + b1[i])), c1 = Z.map(z => f(z*MVP[2][0]));
+  const a3 = a2.map((v,i) => f(v + c1[i])), a4 = a3.map(v => f(v + MVP[3][0]));
+  const sc = VERTS.map(p => mulRowC(p, 0));
+  const same = sc.every((v,i) => Object.is(v, a4[i]));
+  $("simdLanes").innerHTML =
+    `<div class="reg">ymm x = _mm256_load_ps(px + i) — couloir j = sommet i + j</div>${lane(X)}` +
+    `<div class="reg">ymm y</div>${lane(Y)}<div class="reg">ymm z</div>${lane(Z)}` +
+    `<div class="reg">a = x · m00   (m00 = ${f6(MVP[0][0])}, diffusé)</div>${lane(a1)}` +
+    `<div class="reg">a = a + y · m10   (m10 = ${f6(MVP[1][0])})</div>${lane(a2)}` +
+    `<div class="reg">a = a + z · m20   (m20 = ${f6(MVP[2][0])})</div>${lane(a3)}` +
+    `<div class="reg">a = a + m30 = clip.x   (m30 = ${f6(MVP[3][0])}) → _mm256_store_ps(cx + i, a)</div>${lane(a4, true)}` +
+    `<div class="reg">scalaire MulRow(m, src[i]).x, sommet par sommet</div>${lane(sc)}` +
+    `<div class="reg">bits du couloir 0 : AVX2 ${hex(a4[0])} · scalaire ${hex(sc[0])}</div>` +
+    `<div class="${same?'ok':'bad'}" style="margin-top:8px">${same ? "Les 8 couloirs sont identiques au bit près au scalaire : même opérations, même ordre, aucune FMA." : "Écart détecté : vérifier l'ordre des opérations."}</div>`;
+})();
+
+/* ═══════════ Étape 7 · un sommet partagé par six faces ═══════════ */
+(function(){
+  const p = VERTS[2], clip = [0,1,2,3].map(c => mulRowC(p, c));
+  // chercher un sommet où un autre parenthésage change le résultat
+  const r = rng(77); let alt = null;
+  for (let k=0;k<20000 && !alt;k++){ const q = [f((r()-.5)*2), f((r()-.5)*2), f((r()-.5)*2)];
+    for (let c=0;c<4;c++){ const u = mulRowC(q,c), v = mulRowAlt(q,c); if (!Object.is(u,v)){ alt = {q, c, u, v}; break; } } }
+  const rows = [1,2,3,4,5,6].map(k => `<tr><td>face ${k} (par coin)</td><td class="num">${clip.map(f6).join(" ; ")}</td><td class="bits">${hex(clip[0])} ${hex(clip[3])}</td></tr>`).join("");
+  $("e7Calc").innerHTML = `<div class="scroll"><table>
+    <thead><tr><th>Calcul</th><th class="num">clip = (x ; y ; z ; w)</th><th>bits de x et de w</th></tr></thead><tbody>
+    <tr><td>position objet</td><td class="num">${p.map(f6).join(" ; ")} ; 1</td><td>—</td></tr>
+    ${rows}
+    <tr style="background:var(--hl)"><td>après : clipBuf[vi], calculé une fois</td><td class="num">${clip.map(f6).join(" ; ")}</td><td class="bits">${hex(clip[0])} ${hex(clip[3])}</td></tr>
+    </tbody></table></div>
+    <p class="small">Avant : 6 × 4 colonnes × (3 mul + 3 add) = 144 opérations pour ce sommet ; après : 24. Le résultat est le même au bit près parce que c'est la même fonction sur les mêmes entrées.</p>` +
+    (alt ? `<div class="warn">Contre-épreuve : un autre parenthésage, x·m0c + (y·m1c + z·m2c) + m3c, donne pour le sommet (${alt.q.map(f6).join(" ; ")}) la composante ${"xyzw"[alt.c]} = ${f6(alt.v)} (${hex(alt.v)}) au lieu de ${f6(alt.u)} (${hex(alt.u)}). Égal en réels, différent en float32 : une version AVX2 doit garder l'ordre exact de MulRow.</div>` : "");
+})();
+
+/* ═══════════ Étape 12 · réassociation ═══════════ */
+(function(){
+  const N = 4096, r = rng(12), a = Array.from({length:N}, () => f(r()));
+  let s1 = 0; for (let i=0;i<N;i++) s1 = f(s1 + a[i]);
+  const p = [0,0,0,0]; for (let i=0;i<N;i+=4) for (let k=0;k<4;k++) p[k] = f(p[k] + a[i+k]);
+  const s4 = f(f(p[0] + p[1]) + f(p[2] + p[3]));
+  const q = new Array(32).fill(0); for (let i=0;i<N;i+=32) for (let k=0;k<32;k++) q[k] = f(q[k] + a[i+k]);
+  const v = q.slice(0,8).map((x,j) => f(f(x + q[8+j]) + f(q[16+j] + q[24+j])));
+  const h4 = [0,1,2,3].map(j => f(v[j] + v[4+j])); const h2 = [f(h4[0] + h4[2]), f(h4[1] + h4[3])]; const s32 = f(h2[0] + h2[1]);
+  let dref = 0; for (let i=0;i<N;i++) dref += a[i];
+  $("e12Calc").innerHTML = `<div class="scroll"><table><thead><tr><th>Ordre des additions (4 096 floats aléatoires de [0, 1[)</th><th class="num">Somme float32</th><th>bits</th><th class="num">Écart à la somme exacte (double)</th></tr></thead><tbody>
+    <tr><td>Sum1 : une chaîne</td><td class="num">${f6(s1)}</td><td class="bits">${hex(s1)}</td><td class="num">${(s1-dref).toExponential(2)}</td></tr>
+    <tr><td>Sum4 : quatre chaînes</td><td class="num">${f6(s4)}</td><td class="bits">${hex(s4)}</td><td class="num">${(s4-dref).toExponential(2)}</td></tr>
+    <tr><td>Sum32_AVX2 : 4 × 8 couloirs</td><td class="num">${f6(s32)}</td><td class="bits">${hex(s32)}</td><td class="num">${(s32-dref).toExponential(2)}</td></tr>
+    </tbody></table></div><p class="small">Les sommes à plusieurs chaînes sont souvent <b>plus</b> précises (sommes partielles plus petites), mais elles sont <b>différentes</b> : un moteur dont l'image doit être identique au bit près ne réassocie jamais en silence.</p>`;
+})();
+
+/* ═══════════ initialisation ═══════════ */
+function all(){ l1Draw(); l3Draw(); l5Draw(); }
+l1Start(); l2Draw(); l3Draw(); l4Draw(); l5Draw(); l6Draw(); l7Draw();
+let rt = 0; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(all, 120); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", all);
+})();
+</script>
+
+
+</body>
+</html>

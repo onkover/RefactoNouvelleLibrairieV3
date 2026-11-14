@@ -1,0 +1,1914 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH4-G — La campagne de mesure, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+/* Ajouts PH4-G : barres empilées de frame, chaîne de la preuve, console d’arguments. */
+.bar{display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin:8px 0; background:var(--surface2)}
+.bar>span{display:block; height:100%; min-width:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px}
+.kv>dt{color:var(--ink3); font-family:var(--mono); font-size:12.5px}
+.kv>dd{margin:0; font-family:var(--mono); font-size:12.5px; overflow-wrap:anywhere}
+input[type=text].cmd{width:100%; font-family:var(--mono); font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.tag{font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.zone-chip{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+</style>
+
+<header>
+  <div class="t">Lot PH4-G — La campagne de mesure, pas à pas</div>
+  <div class="s">LibraryV3 · phase 4 du carnet de route, discussion G · harnais <code>Core/Profiler</code>, mode banc, bugs 67, 68, 69 · décision A3 · consolidation C2 · échange du 24 au 26/09/2026 · création (aucun artefact n’existait) · amendé le 13/11 : méthode, outils, indicateurs (section M)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">Méthode</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">Fin septembre, le carnet de route laissait une question en suspens, coûteuse et presque irréversible : <b>A3</b>, la traversée « aplatie » du graphe de scène, estimée à deux ou trois séances de travail sur la structure la plus centrale du moteur. Le carnet le disait en toutes lettres : <i>« Ces chiffres décident si A3 vaut ses 2-3 séances. Pas avant. »</i></p>
+
+<p>Or il n’existait <b>aucun chiffre</b>. Pas une seule borne de temps dans le moteur. La seule mesure disponible, <code>ReportCullStats()</code>, comptait des classifications de frustum — pas des nanosecondes — et ne vivait qu’en Debug, c’est-à-dire précisément dans la configuration où l’on ne mesure jamais. La décision aurait donc été prise sur une impression : « ça rame avec la ceinture d’astéroïdes ».</p>
+
+<p>Ce lot raconte comment on a remplacé cette impression par une preuve, en quatre temps :</p>
+<ol>
+<li><b>Construire l’instrument</b> — un chronomètre par frame, éteint par défaut, qui ne perturbe pas ce qu’il mesure et qui se mesure lui-même ;</li>
+<li><b>Construire le protocole</b> — une seule binaire, plusieurs scènes, un monde qui avance exactement de la même façon à chaque exécution ;</li>
+<li><b>Mesurer</b> — deux scènes de référence, puis trois expériences qui ne font varier qu’un paramètre chacune ;</li>
+<li><b>Décider</b> — A3 abandonnée, et une feuille de route d’optimisation qui ne repose plus sur l’intuition.</li>
+</ol>
+
+<p>En chemin, la construction du protocole a fait apparaître <b>trois bugs</b> (67, 68, 69) qui auraient silencieusement corrompu les mesures, et deux incidents de compilation qui ont montré pourquoi une binaire doit déclarer elle-même son état.</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « La ceinture fait chuter les FPS, et la ceinture ajoute des centaines d’entités au graphe : c’est donc la traversée du graphe qui coûte, faisons A3. » Le raisonnement est fluide, et il est faux. Mesurée, la traversée complète du graphe (<code>WorldXform1</code>) coûte <b>23,7 µs sur une frame de 13,7 ms : un millième</b>. Rendre A3 instantanée aurait fait gagner 0,2 % du temps de frame. Tout le temps partait ailleurs, dans le nombre de triangles soumis au rendu. On ne l’a su qu’en mesurant.
+</div>
+
+<p class="small">Nom du lot : <b>PH4-G</b> (phase 4 du carnet, discussion G). Le document de clôture de l’échange s’appelle « Consolidation C2 » ; ce nom entre en collision avec le chantier C2 (arêtes AVX2) et son artefact « Lot C2 pas à pas » (point C1-0 de la roadmap). D’où ce nom distinct.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>La campagne de mesure arrive après la phase 1 du carnet (intégrité du graphe, boucle principale, viewports). Chacun des lots précédents a posé une pièce sur laquelle elle s’appuie — ou qu’elle a dû corriger.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH4-G en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>A10</b> — build portable</td><td><code>LV3.Common.props</code> partagé par la LIB et l’EXE ; commutateurs indépendants (<code>LV3_DEBUG</code>, <code>LV3_ASSERTS_ENABLED</code>…) ; <code>ResolveContentRoot</code> et son marqueur <code>engine.json</code>.</td><td>Le sixième commutateur, <code>LV3_PROFILE</code>, est posé au même foyer. Le bug 68 est un défaut de la politique de A10.</td></tr>
+<tr><td><b>PH0</b> et bug 62</td><td>Filtrage des triggers par rôle avant le test de distance.</td><td>Le point 7 du carnet : le narrow-phase devrait être O(N) et non O(N²). <i>« À confirmer par les chiffres de cette campagne. »</i></td></tr>
+<tr><td><b>L06</b> — graphe de scène</td><td><code>PropagateWorld</code>, <code>SimulationClock</code> (temps réel et temps simulé, S10).</td><td><code>WorldTransformSystem</code> est la zone dont dépend A3 ; le mode banc agit sur l’entrée de <code>SimulationClock</code>.</td></tr>
+<tr><td><b>PH1-D</b> — boucle principale</td><td>Ordre canonique S13 : deux cuissons (complète, puis ciblée sur les caméras) ; bug 63 : la racine du projet avant la copie de l’exécutable.</td><td>Les zones de mesure suivent S13 une à une. Le bug 63 avait prévenu : <i>« la garantie argv[1] […] dont dépendra la sélection de scène de la campagne Phase 4/G — à garder à l’esprit en G »</i>.</td></tr>
+<tr><td><b>PH1-E</b> / A11 — viewports</td><td>Jusqu’à quatre panneaux, nombre de vues décidé par la scène.</td><td>Le nombre de vues devient une <b>métadonnée de mesure</b> : c’est lui qui a révélé une confusion entre deux scènes.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ</b> (fin de la discussion J, 20/09/2026, prochain numéro de bug libre : 67). La boucle exécutait S13 sans aucune borne de temps. <code>argv[1]</code> désignait la <b>racine de contenu</b> ; la scène venait uniquement de <code>config.json → assets.scene_graph.object</code>. <code>config.json</code>, <code>engine.json</code> et la police étaient ouverts par un chemin relatif. Le temps de simulation dérivait du temps réel mesuré, la souris était capturée. Le protocole du carnet demandait pourtant : <i>« une seule binaire, deux scènes, aucune recompilation »</i> et des chiffres <i>« versionnés en CSV »</i>.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce qu’est « mesurer un moteur »</h3>
+<p>Un moteur temps réel produit une image toutes les quelques millisecondes. Mesurer, ce n’est pas lire un compteur de FPS : c’est <b>découper chaque frame en zones</b> (les entrées, l’animation, les matrices, la détection, le rendu…) et savoir combien de temps chacune a pris, frame après frame. C’est la seule façon de savoir <em>où</em> part le temps. Un FPS dit que la voiture est lente ; une ventilation par zone dit que c’est le frein à main.</p>
+
+<p>Deux outils existent, complémentaires :</p>
+<ul>
+<li>le <b>profileur d’échantillonnage</b> de Visual Studio, qui interrompt le programme des milliers de fois par seconde et note la ligne en cours. Il répond à « quelle <em>ligne</em> est chaude ? » ;</li>
+<li>le <b>harnais instrumenté</b> construit ici, qui pose des bornes de temps nommées et des <b>compteurs</b>. Il répond à « combien coûte chaque <em>zone</em>, frame par frame, <em>en fonction de quoi</em> ? ».</li>
+</ul>
+<p class="small">Les outils, le protocole et les indicateurs sont détaillés dans la <a href="#methode">section M</a>.</p>
+<p>Le second est indispensable pour une décision comme A3 : il donne une série versionnable dans le dépôt, et c’est le rapport <i>temps ÷ compteur</i> qui distingue un coût O(N) d’un coût O(N²) — le temps seul ne le peut pas.</p>
+
+<h3>Les objectifs du lot</h3>
+<ol>
+<li><b>Un instrument permanent</b>, compilé dans le moteur, éteint par défaut, et dont le coût propre est mesuré et écrit à côté des résultats.</li>
+<li><b>Un protocole reproductible</b> : deux exécutions de la même scène font exactement le même travail, au compteur près.</li>
+<li><b>Une seule binaire pour toutes les scènes</b>, choisies par la ligne de commande, sans éditer de fichier entre deux mesures.</li>
+<li><b>Des chiffres auto-descriptifs</b>, versionnés dans <code>Mesures/</code>, lisibles six mois plus tard sans se souvenir des conditions.</li>
+<li><b>Deux décisions</b> : A3 vaut-elle ses séances ? La détection des triggers est-elle O(N²) (point 7) ?</li>
+</ol>
+
+<h3>La chaîne de la preuve</h3>
+<p>Le lot s’organise comme une démonstration : chaque maillon n’a de valeur que si le précédent tient. Les <b>témoins</b> (zones qui ne doivent pas varier) peuvent refuser une expérience à n’importe quel moment.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 250" role="img" aria-label="Chaîne de la preuve : instrument, protocole, expériences, lois, décisions, avec des témoins qui peuvent refuser une expérience">
+<defs><marker id="ar0" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>.c0{fill:var(--surface2);stroke:var(--line)}.c1{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}.c2{fill:var(--bad-bg);stroke:var(--bad)}.t0{fill:var(--ink);font:600 13px var(--sans)}.t1{fill:var(--ink3);font:11px var(--mono)}.l0{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}.l1{stroke:var(--bad);color:var(--bad);stroke-width:1.4;fill:none;stroke-dasharray:4 3}</style>
+<rect class="c1" x="10" y="30" width="160" height="80" rx="9"/><text class="t0" x="22" y="56">1 · Instrument</text><text class="t1" x="22" y="76">Core/Profiler</text><text class="t1" x="22" y="92">12 zones, compteurs</text>
+<rect class="c1" x="190" y="30" width="160" height="80" rx="9"/><text class="t0" x="202" y="56">2 · Protocole</text><text class="t1" x="202" y="76">--scene --bench</text><text class="t1" x="202" y="92">dt fixe, CSV</text>
+<rect class="c1" x="370" y="30" width="160" height="80" rx="9"/><text class="t0" x="382" y="56">3 · Expériences</text><text class="t1" x="382" y="76">A, B, C, D, E</text><text class="t1" x="382" y="92">une variable à la fois</text>
+<rect class="c1" x="550" y="30" width="160" height="80" rx="9"/><text class="t0" x="562" y="56">4 · Lois</text><text class="t1" x="562" y="76">Render ≈ k × faces</text><text class="t1" x="562" y="92">plancher de bruit</text>
+<rect class="c1" x="730" y="30" width="160" height="80" rx="9"/><text class="t0" x="742" y="56">5 · Décisions</text><text class="t1" x="742" y="76">A3 abandonnée</text><text class="t1" x="742" y="92">chantiers classés</text>
+<line class="l0" x1="170" y1="70" x2="186" y2="70" marker-end="url(#ar0)"/><line class="l0" x1="350" y1="70" x2="366" y2="70" marker-end="url(#ar0)"/><line class="l0" x1="530" y1="70" x2="546" y2="70" marker-end="url(#ar0)"/><line class="l0" x1="710" y1="70" x2="726" y2="70" marker-end="url(#ar0)"/>
+<rect class="c2" x="250" y="160" width="400" height="66" rx="9"/><text class="t0" x="266" y="185">Témoins et métadonnées</text><text class="t1" x="266" y="205">Clear, Present (ne dépendent que de la résolution)</text><text class="t1" x="266" y="219">en-tête : scène, config, résolution, vues, overhead</text>
+<path class="l1" d="M450 160 L450 112" marker-end="url(#ar0)"/><text class="t1" x="460" y="140" style="fill:var(--bad)">peuvent refuser une expérience</text>
+</svg>
+</div>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Quel outil</td><td>profileur d’échantillonnage VS · harnais maison</td><td>harnais, le profileur VS en complément</td><td>Il faut des séries par frame, des compteurs, et un fichier versionnable.</td></tr>
+<tr><td>Commutateur</td><td>dériver de <code>_DEBUG</code> · de <code>LV3_DEBUG</code> · indépendant</td><td>sixième commutateur indépendant <code>LV3_PROFILE</code>, défaut 0</td><td>On mesure en Release. En Debug, la STL instrumentée fausse les coûts d’un facteur 10 à 50 et ne préserve même pas leurs rapports.</td></tr>
+<tr><td>Où le définir</td><td>projet LIB · projet EXE · <code>LV3.Common.props</code></td><td>props partagé, un seul mot à changer</td><td>Deux définitions séparées reproduiraient la quasi-violation d’ODR du bug 0.3.</td></tr>
+<tr><td>Horloge</td><td><code>system_clock</code> · <code>steady_clock</code> · <code>__rdtsc</code></td><td><code>steady_clock</code></td><td>Monotone, sans <code>windows.h</code>, adossée à QPC. <code>__rdtsc</code> attendra des bornes par triangle.</td></tr>
+<tr><td>Format de sortie</td><td>log texte · CSV en ms décimales · CSV en entiers</td><td>CSV <code>;</code>, tout en entiers, en-tête auto-descriptif</td><td>Un point décimal dans un Excel francophone devient du texte.</td></tr>
+<tr><td>Statistiques</td><td>moyenne, FPS moyens · médiane, p95, max</td><td>médiane, p95, max</td><td><code>moyenne(1/t) ≠ 1/moyenne(t)</code> ; une moyenne écrase la distribution.</td></tr>
+<tr><td>Reproductibilité</td><td>dt réel et beaucoup de frames · dt fixe</td><td>dt fixe en mode banc</td><td>Avec un dt réel, deux exécutions ne rendent pas la même scène.</td></tr>
+<tr><td>Choix de la scène</td><td>éditer <code>config.json</code> · positionnel · <code>--scene=</code></td><td><code>--scene=</code></td><td>Un jeton qui porte sa valeur ne dépend pas de son rang.</td></tr>
+<tr><td>Racine invalide passée en argument</td><td>repli silencieux · avertissement · arrêt</td><td>arrêt (bug 68)</td><td>Une intention erronée n’est pas une absence d’information.</td></tr>
+<tr><td>Où poser les compteurs</td><td>partout · là où le temps se trouve</td><td>dans <code>RenderView</code> seulement</td><td>Instrumenter une zone qui pèse 1 ‰ serait la faute même qu’on cherche à éviter avec A3.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>La chaîne complète du moteur, du lancement jusqu’à l’écriture des mesures, telle qu’elle tourne à la fin de l’échange (26/09). Deux marquages : <span class="tag" style="background:var(--hl);border-color:var(--hl-line)">surligné</span> = étage <b>modifié</b> par ce lot (avec la référence) ; <span class="tag" style="border-style:dashed;border-color:var(--accent)">tireté</span> = étage <b>observé</b> : une borne de temps l’entoure, son code ne change pas. Un lot de mesure doit, par principe, observer sans modifier ; les seules modifications fonctionnelles sont les trois bugs découverts en route.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 820" role="img" aria-label="Chaîne complète du moteur, avec les étages modifiés par le lot PH4-G surlignés et les étages observés par une borne de temps en tireté">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>
+.bx{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.bxh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}
+.bxo{fill:var(--surface2);stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 3}
+.lb{fill:var(--ink);font:600 12.5px var(--sans)}
+.sb{fill:var(--ink3);font:11px var(--mono)}
+.ph{fill:var(--ink3);font:600 10.5px var(--sans);letter-spacing:.09em}
+.ln{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}
+</style>
+<text class="ph" x="16" y="20">1 · LANCEMENT (une fois)</text>
+<rect class="bxh" x="16" y="30" width="160" height="62" rx="8"/><text class="lb" x="28" y="52">ParseArgs (G2a)</text><text class="sb" x="28" y="69">1 positionnel</text><text class="sb" x="28" y="83">--scene --bench --csv</text>
+<rect class="bxh" x="190" y="30" width="190" height="62" rx="8"/><text class="lb" x="202" y="52">Racine (68)</text><text class="sb" x="202" y="69">IsContentRoot(argv)</text><text class="sb" x="202" y="83">env posée invalide → arrêt</text>
+<rect class="bxh" x="394" y="30" width="170" height="62" rx="8"/><text class="lb" x="406" y="52">config + engine (67)</text><text class="sb" x="406" y="69">contentRoot / …</text><text class="sb" x="406" y="83">ligne [Build]</text>
+<rect class="bxh" x="578" y="30" width="150" height="62" rx="8"/><text class="lb" x="590" y="52">Scène (G2a)</text><text class="sb" x="590" y="69">--scene prime</text><text class="sb" x="590" y="83">substitution tracée</text>
+<rect class="bxh" x="742" y="30" width="142" height="62" rx="8"/><text class="lb" x="754" y="52">SDL, police (67)</text><text class="sb" x="754" y="69">tahoma.ttf sous</text><text class="sb" x="754" y="83">contentRoot</text>
+<line class="ln" x1="176" y1="61" x2="186" y2="61" marker-end="url(#ar)"/><line class="ln" x1="380" y1="61" x2="390" y2="61" marker-end="url(#ar)"/><line class="ln" x1="564" y1="61" x2="574" y2="61" marker-end="url(#ar)"/><line class="ln" x1="728" y1="61" x2="738" y2="61" marker-end="url(#ar)"/>
+<rect class="bxh" x="560" y="104" width="324" height="50" rx="8"/><text class="lb" x="572" y="125">Armement du banc (G2b)</text><text class="sb" x="572" y="142">souris libre · Profiler::Begin(N, chauffe)</text>
+<path class="ln" d="M813 92 L813 100" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="186">2 · UNE FRAME (S13), BORNES DE TEMPS POSÉES (G3a)</text>
+<rect class="bxh" x="16" y="196" width="210" height="62" rx="8"/><text class="lb" x="28" y="218">realDt → dt fixe (G2b)</text><text class="sb" x="28" y="235">si banc : 1/60 s</text><text class="sb" x="28" y="249">puis _clock.Advance</text>
+<rect class="bxh" x="240" y="196" width="150" height="62" rx="8"/><text class="lb" x="252" y="218">BeginFrame</text><text class="sb" x="252" y="235">simTime en</text><text class="sb" x="252" y="249">milli-jours</text>
+<rect class="bxh" x="404" y="196" width="230" height="62" rx="8"/><text class="lb" x="416" y="218">{Input} (G2b)</text><text class="sb" x="416" y="235">BuildInputState, puis</text><text class="sb" x="416" y="249">InputState vidé si banc</text>
+<rect class="bxo" x="648" y="196" width="236" height="62" rx="8"/><text class="lb" x="660" y="218">{Animation}</text><text class="sb" x="660" y="235">AnimationSystem(simDt)</text><text class="sb" x="660" y="249">code inchangé</text>
+<line class="ln" x1="226" y1="227" x2="236" y2="227" marker-end="url(#ar)"/><line class="ln" x1="390" y1="227" x2="400" y2="227" marker-end="url(#ar)"/><line class="ln" x1="634" y1="227" x2="644" y2="227" marker-end="url(#ar)"/>
+<path class="ln" d="M766 258 L766 272 L114 272 L114 284" marker-end="url(#ar)"/>
+<rect class="bxo" x="16" y="288" width="196" height="62" rx="8"/><text class="lb" x="28" y="310">{LocalXform1}</text><text class="sb" x="28" y="327">{WorldXform1} ← A3</text><text class="sb" x="28" y="341">cuisson complète O(N)</text>
+<rect class="bxo" x="226" y="288" width="240" height="62" rx="8"/><text class="lb" x="238" y="310">{Cameras}</text><text class="sb" x="238" y="327">FPS, Follow, Zoom ; puis</text><text class="sb" x="238" y="341">BEGIN/END : sélection, gizmo</text>
+<rect class="bxo" x="480" y="288" width="196" height="62" rx="8"/><text class="lb" x="492" y="310">{LocalXform2}</text><text class="sb" x="492" y="327">{WorldXform2}</text><text class="sb" x="492" y="341">sous le seuil (≈ 0,3 µs)</text>
+<rect class="bxo" x="690" y="288" width="194" height="62" rx="8"/><text class="lb" x="702" y="310">{Trigger}</text><text class="sb" x="702" y="327">point 7 : N² ?</text><text class="sb" x="702" y="341">{BuildViews}</text>
+<line class="ln" x1="212" y1="319" x2="222" y2="319" marker-end="url(#ar)"/><line class="ln" x1="466" y1="319" x2="476" y2="319" marker-end="url(#ar)"/><line class="ln" x1="676" y1="319" x2="686" y2="319" marker-end="url(#ar)"/>
+<path class="ln" d="M786 350 L786 364 L114 364 L114 376" marker-end="url(#ar)"/>
+<rect class="bxo" x="16" y="380" width="196" height="62" rx="8"/><text class="lb" x="28" y="402">{Clear}</text><text class="sb" x="28" y="419">Clean_Render</text><text class="sb" x="28" y="433">témoin : résolution</text>
+<rect class="bxh" x="226" y="380" width="300" height="62" rx="8"/><text class="lb" x="238" y="402">{Render} + compteurs (G3b, 69)</text><text class="sb" x="238" y="419">MeshesTested/Culled, FacesSubmitted</text><text class="sb" x="238" y="433">TrisRasterized ; vi sous LV3_DEBUG</text>
+<rect class="bxh" x="540" y="380" width="170" height="62" rx="8"/><text class="lb" x="552" y="402">{Present} (G2b)</text><text class="sb" x="552" y="419">hors budget moteur</text><text class="sb" x="552" y="433">témoin : résolution</text>
+<rect class="bxh" x="724" y="380" width="160" height="62" rx="8"/><text class="lb" x="736" y="402">EndFrame</text><text class="sb" x="736" y="419">puis ++k ≥ N</text><text class="sb" x="736" y="433">→ g_running = faux</text>
+<line class="ln" x1="212" y1="411" x2="222" y2="411" marker-end="url(#ar)"/><line class="ln" x1="526" y1="411" x2="536" y2="411" marker-end="url(#ar)"/><line class="ln" x1="710" y1="411" x2="720" y2="411" marker-end="url(#ar)"/>
+<path class="ln" d="M804 442 L804 458 L894 458 L894 180 L130 180 L130 192" marker-end="url(#ar)"/>
+<text class="sb" x="606" y="474">frame suivante</text>
+
+<text class="ph" x="16" y="510">3 · FIN DE CAMPAGNE (une fois)</text>
+<rect class="bxh" x="16" y="520" width="420" height="78" rx="8"/><text class="lb" x="28" y="542">Profiler::DumpCsv (G1, G1 bis, G3a)</text><text class="sb" x="28" y="560">contentRoot/Mesures/&lt;scène&gt;_&lt;config&gt;.csv  (série brute)</text><text class="sb" x="28" y="574">…_summary.csv : médiane, p95, max, ‰, RESTE</text><text class="sb" x="28" y="588">en-tête : scène ; config ; res ; vues ; overhead ; résolution</text>
+<rect class="bx" x="450" y="520" width="434" height="78" rx="8"/><text class="lb" x="462" y="542">Lecture humaine → consolidation C2</text><text class="sb" x="462" y="560">témoins, plancher de bruit, deltas</text><text class="sb" x="462" y="574">loi Render ≈ 42 ns × faces</text><text class="sb" x="462" y="588">décision A3, chantiers classés</text>
+<line class="ln" x1="436" y1="559" x2="446" y2="559" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="636">CE QUE LE LOT NE TOUCHE PAS</text>
+<rect class="bx" x="16" y="646" width="868" height="160" rx="8"/>
+<text class="sb" x="28" y="670">Le code des systèmes mesurés : Animation, cuissons, caméras, TriggerSystem, BuildViewData, Clean_Render, RenderView, rasterizer.</text>
+<text class="sb" x="28" y="690">Le lot les ENTOURE de bornes (blocs RAII) et pose quatre compteurs dans RenderView ; il ne change aucun calcul.</text>
+<text class="sb" x="28" y="714">Exceptions, toutes justifiées par un bug découvert en route :</text>
+<text class="sb" x="28" y="732">  67 — chemins des fichiers de configuration et de la police (main.cpp, SDLMngt.cpp) ;</text>
+<text class="sb" x="28" y="750">  68 — politique d’une racine invalide demandée explicitement (main.cpp, ContentRoot.h/.cpp) ;</text>
+<text class="sb" x="28" y="768">  69 — _DEBUG remplacé par LV3_DEBUG autour de l’index de vue (RenderSystem.cpp).</text>
+<text class="sb" x="28" y="792">Une ablation temporaire (DrawTriangle débranché) a été posée puis RETIRÉE dans le même échange.</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Réf.</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Core/config.h</code></td><td>LIB</td><td>G1</td><td><span class="pill ok">ajout</span> commutateur 6 <code>LV3_PROFILE</code>, défaut 0, puis <code>#pragma message</code> de diagnostic</td></tr>
+<tr><td><code>Core/Profiler.h</code> / <code>.cpp</code></td><td>LIB</td><td>G1, G1 bis, G3a</td><td><span class="pill ok">nouveau</span> zones, compteurs, <code>ProfFrame</code>, <code>ScopeTimer</code>, macros, <code>DumpCsv</code>, calibration, <code>CompiledProfileFlag</code>, bornes manuelles, ligne <code>RESTE</code></td></tr>
+<tr><td><code>Build/LV3.Common.props</code></td><td>EXE (partagé)</td><td>G1</td><td><span class="pill ok">ajout</span> propriété <code>LV3Profile</code>, définition conditionnelle, cible <code>LV3ShowProfile</code></td></tr>
+<tr><td><code>Core/ContentRoot.h</code> / <code>.cpp</code></td><td>LIB</td><td>68</td><td><span class="pill warn">modifié</span> <code>IsContentRoot</code> publiée ; <code>LV3_CONTENT_ROOT</code> posée et invalide → échec</td></tr>
+<tr><td><code>Scene/RenderSystem.cpp</code></td><td>LIB</td><td>G3b, 69</td><td><span class="pill ok">ajout</span> quatre compteurs ; <span class="pill warn">modifié</span> <code>#ifdef _DEBUG</code> → <code>#if LV3_DEBUG</code></td></tr>
+<tr><td><code>Helper/AppArgs.h</code> / <code>.cpp</code></td><td>EXE</td><td>G2a</td><td><span class="pill ok">nouveau</span> <code>ParseArgs</code>, <code>PrintUsage</code></td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>67, 68, G2a, G2b, G3a</td><td><span class="pill warn">modifié</span> chemins, validation de la racine, <code>--scene</code>, banc, ligne <code>[Build]</code>, treize bornes, écriture du CSV</td></tr>
+<tr><td><code>main.h</code>, <code>SDLMngt.cpp</code></td><td>EXE</td><td>67</td><td><span class="pill warn">modifié</span> <code>SDLINIT(w, h, fontPath)</code></td></tr>
+<tr><td><code>.vcxproj</code> + <code>.filters</code></td><td>LIB, EXE</td><td>R29</td><td><span class="pill ok">ajout</span> <code>Profiler.h/.cpp</code>, <code>AppArgs.h/.cpp</code></td></tr>
+<tr><td><code>Mesures/*.csv</code></td><td>EXE (contenu)</td><td>—</td><td><span class="pill ok">nouveau</span> séries brutes et résumés, <b>versionnés</b> (contrairement aux <code>*.log</code>)</td></tr>
+<tr><td><code>Consolidation_C2_Campagne_Mesure.md</code></td><td>projet</td><td>—</td><td><span class="pill ok">nouveau</span> document de clôture (26/09)</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Cinq fonctionnements changent. Pour chacun, l’algorithme d’avant (état du 20/09) et celui d’après (26/09). Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · Le lancement : où lire, quelle scène</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — la scène vient d’un fichier, les chemins du répertoire courant</div>
+<pre><code><span class="hl">racine ← ResolveContentRoot([argv[1]?, LV3_PROJECT_DIR?])</span>
+<span class="hl">          // candidat invalide : SAUTÉ, sans un mot</span>
+<span class="hl">cfg    ← ProgrammeConfig("config.json")     // dossier COURANT</span>
+<span class="hl">engine ← LoadFromJson("engine.json")        // dossier COURANT</span>
+<span class="hl">scène  ← cfg.scene_graph                    // éditer le fichier</span>
+<span class="hl">SDLINIT(w, h) → TTF_OpenFont("Tahoma.ttf") // dossier COURANT</span>
+SetMouseCapture(vrai)
+boucle infinie</code></pre></div>
+<div class="ap"><div class="t">Après — la commande décide, tout se lit sous la racine</div>
+<pre><code><span class="hl">args ← ParseArgs(argc, argv)                // G2a</span>
+<span class="hl">  aide → usage, 0 ; invalide → usage, −1</span>
+<span class="hl">si args.racine et !IsContentRoot(racine) → arrêt     // 68</span>
+racine ← ResolveContentRoot(...)    <span class="hl">// env invalide → arrêt</span>
+<span class="hl">cfg    ← ProgrammeConfig(racine / "config.json")     // 67</span>
+<span class="hl">engine ← LoadFromJson(racine / kContentMarker)       // 67</span>
+<span class="hl">[Build] config | LV3_PROFILE exe, lib | date</span>
+<span class="hl">scène  ← args.scene sinon cfg.scene_graph  (tracé)</span>
+<span class="hl">SDLINIT(w, h, racine / "tahoma.ttf")                 // 67</span>
+<span class="hl">SetMouseCapture(!banc) ; si banc : Profiler::Begin</span></code></pre></div>
+</div>
+
+<h3>B · Une frame : un monde reproductible, des bornes partout</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — le monde suit l’horloge murale, rien n’est chronométré</div>
+<pre><code>realDt ← mesure ; clamp 0,1 s
+simDt  ← _clock.Advance(realDt)
+input  ← BuildInputState()
+PlayerInputSystem(input)
+CheckControllerExclusivity ; AnimationSystem(simDt)
+Local + World (cuisson 1) ; caméras ; sélection ; gizmo
+Local + World ciblée (cuisson 2) ; Trigger ; BuildViewData × N
+Clean_Render ; BeginFrame ; RenderView × N
+RenderCopy ; RenderPresent</code></pre></div>
+<div class="ap"><div class="t">Après — dt fixe en banc, une borne par étage S13</div>
+<pre><code>realDt ← mesure ; clamp 0,1 s
+<span class="hl">si banc : realDt ← 1/60</span>
+simDt  ← _clock.Advance(realDt)
+<span class="hl">BeginFrame(simTime × 1000)</span>
+<span class="hl">{Input}</span> input ← BuildInputState() <span class="hl">; si banc : input ← {}</span> ; Player
+<span class="hl">{Cameras}</span> CheckControllerExclusivity ; <span class="hl">{Animation}</span>
+<span class="hl">{LocalXform1} {WorldXform1} {Cameras}</span> FPS, Follow, Zoom
+<span class="hl">BEGIN(camSel)</span> sélection, bindings, gizmo <span class="hl">END → Cameras</span>
+<span class="hl">{LocalXform2} {WorldXform2} {Trigger} {BuildViews}</span>
+<span class="hl">{Clear}</span> Clean_Render, BeginFrame ; <span class="hl">{Render}</span> RenderView × N
+<span class="hl">{Present}</span> RenderCopy ; RenderPresent
+<span class="hl">EndFrame ; si banc et ++k ≥ N : g_running ← faux</span></code></pre></div>
+</div>
+<p class="small">Une même étiquette peut apparaître plusieurs fois : les zones <b>s’accumulent</b> sur la frame. <code>Cameras</code> regroupe trois morceaux non contigus.</p>
+
+<h3>C · La fin de la campagne</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>SDLkill()
+retour 0          // aucune trace de ce qui s’est passé</code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code><span class="hl">si banc :</span>
+<span class="hl">  rel ← args.csv sinon "Mesures/&lt;scène&gt;_&lt;config&gt;.csv"</span>
+<span class="hl">  create_directories(racine / rel)</span>
+<span class="hl">  DumpCsv(racine / rel, {scène, config, w, h, vues})</span>
+<span class="hl">    → série brute (une ligne par frame)</span>
+<span class="hl">    → _summary : médiane, p95, max, ‰, RESTE</span>
+SDLkill() ; retour 0</code></pre></div>
+</div>
+
+<h3>D · La décision A3 : de l’impression à la mesure</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — carnet du 20/09</div>
+<pre><code>A3 : traversée aplatie, dirty par sous-arbre,
+     split chaud/froid — 2 à 3 séances
+<span class="hl">justification : « ça rame avec la ceinture »</span>
+<span class="hl">critère : aucun</span></code></pre></div>
+<div class="ap"><div class="t">Après — consolidation C2 § 8.1</div>
+<pre><code><span class="hl">mesure : WorldXform1 = 23,7 µs sur FRAME = 13,7 ms</span>
+<span class="hl">part   : 1 ‰ ; gain maximal théorique 0,2 %</span>
+<span class="hl">verdict : ABANDONNÉE</span>
+<span class="hl">réouverture : si WorldXform1 &gt; 5 % de la frame</span></code></pre></div>
+</div>
+
+<h3>E · Le rendu, enfin instrumenté</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — RenderView</div>
+<pre><code>pour chaque instance visible :
+  vis ← Classify(AABB monde)
+  si vis = Outside : continuer
+  pour chaque face : … EmitClipTriangle → DrawTriangle
+<span class="hl">// seule statistique : ReportCullStats, en Debug</span></code></pre></div>
+<div class="ap"><div class="t">Après — RenderView instrumenté (G3b)</div>
+<pre><code>pour chaque instance visible :
+  vis ← Classify(AABB monde) ; <span class="hl">MeshesTested += 1</span>
+  si vis = Outside : <span class="hl">MeshesCulled += 1 ;</span> continuer
+  <span class="hl">FacesSubmitted += faceCount()</span>
+  pour chaque face : …
+    EmitClipTriangle : backface → retour
+                       <span class="hl">TrisRasterized += 1</span> ; DrawTriangle</code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="methode">
+<h2>M · Comprendre la mesure : protocole, outils, indicateurs</h2>
+<p class="lede">Section ajoutée le 13/11/2026. Les sections précédentes disent <em>ce qui</em> a été mesuré. Celle-ci explique <em>comment</em> on mesure un moteur, avec quels outils, ce que veulent dire les indicateurs du résumé (médiane, p95, max, ‰, RESTE…), et comment on passe de milliers de nombres bruts à une décision. Le but : pouvoir refaire seul une campagne, la lire, et la contester.</p>
+
+<!-- ───────── M.1 ───────── -->
+<h3>M.1 · Ce qu’on cherche à savoir, et pourquoi c’est difficile</h3>
+<p>La question paraît simple : « ce changement de code rend-il le moteur plus rapide, et de combien ? ». La difficulté est qu’un PC n’exécute <b>jamais deux fois</b> le même programme à la même vitesse. Entre deux lancements, et même entre deux frames, une dizaine de choses varient qui n’ont rien à voir avec ton code. Si l’écart que tu cherches à mesurer (un gain de 3 %, par exemple) est plus petit que ces variations, une seule mesure ne prouve rien — elle peut même prouver le contraire de la vérité.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Source de variation</th><th>Ce qu’elle fait</th><th>Ordre de grandeur observé dans le projet</th><th>Parade du protocole</th></tr></thead>
+<tbody>
+<tr><td><b>L’ordonnanceur de Windows</b></td><td>suspend ton thread pour en servir un autre (antivirus, navigateur, indexation)</td><td>des frames isolées 2 à 3 fois plus lentes</td><td>médiane plutôt que moyenne ; p95 pour voir les accidents</td></tr>
+<tr><td><b>La fréquence du processeur</b></td><td>monte en turbo quand le CPU est froid, baisse quand il chauffe</td><td>≈ 12 % sur <code>Clear</code> entre deux runs (C2)</td><td>frames de chauffe ; comparaison dans une même séance (ABBA)</td></tr>
+<tr><td><b>Le mode d’alimentation</b></td><td>en mode économie ou sur batterie, le CPU bride sa fréquence</td><td>×1,6 sur tout le moteur (18/10)</td><td>secteur, mode « performances élevées »</td></tr>
+<tr><td><b>Le type de cœur</b> (CPU hybride)</td><td>un i7-1265U a 2 cœurs P (rapides) et 8 cœurs E (économes) ; Windows choisit</td><td><code>Render</code> ×1,78 sur cœur E (avenant C2)</td><td>épingler le programme sur un cœur P (<code>start /affinity 4</code>)</td></tr>
+<tr><td><b>Les caches et la mémoire</b></td><td>les premières frames chargent les données en cache, déclenchent des défauts de page</td><td>premières frames nettement plus lentes</td><td>60 frames de chauffe exclues du résumé</td></tr>
+<tr><td><b>Le contenu de la scène</b></td><td>avec un dt réel, les planètes ne sont pas au même endroit d’un run à l’autre</td><td>charge de travail différente à chaque run</td><td>mode banc : dt fixe, compteurs identiques au chiffre près</td></tr>
+<tr><td><b>La dérive dans la séance</b></td><td>la machine se réchauffe lentement pendant une série de runs</td><td>jusqu’à 12 à 35 % d’un jour à l’autre (plan)</td><td>ordre ABBA, qui annule une dérive linéaire</td></tr>
+<tr><td><b>L’instrument lui-même</b></td><td>chaque borne lit l’horloge ; chaque compteur ajoute une instruction</td><td>32 à 123 ns par paire de bornes ; +2,6 % avec les compteurs de rendu</td><td>coût écrit dans le CSV ; compteurs chauds sous commutateur dédié (M10)</td></tr>
+</tbody></table></div>
+
+<div class="note"><b>Le principe qui découle de ce tableau.</b> On ne cherche pas à supprimer le bruit — c’est impossible sur un PC de bureau. On cherche à le <b>rendre petit</b> (protocole), à le <b>mesurer</b> (témoins, plancher de bruit), puis à ne conclure que sur des écarts <b>plus grands que lui</b>. C’est exactement la démarche d’un laboratoire de physique.</div>
+
+<!-- ───────── M.2 ───────── -->
+<h3>M.2 · Le protocole utilisé, étape par étape</h3>
+<p>Un <b>protocole</b> est une recette écrite <em>avant</em> de mesurer, qui fixe trois choses : ce qu’on fait varier (une seule chose), ce qu’on garde fixe (tout le reste), et la règle qui permettra de conclure. L’écrire avant empêche de choisir, après coup, l’interprétation qui arrange.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 300" role="img" aria-label="Les huit étapes du protocole de mesure, de la préparation de la machine à la décision">
+<defs><marker id="arM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>.mb{fill:var(--surface2);stroke:var(--line)}.mh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}.mr{fill:var(--bad-bg);stroke:var(--bad)}.mt{fill:var(--ink);font:600 12.5px var(--sans)}.ms{fill:var(--ink3);font:11px var(--mono)}.ml{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}.mlr{stroke:var(--bad);color:var(--bad);stroke-width:1.4;fill:none;stroke-dasharray:4 3}</style>
+<rect class="mb" x="10" y="20" width="200" height="66" rx="8"/><text class="mt" x="22" y="42">1 · Préparer la machine</text><text class="ms" x="22" y="60">secteur, perf. élevées</text><text class="ms" x="22" y="74">applis lourdes fermées</text>
+<rect class="mb" x="230" y="20" width="200" height="66" rx="8"/><text class="mt" x="242" y="42">2 · Construire</text><text class="ms" x="242" y="60">Release, LV3Profile=true</text><text class="ms" x="242" y="74">régénérer LIB + EXE</text>
+<rect class="mh" x="450" y="20" width="200" height="66" rx="8"/><text class="mt" x="462" y="42">3 · Identifier la binaire</text><text class="ms" x="462" y="60">ligne [Build]</text><text class="ms" x="462" y="74">exe = lib, date du jour</text>
+<rect class="mb" x="670" y="20" width="220" height="66" rx="8"/><text class="mt" x="682" y="42">4 · Lancer le banc</text><text class="ms" x="682" y="60">--scene --bench=300</text><text class="ms" x="682" y="74">dt fixe, 60 de chauffe</text>
+<line class="ml" x1="210" y1="53" x2="226" y2="53" marker-end="url(#arM)"/><line class="ml" x1="430" y1="53" x2="446" y2="53" marker-end="url(#arM)"/><line class="ml" x1="650" y1="53" x2="666" y2="53" marker-end="url(#arM)"/>
+<path class="ml" d="M780 86 L780 104 L120 104 L120 120" marker-end="url(#arM)"/>
+<rect class="mh" x="10" y="124" width="200" height="66" rx="8"/><text class="mt" x="22" y="146">5 · Lire l’en-tête</text><text class="ms" x="22" y="164">scène, res, vues, config</text><text class="ms" x="22" y="178">avant le 1er chiffre</text>
+<rect class="mr" x="230" y="124" width="200" height="66" rx="8"/><text class="mt" x="242" y="146">6 · Recevabilité</text><text class="ms" x="242" y="164">témoins, RESTE, p95/méd.</text><text class="ms" x="242" y="178">compteurs identiques</text>
+<rect class="mb" x="450" y="124" width="200" height="66" rx="8"/><text class="mt" x="462" y="146">7 · KPI et comparaison</text><text class="ms" x="462" y="164">rapports, coûts unitaires</text><text class="ms" x="462" y="178">vs plancher de bruit</text>
+<rect class="mh" x="670" y="124" width="220" height="66" rx="8"/><text class="mt" x="682" y="146">8 · Conclure et consigner</text><text class="ms" x="682" y="164">règle écrite AVANT</text><text class="ms" x="682" y="178">CSV versionnés</text>
+<line class="ml" x1="210" y1="157" x2="226" y2="157" marker-end="url(#arM)"/><line class="ml" x1="430" y1="157" x2="446" y2="157" marker-end="url(#arM)"/><line class="ml" x1="650" y1="157" x2="666" y2="157" marker-end="url(#arM)"/>
+<path class="mlr" d="M330 190 L330 226 L780 226 L780 90" marker-end="url(#arM)"/>
+<text class="ms" x="342" y="246" style="fill:var(--bad)">run refusé → on relance (et on cherche pourquoi), jamais on « corrige » le chiffre</text>
+<text class="ms" x="10" y="284">Surligné : étapes ajoutées par ce lot ou après un incident réel (identité de la binaire, lecture de l’en-tête, règle écrite avant).</text>
+</svg>
+</div>
+
+<div class="scroll"><table>
+<thead><tr><th>Étape</th><th>Ce qu’on fait</th><th>Pourquoi</th><th>Ce qui arrive si on la saute</th></tr></thead>
+<tbody>
+<tr><td><b>1 · Préparer</b></td><td>Brancher sur secteur, mode d’alimentation « performances élevées », fermer navigateur et logiciels lourds.</td><td>Réduire les sources de variation de M.1 avant même de commencer.</td><td>Lot du 18/10 en mode économie : tout le moteur ×1,6, runs instables, lot à refaire.</td></tr>
+<tr><td><b>2 · Construire</b></td><td>Configuration <code>Release</code>, <code>LV3Profile=true</code>, <b>régénérer</b> la solution (les deux projets).</td><td>On mesure le code qui sera livré, avec le harnais allumé des deux côtés.</td><td>Debug : coûts faux d’un facteur 10 à 50. Un seul projet régénéré : EXE et LIB divergent (incident de l’étape 7).</td></tr>
+<tr><td><b>3 · Identifier</b></td><td>Lire la ligne <code>[Build]</code> : configuration, <code>LV3_PROFILE(exe)</code> = <code>(lib)</code> = 1, date de compilation du jour.</td><td>Savoir <em>quelle</em> binaire a produit les chiffres.</td><td>On mesure une ancienne binaire, ou une binaire avec l’ablation encore active (avenant C2, séance 2).</td></tr>
+<tr><td><b>4 · Lancer</b></td><td><code>--scene=… --bench=300</code> ; plus tard <code>start /affinity 4</code> pour épingler sur un cœur P.</td><td>Même scène, même travail, même nombre de frames, sans geste humain.</td><td>Mesure en jouant : chaque run fait un travail différent, aucune comparaison possible.</td></tr>
+<tr><td><b>5 · Lire l’en-tête</b></td><td>Vérifier scène, résolution, nombre de vues, configuration (et plus tard <code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code>).</td><td>Une seule variable doit différer entre les deux fichiers comparés.</td><td>Référence B : <code>views=4</code> contre 2, confusion d’un facteur 2 sur l’effet de la ceinture.</td></tr>
+<tr><td><b>6 · Recevabilité</b></td><td>Témoins dans le plancher ; <code>RESTE</code> de quelques ‰ ; p95 &lt; 1,15 × médiane ; compteurs identiques si la scène est la même.</td><td>Refuser un run perturbé <em>avant</em> de l’interpréter.</td><td>On attribue au code un ralentissement causé par la machine (avenant C2 : un run sur cœur E pris pour un bridage thermique).</td></tr>
+<tr><td><b>7 · KPI</b></td><td>Calculer médianes, rapports A/B, coûts par unité de travail ; comparer au plancher.</td><td>Transformer des nombres en réponse (section M.5).</td><td>On lit des valeurs absolues isolées, qui ne disent rien.</td></tr>
+<tr><td><b>8 · Conclure</b></td><td>Appliquer la règle écrite avant la mesure ; versionner les CSV ; consigner (consolidation, Résultats).</td><td>Une décision doit pouvoir être revérifiée dans six mois.</td><td>Règle réécrite après avoir vu les chiffres (M12) : on conclut ce qu’on espérait.</td></tr>
+</tbody></table></div>
+
+<h4>Pourquoi 300 frames, dont 60 de chauffe</h4>
+<p>La chauffe absorbe la mise en régime : défauts de page au premier accès au depth buffer, caches vides, montée en fréquence. 60 frames représentent moins d’une seconde. Restent <b>240 frames mesurées</b> : assez pour que la médiane soit stable, et pour que le p95 repose sur les 12 frames les plus lentes (5 % de 240) — un p99 ne reposerait que sur 2 ou 3 frames, trop peu pour être fiable. Le tout dure 1 à 4 secondes par run, ce qui permet d’en enchaîner beaucoup dans une même séance.</p>
+
+<h4>Pourquoi ce protocole et pas un autre</h4>
+<div class="scroll"><table>
+<thead><tr><th>Méthode écartée</th><th>Ce qu’elle mesure vraiment</th><th>Pourquoi elle ne suffisait pas</th></tr></thead>
+<tbody>
+<tr><td>Regarder un compteur de FPS à l’écran</td><td>une moyenne sur une seconde, d’une scène qui bouge</td><td>Ni zone, ni distribution, ni reproductibilité. Ne dit pas <em>où</em> part le temps.</td></tr>
+<tr><td>Chronométrer une seule frame</td><td>une valeur parmi des milliers</td><td>Elle peut tomber sur une interruption de Windows : un tirage au sort.</td></tr>
+<tr><td>Jouer une minute et comparer</td><td>un travail différent à chaque fois</td><td>La caméra et le temps ne sont jamais les mêmes : deux scènes différentes.</td></tr>
+<tr><td>Comparer un run d’aujourd’hui à celui d’hier</td><td>le code <em>et</em> l’état de la machine</td><td>12 à 35 % de dérive d’un jour à l’autre : bien plus que les gains cherchés.</td></tr>
+<tr><td>Le profileur de Visual Studio seul</td><td>la répartition des échantillons par fonction</td><td>Pas de série par frame, pas de compteurs de travail, pas de fichier versionnable. Outil complémentaire (M.3).</td></tr>
+<tr><td>Intel VTune dès maintenant</td><td>les compteurs matériels du processeur</td><td>Très puissant, mais il répond à « pourquoi cette boucle est lente », pas à « laquelle de mes zones coûte ». Leçon dédiée prévue (PH4G-16).</td></tr>
+</tbody></table></div>
+
+<h4>Le perfectionnement : l’ordre ABBA (règle M8, avenant C2)</h4>
+<p>Au 26/09, le protocole comparait deux runs isolés et tolérait un plancher de 15 %. Les avenants l’ont durci : pour comparer une version <b>A</b> à une version <b>B</b>, on les fait tourner <b>dans la même séance</b>, en alternance <b>A B B A</b>, après un run jetable de mise en régime. Si la machine dérive lentement (elle chauffe), A est mesurée une fois au début et une fois à la fin, B deux fois au milieu : la dérive se compense exactement si elle est linéaire. L’ordre naïf A B A B, lui, avantage toujours la même version. Résultat : une précision de ±0,4 % entre paires, au lieu de 15 %.</p>
+<div class="ctl">
+<label>Effet réel de B <input type="range" id="mEff" min="-20" max="20" value="-5"> <span id="mEffV"></span></label>
+<label>Dérive de la machine par run <input type="range" id="mDrift" min="0" max="5" step="0.5" value="2"> <span id="mDriftV"></span></label>
+<label>Ordre <select id="mOrder"><option value="ABAB">A B A B</option><option value="ABBA" selected>A B B A</option><option value="AABB">A A B B</option></select></label>
+</div>
+<canvas id="mAbbaCv" aria-label="Quatre runs successifs et la dérive de la machine"></canvas>
+<div class="stats" id="mAbbaSt"></div>
+
+<!-- ───────── M.3 ───────── -->
+<h3>M.3 · Les outils, et à quelle question chacun répond</h3>
+<p>Un outil de mesure répond toujours à <b>une</b> question. Se tromper d’outil, c’est obtenir une réponse juste à une autre question.</p>
+<div class="scroll"><table>
+<thead><tr><th>Outil</th><th>Question à laquelle il répond</th><th>Grain</th><th>Ce qu’il coûte / perturbe</th><th>Dans ce projet</th></tr></thead>
+<tbody>
+<tr><td><b>Harnais <code>Core/Profiler</code></b> (bornes)</td><td>Combien de temps prend chaque zone, frame par frame ?</td><td>zone (µs)</td><td>32 à 123 ns par borne ; illisible sous ~1 µs</td><td>construit dans ce lot</td></tr>
+<tr><td><b>Compteurs</b> du harnais</td><td>Combien de travail a été fait (meshes, faces, triangles, pixels) ?</td><td>unité de travail</td><td>une addition ; mais un compteur par pixel perturbe (M10)</td><td>4 posés ici, 49 aujourd’hui</td></tr>
+<tr><td><b>Mode banc</b> (<code>--bench</code>)</td><td>Comment refaire exactement la même chose ?</td><td>run complet</td><td>aucun (n’altère que l’entrée du monde)</td><td>construit dans ce lot</td></tr>
+<tr><td><b>CSV + tableur</b></td><td>Comment lire, filtrer, comparer les séries ?</td><td>frame</td><td>aucun (hors du programme)</td><td>Excel ou LibreOffice</td></tr>
+<tr><td><b>Ablation</b></td><td>Combien coûte un étage <em>isolé</em> ?</td><td>étage</td><td>change le programme : écran noir, binaire à ne jamais livrer</td><td>étape 14 ; commutateurs dédiés plus tard</td></tr>
+<tr><td><b>Témoins</b></td><td>Ce run est-il comparable à l’autre ?</td><td>run</td><td>aucun (zones déjà mesurées)</td><td><code>Clear</code>, <code>Present</code>, puis T</td></tr>
+<tr><td><b>Affinité, alimentation</b></td><td>La machine est-elle dans le même état ?</td><td>séance</td><td>aucun</td><td><code>start /affinity 4</code>, secteur (avenants)</td></tr>
+<tr><td><b>Profileur d’échantillonnage VS</b></td><td>Quelle fonction, quelle ligne est chaude ?</td><td>ligne</td><td>faible ; statistique, sans série par frame</td><td>complément, en cas de surprise</td></tr>
+<tr><td><b>Listing assembleur <code>/FAs</code></b></td><td>Qu’a réellement produit le compilateur ?</td><td>instruction</td><td>aucun</td><td>lots B, C, D (vectorisation)</td></tr>
+<tr><td><b>Intel VTune</b></td><td>Pourquoi le processeur attend-il (mémoire, branches, décodage) ?</td><td>micro-architecture</td><td>faible ; apprentissage important</td><td>cité par les avenants C2, C3 ; leçon à venir</td></tr>
+</tbody></table></div>
+
+<h4>Le harnais : un chronomètre à cases</h4>
+<p>Imagine un chronomètre à douze cases, une par zone de la frame. À chaque frame, chaque case accumule le temps passé dans sa zone ; à la fin de la frame, la rangée des douze valeurs est rangée dans un tableau. Après 300 frames, on a un tableau de 300 lignes × 12 colonnes de temps (plus les compteurs) : c’est le fichier brut. Rien n’est calculé pendant la mesure — tout le calcul (médianes, etc.) a lieu à la fin, pour ne pas perturber ce qu’on mesure.</p>
+
+<h4>Bornes et compteurs : le temps et le travail</h4>
+<p>Une <b>borne</b> dit combien de temps une zone a pris. Un <b>compteur</b> dit combien de travail elle a fait. Les deux ensemble donnent le coût unitaire (temps ÷ travail), qui est le vrai indicateur d’efficacité. Exemple : <code>Render</code> passe de 0,44 ms à 11,6 ms entre deux scènes. Est-ce que le code a empiré ? Non : les faces soumises sont passées de 4 272 à 274 988. Le coût par face, lui, a <em>baissé</em> (102 → 42 ns). Sans compteur, on aurait cru à une dégradation.</p>
+
+<h4>Le CSV et le tableur : faire les calculs soi-même</h4>
+<ol>
+<li><b>Ouvrir</b> : dans Excel, <i>Données → À partir d’un fichier texte/CSV</i>, délimiteur <b>point-virgule</b>. Toutes les valeurs sont des entiers : aucun problème de virgule décimale.</li>
+<li><b>Écarter la chauffe</b> : filtrer la colonne <code>warmup</code> sur 0.</li>
+<li><b>Convertir</b> en µs ou ms dans une colonne voisine : <code>=E2/1000</code> (µs) ou <code>=E2/1000000</code> (ms).</li>
+<li><b>Résumer</b> : <code>=MEDIANE(plage)</code>, <code>=CENTILE.INCLURE(plage;0,95)</code>, <code>=MAX(plage)</code>. LibreOffice : <code>MEDIANE</code>, <code>CENTILE</code>, <code>MAX</code>.</li>
+<li><b>Comparer</b> deux runs : <code>=médiane_B/médiane_A</code>, puis <code>=rapport-1</code> au format pourcentage.</li>
+</ol>
+<div class="warn"><b>Piège : Excel et le harnais ne calculent pas le p95 de la même façon.</b> <code>CENTILE.INCLURE</code> <em>interpole</em> entre deux valeurs voisines ; le harnais prend la valeur réelle de rang le plus proche (règle <code>k = arrondi(q × (n − 1))</code>). Sur 240 frames, l’écart est en général minime, mais il existe : deux outils peuvent donner deux p95 différents à partir des mêmes données, et aucun n’a tort — ils n’ont pas la même définition. Le laboratoire M.4 le montre.</div>
+
+<h4>Le profileur d’échantillonnage de Visual Studio</h4>
+<p>Un profileur par échantillonnage interrompt le programme à intervalle régulier (de l’ordre de mille fois par seconde) et note dans quelle fonction il se trouvait. Après quelques secondes, une fonction présente dans 40 % des échantillons a pris environ 40 % du temps. Pour l’utiliser : configuration <code>Release</code> avec symboles (PDB), menu <i>Déboguer → Profileur de performances</i> (<span class="kbd">Alt</span>+<span class="kbd">F2</span>), outil <i>Utilisation du processeur</i>, lancer, arrêter, puis lire la vue « Arbre des appels » ou « Fonctions ». Il est idéal pour trouver <em>quelle ligne</em> coûte, quand le harnais a déjà dit <em>quelle zone</em> coûte. Il ne remplace pas le harnais : pas de série par frame, pas de compteurs de travail, pas de fichier à versionner.</p>
+
+<h4>Intel VTune, et pourquoi plus tard</h4>
+<p>VTune (gratuit, dans Intel oneAPI) lit les <b>compteurs matériels</b> du processeur : cycles, instructions exécutées, défauts de cache, erreurs de prédiction de branchement. Sa méthode phare, l’analyse <i>Top-down</i>, classe chaque cycle en quatre catégories : <b>Retiring</b> (travail utile), <b>Bad Speculation</b> (travail jeté après une erreur de prédiction), <b>Front-End Bound</b> (le processeur n’arrive pas à décoder assez vite), <b>Back-End Bound</b> (il attend la mémoire ou une unité de calcul). C’est l’outil qui aurait <em>prouvé</em> les hypothèses des avenants C2 (attentes mémoire) et C3 (erreurs de prédiction). Il vient après le harnais, pas à sa place : on ne demande « pourquoi cette boucle est lente » qu’une fois qu’on sait quelle boucle l’est. Une leçon de découverte est inscrite dans la roadmap (PH4G-16).</p>
+
+<!-- ───────── M.4 ───────── -->
+<h3>M.4 · Les indicateurs (KPI), définis un par un</h3>
+<p>Un <b>KPI</b> (indicateur clé de performance) est un nombre calculé à partir des mesures, choisi parce qu’il répond à une question précise. Chaque indicateur ci-dessous est donné avec sa définition, ce qu’il dit, son piège, et un exemple tiré de la campagne.</p>
+
+<div class="scroll"><table>
+<thead><tr><th>Indicateur</th><th>Définition</th><th>Ce qu’il dit</th><th>Piège</th><th>Exemple (campagne)</th></tr></thead>
+<tbody>
+<tr><td><b>Échantillon</b></td><td>les 240 valeurs d’une zone, une par frame mesurée</td><td>la matière première de tous les KPI</td><td>inclure la chauffe fausse le résumé</td><td>300 frames − 60 = 240</td></tr>
+<tr><td><b>Médiane</b> (p50)</td><td>valeur du milieu de l’échantillon trié : la moitié des frames sont plus rapides</td><td>le coût <b>typique</b> d’une frame</td><td>ne voit pas les saccades rares</td><td><code>Render</code> belt : 11,48 ms</td></tr>
+<tr><td><b>Moyenne</b></td><td>somme ÷ nombre</td><td>le coût total réparti</td><td>une seule frame aberrante la tire : non utilisée dans les résumés</td><td>voir laboratoire 1.3</td></tr>
+<tr><td><b>p95</b> (95ᵉ centile)</td><td>valeur sous laquelle se trouvent 95 % des frames</td><td>les <b>mauvaises frames régulières</b> : 1 frame sur 20</td><td>sur peu de frames, il repose sur très peu de valeurs</td><td><code>Render</code> belt : 12,57 ms</td></tr>
+<tr><td><b>Max</b></td><td>la frame la plus lente</td><td>le pire accident observé</td><td>un seul événement : jamais une base de décision</td><td><code>Render</code> belt : 12,75 ms</td></tr>
+<tr><td><b>p95 ÷ médiane</b></td><td>rapport des deux</td><td>la <b>stabilité</b> du run</td><td>&gt; 1,15 : run bimodal ou perturbé, à refuser (avenant C2)</td><td>12,57 ÷ 11,48 = 1,095</td></tr>
+<tr><td><b>‰ de la frame</b></td><td>médiane de la zone × 1000 ÷ médiane de FRAME</td><td>le <b>poids</b> d’une zone</td><td>rapport de médianes : la somme des ‰ n’est pas exactement 1000</td><td><code>WorldXform1</code> : 1 ‰</td></tr>
+<tr><td><b>Images par seconde</b></td><td>1 000 ÷ médiane de FRAME (ms)</td><td>la cadence typique</td><td>jamais « moyenne des FPS » : <code>moyenne(1/t) ≠ 1/moyenne(t)</code></td><td>1 000 ÷ 13,69 = 73</td></tr>
+<tr><td><b>Budget moteur</b></td><td>FRAME − <code>Present</code></td><td>ce que coûte <em>le moteur</em>, sans SDL ni compositeur</td><td>ne pas optimiser <code>Present</code> en croyant optimiser le moteur</td><td>2,51 − 0,93 = 1,58 ms (scène légère)</td></tr>
+<tr><td><b>RESTE</b></td><td>frame − somme des zones, frame par frame, puis médiane</td><td>la part <b>non instrumentée</b></td><td>grand RESTE : la ventilation ment par omission</td><td>≈ 10 µs, 1 à 4 ‰</td></tr>
+<tr><td><b>Coût d’une paire de bornes</b> (<code>overhead_ns</code>)</td><td>temps moyen de deux lectures d’horloge</td><td>ce que l’instrument <b>ajoute</b></td><td>varie selon la machine : lire celui du fichier</td><td>32 à 123 ns</td></tr>
+<tr><td><b>Résolution</b> (<code>resolution_ns</code>)</td><td>plus petit écart observable</td><td>en dessous, l’instrument est <b>aveugle</b></td><td>un 0 ne veut pas dire « gratuit »</td><td>100 ns</td></tr>
+<tr><td><b>Compteur</b></td><td>quantité de travail par frame</td><td>le <b>travail</b>, indépendamment de la machine</td><td>déterministe : s’il varie entre deux runs identiques, le protocole fuit</td><td>274 988 faces</td></tr>
+<tr><td><b>Coût unitaire</b></td><td>temps ÷ compteur</td><td>l’<b>efficacité</b> du code</td><td>mélange des régimes (grandes et petites faces)</td><td>42 ns par face</td></tr>
+<tr><td><b>Rapport, écart relatif</b></td><td>B ÷ A ; (B ÷ A) − 1</td><td>l’<b>effet</b> d’un changement</td><td>n’a de sens que si une seule variable a changé</td><td>Render ÷ 2,05 de 4 à 2 vues</td></tr>
+<tr><td><b>Témoin</b></td><td>zone que le changement ne peut pas toucher</td><td>si la machine a changé entre deux runs</td><td><code>Clear</code> ne voit pas une baisse de fréquence (limité par la mémoire)</td><td><code>Clear</code>, puis T</td></tr>
+<tr><td><b>Plancher de bruit</b></td><td>variation du témoin entre runs : max ÷ min − 1</td><td>la <b>précision</b> du banc</td><td>dépend du protocole : 15 % entre séances, 0,4 % en ABBA</td><td>1 085 ÷ 953 − 1 = 13,9 %</td></tr>
+<tr><td><b>Gain maximal</b> (loi d’Amdahl)</td><td>si une part <i>p</i> est accélérée <i>s</i> fois, la frame devient (1 − p) + p ÷ s</td><td>ce qu’un chantier peut <b>au mieux</b> rapporter</td><td>même infiniment rapide, une zone de 1 ‰ ne rapporte que 0,1 %</td><td>A3 : 0,17 % au maximum</td></tr>
+</tbody></table></div>
+
+<h4>Laboratoire : médiane, p95, max sur un petit échantillon</h4>
+<p>Des valeurs tirées au hasard (graine fixe), triées de gauche à droite. Les rangs choisis par le harnais sont marqués ; à côté, ce que donnerait Excel (<code>CENTILE.INCLURE</code>, avec interpolation). Ajoutez un pic pour voir qui bouge et qui ne bouge pas.</p>
+<div class="ctl">
+<label>Nombre de frames <input type="range" id="qN" min="5" max="60" value="20"> <span id="qNV"></span></label>
+<label><input type="checkbox" id="qSpike"> une frame aberrante (×4)</label>
+</div>
+<canvas id="qCv" aria-label="Échantillon trié avec médiane, p95 et max"></canvas>
+<div class="stats" id="qSt"></div>
+
+<!-- ───────── M.5 ───────── -->
+<h3>M.5 · Des chiffres bruts aux KPI exploitables</h3>
+<p>Un run produit 300 lignes × une trentaine de colonnes, soit environ 9 000 nombres. Aucun d’eux, pris seul, ne répond à une question. Le dépouillement est une chaîne de sept transformations, chacune avec un rôle précis :</p>
+<ol>
+<li><b>Lire l’en-tête</b> → savoir ce qu’on compare (scène, résolution, vues, configuration).</li>
+<li><b>Écarter la chauffe</b> → ne garder que le régime établi (240 frames).</li>
+<li><b>Résumer chaque colonne</b> (médiane, p95, max) → passer de 240 valeurs à 3 par zone.</li>
+<li><b>Contrôler la recevabilité</b> (témoins, RESTE, p95 ÷ médiane, compteurs) → refuser un run perturbé.</li>
+<li><b>Normaliser</b> (‰ de la frame, coût par unité de travail) → rendre comparables des scènes différentes.</li>
+<li><b>Comparer</b> (rapport B ÷ A, face au plancher de bruit) → séparer un effet réel du hasard.</li>
+<li><b>Décider</b> avec la règle écrite avant (seuil, loi d’Amdahl) → une action, ou aucune.</li>
+</ol>
+
+<h4>Atelier : dépouiller deux runs synthétiques, étape par étape</h4>
+<p>Deux runs de 300 frames sont générés à partir des valeurs réelles de la référence R (ceinture, 4 vues) : A (code d’origine) et B (un changement qui agit sur <code>Render</code>). Vous réglez l’effet réel du changement, le bruit, une dérive de la machine et des accidents ; l’atelier refait toute la chaîne, en entiers de nanosecondes comme le harnais, et montre à chaque étape le résultat de la précédente.</p>
+<div class="ctl">
+<label>Effet réel de B sur Render <input type="range" id="aEff" min="-30" max="30" value="-8"> <span id="aEffV"></span></label>
+<label>Bruit par frame <input type="range" id="aNoise" min="0" max="20" value="4"> <span id="aNoiseV"></span></label>
+<label>Dérive machine A → B <input type="range" id="aDrift" min="0" max="25" value="0"> <span id="aDriftV"></span></label>
+<label>Accidents (frames ×3) <input type="range" id="aSpk" min="0" max="20" value="3"> <span id="aSpkV"></span></label>
+<label>Plancher <input type="range" id="aFloor" min="1" max="20" value="5"> <span id="aFloorV"></span></label>
+</div>
+<div id="aSteps"></div>
+
+<h4>Atelier : vos propres fichiers <code>_summary.csv</code></h4>
+<p>Collez le contenu de deux résumés produits par le harnais (A = référence, B = version testée). L’atelier lit les en-têtes, signale ce qui diffère, calcule le rapport de chaque zone et de chaque compteur, et marque ce qui sort du plancher. Rien n’est envoyé nulle part : le calcul se fait dans la page.</p>
+<div class="io">
+<div><h5>Résumé A</h5><textarea id="uA" rows="8" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px" spellcheck="false"></textarea></div>
+<div><h5>Résumé B</h5><textarea id="uB" rows="8" style="width:100%;font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px" spellcheck="false"></textarea></div>
+</div>
+<div class="ctl">
+<label>Plancher <input type="range" id="uFloor" min="1" max="20" value="5"> <span id="uFloorV"></span></label>
+<button type="button" id="uDemo">Charger l’exemple : ceinture 4 vues (A) contre 2 vues (B)</button>
+</div>
+<div id="uOut"></div>
+
+<h4>Laboratoire : ce qu’un chantier peut rapporter au mieux (loi d’Amdahl)</h4>
+<p>Avant d’investir des séances, on calcule le <b>gain maximal</b> : si une zone pèse une part <i>p</i> de la frame et qu’on la rend <i>s</i> fois plus rapide, la frame passe de 1 à (1 − p) + p ÷ s. C’est le calcul qui a tranché A3.</p>
+<div class="ctl">
+<label>Part de la zone (‰) <input type="range" id="amP" min="0" max="1000" step="0.1" value="1.7"> <span id="amPV"></span></label>
+<label>Accélération de la zone <input type="range" id="amS" min="1" max="50" step="0.5" value="50"> <span id="amSV"></span></label>
+<span id="amPre" style="display:flex;gap:6px;flex-wrap:wrap"></span>
+</div>
+<div class="stats" id="amSt"></div>
+
+<h4>Comment les KPI de la campagne ont produit les décisions</h4>
+<div class="scroll"><table>
+<thead><tr><th>Décision</th><th>KPI utilisés</th><th>Raisonnement</th></tr></thead>
+<tbody>
+<tr><td>A3 abandonnée</td><td>‰ de <code>WorldXform1</code> ; gain maximal (Amdahl)</td><td>1,7 ‰ → même infiniment rapide, gain ≤ 0,17 % : ne vaut pas trois séances.</td></tr>
+<tr><td>Point 7 sans enjeu</td><td>médiane de <code>Trigger</code>, rapport A → B face au plancher</td><td>13,3 → 12,4 µs, écart −7 %, sous le plancher de 15 % : pas d’effet mesurable de la ceinture.</td></tr>
+<tr><td>Référence B à requalifier</td><td>en-tête (<code>views=</code>)</td><td>deux variables changeaient : comparaison refusée, run E ajouté.</td></tr>
+<tr><td>« Le rendu n’est pas limité par les pixels »</td><td>témoin <code>Clear</code> ÷ 5 ; <code>Render</code> −1,6 % ; compteurs identiques</td><td>la résolution a bien changé, le rendu non : écart sous le plancher.</td></tr>
+<tr><td>Loi <code>Render ≈ 42 ns × faces</code></td><td>coût unitaire sur trois runs</td><td>41,7 / 42,1 / 44,4 ns : même pente à 2 et 4 vues, à deux résolutions.</td></tr>
+<tr><td>Chantiers classés par le nombre de faces</td><td>‰ de <code>Render</code> (838) ; coût unitaire ; Amdahl</td><td>diviser <code>Render</code> par 2 ferait gagner ≈ 42 % de la frame : le seul levier qui compte.</td></tr>
+<tr><td>Compteurs acceptés malgré leur coût</td><td>rapport <code>Render</code> avec / sans compteurs</td><td>+2,6 %, sous le seuil de 5 % fixé avant la mesure.</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir avant le code</h2>
+<p>Sept schémas interactifs. Les quatre premiers portent sur la <b>méthode</b> (ce que dit une frame, pourquoi un dt fixe, pourquoi une médiane, ce qu’est un plancher de bruit). Le cinquième porte sur le <b>résultat</b> (la loi de coût du rendu). Les deux derniers rejouent les <b>bugs</b> 67, 68 et la grammaire de la ligne de commande. Tous les chiffres viennent des fichiers <code>_summary.csv</code> de l’échange.</p>
+
+<h3>1.1 · La ventilation d’une frame</h3>
+<p><b>À quoi sert ce schéma.</b> Voir d’un coup d’œil où part le temps, pour chacune des huit exécutions de la campagne. Cochez « budget moteur » pour retirer <code>Present</code>, qui est le coût de SDL et du compositeur, pas celui du moteur.</p>
+<div class="ctl">
+<label>Exécution <select id="vRun"></select></label>
+<label><input type="checkbox" id="vNoPresent"> budget moteur (sans Present)</label>
+<label><input type="checkbox" id="vSimOnly"> zoom sur la simulation</label>
+</div>
+<div class="bar" id="vBar" aria-label="Barre empilée des zones"></div>
+<div class="legend" id="vLeg"></div>
+<div class="stats" id="vStats"></div>
+<div class="scroll"><table id="vTab"></table></div>
+<p class="small">La ligne <code>RESTE</code> est le temps de frame non couvert par une borne, calculé frame par frame puis résumé. Elle ne vaut jamais plus de 4 ‰ : la ventilation est crédible.</p>
+
+<h3>1.2 · Pourquoi un dt fixe</h3>
+<p><b>À quoi sert ce schéma.</b> Deux exécutions de la même scène, côte à côte. En temps réel, chaque frame dure un peu plus ou un peu moins (ordonnanceur de Windows, caches, fréquence du CPU) : la planète n’est pas au même endroit à la frame <i>k</i>. Avec un dt fixe, elle l’est au bit près. Le calcul est fait en <code>float</code> 32 bits, comme <code>realDt</code> dans le moteur.</p>
+<div class="ctl">
+<label>Gigue de l’ordonnanceur <input type="range" id="dJit" min="0" max="40" value="15"> <span id="dJitV"></span></label>
+<label>Frame <i>k</i> <input type="range" id="dK" min="1" max="300" value="120"> <span id="dKV"></span></label>
+<label><input type="checkbox" id="dFixed"> mode banc (dt = 1/60)</label>
+</div>
+<canvas id="dCanvas" aria-label="Orbite simulée pour deux exécutions"></canvas>
+<div class="stats" id="dStats"></div>
+
+<h3>1.3 · Médiane, p95, et le piège des FPS moyens</h3>
+<p><b>À quoi sert ce schéma.</b> 240 temps de frame synthétiques (graine fixe), avec une proportion réglable de frames lentes. Comparez ce que disent la moyenne, la médiane, le p95, et deux façons de calculer des « FPS moyens » qui ne donnent pas le même nombre.</p>
+<div class="ctl">
+<label>Frame rapide <input type="range" id="sFast" min="2" max="20" value="3"> <span id="sFastV"></span></label>
+<label>Frame lente <input type="range" id="sSlow" min="5" max="60" value="18"> <span id="sSlowV"></span></label>
+<label>Part de frames lentes <input type="range" id="sPct" min="0" max="60" value="10"> <span id="sPctV"></span></label>
+</div>
+<canvas id="sCanvas" aria-label="Histogramme des temps de frame"></canvas>
+<div class="stats" id="sStats"></div>
+
+<h3>1.4 · Le témoin et le plancher de bruit</h3>
+<p><b>À quoi sert ce schéma.</b> <code>Clear</code> ne dépend que de la résolution : à résolution égale, il « devrait » être constant. Ses variations réelles d’une exécution à l’autre mesurent le bruit de la machine. Choisissez deux exécutions et une zone : le verdict dit si l’écart dépasse le plancher.</p>
+<div class="scroll"><table id="nTab"></table></div>
+<div class="ctl">
+<label>Exécution 1 <select id="nA"></select></label>
+<label>Exécution 2 <select id="nB"></select></label>
+<label>Zone <select id="nZone"></select></label>
+<label>Plancher <input type="range" id="nFloor" min="1" max="30" value="15"> <span id="nFloorV"></span></label>
+</div>
+<div class="stats" id="nStats"></div>
+
+<h3>1.5 · La loi de coût du rendu</h3>
+<p><b>À quoi sert ce schéma.</b> Chaque point est une exécution : en abscisse les faces soumises par frame, en ordonnée le temps de <code>Render</code>. Les points de la ceinture s’alignent sur une droite passant par l’origine, à 2 vues comme à 4, à pleine résolution comme au quart des pixels. La pente est le coût d’une face. Le curseur prédit le coût d’une scène.</p>
+<div class="ctl">
+<label>Faces soumises <input type="range" id="lFaces" min="3" max="5.7" step="0.01" value="4.7"> <span id="lFacesV"></span></label>
+<label>Pente <select id="lRef"><option value="c2">C2 (26/09) — ajustée sur les points</option><option value="f">Réf. F (avenant C2) — 37 ns</option><option value="g">Réf. G (avenant C3) — 26,5 ns</option></select></label>
+</div>
+<canvas id="lCanvas" aria-label="Temps de rendu en fonction des faces soumises"></canvas>
+<div class="stats" id="lStats"></div>
+
+<h3>1.6 · Qui fournit la racine, et d’où viennent les fichiers (bugs 63, 67, 68)</h3>
+<p><b>À quoi sert ce schéma.</b> Rejouer les situations de lancement de la campagne. Le moteur doit lire <b>une seule</b> source de vérité. Comparez « avant » (après le bug 63, avant 67 et 68) et « après ».</p>
+<div class="ctl">
+<label>Argument racine <select id="rArgv"><option value="none">absent</option><option value="ok" selected>chemin du projet (valide)</option><option value="bad">« azazaz » (invalide)</option></select></label>
+<label>LV3_CONTENT_ROOT <select id="rEnv"><option value="none" selected>absente</option><option value="ok">valide</option><option value="bad">posée, invalide</option></select></label>
+<label>Configuration <select id="rCfg"><option value="Release" selected>Release</option><option value="Debug">Debug (LV3_PROJECT_DIR défini)</option></select></label>
+<label>Lancé depuis <select id="rCwd"><option value="rel" selected>x64\Release</option><option value="proj">dossier du projet (F5)</option><option value="root">C:\</option></select></label>
+<label>Code <select id="rMode"><option value="before">avant 67 et 68</option><option value="after" selected>après 67 et 68</option></select></label>
+</div>
+<div class="lab"><div><dl class="kv" id="rOut"></dl></div><div><div class="console" id="rLog"></div></div></div>
+
+<h3>1.7 · La grammaire de la ligne de commande (G2a)</h3>
+<p><b>À quoi sert ce schéma.</b> Taper une commande et voir ce que <code>ParseArgs</code> en fait — avec exactement les règles du code : un seul positionnel, des options <code>--clé=valeur</code>, toute option inconnue est une erreur, les chemins doivent être relatifs et sans <code>..</code>, les entiers sont lus par <code>from_chars</code>.</p>
+<div class="ctl" style="display:block">
+<input type="text" class="cmd" id="pCmd" value='exe.exe "D:\3d_Bases\22.RefactoNouvelleLibrairieV3" --scene=solar_system_v1compat_belt.json --bench=300' aria-label="Ligne de commande">
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px" id="pPresets"></div>
+</div>
+<div class="console" id="pOut"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<h3>2.1 · L’anatomie du harnais : une frame est un enregistrement plat</h3>
+<p>Le principe numéro un d’un instrument de mesure est de <b>ne pas perturber ce qu’il mesure</b>. Un profileur qui hache des chaînes de caractères, alloue de la mémoire ou suit des pointeurs dans la boucle chaude ajoute son propre coût et pollue les caches qu’on cherche justement à étudier. Le harnais est donc écrit « orienté données » :</p>
+<ul>
+<li>les zones et les compteurs sont des <code>enum class</code> <b>denses</b> qui servent directement d’index dans un tableau : une borne coûte une addition dans une case connue ;</li>
+<li>une frame est un <code>struct ProfFrame</code> <b>trivialement copiable</b>, sans chaîne ni pointeur ;</li>
+<li>la seule allocation est faite <b>une fois</b>, avant la première frame, par <code>reserve(N)</code>.</li>
+</ul>
+<div class="ab">
+<div class="ap"><div class="t">Core/Profiler.h — l’enregistrement d’une frame (version du 26/09)</div>
+<pre><code>struct ProfFrame
+{
+    uint64_t ns[kProfZoneCount]{};          // 12 zones × 8 o
+    uint64_t counters[kProfCounterCount]{}; //  8 compteurs × 8 o
+    uint64_t frameNs = 0;
+    uint64_t simTimeMilliDays = 0;          // entier : pas de piège de locale
+    uint32_t index = 0;
+    uint32_t warmup = 0;                    // 1 = chauffe, exclue du résumé
+};
+// 96 + 64 + 8 + 8 + 4 + 4 = 184 octets ; 300 frames = 55 200 octets</code></pre></div>
+<div class="pr"><div class="t">Les noms : tableaux parallèles, vérifiés à la compilation</div>
+<pre><code>inline constexpr const char* kProfZoneNames[] = {
+    "Input", "Animation", "LocalXform1", "WorldXform1",
+    "Cameras", "LocalXform2", "WorldXform2", "Trigger",
+    "BuildViews", "Clear", "Render", "Present" };
+
+static_assert(std::size(kProfZoneNames) == kProfZoneCount,
+    "kProfZoneNames doit suivre EProfZone");
+// Une zone ajoutée sans son nom : erreur de compilation,
+// pas un décalage silencieux des colonnes du CSV.</code></pre></div>
+</div>
+<p class="small">Dans le dépôt actuel, <code>ProfFrame</code> porte 15 zones et 49 compteurs : (15 + 49) × 8 + 24 = <b>536 octets</b> par frame (voir amendement AM9). Le principe n’a pas changé ; la règle « ajout <b>en fin</b> d’enum » a protégé la position des colonnes des CSV de référence.</p>
+
+<h3>2.2 · Une borne : RAII, et la même macro compilée deux fois</h3>
+<p>Une zone se mesure par un objet <code>ScopeTimer</code> : son constructeur lit l’horloge, son destructeur la relit et ajoute l’écart à la zone. La fermeture du bloc C++ ferme donc la borne, même sur un <code>return</code> anticipé. Les macros donnent à ce code deux visages, selon <code>LV3_PROFILE</code> :</p>
+<div class="scroll"><table>
+<thead><tr><th>Macro</th><th><code>LV3_PROFILE = 1</code></th><th><code>LV3_PROFILE = 0</code></th></tr></thead>
+<tbody>
+<tr><td><code>LV3_PROF_SCOPE(z)</code></td><td><code>ScopeTimer lv3Prof_&lt;ligne&gt;{ z }</code></td><td><code>((void)sizeof(z))</code></td></tr>
+<tr><td><code>LV3_PROF_COUNT(c, n)</code></td><td><code>Profiler::Add(c, n)</code></td><td><code>((void)sizeof(c), (void)sizeof(n))</code></td></tr>
+<tr><td><code>LV3_PROF_BEGIN_FRAME(t)</code></td><td><code>Profiler::BeginFrame(t)</code></td><td><code>((void)sizeof(t))</code></td></tr>
+<tr><td><code>LV3_PROF_END_FRAME()</code></td><td><code>Profiler::EndFrame()</code></td><td><code>((void)0)</code></td></tr>
+<tr><td><code>LV3_PROF_BEGIN(tag)</code></td><td><code>const auto lv3ProfT_tag = now()</code></td><td><code>((void)0)</code></td></tr>
+<tr><td><code>LV3_PROF_END(tag, z)</code></td><td><code>AddNs(z, now() − lv3ProfT_tag)</code></td><td><code>((void)sizeof(z))</code></td></tr>
+</tbody></table></div>
+<p>La forme éteinte reprend l’idiome de <code>LV3_ASSERT</code> : <code>sizeof(expr)</code> <b>compile</b> l’expression (elle est vérifiée, et ses variables comptent comme utilisées, donc pas d’avertissement C4189 en <code>/W4</code>) mais ne l’<b>évalue</b> jamais. Conséquence à retenir : une expression à effet de bord placée dans <code>LV3_PROF_COUNT</code> disparaît quand le harnais est éteint.</p>
+<p>Les bornes manuelles <code>BEGIN</code>/<code>END</code> existent pour une seule raison : la section de sélection des caméras <b>déclare</b> des variables (<code>nDebugSlots</code>, <code>total</code>, <code>nViews</code>) utilisées plus bas dans la frame. Un bloc RAII les enfermerait dans sa portée. Filet : un <code>BEGIN</code> sans son <code>END</code> laisse une variable jamais lue, que <code>/W4</code> signale (C4189).</p>
+
+<h3>2.3 · L’horloge : unité, résolution, coût propre</h3>
+<p><code>std::chrono::steady_clock</code> est monotone (un ajustement NTP ne peut pas produire une durée négative, contrairement à <code>system_clock</code>) et, sous MSVC, s’appuie sur <code>QueryPerformanceCounter</code> sans faire entrer <code>windows.h</code> dans le fichier (règle : <code>Platform.h</code> est son seul point d’entrée). Le harnais distingue trois grandeurs, et les écrit toutes dans le CSV :</p>
+<div class="scroll"><table>
+<thead><tr><th>Grandeur</th><th>Valeur mesurée</th><th>Ce qu’elle dit</th></tr></thead>
+<tbody>
+<tr><td><b>Unité</b></td><td>la nanoseconde</td><td>le type des valeurs stockées</td></tr>
+<tr><td><b>Résolution</b> (<code>resolution_ns</code>)</td><td>100 ns (QPC à 10 MHz)</td><td>en dessous, l’instrument ne voit rien : toutes les valeurs sont des multiples de 100</td></tr>
+<tr><td><b>Coût d’une paire de bornes</b> (<code>overhead_ns</code>)</td><td>32 à 123 ns selon l’état de la machine</td><td>ce que l’instrument ajoute ; une zone de 200 ns n’est pas lisible</td></tr>
+</tbody></table></div>
+<pre><code>// Profiler.cpp — calibration, une fois dans Begin()
+uint64_t MeasureOverhead(uint64_t&amp; outResolutionNs)
+{
+    constexpr int kN = 10000;
+    volatile uint64_t sink = 0;          // interdit de supprimer la paire
+    uint64_t minNonZero = 0;
+    const auto a = steady_clock::now();
+    for (int i = 0; i &lt; kN; ++i) {
+        const auto x = steady_clock::now();
+        const auto y = steady_clock::now();
+        const uint64_t d = duration_cast&lt;nanoseconds&gt;(y - x).count();
+        if (d != 0 &amp;&amp; (minNonZero == 0 || d &lt; minNonZero)) minNonZero = d;
+        sink = sink + d;
+    }
+    const auto b = steady_clock::now();
+    outResolutionNs = minNonZero;        // plus petit écart observable
+    return duration_cast&lt;nanoseconds&gt;(b - a).count() / kN;
+}</code></pre>
+
+<h3>2.4 · L’écriture : entiers, deux fichiers, et la ligne RESTE</h3>
+<ul>
+<li><b>Séparateur <code>;</code> et uniquement des entiers</b> (temps en ns, temps simulé en milli-jours). Un point décimal dans un Excel configuré en français est lu comme du texte ; une colonne de temps devenue texte est une campagne à refaire.</li>
+<li><b>Deux fichiers</b> : la série brute (une ligne par frame) est <i>la preuve</i> ; le résumé (médiane, p95, max, part en ‰) est <i>la réponse</i>. On versionne les deux.</li>
+<li><b>Les frames de chauffe</b> (60 par défaut) sont exclues du résumé mais restent dans la série, marquées <code>warmup=1</code>.</li>
+<li><b>Les quantiles</b> sont calculés par <code>std::nth_element</code> (linéaire), <b>après</b> la campagne. <code>nth_element</code> permute le vecteur : la médiane, le p95 et le max sont donc calculés chacun sur une nouvelle copie.</li>
+<li><b>RESTE</b> = temps de frame moins la somme des zones, calculé <b>frame par frame</b>, puis résumé. La médiane d’une somme n’est pas la somme des médianes.</li>
+</ul>
+<pre><code>// Profiler.cpp — DumpCsv, ligne RESTE (G3a)
+auto collectResidual = [&amp;]() {
+    tmp.clear();
+    for (const ProfFrame&amp; fr : s_frames) {
+        if (fr.warmup) continue;
+        uint64_t sum = 0;
+        for (size_t z = 0; z &lt; kProfZoneCount; ++z) sum += fr.ns[z];
+        tmp.push_back(fr.frameNs &gt; sum ? fr.frameNs - sum : 0);
+    }
+};
+collectResidual(); const uint64_t med = Quantile(tmp, 0.50);
+collectResidual(); const uint64_t p95 = Quantile(tmp, 0.95);
+collectResidual(); const uint64_t mx  = Quantile(tmp, 1.00);</code></pre>
+
+<h3>2.5 · Un commutateur, un foyer, et une binaire qui se dénonce</h3>
+<p><code>LV3_PROFILE</code> est défini à un seul endroit, <code>LV3.Common.props</code>, importé par les deux projets. Une propriété MSBuild <code>LV3Profile</code> sert d’interrupteur ; <code>/p:LV3Profile=true</code> l’active sans éditer le fichier. Trois garde-fous ont été ajoutés après un incident (étape 7) où la binaire affichait <code>LV3_PROFILE=1</code> alors que le props disait <code>false</code> :</p>
+<ol>
+<li>la cible MSBuild <code>LV3ShowProfile</code> affiche la valeur <b>effective</b> de la propriété à chaque compilation ;</li>
+<li><code>config.h</code> émet un <code>#pragma message</code> qui dit si la valeur vient de la ligne de commande ou du défaut ;</li>
+<li>au démarrage, la ligne <code>[Build]</code> affiche la configuration, <code>LV3_PROFILE</code> vu par l’EXE <b>et</b> par la LIB (<code>Profiler::CompiledProfileFlag()</code>), et la date de compilation de <code>main.cpp</code>. Si les deux valeurs diffèrent, une erreur est journalisée.</li>
+</ol>
+
+<h3>2.6 · La ligne de commande (G2a)</h3>
+<p><code>ParseArgs</code> vit côté EXE : le moteur n’a pas à savoir qu’une ligne de commande existe, comme il ignore SDL. La grammaire est volontairement pauvre :</p>
+<pre><code>&lt;exe&gt; [&lt;racine_de_contenu&gt;] [--scene=f.json] [--bench=N] [--warmup=N] [--csv=chemin] [--help]</code></pre>
+<ul>
+<li>un seul argument <b>positionnel</b>, la racine ; un second est une erreur ;</li>
+<li>toute option porte sa valeur <b>collée</b> (<code>--clé=valeur</code>) : un jeton se décrit lui-même ;</li>
+<li>toute option inconnue est une <b>erreur</b> qui arrête le programme (même discipline que <code>WarnUnread</code>) ;</li>
+<li><code>--scene</code> et <code>--csv</code> doivent être <b>relatifs et sans <code>..</code></b> : <code>racine / "C:\x.json"</code> donnerait <code>C:\x.json</code>, car <code>operator/</code> écrase la gauche quand la droite est absolue ;</li>
+<li>les entiers sont lus par <code>std::from_chars</code>, qui dit où il s’est arrêté : <code>"300abc"</code> est refusé là où <code>stoul</code> rendrait 300 ;</li>
+<li>une chauffe supérieure ou égale au nombre de frames est ramenée à un quart, avec un avertissement.</li>
+</ul>
+
+<h3>2.7 · La racine : intention contre repli (bug 68)</h3>
+<p>Une chaîne de replis est la bonne réponse à l’<b>absence</b> d’information. Elle est la mauvaise réponse à une information <b>erronée</b>. <code>ResolveContentRoot</code> reçoit une liste anonyme de candidats et ne peut pas distinguer un ordre (« utilise ce dossier ») d’un défaut (« essaie celui-ci »). La validation des intentions appartient donc à l’application, avec le critère du moteur :</p>
+<div class="scroll"><table>
+<thead><tr><th>Source</th><th>Nature</th><th>Si invalide</th></tr></thead>
+<tbody>
+<tr><td>argument positionnel</td><td>intention</td><td>arrêt, message avec le chemin (<code>main.cpp</code>, via <code>IsContentRoot</code>)</td></tr>
+<tr><td><code>LV3_CONTENT_ROOT</code> posée</td><td>intention</td><td>arrêt, dans <code>ResolveContentRoot</code></td></tr>
+<tr><td><code>LV3_PROJECT_DIR</code> (Debug)</td><td>repli</td><td>candidat suivant, en silence</td></tr>
+<tr><td>dossier de l’exécutable</td><td>repli de dernier recours</td><td>échec global seulement si tout a échoué</td></tr>
+</tbody></table></div>
+<p>Le critère est <b>le marqueur</b> (<code>engine.json</code>), jamais <code>exists()</code> : un dossier qui existe sans marqueur passerait un test d’existence puis serait sauté par le résolveur.</p>
+
+<h3>2.8 · Le mode banc (G2b)</h3>
+<ul>
+<li><b>Le temps qui nourrit le monde est fixe</b> (1/60 s), le temps réel reste mesuré : on fige l’entrée de la simulation, pas l’horloge.</li>
+<li><b>Les événements sont dépilés</b>, puis l’<code>InputState</code> est remis à zéro : sans <code>SDL_PollEvent</code>, Windows déclare la fenêtre « ne répond pas » et cesse de la présenter. <span class="kbd">Échap</span> et la croix restent actifs, car ils agissent sur <code>g_running</code> directement.</li>
+<li><b>La souris n’est pas capturée</b> : un mouvement involontaire ferait pivoter la caméra et changerait le nombre de pixels rasterisés.</li>
+<li><b>L’arrêt</b> se décide après <code>EndFrame</code>, pour que la N-ième frame soit enregistrée entière.</li>
+<li><b>Un banc sans harnais</b> (<code>--bench</code> avec <code>LV3_PROFILE=0</code>) tourne mais prévient au démarrage qu’aucun fichier ne sera écrit.</li>
+</ul>
+
+<h3>2.9 · Pendant scalaire et vectorisé</h3>
+<p>Aucune étape de ce lot n’a de pendant AVX2, et c’est voulu. Le harnais ne fait qu’<b>additionner</b> dans des cases connues pendant la frame ; tout le calcul (quantiles, résidus) a lieu une fois, après la campagne, sur quelques centaines de valeurs. Vectoriser un instrument de mesure n’aurait aucun sens : sa qualité principale est d’être <b>invisible</b>. Le lien avec la vectorisation est ailleurs : c’est ce lot qui a montré <em>où</em> elle serait utile (la transformation des sommets, puis la projection), et où elle ne le serait pas (le graphe de scène). Voir les amendements AM6 et AM7.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange (24 → 26/09)</h2>
+<p>Chaque étape donne son objectif (pourquoi ce travail), ce qu’elle utilise de l’étape précédente, ce qu’elle produit, le code avant / après sous forme abrégée, et le résultat observé. Les corrections ont été appliquées par Onky, fichier par fichier.</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> G1 · le harnais, et son test de fumée</div><div class="b">
+<p><b>Objectif.</b> Disposer d’un chronomètre par frame, éteint par défaut, dont on connaît la marge d’erreur, avant de poser une seule borne dans le moteur.</p>
+<div class="io"><div><h5>Utilise</h5>Les cinq commutateurs de <code>Core/config.h</code> ; <code>LV3.Common.props</code> (lot A10).</div><div><h5>Produit</h5><code>LV3_PROFILE</code> (commutateur 6) ; <code>Core/Profiler.h/.cpp</code> ; propriété <code>LV3Profile</code> ; entrées <code>.vcxproj</code> (R29).</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Core/config.h</div><pre><code>#ifndef LV3_DUMP_HIERARCHY
+    #define LV3_DUMP_HIERARCHY 0
+#endif
+// aucune borne de temps nulle part</code></pre></div>
+<div class="ap"><div class="t">Après — Core/config.h</div><pre><code>// 6. Harnais de mesure par frame. NE DÉRIVE PAS
+//    de _DEBUG : on mesure en Release, jamais en Debug.
+#ifndef LV3_PROFILE
+    #define LV3_PROFILE 0
+#endif</code></pre></div>
+</div>
+<p><b>Résultat du test de fumée</b> (5 frames, une zone autour d’un <code>sleep_for(5 ms)</code>) : <code>coût d’une paire de bornes ~123 ns</code> ; toutes les valeurs sont des multiples de 100 ; <code>Render</code> ≈ 5,6 à 6,0 ms (le <code>sleep</code> dépasse, l’ordonnanceur de Windows aussi) ; <code>frame − Render</code> ≈ 500 à 800 ns (le coût du harnais par frame) ; <code>Entities = 42</code>. La plomberie fonctionne.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> G1 bis · écrire la résolution dans le fichier</div><div class="b">
+<p><b>Objectif.</b> Qu’un <code>WorldXform2 = 0</code> lu dans six mois ne soit pas pris pour « gratuit ». Le fichier doit dire lui-même en dessous de quoi il ne sait plus rien.</p>
+<div class="io"><div><h5>Utilise</h5>Le constat de l’étape 1 : tout est multiple de 100 ns.</div><div><h5>Produit</h5><code>MeasureOverhead(outResolutionNs)</code> ; champ <code>resolution_ns=</code> dans les deux en-têtes.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>s_overheadNs = MeasureOverhead();
+f &lt;&lt; ";overhead_ns=" &lt;&lt; s_overheadNs &lt;&lt; '\n';</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>s_overheadNs = MeasureOverhead(s_resolutionNs);
+f &lt;&lt; ";overhead_ns="   &lt;&lt; s_overheadNs
+  &lt;&lt; ";resolution_ns=" &lt;&lt; s_resolutionNs &lt;&lt; '\n';</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Bug 67 · les fichiers de configuration lus dans le répertoire courant</div><div class="b">
+<p><b>Objectif.</b> Lire <code>config.json</code>, <code>engine.json</code> et la police sous <code>contentRoot</code>, comme la scène et les gizmos. Indice : le CSV du test de fumée avait atterri dans le répertoire de travail.</p>
+<div class="io"><div><h5>Utilise</h5><code>contentRoot</code> résolu par <code>ResolveContentRoot</code> ; <code>kContentMarker</code>.</div><div><h5>Produit</h5>Une seule source de vérité, quel que soit le dossier d’où l’on lance.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — main.cpp, SDLMngt.cpp</div><pre><code>ProgrammeConfig("config.json", cfg)
+EngineConfig::Get().LoadFromJson("engine.json")
+SDLINIT(FrameW, FrameH)
+  → TTF_OpenFont("Tahoma.ttf", 20)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>ProgrammeConfig((contentRoot / "config.json").string(), cfg)
+EngineConfig::Get().LoadFromJson(
+    (contentRoot / LV3::kContentMarker).string())
+SDLINIT(FrameW, FrameH, (contentRoot / "tahoma.ttf").string())
+  → TTF_OpenFont(fontPath.c_str(), 20)   // chemin dans le message</code></pre></div>
+</div>
+<p><b>Pourquoi c’était grave.</b> <code>ResolveContentRoot</code> valide une racine par la présence d’<code>engine.json</code>, puis le programme lisait <b>un autre</b> <code>engine.json</code>. Lancé depuis <code>x64\Release</code>, il lisait les copies post-build pour la configuration, et le projet pour la scène : une exécution cohérente nulle part. Rejeté : <code>SetCurrentDirectoryW(contentRoot)</code>, qui cache le défaut au lieu de le corriger.</p>
+<p><b>Validation d’Onky</b> : largeur changée à 1200 dans le <code>config.json</code> du projet, lancement depuis <code>x64\Release</code> avec la racine en argument → fenêtre de 1200 px ; lancement depuis <code>C:\</code> → démarrage normal. « C’est bon, cela fonctionne ».</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> G2a · choisir la scène sans recompiler</div><div class="b">
+<p><b>Objectif.</b> Une seule binaire, plusieurs scènes, aucun fichier édité entre deux mesures.</p>
+<div class="io"><div><h5>Utilise</h5>La racine fiable de l’étape 3.</div><div><h5>Produit</h5><code>Helper/AppArgs.h/.cpp</code> ; <code>--scene</code> prime sur <code>config.json</code>, substitution journalisée ; <code>sceneFile</code> à portée fonction.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — main.cpp</div><pre><code>if (argc &gt; 1)
+    devCandidates.emplace_back(argv[1]);
+...
+std::string pathScene = resources.pathGraphScene
+    + cfg.mapAssets["scene_graph"].object;</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>const AppArgs args = ParseArgs(argc, argv);
+if (args.wantsHelp) { PrintUsage(); return 0; }
+if (!args.valid)    { PrintUsage(); return -1; }
+...
+sceneFile = cfg.mapAssets["scene_graph"].object;
+if (!args.scene.empty()) {
+    Logger::info("[Args] scene forcee par --scene : " + args.scene
+        + "  (config.json proposait : " + sceneFile + ")");
+    sceneFile = args.scene;
+}</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Bug 68 · une racine invalide passée en argument était ignorée</div><div class="b">
+<p><b>Objectif.</b> Trouvé par Onky : <code>exe.exe "azazaz"</code> démarrait sans un mot, sur une autre racine. En Release, sur la <b>copie post-build</b>. Une faute de frappe dans un script de mesure aurait produit des chiffres exacts sur le mauvais contenu.</p>
+<div class="io"><div><h5>Utilise</h5><code>IsContentRoot</code>, jusque-là <code>static</code> dans <code>ContentRoot.cpp</code>.</div><div><h5>Produit</h5><code>IsContentRoot</code> publiée ; validation de l’argument dans <code>main.cpp</code> ; <code>LV3_CONTENT_ROOT</code> posée et invalide → échec.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — ContentRoot.cpp</div><pre><code>if (IsContentRoot(p)) { ...; return p; }
+tried.push_back(p);       // puis on continue</code></pre></div>
+<div class="ap"><div class="t">Après — ContentRoot.cpp et main.cpp</div><pre><code>// ContentRoot.cpp : la variable posée est une intention
+Logger::error("[Content] LV3_CONTENT_ROOT posee mais invalide : ...");
+return {};
+
+// main.cpp : l'argument aussi
+if (!LV3::IsContentRoot(args.contentRoot)) {
+    Logger::error("[Args] racine de contenu invalide : ...");
+    return -1;
+}
+devCandidates.emplace_back(args.contentRoot);</code></pre></div>
+</div>
+<p><b>Décision assumée.</b> Une <code>LV3_CONTENT_ROOT</code> périmée arrête le programme même si l’argument est correct. L’alternative (l’argument prime, avec un avertissement) a été écartée : une variable d’environnement qui pointe dans le vide est un défaut de la machine ; la découvrir coûte cinq secondes aujourd’hui, une soirée dans six mois.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> G2b · le mode banc</div><div class="b">
+<p><b>Objectif.</b> Supprimer les trois sources de variation : le dt réel, la souris capturée, l’absence de fin.</p>
+<div class="io"><div><h5>Utilise</h5><code>args.benchFrames</code>, <code>args.warmupFrames</code>, <code>args.csv</code> (étape 4) ; <code>Profiler</code> (étape 1).</div><div><h5>Produit</h5>Neuf éditions de <code>main.cpp</code> : <code>bench</code>, <code>kBenchDt</code>, <code>kBuildConfigName</code>, souris, armement, dt fixe, <code>BeginFrame</code>, <code>InputState</code> vidé, nombre de vues, borne <code>Present</code>, <code>EndFrame</code> et arrêt, écriture du CSV.</div></div>
+<pre><code>if (bench) realDt = kBenchDt;                   // 1/60 : constant, c'est tout ce qui compte
+const float simDt = _clock.Advance(realDt);
+LV3_PROF_BEGIN_FRAME(static_cast&lt;uint64_t&gt;(_clock.m_simTime * 1000.0));
+...
+if (bench) input = LV3::InputState{};           // après BuildInputState, qui a dépilé les événements
+...
+LV3_PROF_END_FRAME();
+if (bench &amp;&amp; ++benchFrame &gt;= args.benchFrames) g_running = false;   // APRÈS EndFrame</code></pre>
+<p><b>Résultats d’Onky</b> : souris libre, fermeture seule après 300 frames, 300 lignes, chauffe marquée, <b>dernière valeur de <code>sim_millidays</code> identique entre deux exécutions</b> (déterminisme). Et la question posée par la seule borne <code>Present</code> : médiane 1,21 ms pour une frame de 3,12 ms. La boucle <b>tourne libre</b> (pas de synchronisation verticale), contrairement à ce que suggérait un commentaire de <code>SDLMngt.cpp</code>.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> Incident · <code>LV3_PROFILE=1</code> malgré <code>false</code></div><div class="b">
+<p><b>Objectif.</b> Comprendre pourquoi le CSV s’écrivait encore avec <code>LV3Profile=false</code>. La binaire avait bien été recompilée (dates 22:47 puis 22:51).</p>
+<div class="io"><div><h5>Utilise</h5>La propriété <code>LV3Profile</code> ; <code>echo %LV3Profile%</code> (négatif : pas de variable d’environnement).</div><div><h5>Produit</h5>La cible <code>LV3ShowProfile</code> ; le <code>#pragma message</code> de <code>config.h</code> ; la ligne <code>[Build]</code> avec <code>(exe)</code> et <code>(lib)</code>.</div></div>
+<pre><code>Logger::info(std::string("[Build] ") + kBuildConfigName
+    + " | LV3_PROFILE(exe)=" + std::to_string(LV3_PROFILE)
+    + " | LV3_PROFILE(lib)=" + std::to_string(LV3::Profiler::CompiledProfileFlag())
+    + " | LV3_ASSERTS_ENABLED=" + std::to_string(LV3_ASSERTS_ENABLED)
+    + " | compile le " __DATE__ " a " __TIME__);
+if (LV3_PROFILE != LV3::Profiler::CompiledProfileFlag())
+    Logger::error("[Build] LV3_PROFILE differe entre l'EXE et la LIB ...");</code></pre>
+<p><b>Résultat.</b> Après régénération complète : <code>(exe)=0 | (lib)=0</code> avec <code>false</code>, <code>(exe)=1 | (lib)=1</code> avec <code>true</code>. <b>Cause non établie</b> (le plus probable : un objet ou une bibliothèque périmés). Le garde-fou reste en place définitivement.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> G3a · poser les bornes, et la ligne RESTE</div><div class="b">
+<p><b>Objectif.</b> Ventiler les 1,9 ms de budget moteur entre les étages de S13.</p>
+<div class="io"><div><h5>Utilise</h5>L’ordre S13 (lot PH1-D) ; les zones de l’étape 1.</div><div><h5>Produit</h5>Macros <code>LV3_PROF_BEGIN</code>/<code>END</code> ; ligne <code>RESTE</code> ; treize bornes dans <code>main.cpp</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>LV3::InputState input = BuildInputState();
+...
+PlayerInputSystem(registry, input, realDt);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>LV3::InputState input{};          // déclaré HORS du bloc :
+{                                  // les caméras le relisent
+    LV3_PROF_SCOPE(LV3::EProfZone::Input);
+    input = BuildInputState();
+    if (bench) input = LV3::InputState{};
+    PlayerInputSystem(registry, input, realDt);
+}</code></pre></div>
+</div>
+<p class="small">Voir l’amendement AM10 : dans le dépôt, <code>PlayerInputSystem</code> est appelé deux fois par frame depuis le commit EXE <code>a22ceeb</code> (26/09) qui a posé cette borne (point PH1D-1 de la roadmap).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Incident C4005 · les deux branches mélangées</div><div class="b">
+<p><b>Objectif.</b> Comprendre l’avertissement « redéfinition de macro » sur <code>LV3_PROF_BEGIN</code>. L’hypothèse « <code>Profiler.h</code> est inclus par deux fichiers » était fausse : une macro ne vit que dans une unité de compilation, et <code>#pragma once</code> interdit la seconde inclusion.</p>
+<p><b>Cause réelle.</b> Les formes <b>éteintes</b> de <code>BEGIN_FRAME</code>, <code>END_FRAME</code>, <code>BEGIN</code>, <code>END</code> avaient été collées dans la branche <b>active</b>. C4005 ne signalait que <code>BEGIN</code>/<code>END</code>, redéfinis juste après ; <code>BEGIN_FRAME</code>/<code>END_FRAME</code>, jamais redéfinis, seraient restés des no-ops. Le programme aurait tourné 300 frames et écrit… rien. <b>Un avertissement de redéfinition de macro n’est jamais cosmétique.</b></p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Référence A · la scène légère, ventilée</div><div class="b">
+<p><b>Objectif.</b> Première ventilation réelle du moteur.</p>
+<div class="io"><div><h5>Utilise</h5>Les bornes de l’étape 8, le banc de l’étape 6.</div><div><h5>Produit</h5><code>solar_system_v1compat</code>, 2 vues, 1536×900 : FRAME 2,507 ms ; Clear 1 085 µs (432 ‰) ; Present 930 µs (370 ‰) ; Render 426 µs (169 ‰) ; <b>toute la simulation : 48 µs (1,9 %)</b> ; RESTE 3 ‰ ; <code>overhead_ns</code> = 36.</div></div>
+<p><b>Lecture.</b> 80 % de la frame part dans l’écran (effacer, présenter), deux coûts qui ne dépendent que de la résolution. Le moteur ne passe pas son temps à simuler un système solaire.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 11</span> Référence B · la ceinture, et la confusion des vues</div><div class="b">
+<p><b>Objectif.</b> La seconde scène du protocole, et le verdict sur A3.</p>
+<div class="io"><div><h5>Utilise</h5>La référence A.</div><div><h5>Produit</h5>FRAME 13,49 ms ; Render 11,30 ms (837 ‰) ; <b>WorldXform1 24,1 µs (1 ‰)</b> ; Trigger 12,2 µs (inchangé) ; Clear 953 µs (−12 % : le plancher de bruit).</div></div>
+<p><b>Deux constats.</b> A3 est abandonnée : même gratuite, elle rapporterait 0,2 %. Et l’en-tête dit <code>views=4</code>, alors que A en avait 2 : les deux scènes ne diffèrent pas que par la ceinture. Sans ce champ, toute la hausse de <code>Render</code> aurait été attribuée à la ceinture.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 12</span> G3b · les compteurs du rendu, et le bug 69</div><div class="b">
+<p><b>Objectif.</b> Savoir de quoi sont faites les 11,3 ms de <code>Render</code> : trop de meshes, trop de faces, ou trop de pixels.</p>
+<div class="io"><div><h5>Utilise</h5><code>RenderView</code>, <code>EmitClipTriangle</code>.</div><div><h5>Produit</h5>Quatre compteurs ; bug 69 corrigé au passage.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — RenderSystem.cpp</div><pre><code>if (vis == EIntersect::Outside) continue;
+...
+#ifdef _DEBUG
+    const int vi = g_viewIndex;   // utilisé plus bas
+#endif                            // sous #if LV3_DEBUG</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>LV3_PROF_COUNT(EProfCounter::MeshesTested, 1);
+if (vis == EIntersect::Outside) {
+    LV3_PROF_COUNT(EProfCounter::MeshesCulled, 1);
+    continue;
+}
+LV3_PROF_COUNT(EProfCounter::FacesSubmitted, mesh-&gt;faceCount());
+...  // EmitClipTriangle, après le backface :
+LV3_PROF_COUNT(EProfCounter::TrisRasterized, 1);
+
+#if LV3_DEBUG                     // bug 69 : même commutateur
+    const int vi = g_viewIndex;   // que l'usage
+#endif</code></pre></div>
+</div>
+<p><b>Contrôle de perturbation.</b> Un compteur par triangle coûte. Render était à 11,296 ms sans compteurs ; il passe à 11,586 ms avec (+2,6 %), sous le seuil de 5 % fixé avant la mesure. Compteurs : 2 580 meshes testés, 1 283 rejetés, 274 988 faces, 134 389 triangles.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 13</span> Expérience C · diviser les pixels par quatre</div><div class="b">
+<p><b>Objectif.</b> Départager « limité par le remplissage » et « limité par la géométrie » en ne changeant qu’un paramètre : la résolution (768×450).</p>
+<div class="io"><div><h5>Utilise</h5>La ceinture instrumentée (étape 12).</div><div><h5>Produit</h5>Clear 969 → 194 µs (le témoin prouve que la résolution a changé) ; <b>Render 11,59 → 11,40 ms (−1,6 %, sous le plancher)</b> ; compteurs identiques au chiffre près.</div></div>
+<p><b>Lecture du 26/09.</b> Le rendu n’est pas limité par les pixels. <i>Voir l’amendement AM5 : l’avenant C3 a donné la vraie raison.</i></p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 14</span> Expérience D · débrancher le rasterizer, puis le rebrancher</div><div class="b">
+<p><b>Objectif.</b> Le modèle « tout est dans la transformation » ne pouvait pas être vrai à 100 %. Chronométrer chaque triangle perturberait trop : on <b>retranche</b> au lieu de mesurer.</p>
+<pre><code>LV3_PROF_COUNT(EProfCounter::TrisRasterized, 1);
+// ===== ABLATION TEMPORAIRE — PHASE G, À RETIRER APRÈS LA MESURE =====
+return;
+// ====================================================================
+renderer.DrawTriangle(...</code></pre>
+<p><b>Prédiction écrite avant</b> : ~11 ms → tout est géométrie ; 8 à 9 ms → ~3 ms de rasterisation ; &lt; 5 ms → le modèle est faux. <b>Mesuré</b> : 5,95 ms. Ni l’un ni l’autre des extrêmes : moitié-moitié. Compteurs identiques. Retrait vérifié : retour à 11,48 ms, puis <code>[Build] … (exe)=0 | (lib)=0</code>.</p>
+<p class="small">Amendement AM3 : une ablation mesure le coût d’un étage <b>isolé</b>, pas sa contribution à la frame.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 15</span> Référence E · la ceinture à deux vues, et la loi</div><div class="b">
+<p><b>Objectif.</b> Lever la confusion de l’étape 11 : ne changer que le nombre de vues.</p>
+<div class="io"><div><h5>Utilise</h5>Les références B (4 vues) et A (2 vues).</div><div><h5>Produit</h5>Render 5,600 ms pour 126 102 faces ; à 4 vues 11,477 ms pour 274 988 faces. <b>41,7 et 44,4 ns par face.</b></div></div>
+<p><b>La loi</b> : <code>Render ≈ 42 ns × FacesSubmitted</code>, indépendamment de la résolution et du nombre de vues. Un viewport supplémentaire ne coûte rien en soi : il coûte les faces qu’il resoumet. À nombre de vues égal, la ceinture multiplie les faces par 29,5 et le temps par 12,8 : les rares faces de la scène légère sont grandes à l’écran (102 ns par face), celles de la ceinture minuscules (44 ns). La consolidation C2 est mise à jour en conséquence.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>1. Faire la moyenne des FPS.</b> Une moitié de frames à 2 ms, une moitié à 18 ms. Moyenne des FPS : (500 + 55,6) / 2 = <b>277,8 fps</b>. Inverse du temps moyen : 1 / 10 ms = <b>100 fps</b>. Le même run, deux chiffres qui diffèrent d’un facteur 2,8 ; seul le second correspond au nombre d’images réellement produites par seconde. Le laboratoire 1.3 le recalcule pour toute distribution.</div>
+
+<div class="bad"><b>2. Accumuler des millisecondes en <code>float</code>.</b> 10 000 fois 0,1 ms additionnées en float 32 bits donnent <b>999,9029 ms</b> au lieu de 1 000 : 0,1 ms perdue, soit l’ordre de grandeur de zones entières (Trigger vaut 12 µs). Le harnais additionne des <b>entiers</b> de nanosecondes.</div>
+
+<div class="bad"><b>3. Comparer des runs dont une autre variable a changé.</b> Ceinture (4 vues) contre scène légère (2 vues) : Render ×26,5, attribué entièrement à la ceinture. À vues égales (référence E), la ceinture vaut ×12,8. Un facteur 2 d’erreur, détecté par la seule ligne <code>views=</code> de l’en-tête.</div>
+
+<div class="bad"><b>4. Optimiser ce qui ne coûte rien.</b> A3 ciblait <code>WorldXform1</code> : 23,7 µs sur 13 687 µs, soit 1,7 ‰. Gain maximal si A3 rendait la traversée gratuite : <b>0,17 %</b>, pour deux à trois séances. Le même temps investi dans le chantier 2 (pré-transformation) a rapporté −17,3 % sur <code>Render</code> (avenant C2).</div>
+
+<div class="bad"><b>5. Laisser une ablation dans le dépôt.</b> Avec le <code>return</code> de l’étape 14 oublié, <code>Render</code> tombe de 11,5 à 5,95 ms… et l’écran est noir. L’avenant C2 raconte qu’une séance entière a été faussée par un binaire construit avec l’ablation active, que les compteurs ne pouvaient pas détecter. D’où le champ <code>ablation=</code> ajouté plus tard à l’en-tête.</div>
+
+<div class="bad"><b>6. Un profileur à <code>unordered_map&lt;std::string, double&gt;</code>.</b> Chaque borne hache une chaîne et cherche dans une table. Même à 100 ns par recherche (ordre de grandeur indicatif, non mesuré ici), 24 recherches par frame font 2,4 µs : <b>plus que la zone <code>WorldXform1</code> de la scène légère</b> (5,4 µs) qu’on prétend mesurer. Le harnais indexe un tableau par un enum.</div>
+
+<div class="bad"><b>7. Corriger le bug 67 par <code>SetCurrentDirectoryW(contentRoot)</code>.</b> Une ligne, et tous les chemins relatifs « marchent ». Mais le défaut est caché, pas corrigé : le prochain chemin relatif fonctionnera par accident. Et un <code>--csv=Mesures\x.csv</code> tapé par l’utilisateur serait résolu par rapport à la racine, pas à l’endroit où il a tapé la commande.</div>
+
+<div class="bad"><b>8. Passer la scène en positionnel, ou séparer l’option de sa valeur.</b> <code>exe.exe belt.json</code> sans racine : la scène est prise pour une racine. <code>--scene --bench=300</code> : <code>--scene</code> avale <code>--bench=300</code> comme nom de fichier, et l’on lance une session interactive sans fin en croyant mesurer 300 frames.</div>
+
+<div class="bad"><b>9. Valider la racine par <code>exists()</code>.</b> Un dossier qui existe mais sans <code>engine.json</code> passe le test, puis est sauté par <code>ResolveContentRoot</code> au profit d’un repli : le bug 68 revient par la porte de derrière.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>5.1 · Lancer une campagne (recette du 26/09)</h3>
+<pre><code>:: 1. Build\LV3.Common.props : &lt;LV3Profile ...&gt;true&lt;/LV3Profile&gt;  (ou /p:LV3Profile=true)
+:: 2. Régénérer la SOLUTION (les deux projets)
+:: 3. Lire la ligne [Build] : LV3_PROFILE(exe)=1 | LV3_PROFILE(lib)=1 | date de l'instant
+
+cd &lt;racine&gt;\x64\Release
+RefactoNouvelleLibrairieV3.exe "&lt;racine&gt;" --scene=solar_system_v1compat.json      --bench=300
+RefactoNouvelleLibrairieV3.exe "&lt;racine&gt;" --scene=solar_system_v1compat_belt.json --bench=300
+
+:: 4. LV3Profile à false, régénérer, vérifier LV3_PROFILE(exe)=0 | (lib)=0</code></pre>
+<p class="small">La recette a été durcie par les avenants C2 à C4 (amendements AM2 et AM4) : épinglage sur un cœur performant, alternance ABBA dans une même séance, exécutables désignés explicitement :</p>
+<pre><code>set EXE_A=D:\banc\A\RefactoNouvelleLibrairieV3.exe
+start "" /wait /affinity 4 "%EXE_A%" "%ROOT%" --scene=solar_system_v1compat_belt.json --bench=300 --csv=Mesures/A1.csv</code></pre>
+
+<h3>5.2 · Lire un résumé en cinq questions, dans cet ordre</h3>
+<p class="small">Pour le faire sur vos propres fichiers : atelier « vos propres fichiers » de la <a href="#methode">section M.5</a>.</p>
+<ol>
+<li><b>L’en-tête</b> : la scène, la configuration, la résolution et le nombre de vues sont-ils ceux que je crois ? (règle M13 ajoutée plus tard : on lit l’en-tête avant le premier chiffre.)</li>
+<li><b>Les témoins</b> : <code>Clear</code> et <code>Present</code> sont-ils dans le plancher de bruit par rapport à la référence ?</li>
+<li><b>RESTE</b> : est-il de quelques ‰ ? Sinon, une partie du travail n’est pas instrumentée.</li>
+<li><b>Les parts en ‰</b> : quelle zone domine ? Une zone sous 10 ‰ ne justifie pas un chantier.</li>
+<li><b>Les compteurs</b> : le travail a-t-il changé entre deux runs comparés ? S’il est identique, l’écart de temps vient du code ou de la machine, pas de la scène.</li>
+</ol>
+
+<h3>5.3 · Ajouter une zone</h3>
+<pre><code>// Core/Profiler.h — EN FIN d'enum (les colonnes des CSV de référence gardent leur place)
+enum class EProfZone : uint8_t { Input = 0, ..., Present, MaZone, Count };
+inline constexpr const char* kProfZoneNames[] = { "Input", ..., "Present", "MaZone" };
+// oublier le nom = erreur de compilation (static_assert std::size)
+
+// au site mesuré
+{
+    LV3_PROF_SCOPE(LV3::EProfZone::MaZone);
+    MonSysteme(registry);
+}</code></pre>
+
+<h3>5.4 · Ajouter un compteur</h3>
+<pre><code>// la valeur passée doit être SANS EFFET DE BORD : elle disparaît quand LV3_PROFILE vaut 0
+LV3_PROF_COUNT(EProfCounter::FacesSubmitted, mesh-&gt;faceCount());   // accesseur pur : bien
+LV3_PROF_COUNT(EProfCounter::Entities, ++n);                         // NON : ++n disparaît en livraison</code></pre>
+
+<h3>5.5 · Prédire un coût avec la loi</h3>
+<p>Une scène qui soumettrait 50 000 faces par frame coûterait, au 26/09, environ 50 000 × 42 ns ≈ <b>2,1 ms</b> de <code>Render</code>. Avec la pente de la référence G (après les chantiers 2 et 3b, avenant C3) : 50 000 × 26,5 ns ≈ <b>1,3 ms</b>. Le laboratoire 1.5 fait le calcul pour n’importe quel nombre de faces. La loi vaut pour des faces <b>petites</b> à l’écran ; pour de grandes faces, le remplissage s’ajoute (102 ns par face sur la scène légère).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Les avenants C2, C3 et C4 (27 au 30/09) et les lots suivants ont corrigé plusieurs lectures de ce lot. L’instrument et le protocole tiennent ; certaines interprétations non. Chaque amendement donne l’avant (26/09) et l’après.</p>
+
+<div class="amend"><div class="h">AM1 · Les chiffres absolus de C2 ne se comparent pas à ceux du portable</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>« Machine Core 9 » ; FRAME belt 13,69 ms ;
+loi ≈ 42 ns par face</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C2 § 6</div><pre><code>Machine de C2 non identifiable avec certitude
+(aucun champ cpu=). Référence F sur i7-1265U,
+P-core épinglé : ≈ 37 ns par face.
+Le DIAGNOSTIC de C2 reste valable : il repose
+sur des RAPPORTS mesurés sur une même machine.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM2 · Les métadonnées et les témoins ont été complétés (M2, M3)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>en-tête : scene, config, res, views, frames,
+          warmup, overhead_ns, resolution_ns
+témoin : Clear (et Present)</code></pre></div>
+<div class="ap"><div class="t">Après — avenants C2, C3</div><pre><code>en-tête + cpu=, affinity=, ablation=,
+          rasterstats=, asserts_lib= (écrits par la LIB)
+deux témoins : T (calcul) = Animation + LocalXform1
+  + WorldXform1 + Trigger, et Clear (mémoire).
+Clear est limité par la mémoire : il ne voit pas
+une baisse de fréquence (il va PLUS VITE sur E-core).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM3 · Une ablation ne donne pas la contribution d’un étage (M7)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2 § 6.5</div><pre><code>géométrie = 5,95 ms ; rasterisation = 11,59 − 5,95
+          = 5,63 ms (par soustraction)</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C2 § 5 et § 7</div><pre><code>Une ablation mesure le coût d'un étage ISOLÉ.
+Le cœur exécute les étages EN RECOUVREMENT (out-of-order) :
+une partie de la géométrie était cachée dans les attentes
+de la rasterisation. Jamais de coût d'un étage voisin
+par soustraction.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM4 · Le plancher de 15 % était celui d’une comparaison entre séances (M8, M9, M14)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2 § 3.4</div><pre><code>Tout écart &lt; ~15 % entre deux exécutions
+n'est pas significatif.</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>Deux versions se comparent dans UNE séance, en ABBA,
+après un run de mise en régime : ±0,4 % entre paires.
+Sur CPU hybride, le banc est épinglé (start /affinity 4).
+Un temps ne se compare qu'à un temps de la même séance.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM5 · Pourquoi le rendu ignorait la résolution (C2 § 7.1)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>« Le coût de la rasterisation est dans la
+préparation de chaque triangle, indifférente
+à sa surface. »</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C3 § 5.1</div><pre><code>PixelsTested ne baisse que de 6 % au quart des pixels
+(584 545 → 548 346). Le coût était le PLANCHER de la
+boîte lâche : ~4 tests par micro-triangle, même pour
+un triangle qui ne couvre rien. Corrigé par 3b
+(rejet des boîtes serrées vides) : −29 % sur Render.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM6 · L’ordre des chantiers (C2 § 8.2)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>1 LOD · 2 pré-transformation · 3 sub-pixel
+4 AVX2 sur la pré-transformation
+« L'ordre n'est pas négociable »</code></pre></div>
+<div class="ap"><div class="t">Après — avenants C2, C3, C4</div><pre><code>2 CLOS (−17,3 % Render) · 3b CLOS (−29 %)
+2b CLOS (−33,5 %) : décidé obligatoire AVANT le LOD
+LOD ensuite (fait : A14, A14a)
+4 : cible déplacée de TransformPositions vers
+    ProjectPositions (97,6 % des faces)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM7 · Le coût d’un sommet et <code>vertsPerFace</code> (C2 § 7.2)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>7,2 ns par sommet ≈ un MulRow ;
+faces triangulaires « à confirmer »</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C2 § 4</div><pre><code>3,5 ns par MulRow + ~3,7 ns d'autres traitements par
+coin (division, ToRaster, backface, FaceColor, copies).
+vertsPerFace = 3 confirmé : 824 964 MulRow = 3 × faces.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM8 · <code>Clear</code> à 1 ms, « non expliqué » (C2 § 9.6)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2</div><pre><code>~11 Mo effacés en 970 µs, soit ~11 Go/s :
+anomalie non expliquée</code></pre></div>
+<div class="ap"><div class="t">Après — étape 2 de la phase G (A15)</div><pre><code>Chantier Clear : stores non temporels SSE2,
+sous-zones ClearColor et ClearDepth (Référence K).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM9 · Le harnais a grandi</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — 26/09</div><pre><code>12 zones, 8 compteurs, ProfFrame = 184 octets</code></pre></div>
+<div class="ap"><div class="t">Après — dépôt actuel</div><pre><code>15 zones : sous-zones ClearColor, ClearDepth, RenderVerts,
+  EXCLUES de RESTE (kProfMainZoneCount) ;
+49 compteurs (couverture, LOD, B5, C0 à D-a1c),
+  tous ajoutés EN FIN d'enum ; ProfFrame = 536 octets ;
+ProfRunInfo.renderDriver ; Profiler s_armed (étape 3.4).</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM10 · La borne <code>Input</code> a dupliqué <code>PlayerInputSystem</code></div><div class="b"><div class="ab">
+<div class="av"><div class="t">Prévu — étape 8</div><pre><code>{ LV3_PROF_SCOPE(Input);
+  input = BuildInputState(); ...
+  PlayerInputSystem(...); }       // UN appel</code></pre></div>
+<div class="ap"><div class="t">Constaté — commit EXE a22ceeb (26/09)</div><pre><code>PlayerInputSystem appelé DEUX fois par frame :
+vaisseau à 24 u/s au lieu de 12 (sans effet en banc,
+InputState vide). Inscrit : PH1D-1, L6-2.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM11 · Le point 7 (détection N²) n’a jamais été confirmé par un compteur</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2 § 7.4</div><pre><code>Trigger inchangé (13,3 → 12,4 µs) : pas un problème
+de performance ; « TriggerPairs reste à brancher ».</code></pre></div>
+<div class="ap"><div class="t">Après — dépôt actuel</div><pre><code>Entities, XformNodes, TriggerPairs, TriggerHits
+déclarés mais jamais incrémentés : 0 dans tous les
+résumés (PH1C-11 pour XformNodes). Voir PH4G-1.</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM12 · La série M a dépassé M7</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — C2 § 5</div><pre><code>M1 à M7, « série distincte des R/S
+pour éviter une collision »</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>M8 à M14 (avenants C2 à C4), M19 (rappels du plan) :
+les règles de mesure vivent dans trois documents.
+Voir PH4G-11.</code></pre></div></div></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>7.1 · Tests hors moteur</h3>
+<ul>
+<li><b>Test de fumée du harnais</b> (étape 1) : 5 frames, zone autour d’un <code>sleep_for(5 ms)</code>. Attendu : <code>Render</code> ≈ 5 000 000 ns et plus, <code>frame_ns</code> à peine au-dessus, le compteur à sa valeur, les deux fichiers écrits. Valide la plomberie, pas la précision.</li>
+<li><b>Grammaire de <code>ParseArgs</code></b> : le tableau de G2a, rejouable dans le laboratoire 1.7 — <code>--help</code> (0), <code>--banch=10</code> (refus), <code>--bench=abc</code> (refus), deux positionnels (refus), <code>--scene=C:\x.json</code> (refus), aucun argument (inchangé).</li>
+<li><b>Résolution de la racine</b> (bugs 67, 68) : lancement depuis <code>x64\Release</code> avec une largeur modifiée dans le <code>config.json</code> du projet ; lancement depuis <code>C:\</code> ; <code>"azazaz"</code> ; <code>set LV3_CONTENT_ROOT=azazaz</code>. Rejouable dans le laboratoire 1.6.</li>
+</ul>
+
+<h3>7.2 · Filets à la compilation et en Debug</h3>
+<ul>
+<li><code>static_assert(std::size(kProfZoneNames) == kProfZoneCount)</code> et son pendant pour les compteurs ;</li>
+<li><code>LV3_ASSERT(expectedFrames &gt; 0)</code> et <code>LV3_ASSERT(warmupFrames &lt; expectedFrames)</code> dans <code>Profiler::Begin</code> ;</li>
+<li>C4189 sous <code>/W4</code> pour une borne manuelle ouverte et jamais fermée ;</li>
+<li>C4005 : une redéfinition de macro dans <code>Profiler.h</code> signale deux branches mélangées (étape 9) ;</li>
+<li>la cible <code>LV3ShowProfile</code>, le <code>#pragma message</code> de <code>config.h</code>, la ligne <code>[Build]</code> et son erreur si EXE et LIB divergent.</li>
+</ul>
+
+<h3>7.3 · Prédictions écrites avant les mesures, et leur sort</h3>
+<div class="scroll"><table>
+<thead><tr><th>Mesure</th><th>Prédiction</th><th>Mesuré</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Coût d’une paire de bornes</td><td>20 à 60 ns</td><td>123 ns (fumée), puis 32 à 40 ns</td><td><span class="pill warn">dépend de l’état de la machine</span></td></tr>
+<tr><td><code>LocalXform2</code>, <code>WorldXform2</code></td><td>sous le seuil de lisibilité</td><td>200 à 400 ns</td><td><span class="pill ok">confirmé</span></td></tr>
+<tr><td>Perturbation des compteurs</td><td>&lt; 5 % sur <code>Render</code></td><td>+2,6 %</td><td><span class="pill ok">confirmé</span></td></tr>
+<tr><td>Résolution ÷ 4</td><td><code>Clear</code> au quart</td><td>÷ 5,0</td><td><span class="pill ok">confirmé</span></td></tr>
+<tr><td>Ablation du rasterizer</td><td>trois issues : ~11, 8-9, &lt; 5 ms</td><td>5,95 ms</td><td><span class="pill warn">aucune des trois : moitié-moitié</span></td></tr>
+<tr><td>Retrait de l’ablation</td><td>retour à ~11,6 ms</td><td>11,48 ms</td><td><span class="pill ok">confirmé</span></td></tr>
+<tr><td>Ceinture à 2 vues</td><td>isole la ceinture des vues</td><td>coût par face 44,4 contre 41,7 ns</td><td><span class="pill ok">loi établie</span></td></tr>
+</tbody></table></div>
+
+<h3>7.4 · Avant de comparer deux fichiers</h3>
+<ol>
+<li><code>res</code>, <code>views</code>, <code>config</code> identiques dans les deux en-têtes ;</li>
+<li><code>Clear</code> à moins de 15 % (règle de l’époque ; aujourd’hui ABBA dans la même séance et témoin T à moins de 3 %) ;</li>
+<li><code>RESTE</code> de quelques ‰ ;</li>
+<li>compteurs identiques si le code de la scène n’a pas changé.</li>
+</ol>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p><b>Rien n’est acté.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH4-G ». Les décisions <b>prises</b> pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH4G_Campagne_Mesure.md</code>. Les sujets sont à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody id="rmBody"></tbody>
+</table></div>
+</section>
+
+<footer>
+Lot PH4-G — reconstruction du 13/11/2026 à partir de l’échange du 24 au 26/09/2026, de <code>Consolidation_C2_Campagne_Mesure.md</code>, des avenants C2, C3, C4, du carnet de route et du dépôt LibraryV3 (<code>Core/Profiler.h</code> actuel). Les chiffres des laboratoires sont ceux des fichiers <code>_summary.csv</code> de l’échange. Section M (protocole, outils, indicateurs, ateliers de dépouillement) ajoutée le 13/11/2026 à la demande d’Onky.
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const fr = (v, d=1) => (Object.is(v,-0)?0:v).toLocaleString("fr-FR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function fit(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 640;
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+function rng(seed){ let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+// même règle que Quantile() du Profiler : k = arrondi de q·(n−1)
+function quantile(arr, q){ if(!arr.length) return 0; const v = arr.slice().sort((a,b)=>a-b); const last = v.length-1; let k = Math.floor(q*last + 0.5); if (k > last) k = last; return v[k]; }
+
+/* ═══════════ Données : les summaries de l'échange (µs) ═══════════ */
+const ZN = ["Input","Animation","LocalXform1","WorldXform1","Cameras","LocalXform2","WorldXform2","Trigger","BuildViews","Clear","Render","Present","RESTE"];
+const SIM = ZN.slice(0,9);
+const ZC = {Input:"var(--ship)", Animation:"var(--planet)", LocalXform1:"#4f9a9a", WorldXform1:"var(--accent)", Cameras:"var(--cam)", LocalXform2:"var(--ghost)", WorldXform2:"#8a8579", Trigger:"var(--ok)", BuildViews:"#6c9a5a", Clear:"var(--warn)", Render:"var(--bad)", Present:"var(--ink3)", RESTE:"var(--line)"};
+function Z(a){ const o = {}; ZN.forEach((n,i)=>o[n]=a[i]); return o; }
+const RUNS = [
+ {id:"A",  label:"A — v1compat, 2 vues (étape 10)",                scene:"v1compat", views:2, res:"1536x900", frame:2507.0,  ov:36, z:Z([12.9,6.1,2.3,5.4,6.9,0.2,0.2,13.3,0.9,1085.3,425.8,929.8,9.5]), c:null},
+ {id:"A2", label:"A' — v1compat, 2 vues, avec compteurs (étape 13)", scene:"v1compat", views:2, res:"1536x900", frame:2568.5,  ov:32, z:Z([12.6,6.3,2.1,5.4,7.1,0.2,0.2,13.4,0.8,1085.7,436.6,1008.9,11.0]), c:[86,83,4272,151]},
+ {id:"B",  label:"B — belt, 4 vues, sans compteurs (étape 11)",     scene:"belt", views:4, res:"1536x900", frame:13486.4, ov:32, z:Z([11.4,40.1,20.0,24.1,6.3,0.4,0.3,12.2,0.9,953.4,11296.1,1055.1,10.5]), c:null},
+ {id:"B2", label:"B' — belt, 4 vues, avec compteurs (étape 12)",    scene:"belt", views:4, res:"1536x900", frame:13810.6, ov:32, z:Z([11.2,37.9,20.3,24.3,6.5,0.4,0.3,12.3,0.8,969.3,11585.8,1030.3,10.5]), c:[2580,1283,274988,134389]},
+ {id:"C",  label:"C — belt, 4 vues, 768×450 (étape 13)",            scene:"belt", views:4, res:"768x450",  frame:12424.2, ov:40, z:Z([11.0,37.8,19.4,24.1,6.4,0.4,0.3,12.7,0.8,194.1,11401.1,680.9,9.8]), c:[2580,1283,274988,134389]},
+ {id:"D",  label:"D — belt, 4 vues, ablation du rasterizer (étape 14)", scene:"belt", views:4, res:"1536x900", frame:8151.9, ov:33, z:Z([11.5,39.9,21.1,25.5,6.2,0.4,0.3,12.6,0.9,996.0,5952.8,984.7,10.0]), c:[2580,1283,274988,134389]},
+ {id:"R",  label:"R — belt, 4 vues, ablation retirée (étape 14)",   scene:"belt", views:4, res:"1536x900", frame:13687.0, ov:32, z:Z([11.1,38.4,20.4,23.7,6.4,0.4,0.3,12.4,0.8,973.4,11477.4,1025.6,10.6]), c:[2580,1283,274988,134389]},
+ {id:"E",  label:"E — belt, 2 vues (étape 15)",                     scene:"belt", views:2, res:"1536x900", frame:7757.6,  ov:32, z:Z([11.7,39.6,20.2,25.0,6.0,0.4,0.2,12.4,0.7,1001.2,5600.2,944.7,10.1]), c:[1290,660,126102,62977]}
+];
+const RUN = id => RUNS.find(r => r.id === id);
+
+/* ═══════════ 1.1 · ventilation ═══════════ */
+$("vRun").innerHTML = RUNS.map(r => `<option value="${r.id}"${r.id==="R"?" selected":""}>${esc(r.label)}</option>`).join("");
+$("vRun").value = "R";
+function vDraw(){
+  const r = RUN($("vRun").value), noP = $("vNoPresent").checked, simOnly = $("vSimOnly").checked;
+  const names = simOnly ? SIM : ZN.filter(n => !(noP && n==="Present"));
+  const total = simOnly ? SIM.reduce((s,n)=>s+r.z[n],0) : (noP ? r.frame - r.z.Present : r.frame);
+  $("vBar").innerHTML = names.map(n => `<span title="${n} : ${fr(r.z[n])} µs" style="width:${(100*r.z[n]/total).toFixed(3)}%;background:${ZC[n]}"></span>`).join("");
+  $("vLeg").innerHTML = names.map(n => `<span><i style="background:${ZC[n]}"></i>${n}</span>`).join("");
+  const sim = SIM.reduce((s,n)=>s+r.z[n],0);
+  $("vStats").innerHTML = `
+    <div><div class="k">FRAME (médiane)</div><div class="v">${fr(r.frame/1000,3)} ms</div></div>
+    <div><div class="k">images par seconde</div><div class="v">${fr(1e6/r.frame,0)}</div></div>
+    <div><div class="k">budget moteur (sans Present)</div><div class="v">${fr((r.frame-r.z.Present)/1000,3)} ms</div></div>
+    <div><div class="k">toute la simulation</div><div class="v ${sim/r.frame<0.05?'ok':'warn'}">${fr(sim,1)} µs · ${fr(1000*sim/r.frame,1)} ‰</div></div>
+    <div><div class="k">WorldXform1 (A3)</div><div class="v ok">${fr(1000*r.z.WorldXform1/r.frame,2)} ‰</div></div>
+    <div><div class="k">en-tête</div><div class="v" style="font-size:13px">${r.res} · ${r.views} vues · overhead ${r.ov} ns</div></div>`;
+  $("vTab").innerHTML = `<thead><tr><th>Zone</th><th class="num">médiane (µs)</th><th class="num">‰ de ${simOnly?"la simulation":(noP?"budget moteur":"la frame")}</th><th>Lecture</th></tr></thead><tbody>` +
+    names.map(n => {
+      const v = r.z[n], pm = 1000*v/total;
+      let note = "";
+      if (n==="LocalXform2"||n==="WorldXform2") note = '<span class="pill warn">sous le seuil (100 ns, paire ≈ '+r.ov+' ns)</span>';
+      else if (n==="Clear"||n==="Present") note = '<span class="pill">témoin : ne dépend que de la résolution</span>';
+      else if (n==="WorldXform1") note = '<span class="pill ok">la zone de A3</span>';
+      else if (n==="Trigger") note = '<span class="pill">point 7 du carnet</span>';
+      else if (n==="RESTE") note = '<span class="pill">non instrumenté</span>';
+      return `<tr><td><span class="zone-chip" style="background:${ZC[n]}"></span>${n}</td><td class="num">${fr(v,1)}</td><td class="num">${fr(pm,1)}</td><td>${note}</td></tr>`;
+    }).join("") + (r.c ? `<tr><td colspan="4" class="small">Compteurs : ${r.c[0].toLocaleString("fr-FR")} meshes testés · ${r.c[1].toLocaleString("fr-FR")} rejetés · ${r.c[2].toLocaleString("fr-FR")} faces soumises · ${r.c[3].toLocaleString("fr-FR")} triangles rasterisés</td></tr>` : `<tr><td colspan="4" class="small">Compteurs : non posés à cette étape.</td></tr>`) + `</tbody>`;
+}
+["vRun","vNoPresent","vSimOnly"].forEach(id => $(id).addEventListener("input", vDraw));
+
+/* ═══════════ 1.2 · dt fixe ═══════════ */
+function dDraw(){
+  const jit = +$("dJit").value/100, K = +$("dK").value, fixed = $("dFixed").checked;
+  $("dJitV").textContent = "±" + Math.round(jit*100) + " %"; $("dKV").textContent = K;
+  const DT = f(1/60), T = 4.0;   // période de l'orbite de démonstration, en secondes simulées
+  function run(seed){
+    const R = rng(seed); let t = f(0); const pts = [];
+    for (let i = 0; i < K; i++){
+      const dt = fixed ? DT : f(DT * (1 + jit * (2*R() - 1)));
+      t = f(t + dt);
+      if (i >= K - 40) pts.push(t);
+    }
+    return {t, pts};
+  }
+  const r1 = run(11), r2 = run(29);
+  const {g, w, h} = fit($("dCanvas"), 300), cx = w/2, cy = h/2, Rr = Math.min(w, h)*0.36;
+  g.clearRect(0,0,w,h);
+  g.strokeStyle = css("--line"); g.lineWidth = 1; g.beginPath(); g.arc(cx, cy, Rr, 0, 7); g.stroke();
+  g.fillStyle = css("--warn"); g.beginPath(); g.arc(cx, cy, 10, 0, 7); g.fill();
+  const P = t => { const a = 2*Math.PI*t/T - Math.PI/2; return {x: cx + Rr*Math.cos(a), y: cy + Rr*Math.sin(a)}; };
+  [[r1, css("--ship")], [r2, css("--cam")]].forEach(([r, col], j) => {
+    g.strokeStyle = col; g.globalAlpha = 0.35; g.lineWidth = 3; g.beginPath();
+    r.pts.forEach((t, i) => { const p = P(t); i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y); }); g.stroke(); g.globalAlpha = 1;
+    const p = P(r.t); g.fillStyle = col; g.beginPath(); g.arc(p.x, p.y, j ? 6 : 9, 0, 7); g.fill();
+  });
+  g.fillStyle = css("--ink3"); g.font = "11px ui-monospace, monospace";
+  g.fillText("exécution 1", 12, 18); g.fillStyle = css("--ship"); g.fillRect(90, 10, 10, 10);
+  g.fillStyle = css("--ink3"); g.fillText("exécution 2", 12, 36); g.fillStyle = css("--cam"); g.fillRect(90, 28, 10, 10);
+  const dt_ms = Math.abs(r1.t - r2.t)*1000, dAng = Math.abs(r1.t - r2.t)/T*360, same = r1.t === r2.t;
+  $("dStats").innerHTML = `
+    <div><div class="k">temps simulé, exéc. 1</div><div class="v">${r1.t.toFixed(6).replace('.',',')} s</div></div>
+    <div><div class="k">temps simulé, exéc. 2</div><div class="v">${r2.t.toFixed(6).replace('.',',')} s</div></div>
+    <div><div class="k">écart à la frame ${K}</div><div class="v ${same?'ok':'bad'}">${fr(dt_ms,3)} ms · ${fr(dAng,2)}°</div></div>
+    <div><div class="k">même image ?</div><div class="v ${same?'ok':'bad'}">${same?"oui, au bit près":"non"}</div></div>
+    <div><div class="k">300 × fround(1/60)</div><div class="v">5,000010 s</div></div>`;
+}
+["dJit","dK","dFixed"].forEach(id => $(id).addEventListener("input", dDraw));
+
+/* ═══════════ 1.3 · statistiques ═══════════ */
+function sDraw(){
+  const fast = +$("sFast").value, slow = Math.max(+$("sSlow").value, fast), pct = +$("sPct").value/100;
+  $("sFastV").textContent = fast + " ms"; $("sSlowV").textContent = slow + " ms"; $("sPctV").textContent = Math.round(pct*100) + " %";
+  const R = rng(7), v = [];
+  for (let i = 0; i < 240; i++){ const base = (R() < pct) ? slow : fast; v.push(base * (1 + 0.05*(2*R()-1))); }
+  const mean = v.reduce((s,x)=>s+x,0)/v.length, med = quantile(v,0.5), p95 = quantile(v,0.95), mx = quantile(v,1);
+  const meanFps = v.reduce((s,x)=>s+1000/x,0)/v.length, fpsMean = 1000/mean;
+  const {g, w, h} = fit($("sCanvas"), 220), pad = 30, X = x => pad + (w-2*pad)*x/(mx*1.08), B = 48;
+  g.clearRect(0,0,w,h);
+  const bins = new Array(B).fill(0); v.forEach(x => { const k = Math.min(B-1, Math.floor(B*x/(mx*1.08))); bins[k]++; });
+  const top = Math.max(...bins);
+  g.fillStyle = css("--ink3"); bins.forEach((c,k) => { const x0 = pad + (w-2*pad)*k/B, bw = (w-2*pad)/B - 1, bh = (h-60)*c/top; g.fillRect(x0, h-30-bh, bw, bh); });
+  g.strokeStyle = css("--line"); g.beginPath(); g.moveTo(pad, h-30); g.lineTo(w-pad, h-30); g.stroke();
+  const mark = (x, col, lab, row) => { g.strokeStyle = col; g.lineWidth = 2; g.beginPath(); g.moveTo(X(x), 18); g.lineTo(X(x), h-30); g.stroke(); g.lineWidth = 1; g.fillStyle = col; g.font = "11px ui-monospace, monospace"; g.fillText(lab, Math.min(X(x)+4, w-90), 14 + row*13); };
+  mark(med, css("--ok"), "médiane", 0); mark(mean, css("--accent"), "moyenne", 1); mark(p95, css("--bad"), "p95", 2);
+  g.fillStyle = css("--ink3"); g.fillText("0 ms", pad, h-12); g.fillText(fr(mx*1.08,1)+" ms", w-pad-50, h-12);
+  $("sStats").innerHTML = `
+    <div><div class="k">médiane</div><div class="v ok">${fr(med,2)} ms</div></div>
+    <div><div class="k">moyenne</div><div class="v warn">${fr(mean,2)} ms</div></div>
+    <div><div class="k">p95</div><div class="v bad">${fr(p95,2)} ms</div></div>
+    <div><div class="k">max</div><div class="v">${fr(mx,2)} ms</div></div>
+    <div><div class="k">« FPS moyens » = moyenne(1000/t)</div><div class="v bad">${fr(meanFps,1)}</div></div>
+    <div><div class="k">images/s réelles = 1000/moyenne(t)</div><div class="v ok">${fr(fpsMean,1)}</div></div>`;
+}
+["sFast","sSlow","sPct"].forEach(id => $(id).addEventListener("input", sDraw));
+
+/* ═══════════ 1.4 · témoin et plancher ═══════════ */
+$("nTab").innerHTML = `<thead><tr><th>Exécution</th><th>res</th><th>vues</th><th class="num">Clear (µs)</th><th class="num">Present (µs)</th><th class="num">Render (µs)</th><th class="num">WorldXform1 (µs)</th></tr></thead><tbody>` +
+  RUNS.map(r => `<tr><td>${r.id}</td><td>${r.res}</td><td>${r.views}</td><td class="num">${fr(r.z.Clear)}</td><td class="num">${fr(r.z.Present)}</td><td class="num">${fr(r.z.Render)}</td><td class="num">${fr(r.z.WorldXform1)}</td></tr>`).join("") + `</tbody>`;
+const opts = RUNS.map(r => `<option value="${r.id}">${esc(r.label)}</option>`).join("");
+$("nA").innerHTML = opts; $("nB").innerHTML = opts; $("nA").value = "A"; $("nB").value = "R";
+$("nZone").innerHTML = ZN.map(n => `<option${n==="Clear"?" selected":""}>${n}</option>`).join("");
+$("nZone").value = "Clear";
+function nDraw(){
+  const a = RUN($("nA").value), b = RUN($("nB").value), z = $("nZone").value, floor = +$("nFloor").value/100;
+  $("nFloorV").textContent = Math.round(floor*100) + " %";
+  const va = a.z[z], vb = b.z[z], d = vb/va - 1;
+  const same = RUNS.filter(r => r.res === "1536x900").map(r => r.z.Clear);
+  const spread = Math.max(...same)/Math.min(...same) - 1;
+  const warn = [];
+  if (a.res !== b.res) warn.push("résolutions différentes : les témoins ne peuvent PAS valider cette comparaison");
+  if (a.views !== b.views) warn.push("nombre de vues différent : deux variables changent (M4)");
+  if (a.id === "D" || b.id === "D") warn.push("une exécution est une ABLATION (le rasterizer est débranché)");
+  let verdict, cls;
+  if (a.id === b.id){ verdict = "même exécution"; cls = ""; }
+  else if (Math.abs(d) < floor){ verdict = "dans le bruit — rien ne peut être conclu"; cls = "ok"; }
+  else { verdict = "au-delà du plancher — écart significatif"; cls = "bad"; }
+  $("nStats").innerHTML = `
+    <div><div class="k">${z}, exéc. ${a.id}</div><div class="v">${fr(va)} µs</div></div>
+    <div><div class="k">${z}, exéc. ${b.id}</div><div class="v">${fr(vb)} µs</div></div>
+    <div><div class="k">écart</div><div class="v ${cls}">${d>=0?"+":"−"}${fr(Math.abs(d)*100,1)} %</div></div>
+    <div><div class="k">verdict</div><div class="v ${cls}" style="font-size:14px">${verdict}</div></div>
+    <div><div class="k">dispersion de Clear à 1536×900</div><div class="v warn">${fr(spread*100,1)} %</div></div>` +
+    (warn.length ? `<div style="grid-column:1/-1"><div class="k">avertissements</div><div class="v bad" style="font-size:13px">${warn.map(esc).join(" · ")}</div></div>` : "");
+}
+["nA","nB","nZone","nFloor"].forEach(id => $(id).addEventListener("input", nDraw));
+
+/* ═══════════ 1.5 · loi de coût ═══════════ */
+const LP = [
+  {lab:"A' v1compat 2 vues", x:4272,   y:436.6,   k:"light"},
+  {lab:"E belt 2 vues",      x:126102, y:5600.2,  k:"belt"},
+  {lab:"B' belt 4 vues",     x:274988, y:11585.8, k:"belt"},
+  {lab:"C 768×450",          x:274988, y:11401.1, k:"belt"},
+  {lab:"R ablation retirée", x:274988, y:11477.4, k:"belt"},
+  {lab:"D ablation",         x:274988, y:5952.8,  k:"abl"}
+];
+const belt = LP.filter(p => p.k === "belt");
+const kFit = belt.reduce((s,p)=>s+p.x*p.y,0) / belt.reduce((s,p)=>s+p.x*p.x,0) * 1000;   // ns par face
+function lDraw(){
+  const faces = Math.round(Math.pow(10, +$("lFaces").value)), ref = $("lRef").value;
+  const k = ref === "f" ? 37 : ref === "g" ? 26.5 : kFit;
+  $("lFacesV").textContent = faces.toLocaleString("fr-FR");
+  const {g, w, h} = fit($("lCanvas"), 320), L = 52, Bm = 36, Xmax = 320000, Ymax = 13000;
+  const X = x => L + (w-L-16)*x/Xmax, Y = y => h - Bm - (h-Bm-14)*y/Ymax;
+  g.clearRect(0,0,w,h); g.font = "11px ui-monospace, monospace";
+  g.strokeStyle = css("--line"); g.fillStyle = css("--ink3"); g.lineWidth = 1;
+  for (let x = 0; x <= Xmax; x += 50000){ g.beginPath(); g.moveTo(X(x), 14); g.lineTo(X(x), h-Bm); g.stroke(); g.fillText((x/1000)+" k", X(x)-12, h-Bm+15); }
+  for (let y = 0; y <= Ymax; y += 2000){ g.beginPath(); g.moveTo(L, Y(y)); g.lineTo(w-16, Y(y)); g.stroke(); g.fillText((y/1000)+" ms", 6, Y(y)+4); }
+  g.fillText("faces soumises par frame", w/2-70, h-6);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2; g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(Xmax), Y(Xmax*kFit/1000)); g.stroke();
+  if (ref !== "c2"){ g.setLineDash([5,4]); g.strokeStyle = css("--ok"); g.beginPath(); g.moveTo(X(0), Y(0)); g.lineTo(X(Xmax), Y(Xmax*k/1000)); g.stroke(); g.setLineDash([]); }
+  g.lineWidth = 1;
+  LP.forEach((p, i) => { const col = p.k==="belt" ? css("--bad") : p.k==="abl" ? css("--ghost") : css("--ship");
+    g.fillStyle = col; g.beginPath(); g.arc(X(p.x), Y(p.y), 5, 0, 7); g.fill();
+    g.fillStyle = css("--ink2"); const dy = p.k==="belt" ? (i===2?-10:i===3?14:i===4?-22:-10) : -9; g.fillText(p.lab, Math.min(X(p.x)+8, w-130) - (p.x>200000?135:0), Y(p.y)+dy); });
+  const px = Math.min(faces, Xmax); g.strokeStyle = css("--warn"); g.setLineDash([3,3]); g.beginPath(); g.moveTo(X(px), 14); g.lineTo(X(px), h-Bm); g.stroke(); g.setLineDash([]);
+  const pred = faces * k / 1e6;
+  $("lStats").innerHTML = `
+    <div><div class="k">pente ajustée (B', C, R, E)</div><div class="v">${fr(kFit,1)} ns / face</div></div>
+    <div><div class="k">pente utilisée</div><div class="v">${fr(k,1)} ns / face</div></div>
+    <div><div class="k">Render prédit</div><div class="v warn">${fr(pred,2)} ms</div></div>
+    <div><div class="k">v1compat (grandes faces)</div><div class="v">${fr(436.6/4272*1000,0)} ns / face</div></div>
+    <div><div class="k">ablation (isolée)</div><div class="v">${fr(5952.8/274988*1000,1)} ns / face</div></div>`;
+}
+["lFaces","lRef"].forEach(id => $(id).addEventListener("input", lDraw));
+
+/* ═══════════ 1.6 · racine et fichiers ═══════════ */
+function rDraw(){
+  const argv = $("rArgv").value, env = $("rEnv").value, cfg = $("rCfg").value, cwd = $("rCwd").value, mode = $("rMode").value;
+  const PLACE = {proj:"dossier du projet", exe:"x64\\Release (copie post-build)", bad:"azazaz", envok:"dossier désigné par LV3_CONTENT_ROOT"};
+  const log = []; let root = null, stop = null;
+  const L = (cls, s) => log.push(`<span class="${cls}">${esc(s)}</span>`);
+  if (mode === "after"){
+    if (argv === "bad"){ L("e","[Args] racine de contenu invalide : 'azazaz' — 'engine.json' introuvable."); L("e","[Args] une racine passee en argument est un ordre, pas une suggestion : arret."); stop = "arrêt (bug 68, argument)"; }
+    else if (env === "bad"){ L("e","[Content] LV3_CONTENT_ROOT posee mais invalide : aucun repli."); L("e","Arret : aucune racine de contenu."); stop = "arrêt (bug 68, variable)"; }
+  }
+  if (!stop){
+    const cands = [];
+    if (env !== "none") cands.push({src:"LV3_CONTENT_ROOT", loc: env==="ok"?"envok":"bad"});
+    if (argv !== "none") cands.push({src:"argument", loc: argv==="ok"?"proj":"bad"});
+    if (cfg === "Debug") cands.push({src:"LV3_PROJECT_DIR", loc:"proj"});
+    cands.push({src:"dossier de l'exécutable", loc:"exe"});
+    for (const c of cands){
+      if (c.loc === "bad"){ L("w", `[Content] candidat ${c.src} invalide ('azazaz') — essai du suivant` + (mode==="before"?" (en silence dans le code d'avant)":"")); continue; }
+      root = c; L("o", `[Content] racine = ${c.src} : ${PLACE[c.loc]}`); break;
+    }
+  }
+  let files = {cfg:"—", eng:"—", font:"—", scene:"—"}, verdict, vcls;
+  if (stop){ verdict = stop + " — aucune mesure produite, l'erreur est vue tout de suite"; vcls = "ok"; }
+  else {
+    const rootTxt = PLACE[root.loc];
+    files.scene = rootTxt;
+    if (mode === "after"){ files.cfg = files.eng = files.font = rootTxt; }
+    else {
+      const cwdTxt = cwd==="rel" ? PLACE.exe : cwd==="proj" ? PLACE.proj : "C:\\";
+      files.cfg = files.eng = files.font = cwdTxt + " (répertoire courant)";
+      if (cwd === "root"){ L("e","Config — fichier introuvable : config.json"); verdict = "arrêt : config.json introuvable dans C:\\"; vcls = "bad"; }
+    }
+    if (!verdict){
+      const cfgLoc = mode==="after" ? root.loc : (cwd==="rel"?"exe":"proj");
+      const mixed = cfgLoc !== root.loc;
+      const ignored = (argv === "bad" || env === "bad");
+      if (mixed){ verdict = "DEUX sources de vérité : configuration lue dans " + (cfgLoc==="exe"?"la copie":"le projet") + ", scène lue dans " + (root.loc==="exe"?"la copie":root.loc==="proj"?"le projet":"le dossier de la variable"); vcls = "bad"; }
+      else if (ignored){ verdict = "démarre, mais la racine DEMANDÉE a été ignorée sans un mot : chiffres exacts sur un autre contenu"; vcls = "bad"; }
+      else if (root.loc === "exe"){ verdict = "cohérent, mais sur la copie post-build : elle peut être périmée par rapport au projet"; vcls = "warn"; }
+      else { verdict = "une seule source de vérité"; vcls = "ok"; }
+    }
+  }
+  $("rOut").innerHTML = `<dt>racine</dt><dd>${esc(root ? root.src + " → " + PLACE[root.loc] : "aucune")}</dd>
+    <dt>config.json</dt><dd>${esc(files.cfg)}</dd><dt>engine.json</dt><dd>${esc(files.eng)}</dd>
+    <dt>tahoma.ttf</dt><dd>${esc(files.font)}</dd><dt>scène</dt><dd>${esc(files.scene)}</dd>
+    <dt>verdict</dt><dd class="pill ${vcls}" style="white-space:normal">${esc(verdict)}</dd>`;
+  $("rLog").innerHTML = log.join("\n") || '<span class="i">(aucun message)</span>';
+}
+["rArgv","rEnv","rCfg","rCwd","rMode"].forEach(id => $(id).addEventListener("input", rDraw));
+
+/* ═══════════ 1.7 · ParseArgs ═══════════ */
+function tokenize(s){ const out = []; let cur = "", q = false, has = false;
+  for (const ch of s){ if (ch === '"'){ q = !q; has = true; continue; } if (!q && /\s/.test(ch)){ if (has){ out.push(cur); cur = ""; has = false; } continue; } cur += ch; has = true; }
+  if (has) out.push(cur); return out; }
+function parseU32(s){ if (!/^\d+$/.test(s)) return null; const v = Number(s); return v <= 4294967295 ? v : null; }
+function safeRel(s){ if (!s) return false; if (/^[A-Za-z]:/.test(s) || /^[\\/]/.test(s)) return false; return !s.split(/[\\/]/).includes(".."); }
+function pRun(){
+  const toks = tokenize($("pCmd").value).slice(1);
+  const a = {contentRoot:"", scene:"", csv:"", benchFrames:0, warmupFrames:60, wantsHelp:false, valid:true}; const log = []; let rootSeen = false;
+  const E = s => { log.push(`<span class="e">${esc(s)}</span>`); a.valid = false; };
+  for (const t of toks){
+    if (t === "--help" || t === "-h"){ a.wantsHelp = true; continue; }
+    if (!t.startsWith("--")){ if (rootSeen){ E(`[Args] argument positionnel en trop : '${t}' — la scene se choisit avec --scene=, jamais par position.`); continue; } a.contentRoot = t; rootSeen = true; continue; }
+    let m;
+    if ((m = t.match(/^--scene=(.*)$/))){ a.scene = m[1]; if (!safeRel(a.scene)) E(`[Args] --scene doit etre un chemin RELATIF sans '..' : '${a.scene}'`); continue; }
+    if ((m = t.match(/^--csv=(.*)$/))){ a.csv = m[1]; if (!safeRel(a.csv)) E(`[Args] --csv doit etre un chemin RELATIF sans '..' : '${a.csv}'`); continue; }
+    if ((m = t.match(/^--bench=(.*)$/))){ const v = parseU32(m[1]); if (v === null || v === 0) E(`[Args] --bench attend un entier strictement positif : '${m[1]}'`); else a.benchFrames = v; continue; }
+    if ((m = t.match(/^--warmup=(.*)$/))){ const v = parseU32(m[1]); if (v === null) E(`[Args] --warmup attend un entier : '${m[1]}'`); else a.warmupFrames = v; continue; }
+    E(`[Args] option inconnue : '${t}'`);
+  }
+  if (a.benchFrames > 0 && a.warmupFrames >= a.benchFrames){ const c = Math.floor(a.benchFrames/4); log.push(`<span class="w">[Args] --warmup (${a.warmupFrames}) >= --bench (${a.benchFrames}) — ramene a ${c}</span>`); a.warmupFrames = c; }
+  if (a.wantsHelp){ log.push('<span class="i">PrintUsage() … retour 0, aucune fenêtre</span>'); }
+  else if (!a.valid){ log.push('<span class="i">PrintUsage() … retour −1, aucune fenêtre</span>'); }
+  else {
+    log.push(`<span class="o">AppArgs valide</span>`);
+    log.push(`<span class="i">  contentRoot  = ${esc(a.contentRoot || "(absent : replis LV3_CONTENT_ROOT, LV3_PROJECT_DIR, dossier exe)")}</span>`);
+    log.push(`<span class="i">  scene        = ${esc(a.scene || "(absente : celle de config.json)")}</span>`);
+    log.push(`<span class="i">  benchFrames  = ${a.benchFrames}${a.benchFrames ? "  → mode banc, dt = 1/60" : "  → session interactive"}</span>`);
+    log.push(`<span class="i">  warmupFrames = ${a.warmupFrames}</span>`);
+    log.push(`<span class="i">  csv          = ${esc(a.csv || (a.benchFrames ? "(défaut : Mesures/<scène>_<config>.csv)" : "—"))}</span>`);
+    if (a.contentRoot) log.push(`<span class="i">  puis main.cpp : IsContentRoot("${esc(a.contentRoot)}") ? sinon arrêt (bug 68)</span>`);
+  }
+  $("pOut").innerHTML = log.join("\n");
+}
+const PRESETS = [
+  ["aide", 'exe.exe --help'],
+  ["campagne belt", 'exe.exe "D:\\3d_Bases\\22.RefactoNouvelleLibrairieV3" --scene=solar_system_v1compat_belt.json --bench=300'],
+  ["faute de frappe", 'exe.exe "D:\\Proj" --banch=10'],
+  ["entier invalide", 'exe.exe "D:\\Proj" --bench=300abc'],
+  ["deux positionnels", 'exe.exe "D:\\Proj" "D:\\Proj"'],
+  ["scène absolue", 'exe.exe "D:\\Proj" --scene=C:\\x.json'],
+  ["remontée ..", 'exe.exe "D:\\Proj" --scene=..\\..\\autre.json'],
+  ["option séparée", 'exe.exe "D:\\Proj" --scene belt.json'],
+  ["chauffe trop longue", 'exe.exe "D:\\Proj" --bench=10'],
+  ["sans argument (F5)", 'exe.exe']
+];
+$("pPresets").innerHTML = PRESETS.map((p,i) => `<button type="button" data-i="${i}" class="tag" style="cursor:pointer">${esc(p[0])}</button>`).join("");
+$("pPresets").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; $("pCmd").value = PRESETS[+b.dataset.i][1]; pRun(); });
+$("pCmd").addEventListener("input", pRun);
+
+
+/* ═══════════ M.2 · ABBA ═══════════ */
+function mDraw(){
+  const eff = +$("mEff").value/100, d = +$("mDrift").value/100, ord = $("mOrder").value;
+  $("mEffV").textContent = (eff>=0?"+":"−") + Math.abs(Math.round(eff*100)) + " %"; $("mDriftV").textContent = "+" + fr(d*100,1) + " % / run";
+  const A = 10, B = A*(1+eff), seq = ord.split("");
+  const runs = seq.map((v,i) => ({v, t:(v==="A"?A:B), m:(v==="A"?A:B)*(1+d*i)}));
+  const mA = runs.filter(r=>r.v==="A").reduce((s,r)=>s+r.m,0)/2, mB = runs.filter(r=>r.v==="B").reduce((s,r)=>s+r.m,0)/2;
+  const est = mB/mA - 1, bias = est - eff;
+  const {g, w, h} = fit($("mAbbaCv"), 220), L = 50, bw = (w-L-20)/4, top = Math.max(...runs.map(r=>r.m))*1.15, Y = y => h-30-(h-50)*y/top;
+  g.clearRect(0,0,w,h); g.font = "11px ui-monospace, monospace";
+  runs.forEach((r,i) => { const x = L + i*bw + bw*0.2; g.fillStyle = r.v==="A" ? css("--ship") : css("--cam"); g.fillRect(x, Y(r.m), bw*0.6, h-30-Y(r.m));
+    g.globalAlpha = 0.35; g.fillRect(x, Y(r.t), bw*0.6, 2); g.globalAlpha = 1;
+    g.fillStyle = css("--ink2"); g.fillText(`run ${i+1} : ${r.v}`, x, h-14); g.fillText(fr(r.m,2)+" ms", x, Y(r.m)-5); });
+  g.strokeStyle = css("--warn"); g.setLineDash([4,3]); g.beginPath(); g.moveTo(L, Y(A)); g.lineTo(w-20, Y(A*(1+3*d))); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--warn"); g.fillText("dérive de la machine (sur A)", L+4, Y(A*(1+3*d))-8);
+  $("mAbbaSt").innerHTML = `
+    <div><div class="k">effet réel de B</div><div class="v">${(eff>=0?"+":"−")+fr(Math.abs(eff)*100,2)} %</div></div>
+    <div><div class="k">effet estimé (moy. B ÷ moy. A)</div><div class="v ${Math.abs(bias)<1e-9?'ok':'warn'}">${(est>=0?"+":"−")+fr(Math.abs(est)*100,2)} %</div></div>
+    <div><div class="k">erreur due à l’ordre</div><div class="v ${Math.abs(bias)<1e-9?'ok':'bad'}">${(bias>=0?"+":"−")+fr(Math.abs(bias)*100,2)} pt</div></div>
+    <div><div class="k">lecture</div><div class="v" style="font-size:13px">${ord==="ABBA"?"la dérive linéaire s’annule exactement":ord==="ABAB"?"B est toujours mesuré « plus tard » : biais":"pire cas : A au début, B à la fin"}</div></div>`;
+}
+["mEff","mDrift","mOrder"].forEach(id => $(id).addEventListener("input", mDraw));
+
+/* ═══════════ M.4 · quantiles ═══════════ */
+function excelPct(sorted, q){ const h = (sorted.length-1)*q, lo = Math.floor(h), hi = Math.ceil(h); return sorted[lo] + (h-lo)*(sorted[hi]-sorted[lo]); }
+function qDraw(){
+  const n = +$("qN").value, spike = $("qSpike").checked; $("qNV").textContent = n;
+  const R = rng(5), v = []; for (let i = 0; i < n; i++) v.push(10*(1 + 0.08*(2*R()-1)));
+  if (spike) v[Math.floor(n/3)] *= 4;
+  const s = v.slice().sort((a,b)=>a-b), last = n-1;
+  const kM = Math.floor(0.5*last+0.5), k95 = Math.min(last, Math.floor(0.95*last+0.5));
+  const mean = v.reduce((a,b)=>a+b,0)/n, exMed = n%2 ? s[(n-1)/2] : (s[n/2-1]+s[n/2])/2, ex95 = excelPct(s,0.95);
+  const {g, w, h} = fit($("qCv"), 200), L = 40, bw = (w-L-10)/n, top = s[last]*1.12, Y = y => h-24-(h-44)*y/top;
+  g.clearRect(0,0,w,h); g.font = "11px ui-monospace, monospace";
+  s.forEach((x,i) => { g.fillStyle = i===kM ? css("--ok") : i===k95 ? css("--bad") : i===last ? css("--warn") : css("--ghost");
+    g.fillRect(L+i*bw+1, Y(x), Math.max(1,bw-2), h-24-Y(x)); });
+  g.strokeStyle = css("--accent"); g.setLineDash([4,3]); g.beginPath(); g.moveTo(L, Y(mean)); g.lineTo(w-10, Y(mean)); g.stroke(); g.setLineDash([]);
+  g.fillStyle = css("--accent"); g.fillText("moyenne", w-70, Y(mean)-5);
+  g.fillStyle = css("--ink3"); g.fillText("rang 1", L, h-8); g.fillText("rang " + n, w-60, h-8);
+  $("qSt").innerHTML = `
+    <div><div class="k">médiane (harnais : rang ${kM+1})</div><div class="v ok">${fr(s[kM],2)} ms</div></div>
+    <div><div class="k">médiane (Excel MEDIANE)</div><div class="v">${fr(exMed,2)} ms</div></div>
+    <div><div class="k">p95 (harnais : rang ${k95+1})</div><div class="v bad">${fr(s[k95],2)} ms</div></div>
+    <div><div class="k">p95 (Excel CENTILE.INCLURE)</div><div class="v">${fr(ex95,2)} ms</div></div>
+    <div><div class="k">max</div><div class="v warn">${fr(s[last],2)} ms</div></div>
+    <div><div class="k">moyenne</div><div class="v">${fr(mean,2)} ms</div></div>
+    <div><div class="k">frames au-dessus du p95</div><div class="v">${last-k95}</div></div>`;
+}
+["qN","qSpike"].forEach(id => $(id).addEventListener("input", qDraw));
+
+/* ═══════════ M.5 · atelier synthétique ═══════════ */
+const AZ = [["Autres",77.8],["WorldXform1",23.7],["Trigger",12.4],["Clear",973.4],["Render",11477.4],["Present",1025.6]];
+function gauss(R){ return (R()+R()+R()+R()-2)/0.577; }   // ≈ N(0,1) borné
+function genRun(seed, renderMul, machine, noise, spikes){
+  const R = rng(seed), rows = [], spk = new Set(); const RS = rng(seed+99);
+  while (spk.size < spikes) spk.add(60 + Math.floor(RS()*240));
+  for (let i = 0; i < 300; i++){
+    const warm = i < 60 ? 1 + 0.25*(1 - i/60) : 1;
+    const z = {}; let sum = 0;
+    for (const [n, base] of AZ){
+      let v = base * machine * warm * (1 + noise*gauss(R));
+      if (n === "Render"){ v *= renderMul; if (spk.has(i)) v *= 3; }
+      z[n] = Math.max(100, Math.round(v*10)*100);   // ns, granularité 100 ns comme QPC
+      sum += z[n];
+    }
+    const rest = Math.round(10.6*1000*(1 + noise*gauss(R))/100)*100;
+    rows.push({i, warm: i<60?1:0, frame: sum + rest, z, rest});
+  }
+  return rows;
+}
+function summ(rows, key){ const v = rows.filter(r=>!r.warm).map(r => key==="FRAME" ? r.frame : key==="RESTE" ? r.rest : r.z[key]); return {med:quantile(v,.5), p95:quantile(v,.95), max:quantile(v,1)}; }
+const us = ns => fr(ns/1000, 1);
+function aDraw(){
+  const eff = +$("aEff").value/100, noise = +$("aNoise").value/100, drift = +$("aDrift").value/100, spikes = +$("aSpk").value, floor = +$("aFloor").value/100;
+  $("aEffV").textContent = (eff>=0?"+":"−")+Math.abs(Math.round(eff*100))+" %"; $("aNoiseV").textContent = "±"+Math.round(noise*100)+" %";
+  $("aDriftV").textContent = "+"+Math.round(drift*100)+" %"; $("aSpkV").textContent = spikes; $("aFloorV").textContent = Math.round(floor*100)+" %";
+  const A = genRun(101, 1, 1, noise, spikes), B = genRun(202, 1+eff, 1+drift, noise, spikes);
+  const keys = ["FRAME", ...AZ.map(a=>a[0]), "RESTE"];
+  const SA = {}, SB = {}; keys.forEach(k => { SA[k] = summ(A,k); SB[k] = summ(B,k); });
+  const step = (n, title, goal, used, body) => `<div class="step"><div class="h"><span class="n">${n}</span> ${title}</div><div class="b"><p><b>Objectif.</b> ${goal}</p><div class="io"><div><h5>Utilise</h5>${used}</div><div><h5>Produit</h5>${body}</div></div></div></div>`;
+  const raw = r => `<tr><td class="num">${r.i}</td><td class="num">${r.warm}</td><td class="num">${r.frame.toLocaleString("fr-FR")}</td><td class="num">${r.z.Render.toLocaleString("fr-FR")}</td><td class="num">${r.z.Clear.toLocaleString("fr-FR")}</td></tr>`;
+  const tblRaw = `<div class="scroll"><table style="min-width:360px"><thead><tr><th>frame</th><th>warmup</th><th>frame_ns</th><th>Render_ns</th><th>Clear_ns</th></tr></thead><tbody>${[0,1,2].map(i=>raw(A[i])).join("")}<tr><td colspan="5" class="small">…</td></tr>${[60,61,62].map(i=>raw(A[i])).join("")}</tbody></table></div>`;
+  const tblSum = `<div class="scroll"><table style="min-width:520px"><thead><tr><th>zone</th><th class="num">A méd.</th><th class="num">A p95</th><th class="num">A max</th><th class="num">B méd.</th><th class="num">B p95</th><th class="num">B max</th></tr></thead><tbody>${keys.map(k=>`<tr><td>${k}</td><td class="num">${us(SA[k].med)}</td><td class="num">${us(SA[k].p95)}</td><td class="num">${us(SA[k].max)}</td><td class="num">${us(SB[k].med)}</td><td class="num">${us(SB[k].p95)}</td><td class="num">${us(SB[k].max)}</td></tr>`).join("")}</tbody></table></div><p class="small">Valeurs en µs. Les accidents (frames ×3) gonflent le <b>max</b>, parfois le p95, presque jamais la médiane.</p>`;
+  const wit = SB.Clear.med/SA.Clear.med - 1, witOk = Math.abs(wit) < 0.03;
+  const stabA = SA.Render.p95/SA.Render.med, stabB = SB.Render.p95/SB.Render.med;
+  const restA = 1000*SA.RESTE.med/SA.FRAME.med, restB = 1000*SB.RESTE.med/SB.FRAME.med;
+  const rec = `<ul style="margin:4px 0 0 18px">
+    <li>témoin <code>Clear</code> : B ÷ A = ${fr(1+wit,3)} → ${witOk?'<span class="pill ok">même machine (écart &lt; 3 %)</span>':'<span class="pill bad">la machine a changé : paire REFUSÉE</span>'}</li>
+    <li>stabilité p95 ÷ médiane de Render : A ${fr(stabA,3)}, B ${fr(stabB,3)} → ${stabA<1.15&&stabB<1.15?'<span class="pill ok">&lt; 1,15</span>':'<span class="pill bad">run instable</span>'}</li>
+    <li>RESTE : A ${fr(restA,1)} ‰, B ${fr(restB,1)} ‰ → <span class="pill ok">ventilation crédible</span></li>
+    <li>compteurs : 274 988 faces dans A et B → <span class="pill ok">même travail</span></li></ul>`;
+  const nsA = SA.Render.med/274988, nsB = SB.Render.med/274988;
+  const norm = `Render : A ${fr(1000*SA.Render.med/SA.FRAME.med,0)} ‰ de la frame, B ${fr(1000*SB.Render.med/SB.FRAME.med,0)} ‰ ; coût par face : A ${fr(nsA,1)} ns, B ${fr(nsB,1)} ns.`;
+  const r = SB.Render.med/SA.Render.med - 1, sig = Math.abs(r) > floor;
+  const cmp = `Render : B ÷ A = <b>${fr(1+r,3)}</b>, soit <b>${(r>=0?"+":"−")+fr(Math.abs(r)*100,1)} %</b> face à un plancher de ${Math.round(floor*100)} % → ${sig?'<span class="pill warn">au-delà du plancher</span>':'<span class="pill">dans le bruit</span>'}.`;
+  let verdict, vc;
+  if (!witOk){ verdict = "Paire refusée : le témoin a bougé. On ne « corrige » pas Render par le rapport du témoin (M14) : on relance A et B dans la même séance, en ABBA."; vc = "bad"; }
+  else if (!sig){ verdict = "Rien de démontré : l’écart est plus petit que le plancher. Ni gain, ni régression — il faut un protocole plus précis (plus de paires ABBA) ou renoncer."; vc = "warn"; }
+  else { verdict = r < 0 ? "Gain démontré sur Render. Application de la règle écrite avant : B accepté." : "Régression démontrée sur Render : B refusé (ou dérogation motivée)."; vc = r < 0 ? "ok" : "bad"; }
+  const truth = `Vérité cachée (connue seulement parce que les runs sont synthétiques) : effet réel ${(eff>=0?"+":"−")+Math.round(Math.abs(eff)*100)} %, dérive ${Math.round(drift*100)} %.`;
+  $("aSteps").innerHTML =
+    step("1","Lire l’en-tête","savoir ce qu’on compare avant tout chiffre.","les deux fichiers.","<code># scene=…belt…;config=Release;res=1536x900;views=4</code> dans A et B : une seule différence attendue, la version du code.") +
+    step("2","Écarter la chauffe","ne garder que le régime établi.","la série brute (300 lignes).", tblRaw + `<p class="small">Les frames 0 à 59 (warmup = 1) sont plus lentes : elles restent dans le fichier, hors du résumé. 240 frames retenues.</p>`) +
+    step("3","Résumer chaque zone","passer de 240 valeurs à trois nombres lisibles par zone.","les 240 frames retenues de l’étape 2.", tblSum) +
+    step("4","Contrôler la recevabilité","refuser un run perturbé AVANT de l’interpréter.","les résumés de l’étape 3.", rec) +
+    step("5","Normaliser","rendre les chiffres comparables entre scènes et versions.","médianes de l’étape 3, compteurs.", norm) +
+    step("6","Comparer","séparer un effet réel du hasard.","la recevabilité (étape 4), le plancher.", cmp) +
+    step("7","Décider","appliquer la règle écrite avant la mesure : témoin à moins de 3 %, puis écart au-delà du plancher.","les étapes 4 et 6.", `<span class="pill ${vc}" style="white-space:normal">${verdict}</span><p class="small">${truth}</p>`);
+}
+["aEff","aNoise","aDrift","aSpk","aFloor"].forEach(id => $(id).addEventListener("input", aDraw));
+
+/* ═══════════ M.5 · vos fichiers ═══════════ */
+function parseSummary(txt){
+  const out = {meta:{}, zones:{}, counters:{}}; let sec = null;
+  for (const raw of txt.split(/\r?\n/)){
+    const line = raw.trim(); if (!line) continue;
+    if (line.startsWith("#")){ line.replace(/^#\s*/,"").split(";").forEach(p => { const i = p.indexOf("="); if (i>0) out.meta[p.slice(0,i).trim()] = p.slice(i+1).trim(); }); continue; }
+    const c = line.split(";");
+    if (c[0] === "zone"){ sec = "zones"; continue; } if (c[0] === "compteur"){ sec = "counters"; continue; }
+    if (c.length >= 4 && /^\d+$/.test(c[1])){ const tgt = sec === "counters" ? out.counters : (sec === "zones" ? out.zones : (/^[A-Z]/.test(c[0]) && out.zones)); if (tgt) tgt[c[0]] = {med:+c[1], p95:+c[2], max:+c[3]}; }
+  }
+  return out;
+}
+function uRun(){
+  const floor = +$("uFloor").value/100; $("uFloorV").textContent = Math.round(floor*100) + " %";
+  const ta = $("uA").value, tb = $("uB").value;
+  if (!ta.trim() || !tb.trim()){ $("uOut").innerHTML = '<p class="small">Collez deux résumés, ou chargez l’exemple.</p>'; return; }
+  const A = parseSummary(ta), B = parseSummary(tb);
+  const info = new Set(["mesurees","chauffe","overhead_ns","resolution_ns","frames","warmup"]);
+  const keys = [...new Set([...Object.keys(A.meta), ...Object.keys(B.meta)])];
+  const diffs = keys.filter(k => !info.has(k) && A.meta[k] !== B.meta[k]);
+  let html = `<div class="${diffs.length>1?'bad':diffs.length===1?'warn':'ok'}"><b>En-têtes.</b> ` +
+    (diffs.length ? `Champs qui diffèrent : ${diffs.map(k=>`<code>${esc(k)}</code> (${esc(A.meta[k]??"—")} → ${esc(B.meta[k]??"—")})`).join(", ")}. ` + (diffs.length>1 ? "<b>Plus d’une variable change : la comparaison n’isole aucun effet (M4).</b>" : "Une seule variable change : comparaison recevable sur ce point.") : "Aucune différence de contexte : seul le code (ou rien) a changé.") + `</div>`;
+  const T = S => ["Animation","LocalXform1","WorldXform1","Trigger"].reduce((s,z)=>s+(S.zones[z]?S.zones[z].med:0),0);
+  if (A.zones.Clear && B.zones.Clear){
+    const wc = B.zones.Clear.med/A.zones.Clear.med - 1, wt = T(B)/T(A) - 1;
+    html += `<div class="note"><b>Témoins.</b> Clear : ${(wc>=0?"+":"−")+fr(Math.abs(wc)*100,1)} % ${Math.abs(wc)<0.03?"(stable)":"(a bougé)"} · T ≈ Animation + LocalXform1 + WorldXform1 + Trigger : ${(wt>=0?"+":"−")+fr(Math.abs(wt)*100,1)} % ${Math.abs(wt)<0.03?"(stable)":"(a bougé)"}. <span class="small">T est approché ici par une somme de médianes, ce que M12 interdit pour conclure : le harnais devrait l’écrire lui-même (PH4G-5).</span></div>`;
+  }
+  const row = (n, a, b, unit) => { if (!a || !b) return ""; const r = a.med ? b.med/a.med : NaN, d = r - 1, sig = isFinite(d) && Math.abs(d) > floor;
+    const stab = b.med ? b.p95/b.med : 0, tiny = Math.min(a.med, b.med) < 1000, big = Math.min(a.med, b.med) >= 100000;
+    const verdict = !isFinite(d) ? "" : tiny ? '<span class="pill">sous le seuil (&lt; 1 µs)</span>' : sig ? (d<0?'<span class="pill ok">baisse</span>':'<span class="pill bad">hausse</span>') : '<span class="pill">bruit</span>';
+    return `<tr><td>${esc(n)}</td><td class="num">${unit(a.med)}</td><td class="num">${unit(b.med)}</td><td class="num">${isFinite(r)?fr(r,3):"—"}</td><td class="num">${isFinite(d)?(d>=0?"+":"−")+fr(Math.abs(d)*100,1)+" %":"—"}</td><td>${verdict}${big&&stab>1.15?' <span class="pill warn">instable : p95/méd. '+fr(stab,2)+'</span>':''}</td></tr>`; };
+  const zn = [...new Set([...Object.keys(A.zones), ...Object.keys(B.zones)])];
+  html += `<div class="scroll"><table><thead><tr><th>Zone</th><th class="num">A médiane (µs)</th><th class="num">B médiane (µs)</th><th class="num">B ÷ A</th><th class="num">écart</th><th>verdict (plancher ${Math.round(floor*100)} %)</th></tr></thead><tbody>${zn.map(z=>row(z, A.zones[z], B.zones[z], v=>fr(v/1000,1))).join("")}</tbody></table></div>`;
+  const cn = [...new Set([...Object.keys(A.counters), ...Object.keys(B.counters)])].filter(c => (A.counters[c]&&A.counters[c].med) || (B.counters[c]&&B.counters[c].med));
+  if (cn.length){
+    html += `<div class="scroll"><table><thead><tr><th>Compteur</th><th class="num">A médiane</th><th class="num">B médiane</th><th class="num">B ÷ A</th><th>travail</th></tr></thead><tbody>${cn.map(c=>{ const a = A.counters[c]?.med ?? 0, b = B.counters[c]?.med ?? 0; return `<tr><td>${esc(c)}</td><td class="num">${a.toLocaleString("fr-FR")}</td><td class="num">${b.toLocaleString("fr-FR")}</td><td class="num">${a?fr(b/a,3):"—"}</td><td>${a===b?'<span class="pill ok">identique</span>':'<span class="pill warn">différent : la charge a changé</span>'}</td></tr>`; }).join("")}</tbody></table></div>`;
+    if (A.zones.Render && B.zones.Render && A.counters.FacesSubmitted && B.counters.FacesSubmitted && A.counters.FacesSubmitted.med && B.counters.FacesSubmitted.med)
+      html += `<p>Coût par face soumise : A ${fr(A.zones.Render.med/A.counters.FacesSubmitted.med,1)} ns, B ${fr(B.zones.Render.med/B.counters.FacesSubmitted.med,1)} ns.</p>`;
+  }
+  html += `<p class="small">Lecture : une zone de quelques µs varie naturellement de plusieurs % (résolution 100 ns, coût d’une borne 30 à 120 ns) ; seules les zones lourdes se jugent au plancher. Le critère de stabilité p95 ÷ médiane &lt; 1,15 n’est affiché que pour les zones d’au moins 100 µs.</p>`;
+  $("uOut").innerHTML = html;
+}
+const DEMO_A = `# scene=solar_system_v1compat_belt.json;config=Release;res=1536x900;views=4;mesurees=240;chauffe=60;overhead_ns=32;resolution_ns=100
+zone;median_ns;p95_ns;max_ns;pourmille_de_la_frame
+FRAME;13687000;14889000;15319500;1000
+Input;11100;22600;93900;0
+Animation;38400;55400;84700;2
+LocalXform1;20400;22200;48600;1
+WorldXform1;23700;29500;78200;1
+Cameras;6400;8800;14700;0
+LocalXform2;400;500;5800;0
+WorldXform2;300;500;1300;0
+Trigger;12400;14500;34600;0
+BuildViews;800;1400;2500;0
+Clear;973400;1195900;1747900;71
+Render;11477400;12567000;12745800;838
+Present;1025600;1373400;1697100;74
+RESTE;10600;15400;36800;0
+
+compteur;median;p95;max;-
+MeshesTested;2580;2580;2580;0
+MeshesCulled;1283;1286;1287;0
+FacesSubmitted;274988;282412;286380;0
+TrisRasterized;134389;135706;136255;0`;
+const DEMO_B = `# scene=solar_system_v1compat_belt.json;config=Release;res=1536x900;views=2;mesurees=240;chauffe=60;overhead_ns=32;resolution_ns=100
+zone;median_ns;p95_ns;max_ns;pourmille_de_la_frame
+FRAME;7757600;8743700;10144800;1000
+Input;11700;27500;49900;1
+Animation;39600;59300;108600;5
+LocalXform1;20200;28500;59000;2
+WorldXform1;25000;40300;82900;3
+Cameras;6000;9700;15200;0
+LocalXform2;400;1000;2200;0
+WorldXform2;200;600;3800;0
+Trigger;12400;20800;98100;1
+BuildViews;700;1400;4200;0
+Clear;1001200;1179200;1597400;129
+Render;5600200;6135200;7882400;721
+Present;944700;1563100;2254900;121
+RESTE;10100;16800;29400;1
+
+compteur;median;p95;max;-
+MeshesTested;1290;1290;1290;0
+MeshesCulled;660;660;660;0
+FacesSubmitted;126102;126102;127062;0
+TrisRasterized;62977;63134;63531;0`;
+$("uDemo").addEventListener("click", () => { $("uA").value = DEMO_A; $("uB").value = DEMO_B; uRun(); });
+["uA","uB","uFloor"].forEach(id => $(id).addEventListener("input", uRun));
+
+/* ═══════════ M.5 · Amdahl ═══════════ */
+const AMP = [["A3 : WorldXform1 gratuit", 1.7, 50], ["Render ÷ 2 (ceinture)", 838, 2], ["Clear ÷ 2 (scène légère)", 432, 2], ["Trigger ÷ 10", 0.9, 10]];
+$("amPre").innerHTML = AMP.map((p,i) => `<button type="button" class="tag" data-i="${i}" style="cursor:pointer">${esc(p[0])}</button>`).join("");
+$("amPre").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; const p = AMP[+b.dataset.i]; $("amP").value = p[1]; $("amS").value = p[2]; amDraw(); });
+function amDraw(){
+  const p = +$("amP").value/1000, s = +$("amS").value, inf = s >= 50;
+  $("amPV").textContent = fr(p*1000,1) + " ‰"; $("amSV").textContent = inf ? "∞ (gratuite)" : "×" + fr(s,1);
+  const nf = (1-p) + (inf ? 0 : p/s), gain = 1 - nf;
+  $("amSt").innerHTML = `
+    <div><div class="k">nouvelle frame</div><div class="v">${fr(nf*100,2)} % de l’ancienne</div></div>
+    <div><div class="k">gain sur la frame</div><div class="v ${gain<0.02?'bad':gain<0.1?'warn':'ok'}">${fr(gain*100,2)} %</div></div>
+    <div><div class="k">accélération de la frame</div><div class="v">×${fr(1/nf,3)}</div></div>
+    <div><div class="k">plafond (zone gratuite)</div><div class="v">${fr(p*100,2)} %</div></div>`;
+}
+["amP","amS"].forEach(id => $(id).addEventListener("input", amDraw));
+
+/* ═══════════ Roadmap ═══════════ */
+const RM = [
+ ["PH4G-1","Compteurs déclarés mais jamais incrémentés : <code>Entities</code>, <code>XformNodes</code>, <code>TriggerPairs</code>, <code>TriggerHits</code> (0 dans tous les résumés). Le point 7 du carnet (détection O(N) ou O(N²)) n’a donc jamais été démontré, seulement rendu sans enjeu par le temps mesuré.","Dette (mesure)","Brancher (<code>PropagateWorld</code>, <code>TriggerSystem</code>, taille du registre) ou les documenter comme réservés ; ne pas les retirer (décalage des colonnes). Recoupe PH1C-11."],
+ ["PH4G-2","<code>Present</code> ≈ 0,7 à 1 ms (téléversement du framebuffer par <code>SDL_RenderCopy</code>) : jusqu’à 39 % de la frame sur une scène légère dans cette campagne.","Évolution (déjà rangée)","Rejoint la piste rangée « <code>Present</code> » (UpdateTexture D3D9, pilote D3D11, double tampon) : ne pas ouvrir un second sujet."],
+ ["PH4G-3","Limite connue du bug 67 : <code>contentRoot.string()</code> convertit le chemin par la page de code ANSI ; une racine hors de cette page échouerait.","Dette","Passer <code>EngineConfig::LoadFromJson</code>, <code>ProgrammeConfig</code> et l’ouverture de la police en <code>std::filesystem::path</code> ou UTF-8."],
+ ["PH4G-4","La ligne <code>[Build]</code> date la compilation par <code>__DATE__</code>/<code>__TIME__</code> (build non reproductible) et n’identifie pas le commit ; le CSV ne porte aucun identifiant de binaire.","Évolution","Injecter le hash Git par le props et l’écrire dans l’en-tête du CSV (M2, M11, M13)."],
+ ["PH4G-5","Le témoin de calcul T (Animation + LocalXform1 + WorldXform1 + Trigger) doit être écrit dans le CSV par la LIB (action de l’avenant C4) : état non vérifié.","À vérifier","Le calculer dans <code>DumpCsv</code> et l’écrire dans l’en-tête du résumé."],
+ ["PH4G-6","Un banc interrompu par Échap écrit un CSV plus court, sans le signaler : l’en-tête donne <code>frames=</code> (enregistrées) mais pas le nombre demandé.","Dette","Ajouter <code>requested=</code> (ou <code>interrupted=1</code>) à l’en-tête."],
+ ["PH4G-7","<code>kBenchDt = 1/60</code> codé en dur ; aucune option pour un autre pas.","Évolution (faible)","Option <code>--dt=</code>, ou rien tant qu’aucune mesure n’en a besoin."],
+ ["PH4G-8","Décomposition par vue jamais mesurée (C2 § 9.4) : la loi montre que le coût suit les faces resoumises, pas la part de chaque viewport.","Évolution","Un compteur ou une zone par vue, si la question se pose (scène FPS à une vue)."],
+ ["PH4G-9","Bug 69 : vérifier que <code>#if LV3_DEBUG</code> est bien dans le dépôt autour de <code>vi</code>, et balayer les autres <code>#ifdef _DEBUG</code> de la LIB.","À vérifier","Correction bug par bug ; rejoint le « peigne <code>#if LV3_DEBUG</code> » de la phase 2."],
+ ["PH4G-10","CSV des références A à E de C2 : présence dans <code>Mesures/</code> et versionnement non vérifiés (l’avenant C2 demande le même pour F).","À vérifier","Les versionner, ou noter qu’ils sont perdus et que F, G, H les remplacent."],
+ ["PH4G-11","Règles de mesure dispersées : M1 à M7 (C2), M8 à M14 (avenants), M19 et règles des lots (plan), sans foyer unique.","Convention","Un seul document de référence pour la série M, les autres y renvoient."],
+ ["PH4G-12","<code>Consolidation_C2_Campagne_Mesure.md</code> n’indique pas ses amendements : un lecteur de C2 seule lit des conclusions réfutées (soustraction d’une ablation, raison de l’insensibilité à la résolution, ordre des chantiers).","Documentation","Ajouter en tête un bandeau « amendée par les avenants C2, C3, C4 » avec la liste AM1 à AM12."],
+ ["PH4G-13","<code>Core/Profiler.h</code> : un <code>static_assert(…)</code> et <code>inline constexpr size_t kProfCounterCount</code> sur la même ligne.","Hygiène","Une déclaration par ligne."],
+ ["PH4G-14","<code>ProfRunInfo</code> : ligne morte <code>//std::string ablation = \"none\";</code> alors que <code>ablation=</code> est écrit par la LIB (<code>AblationName()</code>).","Hygiène","Retirer la ligne, ou la remplacer par un commentaire qui dit où le champ est écrit (M11)."],
+ ["PH4G-15","Bornes manuelles : le <code>break</code> du cas <code>nViews == 0</code> saute <code>LV3_PROF_END(camSel)</code>. Sans effet aujourd’hui (la frame n’est pas enregistrée).","Convention","Documenter la règle « aucune sortie entre BEGIN et END », ou fournir un garde RAII nommé si le patron se répand."],
+ ["PH4G-16","Leçon de découverte d’Intel VTune (gratuit, oneAPI) : installation, première analyse <i>Hotspots</i>, puis <i>Microarchitecture Exploration</i> (Top-down : Retiring, Bad Speculation, Front-End Bound, Back-End Bound / Memory Bound) sur <code>RasterizeTriangle</code>. Demandée par Onky le 13/11/2026 : outil jugé trop complexe pour être abordé seul.","Évolution (leçon)","Planifier un lot « Découverte de VTune pas à pas ». Cas d’école tout trouvé : trancher les deux hypothèses restées non prouvées (attentes mémoire, avenant C2 § 5 ; erreurs de prédiction, avenant C3 § 5.2)."],
+ ["PH4G-17","Dépouillement manuel : comparer deux résumés demande un tableur ou cet artefact (atelier M.5). Aucun outil du dépôt ne produit le rapport A/B, le témoin T ni le verdict face au plancher.","Évolution","Garder l’atelier de l’artefact comme outil de dépouillement, ou ajouter au harnais un mode de comparaison qui lit deux CSV et écrit le rapport (sans script Python côté utilisateur)."]
+];
+$("rmBody").innerHTML = RM.map(r => `<tr><td class="num"><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join("") +
+  `<tr><td colspan="4" class="small"><b>Renvois</b> (déjà inscrits, non dupliqués) : PH1D-1 et L6-2 (<code>PlayerInputSystem</code> appelé deux fois depuis la pose de la borne <code>Input</code>) ; PH1D-16 (S10 ne décrit pas le mode banc) ; PH1C-11 (<code>XformNodes</code>) ; C1-0 (collision des noms C1/C2). <b>Ordre de lecture suggéré</b> : PH4G-1, puis 9 et 10 (vérifications), 12 et 11 (documents qui induisent en erreur), 4 et 5 (métadonnées), PH4G-16 (leçon VTune, à planifier) et 17, puis 6, 3, 8, 7, l’hygiène (13 à 15) ; PH4G-2 suit la piste « Present » déjà rangée.</td></tr>`;
+
+/* ═══════════ démarrage ═══════════ */
+function redrawAll(){ vDraw(); dDraw(); sDraw(); nDraw(); lDraw(); rDraw(); mDraw(); qDraw(); aDraw(); amDraw(); uRun(); }
+pRun(); redrawAll();
+window.addEventListener("resize", () => { dDraw(); sDraw(); lDraw(); mDraw(); qDraw(); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+})();
+</script>
+
+</body></html>

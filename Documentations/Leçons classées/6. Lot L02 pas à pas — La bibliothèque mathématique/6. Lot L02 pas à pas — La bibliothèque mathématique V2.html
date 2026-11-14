@@ -154,17 +154,71 @@ canvas { width: 100%; display: block; background: var(--surface2); border: 1px s
 .three > div { border:1px solid var(--border); border-radius: var(--radius); padding:.7rem .8rem; background: var(--surface); font-size:.85rem; color: var(--text2); }
 .three > div h4 { font-size:.85rem; font-weight:500; color: var(--text); margin-bottom:.3rem; }
 .dlwrap { max-width:940px; margin:0 auto; padding:0 2rem 2.5rem; }
+
+/* ═══ §0 Vue d'ensemble ═══ */
+.lead { font-size:.98rem; color:var(--text2); max-width:80ch; margin-bottom:1rem; }
+.layers { display:grid; gap:4px; margin:.6rem 0 .4rem; }
+.layer { display:grid; grid-template-columns: 9.5em 1fr 8.5em; gap:.8rem; align-items:baseline; border:1px solid var(--border); border-radius:6px; padding:.5rem .8rem; background:var(--surface); font-size:.84rem; color:var(--text2); }
+.layer b { font-family:var(--mono); color:var(--text); font-weight:600; }
+.layer .who { font-size:.75rem; color:var(--text3); text-align:right; }
+.layer.dim { opacity:.62; }
+.layer.lot { border:2px solid var(--accent); background:var(--accent-bg); color:var(--accent-text); opacity:1; }
+.layer.lot b, .layer.lot .who { color:var(--accent-text); }
+.layer .side { display:block; font-size:.76rem; margin-top:.2rem; color:var(--text3); }
+.layer.lot .side { color:var(--accent-text); opacity:.85; }
+@media (max-width:640px){ .layer { grid-template-columns:1fr; } .layer .who { text-align:left; } }
+.seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin:.3rem 0 .5rem; }
+.seg .btn { border:none; border-radius:0; border-right:1px solid var(--border); }
+.seg .btn:last-child { border-right:none; }
+.pipe { display:grid; gap:3px; margin:.4rem 0 .6rem; }
+.pphase { font-size:.74rem; font-weight:600; letter-spacing:.03em; color:var(--text3); margin:.7rem 0 .15rem; text-transform:uppercase; }
+.pstage { display:grid; grid-template-columns: 2.2em minmax(13em,1.15fr) minmax(12em,1fr); gap:.2rem .8rem; border:1px solid var(--border); border-radius:6px; padding:.4rem .7rem; background:var(--surface); font-size:.83rem; opacity:.5; }
+.pstage.lot { opacity:1; border:2px solid var(--accent); background:var(--accent-bg); }
+.pstage .pn { font-family:var(--mono); color:var(--text3); }
+.pstage .pt { color:var(--text); font-weight:500; }
+.pstage .pd { font-family:var(--mono); font-size:.76rem; color:var(--text2); }
+.pstage.lot .pd { color:var(--accent-text); }
+.pstage .px { grid-column: 2 / -1; font-size:.8rem; color:var(--text2); border-top:1px dashed var(--border); padding-top:.3rem; margin-top:.15rem; }
+@media (max-width:700px){ .pstage { grid-template-columns: 2.2em 1fr; } .pstage .pd { grid-column: 2; } }
+.pbadge { display:inline-block; font-size:.68rem; padding:0 7px; border-radius:10px; margin-left:.45rem; font-weight:500; vertical-align:1px; }
+.pbadge.new { background:var(--green-bg); color:var(--green); }
+.pbadge.mod { background:var(--amber-bg); color:var(--amber); }
+.pbadge.up  { background:var(--purple-bg); color:var(--purple); }
+.pbadge.keep{ background:var(--surface2); color:var(--text3); }
+.pbadge.gap { background:var(--red-bg); color:var(--red); }
+.legend { display:flex; flex-wrap:wrap; gap:.4rem 1.2rem; font-size:.78rem; color:var(--text3); margin:.3rem 0 1rem; align-items:center; }
+.legend .sw { display:inline-block; width:14px; height:12px; border-radius:3px; vertical-align:-1px; margin-right:.35rem; }
+tr.lotrow td { background:var(--accent-bg); color:var(--accent-text); }
+tr.lotrow td code { background:transparent; color:inherit; }
+tr.outrow td { opacity:.6; }
+.tag { display:inline-block; font-size:.7rem; padding:0 7px; border-radius:10px; font-weight:500; white-space:nowrap; }
+.tag.new{background:var(--green-bg);color:var(--green)} .tag.mod{background:var(--amber-bg);color:var(--amber)}
+.tag.del{background:var(--red-bg);color:var(--red)} .tag.out{background:var(--surface2);color:var(--text3)}
+.tag.up{background:var(--purple-bg);color:var(--purple)}
+pre.algo { font-size:.78rem; line-height:1.55; }
+pre.algo .s  { color:var(--green); font-weight:600; }
+pre.algo .m  { color:var(--amber); font-weight:600; }
+pre.algo .u  { color:var(--purple); font-weight:600; }
+pre.algo .h  { color:var(--text); font-weight:600; }
+pre.algo .lotl { background:var(--accent-bg); display:inline-block; width:100%; }
+.bcard { border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:.8rem 1rem .5rem; margin:.8rem 0 1.1rem; }
+.bcard > p.bt { color:var(--text); font-weight:500; margin-bottom:.4rem; }
+.bcard .code2 .dh { font-size:.74rem; color:var(--text3); margin-bottom:.2rem; display:block; }
+.bcard table { margin-top:.6rem; }
+.bcard td.bad { color:var(--red); } .bcard td.good { color:var(--green); }
+
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
 <body>
 <header class="hero">
   <h1>Lot L02 — La bibliothèque mathématique <span class="badge badge-blue">Leçon 02</span><span class="badge badge-amber">Reconstruction</span></h1>
-  <p class="sub">Vecteurs, matrices 4×4, quaternions et la fiche de convention qui les lie. Reconstruction du 07/11/2026 : la leçon telle qu’elle a été faite, confrontée au dépôt LIB d’aujourd’hui. Tous les nombres de cette page sont calculés en float32, opération par opération, dans l’ordre où le C++ les écrit. <strong>Mise à jour du 08/11/2026</strong> (session de parité ancien moteur / LV3) : écarts L2-15 et L2-16, contre-exemples C13 et C14, test T11, question Q10.</p>
+  <p class="sub">Vecteurs, matrices 4×4, quaternions et la fiche de convention qui les lie. Reconstruction du 07/11/2026 : la leçon telle qu’elle a été faite, confrontée au dépôt LIB d’aujourd’hui. Tous les nombres de cette page sont calculés en float32, opération par opération, dans l’ordre où le C++ les écrit.</p>
 </header>
 
 <nav class="tabs" role="tablist">
-  <button class="tab-btn active" data-tab="ouv" role="tab">Ouverture</button>
+  <button class="tab-btn active" data-tab="vue" role="tab">Vue d’ensemble</button>
+  <button class="tab-btn" data-tab="ouv" role="tab">Ouverture</button>
   <button class="tab-btn" data-tab="sch" role="tab">Schéma</button>
   <button class="tab-btn" data-tab="alg" role="tab">Algorithme</button>
   <button class="tab-btn" data-tab="fct" role="tab">Fonctionnement</button>
@@ -175,8 +229,288 @@ canvas { width: 100%; display: block; background: var(--surface2); border: 1px s
   <button class="tab-btn" data-tab="rdm" role="tab">Roadmap</button>
 </nav>
 
+<!-- ═══════════════════════════ VUE D'ENSEMBLE ═══════════════════════════ -->
+<section class="tab-panel active" id="tab-vue">
+
+<div class="toc">
+  <a href="#v01">0.1 · Algorithme global du projet et place du lot</a>
+  <a href="#v01b">0.1 · La boucle de frame, étage par étage</a>
+  <a href="#v01c">0.1 · Carte des fichiers Maths/</a>
+  <a href="#v02">0.2 · Algorithme détaillé de l’apport du lot</a>
+  <a href="#v02a">0.2 · A — Ce que le lot ajoute</a>
+  <a href="#v02b">0.2 · B — Ce que le lot remet en question</a>
+  <a href="#v03">0.3 · Vérification des déductions (11/11)</a>
+</div>
+
+<p class="lead">Le moteur devient dense. Avant d’entrer dans le lot, deux cartes : <strong>où il se situe dans l’ensemble</strong>, puis <strong>ce qu’il ajoute ou modifie exactement</strong>. Particularité de L02 : ce n’est pas un étage de la frame, c’est un <strong>socle</strong>. Aucune ligne de la boucle ne s’appelle « maths », mais presque toutes en appellent.</p>
+
+<!-- ─────────── 0.1 ─────────── -->
+<h2 id="v01">0.1 — Algorithme global du projet, et la place de ce lot</h2>
+
+<h3>Vu d’en haut : le moteur en couches</h3>
+<p>Lecture de haut en bas : chaque couche consomme celles du dessous et ignore celles du dessus. La bibliothèque mathématique est l’avant-dernière couche : <strong>elle ne dépend que de <code>Core/</code></strong> (pour <code>LV3_FORCEINLINE</code> et les constantes de <code>config.h</code>), et tout le reste dépend d’elle. C’est pour cela qu’une convention fausse ici ne casse pas un endroit : elle se propage partout.</p>
+
+<div class="layers" role="list">
+  <div class="layer dim" role="listitem"><b>EXE</b><span>main.cpp — fenêtre SDL, texture streaming, boucle, <code>Present</code></span><span class="who">projet EXE</span></div>
+  <div class="layer dim" role="listitem"><b>Scene/</b><span>ECS (Registry, SparseSet), Serializer, Hierarchy, systèmes : Local/WorldTransform, BuildViewData, RenderView, Trigger, gizmos</span><span class="who">L03 · L05 · L06 · A5</span></div>
+  <div class="layer dim" role="listitem"><b>Rendering/</b><span>VertexStage, Clipper, FaceStage, Rasterizer, Fragment, FrameBuffer, DepthBuffer</span><span class="who">L04 · phase G</span></div>
+  <div class="layer dim" role="listitem"><b>Ressources/</b><span>OBJLoader, MTLLoader, ResourceManager, MeshClass, <code>MathTypes.h</code> (porte d’entrée des maths)</span><span class="who">L03 · A13</span></div>
+  <div class="layer lot" role="listitem"><b>Maths/</b><span><strong>Vectorlib · MatrixLib · QuaternionLib · Transform</strong> — ▶ CE LOT
+    <span class="side">à côté, posés par d’autres lots sur ce socle : <code>Projection</code> (L05, reverse-Z L02-C) · <code>Geometry/</code> Plane, AABB3d, Frustum (L05) · <code>MathUtils</code> (L04)</span></span><span class="who">L02</span></div>
+  <div class="layer dim" role="listitem"><b>Core/</b><span>config.h, Compiler.h, pch.h, enums, Logger, EngineConfig, JsonReader</span><span class="who">L01 · A6</span></div>
+</div>
+<p class="cap">Surbrillance bleue : le périmètre du lot L02. Les fichiers listés « à côté » vivent dans <code>Maths/</code> mais appartiennent à d’autres lots ; ils sont construits <em>avec</em> les types de L02.</p>
+
+<h3 id="v01b">Vu de l’intérieur : la boucle du moteur, et où L02 travaille</h3>
+<p>Même boucle que dans les lots L04 et Consolidation C1, telle qu’elle tourne dans le dépôt. La colonne de droite dit <strong>quelle primitive de L02 l’étage appelle</strong>. Un étage en surbrillance consomme L02 ; un étage grisé n’en a pas besoin (entrées, effacement, virgule fixe des arêtes…). Les badges disent ce que <strong>ce lot</strong> a changé pour cet étage.</p>
+<div class="seg" id="v-pipeSeg">
+  <button class="btn on" data-v="all" type="button">Tout le moteur</button>
+  <button class="btn" data-v="lot" type="button">Seulement là où L02 travaille</button>
+  <button class="btn" data-v="diff" type="button">Seulement ce que L02 a changé</button>
+</div>
+<div class="chk"><label><input type="checkbox" id="v-pipeDetail"> Afficher pourquoi l’étage dépend du lot</label></div>
+<div class="pipe" id="v-pipeline"></div>
+<div class="legend">
+  <span><i class="sw" style="background:var(--accent-bg);border:2px solid var(--accent)"></i>consomme L02</span>
+  <span><i class="sw" style="background:var(--surface);border:1px solid var(--border);opacity:.5"></i>n’utilise pas L02</span>
+  <span><span class="pbadge new" style="margin:0">ajouté</span> par L02</span>
+  <span><span class="pbadge mod" style="margin:0">changé</span> par L02</span>
+  <span><span class="pbadge up" style="margin:0">repris</span> par un lot supérieur</span>
+  <span><span class="pbadge keep" style="margin:0">inchangé</span></span>
+  <span><span class="pbadge gap" style="margin:0">contourne L02</span> écart</span>
+</div>
+<div class="callout"><strong>Lecture.</strong> Les étages qui changent de comportement à cause de L02 sont tous dans la première moitié de la frame : <code>LocalTransformSystem</code> (ordre S·R·T), <code>WorldTransformSystem</code> (local · parent), <code>BuildViewData</code> (vue par inverse). Le rendu, lui, n’a pas changé de code : il a <em>hérité</em> de la convention — c’est le vecteur-ligne de L02 qui permet à l’étage sommets de charger une ligne de matrice par registre (B3, D-a1). La seconde moitié de la frame (arêtes, pixels) travaille en virgule fixe et n’appelle plus aucune fonction de L02.</div>
+
+<h3 id="v01c">Carte des fichiers <code>Maths/</code></h3>
+<div class="twrap"><table id="v-fileMap"></table></div>
+
+<!-- ─────────── 0.2 ─────────── -->
+<h2 id="v02">0.2 — Algorithme détaillé de l’apport du lot</h2>
+<p>Le contrat que L02 établit, écrit dans l’ordre où le moteur l’exécute. Chaque ligne porte la fonction réelle du dépôt et son statut. La bande bleue est ce que L02 possède ; le reste est l’usage qu’en font les autres lots.</p>
+<pre class="algo"><span class="h">CHARGEMENT (une fois)</span>                                                    <span class="c">Serializer · L03</span>
+  position = Vec3f(x, y, z)
+<span class="lotl">  rotation = Quatf(Vec3f(pitch, yaw, roll), eulerAngles = true)           <span class="m">✎ Vec3&lt;T&gt; générique</span></span>
+  scale    = Vec3f(sx, sy, sz)
+
+<span class="h">PAR FRAME — LocalTransformSystem</span>  (seulement si m_dirty)                  <span class="c">L06</span>
+<span class="lotl">  S     = Matrix44f::Scale(scale)                     diagonale           <span class="s">★ ajouté</span></span>
+<span class="lotl">  R     = rotation.ToMatrix44()                       forme vecteur-ligne  <span class="m">✎ corrigé (B5)</span></span>
+<span class="lotl">  T     = Matrix44f::Translation(position)            translation LIGNE 3  <span class="s">★ ajouté</span></span>
+<span class="lotl">  local = S · R · T                                   Transform::ToLocalMatrix  <span class="m">✎ ordre inversé (B2)</span></span>
+
+<span class="h">PAR FRAME — WorldTransformSystem</span>  (parents avant enfants)                <span class="c">L06</span>
+<span class="lotl">  world = local · world(parent)                       Matrix44 operator*  <span class="u">↻ sorti du composant (B3)</span></span>
+
+<span class="h">PAR VUE — BuildViewData</span>                                                  <span class="c">L05</span>
+<span class="lotl">  V   = world(caméra).inverseRigid()                  [Rᵀ | 0 ; −t·Rᵀ | 1]   <span class="u">↻ remplace LookAt (B7)</span></span>
+  P   = Projection::Perspective…(fov, aspect, near)   NDC z ∈ [0,1] rev-Z  <span class="u">↻ sorti de MatrixLib (B6)</span>
+  VP  = V · P
+
+<span class="h">PAR INSTANCE — RenderView</span>                                                <span class="c">L04 · phase G</span>
+  mvp = world · VP
+<span class="lotl">  point      p' = p · mvp     w = 1 : translation, puis ÷ w      multVecMatrix  <span class="m">✎ garde w ≠ 0 (B8)</span></span>
+<span class="lotl">  direction  d' = d · M       w = 0 : bloc 3×3 seul                multDirMatrix  inchangé</span>
+<span class="lotl">  normale    n' = n · (M⁻¹)ᵀ  puis Normalized()     inverse().transposed()  <span class="s">★ contrat posé (D15)</span></span>
+                              <span class="c">→ application dans l’étage sommets non relue : écart L2-8</span>
+
+<span class="h">OUTILS DU SOCLE</span>
+<span class="lotl">  un seul LV3::Vec3f / Matrix44f / Quatf             namespace LV3        <span class="m">✎ fin des deux familles (B1)</span></span>
+<span class="lotl">  Vec3::Forward() = (0,0,−1) + 3 static_assert        verrou du repère     <span class="m">✎ corrigé + verrouillé (B4)</span></span>
+<span class="lotl">  Vec3::angleTo = acos(clamp(cos, −1, 1))                                  <span class="m">✎ remplace getAngle (B9)</span></span>
+<span class="lotl">  operator[](int)                                     plus de C4244        <span class="m">✎ D18</span></span>
+<span class="lotl">  Quat : conjugate · inverse · rotate · Identity                           <span class="s">★ ajoutés</span></span>
+  Quat::LookRotation / LookAt  (Shepperd)                                  <span class="u">↻ ajouté par L05</span>
+<span class="lotl">  Matrix44::inverse  (Gauss-Jordan, pivot partiel)                         inchangé</span>
+<span class="lotl">  Vec3 : dotProduct · crossProduct · norm (= CARRÉ) · Normalized            noms hérités (D17, L2-14)</span></pre>
+<div class="legend">
+  <span><b class="ok">★</b> ajouté par L02</span><span><b class="warn">✎</b> modifié ou corrigé par L02</span><span><b style="color:var(--purple)">↻</b> repris ensuite par un lot supérieur</span>
+</div>
+
+<h3 id="v02a">A — Ce que le lot ajoute</h3>
+<div class="twrap"><table>
+<tr><th style="width:3em">#</th><th style="width:15em">Ajout</th><th>Pourquoi, et ce qui se passerait sans</th></tr>
+<tr><td class="num">A1</td><td><strong>Un seul jeu de types</strong><br><code>LV3::Vec3f</code>, <code>Matrix44f</code>, <code>Quatf</code></td><td>Sans lui, <code>Vec3f</code> désigne deux types selon le namespace d’où on écrit : deux conventions de matrice peuvent se croiser dans le même calcul sans que le compilateur proteste (D10, D11).</td></tr>
+<tr><td class="num">A2</td><td><strong>Verrou du repère</strong><br>3 <code>static_assert</code> en fin de <code>Vec3</code></td><td>Forward.z &lt; 0, Right × Forward = Up, Forward × Up = Right. Le repère ne peut plus dériver en silence : toucher à <code>Forward()</code> ou à <code>crossProduct</code> fait échouer la compilation (L2-1).</td></tr>
+<tr><td class="num">A3</td><td><strong>Fabriques</strong><br><code>Matrix44::Scale</code>, <code>Translation</code></td><td>Elles écrivent la translation en <strong>ligne 3</strong>, une fois pour toutes. Sans elles, chaque appelant remplit <code>m[3][…]</code> ou <code>m[…][3]</code> à la main, et le mélange row/column revient par la petite porte.</td></tr>
+<tr><td class="num">A4</td><td><strong><code>inverseRigid()</code></strong></td><td>Inverse d’une rotation + translation : neuf copies, neuf produits, aucune division. Utilisée pour la matrice de vue à chaque frame. Précondition « pas de scale » non vérifiée (L2-6).</td></tr>
+<tr><td class="num">A5</td><td><strong>Quaternion complet</strong><br><code>conjugate</code>, <code>inverse</code>, <code>rotate(p)</code>, <code>Identity</code></td><td>Tourner un point sans construire de matrice ; défaire une rotation. Sans eux, toute rotation passe par une 4×4.</td></tr>
+<tr><td class="num">A6</td><td><strong><code>angleTo</code></strong></td><td>Un vrai angle, <code>acos</code> d’un cosinus borné à [−1, 1]. L’ancien <code>getAngle</code> renvoyait <code>max(dot, 0)</code> : un cosinus tronqué, pas un angle.</td></tr>
+<tr><td class="num">A7</td><td><strong>Garde <code>w ≠ 0</code></strong> dans <code>multVecMatrix</code></td><td>Un point sur le plan de l’œil donne w = 0 : sans garde, la division produit ±inf puis NaN, qui contamine tout le triangle.</td></tr>
+<tr><td class="num">A8</td><td><strong>Contrat point / direction / normale</strong></td><td>Trois objets, trois chemins : w = 1, w = 0, transposée de l’inverse. Sous scale non uniforme, une normale passée par la matrice monde penche (contre-exemple C3).</td></tr>
+</table></div>
+
+<h3 id="v02b">B — Ce que le lot remet en question</h3>
+<p>Chaque carte met l’ancien fonctionnement en face du nouveau. Le badge dit si la remise en question vient de L02 lui-même ou d’un lot supérieur qui a ensuite repris la décision de L02 (elles sont alors déjà portées en roadmap).</p>
+
+<div class="bcard">
+<p class="bt">B1 — Deux familles de types deviennent une seule <span class="tag mod">changé par L02</span></p>
+<div class="code2">
+<pre><span class="dh">avant — MathTypes.h inclut les deux</span><span class="del">#include "Vectorlib.h"   // Vec3&lt;T&gt;, global</span>
+<span class="del">#include "Vec3f.h"       // struct Vec3f, namespace LibV3</span>
+<span class="del">#include "Matrix44f.h"   // namespace LibV2, colonne-majeur</span>
+<span class="c">// dans namespace LibV3 : Vec3f → la struct moderne</span>
+<span class="c">// ailleurs            : Vec3f → Vec3&lt;float&gt;</span></pre>
+<pre><span class="dh">après — une famille, un namespace</span><span class="add">#include "Vectorlib.h"     // LV3::Vec2/3/4&lt;T&gt;</span>
+<span class="add">#include "MatrixLib.h"     // LV3::Matrix44&lt;T&gt; row-major</span>
+<span class="add">#include "QuaternionLib.h" // LV3::Quat&lt;T&gt;</span>
+<span class="add">// Vec3f = Vec3&lt;float&gt;, partout, toujours</span></pre>
+</div>
+<table><tr><th style="width:12em">Conséquence</th><th>Avant</th><th>Après</th></tr>
+<tr><td>Nom <code>Vec3f</code></td><td class="bad">Deux types selon le namespace (Q5)</td><td class="good">Un seul type</td></tr>
+<tr><td>Conventions</td><td class="bad">Row-major et colonne-majeur compilent ensemble</td><td class="good">Une seule possible</td></tr>
+</table>
+</div>
+
+<div class="bcard">
+<p class="bt">B2 — L’ordre de composition : T·R·S devient S·R·T <span class="tag mod">changé par L02</span></p>
+<div class="code2">
+<pre><span class="dh">avant — vecteur-colonne, v' = M · v</span><span class="del">local = T · R · S       // lu de droite à gauche</span>
+<span class="del">clip  = P · V · W · v</span></pre>
+<pre><span class="dh">après — vecteur-ligne, v' = v · M</span><span class="add">local = S · R · T       // lu de gauche à droite</span>
+<span class="add">clip  = v · W · V · P</span></pre>
+</div>
+<p>Les deux écritures décrivent la même géométrie <em>si</em> chaque matrice est transposée. Le bug, c’est de garder l’ordre d’une convention avec les matrices de l’autre. Essayez : point <code>p = (1, 0, 0)</code>, un scale sur X, une rotation autour de Z, une translation sur X, multipliés en vecteur-ligne (float32).</p>
+<div class="ctrls">
+  <label>Scale X <span class="v" id="v-b2-sxv"></span><input type="range" id="v-b2-sx" min="0.5" max="3" step="0.5" value="2"></label>
+  <label>Rotation Z <span class="v" id="v-b2-thv"></span><input type="range" id="v-b2-th" min="0" max="180" step="15" value="90"></label>
+  <label>Translation X <span class="v" id="v-b2-txv"></span><input type="range" id="v-b2-tx" min="-5" max="5" step="1" value="5"></label>
+</div>
+<div class="readout" id="v-b2-out"></div>
+</div>
+
+<div class="bcard">
+<p class="bt">B3 — La hiérarchie quitte le composant <span class="tag up">repris par L06</span></p>
+<div class="code2">
+<pre><span class="dh">avant — Transform::ToWorldMatrix, récursif</span>Matrix44f local = ToLocalMatrix();
+if (!parent) return local;
+<span class="del">return parent-&gt;ToWorldMatrix() * local;</span>
+<span class="c">// le composant suit un pointeur parent</span></pre>
+<pre><span class="dh">après — WorldTransformSystem</span><span class="add">// parents avant enfants, une passe</span>
+<span class="add">world = local · world(parent);</span>
+<span class="add">// Transform = ToLocalMatrix() seulement</span></pre>
+</div>
+<p class="cap">L’échange L02 avait déjà retourné l’ordre (local · parent). L06 a ensuite sorti la récursion du composant (règle S4). Reste <code>Transform.cpp</code>, vidé (dette L2-7).</p>
+</div>
+
+<div class="bcard">
+<p class="bt">B4 — Le repère : Forward pointait du mauvais côté <span class="tag mod">corrigé et verrouillé</span></p>
+<div class="code2">
+<pre><span class="dh">avant — livraison de l’échange</span><span class="del">static constexpr Vec3 Forward() { return {0,0,1}; }</span>
+<span class="del">// "axe monde +Z" : faux en main droite</span></pre>
+<pre><span class="dh">après — dépôt</span><span class="add">static constexpr Vec3 Forward() noexcept { return {0,0,-1}; }</span>
+<span class="add">static_assert(Vec3f::Forward().z &lt; 0.0f, …);</span>
+<span class="add">static_assert(Right × Forward == Up, …);</span></pre>
+</div>
+<p class="cap">Le schéma B de l’onglet Schéma montre en direct ce que les assertions attrapent.</p>
+</div>
+
+<div class="bcard">
+<p class="bt">B5 — Quaternion → matrice : la mauvaise transposée tourne à l’envers <span class="tag mod">corrigé par L02</span></p>
+<div class="code2">
+<pre><span class="dh">avant — ToMatrix44_OLD (forme vecteur-colonne)</span><span class="del">m[0][1] = 2(xy − zw)</span>
+<span class="del">m[1][0] = 2(xy + zw)</span>
+<span class="c">// utilisée avec v · M : rotation inverse</span></pre>
+<pre><span class="dh">après — ToMatrix44 (forme vecteur-ligne)</span><span class="add">m[0][1] = 2(xy + zw)</span>
+<span class="add">m[1][0] = 2(xy − zw)</span>
+<span class="add">// une seule conversion, _OLD supprimée</span></pre>
+</div>
+<p>Une rotation de θ autour de +Z, en main droite, doit envoyer +X vers <code>(cos θ, sin θ, 0)</code>. Les deux matrices appliquées à <code>(1, 0, 0)</code> en vecteur-ligne, calculées en float32 :</p>
+<div class="ctrls"><label>Angle θ autour de +Z <span class="v" id="v-b5-thv"></span><input type="range" id="v-b5-th" min="-180" max="180" step="5" value="30"></label></div>
+<div class="readout" id="v-b5-out"></div>
+</div>
+
+<div class="bcard">
+<p class="bt">B6 — La projection quitte <code>MatrixLib</code> et passe en reverse-Z <span class="tag up">repris par L05 / L02-C</span></p>
+<div class="code2">
+<pre><span class="dh">avant — méthode statique de Matrix44 (échange)</span><span class="del">Matrix44::Perspective(fov, aspect, n, f)</span>
+<span class="del">m[2][2] = −(f+n)/(f−n)    // NDC z ∈ [−1, 1]</span></pre>
+<pre><span class="dh">après — LV3::Projection, fonctions libres</span><span class="add">Projection::Perspective / PerspectiveInfinite / …</span>
+<span class="add">// NDC z ∈ [0, 1] reverse-Z : near → 1, far → 0</span>
+<span class="add">// clear 0.0f, test GREATER</span></pre>
+</div>
+<p class="cap">Matrix44 ne garde que l’algèbre pure ; ce qui encode un choix de rendu sort dans un fichier dédié. La décision D14 de l’échange est caduque. Le code commenté restant dans <code>MatrixLib.h</code> est une dette (L2-3, L2-4 ; détail dans le lot L02-C).</p>
+</div>
+
+<div class="bcard">
+<p class="bt">B7 — La vue n’est plus construite, elle est déduite <span class="tag up">repris par L05</span></p>
+<div class="code2">
+<pre><span class="dh">avant — matrice de vue directe</span><span class="del">View = Matrix44::LookAt(eye, target, up)</span>
+<span class="c">// deux sources de vérité : la caméra a un</span>
+<span class="c">// Transform ET une matrice de vue calculée à part</span></pre>
+<pre><span class="dh">après — la caméra est une entité comme les autres</span><span class="add">rotation = Quat::LookRotation(dir, worldUp)</span>
+<span class="add">View     = world(caméra).inverseRigid()</span>
+<span class="add">// une seule source : le Transform</span></pre>
+</div>
+<p class="cap">Dette ouverte : la garde de <code>LookRotation</code> compare <code>norm()</code> (un carré) à une tolérance, et rejette toute direction de moins de 3,16 cm (L2-5, contre-exemple C9).</p>
+</div>
+
+<div class="bcard">
+<p class="bt">B8 — La division par w devient gardée <span class="tag mod">corrigé par L02</span></p>
+<div class="code2">
+<pre><span class="dh">avant</span>S w = …;
+<span class="del">dst.x = a / w;    // w == 0 → ±inf → NaN</span></pre>
+<pre><span class="dh">après</span>S w = …;
+<span class="add">S invW = (w != S(0)) ? S(1) / w : S(1);</span>
+<span class="add">dst.x = a * invW;  // une division, trois produits</span></pre>
+</div>
+</div>
+
+<div class="bcard">
+<p class="bt">B9 — Un angle qui n’en était pas un <span class="tag mod">corrigé par L02</span></p>
+<div class="code2">
+<pre><span class="dh">avant</span><span class="del">T getAngle(const Vec3&amp; v) const</span>
+<span class="del">{ return max(dotProduct(v), 0); }</span>
+<span class="c">// un cosinus, tronqué : 120° et 90° donnent 0</span></pre>
+<pre><span class="dh">après</span><span class="add">T angleTo(const Vec3&amp; v) const noexcept</span>
+<span class="add">{ return acos(clamp(cos, −1, 1)); }</span>
+<span class="c">// le clamp absorbe un cos à 1.0000001</span></pre>
+</div>
+</div>
+
+<h2 id="v03">0.3 — Vérification des déductions (dépôt relu le 11/11)</h2>
+<p>La première version de cette vue d’ensemble contenait deux affirmations marquées « déduit ». Elles ont été confrontées au code de <code>MeshClass.cpp</code>, <code>ResourceManager.cpp</code>, <code>OBJLoader.cpp</code>, <code>FaceStage.h</code>, <code>RenderSystem.cpp</code> et <code>Frustum.cpp</code>. <strong>Les deux étaient fausses</strong>, et la lecture a fait apparaître un écart nouveau.</p>
+
+<div class="twrap"><table>
+<tr><th style="width:14em">Ce qui était déduit</th><th>Ce que dit le code</th><th style="width:8.5em">Verdict</th></tr>
+<tr><td>Le chargement appelle <code>crossProduct</code> et <code>Normalized</code> de L02 pour cuire les plans de face.</td><td><code>RegisterMesh</code> appelle <code>BakePositionsSoA</code> puis <code>BakeFacePlanesSoA</code>. Celle-ci refait le produit vectoriel <strong>en double</strong>, à la main, pour n’arrondir qu’une fois en float. Les normales de face, elles, sont calculées par <code>OBJLoader::ComputePerFaceData</code> avec des fonctions <strong>recodées localement</strong> (<code>V3Cross</code>, <code>V3Norm</code>…).</td><td><span class="tag del">faux</span><br><span class="tag mod">→ écart L2-15</span></td></tr>
+<tr><td>Le test de face arrière en espace objet (B5) ramène l’œil dans le mesh par une <strong>inverse</strong> de la matrice monde.</td><td>Aucune inverse. <code>HomogeneousEye(mvp)</code> calcule le <strong>centre de projection</strong> de <code>mvp</code> par cofacteurs : 3 <code>crossProduct</code> et 4 <code>dotProduct</code> de L02, une fois par (instance, vue). C’est le point E tel que E·mvp donne x = y = w = 0.</td><td><span class="tag del">faux</span><br><span class="tag new">L02 bien consommé</span></td></tr>
+</table></div>
+
+<h3>Ce que la lecture apprend en plus : deux consommateurs lisent des COLONNES</h3>
+<p>En row-major, les lignes sont contiguës et la convention <code>v·M</code> se lit ligne par ligne. Mais deux étages du moteur lisent volontairement des <strong>colonnes</strong> de matrice, parce qu’en vecteur-ligne la colonne j porte la composante j du clip :</p>
+<div class="code2">
+<pre><span class="c">// Frustum::Build — Gribb-Hartmann</span>
+<span class="c">// clip.j = Σ v[i]·M[i][j] + M[3][j]</span>
+col(j) = Plane( (M[0][j], M[1][j], M[2][j]), M[3][j] )
+Left  = col(3) + col(0)      <span class="c">//  w + x ≥ 0</span>
+Near  = col(3) − col(2)      <span class="c">//  reverse-Z : w − z ≥ 0</span></pre>
+<pre><span class="c">// FaceStage.h — HomogeneousEye(mvp), B5</span>
+r_i = ( m[i][0], m[i][1], m[i][3] )   <span class="c">// x, y, w du clip</span>
+E = ( r1·(r2×r3), −r0·(r2×r3),
+      r0·(r1×r3), −r0·(r1×r2) )
+<span class="c">// face avant ⇔ L·E > 0, L = plan (n, d) cuit</span></pre>
+</div>
+<div class="callout amber"><strong>Conséquence pour la convention.</strong> Ces deux fonctions ne passent pas par <code>multVecMatrix</code> : elles indexent <code>m[i][j]</code> directement. Si un jour la convention changeait (passage en colonne-majeur), le compilateur ne signalerait rien et les deux casseraient en silence : frustum faux, rejet de faces arrière faux. Ce sont les deux meilleurs candidats pour une TNR de convention. Elles confirment D12 : la convention n’est pas un détail de <code>MatrixLib</code>, elle est inscrite dans les indices de tout le moteur.</div>
+
+<h3>L’écart nouveau : le chargement contourne L02</h3>
+<div class="bcard">
+<p class="bt">L2-15 — Trois définitions de la normale d’une face <span class="tag del">contourne L02</span></p>
+<div class="twrap"><table>
+<tr><th>Où</th><th>Comment</th><th>Face dégénérée (aire nulle)</th><th>Appelé ?</th></tr>
+<tr><td><code>OBJLoader::ComputePerFaceData</code></td><td><code>V3Norm(V3Cross(p1−p0, p2−p0))</code>, float, fonctions locales</td><td class="bad"><code>(0, 1, 0)</code> : « regarde vers le haut »</td><td>oui, pour tout OBJ</td></tr>
+<tr><td><code>MeshClass::BakeFacePlanesSoA</code> (B5)</td><td>même produit, en double, un seul arrondi</td><td class="good">plan nul : jamais rejetée</td><td>oui, dans <code>RegisterMesh</code></td></tr>
+<tr><td><code>MeshClass::AddFace</code> / <code>ComputeFaceNormals</code></td><td><code>crossProduct(…).normalize()</code> de <strong>L02</strong></td><td>selon <code>normalize()</code> de L02</td><td>pas par l’OBJLoader (autres appelants non recherchés)</td></tr>
+</table></div>
+<p>Les trois s’accordent sur l’orientation, <code>(p1 − p0) × (p2 − p0)</code>. Elles divergent sur le cas dégénéré. Aujourd’hui sans effet visible : <code>cosLights</code> n’est pas encore calculé. Quand l’éclairage arrivera (L09–L10), une face dégénérée sera éclairée comme un sol, et toute correction faite dans <code>Vectorlib.h</code> ne se propagera pas au chargement.</p>
+<p class="cap">Le double de <code>BakeFacePlanesSoA</code> n’est pas un contournement : c’est un choix de précision documenté (B5). La dette porte sur les <code>V3*</code> de l’OBJLoader et sur la convention de la normale dégénérée.</p>
+</div>
+
+<div class="callout"><strong>Roadmap mise à jour.</strong> L2-15 est ajouté à l’onglet Ouverture (§5) et au bloc markdown de l’onglet Roadmap, comme dette à trancher avant l’éclairage. Rien n’est acté. Les autres reprises (B3, B6, B7) restaient déjà couvertes par L2-3, L2-4, L2-5 et L2-7.</div>
+
+</section>
+
 <!-- ═══════════════════════════ OUVERTURE ═══════════════════════════ -->
-<section class="tab-panel active" id="tab-ouv">
+<section class="tab-panel" id="tab-ouv">
 
 <div class="toc">
   <a href="#o1">1. Rappel — d’où l’on part</a>
@@ -228,7 +562,7 @@ canvas { width: 100%; display: block; background: var(--surface2); border: 1px s
 
 <h2 id="o5">5. Écarts entre la leçon et le code d’aujourd’hui</h2>
 <p>Relevé du dépôt LIB, dossier <code>Maths/</code>, le 07/11/2026. Trois états sont comparés quand c’est utile : le document <code>Lecon_02_Mathematiques.md</code> du projet (le premier jet de la leçon), ce qui a été décidé et livré dans l’échange, et le dépôt actuel. Chaque écart donne sa raison, ce qu’il apporte et un verdict <em>proposé</em>.</p>
-<div class="callout amber"><strong>Rien n’est acté.</strong> Les seize écarts L2-1 à L2-16 sont rédigés dans l’onglet Roadmap sous la forme d’une sous-section « Décisions en attente — socle L02 », à ajouter à <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard », à la suite du socle L01.</div>
+<div class="callout amber"><strong>Rien n’est acté.</strong> Les quinze écarts L2-1 à L2-15 sont rédigés dans l’onglet Roadmap sous la forme d’une sous-section « Décisions en attente — socle L02 », à ajouter à <code>Plan_Phase_G_LibraryV3.md</code>, section « Dettes / correctifs à décider plus tard », à la suite du socle L01.</div>
 
 <details class="ecart" open><summary><span class="id">L2-1</span><span class="tt">Le repère : main gauche dans le document, main droite dans le code</span><span class="badge badge-green">évolution</span><span class="badge badge-red">à corriger</span></summary><div class="body"><dl>
 <dt>Document de leçon</dt><dd>Main gauche, Y haut, <strong>+Z entre dans l’écran</strong> « comme Unity ».</dd>
@@ -335,21 +669,13 @@ Le calcul de z ajoute sa propre erreur d’arrondi, du même ordre : ces chiffre
 <dt>Verdict proposé</dt><dd><strong>À décider</strong> avec D17 : renommer <code>norm()</code> en <code>lengthSq()</code> (et passer les trois fichiers aux noms courts <code>dot</code>/<code>cross</code>), ou garder les noms hérités et documenter.</dd>
 </dl></div></details>
 
-
-<details class="ecart"><summary><span class="id">L2-15</span><span class="tt">TO_RADIAN / TO_DEGRE : π écrit 3.14f dans l’ancien moteur</span><span class="badge badge-green">évolution</span><span class="badge badge-red">à corriger (ancien moteur)</span></summary><div class="body"><dl>
-<dt>Ancien moteur</dt><dd><code>constexpr float TO_RADIAN = (float)3.14f / 180.0f;</code> et <code>TO_DEGRE = 180.0f / (float)3.14f;</code>. Le littéral <code>3.14f</code> est déjà arrondi à deux décimales <em>avant</em> la division : le cast en <code>float</code> arrive trop tard.</dd>
-<dt>Dépôt actuel (LV3)</dt><dd><code>constexpr auto M_PI = 3.14159265358979323846;</code> puis <code>TO_RADIAN = (float)M_PI / 180.0f</code> et <code>TO_DEGRE = 180.0f / (float)M_PI</code> : π gardé en <code>double</code>, arrondi en <code>float</code> une seule fois, à la fin.</dd>
-<dt>Observé (08/11/2026)</dt><dd>Même scène JSON, même frame 0, même <code>LocalTransformSystem</code>. Angle brut de l’entité 3 : <strong>0,4082</strong> (ancien) contre <strong>0,40841</strong> (LV3) ; quaternion <code>r</code> = 0,30878 contre 0,30877. Le diff des trois fichiers <code>Vectorlib</code> / <code>QuaternionLib</code> / <code>MatrixLib</code> n’a montré aucune formule différente : seule la valeur d’entrée du calcul change. Le ratio 0,40820 / 0,40841 vaut 0,99949 = 3,14 / π.</dd>
-<dt>Raison</dt><dd>Héritage : le <code>3.14f</code> venait de l’ancien moteur ; LV3 a pris <code>M_PI</code> en L01 (<code>config.h</code>). Rien dans le code maths n’est faux, ce qui rend le défaut invisible à la lecture.</dd>
-<dt>Ce qu’il apporte</dt><dd>Chaque angle converti est trop petit de 0,05 %. Un tour complet ne se referme pas (il manque 0,18°). Le contre-exemple C13 chiffre le cas, la question Q10 donne la démarche de diagnostic et un manipulateur.</dd>
-<dt>Verdict proposé</dt><dd><strong>À retenir</strong> : la forme LV3 est la bonne. <strong>À faire</strong> : un <code>static_assert</code> sur les deux constantes (filet Debug) et le test T11 ; <code>grep "3.14"</code> sur l’ancien moteur (le littéral se cache souvent à plusieurs endroits) ; ne corriger l’ancien moteur que si la comparaison parallèle doit durer. En C++20, <code>std::numbers::pi_v&lt;float&gt;</code> donne directement le float correctement arrondi.</dd>
+<details class="ecart"><summary><span class="id">L2-15</span><span class="tt">Le chargement des meshes contourne la bibliothèque mathématique</span><span class="badge badge-amber">dette</span><span class="badge badge-blue">à décider</span></summary><div class="body"><dl>
+<dt>Relevé</dt><dd>11/11/2026, en vérifiant les déductions de la vue d’ensemble (§0.3).</dd>
+<dt>Dépôt actuel</dt><dd><code>OBJLoader.cpp</code> recode dans un namespace anonyme <code>V3Cross</code>, <code>V3Dot</code>, <code>V3Norm</code>, <code>V3Sub</code>, <code>V3Add</code>, <code>V3Scl</code>, <code>V3Min</code>, <code>V3Max</code>. <code>V3Norm</code> renvoie <code>(0, 1, 0)</code> sous 1e-12 de longueur au carré. <code>MeshClass::AddFace</code> et <code>ComputeFaceNormals</code>, qui utilisent <code>crossProduct().normalize()</code> de L02, ne sont pas appelées par l’OBJLoader. <code>BakeFacePlanesSoA</code> refait le produit en double (choix B5) et laisse un plan nul pour une face dégénérée.</dd>
+<dt>Ce que ça coûte</dt><dd>Le contrat de D10 (« une seule famille ») est tenu pour les types, pas pour les opérations. Trois définitions de la normale d’une même face, en désaccord sur le cas dégénéré. Aucune correction de <code>Vectorlib.h</code> n’atteint le chargement.</dd>
+<dt>Verdict proposé</dt><dd><strong>Dette :</strong> remplacer les <code>V3*</code> par les méthodes de <code>Vec3</code> (en ajoutant <code>Min</code>/<code>Max</code> composante par composante si besoin) ; <strong>à décider :</strong> la normale d’une face dégénérée — zéro (« pas de normale », cohérent avec le plan nul de B5) ou <code>(0, 1, 0)</code>. Garder le double de B5. À trancher avant L09/L10.</dd>
 </dl></div></details>
 
-<details class="ecart"><summary><span class="id">L2-16</span><span class="tt">Quat(angles) : radians par défaut, SetEulerAngles : degrés</span><span class="badge badge-amber">dette</span><span class="badge badge-blue">à décider</span></summary><div class="body"><dl>
-<dt>Dépôt actuel</dt><dd><code>explicit Quat(const Vec3&lt;T&gt;&amp; Angles, bool eulerAngles = false)</code> : avec <code>false</code> (la valeur par défaut) les angles sont supposés <strong>déjà en radians</strong> et rien n’est converti. <code>SetEulerAngles(const Vec3&lt;T&gt;&amp;)</code>, sa sœur, convertit <strong>toujours</strong> depuis des degrés.</dd>
-<dt>Ce que ça coûte</dt><dd>Deux fonctions voisines, deux unités. L’appel nu <code>Quatf(transform.m_initialLocalRotation)</code> de <code>LocalTransformSystem</code> est correct tant que le loader stocke des radians (c’est le cas : 0,4082), mais rien ne protège si la convention de stockage change. Le contre-exemple C14 chiffre un angle en degrés lu comme des radians : aucune alerte, juste une autre rotation.</dd>
-<dt>Verdict proposé</dt><dd><strong>À décider</strong> : retirer le <code>bool</code> au profit de deux fabriques nommées (<code>FromEulerRadians</code>, <code>FromEulerDegrees</code>), de sorte que l’unité soit écrite à l’appel. Filet Debug partiel en attendant (onglet Vérifier). Le <code>explicit</code> ajouté en LV3 n’y change rien : il n’agit qu’à la compilation.</dd>
-</dl></div></details>
 
 </section>
 
@@ -579,7 +905,7 @@ void multVecMatrix(...) const noexcept {
   <div class="grp" role="group" aria-label="Axe de rotation (x, y, z)"><span>Axe de rotation (x, y, z)</span><input type="number" step="0.1" id="in-ax"><input type="number" step="0.1" id="in-ay"><input type="number" step="0.1" id="in-az"></div>
   <div class="grp" role="group" aria-label="Translation t (x, y, z)"><span>Translation t (x, y, z)</span><input type="number" step="0.1" id="in-tx"><input type="number" step="0.1" id="in-ty"><input type="number" step="0.1" id="in-tz"></div>
 </div>
-<p class="cap">L’angle et le paramètre de Slerp sont dans la barre ci-dessous, qui reste visible pendant que vous descendez dans les étapes : chaque étape recalculée s’allume brièvement. L’angle est converti comme dans <code>Quat</code> : <code>degrés × TO_RADIAN</code> (produit en double), arrondi en float. La constante doit venir du vrai π, pas de <code>3.14f</code> (contre-exemple C13). Les sinus et cosinus sont la valeur double arrondie en float : la <code>sinf</code> du CRT peut différer d’1 ulp.</p>
+<p class="cap">L’angle et le paramètre de Slerp sont dans la barre ci-dessous, qui reste visible pendant que vous descendez dans les étapes : chaque étape recalculée s’allume brièvement. L’angle est converti comme dans <code>Quat</code> : <code>degrés × TO_RADIAN</code> (produit en double), arrondi en float. Les sinus et cosinus sont la valeur double arrondie en float : la <code>sinf</code> du CRT peut différer d’1 ulp.</p>
 </div>
 
 <div class="livebar" id="livebar">
@@ -850,7 +1176,6 @@ __m256 s1 = _mm256_blendv_ps(s1_slerp, s1_lerp, lerp);</pre>
 <tr><td><code>X.dotProduct(Y)</code></td><td><code>0</code></td><td class="ok"><code>0</code></td></tr>
 <tr><td><code>rotateZ(90°)</code> appliquée à X</td><td>≈ <code>[0 1 0]</code></td><td class="ok"><code>[-4.37114e-08 1 0]</code> — l’écart est l’arrondi de π/2 (E9)</td></tr>
 <tr><td>Avertissement C4244 sur <code>t[i][i]</code></td><td>disparu après <code>operator[](int)</code></td><td class="ok">0 avertissement</td></tr>
-<tr><td>Parité ancien moteur / LV3 : angle brut de l’entité 3, frame 0 (session du 08/11/2026)</td><td>identique</td><td>0,4082 contre 0,40841. Écart expliqué en entier par <code>TO_RADIAN</code> (3.14f contre π), écart L2-15, question Q10.</td></tr>
 </table></div>
 <div class="callout amber"><strong>Correction d’un chiffre de l’échange.</strong> Pour le test « translation (10, 0, 0) + scale 2 », l’échange annonçait (12, 0, 0) si l’ordre est bon et (21, 0, 0) sinon. Le second est faux : le mauvais ordre translate d’abord (1 → 11) puis multiplie par 2, soit <strong>(22, 0, 0)</strong>. Le contre-exemple C1 le recalcule.</div>
 
@@ -867,8 +1192,6 @@ __m256 s1 = _mm256_blendv_ps(s1_slerp, s1_lerp, lerp);</pre>
 <tr><td><code>Matrix44::inverse()</code></td><td>Assert avant <code>return Matrix44()</code> sur le chemin singulier</td><td>Un scale nul rend la matrice non inversible ; aujourd’hui l’identité est renvoyée sans bruit (préréglage « Scale nul »).</td></tr>
 <tr><td><code>Matrix44::inverseRigid()</code></td><td>Assert : les trois lignes du bloc 3×3 sont unitaires à 10⁻³ près</td><td>Un appel sur une matrice qui porte un scale (résultat faux, écart L2-6).</td></tr>
 <tr><td><code>Quat::LookRotation()</code></td><td>Garde en <code>NEAR_ZERO_SQ</code> au lieu de <code>EPSILON_FLOAT</code></td><td>Une direction courte mais valide rejetée (C9).</td></tr>
-<tr><td><code>config.h</code></td><td><code>static_assert(TO_RADIAN * 180.0f &gt; 3.141592f &amp;&amp; TO_RADIAN * 180.0f &lt; 3.141593f);</code> (idem pour <code>TO_DEGRE</code>)</td><td>Un π tronqué dans une constante de conversion (C13, L2-15).</td></tr>
-<tr><td><code>Quat(Vec3, bool)</code></td><td><code>LV3_ASSERT</code> : si <code>eulerAngles == false</code>, chaque |angle| ≤ 4π</td><td>Des degrés lus comme des radians, <strong>seulement quand l’angle dépasse 12,6°</strong> : filet partiel, il ne voit pas les petits angles (C14, L2-16).</td></tr>
 </table></div>
 
 <h2>Prédictions pour le lot appairé</h2>
@@ -916,30 +1239,6 @@ __m256 s1 = _mm256_blendv_ps(s1_slerp, s1_lerp, lerp);</pre>
 <div class="qa"><h3>Q9 — AABB et Plane, c’est une prochaine leçon ?</h3>
 <p>Oui. <code>AABB</code>, <code>Plane</code>, <code>Frustum</code>, <code>Ray</code> sont de la géométrie de requête (culling, picking, collisions) ; le rasterizer est de la géométrie de rendu. L’échange proposait le rasterizer d’abord (sans lui, rien à regarder), avec juste ce qu’il faut de <code>Plane</code> pour le clipping near, puis une leçon dédiée à la géométrie.</p>
 <div class="callout"><strong>Numérotation réelle.</strong> L’échange appelait « leçon 3 » le rasterizer. Dans le projet, L03 a été l’ECS (SparseSet, ResourceManager), L04 le rasterizer, L05 la caméra et le frustum (Gribb-Hartmann). La séquence d’idées a été respectée, pas les numéros.</div></div>
-
-<div class="qa"><h3>Q10 — Même code, deux moteurs, rotations différentes : par où commencer ?</h3>
-<p class="q">« Les 2 mêmes fonctions ne me renvoient pas les mêmes calculs ; les rotations et translations diffèrent. » Puis : « Donc il n’y a pas d’erreur, juste la précision, car avant j’utilisais 3.14f et maintenant 3.14159265358979323846 ? »</p>
-<p>Oui. Aucune formule n’était fausse : une constante de conversion était moins précise. Ce qui compte pour la suite est la démarche, parce que la cause n’était dans aucun des fichiers qu’on soupçonnait.</p>
-<div class="twrap"><table>
-<tr><th>Étape</th><th>Question posée</th><th>Résultat</th></tr>
-<tr><td>1</td><td>Les trois fichiers maths (<code>Vec3</code>, <code>Quat</code>, <code>Matrix44</code>) calculent-ils la même chose ?</td><td>Oui, formule par formule. <code>radians / 2</code> et <code>radians * 0.5</code> sont identiques au bit près en IEEE 754. Le reste n’est que du style (<code>noexcept</code>, <code>constexpr</code>, namespace).</td></tr>
-<tr><td>2</td><td>Les deux <code>LocalTransformSystem</code> sont-ils les mêmes ?</td><td>Oui, au caractère près.</td></tr>
-<tr><td>3</td><td>Les <strong>entrées</strong> du calcul sont-elles les mêmes ? (affichage de l’angle brut et du quaternion avant toute matrice)</td><td>Non : <code>0.4082</code> contre <code>0.40841</code>, dès frame 0, avant le moindre calcul. Les quaternions et matrices qui en sortent suivent cet écart à la lettre.</td></tr>
-<tr><td>4</td><td>D’où vient cet écart d’entrée ?</td><td>Des constantes : 0,40841 × (3,14 / π) = 0,40820.</td></tr>
-</table></div>
-<p><strong>Hypothèse écartée en route.</strong> On a d’abord soupçonné des degrés non convertis, car <code>Quat(Vec3)</code> ne convertit pas par défaut. Les angles bruts (≈ 0,41) sont de l’ordre de 23,4° exprimés en radians : la conversion avait bien lieu au chargement. Le piège existe pourtant (C14, L2-16). Le <code>explicit</code> ajouté en LV3 ne pouvait pas non plus jouer : il ne change que la compilation, jamais une valeur.</p>
-<div class="callout"><strong>Règle retenue.</strong> Quand deux versions d’un même code divergent, on compare les <strong>entrées</strong> avant les formules. Et l’ordre de grandeur de l’écart renseigne sur la cause : un signe ou un ordre de multiplication faux donne des écarts de l’ordre de 1 (objet en miroir, rotation inversée) ; un écart relatif de l’ordre de 5·10⁻⁴ à la 4ᵉ décimale est la signature d’une constante tronquée.</div>
-<div class="panel">
-<h3>Manipulateur — l’erreur d’un π approximé</h3>
-<p class="cap">Convertit un angle en degrés comme le fait <code>angle * TO_RADIAN</code> en float32, avec le π choisi, et le compare au π correctement arrondi. Choisissez « π réel » : l’écart tombe à zéro.</p>
-<div class="ctrls">
-  <label>Angle (degrés) <span class="v" id="pi-ang-v"></span><input type="range" id="pi-ang" min="0" max="360" step="0.1" value="23.4"></label>
-  <label>π utilisé <select id="pi-sel"><option value="3.14">3.14f (ancien moteur)</option><option value="3.1416">3.1416f</option><option value="real">π réel (double puis float)</option></select></label>
-</div>
-<div class="readout" id="pi-out"></div>
-</div>
-</div>
-
 </section>
 
 <!-- ═══════════════════════════ ROADMAP ═══════════════════════════ -->
@@ -1291,7 +1590,7 @@ function callout(kind, html) { return '<div class="callout ' + (kind || '') + '"
 
 // ─── Onglets ─────────────────────────────────────────────────
 var tabBar = document.querySelector('.tabs');
-var curTab = 'ouv';
+var curTab = 'vue';
 function activateTab(tab, scrollTop) {
   var b = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
   if (!b || tab === curTab) return;
@@ -1652,21 +1951,6 @@ function renderCtr() {
   card('C11', 'Comparer au bit près un chemin SIMD avec FMA et le scalaire', 'scalaire : ' + V9(sc) + '\nFMA      : ' + V9(fm) + '\nécart : ' + ulpsV(sc, fm) + ' ulp → TNR bit à bit rouge', 'même ordre d’opérations des deux côtés (mul puis add), ou comparaison à tolérance de quelques ulp', 'Le FMA calcule <code>a·b + c</code> avec un seul arrondi au lieu de deux : il est plus exact, donc différent. Les deux résultats sont justes ; c’est le test qui est faux s’il exige l’égalité. Entrées : le préréglage « Cas général ».');
   var Pr = M.perspRevZ(F(Math.PI / 3), F(16 / 9), F(0.1), F(1000)), front = M.multVec(Pr, [0, 0, 5]);
   card('C12', 'Forward() = +Z dans un moteur main droite', 'objet « devant » à Forward·5 = (0, 0, 5)\nclip.w = ' + g6(front.h[3]) + ' &lt; 0 : derrière la caméra', 'Forward() = (0, 0, −1) : objet à (0, 0, −5)\nclip.w = ' + g6(M.multVec(Pr, [0, 0, -5]).h[3]) + ' : visible', 'C’était la livraison de <code>Vectorlib.h</code> pendant la leçon. Tout code qui place un objet « devant » la caméra avec <code>Forward()</code> le met derrière. Les <code>static_assert</code> du dépôt rendent cette erreur impossible à recompiler (schéma B).');
-
-  var trOld = F(F(3.14) / 180), trNew = F(F(Math.PI) / 180);
-  function radOld(d) { return F(F(d) * trOld); }
-  function radNew(d) { return F(F(d) * trNew); }
-  var a90o = radOld(90), a90n = radNew(90), a360o = radOld(360), a360n = radNew(360), a23o = radOld(23.4), a23n = radNew(23.4);
-  var qo13 = M.quatAxisAngle([1, 0, 0], a23o), qn13 = M.quatAxisAngle([1, 0, 0], a23n);
-  card('C13', 'π écrit 3.14f dans TO_RADIAN / TO_DEGRE',
-    'TO_RADIAN = ' + g9(trOld) + '   (3.14f / 180)\n90°   → ' + g9(a90o) + ' rad\n360°  → ' + g9(a360o) + ' rad\n23,4° → ' + g9(a23o) + ' rad\nq (tangage 23,4°) : ' + Q9(qo13),
-    'TO_RADIAN = ' + g9(trNew) + '   ((float)M_PI / 180)\n90°   → ' + g9(a90n) + ' rad\n360°  → ' + g9(a360n) + ' rad\n23,4° → ' + g9(a23n) + ' rad\nq (tangage 23,4°) : ' + Q9(qn13),
-    'Le rapport 3,14 / π vaut ' + (3.14 / Math.PI).toFixed(7) + ' : chaque angle converti est trop petit de ' + ((1 - 3.14 / Math.PI) * 100).toFixed(3) + ' %. Un tour complet ne se referme pas : il manque ' + deg(a360n - a360o).toFixed(4) + '°. À 90° l’écart est ' + deg(a90n - a90o).toFixed(4) + '° ; à rayon 15 il déplace un point de ' + (15 * (a90n - a90o)).toFixed(4).replace('.', ',') + ' unité. Pour 23,4° (la valeur qui reproduit les deux mesures de la session), on retrouve 0,4082 et 0,40841 : l’écart observé entre l’ancien moteur et LV3. Ni le quaternion ni la matrice ne sont en cause. Écart L2-15, question Q10.');
-  var f23 = F(23.4), qBad = M.quatAxisAngle([1, 0, 0], f23), qGood = M.quatAxisAngle([1, 0, 0], a23n), bad23 = (23.4 * 180 / Math.PI) % 360;
-  card('C14', 'Quat(angles) sans eulerAngles = true : des degrés lus comme des radians',
-    'Quatf(Vec3f(23.4, 0, 0))\n23,4 « rad » = ' + (23.4 * 180 / Math.PI).toFixed(1) + '° → ' + bad23.toFixed(1) + '° après modulo 360\n' + Q9(qBad),
-    'Quatf(Vec3f(23.4, 0, 0), true)\n23,4° = ' + g9(a23n) + ' rad\n' + Q9(qGood),
-    'Le constructeur ne devine pas l’unité : sans le second argument il suppose des radians (valeur par défaut <code>false</code>) et ne convertit rien. Aucun avertissement, aucun plantage : une rotation de ' + bad23.toFixed(1) + '° au lieu de 23,4°. Ce n’est pas ce qui s’est passé dans la session (les angles chargés valent 0,4082 : le loader a déjà converti), mais l’appel nu <code>Quatf(transform.m_initialLocalRotation)</code> ne protège de rien si la convention de stockage change. Écart L2-16.');
   $('ctr-list').innerHTML = L.join('');
 }
 function fmtLen(m) { if (m >= 0.01) return (m * 100).toFixed(2).replace('.', ',') + ' cm'; if (m >= 1e-5) return (m * 1000).toFixed(3).replace('.', ',') + ' mm'; return (m * 1e6).toFixed(3).replace('.', ',') + ' µm'; }
@@ -1748,10 +2032,6 @@ function renderTests() {
     '    const Vec3f z0 = Vec3f(0,0,0).Normalized();',
     '    Check(z0 == Vec3f(0,0,0), "T10 Normalized(0) == 0, pas NaN");',
     '',
-    '    // T11 — constantes de conversion : le π correctement arrondi (écart L2-15)',
-    '    Check(Near(LV3::TO_RADIAN * 180.f, 3.14159265f, 1e-6f), "T11a TO_RADIAN * 180 == pi");',
-    '    Check(Near(LV3::TO_DEGRE * LV3::TO_RADIAN, 1.f, 1e-6f), "T11b TO_DEGRE * TO_RADIAN == 1");',
-    '',
     '    std::printf(g_fail ? "\\n%d echec(s)\\n" : "\\nTout est vert\\n", g_fail);',
     '    return g_fail;',
     '}'];
@@ -1766,8 +2046,6 @@ function renderTests() {
     'T7  max |inverseRigid − inverse| = ' + g6(M.maxAbsDiff(M.inverseRigid(rig), M.inverse(rig).m)),
     'T8  n\'·t\' = ' + g6(ndt),
     'T9b angle du milieu = ' + M.quatAngleDeg(half.q).toFixed(5) + '°',
-    'T11a TO_RADIAN × 180 = ' + g9(F(F(F(Math.PI) / 180) * 180)) + '   (ancien moteur, 3.14f : ' + g9(F(F(F(3.14) / 180) * 180)) + ' → ROUGE, écart ' + g6(Math.PI - F(F(F(3.14) / 180) * 180)) + ')',
-    'T11b TO_DEGRE × TO_RADIAN = ' + g9(F(F(180 / F(Math.PI)) * F(F(Math.PI) / 180))) + '   (ancien moteur : ' + g9(F(F(180 / F(3.14)) * F(F(3.14) / 180))) + ' : la paire reste cohérente, mais les deux sont fausses par rapport à π)',
     'Les trigos de la page sont des valeurs double arrondies : à 1 ulp près de celles du CRT, d’où des tolérances et pas des ==.'];
   $('tests-pred').textContent = pred.join('\n');
 
@@ -1799,7 +2077,6 @@ var RDM = [
 '**Aucune décision à ce stade : tout ce qui suit reste à acter.**',
 'Origine : artefact « Lot L02 pas à pas — La bibliothèque mathématique », section 5 « Écarts entre la leçon et le code d\'aujourd\'hui » (document `Lecon_02_Mathematiques.md`, décisions et livraisons de l\'échange de la leçon 02, comparés au dossier `Maths/` du dépôt LIB lu le 07/11/2026).',
 'La colonne « Nature relevée » décrit ce que l\'écart *est* ; ce n\'est pas un verdict. La colonne « À décider » dit ce que l\'acter ou le refuser engage.',
-'L2-15 et L2-16 ont été ajoutés le 08/11/2026, après la session de parité ancien moteur / LV3 (artefact, question Q10).',
 '',
 '| # | Sujet | Nature relevée | À décider |',
 '|---|-------|----------------|-----------|',
@@ -1817,12 +2094,11 @@ var RDM = [
 '| L2-12 | `MathTypes.h` ne contient plus que le cœur ; `AABB3d.h` commenté, `Maths/Geometry/` vide | Évolution | Entériner ; la place de la géométrie se décide dans sa leçon dédiée. |',
 '| L2-13 | `getEulerAngles()` : heuristique héritée, sans TNR | Dette | Écrire la TNR aller-retour Euler → Quat → Matrix44 → Euler, ou retirer la fonction si elle n\'est pas appelée. |',
 '| L2-14 | `norm()` renvoie la longueur au carré ; `normalize()` / `Normalized()` mélangent deux casses | À acter | Renommer `norm()` en `lengthSq()` (et passer aux noms courts `dot`/`cross`), ou garder les noms hérités (D17) et documenter. |',
-'| L2-15 | `TO_RADIAN` / `TO_DEGRE` : l\'ancien moteur utilise `3.14f` (erreur 0,05 %, un tour manque 0,18°), LV3 utilise `M_PI` en double puis cast final | Évolution + dette (ancien moteur) | Entériner la forme LV3. Ajouter `static_assert` sur les constantes et le test T11. `grep "3.14"` sur l\'ancien moteur. Option C++20 : `std::numbers::pi_v<float>`. |',
-'| L2-16 | `Quat(Vec3, bool eulerAngles = false)` suppose des radians par défaut ; `SetEulerAngles(Vec3)` convertit toujours depuis des degrés | Dette (deux unités par défaut) | Remplacer le `bool` par `FromEulerRadians` / `FromEulerDegrees`, ou documenter et ajouter le filet Debug partiel. |',
+'| L2-15 | Le chargement des meshes contourne L02 : `OBJLoader.cpp` recode `V3Cross`/`V3Dot`/`V3Norm`… (normale dégénérée = (0,1,0)) ; `MeshClass::AddFace`/`ComputeFaceNormals` (seuls utilisateurs de `crossProduct`) non appelés par l\'OBJLoader ; `BakeFacePlanesSoA` en double (choix B5) | Dette — relevée le 11/11 | Remplacer les `V3*` par les méthodes de `Vec3` ; trancher la normale d\'une face dégénérée (zéro, comme le plan nul de B5, ou (0,1,0)) ; garder le double de B5. À trancher avant L09/L10 (éclairage). |',
 '',
 '**Décisions de lot (artefact L02, section 4) :** D10 (famille templatée canonique), D11 (`LV3`), D12 (row-major, vecteur-ligne, S·R·T), D13 (main droite) : tranchées dans l\'échange. D15 (tout en 4×4, pas de `Mat3`) et D16 (fabriques pures hors `Camera`, affinée en L05) : acceptées. D14 (profondeur `[-1, 1]`) : remplacée par L05. **D17** (noms hérités conservés) : proposée, se tranche avec **L2-14**. D18 (`operator[](int)`) : appliquée.',
 '',
-'**Ordre de lecture suggéré (sans engagement)** : L2-15 (deux lignes à corriger, cause d\'un écart déjà observé), L2-8 (vérification, impact visuel possible), puis L2-5 (bug latent), L2-1 / L2-2 / L2-3 (documentation, sans coût), L2-4 / L2-7 / L2-10 / L2-11 (nettoyage), L2-9 et L2-14 (conventions à trancher), le reste étant des évolutions en place à entériner.'
+'**Ordre de lecture suggéré (sans engagement)** : L2-8 (vérification, impact visuel possible), puis L2-5 (bug latent), L2-1 / L2-2 / L2-3 (documentation, sans coût), L2-4 / L2-7 / L2-10 / L2-11 (nettoyage), L2-9 et L2-14 (conventions à trancher), le reste étant des évolutions en place à entériner.'
 ];
 function renderRdm() {
   $('rdm-md').textContent = RDM.join('\n');
@@ -1854,28 +2130,125 @@ dl.addEventListener('click', function () {
   } catch (err) { dl.textContent = 'Téléchargement indisponible ici'; }
 });
 
-
-// ═══════════════ Manipulateur π (Q10) ═══════════════
-function renderPiWidget() {
-  var ang = parseFloat($('pi-ang').value), sel = $('pi-sel').value;
-  $('pi-ang-v').textContent = ang.toFixed(1) + '°';
-  var piv = sel === 'real' ? Math.PI : parseFloat(sel);
-  var trBad = F(F(piv) / 180), trOk = F(F(Math.PI) / 180);
-  var rb = F(F(ang) * trBad), ro = F(F(ang) * trOk), d = ro - rb;
-  var qb = M.quatAxisAngle([1, 0, 0], rb), qo = M.quatAxisAngle([1, 0, 0], ro);
-  $('pi-out').textContent =
-    'TO_RADIAN utilisé  = ' + g9(trBad) + '\n' +
-    'TO_RADIAN correct  = ' + g9(trOk) + '\n' +
-    'angle → radians    = ' + g9(rb) + '   (correct : ' + g9(ro) + ')\n' +
-    'écart              = ' + g6(d) + ' rad = ' + deg(d).toFixed(5) + '°   (relatif : ' + (ro !== 0 ? (d / ro * 100).toFixed(4) : '0') + ' %)\n' +
-    'à rayon 15         : ' + (15 * d).toFixed(5) + ' unité de déplacement\n' +
-    'q (tangage)        : ' + Q9(qb) + '\n' +
-    'q correct          : ' + Q9(qo);
-}
-
 // ─── Démarrage ───
+// ═══════════════ §0 Vue d'ensemble ═══════════════
+// [phase, étage, primitive L02 appelée, consomme L02 ?, badge, pourquoi]
+var V_PIPE = [
+  ['Démarrage — une fois', 'EngineConfig::LoadFromJson, ContentRoot', '—', false, null,
+    'Aucune coordonnée : chemins et plafonds seulement.'],
+  ['Démarrage — une fois', 'Serializer : ParseTransform, ParseHierarchy', 'Vec3f · Quatf(angles, eulerAngles)', true, 'mod',
+    'Les Transform lus ici sont la source de toute la chaîne. Le constructeur d’Euler du quaternion prend maintenant un Vec3<T> générique (il codait Vec3f en dur). Son ordre Y-X-Z n’a pas de TNR aller-retour (L2-13).'],
+  ['Démarrage — une fois', 'ResourceManager : OBJLoader, RegisterMesh', 'type Vec3f seulement — produits recodés à part', true, 'gap',
+    'Vérifié le 11/11 : OBJLoader.cpp recode V3Cross, V3Dot, V3Norm… dans un namespace anonyme (V3Norm d’une face dégénérée = (0,1,0)), et BakeFacePlanesSoA refait le produit vectoriel en double. Aucune fonction de L02 n’est appelée au chargement : écart L2-15.'],
+  ['Démarrage — une fois', 'SpawnCameraGizmos', '—', false, null, 'Crée des entités ; leurs matrices seront calculées par les systèmes comme pour tout mesh.'],
+  ['Boucle — par frame', 'PollEvents', '—', false, null, 'Clavier, souris, taille de fenêtre.'],
+  ['Boucle — par frame', 'FPSControllerSystem / CameraFollowSystem', 'Quatf (axe-angle, produit) · Vec3::Forward/Right · LookRotation', true, 'mod',
+    'Les déplacements se font le long de Forward() et Right() : c’est ici que l’ancien Forward() = +Z aurait inversé avance et recul. LookRotation a été ajouté par L05.'],
+  ['Boucle — par frame', 'BuildCameraBindings', '—', false, null, 'Associe caméra, viewport et mode ; aucune coordonnée transformée.'],
+  ['Boucle — par frame', 'CameraGizmoSystem', '—', false, null, 'Forme et couleur des gizmos (lot A5).'],
+  ['Boucle — par frame', 'LocalTransformSystem', 'Scale · ToMatrix44 · Translation → S·R·T', true, 'mod',
+    'Le cœur de L02 : l’ordre de composition et la forme vecteur-ligne de la rotation. Honore m_dirty (règle R11bis).'],
+  ['Boucle — par frame', 'WorldTransformSystem', 'Matrix44 operator* : local · world(parent)', true, 'up',
+    'L’ordre vient de L02 ; la passe « parents avant enfants » hors du composant vient de L06.'],
+  ['Boucle — par frame', 'TriggerSystem', 'Vec3 : soustraction · norm()', true, 'keep',
+    'Distances au carré entre centres (norm() est un carré, ce qui est ici exactement ce qu’on veut : pas de racine).'],
+  ['Boucle — par frame', 'BuildViewData × N', 'inverseRigid · operator* · (Projection, L05)', true, 'up',
+    'V = inverse rigide du monde de la caméra (ajouté après l’échange), P vient de LV3::Projection en reverse-Z (L05, L02-C).'],
+  ['Boucle — par frame', 'Clear (couleur + profondeur à 0.0f)', '—', false, null, 'Moitié du contrat reverse-Z ; aucune maths vectorielle.'],
+  ['RenderView — par instance', 'Frustum::Build / Classify (AABB monde)', 'colonnes de VP · SignedDistance (n·p + d)', true, 'keep',
+    'Vérifié : Build extrait les plans par Gribb-Hartmann en lisant la COLONNE j de VP (normale = M[0..2][j], d = M[3][j]). Ce n’est juste qu’en vecteur-ligne, où la colonne j porte la composante j du clip. Classify : 1 à 2 distances signées par plan (p-vertex / n-vertex).'],
+  ['RenderView — par instance', 'Sélection du LOD (taille apparente)', 'MulRow (L04, v·M sans ÷w) · Extent().length()', true, 'keep', 'Vérifié : le centre de la boîte passe par MulRow(mvp, centre), la copie de v·M de Rasterizer.h qui garde w (il sert de distance). multVecMatrix n’est pas appelé dans RenderView.'],
+  ['RenderView — par instance', 'mvp = world · VP', 'Matrix44 operator*', true, 'keep', 'Une multiplication 4×4 par (instance, vue).'],
+  ['RenderView — par instance', 'Inside : ProjectPositions8 (AVX2)', 'convention v·M row-major (pas d’appel)', true, 'mod',
+    'N’appelle aucune fonction de L02 mais repose sur sa convention : en vecteur-ligne, p·M est une combinaison des LIGNES de M, contiguës en mémoire. On diffuse x, y, z dans 8 couloirs et on multiplie par une ligne : aucune transposition, aucune somme horizontale.'],
+  ['RenderView — par instance', 'Intersect : TransformPositions, ClipTriangleNear', 'convention v·M · ÷w gardée', true, 'keep', 'Même convention, chemin scalaire, clip stocké en mémoire.'],
+  ['RenderView — par lot de 8 faces', 'Étage faces : B5, B4, C3', 'HomogeneousEye(mvp) : crossProduct · dotProduct', true, 'keep',
+    'Vérifié : AUCUNE inverse. L’œil homogène est le centre de projection de mvp, obtenu par cofacteurs (Cauchy-Binet) : 3 crossProduct et 4 dotProduct de L02 sur les lignes r_i = (m[i][0], m[i][1], m[i][3]), une fois par (instance, vue). Lire les colonnes 0, 1, 3 comme x, y, w du clip suppose v·M.'],
+  ['RenderView — par triangle', 'Setup virgule fixe (D-a1)', '—', false, null, 'Coordonnées entières au 1/256 px : plus aucun type de L02.'],
+  ['RenderView — par pixel', 'Arêtes par 8, barycentriques, early-Z, écriture', '—', false, null, 'Virgule fixe et SIMD dédiés ; MathUtils (Saturate, Lerp) appartient à L04.'],
+  ['Fin de frame', 'Present (EXE)', '—', false, null, 'Hors LIB.'],
+  ['À la demande', 'Picking / reconstruction', 'inverse() (Gauss-Jordan) · multVecMatrix', true, 'keep', 'Le seul chemin retour : inverse générale de VP, puis ÷w.'],
+  ['À venir (L09 – L10)', 'Éclairage, normales interpolées', 'inverse().transposed() · multDirMatrix', true, 'new',
+    'Le contrat des normales (D15) est posé par L02 mais n’a pas encore de consommateur prouvé dans la boucle : écart L2-8, à vérifier quand l’éclairage arrive.']
+];
+function vRenderPipe() {
+  var on = document.querySelector('#v-pipeSeg .on'), v = on ? on.dataset.v : 'all', det = $('v-pipeDetail').checked;
+  var html = '', phase = '';
+  V_PIPE.forEach(function (r, i) {
+    if (v === 'lot' && !r[3]) return;
+    if (v === 'diff' && !(r[4] === 'new' || r[4] === 'mod' || r[4] === 'up' || r[4] === 'gap')) return;
+    if (r[0] !== phase) { phase = r[0]; html += '<div class="pphase">' + phase + '</div>'; }
+    var b = r[4] === 'new' ? '<span class="pbadge new">ajouté</span>' : r[4] === 'mod' ? '<span class="pbadge mod">changé</span>' :
+            r[4] === 'up' ? '<span class="pbadge up">repris</span>' : r[4] === 'gap' ? '<span class="pbadge gap">contourne L02</span>' : r[4] === 'keep' ? '<span class="pbadge keep">inchangé</span>' : '';
+    html += '<div class="pstage' + (r[3] ? ' lot' : '') + '"><span class="pn">' + (i + 1) + '</span><span class="pt">' + esc(r[1]) + b +
+            '</span><span class="pd">' + esc(r[2]) + '</span>' + (det ? '<span class="px">' + esc(r[5]) + '</span>' : '') + '</div>';
+  });
+  $('v-pipeline').innerHTML = html;
+}
+document.querySelectorAll('#v-pipeSeg .btn').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('#v-pipeSeg .btn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    vRenderPipe();
+  });
+});
+$('v-pipeDetail').addEventListener('change', vRenderPipe);
+vRenderPipe();
+
+// Carte des fichiers Maths/ : [fichier, statut, classe, rôle, lot ?]
+var V_FILES = [
+  ['Maths/Vectorlib.h', 'modifié', 'mod', 'Vec2/3/4<T> en namespace LV3 ; Zero() réparé, angleTo, operator[](int), Forward() = −Z, 3 static_assert', 1],
+  ['Maths/MatrixLib.h', 'modifié', 'mod', 'Matrix44<T> row-major : produit __restrict, multVec (÷w gardée) / multDir, inverse, Translation, Scale ; code mort SIMD retiré. Reste du code commenté (LookAt, Perspective) : dette L2-4', 1],
+  ['Maths/QuaternionLib.h', 'modifié', 'mod', 'Quat<T> : inclut MatrixLib, constructeur Euler générique, ToMatrix44 seule (vecteur-ligne), conjugate / inverse / rotate / Identity, Slerp', 1],
+  ['Maths/Transform.h', 'modifié', 'mod', 'ToLocalMatrix() = S·R·T inline ; Forward/Right/Up. Plus de ToWorldMatrix (repris par L06)', 1],
+  ['Maths/Transform.cpp', 'vidé', 'del', 'Ne contient plus que #include "pch.h" et du code commenté : dette L2-7', 1],
+  ['Ressources/MathTypes.h', 'modifié', 'mod', 'Porte d’entrée : n’inclut plus que la famille canonique. Tire <iostream> dans le PCH : dette L2-10', 1],
+  ['Vec2f/3f/4f.h, Matrix44f.h/.cpp, Quat.h', 'retirés', 'del', 'Famille « moderne » redondante (LibV2/LibV3), sortie du build (D10)', 1],
+  ['Maths/Projection.h/.cpp', 'autre lot', 'up', 'Fonctions libres de projection, reverse-Z [0,1] — L05 et L02-C', 0],
+  ['Maths/Geometry/ (Plane, AABB3d, Frustum)', 'autre lot', 'out', 'Couche géométrie, Classify 3 états — L05', 0],
+  ['Maths/MathUtils.h', 'autre lot', 'out', 'Saturate, Clamp, Lerp scalaires — L04 ; ApproxEqual manquant : dette L2-11', 0]
+];
+$('v-fileMap').innerHTML = '<tr><th>Fichier</th><th style="width:7em">Statut</th><th>Contenu, après le lot</th></tr>' +
+  V_FILES.map(function (f) {
+    return '<tr class="' + (f[4] ? 'lotrow' : 'outrow') + '"><td><code>' + esc(f[0]) + '</code></td><td><span class="tag ' + f[2] + '">' + f[1] + '</span></td><td>' + esc(f[3]) + '</td></tr>';
+  }).join('');
+
+// B2 — S·R·T contre T·R·S, en vecteur-ligne (float32)
+function vB2() {
+  var sx = +$('v-b2-sx').value, th = +$('v-b2-th').value, tx = +$('v-b2-tx').value;
+  $('v-b2-sxv').textContent = sx; $('v-b2-thv').textContent = th + '°'; $('v-b2-txv').textContent = tx;
+  var S = M.scaleM([sx, 1, 1]), R = M.rotZ(F(th * Math.PI / 180)), T = M.translation([tx, 0, 0]), p = M.v3(1, 0, 0);
+  var good = M.multVec(M.mmul(M.mmul(S, R), T), p).v;
+  var bad = M.multVec(M.mmul(M.mmul(T, R), S), p).v;
+  var same = maxDiffV(good, bad) === 0;
+  $('v-b2-out').innerHTML =
+    'p = (1, 0, 0)\n' +
+    'S·R·T  (LV3)    p·S·R·T = ' + V6(good) + '   ← agrandi, tourné, puis déplacé\n' +
+    'T·R·S  (ordre colonne gardé par erreur)\n' +
+    '                p·T·R·S = ' + V6(bad) + '   ← déplacé, puis tourné AUTOUR DE L’ORIGINE, puis étiré\n' +
+    (same ? '<span class="ok">Identiques : avec ces réglages les trois matrices commutent (translation nulle ou cas particulier).</span>'
+          : '<span class="bad">Écart de ' + g6(maxDiffV(good, bad)) + ' unité(s) : la translation a été tournée et étirée avec l’objet.</span>');
+}
+['v-b2-sx', 'v-b2-th', 'v-b2-tx'].forEach(function (id) { $(id).addEventListener('input', vB2); });
+vB2();
+
+// B5 — ToMatrix44 (vecteur-ligne) contre ToMatrix44_OLD (transposée), float32
+function vB5() {
+  var th = +$('v-b5-th').value; $('v-b5-thv').textContent = th + '°';
+  var rad = F(th * Math.PI / 180), q = M.quatAxisAngle(M.v3(0, 0, 1), rad), p = M.v3(1, 0, 0);
+  var nw = M.multVec(M.quatToMatrix(q), p).v, od = M.multVec(M.quatToMatrixOld(q), p).v;
+  var want = [Math.cos(th * Math.PI / 180), Math.sin(th * Math.PI / 180), 0];
+  var aNew = deg(Math.atan2(nw[1], nw[0])), aOld = deg(Math.atan2(od[1], od[0]));
+  $('v-b5-out').innerHTML =
+    'q = ' + Q9(q) + '\n' +
+    'attendu (main droite)          ' + V6(want) + '\n' +
+    'p · ToMatrix44()      (après)  ' + V6(nw) + '   angle ' + g6(aNew) + '°  <span class="ok">correct</span>\n' +
+    'p · ToMatrix44_OLD()  (avant)  ' + V6(od) + '   angle ' + g6(aOld) + '°  ' +
+    (Math.abs(nw[1] - od[1]) < 1e-6 ? '<span class="warn">identique ici : à 0° et ±180° la transposée ne se voit pas</span>' : '<span class="bad">rotation inversée</span>');
+}
+$('v-b5-th').addEventListener('input', vB5);
+vB5();
+
 measureTabs(); renderDepth(); drawC(); setPreset(0); renderCtr(); renderTests(); renderRdm();
-renderPiWidget(); $('pi-ang').addEventListener('input', renderPiWidget); $('pi-sel').addEventListener('change', renderPiWidget);
 window.addEventListener('resize', function () { measureTabs(); drawA(); drawB(); });
 showTabFromHash();
 })();

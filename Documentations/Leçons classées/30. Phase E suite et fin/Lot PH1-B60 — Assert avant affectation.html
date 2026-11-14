@@ -1,0 +1,933 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot PH1-B60 — Assert avant affectation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : gabarit de la série « Lot … pas à pas » (PH1-C, PH1-D, PH1-E) — colonne 1000 px, en-tête collant avec sommaire,
+   étapes en cartes, avant/après en deux colonnes. Ajout PH1-B60 : chronologie d'une fonction, registres 8 couloirs, arbre de décision. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:560px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:14.5px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.sc{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .sc{grid-template-columns:1fr 1fr} }
+.sc>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.sc>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.sc pre{margin:0; border:0; border-radius:0}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+.small{font-size:13px; color:var(--ink2)}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:4px; margin:8px 0; font-family:var(--mono); font-size:11.5px}
+.lanes>div{background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:4px 5px; text-align:center; overflow-wrap:anywhere}
+.lanes .lh{background:var(--surface2); color:var(--ink3); font-size:10.5px}
+.lanes .sat{border-color:var(--bad); color:var(--bad)}
+.lanes .good{border-color:var(--ok); color:var(--ok)}
+.tl{font-family:var(--mono); font-size:12.5px; min-width:640px}
+.tl td{vertical-align:middle}
+.tl tr.as td{background:var(--hl); border-color:var(--hl-line)}
+.tl tr.dead td{color:var(--ink3)}
+.flow{display:grid; gap:8px; margin:12px 0; padding:0; list-style:none}
+.flow li{margin:0; display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:start; background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:9px 12px}
+.flow li b.n{font-variant-numeric:tabular-nums; color:var(--accent)}
+.flow li.hit{background:var(--hl); border-color:var(--hl-line)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header>
+  <div class="t">Lot PH1-B60 — L’assert avant l’affectation, et la question <code>IsValid()</code>, pas à pas</div>
+  <div class="s">LibraryV3 · clôture de la phase 1 du carnet de route · bug 60 (<code>BuildViewData</code>) · question <code>GizmoAssets::IsValid()</code> · règle R29 · création (aucun artefact n’existait pour cet échange)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+<p class="lede">Un filet de sécurité qui ne se déclenche jamais est pire que pas de filet : il donne la certitude d’être protégé. Le bug 60 en est un exemple de deux lignes. L’assertion existait, elle était écrite correctement, et elle ne pouvait rien attraper parce qu’elle regardait la variable avant qu’on lui donne sa valeur.</p>
+
+<p>Ce lot ne change aucun algorithme de rendu. Il fait deux choses à l’échelle de la fiabilité du moteur.</p>
+<ol>
+<li><b>Il corrige une garde vide</b> (bug 60, <code>BuildViewData</code>) et il établit <i>pourquoi</i> elle était vide. Le carnet de route parlait d’une valeur « indéterminée », donc d’un comportement indéfini. Le dépôt dit autre chose : le champ a un initialiseur par défaut, la lecture était bien définie, et c’est pour cela que personne n’a jamais vu d’erreur.</li>
+<li><b>Il règle une question ouverte par la lecture du dépôt</b> (<code>GizmoAssets::IsValid()</code> : <code>&amp;&amp;</code> ou <code>||</code> ?). Le carnet la présentait comme « à trancher ». Le code avait déjà la réponse, testée par Onky. Le carnet avait pris du retard sur le dépôt : c’est la règle R29 (dépôt, build et documentation doivent dire la même chose).</li>
+</ol>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « L’assertion est là, la ligne est bonne, donc ce point est couvert. » <b>Non.</b> Une assertion se juge à ce qu’elle <i>peut détecter</i>, pas à sa présence. Le test qui le montre : mettre une valeur fausse dans la donnée et regarder si l’assertion se déclenche. Pour le bug 60, avec <code>m_farPlane = NaN</code>, l’ancienne version ne se déclenchait pas, la nouvelle oui (laboratoire 1.1).
+</div>
+</section>
+
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+<p>La phase 1 du carnet de route regroupe les corrections de bugs par discussion. Cet échange ferme les deux dernières pièces qui restaient ouvertes.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH1-B60 en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>PH0</b></td><td>Règle PH0.c : un <i>filet</i> (assertion, sentinelle) vit sous <code>LV3_ASSERTS_ENABLED</code>, un <i>outil</i> sous <code>LV3_DEBUG</code>.</td><td>Le bug 60 est un cas où le filet est actif mais vide. PH0.c dit où il vit ; il ne dit pas s’il voit quelque chose.</td></tr>
+<tr><td><b>PH1-C</b></td><td>Règle PH1C.b : un garde-fou qui doit protéger la Release s’écrit <code>LV3_ASSERT(cond)</code> puis <code>if (!cond) { repli; }</code>.</td><td>Question de roadmap : <code>farPlane</code> non fini en Release n’a aucun repli (PH1B60-2).</td></tr>
+<tr><td><b>PH1-D</b></td><td>Ordre de frame S13 ; <code>BuildViewData</code> est son étape 8.</td><td>Le lieu du bug 60.</td></tr>
+<tr><td><b>PH1-E</b></td><td>Bugs 55, 56, 61, 66 ; décision 4 : <code>IsValid()</code> en <code>||</code> avec repli par caméra ; <code>BuildViewData</code> reçoit <code>depthDisplayRange</code> (66).</td><td>La question <code>IsValid()</code> y est déjà tranchée. Ce lot ajoute comment le carnet a pu rester en retard (AM2).</td></tr>
+<tr><td><b>Cet échange</b></td><td>Bug 60 corrigé et validé (« C’est bon, cela fonctionne ») ; <code>IsValid()</code> constaté déjà en place et testé (« C’est testé et fonctionnel ») ; carnet et <code>architecture-rules.md</code> remis d’accord avec le dépôt.</td><td>Phase 1 fermée au compteur du carnet (12 bugs).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que fait <code>BuildViewData</code></h3>
+<p>Pour chaque caméra rendue dans une frame, <code>BuildViewData</code> recopie dans une structure <code>ViewData</code> tout ce que le rendu doit savoir : matrices, plans proches et lointains, format d’image (<code>aspect</code>), mode, plage de lisibilité Depth. C’est un étage de recopie et de calcul sans logique de jeu. Ses assertions sont les seuls témoins qui disent « la caméra que l’auteur a écrite dans le JSON est exploitable ».</p>
+
+<h3>Ce que le lot garantit après correction</h3>
+<ol>
+<li><b>Chaque assertion de <code>BuildViewData</code> vérifie la valeur qu’elle consomme.</b> L’assertion du plan lointain passe après l’affectation, comme celle de <code>aspect</code> : on calcule, puis on vérifie la valeur calculée.</li>
+<li><b>Un plan lointain non fini se voit en Debug</b> quand la caméra n’a pas de far infini.</li>
+<li><b>Les gizmos tolèrent un asset manquant</b> : <code>IsValid()</code> signifie « au moins un des deux meshes est chargé » ; la caméra dont la projection n’a pas son asset est sautée avec un avertissement, sans éteindre les autres.</li>
+<li><b>La documentation dit ce que fait le code</b> : le carnet n’annonce plus un comportement indéfini qui n’existe pas, et ne présente plus comme ouverte une question déjà tranchée.</li>
+</ol>
+
+<h3>Les décisions de l’échange, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Nature du bug 60</td><td>comportement indéfini · garde vide</td><td>garde vide</td><td><code>ViewData::farPlane</code> vaut <code>1000.0f</code> avant toute affectation : <code>isfinite(1000)</code> est vrai, la lecture est définie.</td></tr>
+<tr><td>Correctif</td><td>supprimer l’assert · le déplacer · valider au chargement</td><td>le déplacer après <code>v.farPlane = cam.m_farPlane;</code></td><td>Même discipline que <code>aspect</code> : calculer, puis vérifier le résultat. Le plus petit changement qui rend le filet utile.</td></tr>
+<tr><td><code>IsValid()</code></td><td><code>&amp;&amp;</code> · <code>||</code> avec repli par caméra</td><td><code>||</code> avec repli</td><td>Un asset partiel est légitime (bug 55). Déjà en place dans le dépôt et testé par Onky.</td></tr>
+<tr><td>Source de vérité</td><td>le carnet · le dépôt</td><td>le dépôt, le carnet est corrigé</td><td>R29 : l’état qui s’exécute fait foi ; la documentation le suit.</td></tr>
+<tr><td>Fermeture de la phase 1</td><td>maintenant · après le balayage des autres asserts</td><td>maintenant ; balayage inscrit en roadmap (PH1B60-1)</td><td>Le balayage est une évolution, pas un défaut connu.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+<p>La chaîne du moteur, du lancement à l’image, avec les tests et la documentation. <b>Les cases en surbrillance sont celles que ce lot touche.</b> Aucun étage de rastérisation n’est concerné.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 470" role="img" aria-label="Chaîne du moteur avec les étages touchés par le lot PH1-B60 en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+</style>
+<text class="ph" x="16" y="20">1 · LANCEMENT (une fois)</text>
+<rect class="bx" x="16" y="30" width="208" height="58" rx="8"/>
+<text class="lb" x="28" y="52">EngineConfig</text><text class="sb" x="28" y="69">LoadFromJson</text><text class="sb" x="28" y="82">(lot PH1-E)</text>
+<rect class="bx" x="236" y="30" width="208" height="58" rx="8"/>
+<text class="lb" x="248" y="52">LoadSceneGraph</text><text class="sb" x="248" y="69">Camera : far, infiniteFar</text><text class="sb" x="248" y="82">(Serializer)</text>
+<rect class="bxh" x="456" y="30" width="208" height="58" rx="8"/>
+<text class="lb" x="468" y="52">LoadGizmoAssets</text><text class="sb" x="468" y="69">assets partiels admis</text><text class="sb" x="468" y="82">IsValid = un des deux</text>
+<rect class="bxh" x="676" y="30" width="208" height="58" rx="8"/>
+<text class="lb" x="688" y="52">SpawnCameraGizmos</text><text class="sb" x="688" y="69">repli PAR caméra</text><text class="sb" x="688" y="82">assets.For(projection)</text>
+<line class="ln" x1="224" y1="59" x2="232" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="444" y1="59" x2="452" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="664" y1="59" x2="672" y2="59" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="124">2 · UNE FRAME (S13)</text>
+<rect class="bx" x="16" y="134" width="208" height="58" rx="8"/>
+<text class="lb" x="28" y="156">Systèmes, cuisson n°1</text><text class="sb" x="28" y="173">monde à jour</text>
+<rect class="bx" x="236" y="134" width="208" height="58" rx="8"/>
+<text class="lb" x="248" y="156">CollectActiveCameras</text><text class="sb" x="248" y="173">catégorie, priorité</text>
+<rect class="bxh" x="456" y="134" width="208" height="58" rx="8"/>
+<text class="lb" x="468" y="156">BuildViewData × N</text><text class="sb" x="468" y="173">LV3_ASSERT farPlane (60)</text><text class="sb" x="468" y="186">désormais APRÈS l'affectation</text>
+<rect class="bx" x="676" y="134" width="208" height="58" rx="8"/>
+<text class="lb" x="688" y="156">RenderView × N</text><text class="sb" x="688" y="173">rastérisation, Present</text>
+<line class="ln" x1="224" y1="163" x2="232" y2="163" marker-end="url(#ar)"/>
+<line class="ln" x1="444" y1="163" x2="452" y2="163" marker-end="url(#ar)"/>
+<line class="ln" x1="664" y1="163" x2="672" y2="163" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="228">3 · FILETS ET TESTS DE L'EXE (démarrage, sous LV3_ASSERTS_ENABLED / LV3_DEBUG)</text>
+<rect class="bxh" x="16" y="238" width="272" height="66" rx="8"/>
+<text class="lb" x="28" y="260">Test_GizmoCountMatchesCameras</text><text class="sb" x="28" y="277">(registry, assets) : compte les caméras</text><text class="sb" x="28" y="290">dont l'asset de projection existe</text>
+<rect class="bxh" x="302" y="238" width="272" height="66" rx="8"/>
+<text class="lb" x="314" y="260">Garde de vacuité</text><text class="sb" x="314" y="277">declared == 0 || nGizChecked &gt; 0</text><text class="sb" x="314" y="290">un test qui ne teste rien se voit</text>
+<rect class="bx" x="588" y="238" width="296" height="66" rx="8"/>
+<text class="lb" x="600" y="260">CheckSceneInvariants</text><text class="sb" x="600" y="277">autres filets (PH0-4 : à quel</text><text class="sb" x="600" y="290">commutateur vivent-ils ?)</text>
+
+<text class="ph" x="16" y="340">4 · DOCUMENTS DU PROJET (R29)</text>
+<rect class="bxh" x="16" y="350" width="208" height="58" rx="8"/>
+<text class="lb" x="28" y="372">Carnet de route</text><text class="sb" x="28" y="389">note 60 réécrite</text><text class="sb" x="28" y="402">question IsValid close</text>
+<rect class="bxh" x="236" y="350" width="208" height="58" rx="8"/>
+<text class="lb" x="248" y="372">architecture-rules.md</text><text class="sb" x="248" y="389">assert après affectation</text><text class="sb" x="248" y="402">IsValid, m_visible corrigé</text>
+<rect class="bxh" x="456" y="350" width="208" height="58" rx="8"/>
+<text class="lb" x="468" y="372">Plan_Phase_G</text><text class="sb" x="468" y="389">section PH1B60-1 à 6</text><text class="sb" x="468" y="402">dettes, rien d'acté</text>
+<rect class="bxh" x="676" y="350" width="208" height="58" rx="8"/>
+<text class="lb" x="688" y="372">Résultats</text><text class="sb" x="688" y="389">décisions de l'échange</text><text class="sb" x="688" y="402">(nouveau fichier)</text>
+
+<text class="ph" x="16" y="442">CE QUE LE LOT NE TOUCHE PAS</text>
+<text class="sb" x="16" y="460">Étages sommets et faces, noyaux de pixels, LOD, graphe de scène, horloge. Le lot change ce que les filets peuvent détecter.</text>
+</svg>
+</div>
+</section>
+
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+<p>Trois fonctionnements sont remis en question. Les lignes surlignées sont celles qui changent. Le code de <code>BuildViewData</code> est celui du dépôt ; les textes du carnet sont rendus par leur sens (formes de lecture).</p>
+
+<h3>A · Le bug 60 : <code>BuildViewData</code></h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — l’assertion lit la valeur par défaut</div>
+<pre><code>v.nearPlane = cam.m_nearPlane;
+<span class="hl">LV3_ASSERT(cam.m_infiniteFar || std::isfinite(v.farPlane));</span>
+//v.farPlane = cam.m_infiniteFar ? std::numeric_limits&lt;float&gt;::infinity() : cam.m_farPlane;
+v.hasFarPlane = !cam.m_infiniteFar;
+<span class="hl">v.farPlane = cam.m_farPlane;      // sans objet si hasFarPlane == false</span>
+
+// ViewData.h : float farPlane = 1000.0f;
+// à la ligne de l'assert, v.farPlane vaut toujours 1000 :
+// isfinite(1000) est vrai pour toute caméra, y compris NaN.</code></pre></div>
+<div class="ap"><div class="t">Après — l’assertion lit la valeur calculée</div>
+<pre><code>v.nearPlane = cam.m_nearPlane;
+//v.farPlane = cam.m_infiniteFar ? std::numeric_limits&lt;float&gt;::infinity() : cam.m_farPlane;
+v.hasFarPlane = !cam.m_infiniteFar;
+<span class="hl">v.farPlane = cam.m_farPlane;      // sans objet si hasFarPlane == false</span>
+<span class="hl">LV3_ASSERT(cam.m_infiniteFar || std::isfinite(v.farPlane));</span>
+
+// même discipline que aspect : on calcule, puis on vérifie
+// la valeur calculée, sur la ligne suivante.</code></pre></div>
+</div>
+
+<h3>B · La note du carnet sur le bug 60</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — forme de lecture</div>
+<pre><code><span class="hl">« assertion placée avant l'affectation : elle lit une</span>
+<span class="hl">  valeur indéterminée (comportement indéfini) »</span></code></pre></div>
+<div class="ap"><div class="t">Après — forme de lecture</div>
+<pre><code><span class="hl">« garde vacue : farPlane a un initialiseur par défaut</span>
+<span class="hl">  (1000.0f), la lecture est définie, mais l'assertion</span>
+<span class="hl">  ne peut jamais échouer. Déplacée après l'affectation. »</span></code></pre></div>
+</div>
+
+<h3>C · <code>GizmoAssets::IsValid()</code>, de la question ouverte à la décision en place</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — ce que disait le carnet</div>
+<pre><code><span class="hl">question ouverte : IsValid() = persp.IsValid() &amp;&amp; ortho.IsValid() ?</span>
+                    ou  ||  ?
+état supposé : à trancher</code></pre></div>
+<div class="ap"><div class="t">Après — ce que disait le dépôt (et le carnet maintenant)</div>
+<pre><code>GizmoAssets::IsValid()
+<span class="hl">    = m_perspective.IsValid() || m_orthographic.IsValid();</span>
+SpawnCameraGizmos :
+    LV3_ASSERT(assets.IsValid());     // forme &amp;&amp; commentée
+    want = assets.For(cam.m_projection);
+<span class="hl">    if (!want.IsValid()) { Logger::warn(...); continue; }</span></code></pre></div>
+</div>
+
+<h3>D · L’algorithme de l’échange : de la note du carnet à la vérité du dépôt</h3>
+<p>Le second algorithme de ce lot décrit la méthode, pas le moteur. Il a servi deux fois dans cet échange, et il est réutilisable.</p>
+<ol class="flow">
+<li><b class="n">1</b><span><b>Lire la note du carnet.</b> Relever ce qu’elle <i>affirme</i> (« valeur indéterminée », « à trancher »).</span></li>
+<li class="hit"><b class="n">2</b><span><b>Lire le dépôt.</b> <code>ViewData.h</code> (le champ a un défaut), <code>DebugGizmos.hpp/.cpp</code> (<code>IsValid()</code> et le repli sont écrits).</span></li>
+<li><b class="n">3</b><span><b>Comparer.</b> Écart entre l’affirmation et le code : c’est une instance de R29.</span></li>
+<li class="hit"><b class="n">4</b><span><b>Classer.</b> Défaut du code (bug 60 : assertion vide) ou défaut du texte (carnet en retard).</span></li>
+<li><b class="n">5</b><span><b>Corriger le côté qui a tort.</b> Bug 60 : le code, avec avant/après par fichier. <code>IsValid()</code> : le texte.</span></li>
+<li><b class="n">6</b><span><b>Faire tester par Onky.</b> « Ça fonctionne » valide le comportement normal, pas le filet : voir l’étape Vérifier.</span></li>
+<li><b class="n">7</b><span><b>Consigner.</b> Carnet, règles, roadmap des dettes, fichier de résultats.</span></li>
+</ol>
+</section>
+
+<section id="labos">
+<h2>1 · Laboratoires — voir avant de lire le code</h2>
+<div class="note">
+Les laboratoires sont des <b>modèles</b> du comportement décrit, pas le code du moteur. Les valeurs flottantes passent par <code>Math.fround</code> (float32, comme le CPU). Les builds suivent la règle du moteur : <code>LV3_ASSERT</code> est évalué en Debug et en RelWithAsserts, jamais en Release.
+</div>
+
+<h3 id="lab-assert">1.1 · Une assertion avant ou après l’affectation</h3>
+<p>Choisissez la valeur que l’auteur a écrite pour le plan lointain, le réglage de la caméra et la place de l’assertion. Le tableau montre, ligne par ligne, ce que vaut <code>v.farPlane</code> au moment où chaque instruction s’exécute.</p>
+<div class="ctl">
+  <label for="l1Far">m_farPlane écrit par l’auteur :
+    <select id="l1Far">
+      <option value="1000">1000</option>
+      <option value="nan" selected>NaN</option>
+      <option value="inf">+inf</option>
+      <option value="ninf">−inf</option>
+      <option value="0">0</option>
+      <option value="-5">−5</option>
+      <option value="over">1e39 (déborde le float32)</option>
+    </select>
+  </label>
+  <label for="l1Inf">m_infiniteFar :
+    <select id="l1Inf"><option value="0" selected>faux (far fini attendu)</option><option value="1">vrai (far infini)</option></select>
+  </label>
+  <label for="l1Place">Assertion :
+    <select id="l1Place"><option value="before">avant l’affectation (bug 60)</option><option value="after">après l’affectation (corrigé)</option></select>
+  </label>
+  <label for="l1Init">Initialiseur de <code>ViewData::farPlane</code> :
+    <select id="l1Init"><option value="def" selected>= 1000.0f (dépôt)</option><option value="none">aucun (hypothèse du carnet)</option></select>
+  </label>
+  <label for="l1Build">Build :
+    <select id="l1Build"><option value="Debug" selected>Debug</option><option value="RelAssert">RelWithAsserts</option><option value="Release">Release</option></select>
+  </label>
+</div>
+<div class="scroll"><table class="tl" id="l1Tl" aria-label="Chronologie de BuildViewData"></table></div>
+<div class="stats" id="l1Stats"></div>
+<div class="console" id="l1Log" aria-live="polite"></div>
+<h4>Le même contrôle sur 8 plans lointains à la fois (un registre AVX2, une valeur par couloir)</h4>
+<div class="lanes" id="l1Lanes"></div>
+<p class="small" id="l1LanesNote"></p>
+
+<h3 id="lab-gizmo">1.2 · <code>IsValid()</code> : tout ou un seul, et le repli par caméra</h3>
+<p>Choisissez quels assets de gizmo ont chargé, combien de caméras de chaque projection portent un gizmo, et la règle d’<code>IsValid()</code>. Le laboratoire donne les gizmos créés, les avertissements, et ce que le test de l’EXE compte.</p>
+<div class="ctl">
+  <label><input type="checkbox" id="l2P" checked> mesh gizmo perspective chargé</label>
+  <label><input type="checkbox" id="l2O"> mesh gizmo orthographique chargé</label>
+  <label for="l2NP">caméras perspective :
+    <select id="l2NP"><option>0</option><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+  </label>
+  <label for="l2NO">caméras orthographiques :
+    <select id="l2NO"><option>0</option><option selected>1</option><option>2</option></select>
+  </label>
+  <label for="l2Pol">Règle :
+    <select id="l2Pol"><option value="or" selected>|| avec repli par caméra (dépôt)</option><option value="and">&amp;&amp; (question du carnet)</option></select>
+  </label>
+</div>
+<div class="stats" id="l2Stats"></div>
+<div class="scroll"><table id="l2List" aria-label="Résultat par caméra"></table></div>
+<div class="console" id="l2Log" aria-live="polite"></div>
+
+<h3 id="lab-tree">1.3 · Où placer cette assertion ?</h3>
+<p>Quatre questions, dans l’ordre, pour toute assertion que vous écrivez ou relisez. Les réponses par défaut décrivent le bug 60.</p>
+<div class="ctl">
+  <label for="l3Q1">1. L’expression lit une variable écrite plus bas dans la fonction :
+    <select id="l3Q1"><option value="1" selected>oui</option><option value="0">non</option></select></label>
+  <label for="l3Q2">2. Cette variable a un initialiseur par défaut :
+    <select id="l3Q2"><option value="1" selected>oui</option><option value="0">non</option></select></label>
+  <label for="l3Q3">3. La valeur vérifiée est la valeur consommée ensuite :
+    <select id="l3Q3"><option value="1" selected>oui</option><option value="0">non</option></select></label>
+  <label for="l3Q4">4. La Release doit être protégée :
+    <select id="l3Q4"><option value="1">oui</option><option value="0" selected>non</option></select></label>
+</div>
+<div class="console" id="l3Out" aria-live="polite"></div>
+</section>
+
+<section id="technique">
+<h2>2 · La technique, expliquée</h2>
+
+<h3>2.1 · Ce que <code>LV3_ASSERT</code> peut et ne peut pas voir</h3>
+<p><code>LV3_ASSERT</code> appelle <code>LV3::AssertFailed</code> quand la condition est fausse, dans les builds où les filets sont actifs (Debug, RelWithAsserts) ; en Release il se réduit à un <code>sizeof</code> qui n’évalue rien. Une assertion ne protège donc que le développeur, et seulement sur les valeurs que le programme lui présente. Deux conséquences qui sont tout le sujet de ce lot : elle doit lire <b>la valeur qui sera consommée</b>, et elle ne remplace pas un repli quand la Release doit survivre (PH1C.b).</p>
+
+<h3>2.2 · Pourquoi le bug 60 n’était pas un comportement indéfini</h3>
+<p>Le raisonnement « une assertion placée avant l’affectation lit une valeur indéterminée » est vrai pour un membre sans initialiseur : lire un <code>float</code> non initialisé est un comportement indéfini. Ici, <code>ViewData::farPlane</code> est déclaré <code>float farPlane = 1000.0f;</code>. L’initialisation par défaut du membre s’exécute à la construction de <code>v</code>, avant la première ligne de la fonction. L’assertion lisait donc <code>1000.0f</code>. Le programme était bien défini. Le défaut était plus discret : l’assertion était <b>vacue</b>, vraie pour toutes les caméras. C’est la forme la plus sournoise, parce qu’aucun symptôme ne force à la corriger.</p>
+<div class="rule"><b>Règle (inscrite à <code>architecture-rules.md</code>).</b> Un assert se place après l’affectation de la valeur qu’il vérifie et porte sur la valeur calculée. Un initialiseur par défaut ne sert pas de garantie : il rend vacue une garde posée avant l’affectation.</div>
+
+<h3>2.3 · Le court-circuit <code>cam.m_infiniteFar || …</code></h3>
+<p>Quand la caméra a un far infini, <code>v.hasFarPlane</code> vaut faux et <code>v.farPlane</code> est « sans objet » : les consommateurs ne le lisent pas. L’opérateur <code>||</code> court-circuite alors la partie <code>isfinite</code>. C’est voulu : on ne vérifie pas une valeur qui ne servira pas. La ligne commentée juste au-dessus (<code>farPlane = infinity</code>) montre l’autre convention, écartée : stocker l’infini dans <code>farPlane</code>. Si elle était un jour réactivée, l’assertion resterait juste grâce au court-circuit.</p>
+
+<h3>2.4 · <code>isfinite</code> en scalaire et en AVX2</h3>
+<p>Scalaire : <code>std::isfinite(x)</code>, vrai si <code>x</code> n’est ni NaN ni ±inf. Le moteur interdit <code>/fp:fast</code> (<code>#error</code>, lot D-a1d), sous lequel le compilateur peut supposer l’absence de NaN et supprimer le test. En AVX2, huit valeurs à la fois : on efface le bit de signe (<code>vandnps</code> avec −0,0f), puis on compare <code>|x| &lt; +inf</code> avec <code>_CMP_LT_OQ</code>. Un NaN rend la comparaison <i>ordonnée</i> fausse, donc exclu ; ±inf donne <code>inf &lt; inf</code>, faux, donc exclu. Le laboratoire 1.1 montre les huit couloirs et le masque obtenu. Dans ce lot, le moteur n’en a pas l’usage par frame (une caméra a un seul <code>farPlane</code>) : l’équivalent vectorisé sert à valider un lot de valeurs, par exemple en test.</p>
+
+<h3>2.5 · <code>IsValid()</code> : « au moins un », pas « tout »</h3>
+<p><code>LoadGizmoAssets</code> charge deux meshes, perspective et orthographique. Une scène qui n’a que des caméras perspective n’a pas besoin du second. Avec <code>&amp;&amp;</code>, l’absence d’un asset éteignait tous les gizmos, y compris ceux dont l’asset existait. Avec <code>||</code>, <code>SpawnCameraGizmos</code> demande <code>assets.For(cam.m_projection)</code> par caméra ; si ce handle n’est pas valide, un <code>Logger::warn</code> nomme la caméra et la boucle continue. Le test de l’EXE applique la même règle à son décompte : <code>cam.m_gizmoLength &gt; 0.0f &amp;&amp; assets.For(cam.m_projection).IsValid()</code>.</p>
+
+<h3>2.6 · La garde de vacuité de l’EXE</h3>
+<p>Le bug 60 a un jumeau côté test : un test qui ne vérifie rien parce que rien n’est à vérifier. <code>LV3_ASSERT(declared == 0 || nGizChecked &gt; 0)</code> dit : si des gizmos sont déclarés, au moins un doit avoir été contrôlé. C’est la même idée que l’assertion après l’affectation : se donner le moyen de constater que le filet a vu quelque chose.</p>
+</section>
+
+<section id="etapes">
+<h2>3 · Les étapes, une par une</h2>
+<p>Chaque étape donne son objectif, le résultat de l’étape précédente qu’elle utilise, le résultat qu’elle produit, le code scalaire et, quand il existe, l’équivalent vectorisé. Valeurs de départ : <code>m_farPlane = NaN</code>, <code>m_infiniteFar = false</code>, build Debug.</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Constater ce que l’assertion lit</div><div class="b">
+<p><b>Objectif.</b> Savoir quelle valeur <code>v.farPlane</code> contient à la ligne de l’assertion.</p>
+<div class="io"><div><h5>Entrée (étape précédente)</h5>Le code du bug 60 : assertion en ligne 2, affectation en ligne 5.</div><div><h5>Résultat</h5><code>v.farPlane</code> vaut <b>1000</b> (initialiseur de <code>ViewData.h</code>). <code>cam.m_infiniteFar</code> est faux, donc la condition se réduit à <code>isfinite(1000)</code> = <b>vrai</b> : l’assertion passe.</div></div>
+<div class="sc"><div><div class="t">Scalaire</div><pre><code>float v_farPlane = 1000.0f;          // ViewData.h
+bool  cond = cam_infiniteFar
+          || std::isfinite(v_farPlane);   // true
+LV3_ASSERT(cond);</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// pas d'équivalent utile : la fonction traite UNE caméra.
+// Pour un lot de ViewData[8], voir l'étape 6.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Prouver que l’assertion est vacue : la mutation</div><div class="b">
+<p><b>Objectif.</b> Ne pas conclure par lecture seule. Mettre la donnée fausse que l’assertion est censée attraper et regarder si elle se déclenche.</p>
+<div class="io"><div><h5>Entrée (étape 1)</h5>L’assertion lit 1000 quel que soit <code>cam.m_farPlane</code>.</div><div><h5>Résultat</h5>Avec <code>cam.m_farPlane = NaN</code>, <code>m_infiniteFar = false</code> : ancienne version, <b>aucun déclenchement</b> ; version corrigée, <b>déclenchement</b> (<code>isfinite(NaN)</code> = faux). Calculé dans le laboratoire 1.1.</div></div>
+<div class="sc"><div><div class="t">Scalaire (mutation à faire dans main.cpp, temporaire)</div><pre><code>// après la cuisson n°1, avant BuildViewData :
+auto* cam = registry.TryGet&lt;CameraComponent&gt;(e);
+cam-&gt;m_infiniteFar = false;
+cam-&gt;m_farPlane    = std::numeric_limits&lt;float&gt;::quiet_NaN();</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// sans objet : une mutation, une caméra</code></pre></div></div>
+<div class="warn">La mutation est une <b>prédiction à vérifier</b> (section Vérifier). Elle n’a pas été exécutée dans l’échange : Onky a validé le comportement normal du rendu, ce qui ne prouve rien sur le filet.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Déplacer l’assertion</div><div class="b">
+<p><b>Objectif.</b> Que l’assertion lise la valeur qui sera consommée.</p>
+<div class="io"><div><h5>Entrée (étape 2)</h5>La preuve que l’assertion est vacue.</div><div><h5>Résultat</h5>L’assertion est la ligne qui suit <code>v.farPlane = cam.m_farPlane;</code>. Aucune autre ligne ne change. Le correctif est dans l’encadré « Après » de la section 0.5 A.</div></div>
+<div class="sc"><div><div class="t">Scalaire (le correctif)</div><pre><code>v.hasFarPlane = !cam.m_infiniteFar;
+v.farPlane    = cam.m_farPlane;
+LV3_ASSERT(cam.m_infiniteFar
+        || std::isfinite(v.farPlane));</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// pas de pendant : une valeur, une branche prévisible.
+// Coût en Release : nul (LV3_ASSERT = sizeof).</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> Les cas particuliers : far infini, far fini, far hors plage</div><div class="b">
+<p><b>Objectif.</b> S’assurer que la condition ne donne pas de fausse alerte et ne laisse pas passer ce qu’elle doit voir.</p>
+<div class="io"><div><h5>Entrée (étape 3)</h5>L’assertion corrigée.</div><div><h5>Résultat (float32, laboratoire 1.1)</h5>
+far = 1000 : passe. NaN, ±inf : se déclenchent si <code>m_infiniteFar</code> est faux. far = 1e39 : après conversion en float32, <b>+inf</b>, se déclenche. far = 0 ou −5 : <b>passent</b> (finis). L’assertion ne vérifie pas la plausibilité (far &gt; near), seulement la finitude.</div></div>
+<div class="note"><code>1e39</code> dépasse le maximum du float32 (3,4028235·10³⁸). En JavaScript <code>Math.fround(1e39)</code> donne <code>Infinity</code>. En C++, convertir un <code>double</code> hors plage en <code>float</code> est, au sens du standard, un comportement non défini ; MSVC donne +inf en pratique. Une lecture JSON qui accepte <code>1e39</code> mérite un avertissement au chargement (PH1B60-2).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Ce que le filet ne couvre pas : la Release</div><div class="b">
+<p><b>Objectif.</b> Savoir ce qui arrive aux données fausses quand le filet est éteint.</p>
+<div class="io"><div><h5>Entrée (étape 4)</h5>L’assertion se déclenche en Debug pour NaN et ±inf.</div><div><h5>Résultat</h5>En Release l’expression n’est pas évaluée (<code>sizeof</code>). Un NaN écrit dans le JSON circule jusqu’aux consommateurs de <code>farPlane</code>. Le patron PH1C.b (assertion <i>et</i> repli) ne s’applique pas aujourd’hui à ce site : décision à prendre (PH1B60-2).</div></div>
+<div class="sc"><div><div class="t">Scalaire (patron PH1C.b, forme de lecture, non appliquée)</div><pre><code>const bool farOk = cam.m_infiniteFar
+                || std::isfinite(cam.m_farPlane);
+LV3_ASSERT(farOk);
+if (!farOk) {                 // Release : repli journalisé
+    Logger::warn("far non fini, far infini utilise");
+    v.hasFarPlane = false;
+}</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// validation au chargement plutôt qu'à la frame :
+// le Serializer lit toutes les caméras une fois ;
+// c'est là qu'un lot de 8 farPlane se contrôle (étape 6).</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Le contrôle de finitude sur 8 valeurs (AVX2)</div><div class="b">
+<p><b>Objectif.</b> Écrire l’équivalent vectorisé du test de l’étape 3, pour valider un lot (tests hors moteur, chargement).</p>
+<div class="io"><div><h5>Entrée (étape 5)</h5>Le besoin d’un contrôle hors frame sur plusieurs caméras.</div><div><h5>Résultat (laboratoire 1.1, float32)</h5>Pour <code>[1000, NaN, +inf, −inf, 0, −5, 3,4028235e38, 1,4e-45]</code> : masque <b>0xF1</b> (couloirs 0, 4, 5, 6, 7 finis). Avec le test faux <code>x != inf</code>, <b>2 couloirs de trop</b> (NaN et −inf) passent.</div></div>
+<div class="sc"><div><div class="t">Scalaire</div><pre><code>unsigned FiniteMask8(const float* p)
+{
+    unsigned m = 0;
+    for (int i = 0; i &lt; 8; ++i)
+        if (std::isfinite(p[i])) m |= 1u &lt;&lt; i;
+    return m;
+}</code></pre></div>
+<div><div class="t">AVX2</div><pre><code>unsigned FiniteMask8(const float* p)  // p aligné 32
+{
+    const __m256 x    = _mm256_load_ps(p);
+    const __m256 absx = _mm256_andnot_ps(
+                          _mm256_set1_ps(-0.0f), x);
+    const __m256 ok   = _mm256_cmp_ps(absx,
+                          _mm256_set1_ps(INFINITY),
+                          _CMP_LT_OQ);          // NaN : faux
+    return (unsigned)_mm256_movemask_ps(ok);
+}</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> <code>IsValid()</code> et le repli par caméra</div><div class="b">
+<p><b>Objectif.</b> Qu’un asset manquant ne coûte que les gizmos qui en dépendent.</p>
+<div class="io"><div><h5>Entrée (étape précédente)</h5>Deux handles : <code>m_perspective</code>, <code>m_orthographic</code>, chacun valide ou non.</div><div><h5>Résultat (laboratoire 1.2, réglage par défaut : perspective seule, 3 caméras perspective et 1 orthographique)</h5>Règle <code>||</code> : <code>IsValid()</code> vrai, <b>3 gizmos créés</b>, 1 avertissement (la caméra orthographique). Règle <code>&amp;&amp;</code> : <code>IsValid()</code> faux, 0 gizmo, test et garde de vacuité en échec.</div></div>
+<div class="sc"><div><div class="t">Scalaire (dépôt)</div><pre><code>bool GizmoAssets::IsValid() const
+{ return m_perspective.IsValid()
+      || m_orthographic.IsValid(); }
+
+// SpawnCameraGizmos, par caméra :
+const MeshHandle want = assets.For(cam.m_projection);
+if (!want.IsValid()) {
+    Logger::warn(/* nom de la caméra */);
+    continue;
+}</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// sans objet : deux handles, quelques caméras,
+// code exécuté au lancement.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> Le test de l’EXE et sa garde de vacuité</div><div class="b">
+<p><b>Objectif.</b> Que le test compte comme le code crée, et qu’un test à zéro contrôle ne passe pas pour un succès.</p>
+<div class="io"><div><h5>Entrée (étape 7)</h5>Des gizmos créés par le repli par caméra.</div><div><h5>Résultat</h5>Décompte attendu = nombre de caméras avec <code>m_gizmoLength &gt; 0</code> <b>et</b> asset de leur projection valide. Même réglage qu’à l’étape 7 : attendu 3, créé 3 (règle <code>||</code>). Garde : <code>declared == 0 || nGizChecked &gt; 0</code>.</div></div>
+<div class="sc"><div><div class="t">Scalaire (dépôt)</div><pre><code>int declared = 0;
+for (/* chaque caméra */)
+    if (cam.m_gizmoLength &gt; 0.0f
+     &amp;&amp; assets.For(cam.m_projection).IsValid())
+        ++declared;
+// ... nGizChecked incrémenté par le test de frustum
+LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);</code></pre></div>
+<div><div class="t">Vectorisé</div><pre><code>// sans objet : comptage de quelques entités au démarrage.</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Remettre les documents d’accord avec le dépôt</div><div class="b">
+<p><b>Objectif.</b> R29 : le texte suit le code. Sinon la prochaine lecture du carnet fait refaire un travail déjà fait.</p>
+<div class="io"><div><h5>Entrée (étape 8)</h5>Les écarts relevés : note UB du bug 60, question <code>IsValid()</code> présentée comme ouverte, remarque sur <code>m_visible</code>.</div><div><h5>Résultat</h5>Carnet de route : ligne 60 corrigée, note réécrite, question close, R29 complétée ; 5 « Prochaines actions » (diagnostic <code>[Diag] slot</code>, <code>mapAssets.scene_graph.object</code>, 3ᵉ layout, séparateurs d’écran en dur, style de rendu par viewport). <code>architecture-rules.md</code> : règle de l’assert après l’affectation, <code>IsValid()</code> en <code>||</code>, note <code>m_visible</code> corrigée.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Vérifier</div><div class="b">
+<p>Voir la section 5 : tests hors moteur (dans cette page), filets Debug, prédictions.</p>
+</div></div>
+</section>
+
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés : ce qu’il ne faut pas faire</h2>
+
+<div class="bad">
+<h3 style="margin-top:0">4.1 · Écrire l’assertion avant la ligne qui donne la valeur</h3>
+<p>Le bug 60 lui-même. Mesuré dans le laboratoire 1.1 (float32, Debug, <code>m_farPlane = NaN</code>, <code>m_infiniteFar = false</code>) : assertion avant l’affectation → <b>0 déclenchement</b> sur le défaut ; après → <b>1 déclenchement</b>. Sur les 7 valeurs proposées par le laboratoire dont 4 non finies (NaN, +inf, −inf, 1e39), l’ancienne version en attrape <b>0 sur 4</b>, la nouvelle <b>4 sur 4</b>.</p>
+</div>
+
+<div class="bad">
+<h3 style="margin-top:0">4.2 · Se fier à l’initialiseur par défaut comme garantie</h3>
+<p><code>float farPlane = 1000.0f;</code> évite le comportement indéfini, mais cache le bug : la valeur lue est constante, donc l’assertion est constante. Si on retire l’initialiseur, l’assertion lit une valeur indéterminée et le comportement devient indéfini (lecture d’un <code>float</code> non initialisé). Deux états, deux défauts différents, pour la même ligne mal placée (laboratoire 1.1, réglage « aucun »).</p>
+</div>
+
+<div class="bad">
+<h3 style="margin-top:0">4.3 · Tester la finitude avec <code>x != inf</code></h3>
+<p>Sur les 8 couloirs du laboratoire, <code>x != +inf</code> laisse passer NaN (<code>NaN != inf</code> est vrai) et −inf : <b>2 couloirs sur 8</b> acceptés à tort, masque 0xFB à la place de 0xF1. Le test juste est « |x| &lt; +inf », comparaison ordonnée.</p>
+</div>
+
+<div class="bad">
+<h3 style="margin-top:0">4.4 · Croire une note de carnet sans lire le code</h3>
+<p>Le carnet affirmait un comportement indéfini qui n’existait pas (bug 60), et présentait comme ouverte une règle déjà implémentée (<code>IsValid()</code>). Deux erreurs de documentation sur deux. Une relecture de <code>ViewData.h</code> et de <code>DebugGizmos.hpp</code> a suffi à les lever, en trois lectures de fichier au lieu d’une décision à rouvrir.</p>
+</div>
+
+<div class="bad">
+<h3 style="margin-top:0">4.5 · <code>&amp;&amp;</code> pour <code>IsValid()</code> avec des assets partiels</h3>
+<p>Laboratoire 1.2, perspective seule, 3 caméras perspective et 1 orthographique : règle <code>&amp;&amp;</code> → <b>0 gizmo créé sur 3 possibles</b> ; règle <code>||</code> → 3 sur 3.</p>
+</div>
+</section>
+
+<section id="usage">
+<h2>4b · Exemples d’utilisation</h2>
+
+<h3>Écrire une assertion dans <code>BuildViewData</code> pour un nouveau champ</h3>
+<p>Si <code>ViewData</code> reçoit un champ <code>exposure</code> issu de la caméra, le patron est toujours le même : on affecte, puis on vérifie la valeur affectée.</p>
+<pre><code>v.exposure = cam.m_exposure;
+LV3_ASSERT(std::isfinite(v.exposure) &amp;&amp; v.exposure &gt; 0.0f);   // sur la valeur calculée</code></pre>
+
+<h3>Vérifier un filet : la mutation</h3>
+<p>Après avoir écrit une assertion, on la teste en lui présentant volontairement une donnée fausse, une fois, en Debug. Si elle ne se déclenche pas, elle est vacue. On retire ensuite la mutation.</p>
+
+<h3>Une scène avec des gizmos perspective seulement</h3>
+<p>Seul le mesh de gizmo perspective charge. Au lancement, <code>IsValid()</code> est vrai, les caméras perspective reçoivent leur gizmo, chaque caméra orthographique de la scène produit un <code>Logger::warn</code> nommé et est sautée. Aucun arrêt, aucune autre caméra touchée (laboratoire 1.2).</p>
+
+<h3>Relire une assertion existante</h3>
+<p>La méthode de la section 1.3 : pour chaque <code>LV3_ASSERT(expr)</code>, repérer si <code>expr</code> lit une variable assignée plus bas dans la même fonction. Dans l’éditeur, une recherche de <code>LV3_ASSERT</code> suivie d’une lecture de la dizaine de lignes qui suivent suffit ; aucun balayage de ce type n’a été fait hors <code>BuildViewData</code> (PH1B60-1).</p>
+</section>
+
+<section id="amend">
+<h2>5 · Amendements aux textes existants</h2>
+<div class="note">Règle du lot : on garde le sujet de l’échange ; on amende un texte existant seulement si cet échange le remet en cause, avec l’avant et l’après.</div>
+
+<div class="amend"><div class="h">AM1 — Carnet de route, note du bug 60 <span class="pill ok">appliqué le 12/11</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>assertion avant l'affectation → valeur indéterminée,
+comportement indéfini</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>garde vacue (initialiseur 1000.0f), lecture définie ;
+l'assertion ne pouvait jamais échouer ; déplacée</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM2 — Carnet de route, question ouverte <code>GizmoAssets::IsValid()</code> <span class="pill ok">appliqué le 12/11</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>Question ouverte : IsValid() en &amp;&amp; ou ||</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>Résolue : || avec repli par caméra (déjà dans le dépôt,
+testée par Onky). Renvoi à PH1-E, décision 4.</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM3 — <code>architecture-rules.md</code>, note sur <code>DebugVisualComponent::m_visible</code> <span class="pill ok">appliqué le 12/11</span></div><div class="b">
+<div class="ab">
+<div class="av"><div class="t">Avant (forme de lecture)</div><pre><code>m_visible présenté comme présent dans le composant
+(le filtre de RenderView le lit)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>m_visible retiré (ligne laissée en commentaire) ;
+le filtre ne lit que m_hideForCamera ;
+politique A5 : tous visibles, teinte = actif</code></pre></div>
+</div></div></div>
+
+<div class="amend"><div class="h">AM4 — Lot PH1-E, périmètre <span class="pill">précisé, pas modifié</span></div><div class="b">
+<p>PH1-E range la question <code>IsValid()</code> dans son périmètre (décision 4) et indique que le bug 60 est clos au carnet sans le reprendre. Ce lot lui ajoute ce qui manquait : la nature exacte du bug 60 (garde vacue) et la méthode qui a permis de repérer le retard du carnet. Aucune décision de PH1-E n’est changée.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM5 — Règle PH1C.b <span class="pill warn">à rapprocher, non modifiée</span></div><div class="b">
+<p>PH1C.b recommande « assertion + repli » pour un garde-fou qui doit protéger la Release. Le site de <code>BuildViewData</code> n’a que l’assertion. Ce n’est pas une contradiction (le filet ne cherche pas à protéger la Release aujourd’hui), mais la question se pose : PH1B60-2.</p>
+</div></div>
+</section>
+
+<section id="verifier">
+<h2>6 · Vérifier</h2>
+
+<h3>6.1 · Tests de cette page (hors moteur)</h3>
+<p>La page exécute ses propres tests au chargement, sur le même modèle que les laboratoires.</p>
+<div class="console" id="selfTests" aria-live="polite"></div>
+
+<h3>6.2 · Filets Debug (à exécuter dans le moteur)</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Action</th><th>Attendu (prédiction écrite avant exécution)</th><th>Statut</th></tr></thead>
+<tbody>
+<tr><td>V1</td><td>Debug, scène normale, quelques secondes.</td><td>Aucune assertion. Le rendu est inchangé.</td><td><span class="pill ok">validé par Onky (« ça fonctionne »)</span></td></tr>
+<tr><td>V2</td><td>Mutation temporaire (étape 2) : <code>m_farPlane = NaN</code>, <code>m_infiniteFar = false</code> sur une caméra rendue ; Debug.</td><td>Assertion dans <code>BuildViewData</code> à la première frame où cette caméra est rendue. Avec l’ancien code, aucune.</td><td><span class="pill warn">à exécuter</span></td></tr>
+<tr><td>V3</td><td>Même mutation avec <code>m_infiniteFar = true</code>.</td><td>Aucune assertion (court-circuit).</td><td><span class="pill warn">à exécuter</span></td></tr>
+<tr><td>V4</td><td>Scène avec une seule caméra perspective et le mesh de gizmo orthographique renommé pour qu’il ne charge pas.</td><td>Gizmos des caméras perspective créés ; un avertissement par caméra orthographique ; <code>Test_GizmoCountMatchesCameras</code> vert.</td><td><span class="pill ok">testé par Onky (« testé et fonctionnel »)</span></td></tr>
+<tr><td>V5</td><td>Les deux assets de gizmo absents.</td><td><code>IsValid()</code> faux : la porte de l’EXE saute <code>SpawnCameraGizmos</code> ; la garde de vacuité ne se déclenche pas (declared = 0).</td><td><span class="pill warn">à exécuter</span></td></tr>
+<tr><td>V6</td><td>RelWithAsserts avec V2.</td><td>Même assertion qu’en Debug (filet actif).</td><td><span class="pill warn">à exécuter</span></td></tr>
+<tr><td>V7</td><td>Release avec V2.</td><td>Pas d’assertion ; la valeur NaN traverse (étape 5).</td><td><span class="pill warn">à exécuter</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>6.3 · Prédictions du lot appairé</h3>
+<p>Ce lot ne modifie aucun chemin de rendu : pas de mesure de temps proposée. La seule prédiction de performance est une absence d’effet. En Release, <code>LV3_ASSERT</code> ne génère aucun code, donc le déplacement de l’assertion est sans effet ; en Debug, le coût d’un <code>isfinite</code> par caméra rendue et par frame est négligeable devant le reste.</p>
+</section>
+
+<section id="roadmap">
+<h2>7 · Roadmap : dettes et évolutions relevées, à décider plus tard</h2>
+<div class="warn"><b>Rien de ce qui suit n’est acté ni appliqué.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH1-B60 ». Les sujets sont à vérifier sur le dépôt avant toute modification.</div>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature relevée</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>PH1B60-1</td><td>Balayage du patron « assertion avant l’affectation » : <code>BuildViewData</code> est le site connu, rien n’a été vérifié ailleurs</td><td>À vérifier</td><td>Relire chaque <code>LV3_ASSERT</code> avec la méthode du laboratoire 1.3 ; corriger bug par bug.</td></tr>
+<tr><td>PH1B60-2</td><td><code>farPlane</code> non fini en Release : aucun repli dans <code>BuildViewData</code> ; une valeur JSON qui déborde le float32 (1e39) devient +inf sans avertissement connu</td><td>Dette / décision</td><td>(a) validation au chargement dans le Serializer, avec avertissement et valeur de repli ; (b) patron PH1C.b dans <code>BuildViewData</code> ; (c) ne rien faire. À rapprocher de PH1E-7.</td></tr>
+<tr><td>PH1B60-3</td><td>Aucun test automatique de la garde du plan lointain (une assertion qui échoue arrête le programme, donc non testable en TNR Debug)</td><td>Proposée</td><td>Extraire une fonction pure <code>IsFarPlaneUsable(const CameraComponent&amp;)</code>, testable hors moteur, que l’assertion appelle.</td></tr>
+<tr><td>PH1B60-4</td><td>Code commenté laissé : <code>//v.farPlane = … infinity</code> dans <code>BuildViewData</code>, <code>// bool m_visible = true;</code> dans <code>Component.hpp</code>, l’ancienne forme <code>&amp;&amp;</code> dans <code>DebugGizmos.cpp</code></td><td>Hygiène</td><td>Purge (rejoint L6-5 et PH1D-14).</td></tr>
+<tr><td>PH1B60-5</td><td>Nom <code>GizmoAssets::IsValid()</code> : suggère « tout est valide », signifie « au moins un »</td><td>Évolution (nommage)</td><td>Renommer (<code>HasAny()</code> ?) ou documenter dans le header. Se tranche avec les noms de L2-14.</td></tr>
+<tr><td>PH1B60-6</td><td>R29 : les entrées « à faire » du carnet n’ont pas de date de dernière vérification ; une question déjà tranchée est restée ouverte</td><td>Convention</td><td>Ajouter « vérifié le … contre commit … » aux questions ouvertes ; ou relire le dépôt avant de rouvrir. Règle proposée ci-dessous.</td></tr>
+</tbody>
+</table>
+</div>
+<p><b>Règle proposée, non actée — PH1B60.a.</b> Avant de présenter une question comme ouverte ou un comportement comme indéfini, lire le code du dépôt à la ligne concernée et y consigner le résultat ; si le code a la réponse, corriger le texte.</p>
+<p class="small"><b>Ordre de lecture suggéré, sans engagement.</b> PH1B60-2 (la seule qui touche un comportement visible), PH1B60-3, PH1B60-1, puis l’hygiène (4), le nommage (5) et la convention (6).</p>
+</section>
+
+<footer>
+Lot PH1-B60 · LibraryV3 · décisions de l’échange : <code>Résultats/Résultats_Lot_PH1B60_Bug60_IsValid.md</code> · dettes : <code>Plan_Phase_G_LibraryV3.md</code>.
+</footer>
+</main>
+
+<script>
+/* ======== MODÈLE PUR (testé hors navigateur) ======== */
+/*PURE*/
+const f32 = Math.fround;
+const FAR_INPUTS = { "1000":1000, "nan":NaN, "inf":Infinity, "ninf":-Infinity, "0":0, "-5":-5, "over":1e39 };
+function farValue(key){ return f32(FAR_INPUTS[key]); }
+function fmt(x){
+  if (Number.isNaN(x)) return "NaN";
+  if (x === Infinity) return "+inf";
+  if (x === -Infinity) return "−inf";
+  if (Object.is(x,-0)) return "−0";
+  return String(x);
+}
+/* o = {far:"nan", infFar:false, place:"before"|"after", init:"def"|"none", build:"Debug"|"RelAssert"|"Release"} */
+function farVerdict(o){
+  const assigned = farValue(o.far);
+  const badData = !o.infFar && !Number.isFinite(assigned);
+  const evaluated = o.build !== "Release";
+  let read, undefinedRead = false;
+  if (o.place === "after") read = assigned;
+  else if (o.init === "def") read = f32(1000);
+  else { read = null; undefinedRead = true; }
+  let fires = false, cond = null;
+  if (!undefinedRead){ cond = o.infFar || Number.isFinite(read); fires = evaluated && !cond; }
+  let code, text, cls;
+  if (!evaluated){
+    code = badData ? "release-missed" : "release-ok";
+    text = badData ? "Release : l'assertion n'est pas évaluée, la valeur fausse traverse." : "Release : assertion non évaluée, donnée saine.";
+    cls = badData ? "bad" : "ok";
+  } else if (undefinedRead){
+    code = "ub"; text = "Lecture d'un float non initialisé : comportement non défini (résultat quelconque)."; cls = "bad";
+  } else if (badData && fires){
+    code = "detected"; text = "Détecté : l'assertion se déclenche sur la donnée fausse."; cls = "ok";
+  } else if (badData && !fires){
+    code = "missed"; text = "MANQUÉ : donnée fausse, assertion muette (garde vacue)."; cls = "bad";
+  } else if (!badData && fires){
+    code = "false-alarm"; text = "Fausse alerte : donnée saine, assertion déclenchée."; cls = "bad";
+  } else {
+    code = "ok"; text = "Donnée saine, assertion muette : conforme."; cls = "ok";
+  }
+  return { assigned, read, undefinedRead, cond, fires, evaluated, badData, code, text, cls };
+}
+const LANE_VALUES = [1000, NaN, Infinity, -Infinity, 0, -5, 3.4028234663852886e38, 1.401298464324817e-45];
+function finiteMask8(vals){
+  let m = 0; const bits = [];
+  for (let i=0;i<8;i++){ const ok = Number.isFinite(f32(vals[i])); bits.push(ok); if (ok) m |= (1<<i); }
+  return { mask:m, bits };
+}
+function wrongMask8(vals){ /* test faux : x != +inf */
+  let m = 0; for (let i=0;i<8;i++){ if (f32(vals[i]) !== Infinity) m |= (1<<i); } return m;
+}
+function popcount(m){ let c=0; while(m){ c += m&1; m >>= 1; } return c; }
+function bitsHex(x){ const b = new DataView(new ArrayBuffer(4)); b.setFloat32(0,x); return "0x"+(b.getUint32(0)>>>0).toString(16).toUpperCase().padStart(8,"0"); }
+
+/* o = {persp:bool, ortho:bool, np:int, no:int, pol:"or"|"and"} */
+function gizVerdict(o){
+  const isValid = o.pol === "or" ? (o.persp || o.ortho) : (o.persp && o.ortho);
+  const cams = [];
+  for (let i=0;i<o.np;i++) cams.push({ name:"Persp_"+(i+1), proj:"perspective", has:o.persp });
+  for (let i=0;i<o.no;i++) cams.push({ name:"Ortho_"+(i+1), proj:"orthographique", has:o.ortho });
+  let spawned = 0, warns = 0;
+  const rows = cams.map(c=>{
+    let res;
+    if (!isValid) res = "porte EXE fermée : aucun gizmo";
+    else if (c.has){ spawned++; res = "gizmo créé"; }
+    else { warns++; res = "warn + continue"; }
+    return { name:c.name, proj:c.proj, assetOk:c.has, res };
+  });
+  const declared = cams.filter(c=>c.has).length;
+  const testOk = spawned === declared;
+  const vacuityFires = declared > 0 && spawned === 0;
+  return { isValid, rows, spawned, warns, declared, testOk, vacuityFires };
+}
+/* o = {q1,q2,q3,q4} en booléens */
+function treeVerdict(o){
+  const out = [];
+  if (o.q1){
+    out.push(o.q2 ? { cls:"bad", t:"Garde vacue : la variable est lue avant son affectation et son initialiseur par défaut la rend constante. Déplacer l'assertion après l'affectation." }
+                  : { cls:"bad", t:"Lecture d'une valeur non initialisée : comportement non défini. Déplacer l'assertion après l'affectation." });
+  } else {
+    out.push({ cls:"ok", t:"Placement correct : la variable est déjà écrite." });
+  }
+  if (!o.q3) out.push({ cls:"warn", t:"La valeur vérifiée n'est pas celle qui sera consommée : vérifier la bonne variable, ou renommer pour qu'il n'y en ait qu'une." });
+  if (o.q4) out.push({ cls:"warn", t:"Release à protéger : assertion et repli (PH1C.b), ou validation au chargement." });
+  else out.push({ cls:"i", t:"Filet de développement seulement : l'assertion suffit." });
+  return out;
+}
+/*ENDPURE*/
+
+/* ======== TESTS ======== */
+function runTests(){
+  const res = []; const T=(name,ok)=>res.push({name,ok});
+  const base = { far:"nan", infFar:false, place:"before", init:"def", build:"Debug" };
+  T("avant l'affectation, far = NaN : MANQUÉ", farVerdict(base).code === "missed");
+  T("après l'affectation, far = NaN : détecté", farVerdict({...base, place:"after"}).code === "detected");
+  T("après, far = 1000 : conforme", farVerdict({...base, far:"1000", place:"after"}).code === "ok");
+  T("far infini déclaré, far = NaN : conforme (court-circuit)", farVerdict({...base, infFar:true, place:"after"}).code === "ok");
+  T("Release, far = NaN : non évalué, valeur fausse traverse", farVerdict({...base, place:"after", build:"Release"}).code === "release-missed");
+  T("RelWithAsserts évalue l'assertion", farVerdict({...base, place:"after", build:"RelAssert"}).fires === true);
+  T("sans initialiseur, avant : comportement non défini", farVerdict({...base, init:"none"}).code === "ub");
+  T("1e39 devient +inf en float32", farValue("over") === Infinity);
+  T("3,4028235e38 reste fini", Number.isFinite(f32(3.4028235e38)));
+  T("far = 0 et −5 passent (finis)", ["0","-5"].every(k => farVerdict({...base, far:k, place:"after"}).fires === false));
+  const keys = ["nan","inf","ninf","over"];
+  T("ancienne version : 0 sur 4 non finis détectés", keys.filter(k => farVerdict({...base, far:k}).fires).length === 0);
+  T("version corrigée : 4 sur 4 non finis détectés", keys.filter(k => farVerdict({...base, far:k, place:"after"}).fires).length === 4);
+  const lm = finiteMask8(LANE_VALUES);
+  T("masque de finitude des 8 couloirs = 0xF1", lm.mask === 0xF1);
+  T("test faux x != inf : 0xFB, 2 couloirs de trop", wrongMask8(LANE_VALUES) === 0xFB && popcount(wrongMask8(LANE_VALUES) & ~lm.mask) === 2);
+  T("bits de NaN float32 = 0x7FC00000", bitsHex(NaN) === "0x7FC00000");
+  const g1 = gizVerdict({ persp:true, ortho:false, np:3, no:1, pol:"or" });
+  T("|| : perspective seule → 3 gizmos, 1 warn, test conforme", g1.isValid && g1.spawned===3 && g1.warns===1 && g1.testOk);
+  const g2 = gizVerdict({ persp:true, ortho:false, np:3, no:1, pol:"and" });
+  T("&& : perspective seule → 0 gizmo, test en échec, garde de vacuité", !g2.isValid && g2.spawned===0 && !g2.testOk && g2.vacuityFires);
+  const g3 = gizVerdict({ persp:false, ortho:false, np:3, no:1, pol:"or" });
+  T("aucun asset : 0 gizmo, test conforme, pas d'alerte de vacuité", !g3.isValid && g3.spawned===0 && g3.testOk && !g3.vacuityFires);
+  const t1 = treeVerdict({ q1:true, q2:true, q3:true, q4:false });
+  T("arbre : lue avant + défaut → garde vacue", t1[0].t.startsWith("Garde vacue"));
+  const t2 = treeVerdict({ q1:true, q2:false, q3:true, q4:false });
+  T("arbre : lue avant, sans défaut → comportement non défini", t2[0].t.includes("non défini"));
+  return res;
+}
+
+/* ======== INTERFACE ======== */
+const $ = id => document.getElementById(id);
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function stat(k,v,c){ return '<div><div class="k">'+esc(k)+'</div><div class="v '+(c||"")+'">'+esc(v)+'</div></div>'; }
+
+function renderLab1(){
+  const o = { far:$("l1Far").value, infFar:$("l1Inf").value==="1", place:$("l1Place").value, init:$("l1Init").value, build:$("l1Build").value };
+  const r = farVerdict(o);
+  const initTxt = o.init==="def" ? "1000 (initialiseur)" : "indéterminée";
+  const rows = [
+    { code:"v.nearPlane = cam.m_nearPlane;", val:null, as:false, dead:false },
+    { code:"//v.farPlane = cam.m_infiniteFar ? inf : cam.m_farPlane;", val:null, as:false, dead:true },
+    { code:"v.hasFarPlane = !cam.m_infiniteFar;", val:null, as:false, dead:false },
+    { code:"v.farPlane = cam.m_farPlane;", val:"assign", as:false, dead:false },
+    { code:"LV3_ASSERT(cam.m_infiniteFar || std::isfinite(v.farPlane));", val:null, as:true, dead:false }
+  ];
+  const order = o.place === "after" ? rows : [rows[0], rows[4], rows[1], rows[2], rows[3]];
+  let assigned = false; let html = "<thead><tr><th>Instruction</th><th>v.farPlane vaut avant</th><th>Résultat</th></tr></thead><tbody>";
+  for (const row of order){
+    const cur = assigned ? fmt(r.assigned) + "  (" + bitsHex(r.assigned) + ")" : initTxt;
+    let result = "";
+    if (row.as){
+      if (!r.evaluated) result = "non évaluée (Release)";
+      else if (r.undefinedRead) result = "?";
+      else result = "condition " + (r.cond ? "vraie : silence" : "fausse : DÉCLENCHEMENT");
+    } else if (row.val === "assign") result = "écrit " + fmt(r.assigned);
+    else if (row.dead) result = "commentée";
+    html += '<tr class="'+(row.as?"as":"")+(row.dead?" dead":"")+'"><td>'+esc(row.code)+'</td><td>'+esc(cur)+'</td><td>'+esc(result)+'</td></tr>';
+    if (row.val === "assign") assigned = true;
+  }
+  html += "</tbody>";
+  $("l1Tl").innerHTML = html;
+  $("l1Stats").innerHTML =
+    stat("valeur lue par l'assertion", r.undefinedRead ? "indéterminée" : fmt(r.read), r.undefinedRead ? "bad" : "") +
+    stat("évaluée dans ce build", r.evaluated ? "oui" : "non (sizeof)", r.evaluated ? "ok" : "warn") +
+    stat("se déclenche", r.undefinedRead ? "?" : (r.fires ? "oui" : "non"), r.fires ? "ok" : "") +
+    stat("reçu par le rendu (farPlane)", o.infFar ? "sans objet (far infini)" : fmt(r.assigned), (!o.infFar && !Number.isFinite(r.assigned)) ? "bad" : "ok") +
+    stat("verdict", r.code, r.cls);
+  $("l1Log").innerHTML = '<span class="'+(r.cls==="ok"?"o":"e")+'">'+esc(r.text)+'</span>\n<span class="i">float32 : m_farPlane = '+esc(fmt(r.assigned))+' → bits '+esc(bitsHex(r.assigned))+'</span>';
+
+  /* huit couloirs : valeurs fixes ; avant l'affectation, chaque couloir lit 1000 */
+  const lanes = o.place === "after" ? LANE_VALUES : LANE_VALUES.map(()=>1000);
+  const fm = finiteMask8(lanes);
+  let h = '<div class="lh">couloir</div>'.repeat(0);
+  let l1="", l2="", l3="";
+  for (let i=0;i<8;i++){
+    l1 += '<div class="lh">couloir '+i+'</div>';
+    l2 += '<div>'+esc(fmt(f32(lanes[i])))+'</div>';
+    l3 += '<div class="'+(fm.bits[i]?"good":"sat")+'">'+(fm.bits[i]?"0xFFFFFFFF":"0x00000000")+'</div>';
+  }
+  $("l1Lanes").innerHTML = l1 + l2 + l3;
+  $("l1LanesNote").textContent = "|x| < +inf (_CMP_LT_OQ), puis movemask : 0x" + fm.mask.toString(16).toUpperCase().padStart(2,"0") +
+    " (bit i = couloir i). " + (o.place==="after" ? "Les huit valeurs réelles : 3 couloirs refusés (NaN, +inf, −inf)." : "Placement « avant » : chaque couloir lit 1000, masque plein, aucune information.");
+}
+
+function renderLab2(){
+  const o = { persp:$("l2P").checked, ortho:$("l2O").checked, np:+$("l2NP").value, no:+$("l2NO").value, pol:$("l2Pol").value };
+  const g = gizVerdict(o);
+  $("l2Stats").innerHTML =
+    stat("IsValid()", g.isValid ? "vrai" : "faux", g.isValid ? "ok" : "bad") +
+    stat("gizmos créés", g.spawned + " sur " + g.declared + " possibles", g.spawned===g.declared ? "ok" : "bad") +
+    stat("avertissements", String(g.warns), g.warns ? "warn" : "") +
+    stat("test de l'EXE", g.testOk ? "conforme" : "ÉCHEC", g.testOk ? "ok" : "bad") +
+    stat("garde de vacuité", g.vacuityFires ? "DÉCLENCHÉE" : "muette", g.vacuityFires ? "bad" : "ok");
+  let html = "<thead><tr><th>Caméra</th><th>Projection</th><th>Asset de sa projection</th><th>Résultat</th></tr></thead><tbody>";
+  for (const r of g.rows) html += "<tr><td>"+esc(r.name)+"</td><td>"+esc(r.proj)+"</td><td>"+(r.assetOk?"chargé":"absent")+"</td><td>"+esc(r.res)+"</td></tr>";
+  if (!g.rows.length) html += '<tr><td colspan="4">Aucune caméra à gizmo.</td></tr>';
+  $("l2List").innerHTML = html + "</tbody>";
+  let log = "";
+  if (!g.isValid && (o.persp || o.ortho)) log += '<span class="e">Règle &amp;&amp; : un seul asset chargé suffit à éteindre tous les gizmos.</span>\n';
+  if (!g.isValid && !o.persp && !o.ortho) log += '<span class="w">Aucun asset : SpawnCameraGizmos n\'est pas appelée (porte de l\'EXE), pas d\'erreur.</span>\n';
+  if (g.isValid && g.warns) log += '<span class="w">'+g.warns+' caméra(s) sautée(s) avec un avertissement nommé ; les autres gizmos sont créés.</span>\n';
+  if (g.isValid && !g.warns) log += '<span class="o">Tous les gizmos déclarés sont créés.</span>\n';
+  if (!g.testOk) log += '<span class="e">Test_GizmoCountMatchesCameras : attendu '+g.declared+', créé '+g.spawned+'.</span>';
+  $("l2Log").innerHTML = log;
+}
+
+function renderLab3(){
+  const o = { q1:$("l3Q1").value==="1", q2:$("l3Q2").value==="1", q3:$("l3Q3").value==="1", q4:$("l3Q4").value==="1" };
+  const cls = { ok:"o", bad:"e", warn:"w", i:"i" };
+  $("l3Out").innerHTML = treeVerdict(o).map(x => '<span class="'+cls[x.cls]+'">'+esc(x.t)+'</span>').join("\n");
+}
+
+function renderTests(){
+  const res = runTests(); const okN = res.filter(r=>r.ok).length;
+  $("selfTests").innerHTML = '<span class="'+(okN===res.length?"o":"e")+'">'+okN+' sur '+res.length+' réussis</span>\n' +
+    res.map(r => '<span class="'+(r.ok?"o":"e")+'">'+(r.ok?"OK  ":"ÉCHEC ")+esc(r.name)+'</span>').join("\n");
+}
+
+["l1Far","l1Inf","l1Place","l1Init","l1Build"].forEach(id => $(id).addEventListener("change", renderLab1));
+["l2P","l2O","l2NP","l2NO","l2Pol"].forEach(id => $(id).addEventListener("change", renderLab2));
+["l3Q1","l3Q2","l3Q3","l3Q4"].forEach(id => $(id).addEventListener("change", renderLab3));
+renderLab1(); renderLab2(); renderLab3(); renderTests();
+</script>
+
+</body></html>

@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot A9 — L’échelle du gizmo orthographique, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eee9; --surface3:#e7e4dd;
+  --ink:#1c1b18; --ink2:#4a4740; --ink3:#78746a;
+  --line:#ddd9d0; --line2:#c8c3b7;
+  --accent:#b8860b; --accent2:#8a6508; --accentBg:#fdf6e3;
+  --ok:#2d6a4f; --okBg:#e8f3ed;
+  --bad:#9b2226; --badBg:#fbeaea;
+  --info:#1f5673; --infoBg:#e8f1f6;
+  --code:#2b2a26; --codeBg:#f3f1ec;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+    --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+    --line:#333139; --line2:#454350;
+    --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+    --ok:#6ac095; --okBg:#17291f;
+    --bad:#e8777c; --badBg:#2c1619;
+    --info:#7cb8d8; --infoBg:#132430;
+    --code:#dcd9e2; --codeBg:#232228;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#16151a; --surface:#1e1d23; --surface2:#26252c; --surface3:#302f38;
+  --ink:#eceaf0; --ink2:#b5b1bd; --ink3:#817d8b;
+  --line:#333139; --line2:#454350;
+  --accent:#e8b84b; --accent2:#f0cd77; --accentBg:#2a2415;
+  --ok:#6ac095; --okBg:#17291f;
+  --bad:#e8777c; --badBg:#2c1619;
+  --info:#7cb8d8; --infoBg:#132430;
+  --code:#dcd9e2; --codeBg:#232228;
+}
+*{box-sizing:inherit}
+html{scroll-behavior:smooth; scroll-padding-top: calc(54px + env(safe-area-inset-top, 0px));}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.65;
+  -webkit-text-size-adjust:100%;
+}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px);
+  background:var(--surface); z-index:50;}
+
+/* ---- barre de navigation ---- */
+#nav{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+  background:var(--surface); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; gap:.5rem; padding:.45rem .7rem;
+  overflow-x:auto; -webkit-overflow-scrolling:touch; white-space:nowrap;
+}
+#nav a{
+  color:var(--ink2); text-decoration:none; font-size:.78rem; font-weight:600;
+  padding:.3rem .55rem; border-radius:6px; flex:0 0 auto;
+}
+#nav a:hover{background:var(--surface2); color:var(--ink)}
+#nav a.on{background:var(--accentBg); color:var(--accent2)}
+#themeBtn{
+  margin-left:auto; flex:0 0 auto; background:var(--surface2); color:var(--ink2);
+  border:1px solid var(--line); border-radius:6px; padding:.3rem .5rem;
+  font-size:.78rem; cursor:pointer; font-family:inherit;
+}
+
+main{max-width:980px; margin:0 auto; padding:1.2rem 1rem 5rem}
+
+/* ---- titres ---- */
+h1{font-size:1.85rem; line-height:1.2; margin:.4rem 0 .3rem; letter-spacing:-.02em}
+h2{font-size:1.3rem; margin:2.6rem 0 .5rem; padding-top:.9rem; border-top:2px solid var(--line);
+   letter-spacing:-.01em}
+h3{font-size:1.05rem; margin:1.8rem 0 .4rem; color:var(--ink)}
+h4{font-size:.93rem; margin:1.2rem 0 .3rem; color:var(--ink2); text-transform:uppercase;
+   letter-spacing:.06em}
+.sub{color:var(--ink3); font-size:.9rem; margin:0 0 1.4rem}
+.kicker{display:inline-block; font-size:.7rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--accent2); background:var(--accentBg);
+  padding:.2rem .5rem; border-radius:4px; margin-bottom:.5rem}
+p{margin:.7rem 0}
+ul,ol{margin:.6rem 0; padding-left:1.3rem}
+li{margin:.3rem 0}
+strong{font-weight:650}
+code{font-family:var(--mono); font-size:.86em; background:var(--codeBg); color:var(--code);
+  padding:.1em .34em; border-radius:4px}
+pre{background:var(--codeBg); border:1px solid var(--line); border-radius:8px;
+  padding:.8rem .9rem; overflow-x:auto; margin:.8rem 0; font-size:.8rem; line-height:1.55}
+pre code{background:none; padding:0; font-size:inherit}
+.cm{color:var(--ink3)}
+.kw{color:var(--accent2); font-weight:600}
+.st{color:var(--ok)}
+.nb{color:var(--info)}
+
+/* ---- blocs ---- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:1rem 1.1rem; margin:1rem 0}
+.note, .warn, .good, .info{
+  border-left:4px solid; border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0;
+  font-size:.92rem}
+.note{border-color:var(--accent); background:var(--accentBg)}
+.warn{border-color:var(--bad); background:var(--badBg)}
+.good{border-color:var(--ok); background:var(--okBg)}
+.info{border-color:var(--info); background:var(--infoBg)}
+.rule{background:var(--surface2); border:1px solid var(--line2); border-left:4px solid var(--accent);
+  border-radius:0 8px 8px 0; padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.rule b{color:var(--accent2)}
+.counter{border:1px dashed var(--bad); background:var(--badBg); border-radius:8px;
+  padding:.75rem .95rem; margin:1rem 0; font-size:.92rem}
+.counter .lbl{font-size:.7rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--bad); display:block; margin-bottom:.3rem}
+
+/* ---- tableaux ---- */
+.tw{overflow-x:auto; margin:1rem 0; border:1px solid var(--line); border-radius:8px}
+table{border-collapse:collapse; width:100%; font-size:.84rem; background:var(--surface)}
+th,td{padding:.5rem .65rem; text-align:left; border-bottom:1px solid var(--line); vertical-align:top}
+th{background:var(--surface2); font-weight:650; font-size:.76rem; text-transform:uppercase;
+  letter-spacing:.04em; color:var(--ink2); white-space:nowrap}
+tr:last-child td{border-bottom:none}
+td.num{font-family:var(--mono); white-space:nowrap}
+
+/* ---- contrôles ---- */
+.ctl{display:flex; flex-wrap:wrap; gap:.85rem; align-items:flex-end; margin:.8rem 0;
+  padding:.8rem; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.fld{display:flex; flex-direction:column; gap:.2rem; min-width:128px; flex:1 1 128px}
+.fld label{font-size:.72rem; font-weight:650; color:var(--ink2); text-transform:uppercase;
+  letter-spacing:.05em}
+.fld .val{font-family:var(--mono); font-size:.8rem; color:var(--accent2); font-weight:600}
+input[type=range]{width:100%; accent-color:var(--accent); margin:0}
+input[type=number],select{font-family:var(--mono); font-size:.82rem; padding:.3rem .4rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2); border-radius:5px;
+  width:100%}
+.seg{display:flex; gap:.25rem; flex-wrap:wrap}
+.seg button{font-family:inherit; font-size:.76rem; font-weight:600; padding:.32rem .6rem;
+  background:var(--surface); color:var(--ink2); border:1px solid var(--line2);
+  border-radius:5px; cursor:pointer}
+.seg button.on{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.btn{font-family:inherit; font-size:.8rem; font-weight:600; padding:.4rem .75rem;
+  background:var(--surface); color:var(--ink); border:1px solid var(--line2);
+  border-radius:6px; cursor:pointer}
+.btn:hover{background:var(--surface3)}
+.btn.pri{background:var(--accent); color:#1c1b18; border-color:var(--accent)}
+.chk{display:flex; align-items:center; gap:.4rem; font-size:.8rem; color:var(--ink2);
+  cursor:pointer; user-select:none}
+
+/* ---- canvas / sorties ---- */
+canvas{display:block; width:100%; max-width:100%; background:var(--surface);
+  border:1px solid var(--line); border-radius:8px; touch-action:none}
+.out{font-family:var(--mono); font-size:.79rem; line-height:1.55; background:var(--codeBg);
+  border:1px solid var(--line); border-radius:8px; padding:.7rem .85rem; margin:.7rem 0;
+  overflow-x:auto; white-space:pre; color:var(--code)}
+.out .g{color:var(--ok); font-weight:600}
+.out .r{color:var(--bad); font-weight:600}
+.out .a{color:var(--accent2); font-weight:600}
+.out .d{color:var(--ink3)}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:.8rem}
+@media (max-width:720px){ .grid2{grid-template-columns:1fr} }
+
+/* ---- étapes ---- */
+.step{border:1px solid var(--line); border-radius:10px; margin:1.1rem 0; overflow:hidden;
+  background:var(--surface)}
+.step>summary{cursor:pointer; padding:.75rem 1rem; background:var(--surface2);
+  font-weight:650; font-size:.95rem; list-style:none; display:flex; align-items:center; gap:.6rem}
+.step>summary::-webkit-details-marker{display:none}
+.step>summary::before{content:"▸"; color:var(--accent); font-size:.8rem; flex:0 0 auto}
+.step[open]>summary::before{content:"▾"}
+.step>summary .n{background:var(--accent); color:#1c1b18; font-family:var(--mono);
+  font-size:.72rem; font-weight:700; padding:.1rem .4rem; border-radius:4px; flex:0 0 auto}
+.step .body{padding:.9rem 1rem 1.1rem; border-top:1px solid var(--line)}
+.io{display:grid; grid-template-columns:auto 1fr; gap:.3rem .7rem; font-size:.83rem;
+  margin:.7rem 0; padding:.6rem .7rem; background:var(--surface2); border-radius:7px}
+.io dt{font-weight:650; color:var(--ink2); white-space:nowrap}
+.io dd{margin:0; font-family:var(--mono); font-size:.78rem}
+.goal{font-size:.9rem; color:var(--ink2); border-left:3px solid var(--accent);
+  padding-left:.7rem; margin:.5rem 0 .8rem; font-style:italic}
+
+/* ---- pipeline ---- */
+.pipe{display:flex; flex-direction:column; gap:.3rem; margin:1rem 0}
+.pstage{display:flex; align-items:center; gap:.6rem; padding:.45rem .7rem;
+  background:var(--surface2); border:1px solid var(--line); border-radius:7px; font-size:.84rem}
+.pstage .pn{font-family:var(--mono); font-size:.72rem; color:var(--ink3); width:1.6rem;
+  flex:0 0 auto}
+.pstage .pt{font-weight:600}
+.pstage .pd{color:var(--ink3); font-size:.78rem; margin-left:auto; text-align:right}
+.pstage.hot{background:var(--accentBg); border-color:var(--accent); border-width:2px}
+.pstage.hot .pt{color:var(--accent2)}
+.pstage.new{border-style:dashed; border-color:var(--ok); background:var(--okBg)}
+.pstage.new .pt{color:var(--ok)}
+.pbadge{font-size:.66rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+  padding:.1rem .35rem; border-radius:3px; background:var(--accent); color:#1c1b18; flex:0 0 auto}
+.pbadge.n{background:var(--ok); color:#fff}
+
+.legend{display:flex; flex-wrap:wrap; gap:.8rem; font-size:.75rem; color:var(--ink3); margin:.5rem 0}
+.legend span{display:flex; align-items:center; gap:.3rem}
+.sw{width:.8rem; height:.8rem; border-radius:3px; display:inline-block}
+
+.ba{display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0}
+@media (max-width:720px){ .ba{grid-template-columns:1fr} }
+.ba>div{border:1px solid var(--line); border-radius:8px; padding:.7rem .8rem; font-size:.84rem}
+.ba .before{border-left:4px solid var(--bad); background:var(--badBg)}
+.ba .after{border-left:4px solid var(--ok); background:var(--okBg)}
+.ba h5{margin:0 0 .4rem; font-size:.74rem; text-transform:uppercase; letter-spacing:.07em}
+.ba .before h5{color:var(--bad)}
+.ba .after h5{color:var(--ok)}
+.ba pre{margin:.4rem 0 0; background:var(--surface); font-size:.74rem}
+
+.foot{margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
+  color:var(--ink3); font-size:.8rem}
+.tag{display:inline-block; font-family:var(--mono); font-size:.7rem; padding:.1rem .4rem;
+  border-radius:3px; background:var(--surface3); color:var(--ink2); margin-right:.3rem}
+/* ---- ajouts A7 ---- */
+.lanes{border-collapse:collapse; font-family:var(--mono); font-size:.74rem; width:100%}
+.lanes th,.lanes td{border:1px solid var(--line); padding:.25rem .35rem; text-align:right; white-space:nowrap}
+.lanes th{background:var(--surface2); text-transform:none; letter-spacing:0; font-size:.72rem}
+.lanes td.l{text-align:left; color:var(--ink2); font-weight:600}
+.pass{color:var(--ok); font-weight:700}
+.fail{color:var(--bad); font-weight:700}
+.big{font-family:var(--mono); font-size:1.05rem; font-weight:700; color:var(--accent2)}
+.files td:first-child{font-family:var(--mono); font-size:.78rem; white-space:nowrap}
+.hl{background:var(--accentBg); border-radius:3px; padding:0 .15rem}
+.newl{background:var(--okBg); border-radius:3px; padding:0 .15rem}
+.algo{font-family:var(--mono); font-size:.78rem; line-height:1.6; background:var(--codeBg); border:1px solid var(--line);
+  border-radius:8px; padding:.8rem .9rem; overflow-x:auto; white-space:pre; color:var(--code)}
+.algo .hl{color:var(--accent2); font-weight:700}
+.algo .newl{color:var(--ok); font-weight:700}
+.algo .d{color:var(--ink3)}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+@media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} }
+.ba>div,.grid2>*{min-width:0}
+.ba pre{max-width:100%}
+:not(pre)>code{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="#s0">Pourquoi</a>
+  <a href="#s1">Rappel</a>
+  <a href="#s2">Objectif</a>
+  <a href="#s3">Algo global</a>
+  <a href="#s4">Algo du lot</a>
+  <a href="#s5">Technique</a>
+  <a href="#s6">Étapes</a>
+  <a href="#s6c">Contre-exemples</a>
+  <a href="#s7">Vérifier</a>
+  <a href="#s8">Exemples</a>
+  <a href="#s9">Amendements</a>
+  <a href="#s10">Règles</a>
+  <a href="#s11">Décisions</a>
+  <button id="themeBtn">◐ Thème</button>
+</nav>
+
+<main>
+
+<span class="kicker">LibraryV3 · Annexe A9 · rattachée à l’Annexe A5 et à la Leçon 05</span>
+<h1>Lot A9 — L’échelle du gizmo orthographique, et l’anatomie d’un faux diagnostic, pas à pas</h1>
+<p class="sub">Un objet démesuré envahit le viewport de rendu. On l’attribue à la mauvaise caméra, on
+cherche une fuite de données qui n’existe pas. Deux lignes de code déjà écrites suffisaient à trancher.
+Derrière l’erreur d’identité, une vraie faute de conception : encoder une grandeur non bornée dans
+une géométrie.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s0">0 · Pourquoi ce lot</h2>
+
+<p>Le constat de départ : dans le viewport de gauche (<code>FPS_Camera</code>, perspective), un objet
+gigantesque apparaît dès que la caméra de droite (<code>Overview_Camera</code>) est orthographique
+avec <code>orthoHeight: 1200</code>. Il disparaît quand elle repasse en perspective. Avec deux caméras
+perspectives, rien. Tout pousse à conclure que « l’ortho contamine le gizmo de la FPS » — une fuite
+de données entre caméras.</p>
+
+<p>Ce lot existe pour trois raisons, de natures très différentes :</p>
+<ol>
+  <li><strong>Une leçon de diagnostic.</strong> Le titre du bug était faux. Une caméra ne dessine
+  <em>jamais</em> son propre gizmo (filtre <code>m_hideForCamera</code> de l’A5). L’objet géant ne
+  pouvait donc pas être celui de la FPS. Une session entière avait été consacrée à chercher pourquoi
+  le mauvais objet se comportait mal. La première question aurait dû être : <em>quel</em> objet ?</li>
+  <li><strong>Une faute de conception.</strong> Le gizmo orthographique était géométriquement exact,
+  et c’était justement le problème : sa section valait <code>orthoHeight</code>, une grandeur de
+  scène sans borne (jusqu’à 5000 avec le zoom de l’A7). Un gizmo ne peut pas à la fois dire le volume
+  exact d’une caméra et rester lisible. Il fallait choisir — c’est la sémantique <strong>S2</strong>.</li>
+  <li><strong>Une discipline, rencontrée deux fois en une heure.</strong> Une formule écrite à deux
+  endroits (le facteur <code>s</code> du test) et une fonction définie deux fois
+  (<code>CheckControllerExclusivity</code>, LIB et EXE) ont divergé. D’où une source unique,
+  <code>GizmoHalfSection</code>, et les règles R16 / R17.</li>
+</ol>
+
+<div class="info"><b>Ce que livre le lot.</b> Aucun changement dans le rendu, les matrices de
+projection ou le filtre de vue. Une ligne de formule dans <code>CameraGizmoSystem</code> (branche ortho) ;
+deux fonctions <code>inline</code> dans <code>DebugGizmos.hpp</code> (<code>GizmoHalfSection</code>,
+<code>FrustumHalfHeightAt</code>) ; dans <code>Test_GizmoMatchesFrustum</code>, un facteur d’échelle
+<code>s</code> et un epsilon indexé sur le coin évalué ; la suppression d’un doublon de
+<code>CheckControllerExclusivity</code> côté EXE.</div>
+
+<div class="note"><b>À relire dans un an.</b> Quand un objet se comporte mal, on ne cherche pas
+<em>pourquoi</em> avant d’avoir établi <em>lequel</em> — par une mesure que le programme produit
+lui-même (nom, scale, suppression ciblée), jamais par l’œil. Et quand un gizmo devient illisible,
+on se demande d’abord s’il porte un nombre qu’il aurait fallu écrire plutôt que dessiner.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s1">1 · Rappel — où en est le moteur</h2>
+
+<p>Ce lot ne crée aucun mécanisme : il corrige une interprétation et une formule, en s’appuyant sur des
+briques déjà en place.</p>
+
+<div class="tw"><table>
+<tr><th>Origine</th><th>Ce qui existe</th><th>Ce que ce lot en utilise</th></tr>
+<tr><td>L02</td><td>Convention vecteur-ligne, <code>v' = v · M</code> ; composition <code>world = local × parentWorld</code></td><td>La dérivation du rapport <code>s</code> (§5.4) et le laboratoire float32 (§5.5)</td></tr>
+<tr><td>L03</td><td>ECS : <code>Registry</code>, <code>ViewGroup&lt;…&gt;</code>, composants optionnels (<code>NameComponent</code>)</td><td>L’itération du système et du test ; la garde sur <code>NameComponent</code> (§5.6)</td></tr>
+<tr><td>L05</td><td><code>CameraComponent</code> = la lentille ; <code>CameraFovY()</code> ; <code>Projection::Perspective</code> / <code>OrthographicCentered</code> ; <code>BuildViewData</code> → <code>viewProjectionMatrix</code></td><td>La définition du frustum : le dénominateur de <code>s</code></td></tr>
+<tr><td>A5</td><td>Meshes canoniques (pyramide, boîte) ; <code>CameraGizmoComponent{m_owner, m_length}</code> ; <code>DebugVisualComponent{m_color, m_hideForCamera}</code> ; gizmo <b>enfant</b> de sa caméra ; <code>CameraBinding</code> : un aspect par couple (caméra, viewport) ; <code>CameraGizmoSystem</code> ; <code>Test_GizmoMatchesFrustum</code> (six bugs détectés) ; « section constante contre section proportionnelle » (§2.4)</td><td>Tout. La preuve du §5.1 est le filtre de l’A5 ; la cause du §5.2 est sa propre §2.4, dont la conséquence n’avait jamais été tirée</td></tr>
+<tr><td>A7</td><td><code>CameraZoomSystem</code> : <code>orthoHeight</code> borné à 0,5–5000, fov à 1–170°</td><td>L’étendue réelle de <code>orthoHeight</code> ; le dézoom qui faisait sauter l’assert (§5.5)</td></tr>
+<tr><td>A8</td><td>R11bis : un système d’affichage n’écrit jamais <code>m_dirty</code></td><td>Contrainte du futur overlay (§9)</td></tr>
+<tr><td>Bug 25</td><td><code>CheckControllerExclusivity</code> (LIB, 22/08), appelée chaque frame avant les contrôleurs</td><td>Le doublon EXE découvert pendant l’échange (§5.6)</td></tr>
+<tr><td>Lot A7 §9.2</td><td>Résumé de cet échange, vu depuis le zoom</td><td>Ce lot en est le traitement complet ; l’A7 y renvoie</td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s2">2 · Contexte et objectif fonctionnel</h2>
+
+<p>La scène de travail compte deux viewports :</p>
+<div class="tw"><table>
+<tr><th>Viewport</th><th>Caméra</th><th>Projection</th><th>Aspect du viewport</th><th><code>gizmoLength</code></th></tr>
+<tr><td>gauche (rendu)</td><td><code>FPS_Camera</code></td><td>perspective, fov 45°</td><td class="num">1,280</td><td class="num">3</td></tr>
+<tr><td>droite (overview)</td><td><code>Overview_Camera</code></td><td>orthographique, <code>orthoHeight: 1200</code></td><td class="num">0,427</td><td class="num">5 <span class="d">(résidu d’un test)</span></td></tr>
+</table></div>
+
+<p>Les constats rapportés en entrée de l’échange :</p>
+<div class="tw"><table>
+<tr><th>#</th><th>Constat</th></tr>
+<tr><td>1</td><td>En perspective, le gizmo de la FPS n’apparaît pas dans le viewport de rendu</td></tr>
+<tr><td>2</td><td>Un assert de <code>Test_GizmoMatchesFrustum</code> saute quand on dézoome beaucoup, quelle que soit la projection</td></tr>
+<tr><td>3</td><td>En ortho, « le gizmo de la FPS » devient démesuré — fuite de données entre caméras ?</td></tr>
+<tr><td>4</td><td>Deux caméras perspectives : aucun problème. Une ortho + une perspective : problème</td></tr>
+<tr><td>5</td><td>D’autres scenegraphs avec les mêmes deux caméras : même souci</td></tr>
+</table></div>
+
+<p><b>Objectif fonctionnel.</b> Un gizmo de caméra lisible dans n’importe quel viewport, quels que
+soient la projection de la caméra décrite et son zoom — sans qu’il mente sur la forme de son frustum,
+et sans que <code>Test_GizmoMatchesFrustum</code> perde un seul des six bugs qu’il détecte.</p>
+
+<p><b>Contraintes posées avant le code</b> : ne pas toucher au filtre de vue ni aux matrices ; pas de
+nouvelle entité par frame ; aucune allocation ; une seule définition de chaque formule partagée.</p>
+
+<p><b>Décisions à prendre, et pourquoi elles comptent</b> (réponses au §11) : quelle
+<em>sémantique</em> donner au gizmo (le frustum exact, une maquette, une icône) — elle décide de tout le
+reste ; sur quelle magnitude indexer l’epsilon du test — sinon le test saute sur du bruit ou se tait
+sur des bugs ; qui possède <code>CheckControllerExclusivity</code> — la librairie qui porte l’invariant,
+ou l’exécutable qui le teste ; comment garder le test non vide sans figer le nombre de caméras.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s3">3 · Algorithme global du moteur — où se situe ce lot</h2>
+
+<p>La boucle de frame complète. À l’époque du lot (13/09/2026), il n’y avait qu’une cuisson des matrices ;
+la boucle a été réorganisée le 18/09 (bug 65, ordre canonique S13, deux cuissons). La place du lot
+n’a pas bougé : <code>CameraGizmoSystem</code> est toujours au palier caméra, et le test toujours après
+le rendu des vues.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:1 1 100%">
+    <label>Vue du pipeline</label>
+    <div class="seg" id="pipeSeg">
+      <button data-v="then" class="on">À l’époque (13/09)</button>
+      <button data-v="today">Aujourd’hui (S13)</button>
+      <button data-v="diff">Touché par le lot</button>
+      <button data-v="s3">S3 envisagé</button>
+    </div>
+  </div>
+  <label class="chk"><input type="checkbox" id="pipeDetail" checked> Afficher le détail de chaque étage</label>
+</div>
+<div class="pipe" id="pipeline"></div>
+<div class="legend">
+  <span><i class="sw" style="background:var(--surface2);border:1px solid var(--line)"></i> inchangé</span>
+  <span><i class="sw" style="background:var(--accentBg);border:2px solid var(--accent)"></i> modifié par le lot</span>
+  <span><i class="sw" style="background:var(--infoBg);border:2px solid var(--info)"></i> lu par le lot — la preuve</span>
+  <span><i class="sw" style="background:var(--okBg);border:1px dashed var(--ok)"></i> futur (S3, non fait)</span>
+</div>
+
+<div class="info"><b>Lecture.</b> Le lot touche deux étages : celui qui <em>écrit</em> le scale du
+gizmo (<code>CameraGizmoSystem</code>) et celui qui le <em>vérifie</em> (le test, en <code>_DEBUG</code>).
+L’étage décisif pour le diagnostic, lui, n’a pas changé d’une ligne : c’est le filtre de
+<code>RenderView</code>, qui rend impossible l’hypothèse de départ (§5.1).</div>
+
+<h3>Carte des fichiers</h3>
+<div class="tw"><table class="files">
+<tr><th>Fichier</th><th>Projet</th><th>Rôle dans le lot</th><th>Touché ?</th></tr>
+<tr><td>Scene/DebugGizmos.hpp</td><td>LIB</td><td><code>GizmoHalfSection</code>, <code>FrustumHalfHeightAt</code> : la source unique</td><td><span class="newl">ajouté</span></td></tr>
+<tr><td>Scene/DebugGizmos.cpp</td><td>LIB</td><td><code>CameraGizmoSystem</code> : la branche ortho devient une maquette</td><td><span class="hl">modifié</span></td></tr>
+<tr><td>Scene/Components/Component.hpp</td><td>LIB</td><td>Commentaire de <code>CameraGizmoComponent::m_length</code>, qui mentait en ortho</td><td><span class="hl">modifié (commentaire)</span></td></tr>
+<tr><td>Scene/RenderSystem.cpp</td><td>LIB</td><td><code>RenderView</code> : <code>if (dbg->m_hideForCamera == view.m_sourceCamera) continue;</code></td><td>lu — <b>la preuve</b></td></tr>
+<tr><td>Scene/System.hpp / .cpp</td><td>LIB</td><td><code>CheckControllerExclusivity</code> : la version conservée (déclaration / définition)</td><td><span class="hl">déplacé en .cpp</span></td></tr>
+<tr><td>Test/TestAffichageGizmoCamera.cpp</td><td>EXE</td><td><code>Test_GizmoMatchesFrustum</code> : <code>s</code>, epsilon sur <code>world</code></td><td><span class="hl">modifié</span></td></tr>
+<tr><td>main.cpp</td><td>EXE</td><td>Garde de vacuité du test ; suppression de la copie de <code>CheckControllerExclusivity</code></td><td><span class="hl">modifié</span></td></tr>
+<tr><td>assets/GraphScene/*.json</td><td>EXE</td><td><code>Overview_Camera</code> : <code>gizmoLength</code> 5 → 3</td><td><span class="hl">à vérifier (A9-8)</span></td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s4">4 · Algorithme détaillé du lot</h2>
+
+<p>Les lignes <span class="newl">vertes</span> sont créées par le lot ; les lignes
+<span class="hl">ambrées</span> sont modifiées.</p>
+
+<div class="algo">CameraGizmoSystem(registry, activeCamera, bindings)        <span class="d">(palier caméra)</span>
+│
+└─ pour chaque gizmo (CameraGizmoComponent, TransformComponent, DebugVisualComponent)
+     ├─ cam    ← CameraComponent de giz.m_owner          <span class="d">(TryGet + continue si détruite)</span>
+     ├─ aspect ← aspect du couple (m_owner, viewport)    <span class="d">(CameraBinding, A5 / bug 31)</span>
+     ├─ L      ← giz.m_length
+     ├─ <span class="newl">hs     ← GizmoHalfSection(cam, L)</span>              <span class="d">(SOURCE UNIQUE)</span>
+     │           <span class="newl">├─ ortho : { L, L }</span>                    <span class="d">(maquette, échelle L / (orthoHeight/2))</span>
+     │           <span class="newl">└─ persp : { L·tan(fovY/2), idem }</span>     <span class="d">(échelle 1, inchangé)</span>
+     ├─ <span class="hl">wanted ← { hs.x · aspect, hs.y, L }</span>
+     ├─ si wanted ≠ m_local.scale : écrire + m_dirty     <span class="d">(R11bis : seul l’écrivain lève)</span>
+     └─ dbg.m_color ← (m_owner == activeCamera) ? ambre : gris
+
+RenderView(view)                                          <span class="d">(INCHANGÉ — la preuve du §5.1)</span>
+└─ pour chaque maillage : si dbg.m_hideForCamera == view.sourceCamera → sauter
+
+<span class="d">_DEBUG, après le rendu des vues :</span>
+Test_GizmoMatchesFrustum(registry, rm, views, n, assets) → checked
+└─ pour chaque gizmo dont la caméra est rendue cette frame
+     ├─ asset, faceCount, expectedW                        <span class="d">(inchangé)</span>
+     ├─ <span class="newl">s ← GizmoHalfSection(cam, L).y / FrustumHalfHeightAt(cam, L)</span>
+     └─ pour chaque coin c du plan lointain
+          ├─ world ← c · m_worldMatrix ;  clip ← world · viewProjection
+          ├─ <span class="hl">eps ← 8 · FLT_EPSILON · max(1, |world|)</span>       <span class="d">(et non |camPos|)</span>
+          └─ <span class="hl">assert |clip.w − expectedW| &lt; eps ; ||clip.x/clip.w| − s| &lt; eps ; idem y</span>
+
+main.cpp : <span class="hl">assert (aucune caméra n’a déclaré de gizmo) OU (checked &gt; 0)</span>   <span class="d">(forme Discussion E, §9)</span></div>
+
+<h3>Avant / après</h3>
+
+<div class="ba">
+  <div class="before"><h5>Avant — branche ortho de CameraGizmoSystem (S1)</h5>
+  <pre><code>const float halfH = cam-&gt;m_orthoHeight * 0.5f;
+wanted = { halfH * aspect, halfH, L };
+<span class="cm">// orthoHeight 1200 → {256, 600, 5}</span></code></pre>
+  Exacte, mais bornée par la scène. <code>L</code> n’agit que sur la profondeur.</div>
+  <div class="after"><h5>Après — maquette (S2)</h5>
+  <pre><code>const Vec2f hs = GizmoHalfSection(*cam, L);
+wanted = { hs.x * aspect, hs.y, L };
+<span class="cm">// ortho : {L·aspect, L, L} → {1.28, 3, 3}</span></code></pre>
+  Le ratio x/y reste exactement <code>aspect</code> ; la taille est pilotée par <code>L</code>.</div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Avant — commentaire du composant</h5>
+  <pre><code>float m_length = 3.0f;  <span class="cm">// longueur d'affichage,</span>
+                        <span class="cm">// PAS le farPlane</span></code></pre>
+  Faux en ortho : ce champ n’affichait rien de la section.</div>
+  <div class="after"><h5>Après</h5>
+  <pre><code><span class="cm">// Taille d'affichage dans les DEUX modes :</span>
+<span class="cm">//  persp : demi-section = L·tan(fovY/2)  (échelle 1)</span>
+<span class="cm">//  ortho : demi-section = L  (échelle L/(orthoHeight/2))</span>
+<span class="cm">// Ce n'est jamais le farPlane.</span>
+float m_length = 3.0f;</code></pre></div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Avant — ce que le test attend</h5>
+  <pre><code>LV3_ASSERT(fabs(fabs(clip.x / clip.w) - 1.0f) &lt; eps);
+LV3_ASSERT(fabs(fabs(clip.y / clip.w) - 1.0f) &lt; eps);</code></pre>
+  Le coin tombe sur le bord du NDC : vrai en S1 par construction.</div>
+  <div class="after"><h5>Après — un rapport</h5>
+  <pre><code>const Vec2f hs = GizmoHalfSection(cam, giz.m_length);
+const float s  = hs.y / FrustumHalfHeightAt(cam, giz.m_length);
+LV3_ASSERT(fabs(fabs(clip.x / clip.w) - s) &lt; eps);
+LV3_ASSERT(fabs(fabs(clip.y / clip.w) - s) &lt; eps);</code></pre>
+  <code>s</code> = 1 en perspective ; <code>L/(orthoHeight/2)</code> en ortho.</div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Avant — epsilon</h5>
+  <pre><code>const Vec3f camPos{ m[3][0], m[3][1], m[3][2] };
+const float eps = 8.0f * FLT_EPSILON
+                * std::max(1.0f, camPos.length());</code></pre>
+  Indexé sur le nœud. Ignore l’encombrement du gizmo.</div>
+  <div class="after"><h5>Après</h5>
+  <pre><code>const float eps = 8.0f * FLT_EPSILON
+                * std::max(1.0f, world.length());
+<span class="cm">// world = le coin évalué = camPos ± encombrement</span></code></pre></div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>Avant — deux CheckControllerExclusivity</h5>
+  <pre><code><span class="cm">// System.hpp (LIB), défini dans le header, sans inline</span>
+void CheckControllerExclusivity(Registry&amp;) { ... }
+<span class="cm">// main.cpp (EXE), copie divergente</span>
+reg.getComponent&lt;NameComponent&gt;(e).m_id  <span class="cm">// sans garde</span>
+"\033[31mI[INVARIANT] ..."                 <span class="cm">// ANSI + coquille</span></code></pre></div>
+  <div class="after"><h5>Après — une seule, dans la LIB</h5>
+  <pre><code><span class="cm">// System.hpp</span>
+void CheckControllerExclusivity(Registry&amp; registry);
+<span class="cm">// System.cpp : garde hasComponent&lt;NameComponent&gt;,</span>
+<span class="cm">// sévérité portée par Logger::error, pas par la chaîne</span>
+<span class="cm">// main.cpp : l'appel seul</span></code></pre></div>
+</div>
+
+<div class="ba">
+  <div class="before"><h5>A9 (13/09) — garde de vacuité</h5>
+  <pre><code>const size_t n = Test_GizmoMatchesFrustum(...);
+LV3_ASSERT(n == 2);</code></pre>
+  Code en dur le nombre de caméras de <em>cette</em> scène.</div>
+  <div class="after"><h5>Discussion E (18/09) — généralisée</h5>
+  <pre><code>if (GizAssets.IsValid()) {
+    size_t declared = 0;
+    for (auto&amp;&amp; [e, cam] : registry.ViewGroup&lt;CameraComponent&gt;())
+        if (cam.m_gizmoLength &gt; 0.0f) ++declared;
+    LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);
+}</code></pre>
+  Vraie pour n’importe quelle scène (§9).</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s5">5 · La technique</h2>
+
+<h3>5.1 L’identification : une caméra ne voit jamais son propre gizmo</h3>
+
+<p>Deux lignes, écrites à l’A5, suffisent. Au spawn, chaque gizmo reçoit le nom de sa caméra comme
+caméra à exclure :</p>
+<pre><code>registry.addComponent(g, DebugVisualComponent{ Color{}, camEntity });
+<span class="cm">//                                                     ^^^^^^^^^ m_hideForCamera</span></code></pre>
+<p>Et <code>RenderView</code> l’exclut de la vue de cette caméra :</p>
+<pre><code>if (dbg &amp;&amp; dbg-&gt;m_hideForCamera == view.m_sourceCamera) continue;</code></pre>
+<p>Conséquence logique, sans exécuter une ligne : dans le viewport de <code>FPS_Camera</code>, le gizmo
+de <code>FPS_Camera</code> n’est <em>jamais</em> dessiné. Ce qui y apparaît ne peut être que le gizmo
+d’une autre caméra — ici, <code>Overview_Camera</code>. Le constat 1 n’est pas un bug, c’est cette
+règle ; et il réfute à lui seul le constat 3.</p>
+
+<p>Le laboratoire reproduit les deux gizmos et la matrice « qui est dessiné dans quelle vue ». Les
+scales sont calculées en float32 avec la formule du moteur ; avec les réglages par défaut, elles
+redonnent exactement les deux lignes de journal mesurées par Onky.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Overview_Camera</label>
+    <div class="seg" id="l1Proj"><button data-v="o" class="on">Ortho</button><button data-v="p">Perspective</button></div></div>
+  <div class="fld" style="flex:0 0 auto"><label>Sémantique du gizmo ortho</label>
+    <div class="seg" id="l1Sem"><button data-v="1" class="on">S1 (exact)</button><button data-v="2">S2 (maquette)</button></div></div>
+  <div class="fld"><label>orthoHeight <span class="val" id="l1OhV"></span></label><input type="range" id="l1Oh" min="0" max="1000" value="720"></div>
+  <div class="fld"><label>gizmoLength (Overview) <span class="val" id="l1LV"></span></label><input type="range" id="l1L" min="0" max="10" step="1" value="5"></div>
+</div>
+<div class="out" id="l1Out"></div>
+<canvas id="l1Cv" height="230"></canvas>
+<p class="d" style="font-size:.8rem;color:var(--ink3)">Vue de face, à l’échelle commune : rectangle ambre = section du gizmo d’<code>Overview_Camera</code> ;
+rectangle bleu = section du gizmo de <code>FPS_Camera</code> (souvent moins d’un pixel). Un cercle signale
+un objet trop petit pour être tracé.</p>
+
+<div class="tw"><table>
+<tr><th>Constat</th><th>Lecture correcte</th></tr>
+<tr><td>1 — le gizmo FPS n’apparaît pas dans la vue FPS</td><td>Règle A5 §4.6. Une caméra qui dessinerait son propre gizmo rendrait l’intérieur de son propre frustum, tranché par le near plane, plein écran.</td></tr>
+<tr><td>3 — « l’ortho contamine le gizmo FPS »</td><td>Erreur d’identité. C’est <code>__gizmo(Overview_Camera)</code> : 512 × 1200 × 5 unités, posé là où est sa caméra.</td></tr>
+<tr><td>4 — deux perspectives : rien</td><td>Prédit par la formule : deux gizmos de 2,4 unités, invisibles à l’échelle de la scène. Aucun rapport avec « les deux font le même calcul ».</td></tr>
+<tr><td>5 — même souci sur d’autres scenegraphs</td><td>La taille ne dépend que du couple (caméra, viewport). Le scenegraph n’entre pas dans <code>wanted</code>.</td></tr>
+<tr><td>« traits dans tous les sens »</td><td>Cette même dalle vue sous un angle rasant. Diagnostic géométrique juste, attribué au mauvais objet.</td></tr>
+</table></div>
+
+<h3>5.2 La cause : section constante contre section proportionnelle</h3>
+
+<p>La formule d’origine décrivait fidèlement les deux frustums. Mais leurs sections n’ont pas la même
+nature, et c’est l’A5 §2.4 qui le disait déjà :</p>
+<div class="tw"><table>
+<tr><th></th><th>Demi-section à la distance d</th><th>Dépend de L ?</th><th>Bornée par</th></tr>
+<tr><td>Perspective</td><td><code>d · tan(fovY/2)</code></td><td><b>oui</b> — proportionnelle</td><td><code>L</code>, que l’auteur choisit</td></tr>
+<tr><td>Orthographique</td><td><code>orthoHeight / 2</code></td><td><b>non</b> — constante</td><td><code>orthoHeight</code>, grandeur de scène (≤ 5000)</td></tr>
+</table></div>
+<p>Deux conséquences, restées invisibles jusqu’ici : en ortho, <code>gizmoLength</code> n’a aucune prise sur
+la section (vérifié par Onky : à <code>gizmoLength: 1</code>, l’objet reste géant) ; et la taille du gizmo
+ortho est dictée par la scène, pas par l’auteur. Le laboratoire montre la caméra de profil, son frustum
+et son gizmo.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Projection</label>
+    <div class="seg" id="l2Proj"><button data-v="o" class="on">Ortho</button><button data-v="p">Perspective</button></div></div>
+  <div class="fld" style="flex:0 0 auto"><label>Sémantique</label>
+    <div class="seg" id="l2Sem"><button data-v="1" class="on">S1</button><button data-v="2">S2</button></div></div>
+  <div class="fld"><label>L (gizmoLength) <span class="val" id="l2LV"></span></label><input type="range" id="l2L" min="1" max="10" step="0.5" value="3"></div>
+  <div class="fld"><label>fov (persp) <span class="val" id="l2FV"></span></label><input type="range" id="l2F" min="10" max="170" value="45"></div>
+  <div class="fld"><label>orthoHeight <span class="val" id="l2OV"></span></label><input type="range" id="l2O" min="1" max="30" step="0.5" value="12"></div>
+</div>
+<canvas id="l2Cv" height="260"></canvas>
+<div class="out" id="l2Out"></div>
+<div class="info">Faites varier <code>L</code> : en perspective, la section du gizmo suit ; en ortho S1, elle ne bouge
+pas d’un pixel — seule la profondeur change. En S2, <code>L</code> pilote la section dans les deux modes. (Pour garder
+le dessin lisible, l’ortho est limitée ici à 30 ; à 1200, la boîte S1 sortirait de l’écran de plusieurs centaines de
+fois.)</div>
+
+<div class="rule"><b>Règle R13.</b> Un gizmo de debug remplit deux fonctions contradictoires : <em>dire la vérité
+géométrique</em> (ceci est le volume vu par cette caméra) et <em>rester lisible</em> (il y a une caméra ici). La
+première a une taille imposée par la scène, la seconde par l’écran de l’observateur. Les séparer devient obligatoire
+dès qu’il existe deux observateurs.</div>
+
+<h3>5.3 Les trois sémantiques possibles — et le choix</h3>
+<p>Tant que la sémantique n’est pas tranchée, aucun code n’est « correct » ou « incorrect » : on ne sait pas ce
+qu’il doit faire.</p>
+<div class="tw"><table>
+<tr><th></th><th>Le gizmo est…</th><th>Taille imposée par</th><th>Prix</th><th>Statut</th></tr>
+<tr><td><b>S1</b></td><td>le frustum, échelle 1</td><td>la scène (<code>orthoHeight</code>)</td><td>illisible dès que la caméra cadre large</td><td>code d’origine</td></tr>
+<tr><td><b>S2</b></td><td>une maquette du frustum, échelle <code>s</code> connue</td><td>l’auteur (<code>gizmoLength</code>)</td><td>perte de la lecture du volume absolu ; le gizmo ortho ne réagit plus au zoom</td><td><b>retenu</b></td></tr>
+<tr><td><b>S3</b></td><td>une icône de taille constante à l’écran</td><td>l’écran de l’observateur</td><td>une donnée par couple (gizmo, observateur) — dette D2</td><td>plus tard (A9-1)</td></tr>
+</table></div>
+<p>S2 n’est pas une impasse : S3 est S2 avec un <code>s</code> recalculé pour chaque observateur. Et S2 n’est pas
+le correctif refusé en session précédente — celui-ci bornait la section par <code>L</code> composante par composante,
+écrasant le ratio x/y (contre-exemple CE2). Une maquette conserve la forme ; seule l’échelle change, d’une quantité
+connue.</p>
+
+<div class="rule"><b>Règle R15.</b> Un gizmo porte ce qui est <em>spatial</em> : position, orientation, forme,
+appartenance. Il ne porte pas ce qui est <em>scalaire</em>. Encoder une grandeur non bornée dans une géométrie produit
+un objet qui devient illisible précisément quand on aurait besoin de le lire.</div>
+
+<h3>5.4 Le rapport s — ce que le test doit attendre</h3>
+<p>Le test ne peut plus attendre ±1 en ortho. Il doit attendre le rapport entre la maquette et le frustum réel, à la
+même distance. Dérivation en perspective : le coin local <code>(1, 1, −1)</code> devient, en espace caméra,
+<code>(hs.x·aspect, hs.y, −L)</code>, et la projection divise par la demi-section réelle :</p>
+<pre><code>clip.x / clip.w = (hs.x · aspect) / (tan(fovY/2) · aspect · L)  =  hs.x / (L · tan(fovY/2))
+                                                                    ^^^^   ^^^^^^^^^^^^^^^^
+                                                                 affichée     réelle à L</code></pre>
+<p><b>L’aspect s’annule</b> : un seul <code>s</code> vaut pour x et pour y, et l’égalité <code>ndcX == ndcY</code>
+reste la signature d’un aspect correct. En ortho, <code>clip.w = 1</code> et la division se fait par
+<code>orthoHeight/2</code> : même forme. Le calculateur ci-dessous déroule la chaîne en float32 pour un coin, caméra à
+l’origine, et permet de désaccorder volontairement le système et le test — c’est l’état « mixte » de l’échange
+(§6, E4).</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Projection</label>
+    <div class="seg" id="l4Proj"><button data-v="o" class="on">Ortho</button><button data-v="p">Perspective</button></div></div>
+  <div class="fld" style="flex:0 0 auto"><label>Système</label>
+    <div class="seg" id="l4Sys"><button data-v="1">S1</button><button data-v="2" class="on">S2</button></div></div>
+  <div class="fld" style="flex:0 0 auto"><label>Test</label>
+    <div class="seg" id="l4Tst"><button data-v="1">attend 1</button><button data-v="2" class="on">attend s</button></div></div>
+  <div class="fld"><label>orthoHeight</label><select id="l4Oh"><option>12</option><option selected>1200</option><option>5000</option></select></div>
+  <div class="fld"><label>fov</label><select id="l4F"><option selected>45</option><option>90</option><option>170</option></select></div>
+  <div class="fld"><label>L</label><select id="l4L"><option>1</option><option selected>3</option><option>5</option></select></div>
+</div>
+<div class="out" id="l4Out"></div>
+
+<h3>5.5 L’epsilon : quelle magnitude gouverne l’erreur ?</h3>
+<p>Le test compare des grandeurs obtenues par une chaîne de produits matriciels en float32. L’erreur naît de
+l’annulation entre termes de même magnitude <code>M</code> ; elle vaut quelques <code>FLT_EPSILON · M</code>. Le test
+indexait <code>M</code> sur la position du nœud caméra. Or le coin évalué vaut <code>camPos ± encombrement du
+gizmo</code> : quand la caméra est près de l’origine et que le gizmo est grand, c’est l’encombrement qui domine — et
+l’epsilon l’ignorait.</p>
+<p>Le laboratoire exécute la chaîne réelle du moteur en float32, sans FMA (<code>world = local × parentWorld</code>,
+<code>viewProjection = view × proj</code>, puis <code>MulRow</code>), sur des caméras tirées au hasard (lacet, tangage,
+direction) à la distance choisie. Il compte combien de coins font sauter chacun des deux epsilons — alors qu’il n’y a
+<b>aucun bug</b> dans la chaîne simulée.</p>
+
+<div class="ctl">
+  <div class="fld" style="flex:0 0 auto"><label>Projection</label>
+    <div class="seg" id="l5Proj"><button data-v="p" class="on">Perspective</button><button data-v="o">Ortho</button></div></div>
+  <div class="fld" style="flex:0 0 auto"><label>Sémantique</label>
+    <div class="seg" id="l5Sem"><button data-v="1" class="on">S1</button><button data-v="2">S2</button></div></div>
+  <div class="fld"><label>fov (persp)</label><select id="l5F"><option>45</option><option>120</option><option selected>170</option></select></div>
+  <div class="fld"><label>orthoHeight (ortho)</label><select id="l5Oh"><option>12</option><option>1200</option><option selected>5000</option></select></div>
+  <div class="fld"><label>|camPos|</label><select id="l5D"><option selected>0</option><option>1</option><option>100</option><option>10000</option><option>100000</option><option>1000000</option></select></div>
+  <button class="btn pri" id="l5Run">Lancer 500 caméras</button>
+</div>
+<div class="out" id="l5Out">Cliquez sur « Lancer ».</div>
+<div class="note"><b>Ce que le calcul montre</b> (graine fixe, résultat reproductible) : en perspective à fov 170°,
+caméra à l’origine, l’erreur réelle atteint ≈ 2,0·10⁻⁶ alors que l’ancien epsilon vaut 8·ε ≈ 9,5·10⁻⁷ : il saute
+sur 157 coins sur 2000 (≈ 8 %), <b>sans aucun bug</b>. C’est le constat 2 — « l’assert saute quand on dézoome
+beaucoup » : le dézoom perspective pousse le fov vers 170°, le gizmo atteint ≈ 44 unités d’encombrement, et c’est cet
+encombrement qui gouverne l’erreur. L’epsilon indexé sur <code>|world|</code> ne saute jamais (rapport erreur/epsilon ≤ 0,15 sur tous les cas essayés). En
+ortho, la chaîne simplifiée ne reproduit pas d’échec : l’ortho du moteur compose davantage (hiérarchie, ligne z), le
+cas n’est donc pas démontré ici.</div>
+<div class="warn"><b>Ce que le calcul révèle en plus.</b> À <code>|camPos| = 10⁶</code>, l’epsilon honnête vaut
+8·ε·10⁶ ≈ 0,95. Un bug d’ordre 1 — un aspect faux donne un écart de 0,33 — passe alors <em>sous</em> la tolérance :
+le test devient aveugle au-delà de <code>|world|</code> ≈ 3,5·10⁵ unités. Ce n’est pas une faute de l’epsilon, c’est la
+limite du float32 loin de l’origine. Dette A9-5.</div>
+
+<h3>5.6 La duplication, deux fois en une heure</h3>
+<p><b>Le facteur <code>s</code></b> s’est retrouvé écrit dans le système et dans le test. Au premier retour arrière,
+le système est revenu en S1, le test est resté en S2 : assert, écart 0,995. Rien n’obligeait les deux copies à rester
+d’accord.</p>
+<p><b><code>CheckControllerExclusivity</code></b> existait dans la LIB et dans l’EXE. Elle a été découverte <em>par
+accident</em> : l’ajout de <code>#include "System.hpp"</code> dans <code>DebugGizmos.hpp</code> a rendu les deux
+définitions visibles ensemble. Ni test ni revue ne pouvaient la voir — aucun ne lit deux fichiers à la fois. Et elle
+divergeait déjà : la copie EXE déréférençait <code>NameComponent</code> sans garde, alors que ce composant est
+optionnel. Un diagnostic qui plante avant d’afficher ce qu’il a trouvé est pire qu’absent.</p>
+<p>Trois défauts de la copie EXE, et un de la copie LIB :</p>
+<div class="tw"><table>
+<tr><th>Point</th><th>LIB</th><th>EXE</th></tr>
+<tr><td>Propriétaire de l’invariant</td><td>oui : ses composants, ses systèmes</td><td>non : un consommateur ; un second EXE repartirait sans filet</td></tr>
+<tr><td><code>NameComponent</code> optionnel</td><td>gardé (<code>hasComponent</code>)</td><td><b>non gardé</b></td></tr>
+<tr><td>Sévérité</td><td><code>Logger::error</code></td><td>codes ANSI dans la chaîne, coquille <code>I[INVARIANT]</code></td></tr>
+<tr><td>Sortie au plus tôt</td><td>deux <code>continue</code>, avant le <code>TryGet</code></td><td>un <code>if</code> combiné après le <code>TryGet</code></td></tr>
+<tr><td>Définition</td><td><b>dans le header, sans <code>inline</code></b> : <code>LNK2005</code> au 2ᵉ <code>.cpp</code> qui l’inclut</td><td>—</td></tr>
+</table></div>
+
+<div class="rule"><b>Règle R16.</b> Une règle ou une formule partagée entre deux sites doit exister en un seul
+exemplaire, exposé comme fonction. Deux copies ne divergent pas <em>si</em> on modifie l’une sans l’autre : elles
+divergent <em>quand</em>. Une règle dupliquée entre la librairie et son harnais de test transforme le test en
+tautologie — il vérifie sa copie, pas le moteur.</div>
+
+<p>D’où <code>GizmoHalfSection</code>. Mais mutualiser une formule entre un système et son test est, en général, la
+façon la plus sûre de vider le test. Ici, il ne rejoue pas le calcul : il forme un rapport entre deux grandeurs
+d’origines différentes — le numérateur vient du gizmo, le dénominateur de la définition du frustum
+(<code>FrustumHalfHeightAt</code>) — puis vérifie que ce rapport survit à toute la chaîne
+<code>m_local.scale → LocalTransformSystem → WorldTransformSystem → viewProjection</code>.</p>
+
+<div class="rule"><b>Règle R17.</b> Un test peut partager avec le système la <em>définition</em> d’une grandeur, jamais
+la <em>chaîne de traitement</em> qui la transporte. Partager la définition supprime un doublon ; partager la chaîne
+supprime le test.</div>
+<div class="warn"><b>Amendé (règle du lot D-a1d, 06/11).</b> R17 protège la chaîne, pas la définition : si
+<code>GizmoHalfSection</code> elle-même était fausse — par exemple <code>{L, L}</code> en perspective —, le système et
+le test suivraient ensemble et le test resterait vert. La règle de D-a1d le dit : <em>une TNR qui compare deux
+implémentations d’une même formule ne voit pas une erreur dans la formule ; toute formule nouvelle reçoit une
+référence indépendante</em>. Voir §9 et A9-4.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s6">6 · Les étapes</h2>
+
+<p>Chaque étape donne son objectif, ce qu’elle utilise de l’étape précédente et ce qu’elle produit, mesuré par Onky
+ou calculé en float32. L’ordre n’est pas négociable : l’étape 2 n’est reproductible <em>qu’avant</em> l’étape 3, et
+l’étape 4 n’a de sens qu’entre l’étape 3 et l’étape 5.</p>
+
+<div class="info"><b>Pendant scalaire / vectorisé.</b> Ce lot n’en a pas, volontairement. <code>CameraGizmoSystem</code>
+traite un gizmo par caméra (2 dans la scène, <code>LV3_MAX_VIEWPORT</code> au plus) ; le test tourne en
+<code>_DEBUG</code> sur 4 coins par gizmo. Huit couloirs AVX2 pour deux éléments, c’est six couloirs vides et un coût de
+mise en place supérieur au calcul. La règle du projet — vectoriser ce qui est chaud et volumineux — exclut ce code.
+Le seul calcul vectorisé qu’il touche indirectement est l’étage sommets (<code>TransformPositions</code>), qui
+transforme les sommets du gizmo comme ceux de n’importe quel mesh : inchangé.</div>
+
+<details class="step" open><summary><span class="n">E1</span> Identifier l’objet — avant toute hypothèse sur la cause</summary><div class="body">
+<p class="goal">Pourquoi : tant que l’entité fautive n’est pas nommée par le programme, toute hypothèse sur la cause
+porte peut-être sur le mauvais objet. Trois mesures, trois minutes.</p>
+<dl class="io"><dt>Utilise</dt><dd>le raisonnement du §5.1 (le gizmo FPS ne peut pas être dans la vue FPS)</dd>
+<dt>Produit</dt><dd>l’identité de l’objet géant, établie par le programme</dd></dl>
+<p><b>Mesure 1 — journal dans <code>CameraGizmoSystem</code></b>, juste après le calcul de <code>wanted</code> :</p>
+<pre><code>Logger::info("[gizmo]" + NameOf(e) + "-&gt;scale(" + ... + ")");</code></pre>
+<div class="out"><span class="d">mesuré par Onky :</span>
+[gizmo]__gizmo(FPS_Camera (idx 80, gen 0))-&gt;scale(<span class="g">1.590580, 1.242641, 3.000000</span>)
+[gizmo]__gizmo(Overview_Camera (idx 81, gen 0))-&gt;scale(<span class="r">256.000000, 600.000000, 5.000000</span>)
+<span class="d">recalcul float32 : tan(22,5°) = 0.41421357 ; ×3 = 1.2426407 ; ×1,28 = 1.5905801  → identique</span>
+<span class="d">                  600 × 0,42666668 = 256.0000              → identique</span></div>
+<p><b>Mesure 2 — suppression ciblée</b> : <code>"gizmoLength": 0</code> sur <code>Overview_Camera</code> →
+l’objet disparaît. <code>SpawnCameraGizmos</code> filtre sur <code>m_gizmoLength &gt; 0.0f</code> : l’entité n’existe plus.</p>
+<p><b>Mesure 3 — variation continue</b> : <code>orthoHeight</code> 1200 → 12 → l’objet rétrécit d’un facteur 100.
+À <code>gizmoLength: 1</code>, il reste géant (§5.2).</p>
+<div class="good"><b>Résultat.</b> Le gizmo de la FPS est sain <em>pendant</em> que l’autre est à 600. Aucune fuite,
+aucun couplage, aucun état partagé. Au passage, <code>1.590580 / 1.242641 = 1,280</code> contre
+<code>256 / 600 = 0,427</code> : deux aspects distincts, chacun issu de son viewport — <code>CameraBinding</code>
+fonctionne (bug 31).</div>
+</div></details>
+
+<details class="step"><summary><span class="n">E2</span> L’epsilon sur le coin évalué — tant que le défaut est reproductible</summary><div class="body">
+<p class="goal">Pourquoi : une tolérance doit suivre la magnitude qui gouverne l’erreur. Avec l’ancien code (S1),
+l’encombrement du gizmo est grand : c’est le seul moment où l’on peut voir l’ancien epsilon échouer et le nouveau tenir.</p>
+<dl class="io"><dt>Utilise</dt><dd>E1 : on sait quel gizmo est grand et pourquoi</dd>
+<dt>Produit</dt><dd>un test qui ne saute plus sur du bruit, sans perdre sa détection</dd></dl>
+<div class="ba">
+<div class="before"><h5>Avant</h5><pre><code>const Vec3f camPos{ trGiz.m_worldMatrix[3][0],
+                    trGiz.m_worldMatrix[3][1],
+                    trGiz.m_worldMatrix[3][2] };
+const float eps = kUlpMargin * FLT_EPSILON
+                * std::max(1.0f, camPos.length());</code></pre></div>
+<div class="after"><h5>Après</h5><pre><code><span class="cm">// M = magnitude du COIN : camPos ± encombrement</span>
+constexpr float kUlpMargin = 8.0f;
+const float eps = kUlpMargin * FLT_EPSILON
+                * std::max(1.0f, world.length());</code></pre></div></div>
+<div class="out"><span class="d">laboratoire §5.5, perspective, fov 170°, |camPos| = 0, S1 :</span>
+erreur réelle max           ≈ 1,99e-6     <span class="d">(|world| jusqu’à 55,8 : l’encombrement du gizmo)</span>
+ancien epsilon  8·ε·1       =  9,54e-7    <span class="r">dépassé 157 fois sur 2000, sans bug</span>
+nouvel epsilon  8·ε·|world| ≤  5,3e-5     <span class="g">jamais dépassé (rapport max 0,04)</span>
+bug d’aspect (écart 0,33)   : <span class="g">toujours détecté</span> (0,33 ≫ 5,3e-5)</div>
+<p>Écart notable : la ligne <code>camPos</code> devient sans usage et part. <code>world</code> est déjà calculé deux
+lignes plus haut — aucune donnée nouvelle.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">E3</span> S2 dans CameraGizmoSystem, par la source unique</summary><div class="body">
+<p class="goal">Pourquoi : rendre <code>gizmoLength</code> maître de la taille dans les deux modes, en conservant la
+forme exacte (le ratio x/y).</p>
+<dl class="io"><dt>Utilise</dt><dd>E1 : <code>Overview_Camera</code> → (256, 600, 5) ; aspect 0,42666668</dd>
+<dt>Produit</dt><dd><code>__gizmo(Overview_Camera)</code> → (1.28, 3, 3) avec <code>L = 3</code></dd></dl>
+<pre><code><span class="cm">// DebugGizmos.hpp — SOURCE UNIQUE, consommée par le système ET par le test</span>
+[[nodiscard]] inline Vec2f GizmoHalfSection(const CameraComponent&amp; cam, float L) noexcept
+{
+    if (cam.m_projection == EProjectionType::Orthographic)
+        return { L, L };                         <span class="cm">// maquette</span>
+    const float tanHalf = std::tan(CameraFovY(cam) * 0.5f);
+    return { L * tanHalf, L * tanHalf };         <span class="cm">// échelle 1 exacte</span>
+}</code></pre>
+<div class="ba">
+<div class="before"><h5>Avant — CameraGizmoSystem</h5><pre><code>if (cam-&gt;m_projection == EProjectionType::Orthographic) {
+    const float halfH = cam-&gt;m_orthoHeight * 0.5f;
+    wanted = { halfH * aspect, halfH, L };
+} else {
+    const float tanHalf = std::tan(CameraFovY(*cam) * 0.5f);
+    wanted = { L * tanHalf * aspect, L * tanHalf, L };
+}</code></pre></div>
+<div class="after"><h5>Après</h5><pre><code>const Vec2f hs = GizmoHalfSection(*cam, L);
+wanted = { hs.x * aspect, hs.y, L };</code></pre></div></div>
+<div class="out">perspective (FPS)  : hs = (1.2426407, 1.2426407) → wanted = (<span class="g">1.5905801, 1.2426407, 3</span>)  <span class="d">inchangé</span>
+ortho (Overview)   : hs = (3, 3)               → wanted = (<span class="a">1.2799999, 3, 3</span>)       <span class="d">était (256, 600, 5)</span>
+encombrement       : 512 × 1200 × 5  →  2,56 × 6 × 3 unités    <span class="d">(÷ 200)</span></div>
+</div></details>
+
+<details class="step"><summary><span class="n">E4</span> Lancer les tests sans toucher au test — le rouge attendu</summary><div class="body">
+<p class="goal">Pourquoi : un test qui était vert avant un changement d’un facteur 200 et vert après, sans qu’on l’ait
+vu rouge, est indiscernable d’un test qui ne regarde plus rien. Le rouge à la valeur prédite est la preuve qu’il
+surveille l’échelle.</p>
+<dl class="io"><dt>Utilise</dt><dd>E3 (système en S2), test encore en « attend 1 »</dd>
+<dt>Produit</dt><dd>un échec sur <code>x/w</code> et <code>y/w</code> d’<code>Overview</code>, à la valeur exacte</dd></dl>
+<div class="out">prédit : |clip.x/clip.w| = L/(orthoHeight/2) = 3/600 = <span class="a">0.004999999888</span>   attendu par le test : 1   → <span class="r">ROUGE</span></div>
+<p><b>Ce qui s’est réellement passé.</b> Les étapes 2, 3 et 5 ont d’abord été appliquées d’un bloc : tout vert, rouge
+intermédiaire jamais vu. Puis un retour arrière partiel a produit l’état <em>miroir</em> : système revenu en S1, test
+resté en S2.</p>
+<div class="out"><span class="d">mesuré par Onky (orthoHeight 12 ou 5000, peu importe) :</span>
+clip.x / clip.w = <span class="a">-1</span>          <span class="d">← en S1 le coin EST le bord du NDC, par construction</span>
+s               = 3/600 = 0.005   <span class="d">(test en S2)</span>
+écart           = |1 − 0,005| = <span class="r">0,995</span>  → assert</div>
+<div class="good"><b>Lecture.</b> Un écart de 0,995 n’est pas de la précision (10⁻⁷…10⁻⁴) : c’est un désaccord de
+formule. Et ce rouge accidentel <em>est</em> la vérification : il prouve que le test inspecte l’échelle du gizmo ortho,
+avec un écart exactement égal à <code>1 − s</code>. Combiné à <code>n == 2</code>, le doute est levé.</div>
+</div></details>
+
+<details class="step"><summary><span class="n">E5</span> Paramétrer le test par le rapport s</summary><div class="body">
+<p class="goal">Pourquoi : le test doit attendre où le coin <em>doit</em> tomber en NDC, c’est-à-dire le rapport
+maquette / frustum réel, dérivé de la même définition que le système (R16), sans rejouer sa chaîne (R17).</p>
+<dl class="io"><dt>Utilise</dt><dd>E3 (<code>GizmoHalfSection</code>), §5.4 (l’aspect s’annule)</dd>
+<dt>Produit</dt><dd>un test vert dans les deux sémantiques, qui garde ses six détections</dd></dl>
+<pre><code><span class="cm">// DebugGizmos.hpp — la grandeur par laquelle la projection divise</span>
+[[nodiscard]] inline float FrustumHalfHeightAt(const CameraComponent&amp; cam, float d) noexcept
+{
+    return (cam.m_projection == EProjectionType::Orthographic)
+         ? cam.m_orthoHeight * 0.5f
+         : d * std::tan(CameraFovY(cam) * 0.5f);
+}</code></pre>
+<div class="ba">
+<div class="before"><h5>Avant</h5><pre><code>LV3_ASSERT(fabs(fabs(clip.x / clip.w) - 1.0f) &lt; eps);
+LV3_ASSERT(fabs(fabs(clip.y / clip.w) - 1.0f) &lt; eps);</code></pre></div>
+<div class="after"><h5>Après</h5><pre><code><span class="cm">// s scalaire : hs.x == hs.y dans les deux modes actuels.</span>
+<span class="cm">// Une demi-section non uniforme exigerait s.x et s.y.</span>
+const Vec2f hs = GizmoHalfSection(cam, giz.m_length);
+const float s  = hs.y / FrustumHalfHeightAt(cam, giz.m_length);
+LV3_ASSERT(fabs(fabs(clip.x / clip.w) - s) &lt; eps);
+LV3_ASSERT(fabs(fabs(clip.y / clip.w) - s) &lt; eps);</code></pre></div></div>
+<div class="tw"><table class="lanes">
+<tr><th>orthoHeight</th><th>prédit (float32)</th><th>mesuré par Onky</th><th></th></tr>
+<tr><td class="l">12</td><td>0.5</td><td>0.5</td><td class="pass">=</td></tr>
+<tr><td class="l">1200</td><td>0.00499999989</td><td>0.00499999989</td><td class="pass">=</td></tr>
+<tr><td class="l">5000</td><td>0.00120000006</td><td>0.00120000006</td><td class="pass">=</td></tr>
+<tr><td class="l">perspective</td><td>1 (exact)</td><td>vert</td><td class="pass">=</td></tr>
+</table></div>
+<p>Le point décisif : <code>s</code> varie avec <code>orthoHeight</code> alors qu’il était figé à 1 en S1. Le test
+suit l’échelle réelle du gizmo ; <code>isOrtho</code> disparaît du calcul de <code>s</code> — plus une seule branche
+dupliquée entre système et test.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">E6</span> Garder le test non vide</summary><div class="body">
+<p class="goal">Pourquoi : <code>LV3_ASSERT(checked &gt; 0)</code> avait été remplacé par un <code>Logger::info</code>.
+Un test vert qui n’a rien exécuté est pire qu’un test absent : il faut prouver que la branche ortho a tourné.</p>
+<dl class="io"><dt>Utilise</dt><dd>E5 : <code>Test_GizmoMatchesFrustum</code> retourne <code>checked</code></dd>
+<dt>Produit</dt><dd><code>n == 2</code> mesuré par Onky (FPS + Overview)</dd></dl>
+<div class="ba">
+<div class="before"><h5>A9, 13/09</h5><pre><code>LV3_ASSERT(n == 2);</code></pre>Juste ce jour-là, sur cette scène.</div>
+<div class="after"><h5>Amendé, Discussion E, 18/09</h5><pre><code>LV3_ASSERT(declared == 0 || nGizChecked &gt; 0);</code></pre>
+Généralisé : vrai avec 1, 2 ou 5 caméras (§9).</div></div>
+</div></details>
+
+<details class="step"><summary><span class="n">E7</span> Une seule CheckControllerExclusivity</summary><div class="body">
+<p class="goal">Pourquoi : l’invariant appartient à qui le porte (la LIB) ; un diagnostic ne doit jamais planter avant
+d’afficher ce qu’il a trouvé ; une fonction définie dans un header sans <code>inline</code> attend son
+<code>LNK2005</code>.</p>
+<dl class="io"><dt>Utilise</dt><dd>la découverte accidentelle via <code>#include "System.hpp"</code> (E3)</dd>
+<dt>Produit</dt><dd>une définition, en <code>.cpp</code>, appelée par l’EXE</dd></dl>
+<pre><code><span class="cm">// System.cpp</span>
+void CheckControllerExclusivity(Registry&amp; registry)
+{
+    for (auto&amp;&amp; [entity, fps] : registry.ViewGroup&lt;FPSControllerComponent&gt;())
+    {
+        if (!fps.m_isEnabled) continue;                        <span class="cm">// cas dominant, avant le TryGet</span>
+        const CameraFollowComponent* follow = registry.TryGet&lt;CameraFollowComponent&gt;(entity);
+        if (!follow || !follow-&gt;m_isEnabled) continue;
+        <span class="cm">// NameComponent est optionnel : un diagnostic ne plante JAMAIS avant d'avoir parlé</span>
+        const std::string name = registry.hasComponent&lt;NameComponent&gt;(entity)
+            ? registry.getComponent&lt;NameComponent&gt;(entity).m_id
+            : std::string("&lt;sans nom&gt;");
+        Logger::error("[INVARIANT] " + name + " : FPSControllerComponent ET CameraFollowComponent"
+                      " actifs simultanement — le second ecrasera le Transform du premier");
+        LV3_ASSERT(false);   <span class="cm">// Debug : arrêt au premier ; Release : la liste complète au journal</span>
+    }
+}</code></pre>
+</div></details>
+
+<details class="step"><summary><span class="n">E8</span> Nettoyer</summary><div class="body">
+<p class="goal">Pourquoi : un résidu de test oublié devient une différence inexpliquée six mois plus tard.</p>
+<dl class="io"><dt>Utilise</dt><dd>E3 : avec S2, <code>gizmoLength</code> compte à nouveau en ortho</dd>
+<dt>Produit</dt><dd>scène et code sans trace du diagnostic</dd></dl>
+<ul>
+<li><code>Overview_Camera</code> : <code>"gizmoLength": 5</code> → <code>3</code> (résidu du test qui a écarté la piste « fuite de <code>gizmo.length</code> »). À vérifier (A9-8).</li>
+<li>Sonde « triangle quasi dégénéré » dans <code>RasterizeTriangle</code> : disculpée, et la géométrie extrême a disparu. Toujours listée en « code commenté à supprimer » dans le carnet de route (= A7-9).</li>
+<li>Journal <code>[gizmo]</code> de E1 : à retirer.</li>
+</ul>
+</div></details>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s6c">6.1 · Contre-exemples chiffrés</h2>
+
+<div class="counter"><span class="lbl">CE1 — identifier par l’œil</span>
+« Le gizmo de la FPS grossit. » Une session entière sur une fuite de données inexistante, des hypothèses cohérentes et
+argumentées (« état mutable partagé dans <code>ResourceManager</code> »), toutes sur le mauvais objet. La réfutation
+tenait en deux lignes déjà écrites et ne demandait aucune exécution.</div>
+
+<div class="counter"><span class="lbl">CE2 — borner la section composante par composante</span>
+<pre><code>wanted = { std::min(halfH * aspect, L), std::min(halfH, L), L };   <span class="cm">// tentative refusée</span></code></pre>
+Avec <code>orthoHeight 1200</code>, aspect 0,42666668, <code>L = 3</code> : <code>wanted = (3, 3, 3)</code>, donc
+<code>ndcX = 3/256 = 0.01171875</code> et <code>ndcY = 3/600 = 0.00499999989</code>. Rapport <b>2,34 = 1/aspect</b> :
+le gizmo est carré alors que le frustum est 2,34 fois plus haut que large. Il ment sur la forme — et le test le refuse,
+à raison. S2 écrit <code>{L·aspect, L}</code> : <code>ndcX = ndcY = s</code>.</div>
+
+<div class="counter"><span class="lbl">CE3 — encoder un scalaire non borné dans une arête</span>
+S1 à la butée du zoom (<code>orthoHeight = 5000</code>, aspect 0,427) : une dalle de <b>2133 × 5000</b> unités. Au moment
+précis où la valeur devient intéressante — la caméra cadre très large —, le gizmo masque la scène.</div>
+
+<div class="counter"><span class="lbl">CE4 — élargir l’epsilon pour faire passer le rouge</span>
+L’état mixte donne un écart de 0,995. Un epsilon qui l’absorberait absorberait aussi un aspect faux (0,33), un fov faux,
+un scale non cuit (écart 1). On ne règle jamais un désaccord de formule par une tolérance.</div>
+
+<div class="counter"><span class="lbl">CE5 — compter les caméras en dur</span>
+<code>LV3_ASSERT(n == 2)</code> casse dès qu’une troisième caméra apparaît (<code>solar_system_v1compat_belt.json</code>),
+et passe à tort si une scène à 2 caméras perd son gizmo ortho mais en gagne un autre. Corrigé en Discussion E (§9).</div>
+
+<div class="counter"><span class="lbl">CE6 — la même formule à deux endroits</span>
+Système S1 + test S2 → assert à 0,995, alors qu’aucun des deux fichiers n’est faux pris isolément. La faute est dans
+l’existence de deux copies.</div>
+
+<div class="counter"><span class="lbl">CE7 — un diagnostic qui plante</span>
+La copie EXE de <code>CheckControllerExclusivity</code> appelle <code>getComponent&lt;NameComponent&gt;</code> sans
+garde : une entité sans nom fait tomber le code de diagnostic <em>avant</em> qu’il affiche le conflit qu’il a trouvé.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s7">7 · Vérifier</h2>
+
+<h3>7.1 Tests hors moteur</h3>
+<ul>
+<li>Le calculateur du §5.4 déroule la chaîne d’un coin en float32 dans les quatre combinaisons système/test : seules
+les deux combinaisons accordées passent.</li>
+<li>Le laboratoire du §5.5 exécute la chaîne matricielle complète sur 500 caméras aléatoires (graine fixe) et compte les
+dépassements des deux epsilons, sans bug injecté.</li>
+<li>Proposé (A9-4, non fait) — une référence indépendante de la définition, à valeurs littérales, pour qu’une erreur
+dans <code>GizmoHalfSection</code> ne passe pas inaperçue (règle D-a1d) :</li>
+</ul>
+<pre><code><span class="cm">// TestGizmoHalfSection — hors moteur, Registry inutile</span>
+CameraComponent p; p.m_projection = EProjectionType::Perspective; <span class="cm">/* fov 45° */</span>
+CameraComponent o; o.m_projection = EProjectionType::Orthographic; o.m_orthoHeight = 1200.0f;
+LV3_ASSERT(std::fabs(GizmoHalfSection(p, 3.0f).y - 1.2426407f) &lt; 1e-6f);  <span class="cm">// 3·tan(22,5°)</span>
+LV3_ASSERT(GizmoHalfSection(o, 3.0f).y == 3.0f);                          <span class="cm">// S2 : L, pas 600</span>
+LV3_ASSERT(std::fabs(FrustumHalfHeightAt(o, 3.0f) - 600.0f) &lt; 1e-6f);</code></pre>
+
+<h3>7.2 Filets Debug en place</h3>
+<ul>
+<li><code>Test_GizmoMatchesFrustum</code> : asset, <code>faceCount</code> (8 / 14), <code>clip.w</code>, <code>x/w</code>,
+<code>y/w</code> contre <code>s</code>, épsilon sur <code>|world|</code>.</li>
+<li>Garde de vacuité <code>declared == 0 || nGizChecked &gt; 0</code> (forme Discussion E).</li>
+<li><code>Test_GizmoCountMatchesCameras(Registry&amp;, const GizmoAssets&amp;)</code> (bug 55/56) : un gizmo par caméra
+qui l’a demandé et dont l’asset est chargé.</li>
+<li><code>CheckControllerExclusivity</code> chaque frame, avant les contrôleurs.</li>
+</ul>
+
+<h3>7.3 Prédictions et mesures</h3>
+<div class="tw"><table>
+<tr><th>Prédiction</th><th>Valeur prédite</th><th>Mesuré</th></tr>
+<tr><td>scale gizmo FPS (fov 45, L 3, aspect 1,28)</td><td class="num">1.5905801, 1.2426407, 3</td><td class="num">1.590580, 1.242641, 3.000000</td></tr>
+<tr><td>scale gizmo Overview, S1 (orthoHeight 1200, aspect 0,427, L 5)</td><td class="num">256, 600, 5</td><td class="num">256.000000, 600.000000, 5.000000</td></tr>
+<tr><td><code>gizmoLength 0</code> sur Overview</td><td>l’objet disparaît</td><td>disparaît</td></tr>
+<tr><td><code>orthoHeight 12</code></td><td>÷ 100</td><td>« beaucoup plus petit »</td></tr>
+<tr><td>état mixte S1/S2, <code>clip.x/clip.w</code></td><td class="num">±1</td><td class="num">−1</td></tr>
+<tr><td><code>s</code> à 12 / 1200 / 5000</td><td class="num">0.5 / 0.00499999989 / 0.00120000006</td><td class="num">identiques</td></tr>
+<tr><td><code>Test_GizmoMatchesFrustum</code> retourne</td><td class="num">2</td><td class="num">2</td></tr>
+</table></div>
+
+<h3>7.4 Vérification à l’œil</h3>
+<p>La dalle a disparu du viewport de rendu. Le gizmo d’<code>Overview_Camera</code> mesure 2,56 × 6 × 3 unités ; à
+l’échelle de la scène, il est probablement invisible depuis la FPS — <b>c’est attendu</b>, c’est la limite de S2 :
+une maquette à l’échelle du monde reste soumise à la perspective. Le rendre lisible à toute distance, c’est S3.
+Le gizmo ortho ne réagit plus au zoom molette (A7) : normal aussi, c’est le prix de S2.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s8">8 · Exemples d’utilisation</h2>
+
+<h3>Régler la taille d’un gizmo, quelle que soit la projection</h3>
+<pre><code>{ "name": "Top_Camera",
+  "camera": { "projection": "orthographic", "orthoHeight": 1200, "gizmoLength": 3 } }
+<span class="cm">// S2 : section du gizmo = 2·L de haut, 2·L·aspect de large, L de profondeur</span>
+<span class="cm">//      → 6 × 2,56 × 3 unités avec un viewport d’aspect 0,427,
+<span class="cm">//      quel que soit orthoHeight ou le zoom molette</span></span>
+
+{ "name": "FPS_Camera",
+  "camera": { "projection": "perspective", "fovYDeg": 45, "gizmoLength": 3 } }
+<span class="cm">// échelle 1 : pyramide exacte jusqu'à L = 3 unités, section 2·3·tan(22,5°) = 2,49</span></code></pre>
+<p><code>gizmoLength</code> veut désormais dire la même chose dans les deux modes : la taille d’affichage. Pour un gizmo
+plus visible depuis une caméra lointaine, on l’augmente ; il garde la forme de son frustum.</p>
+
+<h3>Retirer un gizmo d’une scène de mesure</h3>
+<pre><code>"gizmoLength": 0     <span class="cm">// SpawnCameraGizmos ne crée pas l'entité</span></code></pre>
+<p>C’est la règle des scènes de banc (lot V3) : un gizmo ajoute ≈ 80 faces et ≈ 15 % de pixels.</p>
+
+<h3>Réutiliser le protocole d’identification</h3>
+<p>Pour tout objet qui « se comporte mal » : (1) journaliser nom + grandeur dans le système qui l’écrit ;
+(2) supprimer une seule entité candidate et regarder si le symptôme disparaît ; (3) faire varier continûment le
+paramètre suspect et vérifier que l’effet suit la loi prédite. Trois mesures, aucune hypothèse sur la cause.</p>
+
+<h3>Ajouter une troisième caméra</h3>
+<p>Rien à toucher : chaque gizmo prend l’aspect de son couple (caméra, viewport), le test en vérifie autant qu’il y en a
+de rendues, et la garde de vacuité généralisée (§9) ne dépend pas de leur nombre.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s9">9 · Ce que les échanges suivants ont amendé</h2>
+
+<p>Ce lot a été produit le 13/09/2026. Des discussions et des lots ultérieurs remettent en question plusieurs de ses
+affirmations. Chaque amendement est donné en avant / après.</p>
+
+<h3>9.1 La politique de visibilité « façon Unity » — non retenue (Discussion E, bug 56)</h3>
+<div class="ba">
+<div class="before"><h5>A9 §11.2, proposé</h5>Ne dessiner que le frustum de la caméra active :
+<pre><code>struct DebugVisualComponent {
+    Color m_color; Entity m_hideForCamera;
+    bool  m_visible = true;          <span class="cm">// ajout</span>
+};
+dbg.m_visible = isActive;</code></pre></div>
+<div class="after"><h5>Discussion E, 18/09 — tranché</h5>On garde le comportement A5 : tous les gizmos visibles,
+seule la teinte distingue la caméra active. L’écriture morte de <code>m_visible</code> a été retirée, puis le champ
+lui-même a été retiré de la structure. <code>RenderView</code> ne lit que <code>m_hideForCamera</code>. Réintroduire la
+politique, ce serait réintroduire explicitement un champ — pas réveiller un champ dormant.</div></div>
+<p>Pourquoi c’était un bug et pas seulement un choix : le code s’était retrouvé à moitié câblé (écriture présente, filtre
+commenté). Réactiver le filtre sans y penser aurait rendu la teinte grise inobservable, en contradiction avec A5.</p>
+
+<h3>9.2 La garde de vacuité — généralisée</h3>
+<p>Voir E6. <code>n == 2</code> codait en dur l’effectif de la scène de test. La forme retenue,
+<code>declared == 0 || nGizChecked &gt; 0</code>, dit « si des caméras ont demandé un gizmo, le test en a réellement
+vérifié au moins un ». Elle tient pour toute scène.</p>
+
+<h3>9.3 L’overlay de debug — prévu, pas fait</h3>
+<div class="ba">
+<div class="before"><h5>A9 §9, 13/09</h5>« <b>Déplacé :</b> le scalaire va dans l’overlay de debug de chaque viewport. »</div>
+<div class="after"><h5>Rectifié, Discussion E</h5>« <b>Prévu, pas encore fait</b> » : l’overlay n’existe pas dans le
+code. C’est une cible, rattachée à la Leçon 07, qu’elle bloque (carnet de route, phase 3). Le cadrage UI (lot L07·C1)
+prévoit un overlay ImGui ; la ligne <code>Overview_Camera | ortho | h=1200.0 | aspect 0.427</code> y trouvera sa place.</div></div>
+
+<h3>9.4 La place de la future passe S3 — l’ordre canonique S13</h3>
+<div class="ba">
+<div class="before"><h5>A9 §11.1 (R14 proposée)</h5><pre><code>LocalTransformSystem → WorldTransformSystem
+  → GizmoScreenScaleSystem → BuildViewData</code></pre>Une seule cuisson par frame à l’époque.</div>
+<div class="after"><h5>Depuis S13 (bug 65, 18/09)</h5><pre><code>(6) CameraGizmoSystem
+(7) cuisson n°2 ciblée : Local (dirty) + World(roots)
+    <span class="cm">roots = caméras rendues ; leurs enfants gizmo suivent</span>
+(7b) GizmoScreenScaleSystem       <span class="cm">← S3 viendrait ici</span>
+(9) BuildViewData, RenderView</code></pre>
+« Après WorldTransformSystem » devient « après la cuisson n°2 ciblée ». Le principe de R14 tient (une feuille se
+recompose après la propagation) ; seul l’emplacement est précisé. A9-2.</div></div>
+
+<h3>9.5 R17 ne suffit pas — la référence indépendante (lot D-a1d, 06/11)</h3>
+<div class="ba">
+<div class="before"><h5>A9 §7</h5>Le test partage la <em>définition</em> (<code>GizmoHalfSection</code>), pas la chaîne :
+il reste un vrai test.</div>
+<div class="after"><h5>Règle D-a1d appliquée</h5>Vrai pour la chaîne, faux pour la définition. Si
+<code>GizmoHalfSection</code> rendait <code>{L, L}</code> en perspective, le système dessinerait une pyramide fausse,
+<code>s</code> deviendrait <code>1/tan(fovY/2)</code>, le coin tomberait exactement dessus : vert. La définition doit
+recevoir sa propre référence indépendante, à valeurs littérales (§7.1). Proposé, A9-4.</div></div>
+
+<h3>9.6 Les grandes coordonnées — le test devient aveugle (lot SG)</h3>
+<p>Le scénegraphe Système Solaire sur données physiques (lot SG) place des caméras très loin de l’origine. Le
+laboratoire du §5.5 montre qu’à <code>|world|</code> ≳ 3,5·10⁵ unités, l’epsilon honnête dépasse 0,33 : un aspect
+faux n’est plus détecté. L’epsilon n’y est pour rien — c’est la précision du float32. Remède à décider : évaluer le test
+en coordonnées relatives à la caméra (soustraire la translation de la caméra avant la projection), comme le ferait une
+origine flottante. A9-5.</p>
+
+<h3>9.7 Ce que ce lot amende ailleurs</h3>
+<p>Le lot A7 annonçait « le gizmo suit le zoom sans une ligne modifiée ». Depuis S2, c’est vrai en perspective seulement.
+Le lot A7 porte cet amendement (§4 et §9.2) et renvoie ici ; son point A7-1 (commentaire de <code>CameraZoomSystem</code>)
+en découle.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s10">10 · Les règles dégagées</h2>
+<div class="rule"><b>Principe méthodologique n°13.</b> Avant de chercher la cause d’un comportement, vérifier l’identité
+de l’objet qui le manifeste. Une identification visuelle n’est pas une mesure.</div>
+<div class="rule"><b>R13.</b> Un gizmo dit la vérité géométrique <em>ou</em> reste lisible ; dès deux observateurs, il
+faut séparer les deux fonctions.</div>
+<div class="rule"><b>R15.</b> Un gizmo porte le spatial, jamais le scalaire. Un nombre s’écrit dans un overlay.</div>
+<div class="rule"><b>R16.</b> Une formule ou une règle partagée existe en un seul exemplaire, exposé comme fonction.</div>
+<div class="rule"><b>R17.</b> Un test partage la définition d’une grandeur, jamais la chaîne qui la transporte —
+<em>et</em> (amendement D-a1d) la définition reçoit sa propre référence indépendante.</div>
+<div class="rule"><b>R14 (proposée, emplacement amendé).</b> Une transformation dépendante de la vue appartient à une
+feuille et se recompose après la passe de propagation — depuis S13, après la cuisson n°2 ciblée.</div>
+<div class="rule"><b>Lire l’écart, pas seulement le rouge.</b> 10⁻⁷…10⁻⁴ : précision, sujet d’epsilon.
+0,1…10 : formule, sujet de code. Un epsilon ne règle jamais un désaccord de formule.</div>
+<div class="info">Ces règles vivent dans l’annexe A9 ; elles ne figurent pas dans <code>architecture-rules.md</code>
+(qui s’arrête à R12). Les entériner ou non : A9-7.</div>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s11">11 · Décisions, dettes et roadmap</h2>
+<h3>Décisions prises pendant l’échange</h3>
+<div class="tw"><table>
+<tr><th>#</th><th>Décision</th><th>Pourquoi</th></tr>
+<tr><td>D1</td><td>Piste « fuite de données / état partagé » close</td><td>Mesure E1 : gizmo FPS sain pendant que l’autre est à 600</td></tr>
+<tr><td>D2</td><td>Sémantique S2 pour le gizmo ortho ; S3 plus tard</td><td>Lisible, forme exacte, test conservé ; S3 exige D2</td></tr>
+<tr><td>D3</td><td>Source unique <code>GizmoHalfSection</code> + <code>FrustumHalfHeightAt</code> dans <code>DebugGizmos.hpp</code></td><td>R16 ; le test devient un rapport (R17)</td></tr>
+<tr><td>D4</td><td>Epsilon indexé sur <code>|world|</code></td><td>Magnitude réelle de l’annulation (§5.5)</td></tr>
+<tr><td>D5</td><td><code>CheckControllerExclusivity</code> : version LIB, en <code>.cpp</code>, copie EXE supprimée</td><td>Propriétaire de l’invariant ; garde <code>NameComponent</code> ; pas de <code>LNK2005</code></td></tr>
+<tr><td>D6</td><td>Le gizmo est conservé</td><td>Cinq informations spatiales sur six sans substitut ; support de S3</td></tr>
+<tr><td>D7</td><td>Garde de vacuité : <code>n == 2</code> (13/09), généralisée en Discussion E</td><td>CE5</td></tr>
+<tr><td>D8</td><td>Politique « façon Unity » : non retenue (Discussion E)</td><td>Bug 56 ; comportement A5 validé</td></tr>
+<tr><td>D9</td><td>Le volume ortho ira dans un overlay (L07)</td><td>R15</td></tr>
+</table></div>
+
+<h3>Dettes et évolutions — rien n’est acté</h3>
+<p>Inscrites dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot A9 ». À vérifier sur le
+dépôt avant toute modification.</p>
+<div class="tw"><table>
+<tr><th>Réf</th><th>Sujet</th><th>Nature</th></tr>
+<tr><td>A9-1</td><td>S3 : icône de taille constante à l’écran (dette D2) — une entité gizmo par couple (caméra décrite, caméra observatrice)</td><td>évolution, à décider</td></tr>
+<tr><td>A9-2</td><td>Emplacement de la passe S3 : après la cuisson n°2 ciblée (S13), pas « après WorldTransformSystem » ; R14 à confirmer</td><td>à décider avec A9-1</td></tr>
+<tr><td>A9-3</td><td>Overlay par viewport (<code>orthoHeight</code> / fov / aspect) — bloque L07</td><td>évolution (L07)</td></tr>
+<tr><td>A9-4</td><td>Référence indépendante de <code>GizmoHalfSection</code> / <code>FrustumHalfHeightAt</code> à valeurs littérales (règle D-a1d)</td><td>proposé</td></tr>
+<tr><td>A9-5</td><td>Test aveugle loin de l’origine (<code>|world|</code> ≳ 3,5·10⁵) : évaluation relative à la caméra</td><td>à décider</td></tr>
+<tr><td>A9-6</td><td>Vérifier qu’aucune autre demi-hauteur du frustum ne vit ailleurs (<code>Projection</code>, <code>BuildViewData</code>) — R16 ; <code>FrustumHalfHeightAt</code> devrait-elle vivre dans <code>Projection.h</code> ?</td><td>à vérifier</td></tr>
+<tr><td>A9-7</td><td>Règles R13–R17, R14 et principe n°13 absentes de <code>architecture-rules.md</code></td><td>à entériner ou non</td></tr>
+<tr><td>A9-8</td><td><code>Overview_Camera</code> : <code>gizmoLength</code> resté à 5 dans les JSON ?</td><td>à vérifier</td></tr>
+<tr><td>A9-9</td><td>Commentaire de <code>CameraGizmoComponent::m_length</code> rectifié dans le dépôt ? (même famille que A7-1)</td><td>à vérifier</td></tr>
+<tr><td>A9-10</td><td><code>s</code> scalaire : commentaire « hs.x == hs.y » présent ? S3 pourrait exiger <code>s.x</code>, <code>s.y</code></td><td>à vérifier</td></tr>
+<tr><td>A9-11</td><td><code>CheckControllerExclusivity</code> : copie EXE supprimée et définition en <code>.cpp</code> ? (sinon <code>LNK2005</code> latent)</td><td>à vérifier</td></tr>
+<tr><td>A9-12</td><td>Renvois sans doublon : sonde de triangle dégénéré (= A7-9), <code>ScaledEps</code> / <code>AssertNear</code> (= A7-10)</td><td>suivis en A7</td></tr>
+<tr><td>A9-13</td><td>Journal <code>[gizmo]</code> de E1 retiré ?</td><td>à vérifier</td></tr>
+</table></div>
+<p>Décisions consignées dans <code>Résultats/Résultats_Lot_A9_Gizmo_Ortho_Echelle.md</code>.</p>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<h2 id="s12">12 · Synthèse</h2>
+<p>Le bug portait un nom faux. Le gizmo de la FPS n’a jamais été démesuré : il est invisible dans sa propre vue par
+construction, et ce qu’on voyait était celui de la caméra ortho, exact et gigantesque. La faute n’était ni dans le rendu
+ni dans les matrices, mais dans la sémantique : un gizmo qui encodait une grandeur de scène sans borne. Une maquette à
+échelle connue (S2) rend la taille à l’auteur sans mentir sur la forme ; le test, exprimé en rapport, garde ses six
+détections ; une source unique empêche la formule de diverger à nouveau. Et la leçon de méthode dépasse le gizmo :
+nommer l’objet avant de chercher la cause.</p>
+
+<p class="foot">LibraryV3 — Lot A9 (Annexe A9, rattachée à A5 et L05), échange du 12–13/09/2026, reconstruit le
+12/11/2026. Amendé par la Discussion E (bugs 56, garde de vacuité, overlay), S13 (bug 65), la règle du lot D-a1d et
+le lot SG. Calculs des laboratoires en float32 (<code>Math.fround</code>), sans FMA.</p>
+</main>
+<script>
+"use strict";
+const f32 = Math.fround;
+const EPSF = 1.1920928955078125e-7;
+const $  = (id) => document.getElementById(id);
+const DEG = Math.PI / 180;
+function g(v){ return Number.isFinite(v) ? String(f32(v)) : String(v); }
+function gp(v, n){ return Number.isFinite(v) ? f32(v).toPrecision(n) : String(v); }
+function fr(v, n){ return Number.isFinite(v) ? v.toFixed(n).replace(".", ",") : "—"; }
+function ex(v){ return Number.isFinite(v) ? v.toExponential(2).replace(".", ",") : "—"; }
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function seg(el, cb){
+  el.addEventListener("click", ev => {
+    const b = ev.target.closest("button"); if (!b) return;
+    [...el.querySelectorAll("button")].forEach(x => x.classList.toggle("on", x === b));
+    cb(b);
+  });
+}
+function segVal(id){ return document.querySelector("#" + id + " button.on").dataset.v; }
+function fitCanvas(c){
+  const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const h = +c.getAttribute("height"), w = Math.max(300, r.width);
+  c.width = w * dpr; c.height = h * dpr;
+  const x = c.getContext("2d"); x.setTransform(dpr,0,0,dpr,0,0);
+  return { x, w, h };
+}
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+/* ═══════════ formules du moteur (float32) ═══════════ */
+const ASPECT_FPS = 1.28, ASPECT_OV = f32(256/600);
+function tanHalf(fovDeg){ return f32(Math.tan(f32(f32(fovDeg * DEG) * 0.5))); }
+/* GizmoHalfSection : sem 1 = S1 (exact), 2 = S2 (maquette) */
+function halfSection(ortho, L, fovDeg, orthoH, sem){
+  if (ortho) return sem === 1 ? f32(orthoH * 0.5) : f32(L);
+  return f32(L * tanHalf(fovDeg));
+}
+function frustumHalfAt(ortho, d, fovDeg, orthoH){
+  return ortho ? f32(orthoH * 0.5) : f32(d * tanHalf(fovDeg));
+}
+function wantedScale(ortho, L, fovDeg, orthoH, aspect, sem){
+  const hs = halfSection(ortho, L, fovDeg, orthoH, sem);
+  return [f32(hs * aspect), hs, f32(L)];
+}
+
+/* ═══════════ thème + nav ═══════════ */
+$("themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  const dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  redrawAll();
+});
+(function(){
+  const links = [...document.querySelectorAll("#nav a")];
+  const secs  = links.map(a => $(a.getAttribute("href").slice(1))).filter(Boolean);
+  const obs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    links.forEach(a => a.classList.toggle("on", a.getAttribute("href").slice(1) === e.target.id));
+  }), { rootMargin: "-20% 0px -70% 0px" });
+  secs.forEach(s => obs.observe(s));
+})();
+
+/* ═══════════ 3 · pipeline ═══════════ */
+const P_THEN = [
+ ["PollEvents / BuildInputState","clavier, souris, molette → InputState","keep",""],
+ ["CheckControllerExclusivity","FPS et Follow jamais actifs ensemble","mod","E7 : une seule définition, dans la LIB (System.cpp) ; la copie de main.cpp est supprimée, seul l’appel reste."],
+ ["FPSControllerSystem / CameraFollowSystem","écrivent m_local des caméras","keep",""],
+ ["CameraZoomSystem","molette → lentille (A7)","keep","orthoHeight jusqu’à 5000, fov jusqu’à 170° : l’étendue qui rendait la section ortho illisible et faisait sauter l’epsilon."],
+ ["Sélection, BuildCameraBindings","(caméra, viewport, aspect) × N","keep","L’aspect du gizmo vient de son couple (bug 31) : 1,280 pour la FPS, 0,427 pour l’Overview."],
+ ["CameraGizmoSystem","écrit le scale du gizmo enfant","mod","E3 : wanted = { hs.x·aspect, hs.y, L } avec hs = GizmoHalfSection(cam, L). Ortho : maquette { L, L }. Perspective : inchangé."],
+ ["LocalTransformSystem","m_local → m_localMatrix (dirty)","keep","Recompose le gizmo dont le scale vient de changer."],
+ ["WorldTransformSystem","world = local × parentWorld","keep","Le gizmo est l’enfant de sa caméra : il hérite position et orientation, garde son propre scale."],
+ ["TriggerSystem","collisions","keep",""],
+ ["BuildViewData × N","lentille → viewProjectionMatrix","keep","Divise par la demi-section RÉELLE du frustum : c’est le dénominateur de s (FrustumHalfHeightAt)."],
+ ["RenderView × N","culling, sommets, raster","read","if (dbg->m_hideForCamera == view.m_sourceCamera) continue; — une caméra ne dessine jamais son gizmo : la preuve du §5.1."],
+ ["Tests (_DEBUG)","Test_GizmoMatchesFrustum","mod","E2, E5, E6 : s = rapport maquette / frustum ; eps sur |world| ; garde de vacuité."],
+ ["Present","","keep",""]
+];
+const P_TODAY = [
+ ["(1) realDt mesuré, clampé","","keep","S10."],
+ ["(2) simDt = clock.Advance(realDt)","","keep",""],
+ ["(3) BuildInputState","avant tout lecteur","keep","Bug 45."],
+ ["(4) PlayerInputSystem, AnimationSystem","m_local du monde","keep",""],
+ ["(5) Cuisson n°1 : Local + World (toute la scène)","","keep","Bug 65 : les caméras lisent des matrices fraîches."],
+ ["(6) CheckControllerExclusivity","avant les contrôleurs","mod","E7 : version LIB seule."],
+ ["(6) CameraFPSControllerSystem / CameraFollowSystem","m_local des caméras","keep",""],
+ ["(6) CameraZoomSystem","molette → lentille","keep","A7."],
+ ["(6) Sélection, BuildCameraBindings","aspect par couple","keep",""],
+ ["(6) CameraGizmoSystem","scale du gizmo (S2)","mod","Même place qu’à l’époque."],
+ ["(7) Cuisson n°2 ciblée","Local (dirty) + World(roots = caméras rendues)","keep","Les gizmos, enfants des caméras, sont repropagés avec elles."],
+ ["(8) TriggerSystem","","keep",""],
+ ["(9) BuildViewData, RenderView","filtre m_hideForCamera","read","La preuve, inchangée."],
+ ["Tests (_DEBUG)","Test_GizmoMatchesFrustum + garde declared/checked","mod","Garde de vacuité généralisée en Discussion E."]
+];
+const P_S3 = P_TODAY.slice(0, 11).concat([
+ ["(7b) GizmoScreenScaleSystem","échelle par couple (gizmo, observateur)","new","Futur S3 (A9-1/A9-2) : une feuille se recompose après la propagation (R14). Exige une entité gizmo par couple. NON FAIT."]
+]).concat(P_TODAY.slice(11));
+function renderPipe(){
+  const v = segVal("pipeSeg"), detail = $("pipeDetail").checked;
+  let list = v === "then" ? P_THEN : v === "s3" ? P_S3 : P_TODAY;
+  if (v === "diff") list = P_THEN.filter(s => s[2] !== "keep");
+  const host = $("pipeline"); host.innerHTML = "";
+  list.forEach((s, i) => {
+    const d = document.createElement("div");
+    let cls = "pstage", badge = "";
+    if (s[2] === "mod"){ cls += " hot"; badge = '<span class="pbadge">modifié</span>'; }
+    else if (s[2] === "new"){ cls += " new"; badge = '<span class="pbadge n">futur</span>'; }
+    else if (s[2] === "read"){ badge = '<span class="pbadge" style="background:var(--info);color:#fff">lu</span>'; }
+    d.className = cls;
+    if (s[2] === "read"){ d.style.background = "var(--infoBg)"; d.style.borderColor = "var(--info)"; d.style.borderWidth = "2px"; }
+    d.innerHTML = '<span class="pn">' + (i+1) + '</span><span class="pt">' + esc(s[0]) + '</span>' + badge + '<span class="pd">' + esc(s[1]) + '</span>';
+    host.appendChild(d);
+    if (detail && s[3]){
+      const e = document.createElement("div");
+      e.style.cssText = "font-size:.78rem;color:var(--ink3);padding:.1rem .7rem .5rem 2.3rem;line-height:1.5";
+      e.textContent = s[3]; host.appendChild(e);
+    }
+  });
+}
+seg($("pipeSeg"), renderPipe);
+$("pipeDetail").addEventListener("change", renderPipe);
+
+/* ═══════════ 5.1 · qui dessine quoi ═══════════ */
+const OH_STEPS = [1,2,5,10,12,20,50,100,120,200,500,1000,1200,2000,5000];
+$("l1Oh").max = OH_STEPS.length - 1; $("l1Oh").value = OH_STEPS.indexOf(1200);
+function l1(){
+  const ovOrtho = segVal("l1Proj") === "o", sem = +segVal("l1Sem");
+  const oh = OH_STEPS[+$("l1Oh").value], Lov = +$("l1L").value;
+  $("l1OhV").textContent = oh; $("l1LV").textContent = Lov;
+  const sF = wantedScale(false, 3, 45, 0, ASPECT_FPS, 2);
+  const sO = Lov > 0 ? wantedScale(ovOrtho, Lov, 45, oh, ASPECT_OV, sem) : null;
+  const ext = s => fr(2*s[0], 2) + " × " + fr(2*s[1], 2) + " × " + fr(s[2], 2) + " u";
+  let t = "";
+  t += '<span class="d">gizmo                       scale (float32)                       encombrement</span>\n';
+  t += "__gizmo(FPS_Camera)       → (" + gp(sF[0],7) + ", " + gp(sF[1],7) + ", " + gp(sF[2],7) + ")   " + ext(sF) + "\n";
+  if (sO) t += "__gizmo(Overview_Camera)  → (" + '<span class="' + (sO[1] > 50 ? "r" : "g") + '">' + gp(sO[0],7) + ", " + gp(sO[1],7) + ", " + gp(sO[2],7) + "</span>)   " + ext(sO) + "\n";
+  else t += '__gizmo(Overview_Camera)  → <span class="d">non créé : SpawnCameraGizmos filtre m_gizmoLength &gt; 0</span>\n';
+  t += "\n" + '<span class="d">                          dans la vue FPS (gauche)            dans la vue Overview (droite)</span>\n';
+  t += "gizmo FPS                 " + '<span class="a">masqué (m_hideForCamera)</span>' + "            dessiné\n";
+  t += "gizmo Overview            " + (sO ? (sO[1] > 50 ? '<span class="r">dessiné — GÉANT</span>                ' : '<span class="g">dessiné</span>                          ') : '<span class="d">—</span>                                ') + '<span class="a">masqué (m_hideForCamera)</span>\n';
+  if (sO){
+    const ratio = sO[1] / sF[1];
+    t += "\nrapport des hauteurs Overview / FPS : " + fr(ratio, ratio < 10 ? 2 : 0);
+    if (ovOrtho && sem === 1) t += '\n<span class="d">gizmoLength n’agit que sur la profondeur (' + Lov + ') : la section vaut orthoHeight/2 = ' + gp(oh/2, 6) + "</span>";
+  }
+  $("l1Out").innerHTML = t;
+  drawL1(sF, sO);
+}
+function drawL1(sF, sO){
+  const { x, w, h } = fitCanvas($("l1Cv"));
+  x.fillStyle = css("--surface"); x.fillRect(0,0,w,h);
+  const cx = w/2, cy = h/2 - 6;
+  const maxHalf = Math.max(sF[0], sF[1], sO ? sO[0] : 0, sO ? sO[1] : 0);
+  const k = Math.min((w/2 - 24) / Math.max(sF[0], sO ? sO[0] : 0), (h/2 - 26) / Math.max(sF[1], sO ? sO[1] : 0));
+  x.font = "12px " + css("--mono");
+  function rect(s, col, label, dy){
+    const rw = 2*s[0]*k, rh = 2*s[1]*k;
+    x.strokeStyle = col; x.lineWidth = 2;
+    if (rw < 2.5 || rh < 2.5){
+      x.beginPath(); x.arc(cx, cy, 7, 0, 2*Math.PI); x.stroke();
+      x.fillStyle = col; x.fillText(label + " : " + fr(rh, 2) + " px", cx + 12, cy + 4 + dy);
+    } else {
+      x.strokeRect(cx - rw/2, cy - rh/2, rw, rh);
+      x.fillStyle = col; x.fillText(label, cx - rw/2 + 4, cy - rh/2 - 4 + dy);
+    }
+  }
+  if (sO) rect(sO, css("--accent"), "Overview", 0);
+  rect(sF, css("--info"), "FPS", sO ? 16 : 0);
+  x.fillStyle = css("--ink3");
+  x.fillText("échelle : 1 unité = " + (k >= 1 ? fr(k, 1) : k.toExponential(2)) + " px", 8, h - 8);
+}
+seg($("l1Proj"), l1); seg($("l1Sem"), l1);
+$("l1Oh").addEventListener("input", l1); $("l1L").addEventListener("input", l1);
+
+/* ═══════════ 5.2 · vue de profil ═══════════ */
+function l2(){
+  const ortho = segVal("l2Proj") === "o", sem = +segVal("l2Sem");
+  const L = +$("l2L").value, fov = +$("l2F").value, oh = +$("l2O").value;
+  $("l2LV").textContent = L; $("l2FV").textContent = fov + "°"; $("l2OV").textContent = oh;
+  const hs = halfSection(ortho, L, fov, oh, sem);
+  const real = frustumHalfAt(ortho, L, fov, oh);
+  const s = f32(hs / real);
+  const { x, w, h } = fitCanvas($("l2Cv"));
+  x.fillStyle = css("--surface"); x.fillRect(0,0,w,h);
+  const Dmax = 12, x0 = 40, cy = h/2;
+  const yMax = Math.max(hs, ortho ? oh/2 : Math.min(Dmax * tanHalf(fov), 40), 1) * 1.15;
+  const kx = (w - x0 - 20) / Dmax, ky = (h/2 - 16) / yMax;
+  const X = d => x0 + d*kx, Y = v => cy - v*ky;
+  x.strokeStyle = css("--line2"); x.lineWidth = 1; x.setLineDash([4,4]);
+  x.beginPath(); x.moveTo(x0, cy); x.lineTo(w - 10, cy); x.stroke(); x.setLineDash([]);
+  // frustum réel
+  x.strokeStyle = css("--ink3"); x.lineWidth = 1.2; x.beginPath();
+  if (ortho){ x.moveTo(X(0), Y(oh/2)); x.lineTo(X(Dmax), Y(oh/2)); x.moveTo(X(0), Y(-oh/2)); x.lineTo(X(Dmax), Y(-oh/2)); }
+  else { const t = tanHalf(fov); x.moveTo(X(0), cy); x.lineTo(X(Dmax), Y(Dmax*t)); x.moveTo(X(0), cy); x.lineTo(X(Dmax), Y(-Dmax*t)); }
+  x.stroke();
+  // gizmo
+  x.strokeStyle = css("--accent"); x.fillStyle = css("--accentBg"); x.lineWidth = 2.5; x.beginPath();
+  if (ortho){ x.rect(X(0), Y(hs), L*kx, 2*hs*ky); }
+  else { x.moveTo(X(0), cy); x.lineTo(X(L), Y(hs)); x.lineTo(X(L), Y(-hs)); x.closePath(); }
+  x.globalAlpha = .55; x.fill(); x.globalAlpha = 1; x.stroke();
+  // repère L
+  x.strokeStyle = css("--ok"); x.lineWidth = 1; x.setLineDash([2,3]);
+  x.beginPath(); x.moveTo(X(L), 8); x.lineTo(X(L), h - 8); x.stroke(); x.setLineDash([]);
+  x.fillStyle = css("--ok"); x.font = "12px " + css("--mono"); x.fillText("L = " + L, X(L) + 4, 16);
+  x.fillStyle = css("--ink"); x.beginPath(); x.arc(x0, cy, 5, 0, 2*Math.PI); x.fill();
+  x.fillStyle = css("--ink3"); x.fillText("caméra", 4, cy - 10);
+  x.fillText(ortho ? "frustum ortho (orthoHeight/2 = " + gp(oh/2, 4) + ")" : "frustum perspective (fov " + fov + "°)", x0 + 6, h - 8);
+  const dep = ortho ? (sem === 1 ? '<span class="r">non</span> — section = orthoHeight/2' : '<span class="g">oui</span> — maquette') : '<span class="g">oui</span> — proportionnelle';
+  $("l2Out").innerHTML =
+    "demi-section affichée hs = " + gp(hs, 7) + "\n" +
+    "demi-section réelle à L  = " + gp(real, 7) + "   <span class='d'>(FrustumHalfHeightAt)</span>\n" +
+    "échelle de la maquette s = " + gp(s, 7) + (s === 1 ? "   <span class='g'>échelle 1 : le gizmo EST le frustum</span>" : "") + "\n" +
+    "L agit sur la section ?  " + dep;
+}
+seg($("l2Proj"), l2); seg($("l2Sem"), l2);
+["l2L","l2F","l2O"].forEach(id => $(id).addEventListener("input", l2));
+
+/* ═══════════ 5.4 · calculateur du rapport s ═══════════ */
+function l4(){
+  const ortho = segVal("l4Proj") === "o", sys = +segVal("l4Sys"), tst = +segVal("l4Tst");
+  const oh = +$("l4Oh").value, fov = +$("l4F").value, L = +$("l4L").value;
+  const aspect = ortho ? ASPECT_OV : f32(ASPECT_FPS);
+  const sc = wantedScale(ortho, L, fov, oh, aspect, sys);
+  const cam = [sc[0], sc[1], -L];                       // coin (1,1,-1) en espace caméra
+  let cx, cyv, cw;
+  if (ortho){ cx = f32(cam[0] / f32(f32(oh*0.5) * aspect)); cyv = f32(cam[1] / f32(oh*0.5)); cw = 1; }
+  else { const t = tanHalf(fov); cx = f32(cam[0] / f32(t * aspect)); cyv = f32(cam[1] / t); cw = f32(L); }
+  const nx = f32(cx / cw), ny = f32(cyv / cw);
+  const sTest = tst === 1 ? 1 : f32(halfSection(ortho, L, fov, oh, 2) / frustumHalfAt(ortho, L, fov, oh));
+  const wl = Math.hypot(cam[0], cam[1], cam[2]);
+  const eps = 8 * EPSF * Math.max(1, wl);
+  const ex1 = Math.abs(Math.abs(nx) - sTest), ey1 = Math.abs(Math.abs(ny) - sTest);
+  const okx = ex1 < eps, oky = ey1 < eps;
+  const mixed = (ortho && ((sys === 1) !== (tst === 1)));
+  let t = "";
+  t += '<span class="d">1 · système (' + (sys === 1 ? "S1" : "S2") + ')</span>   scale = (' + gp(sc[0],8) + ", " + gp(sc[1],8) + ", " + gp(sc[2],8) + ")\n";
+  t += '<span class="d">2 · coin (1,1,−1) en espace caméra</span>   (' + gp(cam[0],8) + ", " + gp(cam[1],8) + ", " + gp(cam[2],8) + ")\n";
+  t += '<span class="d">3 · projection</span>   clip = (' + gp(cx,8) + ", " + gp(cyv,8) + ", w=" + gp(cw,8) + ")\n";
+  t += '<span class="d">4 · NDC</span>          x/w = ' + gp(nx,9) + "   y/w = " + gp(ny,9) + "   <span class='d'>(x/w == y/w : l’aspect s’annule)</span>\n";
+  t += '<span class="d">5 · le test attend</span>  s = ' + gp(sTest,9) + (tst === 1 ? "  (S1 : bord du NDC)" : "  = GizmoHalfSection.y / FrustumHalfHeightAt") + "\n";
+  t += '<span class="d">6 · écart</span>        x : ' + ex(ex1) + "   y : " + ex(ey1) + "   eps = 8·ε·|world| = " + ex(eps) + "\n";
+  t += "verdict : " + (okx && oky ? '<span class="g">VERT</span>' : '<span class="r">ROUGE</span>') ;
+  if (!(okx && oky)) t += "   <span class='d'>écart d’ordre " + (ex1 > 0.01 ? "1 → désaccord de FORMULE, pas de précision" : "de la précision") + "</span>";
+  if (mixed) t += "\n<span class='a'>état mixte système/test : c’est le rouge de l’échange (E4)</span>";
+  $("l4Out").innerHTML = t;
+}
+seg($("l4Proj"), l4); seg($("l4Sys"), l4); seg($("l4Tst"), l4);
+["l4Oh","l4F","l4L"].forEach(id => $(id).addEventListener("change", l4));
+
+/* ═══════════ 5.5 · laboratoire epsilon (chaîne matricielle float32, sans FMA) ═══════════ */
+function mulberry32(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+  t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function mul(A,B){ const C=[]; for(let i=0;i<4;i++){ C.push([]); for(let j=0;j<4;j++){ let s=f32(0);
+  for(let k=0;k<4;k++) s=f32(s+f32(A[i][k]*B[k][j])); C[i].push(s); } } return C; }
+function mulRow(v,M){ const r=[]; for(let j=0;j<4;j++){ let s=f32(0); for(let k=0;k<4;k++) s=f32(s+f32(v[k]*M[k][j])); r.push(s); } return r; }
+function scaleM(s){ return [[s[0],0,0,0],[0,s[1],0,0],[0,0,s[2],0],[0,0,0,1]]; }
+function rotYX(yaw,pitch){ const cy=f32(Math.cos(yaw)),sy=f32(Math.sin(yaw)),cp=f32(Math.cos(pitch)),sp=f32(Math.sin(pitch));
+  const Rx=[[1,0,0,0],[0,cp,sp,0],[0,-sp,cp,0],[0,0,0,1]], Ry=[[cy,0,-sy,0],[0,1,0,0],[sy,0,cy,0],[0,0,0,1]]; return mul(Rx,Ry); }
+function trans(t){ return [[1,0,0,0],[0,1,0,0],[0,0,1,0],[f32(t[0]),f32(t[1]),f32(t[2]),1]]; }
+function transpose3(R){ return [[R[0][0],R[1][0],R[2][0],0],[R[0][1],R[1][1],R[2][1],0],[R[0][2],R[1][2],R[2][2],0],[0,0,0,1]]; }
+function epsLab(o){
+  const rnd = mulberry32(20260913);
+  let maxErr=0, failOld=0, failNew=0, rOld=0, rNew=0, worldMax=0, total=0, epsNewMax=0;
+  for (let n=0; n<o.N; n++){
+    const yaw = rnd()*2*Math.PI, pitch = (rnd()-0.5)*1.5;
+    const dir = [rnd()-0.5, rnd()-0.5, rnd()-0.5], dl = Math.hypot(...dir);
+    const cam = dir.map(v => f32(v/dl*o.D));
+    const R = rotYX(yaw,pitch), camW = mul(R, trans(cam));
+    const t = tanHalf(o.fov);
+    const sc = wantedScale(o.ortho, 3, o.fov, o.oh, o.aspect, o.sem);
+    const giz = mul(scaleM(sc), camW);                         // world = local × parentWorld
+    const V = mul(trans(cam.map(v => -v)), transpose3(R));
+    let P;
+    if (o.ortho) P = [[f32(1/f32(f32(o.oh*0.5)*o.aspect)),0,0,0],[0,f32(1/f32(o.oh*0.5)),0,0],[0,0,f32(-0.001),0],[0,0,0,1]];
+    else P = [[f32(1/f32(t*o.aspect)),0,0,0],[0,f32(1/t),0,0],[0,0,0,-1],[0,0,0.1,0]];
+    const VP = mul(V, P);
+    const s = f32(halfSection(o.ortho, 3, o.fov, o.oh, o.sem) / frustumHalfAt(o.ortho, 3, o.fov, o.oh));
+    const camP = [giz[3][0], giz[3][1], giz[3][2]];
+    const epsOld = 8*EPSF*Math.max(1, Math.hypot(...camP));
+    for (const c of [[-1,-1,-1,1],[1,-1,-1,1],[1,1,-1,1],[-1,1,-1,1]]){
+      const w4 = mulRow(c, giz), clip = mulRow([w4[0],w4[1],w4[2],1], VP);
+      const e = Math.max(Math.abs(Math.abs(clip[0]/clip[3]) - s), Math.abs(Math.abs(clip[1]/clip[3]) - s));
+      const wl = Math.hypot(w4[0],w4[1],w4[2]), epsNew = 8*EPSF*Math.max(1, wl);
+      total++; maxErr = Math.max(maxErr, e); worldMax = Math.max(worldMax, wl); epsNewMax = Math.max(epsNewMax, epsNew);
+      if (e >= epsOld) failOld++; if (e >= epsNew) failNew++;
+      rOld = Math.max(rOld, e/epsOld); rNew = Math.max(rNew, e/epsNew);
+    }
+  }
+  return { maxErr, failOld, failNew, rOld, rNew, worldMax, total, epsNewMax };
+}
+function l5(){
+  const ortho = segVal("l5Proj") === "o", sem = +segVal("l5Sem");
+  const o = { ortho, sem, fov: +$("l5F").value, oh: +$("l5Oh").value, D: +$("l5D").value, N: 500,
+              aspect: ortho ? ASPECT_OV : f32(ASPECT_FPS) };
+  const r = epsLab(o);
+  const blind = r.epsNewMax >= 0.33;
+  let t = "";
+  t += '<span class="d">' + r.total + " coins, " + (ortho ? "ortho, orthoHeight " + o.oh : "perspective, fov " + o.fov + "°") + ", " + (sem === 1 ? "S1" : "S2") + ", |camPos| = " + o.D + ", aucun bug injecté</span>\n";
+  t += "erreur réelle max                  " + ex(r.maxErr) + "\n";
+  t += "|world| max                        " + ex(r.worldMax) + "\n";
+  t += "ancien eps (8·ε·|camPos|)  dépassé " + (r.failOld ? '<span class="r">' + r.failOld + " fois</span>" : '<span class="g">0 fois</span>') + "   rapport max erreur/eps = " + fr(r.rOld, 2) + "\n";
+  t += "nouvel eps (8·ε·|world|)   dépassé " + (r.failNew ? '<span class="r">' + r.failNew + " fois</span>" : '<span class="g">0 fois</span>') + "   rapport max erreur/eps = " + fr(r.rNew, 2) + "\n";
+  t += "un aspect faux (écart 0,33) serait-il vu ?  " + (blind ? '<span class="r">NON — eps atteint ' + fr(r.epsNewMax, 2) + " : test aveugle (A9-5)</span>" : '<span class="g">oui</span> (eps max ' + ex(r.epsNewMax) + ")");
+  $("l5Out").innerHTML = t;
+}
+$("l5Run").addEventListener("click", l5);
+
+/* ═══════════ global ═══════════ */
+function redrawAll(){ renderPipe(); l1(); l2(); l4(); }
+let rT = 0; window.addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(redrawAll, 120); });
+redrawAll();
+</script>
+</body>
+</html>

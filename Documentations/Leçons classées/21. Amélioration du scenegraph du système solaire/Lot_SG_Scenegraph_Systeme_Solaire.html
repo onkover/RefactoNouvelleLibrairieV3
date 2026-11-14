@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lot SG — Le scénegraphe Système Solaire, pas à pas</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f7f6f3; --panel:#ffffff; --panel2:#f0eee9; --ink:#1c1b19; --ink2:#55524c;
+  --line:#ddd9d1; --accent:#b4531f; --accent2:#1f6fb4; --ok:#2d7a43;
+  --bad:#b3261e; --warn:#8a6d1f; --code:#f3f1ec; --hi:#fff3cd; --hiln:#e0c56a;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#16171a; --panel:#1e2024; --panel2:#24272c; --ink:#e8e6e1; --ink2:#a6a39c;
+    --line:#333740; --accent:#e58a4d; --accent2:#6fb0e5; --ok:#5fc27e;
+    --bad:#ef6b63; --warn:#d7b24a; --code:#15171b; --hi:#3a3320; --hiln:#7a6a30;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#16171a; --panel:#1e2024; --panel2:#24272c; --ink:#e8e6e1; --ink2:#a6a39c;
+  --line:#333740; --accent:#e58a4d; --accent2:#6fb0e5; --ok:#5fc27e;
+  --bad:#ef6b63; --warn:#d7b24a; --code:#15171b; --hi:#3a3320; --hiln:#7a6a30;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-behavior:smooth; scroll-padding-top: calc(54px + env(safe-area-inset-top, 0px)); height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+     font-size:16px;line-height:1.62;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);
+     background:var(--panel);z-index:10}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 120px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--panel);
+     border-bottom:1px solid var(--line);margin:0 -20px 0;padding:10px 20px}
+header.top .inner{max-width:1080px;margin:0 auto;display:flex;gap:14px;align-items:center;
+     flex-wrap:wrap}
+header.top b{font-size:15px;letter-spacing:.2px}
+nav a{color:var(--ink2);text-decoration:none;font-size:13px;padding:3px 7px;border-radius:5px;
+     white-space:nowrap}
+nav a:hover{background:var(--panel2);color:var(--ink)}
+nav{display:flex;gap:2px;overflow-x:auto;flex:1}
+h1{font-size:30px;line-height:1.22;margin:34px 0 6px;letter-spacing:-.3px}
+h2{font-size:23px;margin:54px 0 10px;padding-top:10px;border-top:2px solid var(--line);
+   letter-spacing:-.2px}
+h3{font-size:18px;margin:30px 0 8px}
+h4{font-size:15px;margin:20px 0 6px;color:var(--ink2);text-transform:uppercase;
+   letter-spacing:.7px;font-weight:700}
+p,li{color:var(--ink)}
+.lead{font-size:18px;color:var(--ink2);margin:0 0 8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+      margin:16px 0}
+.card.tight{padding:12px 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:780px){.grid2,.grid3{grid-template-columns:1fr}}
+code,kbd{font-family:var(--mono);font-size:.88em;background:var(--code);padding:1px 5px;
+     border-radius:4px;border:1px solid var(--line)}
+pre{background:var(--code);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+    overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.5;margin:10px 0}
+pre code{background:none;border:none;padding:0}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+.tablewrap{overflow-x:auto}
+th,td{border:1px solid var(--line);padding:6px 9px;text-align:left;vertical-align:top}
+th{background:var(--panel2);font-weight:600}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;padding:2px 7px;
+     border-radius:999px;text-transform:uppercase;vertical-align:middle}
+.tag.bad{background:var(--bad);color:#fff}
+.tag.ok{background:var(--ok);color:#06240f}
+.tag.warn{background:var(--warn);color:#241d04}
+.tag.neutral{background:var(--panel2);color:var(--ink2);border:1px solid var(--line)}
+.rule{border-left:4px solid var(--accent);background:var(--panel2);padding:10px 14px;
+      border-radius:0 8px 8px 0;margin:14px 0}
+.rule b{color:var(--accent)}
+.ce{border-left:4px solid var(--bad);background:var(--panel2);padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:14px 0}
+.ce .t{color:var(--bad);font-weight:700;font-size:13px;letter-spacing:.5px;text-transform:uppercase}
+.ok-box{border-left:4px solid var(--ok);background:var(--panel2);padding:10px 14px;
+    border-radius:0 8px 8px 0;margin:14px 0}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:780px){.ba{grid-template-columns:1fr}}
+.ba .before{border-top:3px solid var(--bad)}
+.ba .after{border-top:3px solid var(--ok)}
+.ba>div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.ba h5{margin:2px 0 6px;font-size:12px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink2)}
+canvas{display:block;width:100%;height:auto;background:var(--panel2);border:1px solid var(--line);
+       border-radius:8px}
+.ctl{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0 4px;font-size:13px}
+.ctl label{display:flex;gap:7px;align-items:center;color:var(--ink2);white-space:nowrap}
+.ctl input[type=range]{width:150px;accent-color:var(--accent)}
+.ctl output{font-family:var(--mono);color:var(--ink);min-width:52px;display:inline-block}
+button{font-family:inherit;font-size:13px;padding:5px 11px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+button:hover{background:var(--panel2)}
+button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.readout{font-family:var(--mono);font-size:13px;background:var(--code);border:1px solid var(--line);
+  border-radius:8px;padding:10px 12px;margin:10px 0;white-space:pre-wrap;line-height:1.5}
+.step{border:1px solid var(--line);border-radius:10px;margin:18px 0;overflow:hidden;
+      background:var(--panel)}
+.step>summary{cursor:pointer;padding:12px 16px;background:var(--panel2);font-weight:600;
+      list-style:none;display:flex;gap:11px;align-items:baseline}
+.step>summary::-webkit-details-marker{display:none}
+.step>summary .n{font-family:var(--mono);color:var(--accent);font-weight:700;font-size:13px;
+      border:1px solid var(--accent);border-radius:5px;padding:1px 7px;flex:none}
+.step>summary:hover{background:var(--line)}
+.step .body{padding:4px 16px 16px}
+.hl{background:var(--hi);border:1px solid var(--hiln);border-radius:4px;padding:0 4px}
+.algo{font-family:var(--mono);font-size:13px;line-height:1.75;background:var(--code);
+  border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto}
+.algo .cur{background:var(--hi);border-left:3px solid var(--accent);padding-left:7px;
+  margin-left:-10px;display:inline-block;min-width:calc(100% - 0px);border-radius:3px}
+.algo .dim{color:var(--ink2)}
+.algo .new{color:var(--ok);font-weight:600}
+.algo .del{color:var(--bad);text-decoration:line-through}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px}
+.kv dt{color:var(--ink2)}
+.kv dd{margin:0;font-family:var(--mono)}
+.foot{color:var(--ink2);font-size:13px;margin-top:40px;border-top:1px solid var(--line);
+  padding-top:14px}
+ul.clean{padding-left:20px}
+ul.clean li{margin:4px 0}
+.pill{font-family:var(--mono);font-size:12px;background:var(--panel2);border:1px solid var(--line);
+  border-radius:999px;padding:1px 9px;color:var(--ink2)}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="inner">
+  <b>Lot SG · Scénegraphe Système Solaire</b>
+  <nav>
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#global">Vue d’ensemble</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#echelle">Échelle</a>
+    <a href="#ancre">Ancre / Corps</a>
+    <a href="#regles">Règles S1–S12</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#usage">Utilisation</a>
+  </nav>
+  <button id="theme" title="Thème">◐</button>
+</div></header>
+
+<div class="wrap">
+
+<h1>Lot SG — Le scénegraphe Système Solaire, pas à pas</h1>
+<p class="lead">Consolidation. Reconstruire la scène de test du moteur sur des données physiques
+réelles, et faire apparaître ce que le moteur ne sait pas encore faire.</p>
+<p><span class="pill">11/11/2026</span> <span class="pill">consolidation, pas une leçon</span>
+<span class="pill">aucune décision d’architecture actée</span></p>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="pourquoi">1 · Pourquoi ce lot</h2>
+
+<div class="card">
+<p>Le moteur est arrivé à un point où <b>il n’a plus rien à se mettre sous la dent</b>. La scène de
+test traîne depuis le début : trois sphères à dix faces, un cube, des distances choisies à la main
+pour que « ça rende bien ». Elle a rempli son office pendant les leçons 01 à 05, mais elle ne
+mesure plus rien.</p>
+
+<p>Une scène de test sert à trois choses, et celle-là n’en fait plus aucune :</p>
+
+<ul class="clean">
+<li><b>Exercer les chemins du code.</b> Quatre entités ne font pas travailler
+<code>WorldTransformSystem</code>, ne remplissent pas un <code>SparseSet</code>, ne déclenchent
+jamais de LOD.</li>
+<li><b>Produire des nombres comparables.</b> Des distances inventées donnent des temps de rendu
+qu’on ne peut rapporter à rien. On ne peut pas dire « Jupiter coûte cher » si Jupiter n’a pas de
+taille réelle.</li>
+<li><b>Révéler les manques.</b> C’est le point décisif, et il s’est vérifié : en construisant cette
+scène, <b>sept défauts du moteur sont sortis</b>, dont deux qui faussaient tout. Aucun n’aurait été
+visible sur la scène précédente.</li>
+</ul>
+
+<p>La consolidation est donc <i>l’inverse d’une leçon</i>. Une leçon ajoute une fonctionnalité et la
+valide. Une consolidation ne décide rien : elle prend ce qui existe, le charge à fond, et note ce
+qui casse. Tout ce qui est relevé ici part en roadmap comme <b>décision en attente</b>.</p>
+</div>
+
+<div class="rule"><b>Pourquoi le système solaire, et pas une scène quelconque ?</b><br>
+Parce que c’est le seul jeu de données que l’on puisse <b>vérifier sans le moteur</b>. Le rayon de
+Jupiter, la période de Io, l’obliquité d’Uranus sont publiés et stables. Si une planète n’est pas où
+elle devrait être, l’erreur est dans le moteur — jamais dans la donnée. Une scène inventée ne donne
+jamais cette garantie : quand une position est fausse, on ne sait pas lequel des deux a tort.</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="rappel">2 · Ce qui a été fait jusqu’ici</h2>
+
+<div class="tablewrap"><table>
+<tr><th>Lot</th><th>Acquis que ce lot utilise</th></tr>
+<tr><td><b>L01</b> Config &amp; enums</td><td><code>EngineConfig</code>, le partage
+politique / mécanisme, les enums fortement typés.</td></tr>
+<tr><td><b>L02</b> Mathématiques</td><td><code>Vec3f</code>, <code>Mat4</code>, la composition TRS
+et son ordre.</td></tr>
+<tr><td><b>L02-C</b> Reverse-Z</td><td>Le far infini en perspective. Ce lot va montrer où il
+<i>n’a pas</i> de sens.</td></tr>
+<tr><td><b>L03</b> ECS &amp; ResourceManager</td><td><code>SparseSet</code>, le handle de mesh,
+la canonicalisation des chemins. 600 astéroïdes vont l’éprouver.</td></tr>
+<tr><td><b>L04</b> Rasterizer</td><td>Edge function, règle haut-gauche, Z-buffer. Le dépliage UV de
+ce lot pose le même problème de frontière, en espace texture.</td></tr>
+<tr><td><b>L05</b> Caméra &amp; frustum</td><td>Projection, gizmos, catégories et priorités de
+caméra.</td></tr>
+<tr><td><b>A5 / A6</b></td><td>Gizmos de caméra, <code>JsonReader</code> et
+<code>WarnUnread()</code> — la discipline de lecture JSON que tout ce lot applique.</td></tr>
+<tr><td><b>Consolidation C1</b></td><td>La chaîne des espaces. Ce lot en est la suite naturelle :
+C1 vérifiait les espaces, SG vérifie les <i>données</i> qui les traversent.</td></tr>
+</table></div>
+
+<p>Bugs déjà fermés avant ce lot et dont il dépend : <b>bug 42</b> (le chemin résolu de
+<code>ParseMesh</code> était jeté), <b>bug 46</b> (les caméras de debug cherchées par nom en dur
+dans <code>main.cpp</code>, désormais élues par <code>category</code> / <code>priority</code>).</p>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="global">3 · Vue d’ensemble — où se situe ce lot</h2>
+
+<h3>3.1 · Algorithme global du moteur</h3>
+<p>Le moteur devient dense. Voici la frame complète, du lancement au présent.
+<span class="hl">La zone surlignée est celle que ce lot touche.</span></p>
+
+<div class="algo">
+<span class="dim">── DÉMARRAGE ──────────────────────────────────────────────</span>
+  ProgrammeConfig("config.json")            <span class="dim">chemins projet</span>
+  EngineConfig::LoadFromJson("engine.json") <span class="dim">politique moteur</span>
+<span class="cur">  SceneSerializer::LoadSceneGraph(scene.json)   ◄── LOT SG</span>
+<span class="cur">      ParseNode → ParseTransform / ParseMesh / ParseLight</span>
+<span class="cur">                  ParseCamera / ParseTrigger / …</span>
+<span class="cur">      ResourceManager::getMesh(path)  → MeshHandle</span>
+  LoadGizmoAssets + SpawnCameraGizmos
+  RunAllTests()                             <span class="dim">TNR Debug</span>
+
+<span class="dim">── BOUCLE, UNE FRAME ──────────────────────────────────────</span>
+  realDt = mesure, puis clamp 0,1 s         <span class="dim">bug 44</span>
+<span class="cur">  simDt  = SimulationClock::Advance(realDt)     ◄── LOT SG</span>
+  PlayerInputSystem(realDt)
+  BuildInputState()
+  CheckControllerExclusivity()
+<span class="cur">  AnimationSystem(simDt)                        ◄── LOT SG</span>
+  CameraFPSControllerSystem(realDt) / CameraFollowSystem(realDt)
+  CameraZoomSystem(realDt)
+  élection des caméras par catégorie + priorité
+  BuildCameraBindings(layout, slots)
+  CameraGizmoSystem()
+  LocalTransformSystem()                    <span class="dim">TRS → matrice locale</span>
+  WorldTransformSystem()                    <span class="dim">hiérarchie → matrice monde</span>
+<span class="cur">  TriggerSystem(eventBus)                       ◄── LOT SG</span>
+  BuildViewData() × N vues
+  <span class="dim">[Debug] CheckSceneInvariants, DebugDisplaySystem, TNR</span>
+  Clear → RenderView() × N → EndFrame → Present
+</div>
+
+<h3>3.2 · Carte des fichiers</h3>
+<div class="tablewrap"><table>
+<tr><th>Fichier</th><th>Rôle</th><th>Touché par SG</th></tr>
+<tr><td><code>assets/Scenes/*.json</code></td><td>la scène</td><td><span class="tag bad">remplacé</span></td></tr>
+<tr><td><code>assets/Meshes/*.obj</code></td><td>géométrie</td><td><span class="tag bad">remplacé</span></td></tr>
+<tr><td><code>assets/Textures/*</code></td><td>maps</td><td><span class="tag ok">créé</span></td></tr>
+<tr><td><code>Core/SimulationClock.h</code></td><td>temps du monde</td><td><span class="tag ok">créé</span></td></tr>
+<tr><td><code>Core/EngineConfig</code></td><td>section <code>simulation</code></td><td><span class="tag warn">étendu</span></td></tr>
+<tr><td><code>Scene/Serializer.cpp</code></td><td><code>ParseNode</code> et les <code>Parse*</code></td><td><span class="tag warn">à étendre (v2)</span></td></tr>
+<tr><td><code>Scene/system.cpp</code></td><td><code>AnimationSystem</code>, <code>TriggerSystem</code></td><td><span class="tag warn">signature + refonte</span></td></tr>
+<tr><td><code>Core/EventNames.h</code></td><td>noms d’événements</td><td><span class="tag warn">à étendre</span></td></tr>
+<tr><td><code>main.cpp</code></td><td>boucle, clavier</td><td><span class="tag warn">modifié</span></td></tr>
+<tr><td><code>Rendering/*</code></td><td>rasterizer</td><td><span class="tag neutral">intact</span></td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="contexte">4 · Contexte et objectif fonctionnel</h2>
+
+<div class="card">
+<h4>Le point de départ</h4>
+<p>Une scène de 20 nœuds, écrite à la main avant la première leçon. Un pivot au centre, le Soleil,
+quatre astres, un vaisseau, deux zones de danger, six caméras. Trois défauts avoués par Onky :
+tous les astres n’y sont pas, les proportions sont fausses, les vitesses sont inventées.</p>
+
+<h4>L’objectif fonctionnel, en une phrase</h4>
+<p><b>Obtenir une scène dont chaque nombre est vérifiable hors du moteur</b>, assez chargée pour
+mesurer, et dont la structure n’interdit pas la physique réelle (ellipses, inclinaisons, obliquité
+fixe).</p>
+
+<h4>Ce que ça n’est pas</h4>
+<p>Ce n’est pas un simulateur astronomique. On ne résout pas Kepler, on ne propage pas de forces.
+On veut une <b>scène juste</b>, pas une <b>simulation juste</b>. La différence : les positions
+viennent d’éléments orbitaux tabulés, pas d’une intégration.</p>
+</div>
+
+<h3>Les décisions à prendre, et pourquoi</h3>
+<div class="tablewrap"><table>
+<tr><th>Question</th><th>Choix retenu</th><th>Pourquoi</th></tr>
+<tr><td>Que stocke le JSON ?</td><td>des km, des jours, des degrés</td><td>auditables ; sinon aucune valeur n’est vérifiable</td></tr>
+<tr><td>Comment tenir 7,5 × 10⁸ de dynamique ?</td><td>deux lois de puissance déclarées</td><td>monotone, inversible, préserve l’ordre</td></tr>
+<tr><td>Orbite = rotation de pivot ?</td><td>non — position calculée</td><td>un pivot interdit ellipse, inclinaison et obliquité fixe</td></tr>
+<tr><td>Où vivent les vitesses ?</td><td>composants dédiés, pas <code>Mesh</code></td><td>données froides hors du chemin chaud du rendu</td></tr>
+<tr><td>Rayon de trigger et échelle ?</td><td>unités monde, aucun héritage</td><td>un volume de requête n’est pas de la géométrie</td></tr>
+<tr><td>Combien de noms d’événements ?</td><td>trois</td><td>33 zones × 3 transitions = 99 noms, intenable</td></tr>
+<tr><td>Vitesse du temps ?</td><td>une horloge, un facteur</td><td>deux facteurs détruiraient toute cohérence</td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="apport">5 · Algorithme détaillé de l’apport du lot</h2>
+<p>Ce que le lot ajoute, modifie, ou remet en question. Avant / après à chaque fois qu’un
+fonctionnement existant est contesté.</p>
+
+<h3>5.1 · Chargement de la scène</h3>
+<div class="algo">
+LoadSceneGraph(path)
+  lire le JSON
+<span class="new">  lire schemaVersion, units, scaleModel, simulation       ← nouveau (v2)</span>
+  pour chaque nœud :
+      résoudre parent (2 passes : création puis liaison)
+      pour chaque composant :
+          Transform  → position / rotation / échelle locales
+<span class="del">          Mesh       → model, texture, orbitalSpeed, rotationSpeed</span>
+<span class="new">          Mesh       → model seul</span>
+<span class="new">          Body       → classe, rayon km, rayon affiché, axes</span>
+<span class="new">          Orbit      → a, e, i, période, anomalie moyenne, ω/jour</span>
+<span class="new">          Spin       → obliquité, période de rotation, ω/heure</span>
+<span class="new">          Material   → couleur, émissif, 8 maps</span>
+<span class="new">          Ring       → rayons interne/externe, segments</span>
+<span class="new">          Belt       → ceinture procédurale (graine + bornes)</span>
+          Trigger    → rayon, événements<span class="new">, rôle, forme</span>
+          Light / Camera / CameraFPS / CameraFollow / Health / PlayerControl
+<span class="del">          sinon      → return false   (toute la scène échoue)</span>
+<span class="new">          sinon      → Logger::warn + continuer</span>
+      WarnUnread()
+</div>
+
+<div class="ba">
+<div class="before"><h5>Avant — composant inconnu</h5>
+<pre><code>else
+{
+    return false;          // tout le chargement échoue
+}</code></pre>
+<p style="font-size:13.5px;margin:4px 0 0">Un seul composant nouveau, et la scène entière refuse de
+se charger. <code>solar_system_v2.json</code> ne passe pas.</p></div>
+<div class="after"><h5>Après</h5>
+<pre><code>else
+{
+    Logger::warn("[Scene] composant inconnu '%s' sur %s — ignoré",
+                 name.c_str(), nodeId.c_str());
+    // on continue : un composant en avance sur le moteur
+    // n'invalide pas les 125 autres nœuds
+}</code></pre>
+<p style="font-size:13.5px;margin:4px 0 0">Comportement déjà présent dans l’ancien
+<code>SceneGraph.cpp</code>. Il avait été perdu lors de la migration vers
+<code>Serializer.cpp</code>.</p></div>
+</div>
+
+<h3>5.2 · Boucle de frame</h3>
+<div class="algo">
+<span class="del">  dt = constante dans PlayerInputSystem</span>
+<span class="new">  realDt = (now − prev) / freq ; prev = now</span>
+<span class="new">  realDt = min(realDt, 0,1)                         ← bug 44</span>
+<span class="new">  simDt  = clock.Advance(realDt)   // m_paused ? 0 : realDt × m_timeScale</span>
+<span class="new">                                   // m_simTime += simDt</span>
+<span class="del">  AnimationSystem(registry, realDt)</span>
+<span class="new">  AnimationSystem(registry, simDt)                  ← la SEULE ligne</span>
+<span class="new">                                                       qui fait couler le monde</span>
+  CameraFPS / CameraFollow / CameraZoom (realDt)     <span class="dim">inchangé : le joueur</span>
+</div>
+
+<h3>5.3 · Détection des triggers</h3>
+<div class="ba">
+<div class="before"><h5>Avant — N² sur tout</h5>
+<pre><code>for (auto&amp;&amp; [eA, tA] : registry.ViewGroup&lt;TriggerComponent&gt;())
+  for (auto&amp;&amp; [eB, tB] : registry.ViewGroup&lt;TriggerComponent&gt;())
+      if (eA != eB) TestSphere(eA, eB);</code></pre>
+<p style="font-size:13.5px;margin:4px 0 0">34 triggers → <b>561 paires par frame</b>.
+On compare la zone de chaleur du Soleil à l’atmosphère de Neptune : deux volumes qui ne bougeront
+jamais l’un par rapport à l’autre.</p></div>
+<div class="after"><h5>Après — sondes × zones</h5>
+<pre><code>for (auto&amp;&amp; [eP, tP] : Probes(registry))      // 1
+  for (auto&amp;&amp; [eZ, tZ] : Zones(registry))     // 33
+      TestShape(eP, eZ);                        // 33</code></pre>
+<p style="font-size:13.5px;margin:4px 0 0"><b>33 tests</b>. Facteur 17 sans une ligne de
+broad-phase : on a seulement cessé de calculer ce dont personne n’a besoin.</p></div>
+</div>
+
+<div class="rule"><b>À retenir, plus général que les triggers.</b> Avant d’optimiser une boucle,
+vérifier qu’elle ne calcule pas des choses inutiles. Un quadtree posé sur la version « avant »
+aurait accéléré un calcul qui n’avait pas lieu d’être.</div>
+
+<h3>5.4 · Résumé de l’apport</h3>
+<div class="tablewrap"><table>
+<tr><th>Élément</th><th>Nature</th><th>État</th></tr>
+<tr><td><code>SimulationClock</code></td><td>nouveau mécanisme, zéro dépendance au domaine</td><td><span class="tag ok">appliqué</span></td></tr>
+<tr><td><code>AnimationSystem(simDt)</code></td><td>changement de source de temps</td><td><span class="tag ok">appliqué</span></td></tr>
+<tr><td><code>realDt</code> réel + clamp</td><td>bug 44 fermé en passant</td><td><span class="tag ok">appliqué</span></td></tr>
+<tr><td>Scènes, maillages, textures</td><td>données</td><td><span class="tag ok">livré</span></td></tr>
+<tr><td><code>ParseNode</code> tolérant</td><td>régression à réparer</td><td><span class="tag warn">à faire (v2)</span></td></tr>
+<tr><td><code>Orbit</code> / <code>Spin</code> / <code>Body</code> / <code>Material</code> / <code>Ring</code> / <code>Belt</code></td><td>6 parseurs</td><td><span class="tag warn">à faire (v2)</span></td></tr>
+<tr><td><code>Trigger.role</code> / <code>.shape</code></td><td>2 enums</td><td><span class="tag warn">à faire (v2)</span></td></tr>
+<tr><td>Refonte <code>TriggerSystem</code></td><td>sondes × zones</td><td><span class="tag warn">à faire</span></td></tr>
+<tr><td>3 noms d’événements</td><td><code>EventNames.h</code></td><td><span class="tag warn">à faire</span></td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="echelle">6 · Le problème d’échelle — schéma dynamique</h2>
+
+<p>Le rapport entre la plus petite dimension utile (rayon de Deimos, 6,2 km) et la plus grande
+(demi-grand axe d’Éris, 1,015 × 10¹⁰ km) vaut <b>1,6 × 10⁹</b>. Aucun écran ne montre ça.</p>
+
+<p>La réponse n’est pas de choisir les nombres à la main. C’est de <b>déclarer une fonction</b> :</p>
+
+<pre><code>distance planétaire :  D = D_ref × (a / UA)^p_dist          p_dist = 0,50   D_ref = 60
+rayon              :  R = R_ref × (r / R_Terre)^p_rad       p_rad  = 0,40   R_ref = 1
+distance satellite :  d = R_parent_affiché × (a / R_parent_km)^p_sat   p_sat = 0,45</code></pre>
+
+<p>Une loi de puissance et non un logarithme : monotone, sans singularité en 0, exactement
+inversible (on peut réafficher des km dans un HUD), et elle <b>préserve l’ordre et les rapports
+relatifs</b>. Jupiter reste la plus grosse, Neptune reste la plus loin.</p>
+
+<p>Joue avec les exposants. À <code>p_dist = 1</code> tu retrouves l’échelle réelle, et le système
+sort de l’écran.</p>
+
+<div class="card">
+<div class="ctl">
+  <label>p_dist <input type="range" id="pd" min="0.20" max="1.00" step="0.01" value="0.50"><output id="pdv">0.50</output></label>
+  <label>D_ref <input type="range" id="dr" min="20" max="120" step="1" value="60"><output id="drv">60</output></label>
+  <label>p_rad <input type="range" id="pr" min="0.15" max="1.00" step="0.01" value="0.40"><output id="prv">0.40</output></label>
+  <button id="preset-c" class="on">Compressé</button>
+  <button id="preset-r">Réel (p = 1)</button>
+  <button id="preset-f">Plat (p = 0,25)</button>
+</div>
+<canvas id="cvScale" width="1040" height="420"></canvas>
+<div class="readout" id="scaleOut"></div>
+</div>
+
+<div class="ce"><span class="t">Contre-exemple 1 — une seule loi pour tout</span>
+<p>Appliquer la loi planétaire aux satellites. Io est à 421 700 km de Jupiter, soit 0,002819 UA :</p>
+<pre><code>D_Io = 60 × (0,002819)^0,50 = 60 × 0,05310 = 3,19 unités
+R_Jupiter affiché                              = 2,607 unités</code></pre>
+<p>Io orbiterait <b>à 0,58 unité au-dessus de la surface de Jupiter</b>, c’est-à-dire dedans. Et la
+Lune, elle, serait à 3,04 unités d’une Terre de rayon 1 : correct par hasard. Une loi qui marche
+pour un couple et casse pour l’autre n’est pas une loi, c’est une coïncidence.</p>
+<p><b>D’où la troisième loi</b>, relative au rayon du parent : Io passe à 5,853, dégagée de Jupiter
+de 3,2 unités.</p>
+</div>
+
+<h3>Le résultat retenu</h3>
+<div class="tablewrap"><table>
+<tr><th>Corps</th><th class="num">Réel</th><th class="num">Affiché</th><th>Corps</th><th class="num">Réel</th><th class="num">Affiché</th></tr>
+<tr><td>R Soleil</td><td class="num">696 340 km</td><td class="num">6,538</td><td>Orbite Mercure</td><td class="num">0,387 UA</td><td class="num">37,33</td></tr>
+<tr><td>R Jupiter</td><td class="num">69 911 km</td><td class="num">2,607</td><td>Orbite Terre</td><td class="num">1,000 UA</td><td class="num">60,00</td></tr>
+<tr><td>R Terre</td><td class="num">6 371 km</td><td class="num">1,000</td><td>Orbite Jupiter</td><td class="num">5,204 UA</td><td class="num">136,87</td></tr>
+<tr><td>R Lune</td><td class="num">1 737 km</td><td class="num">0,595</td><td>Orbite Neptune</td><td class="num">30,07 UA</td><td class="num">328,89</td></tr>
+<tr><td>R Deimos</td><td class="num">6,2 km</td><td class="num">0,062</td><td>Orbite Éris</td><td class="num">67,86 UA</td><td class="num">494,32</td></tr>
+<tr><td>Lune ← Terre</td><td class="num">384 400 km</td><td class="num">6,328</td><td>Io ← Jupiter</td><td class="num">421 700 km</td><td class="num">5,853</td></tr>
+<tr><td>Titan ← Saturne</td><td class="num">1 221 870 km</td><td class="num">9,533</td><td>Anneaux Saturne</td><td class="num">74 500–140 220 km</td><td class="num">3,10–5,84</td></tr>
+</table></div>
+<p>Dynamique ramenée de <b>1,6 × 10⁹</b> à <b>1 : 8 000</b>.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="ancre">7 · Ancre et Corps — le schéma qui décide de tout</h2>
+
+<p>C’est le point structurel du lot. La scène d’origine faisait orbiter les planètes en
+<b>faisant tourner un pivot</b> : <code>Earth</code> est enfant de <code>Sun-Pivot</code>, à 15
+unités en X, et le pivot tourne. Ça marche, et ça interdit trois choses définitivement.</p>
+
+<div class="grid3">
+<div class="card tight"><h4>Excentricité</h4><p style="font-size:14px">Une rotation de pivot ne
+produit qu’un cercle. Mercure (e = 0,206), Pluton (0,249) et Éris (0,436) sont des ellipses
+marquées.</p></div>
+<div class="card tight"><h4>Inclinaison</h4><p style="font-size:14px">Chaque planète a son plan
+orbital. Un pivot unique les met toutes dans le même. Pluton est à 17,2°, Éris à 44,0°.</p></div>
+<div class="card tight"><h4>Obliquité fixe</h4><p style="font-size:14px">L’axe de rotation est fixe
+dans l’espace <i>inertiel</i>. Sous un pivot, il tourne avec l’orbite : plus de saisons.</p></div>
+</div>
+
+<p>Le troisième est le plus subtil et le plus grave. Regarde-le tourner :</p>
+
+<div class="card">
+<div class="ctl">
+  <button id="mPivot" class="on">Pivot rotatif (avant)</button>
+  <button id="mAnchor">Ancre + Corps (après)</button>
+  <label>vitesse <input type="range" id="spd" min="0" max="3" step="0.05" value="1"><output id="spdv">1.00</output>×</label>
+  <label><input type="checkbox" id="showMoon" checked> lune</label>
+  <button id="playA">⏸ Pause</button>
+</div>
+<canvas id="cvAxis" width="1040" height="400"></canvas>
+<div class="readout" id="axisOut"></div>
+</div>
+
+<div class="ce"><span class="t">Contre-exemple 2 — la Lune qui tourne 365 fois trop vite</span>
+<p>Dans la scène d’origine, <code>Moon</code> est enfant de <code>Earth</code>. Or
+<code>Earth</code> porte sa rotation propre : un tour en 23,93 h. La Lune, étant enfant,
+<b>tourne avec elle</b>.</p>
+<pre><code>Révolutions apparentes de la Lune, par année simulée :
+  attendu   365,256 / 27,3217 =  13,37
+  obtenu    13,37 + 365,256   = 378,63   (+2 732 %)</code></pre>
+<p>Remède : la Lune n’est pas enfant du <b>corps</b> Terre, mais de l’<b>ancre</b> Terre, qui porte
+la position et jamais l’orientation.</p>
+</div>
+
+<h3>Le patron retenu</h3>
+<div class="ba">
+<div class="before"><h5>Avant</h5>
+<pre><code>Sun-Pivot            Transform.rotation ← animée
+└── Earth            translation [15,0,0]
+    │                rotation [23.4,0,0]  ← précesse
+    └── Moon         translation [2,0,0]
+                     hérite du spin terrestre</code></pre></div>
+<div class="after"><h5>Après</h5>
+<pre><code>Solar-System                    repère, rien d'autre
+└── Earth-Anchor     Orbit  → écrit une POSITION
+    │                rotation TOUJOURS identité
+    ├── Earth        Spin   → écrit une ORIENTATION
+    │                translation TOUJOURS nulle
+    └── Moon-Anchor  Orbit  (repère de l'ancre, pas du corps)
+        └── Moon     Spin</code></pre></div>
+</div>
+
+<div class="ok-box"><b>Bénéfice non prévu.</b> <code>OrbitSystem</code> écrit uniquement
+<code>m_local.position</code>, <code>SpinSystem</code> uniquement <code>m_local.rotation</code>.
+Champs disjoints ⇒ les deux systèmes sont <b>parallélisables sans verrou</b>. C’est une conséquence
+directe de la séparation, pas une optimisation ajoutée après coup.</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="regles">8 · Les règles posées (S1 à S12)</h2>
+<p>Douze règles, toutes nées d’un défaut constaté dans ce lot. Aucune n’est actée : elles partent en
+roadmap.</p>
+
+<div class="tablewrap"><table>
+<tr><th>#</th><th>Règle</th><th>Née de</th></tr>
+<tr><td><b>S1</b></td><td>La scène ne stocke que des grandeurs physiques réelles. Aucune valeur pré-mise à l’échelle.</td><td>des nombres sans provenance (25.0, 0.8)</td></tr>
+<tr><td><b>S2</b></td><td>La conversion vers les unités moteur se fait en un seul endroit, un <code>ScaleModel</code> déclaré.</td><td>trois systèmes d’unités implicites</td></tr>
+<tr><td><b>S3</b></td><td>Position orbitale et orientation propre ne partagent jamais le même nœud.</td><td>précession de l’axe, Lune solidaire</td></tr>
+<tr><td><b>S4</b></td><td>Un composant ne contient que ce que son système écrit ou lit.</td><td>4 floats de simulation dans <code>MeshComponent</code></td></tr>
+<tr><td><b>S5</b></td><td>L’orbite est une position calculée, pas la rotation d’un pivot.</td><td>ellipse et inclinaison impossibles</td></tr>
+<tr><td><b>S6</b></td><td>Un identifiant, une convention, une entité.</td><td><code>Sun_Danger_Zone</code> / <code>Sun-Danger-zone</code></td></tr>
+<tr><td><b>S7</b></td><td>Les volumes de gameplay s’expriment en multiples du rayon du corps porteur.</td><td>rayon de Hill de Jupiter = 740 R</td></tr>
+<tr><td><b>S8</b></td><td>Aucun nom d’entité en dur dans l’application : la scène décide.</td><td>bug 46</td></tr>
+<tr><td><b>S9</b></td><td>Le rayon d’un <code>TriggerComponent</code> est en unités monde et n’hérite jamais de l’échelle.</td><td>zone de Saturne × 2,607</td></tr>
+<tr><td><b>S10</b></td><td>Le facteur temps se règle par ratio multiplicatif, borné des deux côtés.</td><td>six décades à couvrir</td></tr>
+<tr><td><b>S11</b></td><td>Les angles sont calculés depuis la date simulée, jamais accumulés.</td><td>dérive, non-reproductibilité</td></tr>
+<tr><td><b>S12</b></td><td>Un événement nomme une transition, pas son contexte.</td><td>99 noms d’événements requis</td></tr>
+</table></div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="etapes">9 · Les étapes</h2>
+<p>Chaque étape : son objectif (pourquoi ce calcul), ce qu’elle consomme de l’étape précédente, et
+son résultat chiffré réel.</p>
+
+<details class="step" open><summary><span class="n">1</span> Poser la vérité physique</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Rendre chaque nombre de la scène vérifiable sans le moteur. Tant qu’une valeur est « réglée à la
+main », aucun test ne peut dire si elle est fausse.</p>
+<h4>Entrée</h4><p>Les éphémérides publiées (rayon moyen, demi-grand axe, excentricité, inclinaison,
+période orbitale, période de rotation, obliquité) pour 40 corps.</p>
+<h4>Sortie</h4>
+<div class="readout">40 corps : 1 étoile · 8 planètes · 7 naines et gros astéroïdes · 24 satellites
+5 systèmes d’anneaux · 2 ceintures · 600 astéroïdes procéduraux
+Table de référence : solar_system_data.md (une ligne par corps, réel + affiché)</div>
+<h4>Exemple — Mars</h4>
+<pre><code>radius_km = 3 389,5      a_km   = 227 939 366      ecc = 0,0934
+incl      = 1,850°       period = 686,980 j        rot = 24,6229 h
+tilt      = 25,19°       color  = #C26B47</code></pre>
+<p>Chacune de ces sept valeurs est publiée. Aucune n’a été choisie pour « bien rendre ».</p>
+</div></details>
+
+<details class="step"><summary><span class="n">2</span> Choisir le modèle d’échelle</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Compresser 1,6 × 10⁹ en quelque chose d’affichable, <b>sans perdre l’ordre ni les rapports</b>,
+et de façon exactement inversible.</p>
+<h4>Utilise</h4><p>Les rayons et demi-grands axes de l’étape 1.</p>
+<h4>Calcul, sur Jupiter, en float32 comme le CPU</h4>
+<pre><code>r / R_Terre   = 69 911 / 6 371            = 10,97394
+ln(10,97394)                              =  2,395557
+× 0,40                                    =  0,958223
+exp                                       =  2,607117
+R_affiché                                 =  2,6071   (arrondi 4 décimales)
+
+a / UA        = 778 479 000 / 149 597 870,7 = 5,203680
+sqrt                                        = 2,281158
+× 60                                        = 136,8695
+D_affichée                                  = 136,871</code></pre>
+<h4>Garde-fou</h4>
+<pre><code>d_sat = max( R_parent × (a/R_parent_km)^0,45 ,
+             R_parent × (1,6 + R_moon/R_parent) )   // jamais sous la surface</code></pre>
+<p>Déclenché sur Phobos : <code>(9 376 / 3 389,5)^0,45 = 1,566</code> contre un plancher de
+<code>1,6 + 0,062/0,777 = 1,680</code> → retenu 1,680 × 0,777 = <b>1,305</b>.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">3</span> Séparer l’ancre et le corps</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Permettre l’ellipse, l’inclinaison propre et l’obliquité fixe, et empêcher un satellite d’hériter
+du spin de sa planète.</p>
+<h4>Utilise</h4><p>Les distances de l’étape 2.</p>
+<h4>Résultat</h4>
+<div class="readout">v2 : 126 nœuds, dont 41 ancres
+     Earth-Anchor   translation [60.0, 0, 0]   rotation [0,0,0]      Orbit
+     Earth          translation [0,0,0]        scale [1,1,1]         Spin + Mesh
+     Moon-Anchor    translation [6.328, 0, 0]  parent = Earth-Anchor Orbit
+     Moon           translation [0,0,0]        scale [0.595]×3       Spin + Mesh</div>
+<h4>Vérification de la chaîne monde</h4>
+<pre><code>Terre   monde x =  60,000   échelle 1,000
+Lune    monde x =  66,328   échelle 0,595
+Jupiter monde x = 136,871   échelle 2,607
+Io      monde x = 142,724   échelle 0,606
+Haumea  monde x = 394,036   échelle (0,581 · 0,297 · 0,465)  ← triaxial</code></pre>
+<p>Haumea est le cas limite utile : 1 050 × 840 × 537 km réels, donc une <b>échelle non
+uniforme</b>. Combinée à une rotation elle ne commute pas — toute erreur d’ordre dans la composition
+TRS se verra là et nulle part ailleurs.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">4</span> Sortir les vitesses du composant de rendu</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Libérer <code>MeshComponent</code> de quatre floats que <code>RenderSystem</code> ne lit jamais,
+et permettre à une entité sans mesh d’orbiter.</p>
+<div class="ba">
+<div class="before"><h5>Avant</h5>
+<pre><code>struct MeshComponent
+{
+    MeshHandle m_mesh;
+    float m_orbitalSpeed;          // simulation
+    float m_rotationSpeed;         // simulation
+    float m_currentOrbitAngle;     // état dérivé
+    float m_currentRotationAngle;  // état dérivé
+};</code></pre></div>
+<div class="after"><h5>Après</h5>
+<pre><code>struct MeshComponent  { MeshHandle m_mesh; };
+
+struct OrbitComponent
+{
+    float m_semiMajorAxisKm, m_displayRadius;
+    float m_eccentricity, m_inclinationDeg;
+    float m_periodDays, m_meanAnomalyDeg;
+    float m_angularSpeedDegPerDay;
+};
+struct SpinComponent
+{
+    float m_axialTiltDeg, m_rotationPeriodHours;
+    float m_angularSpeedDegPerHour, m_initialAngleDeg;
+    bool  m_inheritParentRotation;
+};</code></pre></div>
+</div>
+<p><b>Coût évité :</b> 16 octets de données de simulation streamés par entité dans le chemin chaud
+du rendu. Sur 685 entités, 10,9 Ko de lignes de cache chargées pour rien.</p>
+<p>Les deux <code>m_current*</code> ne sont pas déplacés : ils <b>disparaissent</b>. C’est de l’état
+dérivé, et on ne stocke pas d’état dérivé — voir l’étape 7.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">5</span> Les zones de danger</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Donner au vaisseau des choses à heurter, et au moteur un jeu de triggers assez dense pour que le
+coût se mesure.</p>
+<h4>Pourquoi en multiples du rayon, et pas en km</h4>
+<p>Le rayon de Hill de Jupiter vaut 53 millions de km, soit 740 rayons joviens. Mis à l’échelle, il
+engloutirait l’orbite de Mars. Les zones sont donc du <b>gameplay</b>, calibrées pour être jouables,
+avec la grandeur physique de référence conservée en commentaire.</p>
+<h4>Résultat — 33 zones + 1 sonde</h4>
+<div class="tablewrap"><table>
+<tr><th>Type</th><th>Corps</th><th class="num">Multiple</th><th>Effet</th></tr>
+<tr><td><code>CORONA</code></td><td>Soleil</td><td class="num">2,00</td><td>dégâts extrêmes</td></tr>
+<tr><td><code>HEAT</code></td><td>Soleil</td><td class="num">4,50</td><td>dégâts continus</td></tr>
+<tr><td><code>GRAVITY</code></td><td>Soleil, 8 planètes, Lune, Europe, Pluton, Éris…</td><td class="num">2,5–10</td><td>puits d’attraction</td></tr>
+<tr><td><code>ATMOSPHERE</code></td><td>Vénus, Terre, Mars, 4 géantes, Titan</td><td class="num">1,10–1,40</td><td>rentrée / écrasement</td></tr>
+<tr><td><code>RADIATION</code></td><td>Jupiter</td><td class="num">4,00</td><td>tore de Io, létal</td></tr>
+<tr><td><code>VOLCANIC</code></td><td>Io</td><td class="num">2,00</td><td>éjectas</td></tr>
+<tr><td><code>SPIN</code></td><td>Haumea</td><td class="num">2,20</td><td>rotation en 3 h 55, débris</td></tr>
+<tr><td><code>SURFACE</code></td><td>Mercure</td><td class="num">1,05</td><td>impact direct</td></tr>
+<tr><td><code>SAFE_ZONE</code></td><td>Terre</td><td class="num">9,00</td><td>réparation</td></tr>
+<tr><td>coquille</td><td>ceinture principale, Kuiper</td><td class="num">—</td><td>86,1–108,5 / 328,6–424,3</td></tr>
+</table></div>
+<h4>Calibration vérifiée</h4>
+<pre><code>Soleil HEAT  = 4,50 × 6,538 =  29,42   &lt; orbite Mercure  37,33   ✓
+Jupiter GRAV = 10,0 × 2,607 =  26,07   &lt; écart Mars–Jupiter 62,80 ✓</code></pre>
+<p>Premier jet à 26 R pour le Soleil : 170 unités, soit jusqu’à Jupiter. Recalibré.</p>
+<h4>Pendant vectorisé</h4>
+<p>Le test sonde × zones est trivialement vectorisable : 33 zones, 8 par registre, 5 itérations.</p>
+<pre><code>// scalaire
+for (size_t z = 0; z &lt; nZones; ++z)
+{
+    const Vec3f d = probePos - zonePos[z];
+    const float d2 = d.x*d.x + d.y*d.y + d.z*d.z;
+    inside[z] = (d2 &lt;= zoneR2[z]);
+}
+
+// AVX2 — SoA sur les zones (zx, zy, zz, zr2 : 4 tableaux alignés)
+const __m256 px = _mm256_set1_ps(probePos.x);   // la sonde est un scalaire
+const __m256 py = _mm256_set1_ps(probePos.y);   // diffusé dans les 8 couloirs
+const __m256 pz = _mm256_set1_ps(probePos.z);
+for (size_t z = 0; z &lt; nZones; z += 8)
+{
+    const __m256 dx = _mm256_sub_ps(px, _mm256_load_ps(zx + z));
+    const __m256 dy = _mm256_sub_ps(py, _mm256_load_ps(zy + z));
+    const __m256 dz = _mm256_sub_ps(pz, _mm256_load_ps(zz + z));
+    // d2 = dx² + dy² + dz²  — pas de FMA : on reste bit-exact avec le scalaire
+    __m256 d2 = _mm256_mul_ps(dx, dx);
+    d2 = _mm256_add_ps(d2, _mm256_mul_ps(dy, dy));
+    d2 = _mm256_add_ps(d2, _mm256_mul_ps(dz, dz));
+    // _CMP_LE_OQ : ordonné (NaN → faux) et silencieux, comme &lt;= en scalaire
+    const __m256 m = _mm256_cmp_ps(d2, _mm256_load_ps(zr2 + z), _CMP_LE_OQ);
+    mask |= (uint32_t)_mm256_movemask_ps(m) &lt;&lt; z;   // 8 bits d'un coup
+}</code></pre>
+<p>Un seul registre de masque porte les 33 réponses. Le diff avec le masque de la frame précédente
+donne <code>ENTER</code> et <code>EXIT</code> en deux <code>and</code> ; l’intersection donne
+<code>STAY</code>. Les transitions deviennent de l’arithmétique binaire, plus une suite de
+<code>if</code>.</p>
+<p><b>Non applicable tant que la refonte sondes × zones n’est pas faite</b> : c’est elle qui crée le
+tableau de zones contigu dont le SIMD a besoin.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">6</span> Réduire les noms d’événements à trois</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Empêcher l’explosion combinatoire de <code>EventNames.h</code>.</p>
+<h4>Le constat</h4>
+<div class="readout">Nommage initial : ENTER_&lt;CORPS&gt;_&lt;TYPE&gt; → 33 zones × 3 transitions = 99 noms
+Journal observé : « évènement inconnu 'ENTER_SUN_CORONA' — ne sera jamais reçu »  (×99)</div>
+<p>L’avertissement du moteur est correct. Le défaut est dans le nommage : l’identifiant encodait
+deux informations (quel astre, quel danger) qui sont des <b>données</b>, pas des noms.</p>
+<div class="ba">
+<div class="before"><h5>Avant</h5>
+<pre><code>ENTER_SUN_CORONA        STAY_SUN_CORONA        EXIT_SUN_CORONA
+ENTER_JUPITER_GRAVITY   STAY_JUPITER_GRAVITY   EXIT_JUPITER_GRAVITY
+… 99 entrées d'enum</code></pre></div>
+<div class="after"><h5>Après</h5>
+<pre><code>TRIGGER_ENTER   TRIGGER_STAY   TRIGGER_EXIT     // 3 entrées
+
+struct TriggerEvent {
+    Entity       m_zone;      // QUI : l'entité porteuse
+    EHazardType  m_hazard;    // QUOI : enum sur le composant
+};</code></pre></div>
+</div>
+<h4>Solution de transition appliquée</h4>
+<p>Les zones létales réutilisent les trois noms que le moteur connaît déjà
+(<code>STARTED_TAKING_DAMAGE</code> / <code>TAKING_DAMAGE</code> /
+<code>STOPPED_TAKING_DAMAGE</code>) ; les zones non létales n’émettent rien. <b>Plus aucun
+avertissement de trigger au chargement.</b></p>
+</div></details>
+
+<details class="step"><summary><span class="n">7</span> L’horloge de simulation</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Rendre le temps du monde réglable, et préparer le passage des angles accumulés aux angles
+calculés.</p>
+<h4>La tension irréductible</h4>
+<p>Les périodes de rotation se comptent en heures, les périodes orbitales en années. Rapport
+≈ 10⁴. Aucun facteur unique ne rend les deux confortables :</p>
+<div class="tablewrap"><table>
+<tr><th class="num">daysPerSecond</th><th>un jour terrestre dure</th><th>une année dure</th><th></th></tr>
+<tr><td class="num">1,00</td><td>1 s</td><td>6 min</td><td>rotation illisible</td></tr>
+<tr><td class="num">0,20</td><td>5 s</td><td>30 min</td><td><b>retenu</b></td></tr>
+<tr><td class="num">0,05</td><td>20 s</td><td>2 h</td><td>confortable, orbites lentes</td></tr>
+<tr><td class="num">0,01</td><td>1 min 40</td><td>10 h</td><td>rotation seule</td></tr>
+</table></div>
+
+<div class="ctl">
+  <label>daysPerSecond <input type="range" id="ts" min="-3" max="2" step="0.02" value="-0.699"><output id="tsv">0.200</output></label>
+  <button id="playT">⏸ Pause</button>
+</div>
+<canvas id="cvClock" width="1040" height="240"></canvas>
+<div class="readout" id="clockOut"></div>
+
+<h4>Ce que fait réellement <code>SimulationClock</code></h4>
+<p>Une conversion affine, rien d’autre : <code>temps_monde = temps_réel × échelle</code>. Elle ne
+mesure pas (c’est <code>SDL_GetPerformanceCounter</code>), elle n’anime rien (ce sont les systèmes).
+<b>Elle traduit.</b></p>
+<pre><code>struct SimulationClockSettings      // réglage, lu une fois depuis engine.json
+{
+    float m_step = 1.5f, m_sprint = 4.0f;
+    float m_min = 0.001f, m_max = 1000.0f, m_default = 0.20f;
+};
+
+struct SimulationClock              // agrégat : pas de constructeur,
+{                                   // donc constructible AVANT engine.json
+    SimulationClockSettings m_cfg;
+    float  m_timeScale = 0.20f;
+    double m_simTime   = 0.0;       // double : en float, 1e5 jours → 1 h d'erreur
+    bool   m_paused    = false;
+
+    void Configure(const SimulationClockSettings&amp; cfg, double epochDays = 0.0)
+    {
+        LV3_ASSERT(cfg.m_step   &gt; 1.0f);   // ratio ≤ 1 : fige ou inverse le zoom
+        LV3_ASSERT(cfg.m_sprint &gt; 1.0f);
+        LV3_ASSERT(cfg.m_min    &gt; 0.0f);   // 0 est absorbant
+        LV3_ASSERT(cfg.m_min    &lt; cfg.m_max);
+        m_cfg = cfg;
+        m_timeScale = std::clamp(cfg.m_default, cfg.m_min, cfg.m_max);
+        m_simTime = epochDays; m_paused = false;
+    }
+
+    float Advance(float realDt)         // realDt DOIT être clampé en amont
+    {
+        const float simDt = m_paused ? 0.0f : realDt * m_timeScale;
+        m_simTime += simDt;
+        return simDt;                   // pour ceux qui intègrent
+    }                                   // m_simTime pour ceux qui calculeront
+
+    void Scale(bool up, bool sprint)
+    {
+        const float f = sprint ? m_cfg.m_sprint : m_cfg.m_step;
+        m_timeScale = std::clamp(up ? m_timeScale * f : m_timeScale / f,
+                                 m_cfg.m_min, m_cfg.m_max);
+    }
+    void Reset() { m_timeScale = m_cfg.m_default; }
+};</code></pre>
+
+<h4>Deux temps circulent dans la frame</h4>
+<div class="tablewrap"><table>
+<tr><th>Appel</th><th>Reçoit</th><th>Pourquoi</th></tr>
+<tr><td><code>PlayerInputSystem</code></td><td><code>realDt</code></td><td>le joueur</td></tr>
+<tr><td><code>AnimationSystem</code></td><td><b><code>simDt</code></b></td><td><b>le monde — seule ligne modifiée</b></td></tr>
+<tr><td><code>CameraFPSControllerSystem</code></td><td><code>realDt</code></td><td>doit rester vivant en pause</td></tr>
+<tr><td><code>CameraFollowSystem</code></td><td><code>realDt</code></td><td>le lissage est un ressenti</td></tr>
+<tr><td><code>CameraZoomSystem</code></td><td><code>realDt</code></td><td>le joueur</td></tr>
+</table></div>
+
+<h4>Règle S11 — et pourquoi l’horloge ne suffit pas</h4>
+<p>Tant que <code>AnimationSystem</code> fait <code>angle += vitesse × simDt</code>, la simulation
+n’est pas reproductible : <code>realDt</code> varie, donc la suite des <code>simDt</code> diffère
+d’une exécution à l’autre.</p>
+<div class="ba">
+<div class="before"><h5>Avant — intégré</h5>
+<pre><code>mesh.m_currentOrbitAngle += mesh.m_orbitalSpeed * dt;</code></pre>
+<ul class="clean" style="font-size:13.5px"><li>dérive float sur des millions de frames</li>
+<li>résultat dépendant du framerate</li><li>pas de retour arrière</li>
+<li>aucun TNR ne peut asserter une position</li></ul></div>
+<div class="after"><h5>Après — calculé</h5>
+<pre><code>const float M = orbit.m_meanAnomalyDeg
+              + orbit.m_angularSpeedDegPerDay
+              * float(clock.m_simTime);</code></pre>
+<ul class="clean" style="font-size:13.5px"><li>aucune dérive</li>
+<li>identique quel que soit le framerate</li>
+<li><code>m_timeScale</code> négatif marche gratuitement</li>
+<li>« au jour 1 000, Mars est en (x,y,z) » devient assertable</li></ul></div>
+</div>
+</div></details>
+
+<details class="step"><summary><span class="n">8</span> Les maillages et le dépliage UV</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Remplacer la sphère à 10 faces par une chaîne de LOD, et poser un dépliage correct avant que la
+leçon sur le mapping n’arrive.</p>
+<div class="tablewrap"><table>
+<tr><th>Fichier</th><th class="num">Sommets</th><th class="num">Triangles</th><th>Usage</th></tr>
+<tr><td><code>sphere_lo.obj</code> 16 × 10</td><td class="num">187</td><td class="num">288</td><td>rayon affiché &lt; 0,5</td></tr>
+<tr><td><code>sphere_mid.obj</code> 32 × 16</td><td class="num">561</td><td class="num">960</td><td>0,5 à 2,0</td></tr>
+<tr><td><code>sphere_hi.obj</code> 64 × 32</td><td class="num">2 145</td><td class="num">3 968</td><td>≥ 2,0 (5 géantes + Soleil)</td></tr>
+<tr><td><code>rock_a/b/c.obj</code></td><td class="num">117</td><td class="num">168</td><td>astéroïdes</td></tr>
+<tr><td><code>ship_scout.obj</code></td><td class="num">290</td><td class="num">296</td><td>vaisseau, 5 groupes</td></tr>
+</table></div>
+<p>Le LOD est choisi sur le <b>rayon affiché</b>, pas sur le rayon réel : c’est la taille à l’écran
+qui décide.</p>
+
+<h4>Les deux corrections du dépliage sphérique</h4>
+<pre><code>u = 0,5 + atan2(n.z, n.x) / (2π)
+v = 0,5 − asin(n.y) / π              // n = normale unitaire</code></pre>
+<p><b>La couture.</b> À la longitude 180°, <code>u</code> saute de 0,999 à 0,001. Le triangle qui
+l’enjambe interpole <code>u</code> à travers toute la texture. Remède : générer
+<code>seg + 1</code> colonnes, la dernière à la même position que la première mais avec
+<code>u = 1</code>.</p>
+<p><b>Les pôles.</b> Le pôle est un point en 3D mais un <i>segment</i> en UV. Remède : une rangée
+complète de sommets au pôle, tous à la même position, chacun avec son <code>u</code>.</p>
+<p>Même famille que la règle haut-gauche de L04 : deux calculs voisins qui doivent s’accorder à la
+frontière. Ici, en espace texture.</p>
+
+<h4>Contrôles passés avant livraison</h4>
+<div class="readout">sphere_lo    288 tris   dégénérés 0   normales inversées 0   arêtes de bord 0
+sphere_mid   960 tris   dégénérés 0   normales inversées 0   arêtes de bord 0
+sphere_hi  3 968 tris   dégénérés 0   normales inversées 0   arêtes de bord 0
+rock_a/b/c   168 tris   dégénérés 0   normales inversées 0   arêtes de bord 0
+ship_scout   296 tris   winding corrigé sur 220 triangles (74 %)</div>
+<p>« Arêtes de bord = 0 » signifie que chaque arête est partagée par exactement deux triangles :
+la surface est close. C’est le test qui prouve que la duplication de couture n’a pas laissé de
+fente.</p>
+</div></details>
+
+<details class="step"><summary><span class="n">9</span> La charge — 600 astéroïdes</summary>
+<div class="body">
+<h4>Objectif</h4>
+<p>Donner au moteur assez de matière pour que les coûts deviennent mesurables, avec des données
+reproductibles.</p>
+<h4>Génération</h4>
+<pre><code>a ∈ [2,06 ; 3,27] UA    e ∈ [0 ; 0,20]    i ∈ [−12° ; +12°]
+rayon ∈ [8 ; 120] km (loi de puissance, les petits dominent)
+période = 365,256 × a^1,5            ← 3ᵉ loi de Kepler, pas un tirage
+rotation ∈ [2 ; 20] h
+mesh tiré parmi rock_a / rock_b / rock_c</code></pre>
+<p>Tirage par générateur congruentiel à graine fixe : <b>même ceinture à chaque chargement</b>.
+Condition nécessaire pour qu’un test de charge soit un test.</p>
+<h4>Les lacunes de Kirkwood</h4>
+<p>Aux résonances avec Jupiter — 3:1 (2,502 UA), 5:2 (2,825), 7:3 (2,958), 2:1 (3,279) — la ceinture
+réelle est vide. Les tirages qui y tombent sont rejetés. Vu de dessus, de vrais sillons sombres.</p>
+<h4>Charge obtenue</h4>
+<div class="tablewrap"><table>
+<tr><th>Scène</th><th class="num">Nœuds</th><th class="num">Triangles</th><th>Rôle</th></tr>
+<tr><td><code>solar_system_v1compat.json</code></td><td class="num">85</td><td class="num">32 936</td><td>charge tel quel</td></tr>
+<tr><td><code>solar_system_v1compat_belt.json</code></td><td class="num">685</td><td class="num">133 736</td><td>test de charge</td></tr>
+<tr><td><code>solar_system_v2.json</code></td><td class="num">126</td><td class="num">—</td><td>cible</td></tr>
+</table></div>
+<p>641 <code>MeshComponent</code> pour <b>3 fichiers rocheux</b> : c’est le test grandeur nature de
+la canonicalisation de chemin du <code>ResourceManager</code> (L03 §8.1). Si elle fonctionne,
+3 chargements et 600 handles. Sinon, le temps de démarrage le dira.</p>
+<p>En v2 la ceinture n’est pas cuite : un composant <code>Belt</code> de 13 champs (graine, bornes,
+lacunes) que le moteur développe au chargement. Même résultat, JSON minuscule.</p>
+</div></details>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="contre">10 · Contre-exemples chiffrés</h2>
+<p>Neuf fautes, toutes commises ou évitées de justesse pendant ce lot. Les deux premières sont de
+moi et auraient faussé toutes les mesures.</p>
+
+<div class="ce"><span class="t">CE 3 — les planètes filles du corps Soleil <span class="tag bad">commis</span></span>
+<p>En aplatissant le v2 vers le v1, j’ai rattaché les planètes au nœud <code>Sun</code>. Or ce nœud
+porte <b>la rotation propre du Soleil</b>.</p>
+<pre><code>Sun.rotationSpeed = 14,184397 °/jour      (période 25,38 j)
+Terre, révolution réelle                  =  0,985609 °/jour
+
+Tout le système entraîné :   14,18 / 0,9856 = 14,4× la révolution terrestre</code></pre>
+<p>Les planètes n’auraient pas orbité, elles auraient été emportées en bloc. Révélé par le dump de
+hiérarchie, qui montrait <code>Sun → Mercury, Venus, Earth…</code>.</p>
+<p><b>Correctif :</b> en v1, les planètes sont rattachées à <code>Solar-System</code>, qui ne porte
+ni échelle ni rotation. Bénéfice collatéral : <code>Earth.translation</code> repasse de
+<code>9,17712</code> à <code>60,000</code>, lisible.</p>
+<p><b>Leçon :</b> une règle énoncée ne protège pas de l’appliquer à moitié. Le v2 était juste, la
+rétro-projection ne l’était pas.</p>
+</div>
+
+<div class="ce"><span class="t">CE 4 — far infini en orthographique <span class="tag bad">commis</span></span>
+<p><code>Overview_Camera</code> déclarée <code>orthographic</code> + <code>infiniteFar: true</code>.
+L’assertion du moteur a sauvé la mise :</p>
+<pre><code>LV3_ASSERT(!(cam.m_projection == EProjectionType::Orthographic &amp;&amp; cam.m_infiniteFar));</code></pre>
+<p><b>Pourquoi elle a raison.</b> En perspective, le far infini converge parce que la profondeur
+passe par la division par <i>w</i>. En orthographique, <i>w</i> = 1 : la profondeur est affine en
+<i>z</i> et contient <code>1/(f−n)</code>. Faire tendre <i>f</i> → ∞ annule ce coefficient :</p>
+<pre><code>f = 2 000 :  dz/dnd = 1/(2000−1)     = 5,00 × 10⁻⁴   discrimination normale
+f = 10⁶   :  dz/dnd = 1/(10⁶−1)      = 1,00 × 10⁻⁶   500× moins de dynamique
+f → ∞     :  dz/dnd = 0                              profondeur CONSTANTE</code></pre>
+<p>Le Z-buffer ne discrimine plus rien, et le dessin se fait dans l’ordre de soumission.
+<b>Correctif :</b> <code>far: 2000, infiniteFar: false</code>.</p>
+</div>
+
+<div class="ce"><span class="t">CE 5 — un seul sommet au pôle</span>
+<p>Le réflexe : un pôle, un sommet, <code>u = 0,5</code>. Tous les triangles polaires partagent
+alors le même <code>u</code> et la texture se plisse en éventail. Sur
+<code>sphere_hi</code> : 64 triangles au pôle nord, 64 valeurs de <code>u</code> nécessaires,
+1 fournie.</p>
+<p>Variante de la même faute : garder les deux triangles du quad polaire. Le second est
+<b>dégénéré</b> (aire nulle), il est chargé, transformé, puis rejeté sur une edge function nulle —
+et il menace l’interpolation barycentrique d’une division par zéro.</p>
+<pre><code>sphere_hi avec quads polaires complets : 4 096 triangles, dont  128 dégénérés (3,1 %)
+sphere_hi corrigée                      : 3 968 triangles, dont    0</code></pre>
+</div>
+
+<div class="ce"><span class="t">CE 6 — 99 noms d’événements</span>
+<p>Voir l’étape 6. 33 zones × 3 transitions. L’erreur n’est pas qu’il manque un nom, c’est que le
+nom encodait des données.</p>
+</div>
+
+<div class="ce"><span class="t">CE 7 — deux facteurs de temps séparés</span>
+<p>Tentation naturelle face à la tension rotation / révolution : un facteur pour les rotations, un
+autre pour les orbites. Chiffré sur le système de Jupiter :</p>
+<pre><code>Résonance de Laplace réelle :  Io : Europe : Ganymède = 1 : 2 : 4   (exact)
+Avec deux facteurs (orbites ×0,05, rotations ×1) :
+  Io orbite en 35,4 s mais tourne sur elle-même en 1,77 s  → 20 rotations/orbite
+  alors que Io est en rotation SYNCHRONE : 1 rotation/orbite
+Toute lune synchrone cesse de l'être. Aucun TNR ne peut plus rien asserter.</code></pre>
+<p>Un seul temps, un seul facteur. La tension se résout par le <b>zoom temporel</b>, pas par deux
+horloges.</p>
+</div>
+
+<div class="ce"><span class="t">CE 8 — <code>m_min = 0</code> dans la configuration</span>
+<p>Depuis que les bornes viennent de <code>engine.json</code>, l’utilisateur peut écrire n’importe
+quoi. Trois valeurs plausibles cassent le mécanisme en silence :</p>
+<div class="tablewrap"><table>
+<tr><th>Saisie</th><th>Effet</th><th>Symptôme</th></tr>
+<tr><td><code>step = 1,0</code></td><td><code>]</code> et <code>[</code> ne font plus rien</td><td>aucun message</td></tr>
+<tr><td><code>step = 0,5</code></td><td>le sens s’inverse</td><td>on cherche dans le clavier</td></tr>
+<tr><td><code>min = 0,0</code></td><td><b>zéro absorbant</b></td><td>après ~15 appuis, figé ; <code>×1,5</code> reste à 0 ; <code>P</code> ne débloque pas</td></tr>
+</table></div>
+<p>Le troisième ne se manifeste qu’après coup et <b>ressemble à un bug de pause</b>. D’où les trois
+assertions dans <code>Configure</code> : la validation appartient au chargement, pas à l’usage.
+Même principe que <code>WarnUnread()</code>.</p>
+</div>
+
+<div class="ce"><span class="t">CE 9 — îlots UV qui se chevauchent <span class="tag bad">commis</span></span>
+<p>Impossible de peindre un atlas sans vérifier que les îlots ne se marchent pas dessus. Mesuré en
+rasterisant chaque groupe dans un masque 512² :</p>
+<pre><code>hull     × wings   :  50 texels
+thruster × glass   : 889 texels</code></pre>
+<p><b>Cause :</b> les bouchons circulaires dépliaient en disque de rayon 0,06 en UV, autour du
+centre de leur bande — pour des bandes de 0,15 de haut. Un disque de 0,12 de diamètre dans une
+bande de 0,15 déborde forcément.</p>
+<p><b>Conséquence si laissé :</b> les tuyères auraient reçu les texels de la verrière. On aurait
+cherché dans le rasterizer alors que le défaut est dans la donnée.</p>
+<p><b>Après correction</b> (rayon 0,022, bandes réagencées) :</p>
+<div class="readout">hull      u[0,000 0,998]   v[0,023 0,332]
+wings     u[0,020 0,957]   v[0,361 0,572]
+engine    u[0,000 0,998]   v[0,621 0,781]
+thruster  u[0,477 0,520]   v[0,801 0,842]
+glass     u[0,000 0,998]   v[0,861 0,990]
+chevauchement : aucun</div>
+</div>
+
+<div class="ce"><span class="t">CE 10 — déboguer un dépliage avec une photo de planète</span>
+<p>Sur une image organique, une couture d’un pixel, un <code>v</code> inversé ou un pôle en éventail
+sont <b>invisibles</b>. Sur une mire, ils hurlent. <code>uv_test_2k.png</code> superpose cinq
+informations : damier 32 × 16 (échelle et orientation), dégradé rouge→vert (sens de <code>u</code>),
+dégradé bleu (sens de <code>v</code>), barres magenta à <code>u = 0</code> et <code>u = 1</code>
+(la couture doit se recoller en une seule barre nette), bandes jaune et orange aux pôles.</p>
+<p>On pose les vraies textures <b>après</b> que la mire soit propre, jamais avant.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="verifier">11 · Vérifier</h2>
+
+<h3>11.1 · Contrôles hors moteur, déjà passés</h3>
+<div class="tablewrap"><table>
+<tr><th>Contrôle</th><th>Méthode</th><th>Résultat</th></tr>
+<tr><td>Intégrité des scènes</td><td>identifiants uniques, parents existants</td><td><span class="tag ok">0 doublon, 0 parent manquant</span> sur les 3 fichiers</td></tr>
+<tr><td>Chaîne de transformations</td><td>remontée de hiérarchie en Python</td><td><span class="tag ok">conforme</span> — Terre 60,000 / 1,000 ; Io 142,724 / 0,606</td></tr>
+<tr><td>Étanchéité des maillages</td><td>comptage des arêtes de bord</td><td><span class="tag ok">0</span> sur les 6 sphères et rochers</td></tr>
+<tr><td>Orientation</td><td>normale géométrique · normale déclarée</td><td><span class="tag ok">0 inversée</span> après correction de 220 triangles du vaisseau</td></tr>
+<tr><td>Triangles dégénérés</td><td>aire &lt; 1e-14</td><td><span class="tag ok">0</span></td></tr>
+<tr><td>Îlots UV</td><td>masques 512² par groupe</td><td><span class="tag ok">disjoints</span> après correction</td></tr>
+<tr><td>Lacunes de Kirkwood</td><td>histogramme des 600 demi-grands axes</td><td><span class="tag ok">4 sillons visibles</span></td></tr>
+<tr><td>Calibration des zones</td><td>aucune zone n’avale une orbite voisine</td><td><span class="tag ok">conforme</span> après recalibration du Soleil</td></tr>
+</table></div>
+
+<h3>11.2 · Filets Debug à poser</h3>
+<pre><code>// à l'issue du chargement
+LV3_ASSERT(aucun identifiant dupliqué);
+LV3_ASSERT(aucun parent non résolu);
+LV3_ASSERT(pour tout corps enfant : distance_locale &gt; rayon_parent_affiché);  // pas sous la surface
+
+// par frame, Debug
+LV3_ASSERT(toute ancre a m_local.rotation == identité);     // règle S3
+LV3_ASSERT(tout corps a m_local.position == zéro);          // règle S3</code></pre>
+<p>Les deux derniers sont les plus utiles : ils transforment la règle S3 d’une intention en un
+invariant vérifié à chaque frame. Si un système se met à écrire une position sur un corps, on le
+sait immédiatement.</p>
+
+<h3>11.3 · Le test qui prouve le câblage du temps</h3>
+<div class="ok-box">Mettre <code>m_paused = true</code> au démarrage. On doit pouvoir <b>voler
+librement avec la caméra FPS dans un système solaire entièrement figé</b>.
+<ul class="clean" style="margin-top:6px">
+<li>Si les astres bougent encore → <code>AnimationSystem</code> reçoit <code>realDt</code>.</li>
+<li>Si la caméra se fige → <code>simDt</code> a été propagé trop loin.</li>
+</ul>
+<p style="margin:6px 0 0">Bénéfice : <code>CheckAnimationBaseline</code> (« <code>dt = 0</code>, rien
+ne bouge ») devient rejouable <b>à n’importe quel instant</b> de la session, plus seulement au
+démarrage. Si une planète n’est pas à sa position déclarée alors que rien ne bouge, le bug est dans
+les matrices, pas dans l’animation : l’espace de recherche est coupé en deux.</p></div>
+
+<h3>11.4 · TNR de l’horloge</h3>
+<pre><code>void Test_SimulationClock()
+{
+    LV3::SimulationClockSettings cfg;
+    LV3::SimulationClock c;  c.Configure(cfg);  c.m_timeScale = 1.0f;
+
+    // 1. Advance est linéaire et cumulatif
+    c.Advance(0.5f); c.Advance(0.5f);
+    LV3_ASSERT(std::abs(c.m_simTime - 1.0) &lt; 1e-6);
+
+    // 2. La pause fige la date sans perdre l'échelle
+    c.m_paused = true;
+    const double before = c.m_simTime;
+    LV3_ASSERT(c.Advance(1.0f) == 0.0f);
+    LV3_ASSERT(c.m_simTime == before);
+    LV3_ASSERT(c.m_timeScale == 1.0f);
+    c.m_paused = false;
+
+    // 3. Scale est multiplicatif ET borné DES DEUX CÔTÉS
+    c.Scale(true, false);
+    LV3_ASSERT(std::abs(c.m_timeScale - cfg.m_step) &lt; 1e-6f);
+    for (int i = 0; i &lt; 100; ++i) c.Scale(true, true);
+    LV3_ASSERT(c.m_timeScale &lt;= c.m_cfg.m_max);
+    for (int i = 0; i &lt; 200; ++i) c.Scale(false, true);
+    LV3_ASSERT(c.m_timeScale &gt;= c.m_cfg.m_min);
+
+    // 4. Le clamp bas n'est pas absorbant : on doit pouvoir remonter   ← CE 8
+    c.Scale(true, false);
+    LV3_ASSERT(c.m_timeScale &gt; c.m_cfg.m_min);
+
+    // 5. Deux horloges sont indépendantes — la raison du refus du static
+    LV3::SimulationClock a, b;  a.Configure(cfg);  b.Configure(cfg);
+    a.Advance(1.0f);
+    LV3_ASSERT(b.m_simTime == 0.0);
+}</code></pre>
+
+<h3>11.5 · Les quatre mesures à relever sur <code>v1compat_belt</code></h3>
+<div class="tablewrap"><table>
+<tr><th>Mesure</th><th>Pourquoi</th><th>Ce qu’on attend</th></tr>
+<tr><td>Temps de chargement</td><td>canonicalisation du <code>ResourceManager</code></td><td>3 fichiers rocheux lus, pas 600</td></tr>
+<tr><td><code>WorldTransformSystem</code></td><td>685 nœuds sur 3 niveaux</td><td>la traversée récursive de l’audit commence à parler</td></tr>
+<tr><td>Rasterisation</td><td>133 736 triangles</td><td>premier signal fill-rate ; <code>sphere_hi</code> sur le Soleil de près</td></tr>
+<tr><td><code>TriggerSystem</code></td><td>561 paires avant refonte</td><td>chiffre à noter <b>avant</b> pour que le gain soit prouvé</td></tr>
+</table></div>
+
+<h3>11.6 · Prédictions à confronter</h3>
+<ul class="clean">
+<li>Les vitesses paraîtront folles à <code>daysPerSecond = 1</code> : la Terre tourne en 1 s. Exact
+et illisible. <code>0,05</code> pour observer.</li>
+<li>Éris à 494 et Mercure à 37 dans le même frustum : c’est le reverse-Z à far infini qui passe son
+examen. Si du z-fighting apparaît, ce sera là.</li>
+<li>Haumea, échelle non uniforme + rotation : toute erreur d’ordre dans la composition TRS s’y voit
+exclusivement.</li>
+<li>Un seul type d’avertissement doit subsister : la clé <code>texture</code>, 41 fois. Attendu.</li>
+</ul>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="usage">12 · Exemples d’utilisation</h2>
+
+<h3>12.1 · Lire une valeur et la vérifier</h3>
+<pre><code>// Dans solar_system_v2.json
+"Mars-Anchor": { "Orbit": { "semiMajorAxisKm": 227939366.0,
+                            "displayRadius": 74.073,
+                            "periodDays": 686.98,
+                            "angularSpeedDegPerDay": 0.52403564 } }
+
+// Vérification à la main, sans le moteur :
+//   227 939 366 / 149 597 870,7 = 1,523679 UA        ← valeur publiée  ✓
+//   60 × sqrt(1,523679)         = 74,073             ← displayRadius   ✓
+//   360 / 686,98                = 0,524034 °/jour    ← ω               ✓</code></pre>
+<p>C’est tout l’intérêt de la règle S1 : trois divisions suffisent à auditer une ligne.</p>
+
+<h3>12.2 · Changer d’échelle sans toucher la scène</h3>
+<pre><code>"scaleModel": { "distanceRefUnits": 60.0,  "distanceExponent": 0.50,
+                "radiusRefUnits":   1.0,   "radiusExponent":   0.40,
+                "satelliteExponent": 0.45, "minRadiusUnits":  0.04 }</code></pre>
+<p>Passer <code>distanceExponent</code> à <code>0,35</code> resserre tout le système sans qu’un seul
+nombre physique ne change. Avec l’ancienne scène, il aurait fallu réécrire 200 valeurs à la main —
+et aucune n’aurait été vérifiable.</p>
+
+<h3>12.3 · Piloter le temps</h3>
+<div class="tablewrap"><table>
+<tr><th>Touche (position QWERTY)</th><th>Effet</th></tr>
+<tr><td><kbd>]</kbd> <code>SDL_SCANCODE_RIGHTBRACKET</code></td><td><code>m_timeScale × 1,5</code></td></tr>
+<tr><td><kbd>[</kbd> <code>SDL_SCANCODE_LEFTBRACKET</code></td><td><code>m_timeScale ÷ 1,5</code></td></tr>
+<tr><td><kbd>Shift</kbd> + l’un des deux</td><td>ratio <code>× 4</code></td></tr>
+<tr><td><kbd>P</kbd></td><td>pause / reprise</td></tr>
+<tr><td><kbd>0</kbd></td><td><code>Reset()</code> → valeur d’<code>engine.json</code></td></tr>
+</table></div>
+<div class="ce" style="margin-top:8px"><span class="t">Piège rencontré — scancode contre keycode</span>
+<p>Le <code>switch</code> porte sur <code>ev.key.keysym.scancode</code>. Y mettre
+<code>SDLK_p</code> <b>compile sans le moindre avertissement</b> et ne fonctionne jamais :
+<code>SDLK_p</code> vaut 112 (ASCII), qui n’est pas le scancode de P. Deux espaces de valeurs
+différents, tous deux des entiers.</p>
+<p>Et comme les scancodes suivent la <b>position QWERTY</b>, sur un clavier AZERTY
+<code>SDL_SCANCODE_0</code> est la touche <code>à</code>, <code>LEFTBRACKET</code> / 
+<code>RIGHTBRACKET</code> sont <code>^</code> et <code>$</code>. Cohérent avec le déplacement en
+<code>W/A/S/D</code>, qui se joue physiquement en <code>Z/Q/S/D</code>.</p>
+</div>
+
+<h3>12.4 · Deux erreurs de compilation, symétriques</h3>
+<div class="ba">
+<div class="before"><h5>C2352 — méthode d’instance appelée comme statique</h5>
+<pre><code>SimulationClock::Advance(realDt);   // ✗
+// « un appel d'une fonction membre non statique
+//   nécessite un objet »
+_clock.Advance(realDt);             // ✓</code></pre></div>
+<div class="after"><h5>Le miroir — champ d’instance lu comme statique</h5>
+<pre><code>LV3_ASSERT(c.m_timeScale &lt;= LV3::SimulationClock::m_kMax);  // ✗
+// « référence non conforme à un membre non static »
+LV3_ASSERT(c.m_timeScale &lt;= c.m_cfg.m_max);                 // ✓</code></pre></div>
+</div>
+<p><b><code>::</code> s’adresse à la classe, <code>.</code> s’adresse à l’objet.</b> Le compilateur
+vérifie seulement qu’on s’adresse à quelqu’un qui existe.</p>
+
+<h3>12.5 · Pourquoi l’horloge n’est pas un singleton</h3>
+<p><code>EngineConfig</code> l’est légitimement : chargé une fois, en lecture seule ensuite.
+<code>SimulationClock</code> est de l’<b>état mutable</b> qui avance à chaque frame. Un état
+statique interdirait <code>Test_SimulationClock</code> (le test et le jeu partageraient la même
+horloge) et rendrait la propriété invisible — n’importe quel fichier pourrait faire avancer le
+temps sans que rien ne le signale.</p>
+<p>Nuance retenue : une variable à portée fichier dans <code>main.cpp</code> n’a pas ce défaut. Le
+type reste instanciable ; c’est seulement l’application qui en possède une. Cohérent avec
+<code>g_running</code> et <code>panels</code>. Le jour où <code>BuildInputState</code> migrera dans
+la LIB, l’horloge devra passer en paramètre.</p>
+
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<h2 id="bilan">13 · Bilan</h2>
+<div class="grid2">
+<div class="card"><h4>Ce qui est appliqué</h4>
+<ul class="clean">
+<li><code>SimulationClock</code> + section <code>simulation</code> d’<code>engine.json</code></li>
+<li><code>realDt</code> réel, clampé à 0,1 s — <b>bug 44 fermé</b></li>
+<li><code>AnimationSystem(simDt)</code></li>
+<li>3 scènes, 6 maillages, 6 textures livrés et vérifiés</li>
+<li><code>v1compat</code> charge, sans aucun avertissement de trigger</li>
+</ul></div>
+<div class="card"><h4>Ce qui reste ouvert</h4>
+<ul class="clean">
+<li><code>ParseNode</code> tolérant (bloquant pour le v2)</li>
+<li>6 parseurs, 2 enums de trigger</li>
+<li>Refonte <code>TriggerSystem</code> sondes × zones</li>
+<li>Règle S11 : angles calculés, pas accumulés</li>
+<li>3 noms d’événements + <code>EHazardType</code></li>
+<li><code>DebugDisplaySystem</code> lit un champ mort</li>
+<li><code>SetDepthDisplayRange(80)</code> en dur — régression A6</li>
+<li><code>Clean_Render(fb)</code> après <code>Unbind()</code></li>
+</ul></div>
+</div>
+
+<div class="rule"><b>Statut.</b> Aucune décision d’architecture n’est actée dans ce lot. Tous les
+points ci-dessus partent en roadmap (<code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en
+attente — lot SG »), sous les références <b>SG-1 à SG-22</b>. Les décisions prises pendant l’échange
+sont consignées dans <code>Résultats/Résultats_Lot_SG_Scenegraph_Systeme_Solaire.md</code>.</div>
+
+<p class="foot">Lot SG — Consolidation du scénegraphe, 11/11/2026. Artefact rejouable hors ligne :
+tout est dans ce fichier, aucune ressource externe. Textures d’astres non fournies (licence) :
+Solar System Scope, CC BY 4.0.</p>
+
+</div><!-- /wrap -->
+
+<script>
+(function(){
+"use strict";
+
+/* ─── thème ─────────────────────────────────────────────────────────── */
+var tb = document.getElementById("theme");
+tb.addEventListener("click", function(){
+  var cur = document.documentElement.getAttribute("data-theme");
+  var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  var now  = cur ? cur : (dark ? "dark" : "light");
+  document.documentElement.setAttribute("data-theme", now === "dark" ? "light" : "dark");
+});
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function dpr(cv){
+  var r = cv.getBoundingClientRect();
+  var d = window.devicePixelRatio || 1;
+  if (cv.width !== Math.round(r.width*d)) {
+    cv.width  = Math.round(r.width*d);
+    cv.height = Math.round(r.width*d*(cv.dataset.ratio||0.4));
+  }
+  var g = cv.getContext("2d");
+  g.setTransform(d,0,0,d,0,0);
+  return { g:g, w:r.width, h:r.width*(cv.dataset.ratio||0.4) };
+}
+
+/* ─── 1. modèle d'échelle ───────────────────────────────────────────── */
+var AU = 149597870.7, RE = 6371.0;
+var BODIES = [
+  {n:"Mercure", a:0.387098, r:2439.7,  c:"#8C857D"},
+  {n:"Vénus",   a:0.723332, r:6051.8,  c:"#E8C987"},
+  {n:"Terre",   a:1.000000, r:6371.0,  c:"#3D6BB3"},
+  {n:"Mars",    a:1.523679, r:3389.5,  c:"#C26B47"},
+  {n:"Cérès",   a:2.765500, r:469.7,   c:"#8C8A85"},
+  {n:"Jupiter", a:5.204400, r:69911.0, c:"#C9AD8C"},
+  {n:"Saturne", a:9.582600, r:58232.0, c:"#DEC999"},
+  {n:"Uranus",  a:19.21840, r:25362.0, c:"#8FC7D1"},
+  {n:"Neptune", a:30.07000, r:24622.0, c:"#4266B8"},
+  {n:"Pluton",  a:39.48200, r:1188.3,  c:"#B89E85"},
+  {n:"Éris",    a:67.86400, r:1163.0,  c:"#EFEFEA"}
+];
+var cvS = document.getElementById("cvScale"); cvS.dataset.ratio = 0.40;
+var pd=document.getElementById("pd"), dr=document.getElementById("dr"), pr=document.getElementById("pr");
+
+function drawScale(){
+  var P = dpr(cvS), g = P.g, W = P.w, H = P.h;
+  var p = +pd.value, D = +dr.value, prx = +pr.value;
+  document.getElementById("pdv").textContent = p.toFixed(2);
+  document.getElementById("drv").textContent = D;
+  document.getElementById("prv").textContent = prx.toFixed(2);
+
+  g.clearRect(0,0,W,H);
+  var cx = 46, cy = H/2;
+  var maxD = D*Math.pow(BODIES[BODIES.length-1].a,p);
+  var k = (W-90)/Math.max(maxD,1);
+  var clipped = maxD*k > (W-90)*1.001;
+
+  // axe
+  g.strokeStyle = css("--line"); g.lineWidth = 1;
+  g.beginPath(); g.moveTo(cx,cy); g.lineTo(W-14,cy); g.stroke();
+
+  // soleil
+  var Rs = Math.max(2, Math.pow(696340/RE,prx)*k*0.9);
+  g.fillStyle = "#FFF0CC"; g.beginPath(); g.arc(cx,cy,Math.min(Rs,26),0,6.2832); g.fill();
+
+  var rows = [], prev = null, warn = 0;
+  for (var i=0;i<BODIES.length;i++){
+    var b = BODIES[i];
+    var Du = D*Math.pow(b.a,p);
+    var Ru = Math.pow(b.r/RE,prx);
+    var x = cx + Du*k;
+    var rr = Math.max(1.6, Ru*k*0.9);
+    var off = (i%2===0) ? -1 : 1;
+    if (x < W-6){
+      g.strokeStyle = css("--line"); g.lineWidth = 1;
+      g.beginPath(); g.arc(cx,cy,Du*k,0,6.2832); g.globalAlpha=.30; g.stroke(); g.globalAlpha=1;
+      g.fillStyle = b.c; g.beginPath(); g.arc(x,cy,Math.min(rr,22),0,6.2832); g.fill();
+      g.fillStyle = css("--ink2"); g.font = "11px system-ui";
+      g.textAlign = "center";
+      g.fillText(b.n, Math.min(x,W-26), cy + off*(Math.min(rr,22)+13));
+    }
+    if (prev !== null && (Du-prev.D) < (Ru+prev.R)*1.4) warn++;
+    prev = {D:Du, R:Ru};
+    rows.push(b.n+"  D="+Du.toFixed(1)+"  R="+Ru.toFixed(3));
+  }
+
+  var msg = "p_dist = "+p.toFixed(2)+"   D_ref = "+D+"   p_rad = "+prx.toFixed(2)+"\n";
+  msg += "Mercure D = "+(D*Math.pow(0.387098,p)).toFixed(2)
+       + "   Terre D = "+(D*Math.pow(1,p)).toFixed(2)
+       + "   Jupiter D = "+(D*Math.pow(5.2044,p)).toFixed(2)
+       + "   Éris D = "+(D*Math.pow(67.864,p)).toFixed(2)+"\n";
+  msg += "R Soleil = "+Math.pow(696340/RE,prx).toFixed(3)
+       + "   R Jupiter = "+Math.pow(69911/RE,prx).toFixed(3)
+       + "   R Terre = "+Math.pow(1,prx).toFixed(3)
+       + "   R Deimos = "+Math.max(0.04,Math.pow(6.2/RE,prx)).toFixed(3)+"\n";
+  msg += "dynamique D(Éris)/R(Deimos) = "
+       + (D*Math.pow(67.864,p)/Math.max(0.04,Math.pow(6.2/RE,prx))).toFixed(0)+" : 1\n";
+  if (clipped) msg += "⚠ le système sort du cadre : à cette échelle rien n'est affichable ensemble.";
+  else if (p > 0.80) msg += "⚠ exposant élevé : les planètes internes se tassent contre le Soleil.";
+  else if (p < 0.32) msg += "⚠ exposant faible : l'ordre est préservé mais les écarts disparaissent.";
+  else msg += "✓ lisible ; l'ordre et les rapports relatifs sont préservés.";
+  document.getElementById("scaleOut").textContent = msg;
+}
+[pd,dr,pr].forEach(function(e){ e.addEventListener("input", drawScale); });
+document.getElementById("preset-c").addEventListener("click",function(){
+  pd.value=0.5; dr.value=60; pr.value=0.40; setPreset(this); drawScale(); });
+document.getElementById("preset-r").addEventListener("click",function(){
+  pd.value=1.0; dr.value=60; pr.value=1.00; setPreset(this); drawScale(); });
+document.getElementById("preset-f").addEventListener("click",function(){
+  pd.value=0.25; dr.value=60; pr.value=0.25; setPreset(this); drawScale(); });
+function setPreset(b){
+  ["preset-c","preset-r","preset-f"].forEach(function(id){
+    document.getElementById(id).classList.remove("on"); });
+  b.classList.add("on");
+}
+
+/* ─── 2. précession de l'axe ────────────────────────────────────────── */
+var cvA = document.getElementById("cvAxis"); cvA.dataset.ratio = 0.385;
+var mode = "pivot", tA = 0, playA = true;
+var spd = document.getElementById("spd");
+document.getElementById("mPivot").addEventListener("click", function(){
+  mode="pivot"; this.classList.add("on");
+  document.getElementById("mAnchor").classList.remove("on"); });
+document.getElementById("mAnchor").addEventListener("click", function(){
+  mode="anchor"; this.classList.add("on");
+  document.getElementById("mPivot").classList.remove("on"); });
+document.getElementById("playA").addEventListener("click", function(){
+  playA = !playA; this.textContent = playA ? "⏸ Pause" : "▶ Lecture"; });
+
+function drawAxis(){
+  var P = dpr(cvA), g = P.g, W = P.w, H = P.h;
+  var sp = +spd.value;
+  document.getElementById("spdv").textContent = sp.toFixed(2);
+  g.clearRect(0,0,W,H);
+
+  var cx = W*0.40, cy = H/2, R = Math.min(W*0.30, H*0.38);
+  var th = tA;                         // angle de révolution
+  var px = cx + R*Math.cos(th), py = cy + R*Math.sin(th)*0.42;
+
+  // soleil + orbite
+  g.strokeStyle = css("--line"); g.lineWidth = 1;
+  g.beginPath(); g.ellipse(cx,cy,R,R*0.42,0,0,6.2832); g.stroke();
+  g.fillStyle = "#FFF0CC"; g.beginPath(); g.arc(cx,cy,13,0,6.2832); g.fill();
+  g.fillStyle = css("--ink2"); g.font="11px system-ui"; g.textAlign="center";
+  g.fillText("Soleil", cx, cy+27);
+
+  // la planète
+  var pr2 = 17;
+  g.fillStyle = "#3D6BB3"; g.beginPath(); g.arc(px,py,pr2,0,6.2832); g.fill();
+
+  // axe de rotation : 23,44° d'obliquité
+  var tilt = 23.44*Math.PI/180;
+  var ang  = (mode==="pivot") ? (tilt + th) : tilt;   // ← LE point
+  var ax = Math.sin(ang), ay = -Math.cos(ang);
+  g.strokeStyle = css("--accent"); g.lineWidth = 2.5;
+  g.beginPath();
+  g.moveTo(px - ax*pr2*1.9, py - ay*pr2*1.9);
+  g.lineTo(px + ax*pr2*1.9, py + ay*pr2*1.9);
+  g.stroke();
+  g.fillStyle = css("--accent");
+  g.beginPath(); g.arc(px + ax*pr2*1.9, py + ay*pr2*1.9, 3.5, 0, 6.2832); g.fill();
+
+  // direction de référence inertielle (ce que l'axe DEVRAIT suivre)
+  g.strokeStyle = css("--ink2"); g.setLineDash([3,4]); g.lineWidth = 1;
+  var rx = Math.sin(tilt), ry = -Math.cos(tilt);
+  g.beginPath();
+  g.moveTo(px - rx*pr2*2.3, py - ry*pr2*2.3);
+  g.lineTo(px + rx*pr2*2.3, py + ry*pr2*2.3);
+  g.stroke(); g.setLineDash([]);
+
+  // lune
+  if (document.getElementById("showMoon").checked){
+    var mth = th*13.37;                              // 13,37 révolutions / an
+    var spin = (mode==="pivot") ? th*366.0 : 0;      // spin terrestre hérité
+    var mR = pr2*2.6;
+    var mx = px + mR*Math.cos(mth + spin);
+    var my = py + mR*Math.sin(mth + spin)*0.5;
+    g.strokeStyle = css("--line"); g.beginPath();
+    g.ellipse(px,py,mR,mR*0.5,0,0,6.2832); g.globalAlpha=.4; g.stroke(); g.globalAlpha=1;
+    g.fillStyle = "#9E9C94"; g.beginPath(); g.arc(mx,my,4.5,0,6.2832); g.fill();
+  }
+
+  // panneau
+  var bx = W*0.74;
+  g.textAlign = "left"; g.font = "12px system-ui";
+  g.fillStyle = css("--ink");
+  g.fillText(mode==="pivot" ? "Pivot rotatif (avant)" : "Ancre + Corps (après)", bx, 26);
+  g.font = "11px system-ui"; g.fillStyle = css("--ink2");
+  var dev = ((ang - tilt)*180/Math.PI) % 360;
+  if (dev < 0) dev += 360;
+  var lines = (mode==="pivot")
+    ? ["révolution  : " + ((th*180/Math.PI)%360).toFixed(0) + "°",
+       "écart de l'axe : " + dev.toFixed(0) + "°",
+       "→ l'axe suit l'orbite",
+       "→ aucune saison",
+       "→ la Lune hérite du spin",
+       "   378,6 révolutions/an",
+       "   au lieu de 13,4"]
+    : ["révolution  : " + ((th*180/Math.PI)%360).toFixed(0) + "°",
+       "écart de l'axe : 0°",
+       "→ l'axe reste inertiel",
+       "→ saisons correctes",
+       "→ la Lune est fille de",
+       "   l'ancre, pas du corps",
+       "   13,4 révolutions/an"];
+  for (var i=0;i<lines.length;i++) g.fillText(lines[i], bx, 48+i*17);
+  g.strokeStyle = css("--accent"); g.lineWidth=2.5;
+  g.beginPath(); g.moveTo(bx, 182); g.lineTo(bx+22,182); g.stroke();
+  g.fillStyle = css("--ink2"); g.fillText("axe réel", bx+28, 186);
+  g.strokeStyle = css("--ink2"); g.setLineDash([3,4]); g.lineWidth=1;
+  g.beginPath(); g.moveTo(bx, 200); g.lineTo(bx+22,200); g.stroke(); g.setLineDash([]);
+  g.fillText("référence inertielle", bx+28, 204);
+
+  document.getElementById("axisOut").textContent =
+    (mode==="pivot"
+      ? "AVANT — Earth est enfant de Sun-Pivot, qui tourne.\n"
+      + "  rotation [23.44, 0, 0] sur le Transform de Earth\n"
+      + "  → l'axe tourne AVEC le pivot : écart courant " + dev.toFixed(1) + "°, un tour complet par révolution\n"
+      + "  → Moon, enfant du corps Earth, hérite de son spin : 378,6 révolutions/an au lieu de 13,37 (+2 732 %)"
+      : "APRÈS — Earth-Anchor porte la position, Earth porte l'orientation.\n"
+      + "  Earth-Anchor.rotation = identité (jamais écrite)   Earth.translation = zéro (jamais écrite)\n"
+      + "  → l'axe reste fixe dans l'espace inertiel : écart 0,0°, saisons correctes\n"
+      + "  → Moon-Anchor est fille de Earth-Anchor : elle suit la position sans hériter du spin");
+}
+
+/* ─── 3. horloge ───────────────────────────────────────────────────── */
+var cvC = document.getElementById("cvClock"); cvC.dataset.ratio = 0.23;
+var ts = document.getElementById("ts"), tC = 0, playT = true;
+document.getElementById("playT").addEventListener("click", function(){
+  playT = !playT; this.textContent = playT ? "⏸ Pause" : "▶ Lecture"; });
+
+function drawClock(dt){
+  var P = dpr(cvC), g = P.g, W = P.w, H = P.h;
+  var scale = Math.pow(10, +ts.value);
+  document.getElementById("tsv").textContent = scale.toFixed(3);
+  if (playT) tC += dt*scale;            // tC en JOURS simulés
+  g.clearRect(0,0,W,H);
+
+  var cy = H/2;
+  // Terre : rotation propre
+  var ex = W*0.20;
+  g.strokeStyle = css("--line"); g.beginPath(); g.arc(ex,cy,34,0,6.2832); g.stroke();
+  g.fillStyle = "#3D6BB3"; g.beginPath(); g.arc(ex,cy,30,0,6.2832); g.fill();
+  var rot = tC*(24/23.9345)*2*Math.PI;
+  g.strokeStyle = "#FFF"; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(ex,cy); g.lineTo(ex+30*Math.cos(rot), cy+30*Math.sin(rot)); g.stroke();
+  g.fillStyle = css("--ink2"); g.font="11px system-ui"; g.textAlign="center";
+  g.fillText("rotation propre (23,93 h)", ex, cy+50);
+
+  // orbite
+  var ox = W*0.60, R = Math.min(W*0.14, H*0.34);
+  g.strokeStyle = css("--line"); g.lineWidth=1;
+  g.beginPath(); g.ellipse(ox,cy,R*1.5,R*0.6,0,0,6.2832); g.stroke();
+  g.fillStyle="#FFF0CC"; g.beginPath(); g.arc(ox,cy,9,0,6.2832); g.fill();
+  var orb = tC/365.256*2*Math.PI;
+  g.fillStyle="#3D6BB3";
+  g.beginPath(); g.arc(ox+R*1.5*Math.cos(orb), cy+R*0.6*Math.sin(orb), 6, 0, 6.2832); g.fill();
+  g.fillStyle = css("--ink2");
+  g.fillText("révolution (365,26 j)", ox, cy+50);
+
+  var dayS = 23.9345/24/scale, yearS = 365.256/scale;
+  function hum(s){
+    if (s < 60) return s.toFixed(s<10?2:1)+" s";
+    if (s < 3600) return (s/60).toFixed(1)+" min";
+    if (s < 86400) return (s/3600).toFixed(1)+" h";
+    return (s/86400).toFixed(1)+" j";
+  }
+  document.getElementById("clockOut").textContent =
+    "daysPerSecond = " + scale.toFixed(3) + "        date simulée = " + tC.toFixed(2) + " j\n"
+  + "un jour terrestre dure " + hum(dayS) + "        une année terrestre dure " + hum(yearS) + "\n"
+  + "Terre : " + (360/scale/ (365.256) ).toFixed(0) + " s par degré d'orbite   ·   "
+  + (360*scale*24/23.9345).toFixed(1) + " °/s de rotation propre\n"
+  + (scale > 0.6 ? "⚠ la rotation propre est illisible (plus d'un tour par seconde)."
+    : scale < 0.02 ? "⚠ les orbites deviennent trop lentes pour être observées."
+    : "✓ compromis lisible — c'est le réglage par défaut 0,20 et son voisinage.");
+}
+
+/* ─── animation ─────────────────────────────────────────────────────── */
+var last = 0;
+function loop(t){
+  var dt = last ? Math.min((t-last)/1000, 0.1) : 0;
+  last = t;
+  if (playA) tA += dt*0.35*(+spd.value);
+  drawAxis();
+  drawClock(dt);
+  requestAnimationFrame(loop);
+}
+window.addEventListener("resize", function(){ drawScale(); });
+drawScale();
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

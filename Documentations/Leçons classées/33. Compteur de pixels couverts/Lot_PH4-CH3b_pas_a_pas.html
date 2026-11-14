@@ -1,0 +1,1531 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Lot PH4-CH3b — Le compteur de couverture et le rejet précoce, pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+.bar{display:flex; height:30px; border-radius:6px; overflow:hidden; border:1px solid var(--line); margin:8px 0; background:var(--surface2)}
+.bar>span{display:block; height:100%; min-width:1px}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; font-size:13.5px}
+.kv>dt{color:var(--ink3); font-family:var(--mono); font-size:12.5px}
+.kv>dd{margin:0; font-family:var(--mono); font-size:12.5px; overflow-wrap:anywhere}
+input[type=text].cmd{width:100%; font-family:var(--mono); font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.tag{font-family:var(--mono); font-size:11px; padding:1px 6px; border-radius:4px; border:1px solid var(--line); background:var(--surface2)}
+.zone-chip{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px}
+
+/* Ajouts PH4-CH2 et PH4-CH3b. */
+.lanes{display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); gap:3px; margin:6px 0}
+.lanes>div{font-family:var(--mono); font-size:11px; background:var(--surface2); border:1px solid var(--line); border-radius:4px; padding:3px 4px; text-align:right; overflow-wrap:anywhere; min-width:0}
+.lanes>div.h{background:var(--hl); border-color:var(--hl-line)}
+.reg{font-family:var(--mono); font-size:11.5px; color:var(--ink3); margin-top:8px}
+.bits{font-family:var(--mono); font-size:11.5px; color:var(--ink2)}
+.ports{display:grid; gap:3px; margin:8px 0}
+.ports>div{display:flex; height:22px; border-radius:4px; overflow:hidden; border:1px solid var(--line); background:var(--surface2)}
+.ports>div>span{display:block; height:100%}
+.ports .lbl{font-size:11.5px; color:var(--ink3); font-family:var(--mono)}
+.mesh{display:grid; grid-template-columns:repeat(8,1fr); gap:4px; margin:8px 0}
+.cell{font-family:var(--mono); font-size:11.5px; border:1px solid var(--line); border-radius:5px; padding:6px 4px; text-align:center; background:var(--surface2)}
+.cell.a{background:var(--ok-bg); border-color:var(--ok); color:var(--ok)}
+.cell.b{background:var(--bad-bg); border-color:var(--bad); color:var(--bad)}
+.cell.p{outline:2px solid var(--accent); outline-offset:1px}
+</style>
+<style>
+/* Ajouts PH4-CH3b : couleurs des trois boîtes du laboratoire de couverture. */
+:root{ --loose:#b36b00; --tight:#0b7d70; --cov:#2f5bd3; --zone:#e9e4da; }
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; } }
+:root[data-theme="dark"]{ --loose:#f0a83a; --tight:#3cc4b4; --cov:#7d9cff; --zone:#2a2d34; }
+.trio{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin:10px 0}
+@media(max-width:620px){ .trio{grid-template-columns:1fr} }
+.trio>div{border:1px solid var(--line); border-radius:8px; padding:9px 11px; background:var(--surface); min-width:0; font-size:13.5px}
+.trio b{display:block; font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3); margin-bottom:3px}
+.hbars{display:grid; gap:6px; margin:10px 0}
+.hbars>div{display:grid; grid-template-columns:minmax(90px,150px) 1fr 76px; gap:8px; align-items:center; font-size:13px}
+.hbars .tr{height:14px; background:var(--surface2); border:1px solid var(--line); border-radius:3px; overflow:hidden}
+.hbars .fl{height:100%; background:var(--accent)}
+.hbars .fl.bad{background:var(--bad)} .hbars .fl.ok{background:var(--ok)} .hbars .fl.cov{background:var(--cov)} .hbars .fl.tight{background:var(--tight)} .hbars .fl.loose{background:var(--loose)}
+.stats .v.ok,.stats .v.bad,.stats .v.warn{border:0;background:none;padding:0;margin:0;border-radius:0}
+.hbars .vv{font-family:var(--mono); font-size:12px; text-align:right; font-variant-numeric:tabular-nums}
+</style>
+
+<header>
+  <div class="t">Lot PH4-CH3b — Le compteur de couverture et le rejet précoce, pas à pas</div>
+  <div class="s">LibraryV3 · phase G, chantier 3 du plan de la consolidation C2 · compteur de pixels couverts (<code>LV3_RASTER_STATS</code>), règle de décision écrite avant la mesure, boîte serrée <code>TightPixelBox</code>, rejet précoce des triangles vides · avenant C3, règles M10 à M13, Référence G · échange du 27 au 28/09/2026 · reconstruction du 13/11/2026 (remplace la page « Compteur de couverture LV3 » du 27/09, qui n’avait qu’un schéma)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#methode">Méthode</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">Le chantier 2 (lot PH4-CH2) s’était terminé devant un choix. Deux chantiers pouvaient suivre, et rien dans les mesures ne permettait de les départager. Ce lot raconte comment on a construit l’instrument qui tranche, comment on a écrit la règle de décision <b>avant</b> de voir les chiffres, et ce que les chiffres ont révélé : sur la scène « ceinture », <b>99,8 % des triangles envoyés au rasterizer n’allumaient aucun pixel</b>.</p>
+
+<p>Les deux candidats laissés par l’avenant C2 :</p>
+<ul>
+<li><b>2b</b> : faire la division par w et la conversion en pixels (<code>ToRaster</code>) une fois par sommet au lieu d’une fois par coin. Environ 3 ms de calcul « par coin » restaient dans la géométrie.</li>
+<li><b>3</b> : ne pas préparer les triangles trop petits pour allumer un pixel. La rasterisation pesait désormais 60 à 65 % de <code>Render</code> (estimation faite par soustraction, on verra que ce chiffre était fragile).</li>
+</ul>
+
+<p>Pour choisir, il fallait savoir <b>combien de pixels un triangle de la ceinture couvre réellement</b>. La consolidation C2 (§ 9, point 3) l’avait noté : aucun compteur ne le disait. L’expérience C de C2 prouvait seulement que diviser la résolution par quatre ne changeait pas <code>Render</code>. Elle ne disait pas <i>à quel point</i> les triangles étaient petits.</p>
+
+<p>Le lot se déroule en quatre temps :</p>
+<ol>
+<li><b>l’instrument</b> : huit compteurs dans la boucle du rasterizer, sous un commutateur dédié, pour ne pas fausser les chronométrages futurs ;</li>
+<li><b>la décision</b> : une règle chiffrée, écrite avant la mesure, puis appliquée telle quelle, même quand l’un de ses seuils s’est révélé mal calibré ;</li>
+<li><b>le chantier 3b</b> : un test exact de quatre lignes qui écarte un triangle avant toute préparation, si aucun centre de pixel ne peut tomber dedans ;</li>
+<li><b>la preuve</b> : image identique au fragment près (série A, 300 frames), puis gain mesuré en alternance A B B A (série B) : <b>−29 % sur <code>Render</code></b>.</li>
+</ol>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « Les astéroïdes sont petits, donc il faut un rejet des triangles sub-pixel : on le code, et on verra bien. » Trois erreurs en une phrase. On ne sait pas <i>combien</i> sont petits (1 px ? 0,3 px ?), donc on ne sait pas si le chantier rapporte plus que le 2b. On ne sait pas <i>quel</i> critère utiliser : un test sur l’aire (« moins d’un pixel² ») efface des pixels réellement allumés (laboratoire 1.1). Et on ne pourra pas dire après coup si le gain mesuré correspond au mécanisme imaginé, puisqu’aucune prédiction n’aura été écrite. Ce lot fait l’inverse : <b>compter, écrire la règle, puis mesurer</b>.
+</div>
+
+<p class="small">Nom du lot : <b>PH4-CH3b</b> (phase 4 du carnet, chantier 3b du plan de C2). « C3 » désigne déjà l’avenant C3 (le document de ce lot), le chantier C3 (boîte d’un pixel, phase « dessin des survivantes ») et son artefact. « 3b » seul se confond avec B3 (étage sommets en SoA). D’où ce nom, dans la série PH4-G, PH4-CH2.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH4-CH3b en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L04</b> — rasterizer</td><td>Fonction d’arête de Pineda, couverture au <b>centre</b> du pixel <code>(x + ½, y + ½)</code>, règle top-left, boîte englobante <code>floor(min) … ceil(max) + 1</code> rognée au viewport.</td><td>La boucle qu’on va instrumenter, et la boîte « lâche » dont la relecture va montrer le défaut.</td></tr>
+<tr><td><b>A10</b> — build portable</td><td>Commutateurs indépendants dans <code>config.h</code>, foyer unique <code>LV3.Common.props</code>, configuration <code>RelWithAsserts</code>.</td><td>Un septième commutateur, <code>LV3_RASTER_STATS</code>. La configuration <code>RelWithAsserts</code> servira de preuve.</td></tr>
+<tr><td><b>PH1-C</b> — intégrité</td><td><code>LV3_ASSERT</code> + repli actif en Release (patron du bug 53).</td><td><code>AssertFailed</code> appelle <code>abort()</code> : un CSV complet prouve qu’aucune assertion n’a échoué.</td></tr>
+<tr><td><b>PH4-G</b> — campagne de mesure</td><td>Harnais <code>Core/Profiler</code>, mode banc, compteurs du rendu, M1 à M7, expérience C (résolution ÷ 4 : <code>Render</code> inchangé), ablation D, loi <code>Render ≈ 42 ns × faces</code>, interprétation « le coût est dans la préparation de chaque triangle » (C2 § 7.1).</td><td>Le compteur de couverture est le point 3 du § 9 de C2. Le lot va <b>réinterpréter</b> l’expérience C et le § 7.1.</td></tr>
+<tr><td><b>PH4-CH2</b> — étage sommets</td><td><code>ClipSpaceBuffer</code>, <code>TransformPositions</code>, <code>EmitClipTriangle</code> (seul endroit qui divise par w) ; en-tête <code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code> ; M8 (ABBA), M9 (épinglage P-core) ; Référence F (<code>Render</code> 10,19 ms) ; plan révisé : 2b ou 3.</td><td>La question du lot, le point de comparaison (Référence F), le protocole de mesure, et l’endroit où le rejet va s’insérer.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ</b> (fin du chantier 2, 27/09/2026). Dans <code>EmitClipTriangle</code>, chaque triangle reçoit sa division par w, son <code>ToRaster</code>, son test de face arrière, puis il est compté dans <code>TrisRasterized</code> et envoyé à <code>DrawTriangle</code> → <code>RasterizeTriangle</code>. Celle-ci calcule l’aire, la boîte lâche, trois règles top-left, <code>1/aire</code>, puis teste chaque pixel de la boîte. <b>Aucun compteur ne dit combien de pixels sont testés ni combien sont allumés.</b> Machine de mesure : i7-1265U (portable hybride, 2 cœurs P, 8 cœurs E).
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce que veut dire « couvrir un pixel »</h3>
+<p>Un rasterizer ne colorie pas les pixels qu’un triangle <i>touche</i>. Il pose une question par pixel : <b>le centre de ce pixel est-il dans le triangle ?</b> Le centre du pixel (x, y) est le point (x + ½, y + ½). C’est un échantillonnage : l’écran est une grille de points, et le triangle allume les points qui tombent dedans. La règle top-left tranche le cas d’un centre posé exactement sur une arête partagée, pour qu’il soit allumé une fois et une seule.</p>
+<p>Pour un grand triangle, la différence entre « toucher » et « contenir un centre » est invisible. Pour un triangle de 0,4 pixel, elle décide de tout : posé entre quatre centres, il n’allume <b>rien</b>. Son prix, lui, reste entier : aire, boîte, règles top-left, inverse de l’aire, puis au moins 2 × 2 tests de pixels dans la boîte lâche.</p>
+
+<h3>Le besoin, en termes fonctionnels</h3>
+<ul>
+<li><b>Ce que voit l’utilisateur</b> : rien ne doit changer à l’écran. Le rejet précoce n’enlève que des triangles qui n’allumaient déjà aucun pixel.</li>
+<li><b>Ce que voit le moteur</b> : un triangle qui ne peut contenir aucun centre de pixel n’entre plus dans le rasterizer. Il est écarté par un test de quatre arrondis, juste après le test de face arrière.</li>
+<li><b>Ce que voit la mesure</b> : une distribution des triangles par nombre de pixels allumés (0, 1, 2 à 4, plus de 4), et trois compteurs de pixels (testés, candidats, allumés) qui disent où part le travail.</li>
+</ul>
+
+<h3>Les objectifs du lot</h3>
+<ol>
+<li><b>Mesurer la couverture</b> sans fausser les chronométrages futurs : compteurs sous un commutateur dédié, un seul enregistrement par triangle.</li>
+<li><b>Décider sur une règle écrite d’avance</b> entre 2b, 3a (resserrer la boîte) et 3b (rejet précoce).</li>
+<li><b>Écarter les triangles vides de façon exacte</b> : même image, prouvée au compteur près.</li>
+<li><b>Mesurer le gain</b> contre la Référence F, dans la même séance, sur un cœur P.</li>
+<li><b>Formaliser</b> les erreurs de méthode rencontrées en règles (M10 à M13).</li>
+</ol>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Commutateur des compteurs</td><td>sous <code>LV3_PROFILE</code> · commutateur dédié</td><td><code>LV3_RASTER_STATS</code>, défaut 0</td><td>Un compteur dans la boucle pixel alourdit la boucle la plus chaude. Sous <code>LV3_PROFILE</code>, il fausserait tous les chronométrages, Référence F comprise (M10).</td></tr>
+<tr><td>Où compter</td><td>par pixel (<code>LV3_PROF_COUNT</code>) · dans le shader · en registre puis une fois par triangle</td><td>registre local, un appel par triangle, sur chaque sortie de la fonction</td><td>Un appel par pixel = environ un million d’appels par frame. Le shader passe après le test de profondeur : il compterait le surdessin, pas la couverture.</td></tr>
+<tr><td>Quoi compter</td><td>pixels allumés seuls · distribution + boîtes</td><td>4 tranches (0 / 1 / 2-4 / 5+), boîte serrée vide, pixels testés, candidats, allumés</td><td>La distribution dit combien de triangles sont inutiles ; les trois compteurs de pixels disent combien de travail est perdu dans la boucle.</td></tr>
+<tr><td>Boîte serrée</td><td>l’utiliser tout de suite · la mesurer seulement</td><td>mesurée, jamais utilisée (dans ce lot)</td><td>On mesure l’existant avant de le changer. La boucle reste identique au caractère près.</td></tr>
+<tr><td>Comment choisir le chantier</td><td>à l’intuition · règle chiffrée écrite avant</td><td>règle à trois branches, avec prédiction</td><td>Sans règle écrite d’avance, on ajuste toujours la règle aux chiffres (M12).</td></tr>
+<tr><td>Critère du rejet</td><td>aire &lt; seuil · boîte serrée vide</td><td>boîte serrée vide</td><td>Exact : boîte vide ⇒ aucun centre ⇒ aucun pixel. L’aire est une approximation (laboratoire 1.1).</td></tr>
+<tr><td>Place du rejet</td><td>dans <code>RasterizeTriangle</code> · avant <code>DrawTriangle</code></td><td>dans <code>EmitClipTriangle</code>, après le backface</td><td>Évite l’appel, les écritures du contexte, l’aire, la boîte lâche, les top-left, la division et la boucle.</td></tr>
+<tr><td>Sens de <code>TrisRasterized</code></td><td>après le rejet · avant le rejet</td><td>après le backface, <b>avant</b> le rejet</td><td>Garde le sens de la Référence F : mêmes triangles considérés, runs comparables.</td></tr>
+<tr><td>Formule de la boîte</td><td>copie dans chaque fichier · fonction unique</td><td><code>TightPixelBox</code>, source unique</td><td>Le rejet et la mesure doivent parler du même objet.</td></tr>
+<tr><td>Mode fil de fer</td><td>rejeter aussi · exception</td><td>exception <code>Wireframe</code></td><td>Bresenham trace le contour même d’un triangle sans centre : le rejet n’y est plus exact.</td></tr>
+<tr><td>Binaires A et B de la série B</td><td><code>git worktree</code> · checkout d’un commit identifié</td><td>checkout + régénération + copie dans <code>C:\Bench\A</code> et <code>B</code></td><td><code>LV3.User.props</code> contient un chemin absolu vers la LIB : une copie de travail pourrait compiler l’EXE contre la mauvaise LIB sans rien dire.</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>La chaîne complète du moteur à la clôture de l’échange (28/09). <span class="tag" style="background:var(--hl);border-color:var(--hl-line)">surligné</span> = étage <b>créé ou modifié</b> par ce lot (avec l’étape) ; <span class="tag" style="border-style:dashed;border-color:var(--accent)">tireté</span> = étage <b>observé</b> (mesuré, ou soulagé sans changer son calcul).</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 900" role="img" aria-label="Chaîne complète du moteur. Les étages créés ou modifiés par le lot PH4-CH3b sont surlignés : commutateur LV3_RASTER_STATS, compteurs, TightPixelBox, rejet précoce dans EmitClipTriangle, instrumentation de RasterizeTriangle, en-tête du CSV.">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<style>
+.bx{fill:var(--surface2);stroke:var(--line);stroke-width:1}
+.bxh{fill:var(--hl);stroke:var(--hl-line);stroke-width:2}
+.bxo{fill:var(--surface2);stroke:var(--accent);stroke-width:1.4;stroke-dasharray:5 3}
+.bxr{fill:var(--bad-bg);stroke:var(--bad);stroke-width:1.4}
+.lb{fill:var(--ink);font:600 12.5px var(--sans)}
+.sb{fill:var(--ink3);font:11px var(--mono)}
+.ph{fill:var(--ink3);font:600 10.5px var(--sans);letter-spacing:.09em}
+.ln{stroke:var(--ink3);color:var(--ink3);stroke-width:1.4;fill:none}
+.lr{stroke:var(--bad);color:var(--bad);stroke-width:1.6;fill:none;stroke-dasharray:4 3}
+</style>
+<text class="ph" x="16" y="20">1 · COMPILATION ET LANCEMENT (une fois)</text>
+<rect class="bxh" x="16" y="30" width="268" height="56" rx="8"/><text class="lb" x="28" y="52">config.h — LV3_RASTER_STATS (E4)</text><text class="sb" x="28" y="70">défaut 0 ; #error sans PROFILE / avec ablation</text>
+<rect class="bx" x="298" y="30" width="270" height="56" rx="8"/><text class="lb" x="310" y="52">ParseArgs, racine, Serializer</text><text class="sb" x="310" y="70">--scene --bench --csv ; RegisterMesh</text>
+<rect class="bx" x="582" y="30" width="302" height="56" rx="8"/><text class="lb" x="594" y="52">main : fb, db, clipBuf</text><text class="sb" x="594" y="70">ligne [Build] : config, PROFILE exe / lib</text>
+<line class="ln" x1="284" y1="58" x2="294" y2="58" marker-end="url(#ar)"/><line class="ln" x1="568" y1="58" x2="578" y2="58" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="118">2 · UNE FRAME (S13)</text>
+<rect class="bx" x="16" y="128" width="210" height="50" rx="8"/><text class="lb" x="28" y="149">dt, horloge, Input</text><text class="sb" x="28" y="166">Animation (simDt)</text>
+<rect class="bx" x="240" y="128" width="200" height="50" rx="8"/><text class="lb" x="252" y="149">Cuissons n°1 et n°2</text><text class="sb" x="252" y="166">caméras entre les deux</text>
+<rect class="bx" x="454" y="128" width="200" height="50" rx="8"/><text class="lb" x="466" y="149">Trigger</text><text class="sb" x="466" y="166">témoin T (calcul)</text>
+<rect class="bx" x="668" y="128" width="216" height="50" rx="8"/><text class="lb" x="680" y="149">BuildViewData × N</text><text class="sb" x="680" y="166">{Clear} témoin mémoire</text>
+<line class="ln" x1="226" y1="153" x2="236" y2="153" marker-end="url(#ar)"/><line class="ln" x1="440" y1="153" x2="450" y2="153" marker-end="url(#ar)"/><line class="ln" x1="654" y1="153" x2="664" y2="153" marker-end="url(#ar)"/>
+<path class="ln" d="M776 178 L776 192 L114 192 L114 202" marker-end="url(#ar)"/>
+<rect class="bx" x="16" y="206" width="868" height="44" rx="8"/><text class="lb" x="28" y="226">{Render} : pour chaque vue, RenderView(…, clipBuf) — détail ci-dessous</text><text class="sb" x="28" y="242">SetViewport · SetMode (Solid, Depth, Wireframe…) · SetDepthDisplayRange</text>
+
+<text class="ph" x="16" y="282">3 · DANS RenderView, POUR CHAQUE INSTANCE VISIBLE</text>
+<rect class="bx" x="16" y="292" width="210" height="52" rx="8"/><text class="lb" x="28" y="313">Filtre + frustum</text><text class="sb" x="28" y="331">Outside → suivante</text>
+<rect class="bx" x="240" y="292" width="200" height="52" rx="8"/><text class="lb" x="252" y="313">Étage sommets (CH2)</text><text class="sb" x="252" y="331">TransformPositions</text>
+<rect class="bx" x="454" y="292" width="200" height="52" rx="8"/><text class="lb" x="466" y="313">Faces : lecture, near</text><text class="sb" x="466" y="331">FacesSubmitted</text>
+<rect class="bx" x="668" y="292" width="216" height="52" rx="8"/><text class="lb" x="680" y="313">Inside / ClipTriangleNear</text><text class="sb" x="680" y="331">éventail → Emit</text>
+<line class="ln" x1="226" y1="318" x2="236" y2="318" marker-end="url(#ar)"/><line class="ln" x1="440" y1="318" x2="450" y2="318" marker-end="url(#ar)"/><line class="ln" x1="654" y1="318" x2="664" y2="318" marker-end="url(#ar)"/>
+<path class="ln" d="M776 344 L776 360 L230 360 L230 372" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="370">4 · EmitClipTriangle, POUR CHAQUE TRIANGLE</text>
+<rect class="bxo" x="16" y="378" width="200" height="56" rx="8"/><text class="lb" x="28" y="400">1/w, ToRaster ×3</text><text class="sb" x="28" y="418">inchangé (→ 2b)</text>
+<rect class="bxo" x="230" y="378" width="190" height="56" rx="8"/><text class="lb" x="242" y="400">Backface</text><text class="sb" x="242" y="418">aire ≥ 0 → sortie</text>
+<rect class="bxo" x="434" y="378" width="190" height="56" rx="8"/><text class="lb" x="446" y="400">TrisRasterized += 1</text><text class="sb" x="446" y="418">sens de la Réf. F gardé</text>
+<rect class="bxh" x="638" y="378" width="246" height="56" rx="8"/><text class="lb" x="650" y="400">REJET 3b (E11, E12)</text><text class="sb" x="650" y="418">TightPixelBox vide &amp;&amp; ≠ Wireframe</text>
+<line class="ln" x1="216" y1="406" x2="226" y2="406" marker-end="url(#ar)"/><line class="ln" x1="420" y1="406" x2="430" y2="406" marker-end="url(#ar)"/><line class="ln" x1="624" y1="406" x2="634" y2="406" marker-end="url(#ar)"/>
+<rect class="bxr" x="638" y="448" width="246" height="44" rx="8"/><text class="lb" x="650" y="468">TrisEarlyRejected += 1 ; return</text><text class="sb" x="650" y="484">≈ 134 003 triangles sur 134 389</text>
+<path class="lr" d="M761 434 L761 444" marker-end="url(#ar)"/>
+<rect class="bxh" x="16" y="448" width="608" height="44" rx="8"/><text class="lb" x="28" y="468">TightPixelBox — Rasterizer.h, SOURCE UNIQUE (E11)</text><text class="sb" x="28" y="484">ceil(min − ½) … floor(max − ½) + 1, rognée au viewport ; PixelBox{x0,y0,x1,y1}</text>
+<path class="ln" d="M440 434 L440 444" />
+<path class="ln" d="M600 434 L600 520 L114 520 L114 532" marker-end="url(#ar)"/>
+<text class="sb" x="470" y="514">≈ 386 survivants</text>
+
+<text class="ph" x="16" y="530">5 · DrawTriangle → RasterizeTriangle</text>
+<rect class="bxo" x="16" y="538" width="280" height="56" rx="8"/><text class="lb" x="28" y="560">Préparation</text><text class="sb" x="28" y="578">aire, boîte lâche, top-left ×3, 1/aire</text>
+<rect class="bxh" x="310" y="538" width="280" height="56" rx="8"/><text class="lb" x="322" y="560">Boucle pixels + compteurs (E7)</text><text class="sb" x="322" y="578">covered++ ; assert x ∈ boîte serrée</text>
+<rect class="bxh" x="604" y="538" width="280" height="56" rx="8"/><text class="lb" x="616" y="560">RecordRasterStats (E5, E7)</text><text class="sb" x="616" y="578">1 appel / triangle, chaque sortie</text>
+<line class="ln" x1="296" y1="566" x2="306" y2="566" marker-end="url(#ar)"/><line class="ln" x1="590" y1="566" x2="600" y2="566" marker-end="url(#ar)"/>
+<rect class="bxo" x="16" y="606" width="868" height="40" rx="8"/><text class="lb" x="28" y="631">ShadeFragment_* : test de profondeur, couleur (inchangé)</text>
+
+<text class="ph" x="16" y="678">6 · FIN DE FRAME, FIN DE CAMPAGNE</text>
+<rect class="bx" x="16" y="688" width="220" height="56" rx="8"/><text class="lb" x="28" y="710">{Present}</text><text class="sb" x="28" y="728">hors budget moteur</text>
+<rect class="bxh" x="250" y="688" width="634" height="56" rx="8"/><text class="lb" x="262" y="710">Profiler::DumpCsv — rasterstats=, asserts_lib= écrits par la LIB (E6, E13)</text><text class="sb" x="262" y="728">8 colonnes TrisCov*, TrisTightEmpty, Pixels* + TrisEarlyRejected, en fin</text>
+<line class="ln" x1="236" y1="716" x2="246" y2="716" marker-end="url(#ar)"/>
+
+<text class="ph" x="16" y="776">7 · FORMALISATION (documents)</text>
+<rect class="bxh" x="16" y="786" width="430" height="100" rx="8"/><text class="lb" x="28" y="808">Avenant C3 (E16)</text><text class="sb" x="28" y="828">règle de décision, chiffres, erreurs reconnues</text><text class="sb" x="28" y="844">amende C2 § 7.1 et avenant C2 § 5</text><text class="sb" x="28" y="860">Référence G : Render 7,28 à 7,41 ms</text>
+<rect class="bxh" x="460" y="786" width="424" height="100" rx="8"/><text class="lb" x="472" y="808">Règles de mesure (E16)</text><text class="sb" x="472" y="828">M10 run de comptage · M11 qui vérifie déclare</text><text class="sb" x="472" y="844">M12 règle et prédiction avant, toutes zones</text><text class="sb" x="472" y="860">M13 lire l’en-tête ; chemins dans la commande</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Étape</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Core/config.h</code></td><td>LIB</td><td>E4</td><td><span class="pill ok">ajout</span> section 7 : <code>LV3_RASTER_STATS</code> (défaut 0) et deux <code>#error</code></td></tr>
+<tr><td><code>Core/Profiler.h</code></td><td>LIB</td><td>E5, E12</td><td><span class="pill ok">ajout</span> 8 compteurs de couverture puis <code>TrisEarlyRejected</code>, en fin d’enum ; commentaire de <code>TrisRasterized</code> réécrit</td></tr>
+<tr><td><code>Core/Profiler.cpp</code></td><td>LIB</td><td>E6, E13</td><td><span class="pill ok">ajout</span> champs <code>rasterstats=</code> et <code>asserts_lib=</code> (deux en-têtes) ; bandeau « run de COMPTAGE » dans <code>Begin</code></td></tr>
+<tr><td><code>Rendering/Rasterizer.h</code></td><td>LIB</td><td>E11</td><td><span class="pill ok">ajout</span> <code>PixelBox</code>, <code>TightPixelBox</code></td></tr>
+<tr><td><code>Rendering/Rasterizer.cpp</code></td><td>LIB</td><td>E7, E11</td><td><span class="pill warn">modifié</span> <code>RecordRasterStats</code>, macro <code>LV3_RASTER_RECORD</code>, compteur local, assertion de la boîte serrée</td></tr>
+<tr><td><code>Scene/RenderSystem.cpp</code></td><td>LIB</td><td>E12</td><td><span class="pill warn">modifié</span> rejet précoce dans <code>EmitClipTriangle</code></td></tr>
+<tr><td><code>bench_3b.bat</code> (hors dépôt)</td><td>banc</td><td>E15</td><td><span class="pill ok">nouveau</span> exécutables A et B désignés dans la commande</td></tr>
+<tr><td><code>claude/Avenant_C3_Couverture_Chantier3b.md</code></td><td>projet</td><td>E16</td><td><span class="pill ok">nouveau</span></td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Aucun fichier de l’EXE n’est modifié : les deux champs d’en-tête sont écrits par la LIB (règle M11).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Sept fonctionnements changent. Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · Le sort d’un triangle face avant</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — 27/09 (Référence F)</div>
+<pre><code>EmitClipTriangle(a, b, c) :
+  r[k] ← ToRaster(clip[k] / w[k])   pour k = 0..2
+  si aire(r) ≥ 0 : retour            // face arrière
+  TrisRasterized += 1
+<span class="hl">  DrawTriangle(r)                    // TOUS les triangles face avant</span>
+<span class="hl">    → aire, boîte lâche, top-left ×3, 1/aire</span>
+<span class="hl">    → au moins 2 × 2 tests de pixels</span></code></pre></div>
+<div class="ap"><div class="t">Après — 28/09</div>
+<pre><code>EmitClipTriangle(a, b, c) :
+  r[k] ← ToRaster(clip[k] / w[k])   pour k = 0..2
+  si aire(r) ≥ 0 : retour            // face arrière
+  TrisRasterized += 1
+<span class="hl">  si mode ≠ Wireframe et TightPixelBox(r, vp) vide :</span>
+<span class="hl">    TrisEarlyRejected += 1 ; retour  // 99,7 % sur la ceinture</span>
+  DrawTriangle(r)                    // ≈ 386 survivants par frame</code></pre></div>
+</div>
+
+<h3>B · La boucle du rasterizer : mesurer sans rien changer</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>si aire == 0 : retour
+boîte lâche ← floor(min) … ceil(max) + 1, rognée
+si boîte vide : retour
+pour chaque pixel de la boîte :
+  si centre dans le triangle : fragment</code></pre></div>
+<div class="ap"><div class="t">Après (sous LV3_RASTER_STATS = 1)</div>
+<pre><code><span class="hl">si aire == 0 : enregistrer(0, 0, 0) ; retour</span>
+boîte lâche ← floor(min) … ceil(max) + 1, rognée
+<span class="hl">serrée ← TightPixelBox (mesurée, JAMAIS utilisée)</span>
+<span class="hl">si boîte vide : enregistrer(0, aire(serrée), 0) ; retour</span>
+pour chaque pixel de la boîte :
+  si centre dans le triangle :
+<span class="hl">    assert(pixel ∈ serrée) ; couverts += 1</span>
+    fragment
+<span class="hl">enregistrer(aire(lâche), aire(serrée), couverts)</span></code></pre></div>
+</div>
+
+<h3>C · Les pixels candidats d’un triangle : deux définitions, puis une seule</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code><span class="hl">boîte « lâche », écrite pour la sécurité :</span>
+<span class="hl">  x de floor(min) à ceil(max) + 1 (exclusif)</span>
+<span class="hl">  au moins 2 × 2, une à trois colonnes de trop</span></code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code><span class="hl">boîte « serrée », déduite des centres :</span>
+<span class="hl">  x de ceil(min − ½) à floor(max − ½) + 1 (exclusif)</span>
+<span class="hl">  vide ⇒ aucun centre ⇒ aucun pixel (rejet exact)</span>
+<span class="hl">TightPixelBox : seule fonction, pour le rejet et la mesure</span>
+(la boucle passera sur la boîte serrée le 30/09 : AM1)</code></pre></div>
+</div>
+
+<h3>D · Ce que dit un fichier de mesure</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code># scene ; config ; cpu ; affinity ; ablation ; res ; views ; …
+compteurs : … TrisRasterized ; VertsTransformed</code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code># … ; ablation ; <span class="hl">rasterstats=0|1 ; asserts_lib=0|1</span> ; res ; …
+compteurs : … VertsTransformed ;
+<span class="hl">  TrisCov0 ; TrisCov1 ; TrisCov2to4 ; TrisCov5plus ;</span>
+<span class="hl">  TrisTightEmpty ; PixelsTested ; PixelsTight ; PixelsCovered ;</span>
+<span class="hl">  TrisEarlyRejected</span></code></pre></div>
+</div>
+
+<h3>E · La façon de choisir le chantier suivant</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — plan de l’avenant C2</div>
+<pre><code><span class="hl">« 3 remonte, 2b à mesurer » : deux candidats,</span>
+<span class="hl">aucun chiffre pour les départager</span></code></pre></div>
+<div class="ap"><div class="t">Après — règle écrite le 27/09, avant la mesure</div>
+<pre><code><span class="hl">1. τ ≤ 0,5 et ρ ≥ 6 → 3a (resserrer la boîte)</span>
+<span class="hl">2. sinon f₀ ≥ 0,4    → 3b (rejet précoce)</span>
+<span class="hl">3. sinon             → 2b</span>
+mesuré : ρ = 4,35, τ = 0,018, f₀ = 0,998 → règle 2 → 3b</code></pre></div>
+</div>
+
+<h3>F · Les règles de mesure</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — M1 à M9</div>
+<pre><code>un seul commutateur de mesure (LV3_PROFILE)
+la règle de décision n'est pas une obligation
+config= suffit à décrire un binaire
+la recette de C2 § 10 commence par cd x64\Release</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C3 § 9</div>
+<pre><code><span class="hl">M10 compteur de boucle chaude = commutateur propre ;</span>
+<span class="hl">    run de comptage : compteurs oui, temps non</span>
+<span class="hl">M11 celui qui compte ou vérifie déclare (LIB)</span>
+<span class="hl">M12 règle + prédiction avant, TOUTES les zones ;</span>
+<span class="hl">    invariants frame par frame, jamais sur médianes</span>
+<span class="hl">M13 lire l'en-tête d'abord ; chemins dans la commande</span></code></pre></div>
+</div>
+
+<h3>G · La lecture du coût du rendu</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — C2 § 7.1, avenant C2 § 5</div>
+<pre><code><span class="hl">« le coût n'est pas dans les pixels mais dans la</span>
+<span class="hl">  préparation de chaque triangle »</span>
+<span class="hl">« la rasterisation attend le depth buffer (5,5 Mo) »</span>
+Render ≈ 37 ns par face soumise (Réf. F)</code></pre></div>
+<div class="ap"><div class="t">Après — avenant C3 § 5</div>
+<pre><code><span class="hl">expérience C : PixelsTested −6 % pour 4× moins de pixels</span>
+<span class="hl">  → plancher de la boîte lâche, ≈ 4 tests / triangle</span>
+<span class="hl">4 562 fragments par frame : le depth buffer n'est presque</span>
+<span class="hl">  jamais lu → hypothèse : erreurs de prédiction de branche</span>
+Render ≈ 26,5 ns par face soumise (Réf. G)</code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="methode">
+<h2>M · La méthode : échantillonner au centre, et écarter ce qui ne peut rien échantillonner</h2>
+<p class="lede">Le chantier 3b n’invente rien : il applique une conséquence directe de la façon dont un rasterizer décide de la couverture. La même idée existe sur GPU sous le nom de <i>small primitive culling</i>. Cette section présente la méthode, ses sources et ses concurrentes avant le code.</p>
+
+<h3>M.1 · L’idée, en une image</h3>
+<p>Imagine l’écran comme une planche à clous : un clou au centre de chaque case. Un triangle allume les cases dont le clou passe à travers lui. Un grand triangle attrape beaucoup de clous. Un triangle de 0,4 case, posé au hasard, n’en attrape généralement aucun : il passe entre les clous.</p>
+<p>Pour savoir s’il <i>peut</i> en attraper un, inutile de tester ses arêtes : il suffit de regarder s’il existe au moins un clou entre son x minimal et son x maximal, <b>et</b> au moins un clou entre son y minimal et son y maximal. Sinon, aucun clou ne peut être dedans, quelle que soit la forme du triangle. C’est un test sur quatre nombres, et il est <b>exact dans un sens</b> : boîte sans clou ⇒ triangle sans clou. L’inverse est faux (une aiguille en diagonale peut avoir des clous dans sa boîte et aucun dedans) : ces triangles-là continuent vers le rasterizer, qui les traite comme avant.</p>
+
+<h3>M.2 · D’où elle vient, et qui l’utilise</h3>
+<ul>
+<li><b>Juan Pineda</b>, « A Parallel Algorithm for Polygon Rasterization », SIGGRAPH 1988 : la fonction d’arête et le parcours d’une boîte englobante, base du rasterizer de L04.</li>
+<li><b>Fabian Giesen</b>, « Triangle rasterization in practice », 2013 (<a href="https://fgiesen.wordpress.com/2013/02/08/triangle-rasterization-in-practice/">fgiesen.wordpress.com</a>) : échantillonnage au centre, règle top-left, boîte englobante entière. Le même auteur reviendra au jalon D (arêtes en virgule fixe).</li>
+<li><b>Graham Wihlidal</b>, « Optimizing the Graphics Pipeline with Compute », GDC 2016 (Frostbite) : dans un pipeline piloté par le GPU, un passage de calcul élimine avant le rasterizer matériel les triangles dont la boîte ne contient aucun échantillon (« small primitive culling », test écrit avec des arrondis du min et du max). La bibliothèque AMD GeometryFX propose le même filtre. C’est exactement le 3b, transposé à un rasterizer logiciel.</li>
+<li><b>Le problème des micro-triangles</b> est connu des GPU : ils shadent par blocs de 2 × 2 pixels, et un triangle d’un pixel en paie quatre (K. Fatahalian et al., « Reducing Shading on GPUs using Quad-Fragment Merging », SIGGRAPH 2010). Unreal Engine 5 (Nanite, B. Karis, « A Deep Dive into Nanite », SIGGRAPH 2021) rasterise les petits triangles <b>en logiciel</b>, parce que le matériel y est inefficace.</li>
+<li><b>Le pré-enregistrement</b> d’une règle de décision vient de la méthode scientifique : écrire l’hypothèse et le critère avant de voir les données, pour ne pas ajuster le critère aux données (B. Nosek et al., « The preregistration revolution », PNAS, 2018). C’est l’origine de M12.</li>
+</ul>
+
+<h3>M.3 · Les indicateurs du lot</h3>
+<div class="scroll"><table>
+<thead><tr><th>Grandeur</th><th>Définition</th><th>Ce qu’elle dit</th></tr></thead>
+<tbody>
+<tr><td><b>ρ</b></td><td><code>PixelsTested / TrisRasterized</code></td><td>tours de la boucle pixel par triangle (boîte lâche) ; plancher 4</td></tr>
+<tr><td><b>τ</b></td><td><code>PixelsTight / PixelsTested</code></td><td>part des tours de boucle qui pouvaient servir ; 1 − τ = tours perdus</td></tr>
+<tr><td><b>f₀</b></td><td><code>TrisCov0 / TrisRasterized</code></td><td>part des triangles qui n’allument rien</td></tr>
+<tr><td><b>f<sub>E</sub></b></td><td><code>TrisTightEmpty / TrisRasterized</code></td><td>part rejetable en O(1) par la boîte serrée (sous-ensemble de f₀)</td></tr>
+</tbody></table></div>
+
+<h3>M.4 · Comparaison avec les autres réponses</h3>
+<div class="scroll"><table>
+<thead><tr><th>Réponse au triangle minuscule</th><th>Coût</th><th>Image</th><th>Statut dans LibraryV3</th></tr></thead>
+<tbody>
+<tr><td>Ne rien faire</td><td>préparation complète + ≥ 4 tests</td><td>référence</td><td>état de la Référence F</td></tr>
+<tr><td>Rejet sur l’aire (« &lt; 1 px² »)</td><td>une aire, déjà calculée</td><td><b>change</b> : pixels perdus</td><td>rejeté (contre-exemple)</td></tr>
+<tr><td><b>Rejet si boîte serrée vide (3b)</b></td><td>4 arrondis, 2 comparaisons</td><td>identique</td><td><b>ce lot</b></td></tr>
+<tr><td>Boucle sur la boîte serrée (3a)</td><td>nul</td><td>identique</td><td>rouvert et fait le 30/09 (AM1)</td></tr>
+<tr><td>Dessiner l’objet en point</td><td>1 sommet, 1 fragment</td><td>plus fidèle</td><td>annexe A20, 11/10 (AM8)</td></tr>
+<tr><td>Moins de triangles (LOD)</td><td>assets</td><td>quasi identique</td><td>annexes A13, A14 (AM9)</td></tr>
+</tbody></table></div>
+
+<h3>M.5 · Trois notions de méthode que le lot introduit</h3>
+<ul>
+<li><b>Run de comptage contre run de chronométrage.</b> Un compteur dans une boucle chaude perturbe le temps, pas le compte : la simulation est déterministe. On sépare donc les deux usages par un commutateur, et l’en-tête dit lequel on lit (M10).</li>
+<li><b>Une médiane ne s’additionne pas.</b> La médiane de A + B n’est pas la médiane de A plus la médiane de B. Un invariant entre compteurs se vérifie ligne par ligne dans le fichier brut (laboratoire 1.4).</li>
+<li><b>Écrire la règle avant.</b> Avec toutes ses zones, y compris intermédiaires. Le lot montre les deux faces : une règle qui a tenu malgré un seuil mal calibré, et une prédiction de gain à laquelle il manquait une zone (laboratoire 1.5).</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir avant le code</h2>
+<p>Cinq schémas interactifs. Les deux premiers expliquent le besoin et la méthode ; les trois suivants rejouent les mesures de l’échange avec les chiffres des fichiers <code>_summary.csv</code> et du CSV brut de la série A. Les fonctions d’arête sont calculées en float32 (<code>Math.fround</code>), comme le CPU.</p>
+
+<h3>1.1 · Un triangle sur la grille : boîte lâche, boîte serrée, pixels allumés</h3>
+<p>Fais glisser les sommets. Les points gris sont les centres de pixels. Le cadre orange tireté est la boîte que la boucle parcourait (lâche), le cadre vert la boîte serrée, les cases bleues les pixels allumés. Le panneau de droite donne le verdict du rejet 3b et celui d’un rejet sur l’aire, pour comparer.</p>
+<div class="ctl">
+  <button id="l1Micro" type="button">Micro-triangle</button>
+  <button id="l1Sliver" type="button">Aiguille</button>
+  <button id="l1Diag" type="button">Aiguille en diagonale</button>
+  <button id="l1Edge" type="button">Centre sur une arête</button>
+  <button id="l1Big" type="button">Triangle de 5 px</button>
+  <label><input type="checkbox" id="l1Eps"> contre-exemple : boîte « resserrée » par ε = 10⁻⁴</label>
+</div>
+<div class="lab">
+  <div><canvas id="l1Cv" aria-label="Grille de pixels, triangle déplaçable, boîtes et pixels allumés"></canvas>
+  <div class="legend"><span><i style="background:var(--loose)"></i>boîte lâche (ancienne boucle)</span><span><i style="background:var(--tight)"></i>boîte serrée</span><span><i style="background:var(--cov)"></i>pixel allumé</span></div></div>
+  <div><div class="stats" id="l1Stats"></div><div id="l1Verdict"></div></div>
+</div>
+
+<h3>1.2 · Une population de triangles : la prédiction d’avant la mesure</h3>
+<p>20 000 triangles tirés au hasard, sommets à ± d pixels d’un point (générateur fixe, rejouable). C’est ce que j’ai simulé avant d’écrire la règle, en supposant des triangles d’environ 1 px. Le repère « mesuré » montre où est tombée la vraie ceinture.</p>
+<div class="ctl">
+  <label>Demi-étendue d des sommets <input id="l2S" type="range" min="0.2" max="6" step="0.1" value="1"> <span id="l2Sv" class="tag"></span></label>
+</div>
+<div class="stats" id="l2Stats"></div>
+<div class="hbars" id="l2Bars"></div>
+<div id="l2Verdict"></div>
+
+<h3>1.3 · Les trois runs de comptage, et la règle appliquée</h3>
+<p>Choisis un run. La page refait le calcul de ρ, τ, f₀, applique la règle telle qu’elle était écrite, et compare à la prédiction. Les temps de ces runs ne sont pas lus (M10).</p>
+<div class="ctl">
+  <label>Run <select id="l3Run">
+    <option value="belt">ceinture, 4 vues, 1536 × 900</option>
+    <option value="belt768">ceinture, 4 vues, 768 × 450</option>
+    <option value="v1c">v1compat, 2 vues, 768 × 450</option>
+  </select></label>
+</div>
+<div class="stats" id="l3Stats"></div>
+<div class="hbars" id="l3Bars"></div>
+<div id="l3Verdict"></div>
+
+<h3>1.4 · L’invariant frame par frame, et pourquoi une médiane ne s’additionne pas</h3>
+<p>Les 300 frames du run d’exactitude (série A, <code>RelWithAsserts</code>, code 3b). La courbe montre, frame par frame, Σ <code>TrisCov*</code> + <code>TrisEarlyRejected</code> − <code>TrisRasterized</code> : elle doit rester à zéro. Les boutons comparent une somme de médianes à une médiane de sommes.</p>
+<div class="ctl">
+  <label>Afficher <select id="l4Show">
+    <option value="inv">écart à l’invariant</option>
+    <option value="early">TrisEarlyRejected</option>
+    <option value="draw">triangles dessinés (Σ TrisCov*)</option>
+  </select></label>
+  <label><input type="checkbox" id="l4Warm" checked> exclure les 60 frames de chauffe</label>
+</div>
+<canvas id="l4Cv" aria-label="Courbe frame par frame de la série A"></canvas>
+<div class="stats" id="l4Stats"></div>
+<p class="small" id="l4Txt"></p>
+
+<h3>1.5 · La série B en A B B A : rapports par paire et zones de la règle</h3>
+<p>Les quatre runs chronométrés, épinglés sur un cœur P. Les barres donnent <code>Render</code> ; le panneau refait les contrôles de recevabilité et place le résultat dans les zones de la prédiction. Coche la case pour voir la règle telle qu’elle aurait dû être écrite (toutes les zones définies).</p>
+<div class="ctl">
+  <label>Lecture <select id="l5Mode"><option value="pairs">paire par paire</option><option value="abba">A B B A combiné</option></select></label>
+  <label><input type="checkbox" id="l5Fix"> règle complétée (zone 15–30 % définie)</label>
+</div>
+<canvas id="l5Cv" aria-label="Render des quatre runs A1 B1 B2 A2 et zones de décision"></canvas>
+<div class="stats" id="l5Stats"></div>
+<div id="l5Verdict"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<h3>2.1 · La boîte serrée, démontrée</h3>
+<p>Le centre du pixel x est le réel x + ½. Un pixel peut être allumé seulement si son centre est entre le x minimal et le x maximal des trois sommets :</p>
+<pre><code>minX ≤ x + ½ ≤ maxX   ⇔   minX − ½ ≤ x ≤ maxX − ½
+premier x entier : x0 = ceil (minX − ½)          (inclusif)
+dernier x entier :      floor(maxX − ½)   →  x1 = floor(maxX − ½) + 1   (exclusif)
+idem en y ; puis rognage au viewport (le scissor) ; boîte vide ⇔ x0 ≥ x1 ou y0 ≥ y1</code></pre>
+<ul>
+<li><b>Inclusif aux deux bouts</b> : un centre exactement sur <code>minX</code> (cas d’un sommet sur un centre) reste candidat. La règle top-left décidera ensuite s’il est allumé. C’est pour cela qu’aucun ε n’est permis (contre-exemple CE5).</li>
+<li><b>Comparée à la boîte lâche</b> : <code>floor(m) ≤ ceil(m − ½)</code> et <code>ceil(M) + 1 ≥ floor(M − ½) + 1</code> pour tout réel. La serrée est toujours incluse dans la lâche ; l’écart va d’une à trois colonnes (et lignes).</li>
+<li><b>Le rejet est exact dans un sens</b> : boîte serrée vide ⇒ aucun centre entre les bornes ⇒ aucun pixel. Une boîte non vide ne garantit rien (aiguille en diagonale) : ces triangles vont au rasterizer.</li>
+</ul>
+
+<h3>2.2 · Un commutateur propre aux compteurs de boucle chaude</h3>
+<p><code>LV3_RASTER_STATS</code> est le septième commutateur de <code>config.h</code>, défaut 0. Deux combinaisons sont interdites à la compilation : sans <code>LV3_PROFILE</code>, les compteurs n’iraient nulle part ; avec <code>LV3_ABLATION_RASTER</code>, le rasterizer ne tourne pas et l’on compterait des zéros. Un run qui l’active est un <b>run de comptage</b> : le bandeau du profileur l’annonce, l’en-tête porte <code>rasterstats=1</code>, et ses temps ne se lisent pas (M10).</p>
+
+<h3>2.3 · Compter sans perturber : un registre, un enregistrement, chaque sortie</h3>
+<ul>
+<li>Le nombre de pixels allumés est une variable <b>locale</b> : le compilateur la garde en registre, <code>++covered</code> coûte une addition.</li>
+<li><code>RecordRasterStats</code> est appelée <b>une fois par triangle</b>, sur <b>chaque</b> sortie de la fonction (aire nulle, boîte vide après rognage, fin normale). Sans cela, l’invariant Σ tranches = <code>TrisRasterized</code> casse.</li>
+<li>La macro éteinte vaut <code>((void)0)</code>, et non <code>((void)sizeof(x))</code> comme <code>LV3_PROF_COUNT</code> : ses arguments (<code>tight</code>, <code>covered</code>) n’existent pas quand le commutateur vaut 0, ils doivent disparaître du texte.</li>
+<li>Les neuf compteurs sont ajoutés <b>en fin</b> d’<code>EProfCounter</code> : les colonnes des CSV versionnés ne bougent pas, et le <code>static_assert</code> sur les noms refuse un compteur sans nom.</li>
+</ul>
+
+<h3>2.4 · Le rejet : où, et ce qu’il économise</h3>
+<p>Le test se place dans <code>EmitClipTriangle</code>, après le test de face arrière, parce qu’il a besoin des coordonnées en pixels. Un triangle rejeté paie toujours sa division par w, son <code>ToRaster</code> et son aire. Il ne paie plus : l’appel de <code>DrawTriangle</code>, les écritures du contexte de fragment, le recalcul de l’aire, la boîte lâche (floor, ceil, min, max, rognage), trois <code>IsTopLeft</code>, la division <code>1/aire</code>, et en moyenne 4,35 tests de pixel à trois fonctions d’arête chacun.</p>
+
+<h3>2.5 · Les trois garde-fous de sens</h3>
+<ul>
+<li><b>Exception <code>Wireframe</code></b> : en fil de fer, <code>DrawTriangle</code> trace les trois arêtes par Bresenham, qui allume des pixels même pour un triangle sans centre. Le rejet y changerait l’image.</li>
+<li><b><code>TrisRasterized</code> compte avant le rejet</b> : il garde le sens qu’il avait à la Référence F (triangles face avant). C’est ce qui permet de vérifier que A et B « considèrent les mêmes triangles ». Nouvel invariant : Σ <code>TrisCov*</code> + <code>TrisEarlyRejected</code> = <code>TrisRasterized</code>.</li>
+<li><b>Une seule formule</b> : <code>TightPixelBox</code> sert au rejet et aux statistiques. Deux copies finiraient par diverger, et la mesure ne parlerait plus du même objet que le rejet.</li>
+</ul>
+
+<h3>2.6 · Prouver par l’absence : l’assertion et <code>abort()</code></h3>
+<p>Dans la boucle de l’ancien rasterizer, chaque pixel allumé vérifie <code>LV3_ASSERT(x ∈ boîte serrée)</code>. C’est la contraposée de ce dont le rejet a besoin (« pixel allumé ⇒ dans la boîte serrée » équivaut à « boîte serrée vide ⇒ aucun pixel »). <code>AssertFailed</code> appelle <code>std::abort()</code> : si une seule violation se produit, le programme meurt avant d’écrire son CSV. Un fichier de 300 frames est donc la preuve qu’aucune assertion n’a échoué. La condition : que l’assertion soit compilée <b>dans la LIB</b>, d’où le champ <code>asserts_lib=</code> (M11).</p>
+
+<h3>2.7 · Des métadonnées écrites par celui qui sait</h3>
+<p><code>config=</code> vient de <code>main.cpp</code> : il décrit l’EXE. Le rejet, les compteurs et l’assertion vivent dans la LIB. Si le gestionnaire de configurations associait « EXE RelWithAsserts » à « LIB Release », l’en-tête afficherait <code>RelWithAsserts</code> alors que l’assertion serait éteinte. D’où M11 : <code>rasterstats=</code> et <code>asserts_lib=</code> sont écrits par <code>Profiler.cpp</code>, compilé dans la LIB.</p>
+
+<h3>2.8 · Le protocole de la série B</h3>
+<ul>
+<li>A = la Référence F, commits LIB <code>6bc1813</code> / EXE <code>e5bbaa7</code> ; B = le code avec compteurs et 3b, commité. Avec <code>LV3_RASTER_STATS 0</code>, le compteur disparaît : seule la présence du rejet distingue A de B (M4).</li>
+<li>Chaque binaire est régénéré puis copié dans son dossier de banc ; le script désigne les deux exécutables par leur chemin (M13) ; <code>start "" /wait /affinity 4</code> épingle sur un cœur P (M9).</li>
+<li>Un run jetable, puis A B B A (M8). Recevabilité : témoin T à moins de 3 % dans chaque paire, p95 &lt; 1,15 × médiane de <code>Render</code>, mêmes <code>FacesSubmitted</code> / <code>TrisRasterized</code>, binaire identifiable par son CSV (A n’a pas de champ <code>rasterstats=</code>).</li>
+</ul>
+
+<h3>2.9 · Pendants scalaire et vectorisé</h3>
+<p>Le lot a livré la version <b>scalaire</b> : un test par triangle dans <code>EmitClipTriangle</code>. Le pendant vectorisé est venu trois semaines plus tard, au chantier B4 (<code>ClassifyFaces8</code>, <code>Rendering/FaceStage.h</code>) : la boîte serrée de 8 faces est calculée dans 8 couloirs AVX2, le rejet devient un bit dans un masque, et <code>TrisEarlyRejected</code> se compte par <code>popcount</code>. Il est donné à côté du scalaire aux étapes 11 et 12, avec ses deux pièges (ordre des opérandes de <code>min</code>/<code>max</code>, troncature des valeurs hors plage).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange (27 → 28/09)</h2>
+<p>Pour chaque étape : son objectif, ce qu’elle utilise de l’étape précédente, ce qu’elle produit, le code avant/après et, quand il existe, son pendant vectorisé. Le code est celui de l’échange ; les écarts avec le dépôt actuel sont dans la section 6.</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Relire le rasterizer avant de compter</div><div class="b">
+<p><b>Objectif.</b> Savoir ce qu’on va mesurer, et vérifier que l’instrument posera la bonne question.</p>
+<div class="io"><div><h5>Utilise</h5>La question laissée par l’avenant C2 § 8 (2b ou 3) ; <code>RasterizeTriangle</code> de L04.</div><div><h5>Produit</h5>La découverte de la boîte lâche, et la scission du chantier 3 en 3a (resserrer la boîte) et 3b (rejet précoce).</div></div>
+<pre><code>int minX = int(std::floor(std::min({ p0.x, p1.x, p2.x })));
+int maxX = int(std::ceil (std::max({ p0.x, p1.x, p2.x }))) + 1;   // + 1 « par sécurité »</code></pre>
+<p>Pour un sommet en x = 3,2 : <code>floor</code> = 3, mais le premier centre possible est 3,5, donc x = 3 (ici d’accord). Pour un maximum en 3,2 : <code>ceil + 1</code> = 5, alors que le dernier centre possible est 2,5, donc x = 2 et une borne exclusive à 3. <b>Deux colonnes de trop.</b> Par construction, la boîte lâche fait au moins 2 × 2, même pour un triangle qui ne couvre rien.</p>
+<p class="small">Pendant vectorisé : sans objet (lecture de code).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Simuler avant de mesurer</div><div class="b">
+<p><b>Objectif.</b> Avoir un ordre de grandeur pour écrire des seuils de décision, et vérifier hors moteur la formule de la boîte serrée.</p>
+<div class="io"><div><h5>Utilise</h5>La formule de l’étape 1 ; la règle top-left de L04.</div><div><h5>Produit</h5>Le tableau ci-dessous ; l’inclusion « pixel allumé ⇒ boîte serrée » vérifiée par assertion sur 80 000 triangles.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Demi-étendue d</th><th class="num">Tests (lâche)</th><th class="num">Boîte serrée</th><th class="num">Pixels allumés</th><th class="num">Triangles à 0 px</th></tr></thead>
+<tbody>
+<tr><td>0,5 px</td><td class="num">6,2</td><td class="num">0,25</td><td class="num">0,08</td><td class="num">92 %</td></tr>
+<tr><td>1 px</td><td class="num">9,0</td><td class="num">0,99</td><td class="num">0,31</td><td class="num">71 %</td></tr>
+<tr><td>2 px</td><td class="num">16,0</td><td class="num">3,97</td><td class="num">1,22</td><td class="num">35 %</td></tr>
+<tr><td>4 px</td><td class="num">36,2</td><td class="num">16,1</td><td class="num">4,97</td><td class="num">12 %</td></tr>
+</tbody></table></div>
+<p class="small">Le laboratoire 1.2 refait cette simulation pour n’importe quel d. Pendant vectorisé : sans objet.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Écrire la règle et la prédiction, avant tout code</div><div class="b">
+<p><b>Objectif.</b> Fixer le critère avant de voir les chiffres, pour ne pas l’ajuster aux chiffres.</p>
+<div class="io"><div><h5>Utilise</h5>Le tableau de l’étape 2 ; les grandeurs ρ, τ, f₀ (section M.3).</div><div><h5>Produit</h5>Une règle à trois branches et une prédiction falsifiable.</div></div>
+<pre><code>1. τ ≤ 0,5  et  ρ ≥ 6   →  chantier 3a : resserrer la boîte (exact, 2 lignes)
+2. sinon, f₀ ≥ 0,4       →  chantier 3b : rejet précoce avant DrawTriangle
+3. sinon                 →  chantier 2b : division par w + ToRaster par sommet
+Prédiction (triangles d'environ 1 px) : ρ ≈ 9, τ ≈ 0,1, f₀ ≈ 70 %  →  règle 1</code></pre>
+<p>La branche 1 voulait dire « la boucle est lourde et majoritairement inutile ». Le seuil ρ ≥ 6 supposait des triangles d’au moins 1 px. On verra à l’étape 9 qu’il mesurait la mauvaise chose.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> <code>config.h</code> : le septième commutateur</div><div class="b">
+<p><b>Objectif.</b> Que les compteurs de boucle chaude n’existent que dans un run qui les demande.</p>
+<div class="io"><div><h5>Utilise</h5>Le patron de <code>LV3_ABLATION_RASTER</code> (lot PH4-CH2) ; le foyer unique (A10).</div><div><h5>Produit</h5><code>LV3_RASTER_STATS</code>, défaut 0, et deux combinaisons interdites.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant — fin de config.h</div><pre><code>#ifndef LV3_ABLATION_RASTER
+    #define LV3_ABLATION_RASTER 0
+#endif</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>#ifndef LV3_ABLATION_RASTER
+    #define LV3_ABLATION_RASTER 0
+#endif
+// 7. Statistiques de couverture du rasterizer. Run de COMPTAGE (M10).
+#ifndef LV3_RASTER_STATS
+    #define LV3_RASTER_STATS 0
+#endif
+#if LV3_RASTER_STATS &amp;&amp; !LV3_PROFILE
+    #error "LV3_RASTER_STATS=1 exige LV3_PROFILE=1"
+#endif
+#if LV3_RASTER_STATS &amp;&amp; LV3_ABLATION_RASTER
+    #error "LV3_RASTER_STATS et LV3_ABLATION_RASTER sont exclusifs"
+#endif</code></pre></div></div>
+<p class="small">Pendant vectorisé : sans objet.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> <code>Profiler.h</code> : huit compteurs, en fin d’enum</div><div class="b">
+<p><b>Objectif.</b> Donner un nom et une colonne à chaque grandeur, sans décaler les CSV déjà versionnés.</p>
+<div class="io"><div><h5>Utilise</h5><code>EProfCounter</code> et son tableau de noms parallèle (PH4-G).</div><div><h5>Produit</h5>Les colonnes <code>TrisCov0</code> à <code>PixelsCovered</code>.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>    VertsTransformed,  // appels MulRow (chantier 2)
+    Count
+};</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>    VertsTransformed,
+    // Couverture (LV3_RASTER_STATS). Nuls si le commutateur vaut 0.
+    // Invariant : TrisCov0 + 1 + 2to4 + 5plus == TrisRasterized
+    TrisCov0, TrisCov1, TrisCov2to4, TrisCov5plus,
+    TrisTightEmpty,    // boîte serrée vide (sous-ensemble de TrisCov0)
+    PixelsTested,      // tours de la boucle ACTUELLE (boîte lâche)
+    PixelsTight,       // aire de la boîte serrée
+    PixelsCovered,     // pixels passant les 3 arêtes, AVANT le Z
+    Count
+};
+// et les 8 noms, dans le même ordre, dans kProfCounterNames</code></pre></div></div>
+<p class="small">Pendant vectorisé : sans objet.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> <code>Profiler.cpp</code> : le run se déclare lui-même</div><div class="b">
+<p><b>Objectif.</b> Qu’un run de comptage ne puisse jamais être pris pour un run de chronométrage.</p>
+<div class="io"><div><h5>Utilise</h5>Les champs d’en-tête de PH4-CH2 (<code>cpu=</code>, <code>affinity=</code>, <code>ablation=</code>).</div><div><h5>Produit</h5><code>rasterstats=</code> dans les deux en-têtes, écrit par la LIB ; bandeau au démarrage.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>    &lt;&lt; ";ablation=" &lt;&lt; info.ablation</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>    &lt;&lt; ";ablation=" &lt;&lt; info.ablation
+    &lt;&lt; ";rasterstats=" &lt;&lt; LV3_RASTER_STATS   // la LIB, qui compte
+// Begin() : « RASTER_STATS ACTIF : run de COMPTAGE, temps non recevables »</code></pre></div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> <code>Rasterizer.cpp</code> : compter dans la boucle sans la changer</div><div class="b">
+<p><b>Objectif.</b> Mesurer pixels testés, candidats et allumés, et prouver sur données réelles que la boîte serrée contient tout pixel allumé.</p>
+<div class="io"><div><h5>Utilise</h5>Les compteurs (E5), le commutateur (E4), la formule de la boîte serrée (E1, E2).</div><div><h5>Produit</h5><code>RecordRasterStats</code>, la macro <code>LV3_RASTER_RECORD</code>, l’assertion de contenance.</div></div>
+<pre><code>#if LV3_RASTER_STATS
+    // UN enregistrement par triangle, jamais par pixel.
+    void RecordRasterStats(uint32_t tested, uint32_t tight, uint32_t covered) noexcept
+    {
+        const EProfCounter bucket = covered == 0 ? EProfCounter::TrisCov0
+                                  : covered == 1 ? EProfCounter::TrisCov1
+                                  : covered &lt;= 4 ? EProfCounter::TrisCov2to4
+                                  :                EProfCounter::TrisCov5plus;
+        LV3_PROF_COUNT(bucket, 1);
+        if (tight == 0) LV3_PROF_COUNT(EProfCounter::TrisTightEmpty, 1);
+        LV3_PROF_COUNT(EProfCounter::PixelsTested,  tested);
+        LV3_PROF_COUNT(EProfCounter::PixelsTight,   tight);
+        LV3_PROF_COUNT(EProfCounter::PixelsCovered, covered);
+    }
+    #define LV3_RASTER_RECORD(t, b, c) RecordRasterStats((t), (b), (c))
+#else
+    #define LV3_RASTER_RECORD(t, b, c) ((void)0)   // les arguments DISPARAISSENT
+#endif</code></pre>
+<div class="ab"><div class="av"><div class="t">Avant — RasterizeTriangle</div><pre><code>if (area == 0.0f) return;
+…
+vp.ClampBox(minX, minY, maxX, maxY);
+if (minX &gt;= maxX || minY &gt;= maxY) return;
+for (…) for (…) {
+    … if (!(w2 &gt; 0 || (w2 == 0 &amp;&amp; tl2))) continue;
+    onFragment(x, y, bary, userData);
+}</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>if (area == 0.0f) { LV3_RASTER_RECORD(0u, 0u, 0u); return; }
+…
+vp.ClampBox(minX, minY, maxX, maxY);
+#if LV3_RASTER_STATS
+    const PixelBox tb = TightPixelBox(p0, p1, p2, vp);  // mesurée
+    const uint32_t tight = tb.Area();  uint32_t covered = 0;
+#endif
+if (minX &gt;= maxX || minY &gt;= maxY) { LV3_RASTER_RECORD(0u, tight, 0u); return; }
+for (…) for (…) {
+    … if (!(w2 &gt; 0 || (w2 == 0 &amp;&amp; tl2))) continue;
+#if LV3_RASTER_STATS
+    LV3_ASSERT(x &gt;= tb.x0 &amp;&amp; x &lt; tb.x1 &amp;&amp; y &gt;= tb.y0 &amp;&amp; y &lt; tb.y1);
+    ++covered;                                  // registre, pas d'appel
+#endif
+    onFragment(x, y, bary, userData);
+}
+LV3_RASTER_RECORD(uint32_t(maxX - minX) * uint32_t(maxY - minY), tight, covered);</code></pre></div></div>
+<p class="small">Pendant vectorisé : la boucle de ce lot est scalaire. Au chantier C2 (24/10), la boucle par blocs de 8 pixels compte les pixels allumés d’un bloc par <code>_mm_popcnt_u32(movemask)</code>, toujours versés une fois par triangle à <code>RecordRasterStats</code>.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> Trois runs de comptage</div><div class="b">
+<p><b>Objectif.</b> Mesurer la couverture réelle, et tester l’hypothèse « plancher de la boîte lâche » par un changement de résolution.</p>
+<div class="io"><div><h5>Utilise</h5>Le binaire instrumenté (E4 à E7), <code>LV3_RASTER_STATS 1</code>.</div><div><h5>Produit</h5>Le tableau suivant (médianes ; laboratoire 1.3).</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Run</th><th class="num">TrisRasterized</th><th class="num">TrisCov 0 / 1 / 2-4 / 5+</th><th class="num">Boîte vide</th><th class="num">Tested</th><th class="num">Tight</th><th class="num">Covered</th></tr></thead>
+<tbody>
+<tr><td>Ceinture, 4 vues, 1536 × 900</td><td class="num">134 389</td><td class="num">134 174 / 131 / 50 / 32</td><td class="num">134 003</td><td class="num">584 545</td><td class="num">10 562</td><td class="num">4 562</td></tr>
+<tr><td>Ceinture, 4 vues, 768 × 450</td><td class="num">134 389</td><td class="num">134 267 / 99 / 21 / 6</td><td class="num">134 133</td><td class="num">548 346</td><td class="num">2 722</td><td class="num">1 177</td></tr>
+<tr><td>v1compat, 2 vues, 768 × 450</td><td class="num">151</td><td class="num">30 / 40 / 48 / 33</td><td class="num">9</td><td class="num">23 485</td><td class="num">20 544</td><td class="num">9 091</td></tr>
+</tbody></table></div>
+<p><b>Témoins.</b> <code>FacesSubmitted</code> 274 988, <code>TrisRasterized</code> 134 389 et <code>VertsTransformed</code> 181 061 identiques à la Référence F : l’instrument n’a rien changé au pipeline. <code>PixelsCovered</code> 4 562 → 1 177 quand la résolution est divisée par 4 (rapport 3,88) : le compteur de couverture se comporte comme attendu.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Appliquer la règle, telle qu’écrite</div><div class="b">
+<p><b>Objectif.</b> Décider sans réécrire la règle après coup.</p>
+<div class="io"><div><h5>Utilise</h5>La règle (E3), les chiffres (E8).</div><div><h5>Produit</h5>La décision « chantier 3b », et un seuil reconnu mal calibré.</div></div>
+<ul>
+<li>ρ = 584 545 ÷ 134 389 = <b>4,35</b> ; τ = 10 562 ÷ 584 545 = <b>0,018</b> ; f₀ = <b>99,84 %</b> ; f<sub>E</sub> = 99,71 %.</li>
+<li><b>Règle 1 : elle échoue</b>, τ passe largement mais ρ &lt; 6.</li>
+<li><b>Règle 2 : f₀ ≥ 0,4 → chantier 3b.</b></li>
+</ul>
+<div class="warn"><b>Erreur de calibrage reconnue.</b> Les triangles réels sont environ trois fois plus petits que supposé : la boîte lâche tombe à son plancher (2 × 2 = 4), et ρ ne peut plus atteindre 6. Le seuil mesurait la mauvaise chose. La règle n’a pas été réécrite ; elle a désigné le bon chantier : pour un triangle qui n’allume rien, la meilleure boucle, lâche ou serrée, est celle qu’on n’exécute pas. La prédiction (ρ ≈ 9, τ ≈ 0,1, f₀ ≈ 70 %) était fausse d’un facteur 3 sur la taille.</div>
+<p>Sur la ceinture, les 134 389 triangles allument 4 562 pixels au total. Un astéroïde fait environ 3,5 pixels à l’écran, dessiné avec une centaine de triangles.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Ce que les compteurs réinterprètent</div><div class="b">
+<p><b>Objectif.</b> Corriger, chiffres à l’appui, deux explications des documents précédents.</p>
+<div class="io"><div><h5>Utilise</h5>Les runs 1 et 2 (E8) ; C2 § 7.1 ; avenant C2 § 5.</div><div><h5>Produit</h5>Deux amendements documentaires et une nouvelle hypothèse.</div></div>
+<ol>
+<li><b>L’expérience C de C2 est expliquée.</b> Entre 1536 × 900 et 768 × 450, <code>PixelsTested</code> ne baisse que de 6 % (584 545 → 548 346) pour quatre fois moins de pixels. Le coût « indifférent à la surface » était celui du plancher de la boîte lâche, environ 4 tests par micro-triangle, quelle que soit la résolution.</li>
+<li><b>La cause donnée par l’avenant C2 § 5 est réfutée.</b> Il attribuait les attentes de la rasterisation au depth buffer de 5,5 Mo. Il n’y a que 4 562 fragments par frame, toutes vues confondues : le depth buffer n’est presque jamais lu. Le mécanisme (recouvrement out-of-order) reste possible ; la cause proposée à la place, non démontrée : les <b>erreurs de prédiction de branche</b> (environ 584 000 tests de pixel par frame, des <code>continue</code> à l’issue imprévisible, 15 à 20 cycles perdus par erreur).</li>
+</ol>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 11</span> <code>Rasterizer.h</code> : <code>PixelBox</code> et <code>TightPixelBox</code>, la source unique</div><div class="b">
+<p><b>Objectif.</b> Une seule définition des pixels candidats, partagée par le rejet et les statistiques.</p>
+<div class="io"><div><h5>Utilise</h5>La formule démontrée (§ 2.1) ; <code>Viewport::ClampBox</code>.</div><div><h5>Produit</h5>Une fonction <code>LV3_FORCEINLINE</code>, générique sur le type de sommet (<code>Vec2f</code>, <code>Vec3f</code>).</div></div>
+<pre><code>struct PixelBox
+{
+    int32_t x0, y0, x1, y1;                         // x1 / y1 EXCLUSIFS
+    [[nodiscard]] bool     Empty() const noexcept { return x0 &gt;= x1 || y0 &gt;= y1; }
+    [[nodiscard]] uint32_t Area()  const noexcept
+    { return Empty() ? 0u : uint32_t(x1 - x0) * uint32_t(y1 - y0); }
+};
+
+// Boîte vide  =&gt;  aucun centre de pixel  =&gt;  aucun pixel couvert : rejet EXACT.
+template&lt;typename V&gt;
+[[nodiscard]] LV3_FORCEINLINE PixelBox TightPixelBox(const V&amp; a, const V&amp; b, const V&amp; c,
+                                                     const Viewport&amp; vp) noexcept
+{
+    PixelBox bx{
+        int32_t(std::ceil (std::min({ a.x, b.x, c.x }) - 0.5f)),
+        int32_t(std::ceil (std::min({ a.y, b.y, c.y }) - 0.5f)),
+        int32_t(std::floor(std::max({ a.x, b.x, c.x }) - 0.5f)) + 1,
+        int32_t(std::floor(std::max({ a.y, b.y, c.y }) - 0.5f)) + 1 };
+    vp.ClampBox(bx.x0, bx.y0, bx.x1, bx.y1);
+    return bx;
+}</code></pre>
+<p><b>Pendant vectorisé</b> (chantier B4, <code>ClassifyFaces8</code>, étapes 4 à 7) : les 8 faces d’un lot, une par couloir.</p>
+<pre><code>// Étape 4 — min / max. MSVC : std::min(l, r) == (r &lt; l) ? r : l
+//   et _mm256_min_ps(A, B) == (A &lt; B) ? A : B (rend B si NaN ou égalité)
+//   donc std::min(l, r) == _mm256_min_ps(r, l) : opérandes INVERSÉS, sinon NaN diverge.
+const __m256 minX = _mm256_min_ps(_mm256_min_ps(cx, bx), ax);   // 8 minX
+const __m256 maxX = _mm256_max_ps(_mm256_max_ps(cx, bx), ax);   // 8 maxX   (idem en y)
+// Étape 5 — centres : sub(0,5) puis round (ceil / floor) puis troncature en int32.
+//   cvttps_epi32 : hors plage ou NaN -&gt; 0x80000000, comme cvttss2si du scalaire.
+__m256i x0 = _mm256_cvttps_epi32(_mm256_round_ps(_mm256_sub_ps(minX, half), kCeil));
+__m256i x1 = _mm256_add_epi32(_mm256_cvttps_epi32(
+                 _mm256_round_ps(_mm256_sub_ps(maxX, half), kFloor)), one);
+// Étape 6 — ClampBox en entiers (exact) : max avec vp.x, min avec vp.x + width.
+x0 = _mm256_max_epi32(x0, _mm256_set1_epi32(vp.x));
+x1 = _mm256_min_epi32(x1, _mm256_set1_epi32(vp.x + vp.width));
+// Étape 7 — non vide == (x1 &gt; x0) ET (y1 &gt; y0), dans les 8 couloirs.
+const __m256i nonEmpty = _mm256_and_si256(_mm256_cmpgt_epi32(x1, x0),
+                                          _mm256_cmpgt_epi32(y1, y0));</code></pre>
+<p class="small">Bit-exactitude vérifiée par la TNR <code>Test_B4_ClassifyFaces8</code> (masque survivant contre <code>TightPixelBox</code> scalaire) et par le filet Debug de <code>RenderSystem.cpp</code>, qui refait chaque lot en scalaire.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 12</span> <code>RenderSystem.cpp</code> : le rejet dans <code>EmitClipTriangle</code></div><div class="b">
+<p><b>Objectif.</b> Écarter un triangle sans centre avant toute préparation, sans changer l’image et sans changer le sens des compteurs.</p>
+<div class="io"><div><h5>Utilise</h5><code>TightPixelBox</code> (E11) ; les coordonnées raster <code>r[]</code> déjà calculées ; le mode de la vue.</div><div><h5>Produit</h5>Le rejet, le compteur <code>TrisEarlyRejected</code> (ajouté en fin d’enum), le nouvel invariant.</div></div>
+<div class="ab"><div class="av"><div class="t">Avant</div><pre><code>if (IsBackFacing(EdgeFunction(r[0], r[1], r[2]))) return;
+
+// Compte APRES le backface
+LV3_PROF_COUNT(EProfCounter::TrisRasterized, 1);
+
+renderer.DrawTriangle(…);</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>if (IsBackFacing(EdgeFunction(r[0], r[1], r[2]))) return;
+
+// APRES le backface, AVANT le rejet : sens de la Référence F gardé
+LV3_PROF_COUNT(EProfCounter::TrisRasterized, 1);
+
+// CHANTIER 3b : rejet précoce EXACT (sauf Wireframe : Bresenham trace le contour)
+if (view.mode != ERenderMode::Wireframe &amp;&amp;
+    TightPixelBox(r[0], r[1], r[2], view.viewport).Empty())
+{
+    LV3_PROF_COUNT(EProfCounter::TrisEarlyRejected, 1);
+    return;
+}
+renderer.DrawTriangle(…);</code></pre></div></div>
+<p>Dans le même temps, <code>RasterizeTriangle</code> appelle <code>TightPixelBox</code> au lieu d’une copie de la formule pour ses statistiques.</p>
+<p><b>Pendant vectorisé</b> (B4, <code>EmitTriangleList8</code>) : un masque de 8 bits remplace le <code>if</code>.</p>
+<pre><code>const FaceMasks8 m   = ClassifyFaces8(rv, idx, vp);   // front et survive, 1 bit par face
+const uint32_t front = m.front   &amp; keep;              // face avant (hors bourrage)
+uint32_t       surv  = m.survive &amp; keep;              // face avant ET boîte serrée non vide
+LV3_PROF_COUNT(EProfCounter::TrisRasterized,    std::popcount(front));
+LV3_PROF_COUNT(EProfCounter::TrisEarlyRejected, std::popcount(front &amp; ~surv));
+if (surv == 0) continue;                              // lot entièrement rejeté : aucun appel</code></pre>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 13</span> Le prérequis : la preuve en <code>RelWithAsserts</code>, et deux runs refusés</div><div class="b">
+<p><b>Objectif.</b> Prouver sur les données réelles l’implication dont dépend le rejet, avant de l’intégrer.</p>
+<div class="io"><div><h5>Utilise</h5>L’assertion de l’étape 7 ; la configuration <code>RelWithAsserts</code> (A10).</div><div><h5>Produit</h5>Un run recevable, et le champ <code>asserts_lib=</code>.</div></div>
+<ul>
+<li><b>Deux runs refusés sur leur en-tête.</b> Tous deux annonçaient <code>config=Release</code> (<code>overhead_ns</code> 46 puis 32 : deux exécutions distinctes). L’exécutable lancé était celui de <code>x64\Release\</code> : la recette de C2 § 10 commence par <code>cd &lt;racine&gt;\x64\Release</code>. La binaire s’est dénoncée par sa métadonnée (M2, M6).</li>
+<li><b>Run recevable</b> (<code>config=RelWithAsserts</code>) : CSV complet de 300 frames, donc aucune assertion échouée (environ 4 562 pixels allumés vérifiés par frame, soit 1,4 million) ; compteurs identiques aux runs <code>Release</code> au chiffre près.</li>
+<li><b>Angle mort</b> : <code>config=</code> décrit l’EXE, l’assertion vit dans la LIB. Run accepté sur un argument structurel (le <code>.slnx</code> n’associe aucune configuration par projet), et ajout de <code>asserts_lib=</code> pour que ce soit désormais le fichier qui le prouve.</li>
+</ul>
+<pre><code>    &lt;&lt; ";rasterstats=" &lt;&lt; LV3_RASTER_STATS
+    &lt;&lt; ";asserts_lib=" &lt;&lt; LV3_ASSERTS_ENABLED   // la LIB, qui VERIFIE : config= ne décrit que l'EXE</code></pre>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 14</span> Série A : l’image n’a pas perdu un fragment</div><div class="b">
+<p><b>Objectif.</b> Prouver l’exactitude du rejet avant de le chronométrer.</p>
+<div class="io"><div><h5>Utilise</h5>Le code 3b (E11, E12) en <code>RelWithAsserts</code>, <code>rasterstats=1</code> ; les runs de l’étape 8.</div><div><h5>Produit</h5>Le tableau suivant ; le CSV brut a été vérifié ligne par ligne (laboratoire 1.4).</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Contrôle</th><th>Résultat</th></tr></thead>
+<tbody>
+<tr><td>Σ <code>TrisCov*</code> + <code>TrisEarlyRejected</code> = <code>TrisRasterized</code></td><td><b>300 frames sur 300</b>, chauffe comprise</td></tr>
+<tr><td><code>TrisTightEmpty</code></td><td>0 sur toutes les frames</td></tr>
+<tr><td><code>TrisEarlyRejected</code> (médiane / p95 / max)</td><td>134 003 / 135 207 / 135 830 = <code>TrisTightEmpty</code> d’avant</td></tr>
+<tr><td><code>TrisCov1</code> / <code>2to4</code> / <code>5plus</code></td><td>131 / 50 / 32, inchangés</td></tr>
+<tr><td><b><code>PixelsCovered</code></b></td><td><b>4 562 / 4 573 / 53 668, inchangé</b></td></tr>
+<tr><td><code>PixelsTight</code></td><td>10 562, inchangé (les rejetés avaient une boîte d’aire nulle)</td></tr>
+<tr><td><code>PixelsTested</code></td><td>584 545 → 14 372 (−97,5 %)</td></tr>
+</tbody></table></div>
+<div class="warn"><b>Erreur de prédiction reconnue.</b> J’avais annoncé <code>TrisCov0</code> = 171, calculé comme 134 174 − 134 003 : une <b>différence de médianes</b>. Le run donne 166. Ce n’est pas le code qui a tort, c’est le calcul (laboratoire 1.4).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 15</span> Série B : le gain, en A B B A</div><div class="b">
+<p><b>Objectif.</b> Mesurer le gain contre la Référence F, dans la même séance, sur un cœur P.</p>
+<div class="io"><div><h5>Utilise</h5>Le protocole du § 2.8 ; deux binaires <code>Release</code> (A = Réf. F, B = 3b).</div><div><h5>Produit</h5>Le verdict et la Référence G.</div></div>
+<pre><code>set ROOT=C:\chemin\vers\la\racine_de_contenu
+set EXE_A=C:\Bench\A\RefactoNouvelleLibrairieV3.exe
+set EXE_B=C:\Bench\B\RefactoNouvelleLibrairieV3.exe
+set ARGS=--scene=solar_system_v1compat_belt.json --bench=300
+start "" /wait /affinity 4 "%EXE_A%" "%ROOT%" %ARGS% --csv=Mesures\3b_A0_jetable.csv
+start "" /wait /affinity 4 "%EXE_A%" "%ROOT%" %ARGS% --csv=Mesures\3b_A1.csv
+start "" /wait /affinity 4 "%EXE_B%" "%ROOT%" %ARGS% --csv=Mesures\3b_B1.csv
+start "" /wait /affinity 4 "%EXE_B%" "%ROOT%" %ARGS% --csv=Mesures\3b_B2.csv
+start "" /wait /affinity 4 "%EXE_A%" "%ROOT%" %ARGS% --csv=Mesures\3b_A2.csv</code></pre>
+<p>Résultat (laboratoire 1.5) : <code>Render</code> 10,075 / 10,614 ms (A) contre 7,277 / 7,410 ms (B), rapports 0,722 et 0,698, <b>A B B A combiné 0,710, soit −29,0 %, environ −3,0 ms</b>. Frame −24 % (≈ 80 → 105 images/s). A1 confirme la Référence F à environ 1 % (10,08 contre 10,19 ms).</p>
+<div class="warn"><b>Prédiction manquée d’un point, et règle incomplète.</b> La règle disait « ≥ 30 % : succès ; &lt; 15 % : mécanisme mal compris », sans rien entre les deux. La prédiction elle-même venait d’une soustraction complet − ablation (« 60 à 65 % de rasterisation »), que M7 amendée interdisait déjà : le gain réel, 3,0 ms, vaut la moitié des 6,3 ms espérés. Verdict : succès avec réserve de précision (les deux paires s’écartent de 3,4 %).</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 16</span> Clôture : avenant C3, règles M10 à M13, Référence G</div><div class="b">
+<p><b>Objectif.</b> Figer ce qui a été appris pour qu’il ne se perde pas.</p>
+<div class="io"><div><h5>Utilise</h5>Tout le lot.</div><div><h5>Produit</h5><code>claude/Avenant_C3_Couverture_Chantier3b.md</code> ; quatre règles ; une nouvelle référence ; le plan révisé.</div></div>
+<div class="scroll"><table>
+<thead><tr><th>Référence G</th><th>Valeur</th></tr></thead>
+<tbody>
+<tr><td>Machine</td><td>i7-1265U, cœur P épinglé (<code>affinity=4</code>), secteur, performances élevées</td></tr>
+<tr><td>Code</td><td>chantiers 2 et 3b</td></tr>
+<tr><td><code>Render</code> / FRAME</td><td>7,28 à 7,41 ms / 9,43 à 9,61 ms (≈ 105 images/s)</td></tr>
+<tr><td>Témoins</td><td>T ≈ 96,6 µs ; <code>Clear</code> ≈ 1,08 à 1,11 ms</td></tr>
+<tr><td>Loi de coût</td><td>≈ 26,5 ns par face soumise (contre ≈ 37 à la Référence F)</td></tr>
+<tr><td>Triangles réellement rasterisés</td><td>≈ 386 par frame</td></tr>
+</tbody></table></div>
+<p>Plan révisé (avenant C3 § 11) : 3b clos ; 3a abandonné pour la ceinture (il sera rouvert, AM1) ; <b>2b remonte</b> (coût dominant de chaque triangle rejeté) ; LOD premier sur le fond (seul chantier qui supprime aussi l’amont) ; AVX2 inchangé.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>CE1 · Compter par pixel.</b>
+<pre><code>if (inside) { LV3_PROF_COUNT(EProfCounter::PixelsCovered, 1); onFragment(x, y, bary, userData); }</code></pre>
+Un appel hors ligne et une branche par pixel testé : environ 584 000 par frame sur la ceinture, dans la boucle la plus chaude. On mesurerait surtout le compteur.</div>
+
+<div class="bad"><b>CE2 · Mettre le compteur sous <code>LV3_PROFILE</code>.</b> Tous les runs de chronométrage porteraient son coût, et la Référence F deviendrait incomparable aux runs suivants. Un compteur de boucle chaude a son commutateur (M10).</div>
+
+<div class="bad"><b>CE3 · Compter dans <code>ShadeFragment_*</code>.</b> Le shader passe après le test de profondeur : il compte les pixels qui gagnent le Z, c’est-à-dire une question de surdessin. La couverture se compte avant (le chantier C0 ajoutera <code>PixelsDepthPassed</code> pour l’autre question).</div>
+
+<div class="bad"><b>CE4 · Rejeter sur l’aire.</b>
+<pre><code>if (std::fabs(EdgeFunction(r[0], r[1], r[2])) &lt; 2.0f) return;   // « moins d'un pixel² »</code></pre>
+Une aiguille d’aire 0,4 px² peut couvrir trois centres (laboratoire 1.1, bouton « Aiguille ») ; un triangle d’aire 2 px² peut n’en couvrir aucun. Résultat : des trous dans les astéroïdes, qui changent avec la distance. Une approximation déguisée en optimisation.</div>
+
+<div class="bad"><b>CE5 · « Resserrer encore » avec un ε.</b>
+<pre><code>int32_t(std::ceil(minX - 0.5f + 1e-4f))</code></pre>
+Un centre posé exactement sur une arête gauche est allumé par la règle top-left. Avec l’ε, il sort de la boîte : un pixel perdu, et une couture possible entre deux triangles voisins (laboratoire 1.1, case ε et bouton « Centre sur une arête »).</div>
+
+<div class="bad"><b>CE6 · Rejeter aussi en fil de fer.</b> Bresenham trace les arêtes d’un triangle sans centre : en mode <code>Wireframe</code>, le rejet effacerait des traits visibles.</div>
+
+<div class="bad"><b>CE7 · Calculer une prédiction avec des médianes.</b> 134 174 (médiane de <code>TrisCov0</code>) − 134 003 (médiane de <code>TrisTightEmpty</code>) = 171. Mesuré : 166. Et Σ des médianes des quatre tranches = 134 387, contre 134 389 pour <code>TrisRasterized</code> : un faux écart de 2 qui n’existe sur aucune frame (laboratoire 1.4).</div>
+
+<div class="bad"><b>CE8 · Prédire un gain par soustraction.</b> « Complet − ablation = 60 à 65 % de rasterisation, donc 6,3 ms à gagner. » Mesuré : 3,0 ms. Les étages se recouvrent ; un triangle rejeté garde sa division, son <code>ToRaster</code> et son aire ; le test lui-même a un coût (M7 amendée).</div>
+
+<div class="bad"><b>CE9 · Une règle dont un seuil dépend d’une hypothèse non vérifiée.</b> ρ ≥ 6 supposait des triangles d’au moins 1 px. À 0,3 px, ρ tombe au plancher (4) et la branche 1 devient inatteignable, quelle que soit la quantité de travail perdu (τ = 0,018).</div>
+
+<div class="bad"><b>CE10 · Une règle sans toutes ses zones.</b> « ≥ 30 % succès ; &lt; 15 % échec. » Le résultat (−29 %) tombe dans le trou. Sans zone écrite, on est tenté d’arrondir dans le sens qui arrange (M12).</div>
+
+<div class="bad"><b>CE11 · Lancer depuis <code>cd x64\Release</code>.</b> Deux runs « RelWithAsserts » étaient des runs <code>Release</code> : le dossier venait de la recette de C2 § 10. Seul l’en-tête (<code>config=Release</code>) l’a montré (M13).</div>
+
+<div class="bad"><b>CE12 · Croire <code>config=</code> pour la LIB.</b> L’EXE peut être compilé avec assertions et la LIB sans : l’en-tête dirait <code>RelWithAsserts</code>, l’assertion de la boîte serrée ne tournerait jamais, et le run « prouverait » sans rien vérifier (M11).</div>
+
+<div class="bad"><b>CE13 · Construire A dans une copie de travail <code>git worktree</code>.</b> <code>LV3.User.props</code> contient un chemin absolu vers la LIB : l’EXE de la copie peut se lier à la LIB du dépôt principal, sans erreur. A et B ne différeraient plus de ce qu’on croit.</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>5.1 · Lire un run de comptage, dans l’ordre</h3>
+<ol>
+<li>En-tête : <code>rasterstats=1</code> (sinon ce n’est pas un run de comptage), <code>config=</code> et <code>asserts_lib=</code> conformes à la question posée, <code>ablation=none</code>.</li>
+<li>Témoins de pipeline : <code>FacesSubmitted</code>, <code>TrisRasterized</code>, <code>VertsTransformed</code> identiques au run de référence.</li>
+<li>Invariants <b>dans le CSV brut, frame par frame</b> : Σ <code>TrisCov*</code> + <code>TrisEarlyRejected</code> = <code>TrisRasterized</code> ; <code>PixelsCovered</code> ≤ <code>PixelsTight</code> ≤ <code>PixelsTested</code> ; <code>TrisTightEmpty</code> = 0 dans le moteur. Colonne Excel : <code>=TrisCov0+TrisCov1+TrisCov2to4+TrisCov5plus+TrisEarlyRejected-TrisRasterized</code>, nulle sur toutes les lignes.</li>
+<li>Puis seulement : les grandeurs du lot (ρ, τ, f₀…). Les temps ne se lisent pas.</li>
+</ol>
+
+<h3>5.2 · Ajouter un compteur dans une boucle chaude</h3>
+<pre><code>// 1. Profiler.h : EN FIN d'EProfCounter (+ le nom dans kProfCounterNames)
+NewThing,          // définition exacte, unité, sous quel commutateur
+// 2. dans la boucle : un registre local, jamais un appel
+#if LV3_RASTER_STATS
+    uint32_t newThing = 0;
+#endif
+for (…) { …
+#if LV3_RASTER_STATS
+    newThing += cond ? 1u : 0u;
+#endif
+}
+// 3. une fois par triangle, sur CHAQUE sortie (sinon l'invariant casse)
+LV3_PROF_COUNT(EProfCounter::NewThing, newThing);
+// 4. écrire l'invariant qui le relie aux autres compteurs, AVANT le premier run</code></pre>
+
+<h3>5.3 · Écrire une règle de décision complète</h3>
+<pre><code>Grandeur : r = Render(B) ÷ Render(A), A B B A combiné, paires recevables.
+Prédiction : r ∈ [0,60 ; 0,75], écrite le …, à partir de …
+Zones :
+  r ≤ 0,70          succès, mécanisme confirmé
+  0,70 &lt; r ≤ 0,85   succès partiel : on garde, on documente l'écart à la prédiction
+  0,85 &lt; r &lt; 1,03   neutre : on garde si le code est exact, hypothèse vers VTune
+  r ≥ 1,03          régression : retour arrière
+Recevabilité : T &lt; 3 % dans chaque paire ; p95 &lt; 1,15 × médiane ; compteurs identiques.</code></pre>
+<p>C’est la forme adoptée dès l’avenant C4 (chantier 2b) : quatre zones contiguës, aucun trou.</p>
+
+<h3>5.4 · Réutiliser <code>TightPixelBox</code></h3>
+<pre><code>const PixelBox bb = TightPixelBox(a, b, c, vp);
+if (bb.Empty())                       return;            // aucun centre : rien à faire
+if (bb.x1 - bb.x0 == 1 &amp;&amp; bb.y1 - bb.y0 == 1) { … }      // un seul centre candidat (idée de C3)
+for (int32_t y = bb.y0; y &lt; bb.y1; ++y)                  // boucle sur les seuls candidats (3a)
+    for (int32_t x = bb.x0; x &lt; bb.x1; ++x) { … }</code></pre>
+<p>Toute nouvelle décision fondée sur « quels centres ce triangle peut-il contenir ? » passe par cette fonction, ou par une copie vectorisée gardée par une TNR bit à bit contre elle.</p>
+
+<h3>5.5 · Identifier un binaire par son seul CSV</h3>
+<div class="scroll"><table>
+<thead><tr><th>Champ</th><th>Écrit par</th><th>Question à laquelle il répond</th></tr></thead>
+<tbody>
+<tr><td><code>config=</code></td><td>EXE</td><td>l’EXE a-t-il ses assertions ?</td></tr>
+<tr><td><code>asserts_lib=</code></td><td>LIB</td><td>les assertions du moteur (rejet, rasterizer) sont-elles compilées ?</td></tr>
+<tr><td><code>rasterstats=</code></td><td>LIB</td><td>run de comptage (1) ou de chronométrage (0) ?</td></tr>
+<tr><td><code>ablation=</code></td><td>EXE dans ce lot, LIB depuis C0 (AM12)</td><td>un étage a-t-il été débranché ?</td></tr>
+<tr><td><code>affinity=</code>, <code>cpu=</code></td><td>LIB</td><td>sur quel cœur, quelle machine ?</td></tr>
+<tr><td>présence d’une colonne</td><td>LIB</td><td>quelle version du code (ici : <code>TrisEarlyRejected</code> = binaire B)</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Les chantiers 3a, 2b, B2, B4, C1, C3, D-a1, le dessin en point (A20), le LOD et la relecture du 13/11 ont modifié plusieurs pièces et lectures de ce lot. Chaque amendement donne l’avant (28/09) et l’après. Dépôt lu : LIB <code>e7cae94</code> / EXE <code>5203980</code>.</p>
+
+<div class="amend"><div class="h">AM1 · La boucle pixel parcourt la boîte serrée (chantier 3a, avenant C4 § 14, 30/09)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — ce lot</div><pre><code>boucle sur la boîte LÂCHE ; serrée mesurée seulement
+assert(pixel allumé ∈ serrée) dans la boucle
+3a « abandonné pour la ceinture » (0,2 % de Render)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>boucle sur TightPixelBox : une seule définition
+invariant de comptage PixelsTested == PixelsTight
+assertion RETIRÉE (tautologie : un pixel perdu ne serait
+  plus visité) ; preuve = comparaison frame par frame
+  avec l'ancienne boucle (ceinture et v1compat, 300/300)
+rouvert pour la structure (LOD, arêtes incrémentales),
+  aucun gain revendiqué</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM2 · Le rejet vit dans l’aval commun des deux chemins (chantier 2b, avenant C4)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>EmitClipTriangle(ClipVertex…) : 1/w, ToRaster ×3,
+  backface, TrisRasterized, rejet 3b, DrawTriangle</code></pre></div>
+<div class="ap"><div class="t">Après — RenderSystem.cpp actuel</div><pre><code>EmitRasterTriangle(RasterVertex a, b, c) : aval UNIQUE
+  backface → TrisRasterized → rejet 3b (sauf Wireframe)
+  → SubmitRasterTriangle
+Inside : sommets déjà projetés (ProjectPositions)
+Intersect : ProjectClip par coin après clipping</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM3 · <code>TightPixelBox</code> sans <code>std::min({…})</code> (chantier B2)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>std::ceil(std::min({ a.x, b.x, c.x }) - 0.5f)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>const float minX = std::min(a.x, std::min(b.x, c.x));
+// la liste d'initialisation devenait chez MSVC un appel
+// hors ligne à __std_max_element_f_ (tableau en pile)
+// forme binaire = vminss / vmaxss ; V1 Render −22 %</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM4 · Le rejet 3b est vectorisé par lots de 8 faces (chantier B4)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>un if par triangle, une TightPixelBox scalaire</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>ClassifyFaces8 : boîte serrée de 8 faces (FaceStage.h,
+  étapes 4 à 7, copie AVX2 de la formule)
+survive = front &amp; nonEmpty ; compteurs par popcount
+lot sans survivante : aucun appel
+« source unique » devenue « deux implémentations gardées
+  bit à bit » (TNR B4 + filet Debug) → PH4CH3b-9</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM5 · La préparation du triangle utilise la même boîte (chantier C1)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>RasterizeTriangle calcule sa boîte (lâche puis serrée)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>SetupTriangle : s.bb = TightPixelBox(…) ;
+  si vide → false (aucun appel du noyau)
+« source unique, partagée avec le rejet 3b »</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM6 · L’idée du 3b prolongée à la boîte d’un pixel (chantier C3)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>boîte vide → rejet ; sinon → noyau, quelle que soit la taille</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>boîte 1 × 1 : test exact du centre unique dans l'étage
+  faces, par lots de 8 ; TrisCov0 rejetés sans appel,
+  TrisCov1 dessinés en fragment direct
+V1 : étage faces −34,6 %</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM7 · Sommets accrochés au 1/256 px (jalon D, D-a1)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>sommets raster en float continu</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>SnapToSubpixel dans l'étage sommets ; boîte entière
+  (minX + 127) &gt;&gt; 8 … ((maxX − 128) &gt;&gt; 8) + 1
+  == TightPixelBox sur sommets accrochés (vérifié sur
+  2,1 M triangles, TNR Test_Da1_Fixed)
+V1 : TrisEarlyRejected 231 346 → 229 751 (943 faces
+  dégénérées sur la grille)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM8 · Exact ne veut pas dire fidèle (annexe A20, dessin en point, 11/10)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — lecture de ce lot</div><pre><code>« même image au fragment près » = objectif atteint</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>l'image de référence était déjà infidèle : vue de dessus,
+  600 rochers n'allumaient que 99 pixels (clignotement)
+objet de rayon apparent &lt; 1 px → UN fragment au centre
+  (DrawPoint), aucun sommet, aucune face ; PointSplats
+le 3b reste exact sur ce qui est encore rasterisé ;
+  rejeter les OBJETS sous-pixel ferait disparaître la ceinture</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM9 · Le LOD retire les triangles en amont (annexes A13, A14)</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant</div><pre><code>99,7 % des triangles rejetés APRÈS division,
+  ToRaster et aire (coût encore payé)</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>niveau de détail choisi avant l'étage sommets ;
+  Référence I : Render 1,67 à 1,69 ms (ceinture)
+le 3b garde son rôle sur les scènes sans LOD (V1 :
+  231 346 rejets par frame) et sur les silhouettes</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM10 · L’hypothèse « erreurs de prédiction de branche »</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — avenant C3 § 5.2</div><pre><code>hypothèse proposée, non démontrée</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>corroborée par l'avenant C4 § 8 (2b : −33,5 % au lieu de
+  −13 %, chaîne division → branche imprévisible)
+toujours non démontrée : VTune (Bad Speculation),
+  leçon de découverte inscrite au plan (point 24)</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM11 · Les règles de mesure ont continué de grandir</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — avenant C3</div><pre><code>M10 à M13</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>M12 complétée : latence sur le chemin critique, pas débit
+M14 : un temps ne se compare qu'à un temps de sa séance
+M19 (plan) ; ClearDepth et |A1 − A2| &lt; 3 % (D-a1) ;
+  thermomètre RenderVerts ; ABBA / BAAB</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM12 · L’hygiène de l’avenant C3 § 12, au 13/11</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Demandé le 28/09</div><pre><code>ablation= par la LIB (M11)
+asserts_lib= dans l'en-tête
+LV3Profile à false après la campagne
+CSV de la Référence G sous Mesures/
+recette C2 § 10 réécrite selon M13</code></pre></div>
+<div class="ap"><div class="t">Constaté sur le dépôt</div><pre><code>fait : AblationName() dans Profiler.cpp (C0)
+fait : asserts_lib= (deux en-têtes)
+NON : LV3Profile=true (props), LV3_PROFILE 1 (config.h)
+NON : Mesures/ ne contient que des CSV Debug des
+  scènes V ; aucun CSV 3b
+NON : C2 § 10 commence toujours par cd …\x64\Release</code></pre></div></div></div></div>
+
+<div class="amend"><div class="h">AM13 · La Référence G a été remplacée</div><div class="b"><div class="ab">
+<div class="av"><div class="t">Avant — 28/09</div><pre><code>Référence G : Render 7,28 à 7,41 ms, 26,5 ns / face</code></pre></div>
+<div class="ap"><div class="t">Après</div><pre><code>H (2b) 5,14 à 5,16 ms · I (LOD) 1,67 à 1,69 ms ·
+K (Clear) · L (point) Render 201 à 209 µs
+chaque référence ne se compare qu'aux runs de sa séance</code></pre></div></div></div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>7.1 · Tests hors moteur</h3>
+<ul>
+<li><b>Existants qui couvrent le 3b</b> : <code>Test_B4_ClassifyFaces8</code> (masque survivant AVX2 contre <code>TightPixelBox</code> scalaire) ; <code>Test_Da1_Fixed</code> (boîte entière == <code>TightPixelBox</code> sur sommets accrochés) ; <code>Test_TopLeftRule_ExactCoverage</code> (0 trou, 0 doublon de 3 à 200 px) ; <code>Test_ClipCoverage</code>.</li>
+<li><b>Manquant</b> : aucun test ne vérifie directement la <b>propriété</b> du rejet (« boîte serrée vide ⇒ aucun pixel » et « pixel allumé ⇒ dans la boîte ») sur des cas construits. Depuis le 3a, l’assertion de la boucle a disparu (AM1). Proposé (PH4CH3b-1) :</li>
+</ul>
+<pre><code>// Test/Test_CH3b_TightBox.cpp (proposé) — propriété du rejet 3b, chemin générique
+namespace
+{
+    struct Probe { LV3::PixelBox bb{}; uint32_t hits = 0; bool outside = false; };
+    void CountHit(int32_t x, int32_t y, const LV3::BarycentricWeights&amp;, void* u)
+    {
+        auto* p = static_cast&lt;Probe*&gt;(u);
+        ++p-&gt;hits;
+        if (x &lt; p-&gt;bb.x0 || x &gt;= p-&gt;bb.x1 || y &lt; p-&gt;bb.y0 || y &gt;= p-&gt;bb.y1) p-&gt;outside = true;
+    }
+}
+bool Test_CH3b_TightBox()
+{
+    LV3::Viewport vp; vp.x = 0; vp.y = 0; vp.width = 64; vp.height = 48;
+    uint64_t emptyButHit = 0, outside = 0, tested = 0;
+    for (int i = 0; i &lt; 2'000'000; ++i)
+    {
+        // Micro-triangles autour d'un point ; 1 cas sur 4 accroché au demi-pixel
+        // (sommets SUR des centres, arêtes passant par des centres : le cas de CE5).
+        LV3::Vec2f v[3]; MakeMicroTriangle(i, v);          // TestRand01, déterministe
+        Probe p; p.bb = LV3::TightPixelBox(v[0], v[1], v[2], vp);
+        LV3::RasterizeTriangle(v[0], v[1], v[2], vp, &amp;CountHit, &amp;p);
+        if (p.bb.Empty() &amp;&amp; p.hits) ++emptyButHit;          // le rejet effacerait un pixel
+        if (p.outside)               ++outside;              // pixel hors de la boîte serrée
+        ++tested;
+    }
+    // Attendu : 0 et 0. Mutations à faire échouer : + 1e-4f dans ceil, ceil(min) sans − 0,5.
+    return emptyButHit == 0 &amp;&amp; outside == 0;
+}</code></pre>
+
+<h3>7.2 · Filets à la compilation et en Debug</h3>
+<ul>
+<li>deux <code>#error</code> : <code>LV3_RASTER_STATS</code> sans <code>LV3_PROFILE</code>, ou avec <code>LV3_ABLATION_RASTER</code> ;</li>
+<li><code>static_assert</code> sur le tableau de noms des compteurs ;</li>
+<li>bandeau « run de COMPTAGE » au démarrage, champs <code>rasterstats=</code> et <code>asserts_lib=</code> ;</li>
+<li>dans ce lot : <code>LV3_ASSERT(x ∈ boîte serrée)</code> sur chaque pixel allumé (retirée au 3a) ;</li>
+<li>depuis B4 : en Debug, chaque lot de 8 faces est refait en scalaire et comparé bit à bit (<code>front</code>, <code>survive</code>).</li>
+</ul>
+
+<h3>7.3 · Prédictions écrites avant les mesures, et leur sort</h3>
+<div class="scroll"><table>
+<thead><tr><th>Prédiction</th><th>Valeur annoncée</th><th>Mesuré</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Taille des triangles de la ceinture</td><td>ρ ≈ 9, τ ≈ 0,1, f₀ ≈ 70 %</td><td>4,35 / 0,018 / 99,8 %</td><td><span class="pill bad">réfutée</span> (triangles 3 fois plus petits)</td></tr>
+<tr><td>Chantier désigné</td><td>règle 1 (3a)</td><td>règle 2 (3b)</td><td><span class="pill warn">règle tenue, seuil mal calibré</span></td></tr>
+<tr><td>Expérience C = plancher de la boîte lâche</td><td><code>PixelsTested</code> quasi constant</td><td>−6 % pour ÷ 4 pixels</td><td><span class="pill ok">confirmée</span></td></tr>
+<tr><td><code>TrisEarlyRejected</code></td><td>= <code>TrisTightEmpty</code> d’avant (134 003)</td><td>134 003 / 135 207 / 135 830</td><td><span class="pill ok">exact</span></td></tr>
+<tr><td><code>PixelsCovered</code></td><td>inchangé</td><td>4 562 / 4 573 / 53 668</td><td><span class="pill ok">exact</span></td></tr>
+<tr><td><code>TrisCov0</code></td><td>171</td><td>166</td><td><span class="pill bad">calcul invalide</span> (différence de médianes)</td></tr>
+<tr><td>Gain sur <code>Render</code></td><td>≥ 30 %</td><td>−29,0 % (paires −27,8 et −30,2)</td><td><span class="pill warn">manquée d’un point, zone non définie</span></td></tr>
+</tbody></table></div>
+
+<h3>7.4 · Ce qui n’a pas été vérifié</h3>
+<ul>
+<li>L’hypothèse des erreurs de prédiction de branche : aucun compteur matériel (AM10).</li>
+<li>Le mode <code>Wireframe</code> sur micro-triangles : l’exception est dans le code, aucun contrôle visuel ni test n’est consigné.</li>
+<li>La compilation de l’assertion dans la LIB pendant le run <code>RelWithAsserts</code> : prouvée par la structure du <code>.slnx</code>, pas par <code>asserts_lib=</code> (champ ajouté après).</li>
+<li>Le versionnement des CSV des séries A et B : absents de <code>Mesures/</code> au 13/11 (AM12).</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p><b>Rien n’est acté.</b> Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH4-CH3b ». Les décisions <b>prises</b> pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH4CH3b_Couverture_Rejet_Precoce.md</code>. Les sujets sont à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll"><table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>PH4CH3b-1</td><td>Aucune TNR de la propriété du rejet 3b depuis que l’assertion de la boucle a été retirée (AM1)</td><td>Proposée</td><td><code>Test_CH3b_TightBox</code> (§ 7.1) : 0 pixel pour une boîte vide, 0 pixel hors boîte ; mutations ε et « sans − ½ » en échec.</td></tr>
+<tr><td>PH4CH3b-2</td><td>Les invariants de comptage se vérifient à la main dans Excel</td><td>Évolution</td><td>Vérification automatique frame par frame dans <code>DumpCsv</code> (Σ TrisCov* + Early = Rasterized, Tested = Tight, DepthPassed ≤ Covered, TightEmpty = 0…) et champ <code>invariants=ok|KO</code> dans l’en-tête.</td></tr>
+<tr><td>PH4CH3b-3</td><td>CSV des trois runs de comptage, du run <code>RelWithAsserts</code> et de la série B (<code>3b_A1</code>, <code>B1</code>, <code>B2</code>, <code>A2</code>) absents de <code>Mesures/</code></td><td>Dette (M2)</td><td>Les retrouver et les versionner, ou noter leur perte dans l’avenant C3.</td></tr>
+<tr><td>PH4CH3b-4</td><td><code>LV3Profile</code> vaut <code>true</code> dans <code>LV3.Common.props</code> et <code>LV3_PROFILE</code> 1 dans <code>config.h</code> : l’étape « remettre à false » (C2 § 10, avenant C3 § 12) n’a jamais été faite</td><td>Renvoi</td><td>Se tranche avec <b>E5</b> (socle L01).</td></tr>
+<tr><td>PH4CH3b-5</td><td>Recette de C2 § 10 : <code>cd &lt;racine&gt;\x64\Release</code> toujours écrit ; cause des deux runs refusés</td><td>Documentation</td><td>Réécrire selon M13 (<code>x64\&lt;Config&gt;</code>, vérification de la ligne <code>[Build]</code>, exécutables désignés dans la commande).</td></tr>
+<tr><td>PH4CH3b-6</td><td>Consolidation C2 § 7.1 (« coût dans la préparation ») et avenant C2 § 5 (attente du depth buffer) non annotés</td><td>Documentation</td><td>Renvoi vers l’avenant C3 § 5 ; rejoint PH4CH2-7 (part de l’avenant C2 § 5 sur les cœurs E).</td></tr>
+<tr><td>PH4CH3b-7</td><td>Témoin T absent du CSV (action de l’avenant C4 § 10, non faite) : il a manqué dans la série B du 2b</td><td>Dette (M11)</td><td>Colonne ou champ calculé par la LIB (Animation + LocalXform1 + WorldXform1 + Trigger).</td></tr>
+<tr><td>PH4CH3b-8</td><td>Hypothèse « erreurs de prédiction de branche » non démontrée</td><td>Rappel</td><td>Cas d’école pour la leçon VTune (plan, point 24) : <i>Bad Speculation</i> sur l’ancien <code>RasterizeTriangle</code>.</td></tr>
+<tr><td>PH4CH3b-9</td><td>Le commentaire « SOURCE UNIQUE » de <code>TightPixelBox</code> n’est plus vrai : trois implémentations (scalaire, <code>ClassifyFaces8</code> étapes 4 à 7, boîte entière de <code>SetupTriangleFx</code>)</td><td>Documentation</td><td>Lister les trois et leur garde (TNR B4, filet Debug, <code>Test_Da1_Fixed</code>) dans le commentaire de <code>Rasterizer.h</code>.</td></tr>
+<tr><td>PH4CH3b-10</td><td>Code commenté : ancienne forme <code>std::min({…})</code> de <code>TightPixelBox</code>, ancien <code>RasterizeTriangle</code> et ancien <code>RecordRasterStats</code> dans <code>Rasterizer.cpp</code>, ancien <code>DrawTriangle</code> dans <code>EmitRasterTriangle</code></td><td>Hygiène</td><td>Purge (rejoint L6-5, PH1D-14).</td></tr>
+<tr><td>PH4CH3b-11</td><td><code>TrisTightEmpty</code> vaut toujours 0 dans le moteur depuis le 3b (atteint seulement par le chemin générique des TNR)</td><td>Décision</td><td>Le garder comme témoin (« doit valoir 0 », dans PH4CH3b-2) ou le retirer ; écrire sa sémantique dans <code>Profiler.h</code>.</td></tr>
+<tr><td>PH4CH3b-12</td><td><code>int32_t(std::ceil(x))</code> sur une coordonnée hors de [−2³¹, 2³¹[ : comportement non défini en C++ (MSVC rend 0x80000000, comme <code>cvttps</code>) ; le chemin clippé peut produire de grandes coordonnées</td><td>À vérifier</td><td>Borner les coordonnées raster possibles après clipping, ou une garde (comme <code>TrisFixedGuard</code> de D-a1) ; aucun cas observé.</td></tr>
+<tr><td>PH4CH3b-13</td><td>Mode <code>Wireframe</code> sur micro-triangles : exception présente (scalaire et B4), aucun test</td><td>Proposée</td><td>Test visuel ou TNR : le fil de fer d’un triangle sans centre allume bien ses arêtes.</td></tr>
+<tr><td>PH4CH3b-14</td><td>La page « Compteur de couverture LV3 » (27/09) est remplacée par ce lot, à la même adresse</td><td>Documentation</td><td>Rien à faire, sinon mettre à jour les renvois (« visuel associé » de l’avenant C3).</td></tr>
+</tbody></table></div>
+<p class="small">Ordre de lecture suggéré (sans engagement) : PH4CH3b-1 (le seul filet manquant sur un chemin qui écarte 99 % des triangles de certaines scènes), PH4CH3b-3 (CSV à retrouver tant qu’ils existent), PH4CH3b-4 avec E5, PH4CH3b-2 et 7 (instrument), puis la documentation (5, 6, 9, 14) et l’hygiène (10, 11) ; 8, 12 et 13 attendent leur occasion.</p>
+</section>
+
+<footer>
+Lot PH4-CH3b — reconstruction du 13/11/2026 à partir de l’échange du 27 au 28/09/2026 (compteur de couverture, règle de décision, chantier 3b, séries A et B), de l’avenant C3, de l’avenant C4 (§ 14, chantier 3a), de l’avenant A12a, des annexes A20 et A14, du plan de la phase G et du dépôt LibraryV3 <code>e7cae94</code> / RefactoNouvelleLibrairieV3 <code>5203980</code>. Les chiffres des laboratoires sont ceux des fichiers <code>_summary.csv</code> et du CSV brut de la série A fournis pendant l’échange ; les fonctions d’arête sont calculées en float32 dans la page.
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const nf = v => Math.round(v).toLocaleString("fr-FR");
+const fr = (v, d=2) => Number(v).toLocaleString("fr-FR",{minimumFractionDigits:d, maximumFractionDigits:d});
+const pct = (v, d=1) => fr(v*100, d) + " %";
+function fit(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = Math.max(280, cv.clientWidth || 640);
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(h*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+function rng(seed){ let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function stat(k, v, cls){ return `<div><div class="k">${k}</div><div class="v ${cls||""}">${v}</div></div>`; }
+function quant(a, q){ const v = a.slice().sort((x,y)=>x-y); return v[Math.floor(q*(v.length-1)+0.5)]; }
+
+/* ── Moteur de couverture en float32 : mêmes formules que Rasterizer.h ── */
+function E(ax,ay,bx,by,px,py){ const ux=f(ax-px), uy=f(ay-py), vx=f(bx-px), vy=f(by-py); return f(f(ux*vy) - f(uy*vx)); }
+function topLeft(a,b){ const ex=f(b[0]-a[0]), ey=f(b[1]-a[1]); return (ey===0 && ex<0) || ey>0; }
+function inside(w, tl){ return tl ? (w >= 0) : (w > 0); }
+function boxes(p, eps){
+  const xs=[p[0][0],p[1][0],p[2][0]], ys=[p[0][1],p[1][1],p[2][1]];
+  const mnx=Math.min(...xs), mny=Math.min(...ys), mxx=Math.max(...xs), mxy=Math.max(...ys);
+  const loose=[Math.floor(mnx), Math.floor(mny), Math.ceil(mxx)+1, Math.ceil(mxy)+1];
+  const tight=[Math.ceil(f(mnx-0.5)), Math.ceil(f(mny-0.5)), Math.floor(f(mxx-0.5))+1, Math.floor(f(mxy-0.5))+1];
+  const e=1e-4;
+  const epsb=[Math.ceil(f(f(mnx-0.5)+e)), Math.ceil(f(f(mny-0.5)+e)), Math.floor(f(f(mxx-0.5)-e))+1, Math.floor(f(f(mxy-0.5)-e))+1];
+  return {loose, tight, epsb};
+}
+const area2 = b => Math.max(0,b[2]-b[0]) * Math.max(0,b[3]-b[1]);
+const inBox = (b,x,y) => x>=b[0] && x<b[2] && y>=b[1] && y<b[3];
+function cover(v, keep){
+  let p=[v[0].map(f), v[1].map(f), v[2].map(f)];
+  let A = E(p[0][0],p[0][1],p[1][0],p[1][1],p[2][0],p[2][1]);
+  const bx = boxes(p);
+  if (A === 0) return {A:0, pix:[], cov:0, ...bx};
+  if (A < 0){ const t=p[1]; p[1]=p[2]; p[2]=t; A=-A; }
+  const t0=topLeft(p[1],p[2]), t1=topLeft(p[2],p[0]), t2=topLeft(p[0],p[1]);
+  const L = bx.loose, pix=[]; let cov=0;
+  for (let y=L[1]; y<L[3]; y++){ const py=f(y+0.5);
+    for (let x=L[0]; x<L[2]; x++){ const px=f(x+0.5);
+      if (!inside(E(p[1][0],p[1][1],p[2][0],p[2][1],px,py), t0)) continue;
+      if (!inside(E(p[2][0],p[2][1],p[0][0],p[0][1],px,py), t1)) continue;
+      if (!inside(E(p[0][0],p[0][1],p[1][0],p[1][1],px,py), t2)) continue;
+      cov++; if (keep) pix.push([x,y]);
+    }}
+  return {A, pix, cov, ...bx};
+}
+
+/* ═══════════ 1.1 · un triangle sur la grille ═══════════ */
+const GW = 12, GH = 9;
+let V = [[4.3,3.2],[5.6,4.9],[3.9,4.6]], drag = -1;
+function l1Draw(){
+  const cv = $("l1Cv"); const w0 = Math.max(280, cv.clientWidth || 640); const {g, w, h} = fit(cv, Math.round(w0*GH/GW));
+  const S = w/GW, eps = $("l1Eps").checked, r = cover(V, true);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const lost = [];
+  r.pix.forEach(([x,y]) => { const out = eps && !inBox(r.epsb,x,y); if (out) lost.push([x,y]);
+    g.fillStyle = out ? css("--bad") : css("--cov"); g.globalAlpha = .8; g.fillRect(x*S+1,y*S+1,S-2,S-2); g.globalAlpha = 1; });
+  g.strokeStyle = css("--line"); g.lineWidth = 1;
+  for (let x=0;x<=GW;x++){ g.beginPath(); g.moveTo(x*S+.5,0); g.lineTo(x*S+.5,h); g.stroke(); }
+  for (let y=0;y<=GH;y++){ g.beginPath(); g.moveTo(0,y*S+.5); g.lineTo(w,y*S+.5); g.stroke(); }
+  g.fillStyle = css("--ink3"); for (let y=0;y<GH;y++) for (let x=0;x<GW;x++){ g.beginPath(); g.arc((x+.5)*S,(y+.5)*S,2,0,7); g.fill(); }
+  const box = (b,col,dash,inset) => { const bw=b[2]-b[0], bh=b[3]-b[1]; if (bw<=0||bh<=0) return; g.strokeStyle=col; g.lineWidth=3; g.setLineDash(dash); g.strokeRect(b[0]*S+inset,b[1]*S+inset,bw*S-2*inset,bh*S-2*inset); g.setLineDash([]); };
+  box(r.loose, css("--loose"), [9,6], 3); box(r.tight, css("--tight"), [], 8); if (eps) box(r.epsb, css("--bad"), [3,3], 13);
+  g.strokeStyle = css("--ink"); g.lineWidth = 2; g.beginPath(); g.moveTo(V[0][0]*S,V[0][1]*S); g.lineTo(V[1][0]*S,V[1][1]*S); g.lineTo(V[2][0]*S,V[2][1]*S); g.closePath(); g.stroke();
+  g.fillStyle = css("--ink"); V.forEach(v => { g.beginPath(); g.arc(v[0]*S,v[1]*S,7,0,7); g.fill(); });
+  const tA = area2(r.tight), aPx = r.A/2;
+  $("l1Stats").innerHTML = stat("Tests, boîte lâche", nf(area2(r.loose))) + stat("Candidats, boîte serrée", nf(tA)) + stat("Pixels allumés", nf(r.cov), r.cov? "ok":"") + stat("Aire du triangle", fr(aPx,2)+" px²");
+  const rej3b = tA === 0, rejArea = r.A < 2;
+  let h3b = rej3b ? `<div class="ok"><b>Rejet 3b : oui.</b> Boîte serrée vide : aucun centre entre les bornes, donc ${r.cov} pixel perdu. Le triangle n’entre pas dans le rasterizer.</div>`
+                  : `<div class="note"><b>Rejet 3b : non.</b> ${tA} centre(s) candidat(s) : le triangle va au rasterizer${r.cov===0 ? ", qui n’allumera rien (cas de l’aiguille en diagonale : c’est un TrisCov0, pas un rejet)." : ", qui allumera "+r.cov+" pixel(s)."}</div>`;
+  let hA = rejArea ? (r.cov ? `<div class="bad"><b>Rejet sur l’aire (|aire| &lt; 1 px²) : oui, et faux.</b> ${r.cov} pixel(s) allumé(s) seraient effacés (CE4).</div>` : `<div class="warn"><b>Rejet sur l’aire : oui.</b> Ici sans dommage, par chance : rien n’était allumé.</div>`)
+                   : (r.cov===0 ? `<div class="warn"><b>Rejet sur l’aire : non.</b> Le triangle n’allume pourtant rien : l’aire ne dit pas si un centre est dedans.</div>` : `<div class="note"><b>Rejet sur l’aire : non.</b></div>`);
+  let hE = eps ? (lost.length ? `<div class="bad"><b>Boîte resserrée par ε : ${lost.length} pixel(s) perdu(s)</b> (en rouge) : des centres posés sur une arête, allumés par la règle top-left (CE5).</div>` : `<div class="note"><b>Boîte resserrée par ε :</b> aucun pixel perdu sur ce triangle. Essaie « Centre sur une arête ».</div>`) : "";
+  $("l1Verdict").innerHTML = h3b + hA + hE;
+}
+(function l1Init(){
+  const cv = $("l1Cv");
+  const pos = e => { const b = cv.getBoundingClientRect(); return [(e.clientX-b.left)/b.width*GW, (e.clientY-b.top)/b.height*GH]; };
+  cv.addEventListener("pointerdown", e => { const p = pos(e); let best=-1, bd=.7; V.forEach((v,i) => { const d=Math.hypot(v[0]-p[0], v[1]-p[1]); if (d<bd){bd=d;best=i;} }); if (best>=0){ drag=best; cv.setPointerCapture(e.pointerId); } });
+  cv.addEventListener("pointermove", e => { if (drag<0) return; const p = pos(e); V[drag] = [Math.min(GW-.01,Math.max(.01,p[0])), Math.min(GH-.01,Math.max(.01,p[1]))]; l1Draw(); });
+  cv.addEventListener("pointerup", () => drag = -1);
+  let seed = 11; const R = () => { const r = rng(seed++); return r; };
+  const around = s => { const r = R(), cx = 4+4*r(), cy = 3+3*r(); V = [0,1,2].map(() => [cx+(r()*2-1)*s, cy+(r()*2-1)*s]); l1Draw(); };
+  $("l1Micro").onclick = () => around(.6);
+  $("l1Big").onclick = () => around(2.6);
+  $("l1Sliver").onclick = () => { V = [[2.2,4.40],[9.8,4.62],[6.0,4.58]]; l1Draw(); };
+  $("l1Diag").onclick = () => { V = [[3.6,2.62],[8.4,6.38],[3.9,2.74]]; l1Draw(); };
+  $("l1Edge").onclick = () => {
+    const cands = [ [[3.5,2.0],[6.3,4.2],[3.5,6.0]], [[3.5,2.0],[3.5,6.0],[6.3,4.2]], [[8.5,2.0],[5.7,4.2],[8.5,6.0]] ];
+    $("l1Eps").checked = true;
+    for (const c of cands){ V = c.map(q=>q.slice()); const r = cover(V, true); if (r.pix.some(([x,y]) => !inBox(r.epsb,x,y))) break; }
+    l1Draw();
+  };
+  $("l1Eps").onchange = l1Draw;
+})();
+
+/* ═══════════ 1.2 · population ═══════════ */
+let l2Pending = false;
+function l2Run(){
+  l2Pending = false;
+  const d = +$("l2S").value; $("l2Sv").textContent = fr(d,1) + " px";
+  const r = rng(42), N = 20000; let loose=0, tight=0, cov=0, n=0, empty=0; const b=[0,0,0,0];
+  for (let i=0;i<N;i++){
+    const cx = 100+r(), cy = 100+r();
+    const t = cover([0,1,2].map(() => [cx+(r()*2-1)*d, cy+(r()*2-1)*d]), false);
+    if (t.A === 0) continue; n++;
+    loose += area2(t.loose); const ta = area2(t.tight); tight += ta; cov += t.cov; if (!ta) empty++;
+    b[t.cov===0?0:t.cov===1?1:t.cov<=4?2:3]++;
+  }
+  const rho = loose/n, tau = tight/loose, f0 = b[0]/n, fe = empty/n;
+  $("l2Stats").innerHTML = stat("ρ tests / triangle", fr(rho,2)) + stat("τ candidats / tests", fr(tau,3)) + stat("f₀ à 0 pixel", pct(f0)) + stat("boîte serrée vide", pct(fe)) + stat("pixels allumés / tri", fr(cov/n,2));
+  const lab = ["0 pixel","1 pixel","2 à 4 pixels","plus de 4"];
+  $("l2Bars").innerHTML = b.map((c,i) => `<div><span>${lab[i]}</span><div class="tr"><div class="fl ${i?"cov":"bad"}" style="width:${(c/n*100).toFixed(1)}%"></div></div><span class="vv">${pct(c/n,0)}</span></div>`).join("");
+  let tag, cls, txt;
+  if (tau <= .5 && rho >= 6){ tag="Règle 1 → chantier 3a"; cls="ok"; txt=`${pct(1-tau,0)} des tours de boucle testent un pixel dont le centre ne peut pas être dans le triangle.`; }
+  else if (f0 >= .4){ tag="Règle 2 → chantier 3b"; cls="warn"; txt=`${pct(f0,0)} des triangles n’allument rien : les écarter avant DrawTriangle économise toute leur préparation.`; }
+  else { tag="Règle 3 → chantier 2b"; cls="note"; txt="Les triangles allument assez de pixels : le coût fixe par coin (division, ToRaster) redevient la cible."; }
+  const close = Math.abs(rho-4.35) < .35 && f0 > .95;
+  $("l2Verdict").innerHTML = `<div class="${cls}"><b>${tag}.</b> ${txt}</div><div class="note"><b>Mesuré sur la ceinture</b> (étape 8) : ρ = 4,35, τ = 0,018, f₀ = 99,8 %. ${close ? "Ce réglage de d ressemble à la vraie ceinture." : "Fais glisser d vers 0,3 à 0,4 px pour retrouver ces valeurs : les triangles réels étaient environ trois fois plus petits que les 1 px supposés."} Remarque : à ces tailles, ρ reste collé au plancher 4, ce qui rend la branche 1 inatteignable (CE9).</div>`;
+}
+$("l2S").addEventListener("input", () => { if (!l2Pending){ l2Pending = true; requestAnimationFrame(l2Run); } });
+
+/* ═══════════ 1.3 · trois runs de comptage ═══════════ */
+const RUNS = {
+  belt:   {lbl:"ceinture, 4 vues, 1536 × 900", R:134389, c:[134174,131,50,32], E:134003, T:584545, Ti:10562, C:4562},
+  belt768:{lbl:"ceinture, 4 vues, 768 × 450", R:134389, c:[134267,99,21,6], E:134133, T:548346, Ti:2722, C:1177},
+  v1c:    {lbl:"v1compat, 2 vues, 768 × 450", R:151, c:[30,40,48,33], E:9, T:23485, Ti:20544, C:9091}
+};
+function l3Draw(){
+  const k = $("l3Run").value, u = RUNS[k];
+  const rho = u.T/u.R, tau = u.Ti/u.T, f0 = u.c[0]/u.R, fe = u.E/u.R;
+  $("l3Stats").innerHTML = stat("ρ", fr(rho, rho>100?1:2)) + stat("τ", fr(tau,3)) + stat("f₀", pct(f0)) + stat("f_E", pct(fe)) + stat("pixels allumés", nf(u.C));
+  const lab = ["TrisCov0","TrisCov1","TrisCov2to4","TrisCov5plus"];
+  let h = u.c.map((c,i) => `<div><span>${lab[i]}</span><div class="tr"><div class="fl ${i?"cov":"bad"}" style="width:${Math.max(.3,c/u.R*100).toFixed(2)}%"></div></div><span class="vv">${nf(c)}</span></div>`).join("");
+  h += `<div><span>PixelsTested</span><div class="tr"><div class="fl loose" style="width:100%"></div></div><span class="vv">${nf(u.T)}</span></div>`;
+  h += `<div><span>PixelsTight</span><div class="tr"><div class="fl tight" style="width:${Math.max(.3,u.Ti/u.T*100).toFixed(2)}%"></div></div><span class="vv">${nf(u.Ti)}</span></div>`;
+  h += `<div><span>PixelsCovered</span><div class="tr"><div class="fl cov" style="width:${Math.max(.3,u.C/u.T*100).toFixed(2)}%"></div></div><span class="vv">${nf(u.C)}</span></div>`;
+  $("l3Bars").innerHTML = h;
+  const r1 = tau <= .5 && rho >= 6, r2 = !r1 && f0 >= .4;
+  const dec = r1 ? "règle 1 → 3a" : r2 ? "règle 2 → 3b" : "règle 3 → 2b";
+  let extra = "";
+  if (k === "belt") extra = "Règle 1 : τ passe (0,018 ≤ 0,5) mais ρ = 4,35 &lt; 6, elle échoue. Règle 2 : f₀ = 99,8 % ≥ 40 %. <b>C’est la décision du lot.</b> Prédiction (ρ ≈ 9, τ ≈ 0,1, f₀ ≈ 70 %) réfutée sur la taille.";
+  if (k === "belt768") extra = "Même scène, quatre fois moins de pixels : PixelsCovered ÷ 3,88, mais PixelsTested ne baisse que de 6 %. C’est le plancher de la boîte lâche, et l’explication de l’expérience C de la consolidation C2.";
+  if (k === "v1c") extra = "Scène légère, grands triangles : τ = 0,87, la boîte lâche est presque serrée ; f₀ = 20 %. Sur cette scène seule, la règle aurait désigné le 2b. La décision porte sur la scène lourde, celle qui coûte.";
+  $("l3Verdict").innerHTML = `<div class="${r2?"warn":r1?"ok":"note"}"><b>${dec}.</b> ${extra}</div>`;
+}
+$("l3Run").onchange = l3Draw;
+
+/* ═══════════ 1.4 · série A frame par frame ═══════════ */
+const SA = [[139369,230,261,301,534,138043],[135098,228,237,283,553,133797],[137941,199,170,210,601,136761],[136587,177,141,106,399,135764],[137434,156,139,102,403,136634],[136795,222,221,260,555,135537],[136571,217,223,272,515,135344],[136409,199,195,224,649,135142],[135310,151,137,99,415,134508],[136663,178,136,90,421,135838],[135104,182,187,207,685,133843],[136743,231,218,226,556,135512],[136571,234,227,198,612,135300],[136029,207,153,76,400,135193],[135894,203,150,75,394,135072],[136345,202,161,71,385,135526],[136763,233,229,197,565,135539],[136794,255,228,199,541,135571],[135624,207,152,56,368,134841],[136168,188,144,57,356,135423],[135993,203,143,58,346,135243],[135796,208,173,172,610,134633],[137246,223,205,195,499,136124],[135727,211,175,162,584,134595],[135986,182,137,61,298,135308],[136012,181,138,60,289,135344],[135120,179,140,58,273,134470],[136190,213,200,184,475,135118],[137171,211,192,172,482,136114],[135263,169,129,59,228,134678],[134451,192,134,61,210,133854],[136951,181,133,55,182,136400],[135245,206,168,158,448,134265],[136134,229,187,170,347,135201],[136444,175,130,54,91,135994],[135961,161,128,50,64,135558],[136270,174,130,52,41,135873],[134795,184,138,50,32,134391],[135942,207,182,149,293,135111],[136677,201,161,126,319,135870],[134697,183,132,50,32,134300],[136121,171,132,50,32,135736],[135677,183,136,50,32,135276],[135496,204,162,122,357,134651],[136550,213,176,149,310,135702],[135435,173,134,50,32,135046],[135581,190,140,50,32,135169],[135433,170,136,50,32,135045],[136010,177,131,50,32,135620],[135551,183,163,146,322,134737],[135054,187,136,50,32,134649],[135708,166,132,50,32,135328],[134798,181,133,50,32,134402],[135740,176,131,50,32,135351],[135124,193,149,103,387,134292],[135576,203,152,72,236,134913],[135356,173,135,50,32,134966],[135898,181,138,50,32,135497],[134256,176,134,50,32,133864],[135145,186,126,50,32,134751],[135161,173,139,113,374,134362],[134479,152,122,50,32,134123],[135864,141,122,50,32,135519],[134915,159,130,50,32,134544],[135849,165,133,50,32,135469],[134911,158,137,85,409,134122],[135893,152,127,50,32,135532],[134756,152,125,50,32,134397],[134581,148,127,50,32,134224],[135078,151,126,50,32,134719],[134640,156,128,50,32,134274],[136095,168,135,54,83,135655],[134614,152,128,50,32,134252],[135758,158,124,50,32,135394],[134359,171,129,50,32,133977],[134985,150,131,50,32,134622],[135814,164,137,57,378,135078],[134653,159,130,50,32,134282],[134709,160,130,50,32,134337],[135162,156,135,50,32,134789],[134200,153,127,50,32,133838],[134446,169,131,50,32,134064],[135854,144,127,50,32,135501],[134548,154,130,50,32,134182],[134294,160,128,50,32,133924],[134674,144,123,50,32,134325],[135001,158,127,50,32,134634],[134767,163,133,50,32,134389],[136173,162,132,50,32,135797],[134376,169,134,50,32,133991],[134828,182,136,50,32,134428],[134679,176,139,50,32,134282],[133684,161,132,50,32,133309],[135932,155,129,50,32,135566],[135287,156,127,50,32,134922],[135713,176,132,50,32,135323],[135011,171,132,50,32,134626],[135202,155,129,50,32,134836],[134765,156,125,50,32,134402],[133722,150,126,50,32,133364],[134689,172,135,50,32,134300],[134809,151,129,50,32,134447],[134789,162,121,50,32,134424],[134670,144,128,50,32,134316],[134509,151,126,50,32,134150],[135401,165,126,50,32,135028],[134329,161,131,50,32,133955],[135240,168,131,50,32,134859],[134419,171,125,50,32,134041],[133942,172,124,50,32,133564],[136201,170,124,50,32,135825],[134076,181,128,50,32,133685],[134789,169,131,50,32,134407],[134927,164,122,50,32,134559],[134190,165,124,50,32,133819],[134778,180,128,50,32,134388],[134469,172,127,50,32,134088],[136255,205,138,50,32,135830],[133945,174,130,50,32,133559],[135043,169,128,50,32,134664],[134114,179,126,50,32,133727],[133790,166,129,50,32,133413],[134772,177,133,50,32,134380],[134399,198,143,50,32,133976],[135115,192,142,50,32,134699],[133822,174,133,50,32,133433],[135706,172,127,50,32,135325],[134215,182,127,50,32,133824],[134687,191,128,50,32,134286],[134692,196,138,50,32,134276],[134073,180,134,50,32,133677],[134128,204,137,50,32,133705],[134788,187,139,50,32,134380],[134637,172,133,50,32,134250],[134076,196,146,50,32,133652],[135247,178,141,50,32,134846],[134887,178,144,50,32,134483],[134524,169,136,50,32,134137],[134319,161,134,50,32,133942],[134368,162,133,50,32,133991],[134192,166,132,50,32,133812],[134278,162,133,50,32,133901],[134765,172,132,50,32,134379],[134282,168,131,50,32,133901],[134526,199,147,50,32,134098],[134272,173,136,50,32,133881],[134051,183,135,50,32,133651],[133993,158,127,50,32,133626],[135039,163,130,50,32,134664],[134710,166,130,50,32,134332],[133975,153,126,50,32,133614],[134556,171,136,50,32,134167],[133974,159,134,50,32,133599],[134744,162,129,50,32,134371],[134764,158,124,50,32,134400],[134874,148,124,50,32,134520],[134259,138,121,50,32,133918],[134750,148,127,50,32,134393],[134685,160,130,50,32,134313],[133988,162,134,50,32,133610],[134084,162,130,50,32,133710],[134236,155,131,50,32,133868],[134308,161,129,50,32,133936],[133636,147,126,50,32,133281],[134680,144,123,50,32,134331],[134184,146,129,50,32,133827],[134389,161,129,50,32,134017],[134655,174,136,50,32,134263],[134111,171,133,50,32,133725],[133766,160,129,50,32,133395],[134300,145,128,50,32,133945],[133709,158,130,50,32,133339],[134457,166,136,50,32,134073],[134762,163,135,50,32,134382],[134148,154,129,50,32,133783],[134445,151,131,50,32,134081],[134146,163,131,50,32,133770],[134104,158,131,50,32,133733],[133666,157,135,50,32,133292],[134619,155,133,50,32,134249],[134446,152,131,50,32,134081],[134175,166,129,50,32,133798],[133980,159,132,50,32,133607],[134012,177,136,50,32,133617],[134808,165,131,50,32,134430],[133300,157,131,50,32,132930],[135218,163,135,50,32,134838],[133606,165,138,50,32,133221],[134222,170,136,50,32,133834],[134046,159,134,50,32,133671],[133640,163,131,50,32,133264],[134152,164,137,50,32,133769],[133972,162,136,50,32,133592],[134289,170,133,50,32,133904],[133498,165,133,50,32,133118],[134711,167,137,50,32,134325],[134263,172,139,50,32,133870],[134167,157,132,50,32,133796],[134821,175,134,50,32,134430],[133957,189,137,50,32,133549],[133698,180,127,50,32,133309],[133681,156,127,50,32,133316],[133887,164,132,50,32,133509],[134228,170,132,50,32,133844],[134071,165,127,50,32,133697],[134900,175,130,50,32,134513],[134159,166,134,50,32,133777],[133590,176,136,50,32,133196],[134187,164,131,50,32,133810],[133568,171,128,50,32,133187],[134258,154,130,50,32,133892],[134287,164,128,50,32,133913],[133721,173,132,50,32,133334],[133533,180,137,50,32,133134],[133962,204,138,50,32,133538],[134651,177,140,50,32,134252],[133617,187,136,50,32,133212],[135216,157,132,50,32,134845],[133490,167,133,50,32,133108],[133526,175,135,50,32,133134],[133551,185,137,50,32,133147],[133958,178,130,50,32,133568],[134183,170,133,50,32,133798],[133592,181,136,50,32,133193],[134776,182,138,50,32,134374],[133728,184,135,50,32,133327],[134142,183,134,50,32,133743],[134637,183,131,50,32,134241],[133503,169,128,50,32,133124],[134287,163,128,50,32,133914],[133939,165,129,50,32,133563],[133738,166,130,50,32,133360],[134031,182,135,50,32,133632],[134737,174,134,50,32,134347],[134565,177,136,50,32,134170],[134822,166,137,50,32,134437],[134647,174,138,50,32,134253],[134543,163,132,50,32,134166],[134182,166,129,50,32,133805],[134600,166,126,50,32,134226],[134461,180,135,50,32,134064],[134582,166,130,50,32,134204],[133896,178,138,50,32,133498],[134920,179,138,50,32,134521],[134045,189,145,50,32,133629],[134146,194,149,50,32,133721],[135624,188,147,50,32,135207],[134139,169,136,50,32,133752],[134253,184,135,50,32,133852],[134457,179,133,50,32,134063],[134163,180,139,50,32,133762],[134067,168,140,50,32,133677],[134836,167,134,50,32,134453],[134535,147,130,50,32,134176],[133996,157,128,50,32,133629],[134817,164,133,50,32,134438],[134036,173,139,50,32,133642],[134427,168,141,50,32,134036],[134976,167,131,50,32,134596],[134575,165,130,50,32,134198],[134253,168,130,50,32,133873],[134152,162,128,50,32,133780],[134433,160,128,50,32,134063],[134051,147,127,50,32,133695],[134089,189,133,50,32,133685],[135128,162,129,50,32,134755],[134604,164,128,50,32,134230],[134201,153,127,50,32,133839],[134608,159,125,50,32,134242],[134206,155,123,50,32,133846],[134568,155,125,50,32,134206],[134757,178,135,50,32,134362],[134419,176,138,50,32,134023],[134441,158,133,50,32,134068],[134574,165,133,50,32,134194],[133944,152,124,50,32,133586],[133864,150,125,50,32,133507],[135169,164,128,50,32,134795],[134035,172,129,50,32,133652],[134050,164,128,50,32,133676],[134139,170,130,50,32,133757],[134208,167,127,50,32,133832],[134357,181,134,50,32,133960],[134304,207,136,50,32,133879],[134687,178,139,50,32,134288],[134086,195,144,50,32,133665],[134000,173,137,50,32,133608],[134669,174,131,50,32,134282],[134221,168,128,50,32,133843],[134362,153,124,50,32,134003],[134609,158,125,50,32,134244],[133927,151,126,50,32,133568],[134127,163,130,50,32,133752],[134744,167,124,50,32,134371],[134238,164,129,50,32,133863],[134233,184,130,50,32,133837],[135103,172,135,50,32,134714],[133900,177,134,50,32,133507],[133912,186,140,50,32,133504],[134474,183,140,50,32,134069]];   // [TrisRasterized, TrisCov0, TrisCov1, TrisCov2to4, TrisCov5plus, TrisEarlyRejected] × 300 frames
+function l4Draw(){
+  const cv = $("l4Cv"); const {g, w, h} = fit(cv, 220);
+  const show = $("l4Show").value, noWarm = $("l4Warm").checked;
+  const vals = SA.map(r => show==="inv" ? r[1]+r[2]+r[3]+r[4]+r[5]-r[0] : show==="early" ? r[5] : r[1]+r[2]+r[3]+r[4]);
+  const lo = show==="inv" ? -3 : Math.min(...vals), hi = show==="inv" ? 3 : Math.max(...vals);
+  const pad = {l:56, r:10, t:12, b:24}, X = i => pad.l + i*(w-pad.l-pad.r)/(SA.length-1), Y = v => pad.t + (hi-v)/(hi-lo||1)*(h-pad.t-pad.b);
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  g.fillStyle = css("--zone"); g.fillRect(X(0), pad.t, X(60)-X(0), h-pad.t-pad.b);
+  g.strokeStyle = css("--line"); g.lineWidth = 1; g.font = "11px ui-monospace,Consolas,monospace"; g.fillStyle = css("--ink3"); g.textAlign = "right";
+  [lo, (lo+hi)/2, hi].forEach(v => { g.beginPath(); g.moveTo(pad.l, Y(v)+.5); g.lineTo(w-pad.r, Y(v)+.5); g.stroke(); g.fillText(nf(v), pad.l-6, Y(v)+4); });
+  g.textAlign = "center"; [0,60,150,299].forEach(i => g.fillText(String(i), X(i), h-6));
+  g.textAlign = "left"; g.fillText("chauffe", X(2), pad.t+12);
+  g.strokeStyle = show==="inv" ? css("--ok") : css("--cov"); g.lineWidth = 1.8; g.beginPath();
+  vals.forEach((v,i) => { i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)); }); g.stroke();
+  const rows = noWarm ? SA.slice(60) : SA;
+  const col = j => rows.map(r => r[j]);
+  const medR = quant(col(0), .5), meds = [1,2,3,4,5].map(j => quant(col(j), .5));
+  const sumMed = meds.reduce((a,b)=>a+b, 0);
+  const medSum = quant(rows.map(r => r[1]+r[2]+r[3]+r[4]+r[5]), .5);
+  const bad = SA.filter(r => r[1]+r[2]+r[3]+r[4]+r[5] !== r[0]).length;
+  $("l4Stats").innerHTML = stat("frames contrôlées", "300") + stat("frames hors invariant", String(bad), bad?"bad":"ok")
+    + stat("médiane de TrisRasterized", nf(medR)) + stat("médiane de la somme", nf(medSum), medSum===medR?"ok":"bad") + stat("somme des médianes", nf(sumMed), sumMed===medR?"ok":"bad");
+  $("l4Txt").innerHTML = `Sur ${rows.length} frames, la <b>médiane de la somme</b> vaut ${nf(medSum)}, égale à la médiane de <code>TrisRasterized</code> : l’invariant tient. La <b>somme des médianes</b> (${meds.map(nf).join(" + ")}) vaut ${nf(sumMed)} : un écart de ${nf(medR-sumMed)} qui n’existe sur aucune frame. C’est la même erreur que la prédiction « TrisCov0 = 171 » : 134 174 − 134 003 soustrait deux médianes de runs différents ; frame par frame, TrisCov0 d’après = TrisCov0 d’avant − TrisTightEmpty d’avant, et sa médiane est ${nf(meds[0])}.`;
+}
+$("l4Show").onchange = l4Draw; $("l4Warm").onchange = l4Draw;
+
+/* ═══════════ 1.5 · série B A B B A ═══════════ */
+const SB = [
+  {n:"A1", v:"A", R:10075.1, T:94.6, p:1.067, F:12248.8, C:1092.7},
+  {n:"B1", v:"B", R:7277.3,  T:96.6, p:1.051, F:9431.7,  C:1082.3},
+  {n:"B2", v:"B", R:7410.0,  T:96.7, p:1.051, F:9607.7,  C:1114.5},
+  {n:"A2", v:"A", R:10614.4, T:96.2, p:1.062, F:12782.0, C:1083.5}
+];
+function l5Draw(){
+  const cv = $("l5Cv"); const {g, w, h} = fit(cv, 300);
+  const mode = $("l5Mode").value, fix = $("l5Fix").checked;
+  g.clearRect(0,0,w,h); g.fillStyle = css("--surface"); g.fillRect(0,0,w,h);
+  const top = 150, maxR = 11000, bw = Math.min(90, (w-80)/5);
+  g.font = "11px ui-monospace,Consolas,monospace"; g.textAlign = "center";
+  SB.forEach((s,i) => { const x = 50 + i*(bw*1.25), bh = s.R/maxR*(top-30);
+    g.fillStyle = s.v==="A" ? css("--ghost") : css("--accent"); g.fillRect(x, top-bh, bw, bh);
+    g.fillStyle = css("--ink"); g.fillText(fr(s.R/1000,3)+" ms", x+bw/2, top-bh-5); g.fillStyle = css("--ink3"); g.fillText(s.n, x+bw/2, top+14); });
+  // axe des rapports
+  const x0 = 40, x1 = w-20, r0 = .55, r1 = 1.05, RX = r => x0 + (r-r0)/(r1-r0)*(x1-x0), y = 228;
+  const zone = (a,b,col,lbl,hatch) => { g.fillStyle = col; g.fillRect(RX(a), y-18, RX(b)-RX(a), 30);
+    if (hatch){ g.save(); g.beginPath(); g.rect(RX(a), y-18, RX(b)-RX(a), 30); g.clip(); g.strokeStyle = css("--ink3"); g.lineWidth = 1; for (let xx=RX(a)-30; xx<RX(b); xx+=7){ g.beginPath(); g.moveTo(xx,y+12); g.lineTo(xx+30,y-18); g.stroke(); } g.restore(); }
+    g.fillStyle = css("--ink"); g.textAlign = "center"; g.fillText(lbl, (RX(a)+RX(b))/2, y+28); };
+  zone(r0, .70, css("--ok-bg"), "succès (≥ 30 %)");
+  if (fix) zone(.70, .85, css("--warn-bg"), "succès partiel (15 à 30 %)"); else zone(.70, .85, css("--surface2"), "zone NON DÉFINIE", true);
+  zone(.85, r1, css("--bad-bg"), "mécanisme mal compris (< 15 %)");
+  g.fillStyle = css("--ink3"); g.textAlign = "center"; [.6,.7,.8,.9,1.0].forEach(r => g.fillText(fr(r,2), RX(r), y-24));
+  const ratios = mode==="pairs" ? [{l:"paire 1", r:SB[1].R/SB[0].R},{l:"paire 2", r:SB[2].R/SB[3].R}] : [{l:"A B B A", r:(SB[1].R+SB[2].R)/(SB[0].R+SB[3].R)}];
+  ratios.forEach((q,i) => { const xx = RX(q.r); g.strokeStyle = css("--ink"); g.lineWidth = 2.5; g.beginPath(); g.moveTo(xx, y-20); g.lineTo(xx, y+14); g.stroke();
+    g.fillStyle = css("--ink"); g.fillText(q.l+" "+fr(q.r,3), xx, y+44+i*13); });
+  const dT1 = Math.abs(SB[1].T-SB[0].T)/SB[0].T, dT2 = Math.abs(SB[2].T-SB[3].T)/SB[3].T;
+  const comb = (SB[1].R+SB[2].R)/(SB[0].R+SB[3].R), frame = (SB[1].F+SB[2].F)/(SB[0].F+SB[3].F);
+  $("l5Stats").innerHTML = stat("T, écart paire 1", pct(dT1), dT1<.03?"ok":"bad") + stat("T, écart paire 2", pct(dT2), dT2<.03?"ok":"bad")
+    + stat("p95 ÷ médiane max", fr(Math.max(...SB.map(s=>s.p)),3), "ok") + stat("Render B ÷ A", fr(comb,3)) + stat("FRAME B ÷ A", fr(frame,3)) + stat("gain Render", "≈ "+fr((SB[0].R+SB[3].R-SB[1].R-SB[2].R)/2000,2)+" ms");
+  $("l5Verdict").innerHTML = fix
+    ? `<div class="ok"><b>Avec la règle complétée</b>, −29,0 % tombe dans « succès partiel » : on garde, et l’on documente l’écart à la prédiction (qui reposait sur une soustraction interdite par M7). C’est la forme de règle adoptée dès le chantier 2b (avenant C4 § 6).</div>`
+    : `<div class="warn"><b>Avec la règle telle qu’écrite</b>, −29,0 % tombe dans une zone que personne n’avait définie. Les deux paires (−27,8 % et −30,2 %) s’écartent de 3,4 % : impossible de distinguer −29 de −30. Verdict prononcé : succès avec réserve de précision, et M12 complétée (« toutes les zones »).</div>`;
+}
+$("l5Mode").onchange = l5Draw; $("l5Fix").onchange = l5Draw;
+
+/* ── démarrage et redessin ── */
+function all(){ l1Draw(); l3Draw(); l4Draw(); l5Draw(); }
+all(); l2Run();
+let rt = null; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(all, 120); });
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", all);
+new MutationObserver(all).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+})();
+</script>
+</body></html>

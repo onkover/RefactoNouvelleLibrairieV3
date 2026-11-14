@@ -1,0 +1,1517 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>
+<title>Lot PH1-D — Entrée et boucle principale</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout : même gabarit que la série « Lot … pas à pas » (A5, A7, A9, A10, PH0, PH1-C) — colonne de lecture 1000 px,
+   en-tête collant avec sommaire, étapes en cartes, avant/après en deux colonnes. Ajout PH1-D : frise de frame. */
+:root{
+  --bg:#f7f6f3; --surface:#ffffff; --surface2:#f0eeea; --line:#ddd9d2;
+  --ink:#1b1a18; --ink2:#55514b; --ink3:#86807a;
+  --accent:#8a5a2b; --accent-bg:#f4ead9;
+  --ok:#2f6b46; --ok-bg:#e6f1e9;
+  --bad:#9a3024; --bad-bg:#f8e7e4;
+  --warn:#8a6a12; --warn-bg:#f7efd9;
+  --code-bg:#f2efe9;
+  --hl:#fff2c4; --hl-line:#d8b64a;
+  --ship:#2563a8; --cam:#b5651d; --planet:#6b5ea8; --ghost:#9b958d;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SF Mono", monospace;
+  --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+    --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+    --accent:#d9a066; --accent-bg:#2e2619;
+    --ok:#7fc49a; --ok-bg:#1b2a21;
+    --bad:#e38a7c; --bad-bg:#2e1d1a;
+    --warn:#d9bb6a; --warn-bg:#2b2517;
+    --code-bg:#13151a;
+    --hl:#453a16; --hl-line:#b08f2e;
+    --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#15161a; --surface:#1d1f24; --surface2:#24272e; --line:#343841;
+  --ink:#e9e7e3; --ink2:#b3afa8; --ink3:#817d77;
+  --accent:#d9a066; --accent-bg:#2e2619;
+  --ok:#7fc49a; --ok-bg:#1b2a21;
+  --bad:#e38a7c; --bad-bg:#2e1d1a;
+  --warn:#d9bb6a; --warn-bg:#2b2517;
+  --code-bg:#13151a;
+  --hl:#453a16; --hl-line:#b08f2e;
+  --ship:#6aa8ec; --cam:#e09a55; --planet:#ab9ce8; --ghost:#6c6862;
+}
+*{box-sizing:border-box}
+html{scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 96px);}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.62; -webkit-text-size-adjust:100%;}
+body::before{content:""; position:fixed; inset:0 0 auto; height:env(safe-area-inset-top,0px); background:var(--surface); z-index:40;}
+header{position:sticky; top:env(safe-area-inset-top,0px); z-index:30; background:var(--surface); border-bottom:1px solid var(--line); padding-block:10px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+header .t{font-weight:650; font-size:15px; letter-spacing:.01em; text-wrap:balance}
+header .s{font-size:12.5px; color:var(--ink3)}
+nav{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+nav a{font-size:12px; text-decoration:none; color:var(--ink2); border:1px solid var(--line); border-radius:999px; padding:3px 10px; background:var(--bg)}
+nav a:hover, nav a:focus-visible{color:var(--ink); border-color:var(--accent); outline:none}
+main{max-width:1000px; margin:0 auto; padding-block:26px 90px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px));}
+section{margin:0 0 46px}
+h2{font-size:21px; margin:38px 0 10px; line-height:1.25; border-bottom:1px solid var(--line); padding-bottom:7px; text-wrap:balance}
+h3{font-size:16.5px; margin:26px 0 8px; text-wrap:balance}
+h4{font-size:13px; margin:18px 0 6px; color:var(--ink2); text-transform:uppercase; letter-spacing:.07em}
+p{margin:10px 0}
+.lede{font-size:17px; color:var(--ink2)}
+ul,ol{margin:10px 0 10px 20px; padding:0}
+li{margin:5px 0}
+a{color:var(--accent)}
+code{overflow-wrap:anywhere; font-family:var(--mono); font-size:13px; background:var(--code-bg); padding:1px 5px; border-radius:4px}
+pre{background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; margin:10px 0}
+pre code{overflow-wrap:normal; background:none; padding:0; font-size:12.5px; line-height:1.55}
+.note{border-left:3px solid var(--accent); background:var(--accent-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0; font-size:14.5px}
+.rule{border-left:3px solid var(--accent); background:var(--surface); padding:12px 15px; border-radius:0 8px 8px 0; margin:14px 0}
+.rule b{color:var(--accent)}
+.bad{border-left:3px solid var(--bad); background:var(--bad-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.ok{border-left:3px solid var(--ok); background:var(--ok-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.warn{border-left:3px solid var(--warn); background:var(--warn-bg); padding:11px 14px; border-radius:0 8px 8px 0; margin:12px 0}
+.scroll{overflow-x:auto; margin:12px 0}
+table{border-collapse:collapse; width:100%; font-size:13.5px; min-width:520px}
+th,td{border:1px solid var(--line); padding:6px 9px; text-align:left; vertical-align:top}
+th{background:var(--surface2); font-weight:600}
+.num{font-variant-numeric:tabular-nums; white-space:nowrap}
+.pill{display:inline-block; font-size:11px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2); white-space:nowrap}
+.pill.ok{background:var(--ok-bg); color:var(--ok); border-color:var(--ok)}
+.pill.bad{background:var(--bad-bg); color:var(--bad); border-color:var(--bad)}
+.pill.warn{background:var(--warn-bg); color:var(--warn); border-color:var(--warn)}
+.ctl{display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; margin:12px 0; padding:12px 14px; background:var(--surface2); border:1px solid var(--line); border-radius:8px}
+.ctl label{font-size:13px; display:flex; flex-wrap:wrap; gap:7px; align-items:center; cursor:pointer; color:var(--ink2); min-width:0; max-width:100%}
+.ctl select{max-width:100%; min-width:0; font-family:inherit; font-size:13px; padding:3px 7px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink)}
+.ctl input[type=range]{accent-color:var(--accent); width:150px; max-width:100%}
+.ctl input[type=checkbox]{accent-color:var(--accent)}
+.ctl button{font:inherit; font-size:13px; padding:4px 12px; border:1px solid var(--line); border-radius:6px; background:var(--surface); color:var(--ink); cursor:pointer}
+.ctl button:hover, .ctl button:focus-visible{border-color:var(--accent); outline:none}
+.ctl button[aria-pressed="true"]{background:var(--accent-bg); border-color:var(--accent); color:var(--accent)}
+.stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; margin:10px 0}
+.stats>div{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:8px 10px; min-width:0}
+.stats .k{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink3)}
+.stats .v{font-family:var(--mono); font-size:17px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere}
+.stats .v.bad{color:var(--bad)} .stats .v.ok{color:var(--ok)} .stats .v.warn{color:var(--warn)}
+.step{border:1px solid var(--line); border-radius:10px; margin:18px 0; overflow:hidden; background:var(--surface)}
+.step>.h{background:var(--surface2); padding:10px 16px; font-weight:600; font-size:15px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.step>.h .n{color:var(--accent); font-variant-numeric:tabular-nums}
+.step>.b{padding:14px 16px}
+.io{display:grid; grid-template-columns:1fr; gap:10px; margin:10px 0}
+@media(min-width:720px){ .io{grid-template-columns:1fr 1fr} }
+.io>div{background:var(--surface2); border:1px solid var(--line); border-radius:8px; padding:10px 12px; font-size:13.5px; min-width:0}
+.io h5{margin:0 0 5px; font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink3)}
+.ab{display:grid; grid-template-columns:1fr; gap:10px; margin:12px 0}
+@media(min-width:760px){ .ab{grid-template-columns:1fr 1fr} }
+.ab>div{border:1px solid var(--line); border-radius:8px; overflow:hidden; min-width:0}
+.ab>div>.t{font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; padding:5px 11px; border-bottom:1px solid var(--line)}
+.ab .av>.t{background:var(--bad-bg); color:var(--bad)}
+.ab .ap>.t{background:var(--ok-bg); color:var(--ok)}
+.ab .pr>.t{background:var(--warn-bg); color:var(--warn)}
+.ab pre{margin:0; border:0; border-radius:0; background:var(--code-bg)}
+.hl{background:var(--hl); box-shadow:inset 2px 0 0 var(--hl-line); display:inline-block; width:100%}
+svg{display:block; max-width:100%; height:auto}
+.sv{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:10px; margin:12px 0; overflow-x:auto}
+.sv svg{min-width:720px}
+canvas{display:block; width:100%; max-width:100%; background:var(--surface); border:1px solid var(--line); border-radius:10px}
+.small{font-size:13px; color:var(--ink2)}
+.legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink2); margin:6px 0}
+.legend i{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:-1px}
+.amend{border:1px solid var(--line); border-radius:10px; margin:16px 0; background:var(--surface); overflow:hidden}
+.amend>.h{padding:9px 14px; background:var(--surface2); border-bottom:1px solid var(--line); font-weight:600; font-size:14.5px}
+.amend>.b{padding:10px 14px}
+.lab{display:grid; grid-template-columns:1fr; gap:12px; margin:12px 0}
+@media(min-width:860px){ .lab{grid-template-columns:3fr 2fr} }
+.lab>div{min-width:0}
+.console{font-family:var(--mono); font-size:12.5px; background:var(--code-bg); border:1px solid var(--line); border-radius:8px; padding:10px 12px; white-space:pre-wrap; overflow-x:auto; min-height:4.5em}
+.console .e{color:var(--bad)} .console .w{color:var(--warn)} .console .o{color:var(--ok)} .console .i{color:var(--ink2)}
+.frise{display:flex; flex-wrap:wrap; gap:4px; margin:8px 0}
+.frise span{font-family:var(--mono); font-size:11.5px; padding:3px 7px; border-radius:5px; border:1px solid var(--line); background:var(--surface2); color:var(--ink2)}
+.frise span.w{border-color:var(--ship); color:var(--ship)}
+.frise span.b{border-color:var(--hl-line); background:var(--hl); color:var(--ink)}
+.frise span.c{border-color:var(--cam); color:var(--cam)}
+.frise span.x{border-color:var(--bad); background:var(--bad-bg); color:var(--bad)}
+.frise span.r{border-color:var(--ok); color:var(--ok)}
+.kbd{font-family:var(--mono); font-size:12px; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--surface)}
+footer{border-top:1px solid var(--line); margin-top:40px; padding-top:16px; font-size:13px; color:var(--ink3)}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto !important} }
+</style>
+
+<header>
+  <div class="t">Lot PH1-D — Entrée et boucle principale, pas à pas</div>
+  <div class="s">LibraryV3 · phase 1 du carnet de route, discussion D · bugs 45, 58, 52, 27, puis 63, 64, 65 découverts en route · règles S10 et S13 · création (aucun artefact n’existait)</div>
+  <nav aria-label="Sommaire">
+    <a href="#pourquoi">Pourquoi</a>
+    <a href="#rappel">Rappel</a>
+    <a href="#objectif">Objectif</a>
+    <a href="#global">Algorithme global</a>
+    <a href="#apport">Apport du lot</a>
+    <a href="#labos">Laboratoires</a>
+    <a href="#technique">Technique</a>
+    <a href="#etapes">Étapes</a>
+    <a href="#contre">Contre-exemples</a>
+    <a href="#usage">Utilisation</a>
+    <a href="#amend">Amendements</a>
+    <a href="#verifier">Vérifier</a>
+    <a href="#roadmap">Roadmap</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="pourquoi">
+<h2>0.1 · Pourquoi ce lot</h2>
+
+<p class="lede">Le lot PH1-C avait assaini le graphe de scène : plus de sous-arbre gelé, plus de vieux ticket qui redevient valide. Restait le code qui fait vivre ce graphe à chaque frame : la boucle principale de <code>main.cpp</code>. Elle lit le clavier, fait avancer le temps, déplace le vaisseau, calcule les matrices, place les caméras, puis dessine. Si l’ordre est faux, tout le reste est juste et l’image est fausse quand même.</p>
+
+<p>Le carnet de route avait réuni dans la <b>discussion D</b> quatre défauts de cette boucle. En les corrigeant, trois autres sont apparus, qui ont reçu les numéros 63, 64 et 65.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Bug</th><th>Le défaut</th><th>Ce qu’on voyait à l’écran</th><th>Origine</th></tr></thead>
+<tbody>
+<tr><td><b>45</b></td><td><code>PlayerInputSystem</code> ne lit aucune touche, et il s’exécute avant <code>BuildInputState()</code></td><td>Le vaisseau ne répond pas au clavier</td><td>carnet</td></tr>
+<tr><td><b>58</b></td><td><code>PlayerInputSystem</code> écrit <code>m_local</code> sans lever <code>m_dirty</code> (violation de R11bis)</td><td>Le vaisseau se place bien à la première frame, puis ne bouge plus jamais à l’écran</td><td>carnet</td></tr>
+<tr><td><b>52</b></td><td><code>SimulationClock _clock</code> déclarée deux fois (une variable en masque une autre)</td><td>Les touches <span class="kbd">P</span> <span class="kbd">0</span> <span class="kbd">^</span> <span class="kbd">$</span> agiraient sur une horloge que personne ne lit</td><td>carnet</td></tr>
+<tr><td><b>27</b></td><td>Redimensionnement : <code>SDL_CreateTexture</code> non vérifié ; sortie d’erreur sans <code>SDLkill()</code></td><td>Rien tant que tout va bien ; un plantage loin de la cause si la carte refuse la texture</td><td>carnet</td></tr>
+<tr><td><b>63</b></td><td><code>ResolveContentRoot()</code> préfère la copie des fichiers posée à côté de l’exécutable aux fichiers du projet</td><td>Modifier une scène JSON n’a aucun effet : l’exécutable lit une vieille copie</td><td>découvert le 18/09</td></tr>
+<tr><td><b>64</b></td><td><code>ParseCameraFollow</code> ne lit jamais la clé <code>followRotation</code></td><td>Rien aujourd’hui : le vaisseau ne tourne jamais</td><td>découvert le 18/09</td></tr>
+<tr><td><b>65</b></td><td><code>CameraFollowSystem</code> lit la position monde de sa cible calculée à la frame précédente</td><td>La caméra suit avec une frame de retard ; invisible avec le lissage actif, mais faux</td><td>découvert le 18/09</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Pourquoi D après C</h3>
+<p>Les symptômes de D ressemblent à ceux de C : un objet qui ne bouge pas, ou qui bouge en retard. Avec un orphelin gelé dans la scène (bug 53), on ne pouvait plus dire si un objet immobile venait de l’ordre des systèmes ou d’un lien mort. C a d’abord rendu la structure fiable ; D peut maintenant diagnostiquer le comportement qui la lit.</p>
+
+<div class="bad">
+<b>Le contre-exemple de départ.</b> « La caméra de suivi ne se rapproche pas quand je change <code>offset</code> : c’est un bug de <code>CameraFollowSystem</code>, corrigeons le calcul. » <b>Non.</b> C’est exactement le piège rencontré le 18/09. Huit fichiers ont été audités (JsonReader, Serializer, quaternions, gizmo, sélection de caméra) sans trouver la cause, parce qu’elle n’était pas dans le code du suivi. L’exécutable lisait une copie de la scène que personne ne modifiait (bug 63). Avant de corriger un calcul, on vérifie que le programme lit bien la donnée qu’on croit lui donner. C’est Onky qui a trouvé la cause, en regardant <em>quel fichier</em> était chargé.
+</div>
+
+<p class="small">Vérifié sur le dépôt : sur les sept bugs, deux rendaient le vaisseau immobile (45 et 58, ensemble), un rendait toute retouche de scène inopérante (63). Les quatre autres (52, 27, 64, 65) étaient latents ou invisibles à l’œil.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="rappel">
+<h2>0.2 · Où en était le projet</h2>
+
+<p>Ce lot s’appuie sur six lots antérieurs. Chacun a posé une pièce que la discussion D remet en ordre.</p>
+
+<div class="scroll">
+<table>
+<thead><tr><th>Lot</th><th>Ce qu’il a posé</th><th>Ce que PH1-D en hérite</th></tr></thead>
+<tbody>
+<tr><td><b>L03</b> — ECS</td><td>Les systèmes itèrent des vues denses (<code>ViewGroup&lt;A, B&gt;</code>) ; un composant ne contient que ce que son système lit ou écrit (S4).</td><td><code>PlayerInputSystem</code> parcourt <code>PlayerControlComponent</code> + <code>TransformComponent</code>.</td></tr>
+<tr><td><b>L05</b> — caméra</td><td>Repère main droite, la vue regarde vers −Z (<code>Vec3f::Forward() = (0, 0, −1)</code>, verrouillé par <code>static_assert</code>) ; <code>InputState</code> défini par le moteur, rempli par l’application.</td><td>Les directions du vaisseau, et le sens réel de <code>offset</code> (PH1D-5).</td></tr>
+<tr><td><b>Bug A8</b> (L06)</td><td>Règle <b>R11bis</b> : seul celui qui écrit <code>m_local</code> lève <code>m_dirty</code> ; seul <code>LocalTransformSystem</code>, après recomposition, le baisse.</td><td>Le bug 58 est une violation de R11bis par l’écrivain.</td></tr>
+<tr><td><b>L06</b> — graphe de scène</td><td><code>SimulationClock</code> (S10 : deux temps, réel et simulé) ; <code>CameraFollowComponent</code> et son lissage ; ordre canonique L06 : contrôleurs caméra, puis une seule cuisson <code>Local</code> + <code>World</code>.</td><td>Cet ordre à une seule cuisson est ce que le bug 65 remet en cause.</td></tr>
+<tr><td><b>A10</b> — build portable</td><td><code>ResolveContentRoot</code> et son marqueur <code>engine.json</code> ; copie post-build du contenu à côté de l’exécutable ; <code>LV3_ASSERT</code> qui n’évalue rien en Release.</td><td>Le bug 63 est un défaut d’ordre dans les candidats de A10.</td></tr>
+<tr><td><b>PH1-C</b> — intégrité du graphe</td><td><code>PropagateWorld</code> qui traverse un nœud sans Transform ; tickets 16/16.</td><td>La cuisson ciblée de 65 réutilise <code>PropagateWorld</code> telle quelle.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="note">
+<b>État de départ, lu dans l’historique Git et non supposé</b> (EXE <code>2f48f93</code>, LIB <code>cea458e</code>, 17/09). La boucle faisait, dans cet ordre : <code>PlayerInputSystem(registry, realDt)</code>, <b>puis</b> <code>BuildInputState()</code>, <code>AnimationSystem</code>, les trois systèmes caméra, la sélection des vues, <code>CameraGizmoSystem</code>, <b>une seule</b> cuisson <code>LocalTransformSystem</code> + <code>WorldTransformSystem</code>, <code>TriggerSystem</code>, puis le rendu. <code>PlayerInputSystem</code> faisait <code>position.x += speed · dt</code> sans regarder aucune touche et sans lever <code>m_dirty</code>. <code>ResolveContentRoot</code> testait la variable d’environnement, puis le dossier de l’exécutable, puis les candidats de l’application.
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="objectif">
+<h2>0.3 · Contexte et objectif fonctionnel</h2>
+
+<h3>Ce qu’est une boucle principale, côté jeu</h3>
+<p>Un jeu est une suite d’images. Entre deux images, le programme doit répondre à quatre questions, et l’ordre des réponses compte : <b>qu’a fait le joueur ?</b> (le clavier, la souris), <b>combien de temps s’est écoulé ?</b> (le temps réel, et le temps du monde qui peut être en pause ou accéléré), <b>où est chaque objet ?</b> (le vaisseau, les planètes, puis les caméras qui les regardent), <b>que voit chaque caméra ?</b> (les vues, puis les pixels).</p>
+<p>Chaque système <em>lit</em> des données et en <em>écrit</em> d’autres. Une boucle juste est une boucle où chaque système lit des données écrites <b>pendant cette frame</b>, par le système qui en est responsable. Une donnée lue avant d’avoir été écrite est en retard d’une frame ; une donnée écrite et jamais relue est perdue.</p>
+
+<h3>Les objectifs du lot</h3>
+<ol>
+<li><b>Le joueur pilote.</b> Le vaisseau suit <span class="kbd">Z</span> <span class="kbd">Q</span> <span class="kbd">S</span> <span class="kbd">D</span> (ou les flèches), <span class="kbd">Espace</span> et <span class="kbd">Ctrl</span>, à la vitesse écrite dans la scène, à chaque frame et pas seulement à la première (45, 58).</li>
+<li><b>Le temps se commande.</b> <span class="kbd">P</span> met en pause, <span class="kbd">^</span> et <span class="kbd">$</span> accélèrent et ralentissent le monde, <span class="kbd">0</span> remet l’échelle par défaut ; le vaisseau et les caméras continuent de répondre pendant la pause (52, S10).</li>
+<li><b>La caméra suit sans retard.</b> Elle se place d’après la position du vaisseau de cette frame, et la vue est construite d’après la position de la caméra de cette frame (65, S13).</li>
+<li><b>Ce qu’on édite est ce qui tourne.</b> En développement, l’exécutable lit les fichiers du projet, jamais une copie périmée ; une clé écrite dans la scène est lue (63, 64).</li>
+<li><b>Une erreur SDL s’arrête là où elle se produit</b>, avec le bon message et les ressources libérées (27).</li>
+</ol>
+
+<h3>Les décisions à prendre, et leur raison</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Décision</th><th>Options</th><th>Retenu</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td>Comment <code>PlayerInputSystem</code> reçoit les touches</td><td>lire SDL directement · variable globale · <code>const InputState&amp;</code> en paramètre</td><td>paramètre</td><td>Le moteur ignore SDL (en-tête de <code>InputState.h</code>) ; même forme que <code>CameraFPSControllerSystem</code> ; un système testable sans fenêtre.</td></tr>
+<tr><td>Corriger 45 et 58 séparément ou ensemble</td><td>un bug à la fois · les deux</td><td>ensemble</td><td>45 seul ne montre rien : sans <code>m_dirty</code>, la matrice ne change pas (étape 2). Les deux sont dans le même bloc de neuf lignes.</td></tr>
+<tr><td>Quand lever <code>m_dirty</code></td><td>à chaque frame · seulement si le vaisseau a bougé</td><td>si <code>dir</code> non nul</td><td>Sinon <code>LocalTransformSystem</code> recompose la matrice du vaisseau à chaque frame pour rien (même règle que <code>AnimationSystem</code>).</td></tr>
+<tr><td>Ordre des candidats de racine</td><td>exe d’abord · projet d’abord</td><td>projet d’abord, exe en dernier</td><td>La copie post-build existe dès le premier build : en tête, elle masque toujours le projet (étape 5).</td></tr>
+<tr><td>Supprimer le retard de la caméra</td><td>déplacer les systèmes caméra · deux cuissons complètes · complète + ciblée</td><td>complète + ciblée</td><td>Les caméras lisent le monde et le rendu lit les caméras : une seule cuisson ne peut pas servir les deux. La seconde cuisson complète coûterait N nœuds de plus par frame ; Onky l’a refusée (étape 8).</td></tr>
+<tr><td>Le reste de 27</td><td>extraire le bloc de redimensionnement en fonction testable · différer</td><td>différer, documenté</td><td>La correction de robustesse n’en dépendait pas ; Onky a validé à la main (« bug 27 testé et OK »).</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="global">
+<h2>0.4 · Algorithme global du projet, et la place de ce lot</h2>
+
+<p>Voici la chaîne complète du moteur telle que <code>main.cpp</code> l’exécute aujourd’hui (EXE <code>5203980</code>), du lancement jusqu’à l’image. <b>Les cases en surbrillance sont celles que ce lot a touchées</b>, avec le numéro du bug. Le lot ne modifie aucun étage de rendu : il intervient au démarrage (où lire les fichiers, quelle clé lire) et dans l’ordre des systèmes de la frame.</p>
+
+<div class="sv">
+<svg viewBox="0 0 900 760" role="img" aria-label="Chaîne complète du moteur, du lancement à l'image, avec les étages touchés par le lot PH1-D en surbrillance">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </marker>
+</defs>
+<style>
+  .bx{fill:var(--surface2); stroke:var(--line); stroke-width:1}
+  .bxh{fill:var(--hl); stroke:var(--hl-line); stroke-width:2}
+  .lb{fill:var(--ink); font:600 12.5px var(--sans)}
+  .sb{fill:var(--ink3); font:11px var(--mono)}
+  .ph{fill:var(--ink3); font:600 10.5px var(--sans); letter-spacing:.09em}
+  .ln{stroke:var(--ink3); color:var(--ink3); stroke-width:1.4; fill:none}
+  .lnc{stroke:var(--cam); color:var(--cam); stroke-width:1.4; fill:none; stroke-dasharray:4 3}
+  .tc{fill:var(--cam); font:600 11px var(--sans)}
+</style>
+
+<!-- démarrage -->
+<text class="ph" x="16" y="20">1 · LANCEMENT (une fois)</text>
+<rect class="bx" x="16" y="30" width="150" height="58" rx="8"/>
+<text class="lb" x="28" y="52">ParseArgs</text><text class="sb" x="28" y="69">racine positionnelle</text><text class="sb" x="28" y="82">--scene= --bench=</text>
+<rect class="bxh" x="180" y="30" width="200" height="58" rx="8"/>
+<text class="lb" x="192" y="52">ResolveContentRoot (63)</text><text class="sb" x="192" y="69">env → appli → exe</text><text class="sb" x="192" y="82">marqueur engine.json</text>
+<rect class="bx" x="394" y="30" width="150" height="58" rx="8"/>
+<text class="lb" x="406" y="52">config + engine</text><text class="sb" x="406" y="69">EngineConfig</text><text class="sb" x="406" y="82">_clock.Configure</text>
+<rect class="bxh" x="558" y="30" width="180" height="58" rx="8"/>
+<text class="lb" x="570" y="52">LoadSceneGraph (64)</text><text class="sb" x="570" y="69">ParseCameraFollow</text><text class="sb" x="570" y="82">WarnUnread par composant</text>
+<rect class="bx" x="752" y="30" width="132" height="58" rx="8"/>
+<text class="lb" x="764" y="52">SDL, gizmos</text><text class="sb" x="764" y="69">fenêtre, texture</text><text class="sb" x="764" y="82">assets</text>
+<line class="ln" x1="166" y1="59" x2="176" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="380" y1="59" x2="390" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="544" y1="59" x2="554" y2="59" marker-end="url(#ar)"/>
+<line class="ln" x1="738" y1="59" x2="748" y2="59" marker-end="url(#ar)"/>
+
+<!-- frame : temps et entrées -->
+<text class="ph" x="16" y="124">2 · UNE FRAME — LE TEMPS, LE JOUEUR, LE MONDE (S13, étapes 1 à 4)</text>
+<rect class="bxh" x="16" y="134" width="196" height="58" rx="8"/>
+<text class="lb" x="28" y="156">realDt, puis simDt (S10)</text><text class="sb" x="28" y="173">clamp 0,1 s (bug 44)</text><text class="sb" x="28" y="186">simDt = _clock.Advance</text>
+<rect class="bxh" x="226" y="134" width="196" height="58" rx="8"/>
+<text class="lb" x="238" y="156">BuildInputState (45, 52)</text><text class="sb" x="238" y="173">clavier = état</text><text class="sb" x="238" y="186">souris, molette = cumul</text>
+<rect class="bxh" x="436" y="134" width="216" height="58" rx="8"/>
+<text class="lb" x="448" y="156">PlayerInputSystem (45, 58)</text><text class="sb" x="448" y="173">lit InputState, realDt</text><text class="sb" x="448" y="186">écrit m_local, lève m_dirty</text>
+<rect class="bx" x="666" y="134" width="218" height="58" rx="8"/>
+<text class="lb" x="678" y="156">AnimationSystem</text><text class="sb" x="678" y="173">simDt : orbites, rotations</text><text class="sb" x="678" y="186">écrit m_local, lève m_dirty</text>
+<line class="ln" x1="212" y1="163" x2="222" y2="163" marker-end="url(#ar)"/>
+<line class="ln" x1="422" y1="163" x2="432" y2="163" marker-end="url(#ar)"/>
+<line class="ln" x1="652" y1="163" x2="662" y2="163" marker-end="url(#ar)"/>
+
+<!-- cuissons et caméras -->
+<text class="ph" x="16" y="210">3 · MATRICES ET CAMÉRAS (S13, étapes 5 à 7)</text>
+<rect class="bxh" x="16" y="238" width="196" height="72" rx="8"/>
+<text class="lb" x="28" y="260">Cuisson n°1 (65)</text><text class="sb" x="28" y="277">LocalTransformSystem</text><text class="sb" x="28" y="290">WorldTransformSystem</text><text class="sb" x="28" y="303">toute la scène, O(N)</text>
+<rect class="bxh" x="226" y="238" width="216" height="72" rx="8"/>
+<text class="lb" x="238" y="260">Systèmes caméra (65)</text><text class="sb" x="238" y="277">FPS, Follow : realDt</text><text class="sb" x="238" y="290">Zoom : molette</text><text class="sb" x="238" y="303">lisent le monde frais</text>
+<rect class="bx" x="456" y="238" width="206" height="72" rx="8"/>
+<text class="lb" x="468" y="260">Sélection des vues</text><text class="sb" x="468" y="277">CollectActiveCameras</text><text class="sb" x="468" y="290">BuildCameraBindings</text><text class="sb" x="468" y="303">CameraGizmoSystem</text>
+<rect class="bxh" x="676" y="238" width="208" height="72" rx="8"/>
+<text class="lb" x="688" y="260">Cuisson n°2 ciblée (65)</text><text class="sb" x="688" y="277">LocalTransformSystem</text><text class="sb" x="688" y="290">World(registry, roots)</text><text class="sb" x="688" y="303">roots = caméras rendues</text>
+<line class="ln" x1="212" y1="274" x2="222" y2="274" marker-end="url(#ar)"/>
+<line class="ln" x1="442" y1="274" x2="452" y2="274" marker-end="url(#ar)"/>
+<line class="ln" x1="662" y1="274" x2="672" y2="274" marker-end="url(#ar)"/>
+<path class="ln" d="M776 192 L776 220 L114 220 L114 234" marker-end="url(#ar)"/>
+<!-- dépendance -->
+<path class="lnc" d="M114 310 L114 326 L330 326 L330 314" marker-end="url(#ar)"/>
+<text class="tc" x="124" y="344">les caméras lisent la position du vaisseau cuite à cette frame</text>
+<path class="lnc" d="M330 326 L780 326 L780 314" marker-end="url(#ar)"/>
+
+<!-- détection et rendu -->
+<text class="ph" x="16" y="370">4 · DÉTECTION, VUES, IMAGE (S13, étapes 8 et 9)</text>
+<path class="ln" d="M880 274 L892 274 L892 380 L96 380 L96 394" marker-end="url(#ar)"/>
+<rect class="bx" x="16" y="398" width="160" height="58" rx="8"/>
+<text class="lb" x="28" y="420">TriggerSystem</text><text class="sb" x="28" y="437">lit m_worldMatrix</text><text class="sb" x="28" y="450">événements</text>
+<rect class="bx" x="190" y="398" width="160" height="58" rx="8"/>
+<text class="lb" x="202" y="420">BuildViewData × N</text><text class="sb" x="202" y="437">vue = inverse du</text><text class="sb" x="202" y="450">monde de la caméra</text>
+<rect class="bx" x="364" y="398" width="140" height="58" rx="8"/>
+<text class="lb" x="376" y="420">Filets Debug</text><text class="sb" x="376" y="437">invariants</text><text class="sb" x="376" y="450">tests gizmo</text>
+<rect class="bxh" x="518" y="398" width="196" height="58" rx="8"/>
+<text class="lb" x="530" y="420">LockTexture, rendu (27)</text><text class="sb" x="530" y="437">Clear, RenderView × N</text><text class="sb" x="530" y="450">échec → SDLkill, sortie</text>
+<rect class="bx" x="728" y="398" width="156" height="58" rx="8"/>
+<text class="lb" x="740" y="420">Present</text><text class="sb" x="740" y="437">RenderCopy</text><text class="sb" x="740" y="450">RenderPresent</text>
+<line class="ln" x1="176" y1="427" x2="186" y2="427" marker-end="url(#ar)"/>
+<line class="ln" x1="350" y1="427" x2="360" y2="427" marker-end="url(#ar)"/>
+<line class="ln" x1="504" y1="427" x2="514" y2="427" marker-end="url(#ar)"/>
+<line class="ln" x1="714" y1="427" x2="724" y2="427" marker-end="url(#ar)"/>
+<rect class="bxh" x="518" y="476" width="366" height="58" rx="8"/>
+<text class="lb" x="530" y="498">Redimensionnement différé (27)</text><text class="sb" x="530" y="515">noté par BuildInputState, appliqué après Present</text><text class="sb" x="530" y="528">SDL_CreateTexture vérifié · db.Resize</text>
+<path class="ln" d="M806 456 L806 472" marker-end="url(#ar)"/>
+<text class="sb" x="530" y="552">puis frame suivante : retour à la ligne 2</text>
+
+<!-- hors périmètre -->
+<text class="ph" x="16" y="620">CE QUE LE LOT NE TOUCHE PAS</text>
+<rect class="bx" x="16" y="630" width="868" height="110" rx="8"/>
+<text class="sb" x="28" y="654">Étage sommets (B3, B5), étage faces (B4, C3), pixels (C1, C2, Giesen D-a1), LOD, culling, Clear, Present, TriggerSystem,</text>
+<text class="sb" x="28" y="672">le contenu de CameraFollowSystem (lissage, LookAt), le graphe de scène (PH1-C), la sélection des caméras (A11).</text>
+<text class="sb" x="28" y="696">Le lot change QUAND ces étages reçoivent leurs données, pas CE qu’ils en font.</text>
+<text class="sb" x="28" y="720">Exception : CameraFollowSystem se met à lire une matrice fraîche ; son code ne change pas d’une ligne.</text>
+</svg>
+</div>
+
+<h3>Carte des fichiers touchés</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Fichier</th><th>Projet</th><th>Bug</th><th>Intervention</th></tr></thead>
+<tbody>
+<tr><td><code>Scene/System.hpp</code></td><td>LIB</td><td>45, 65</td><td><span class="pill warn">modifié</span> signature <code>PlayerInputSystem(Registry&amp;, const InputState&amp;, float)</code> ; <span class="pill ok">ajout</span> surcharge <code>WorldTransformSystem(Registry&amp;, std::span&lt;const Entity&gt;)</code> et <code>#include &lt;span&gt;</code></td></tr>
+<tr><td><code>Scene/System.cpp</code></td><td>LIB</td><td>45, 58, 65</td><td><span class="pill warn">réécrit</span> <code>PlayerInputSystem</code> (six intentions, diagonale normalisée, <code>m_dirty</code>) ; <span class="pill ok">ajout</span> la cuisson ciblée</td></tr>
+<tr><td><code>Scene/Serializer.cpp</code></td><td>LIB</td><td>64</td><td><span class="pill ok">ajout</span> <code>c.m_followRotation = r.Read("followRotation", true);</code> dans <code>ParseCameraFollow</code></td></tr>
+<tr><td><code>Core/ContentRoot.cpp</code></td><td>LIB</td><td>63</td><td><span class="pill warn">réordonné</span> <code>ResolveContentRoot</code> : env, puis candidats de l’application, puis dossier de l’exécutable</td></tr>
+<tr><td><code>main.cpp</code></td><td>EXE</td><td>45, 27, 65</td><td><span class="pill warn">modifié</span> <code>BuildInputState</code> avant <code>PlayerInputSystem</code> ; cuisson n°1 avant les caméras ; cuisson n°2 ciblée ; <code>SDL_CreateTexture</code> vérifié au redimensionnement ; <code>SDLkill()</code> sur l’échec de <code>SDL_LockTexture</code></td></tr>
+<tr><td><code>architecture-rules.md</code></td><td>projet</td><td>S10, S13</td><td><span class="pill ok">ajout</span> S10 étendue (quel système prend quel dt) ; S13 (ordre canonique, deux cuissons) ; patron de re-cuisson ciblée</td></tr>
+<tr><td><code>Carnet_de_route_LibraryV3.md</code></td><td>projet</td><td>tous</td><td><span class="pill warn">mis à jour</span> bugs 45, 58, 52, 27 fermés ; 63, 64, 65 ajoutés ; discussion D « CLOS » ; prochain numéro 66</td></tr>
+</tbody>
+</table>
+</div>
+<p class="small">Commits du 18/09 : EXE <code>81f8fd9</code> « Correction bugs 45, 58, 52, 27 de la phase D » puis <code>ced56a9</code> « Adaptation de l’ordre des system et calcule des matrices dans MAIN » ; LIB <code>c7292f9</code>, <code>2bb5e62</code> (followRotation), <code>b46b33c</code>.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="apport">
+<h2>0.5 · L’apport du lot en détail — avant / après</h2>
+
+<p>Six fonctionnements sont remis en question. Pour chacun, l’algorithme d’avant (lu dans Git, 17/09) et celui d’après. Les lignes surlignées sont celles qui changent.</p>
+
+<h3>A · L’ordre d’une frame (45, 65 → S13)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — une cuisson, entrées lues trop tard</div>
+<pre><code>realDt ← mesure, clamp 0,1 s
+simDt  ← _clock.Advance(realDt)
+<span class="hl">PlayerInputSystem(realDt)        // aucune entrée lue</span>
+<span class="hl">input ← BuildInputState()        // trop tard pour lui</span>
+CheckControllerExclusivity
+AnimationSystem(simDt)
+<span class="hl">CameraFPS(input, realDt)         // lit le monde de la</span>
+<span class="hl">CameraFollow(realDt)             //   frame PRÉCÉDENTE</span>
+CameraZoom(input)
+sélection, BuildCameraBindings, CameraGizmoSystem
+<span class="hl">LocalTransformSystem             // UNE cuisson, pour</span>
+<span class="hl">WorldTransformSystem             //   tout le monde</span>
+TriggerSystem
+BuildViewData × N ; rendu</code></pre></div>
+<div class="ap"><div class="t">Après — S13, deux cuissons</div>
+<pre><code>realDt ← mesure, clamp 0,1 s
+simDt  ← _clock.Advance(realDt)
+<span class="hl">input ← BuildInputState()        // (3) d'abord</span>
+<span class="hl">PlayerInputSystem(input, realDt) // (4) monde</span>
+CheckControllerExclusivity
+AnimationSystem(simDt)                // (4) monde
+<span class="hl">LocalTransformSystem             // (5) cuisson n°1</span>
+<span class="hl">WorldTransformSystem             //     complète</span>
+CameraFPS(input, realDt)              // (6) lisent le
+CameraFollow(realDt)                  //     monde FRAIS
+CameraZoom(input)
+sélection, BuildCameraBindings, CameraGizmoSystem
+<span class="hl">LocalTransformSystem             // (7) cuisson n°2</span>
+<span class="hl">WorldTransformSystem(roots)      //     caméras rendues</span>
+TriggerSystem                         // (8)
+BuildViewData × N ; rendu             // (9)</code></pre></div>
+</div>
+
+<h3>B · Piloter le vaisseau (45, 58)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — avance seul, et en silence</div>
+<pre><code>PlayerInputSystem(registry, dt) :
+    pour (control, transform) :
+<span class="hl">        transform.local.position.x += speed · dt</span>
+<span class="hl">        // aucune touche lue</span>
+<span class="hl">        // m_dirty jamais levé :</span>
+<span class="hl">        //   frame 1 : m_dirty = true (défaut) → matrice OK</span>
+<span class="hl">        //   frame 2+ : m_dirty = false → matrice figée</span></code></pre></div>
+<div class="ap"><div class="t">Après — six intentions, une seule écriture</div>
+<pre><code>PlayerInputSystem(registry, in, dt) :
+    pour (control, transform) :
+<span class="hl">        dir ← 0</span>
+<span class="hl">        ± Forward (−Z) selon moveForward / moveBackward</span>
+<span class="hl">        ± Right   (+X) selon strafeRight / strafeLeft</span>
+<span class="hl">        ± Up      (+Y) selon moveUp / moveDown</span>
+<span class="hl">        si dir ≠ 0 :</span>
+<span class="hl">            position += normalise(dir) · speed · dt</span>
+<span class="hl">            m_dirty ← true            // R11bis</span></code></pre></div>
+</div>
+
+<h3>C · Trouver les fichiers (63)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — la copie gagne toujours</div>
+<pre><code>ResolveContentRoot(candidats) :
+    1. LV3_CONTENT_ROOT si valide
+<span class="hl">    2. dossier de l'exécutable si valide</span>
+<span class="hl">       // la copie post-build y est dès le 1er build</span>
+<span class="hl">    3. candidats : argv[1], LV3_PROJECT_DIR</span>
+<span class="hl">       // jamais atteints</span>
+    sinon : liste des essais, échec</code></pre></div>
+<div class="ap"><div class="t">Après — la source avant la copie</div>
+<pre><code>ResolveContentRoot(candidats) :
+    1. LV3_CONTENT_ROOT si valide
+<span class="hl">    2. candidats : argv[1], LV3_PROJECT_DIR</span>
+<span class="hl">       // les fichiers qu'on édite ou qu'on mesure</span>
+<span class="hl">    3. dossier de l'exécutable (dernier recours)</span>
+<span class="hl">       // distribution autonome</span>
+    sinon : liste des essais, échec</code></pre></div>
+</div>
+
+<h3>D · Lire la scène (64)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant — une clé écrite, jamais lue</div>
+<pre><code>ParseCameraFollow :
+    enabled, offset, smoothSpeed, lookAtHeight, target
+<span class="hl">    // followRotation : jamais lue → défaut C++ true</span>
+    WarnUnread()
+<span class="hl">    // → « cle ignoree 'followRotation' » à CHAQUE chargement</span></code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>ParseCameraFollow :
+    enabled, offset, smoothSpeed, lookAtHeight
+<span class="hl">    followRotation ← Read("followRotation", true)</span>
+    target
+    WarnUnread()                      // muet</code></pre></div>
+</div>
+
+<h3>E · La seconde cuisson (65, demande d’Onky)</h3>
+<div class="ab">
+<div class="pr"><div class="t">Première proposition (refusée) — deux cuissons complètes</div>
+<pre><code>Local ; World(registry)            // n°1 : N nœuds
+caméras…
+Local ; <span class="hl">World(registry)    // n°2 : encore N nœuds</span>
+<span class="hl">// « avoir 2 WorldTransformSystem aura un coût quand ma scène</span>
+<span class="hl">//   comporte des centaines d'objets » (Onky, 18/09)</span></code></pre></div>
+<div class="ap"><div class="t">Retenu — la seconde ne refait que les caméras</div>
+<pre><code>Local ; World(registry)            // n°1 : N nœuds
+caméras…
+Local                              // test m_dirty sur N
+<span class="hl">roots ← caméras des vues (nViews ≤ 4)</span>
+<span class="hl">World(registry, roots) :</span>
+<span class="hl">    pour e dans roots :</span>
+<span class="hl">        assert(IsRoot(e))</span>
+<span class="hl">        PropagateWorld(e, identité)   // e + son gizmo</span></code></pre></div>
+</div>
+
+<h3>F · Les erreurs SDL de fin de frame (27)</h3>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>si LockTexture échoue :
+    log
+<span class="hl">    return -1         // fenêtre, renderer, texture non libérés</span>
+
+si redimensionnement :
+    DestroyTexture
+    texture ← CreateTexture(W, H)
+<span class="hl">    // non vérifié : texture nulle → l'échec sort à la</span>
+<span class="hl">    //   frame suivante, dans LockTexture, loin de la cause</span>
+    db.Resize(W, H)</code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>si LockTexture échoue :
+    log
+<span class="hl">    SDLkill()</span>
+    return -1
+
+si redimensionnement :
+    DestroyTexture
+    texture ← CreateTexture(W, H)
+<span class="hl">    si texture nulle :</span>
+<span class="hl">        Logger::error("SDL_CreateTexture (resize) …")</span>
+<span class="hl">        SDLkill() ; return -1</span>
+    db.Resize(W, H)</code></pre></div>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="labos">
+<h2>1 · Laboratoires — voir les bugs avant le code</h2>
+
+<h3 id="lab-frame">1.1 · La frame au ralenti : vaisseau, caméra de suivi, deux cuissons</h3>
+<p>La scène réelle, réduite à deux entités : <code>Player_Ship</code> (part de (64 ; 0 ; 0), <code>PlayerControl.speed = 12</code>) et <code>Follow_Camera</code> (<code>offset = (0 ; 1,5 ; −6)</code>, valeurs de <code>solar_system_v1compat.json</code>). Chaque frame dure 1/60 s. Le laboratoire exécute les systèmes <b>dans l’ordre de la version choisie</b>, avec le vrai contrat du drapeau : <code>m_dirty</code> vaut <code>true</code> à la construction, <code>LocalTransformSystem</code> ne recompose que les transformations sales puis baisse le drapeau, <code>WorldTransformSystem</code> copie la matrice locale dans la matrice monde (les deux entités sont des racines). Tous les calculs sont en float32 (<code>Math.fround</code>), comme le CPU. Vue de dessus, la hauteur (y) est omise.</p>
+
+<div class="ctl">
+  <label for="fVer">Version de la boucle :
+    <select id="fVer">
+      <option value="d17">dépôt du 17/09 (avant D)</option>
+      <option value="f45">45 corrigé seul (pas de m_dirty)</option>
+      <option value="f4558">45 + 58, une seule cuisson (avant 65)</option>
+      <option value="s13full">S13, deux cuissons complètes (refusé)</option>
+      <option value="s13" selected>S13, complète + ciblée (retenu)</option>
+      <option value="l62">régression du 26/09 : PlayerInputSystem deux fois (L6-2)</option>
+    </select>
+  </label>
+  <label for="fSmooth">smoothSpeed :
+    <select id="fSmooth">
+      <option value="0" selected>0 (suivi rigide)</option>
+      <option value="5">5 (valeur de la scène)</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="fW" checked> touche <span class="kbd">Z</span> maintenue (avancer)</label>
+</div>
+<div class="ctl">
+  <button type="button" id="fStep">Frame suivante</button>
+  <button type="button" id="fPlay" aria-pressed="false">Lecture</button>
+  <button type="button" id="fReset">Recharger la scène</button>
+  <span class="small" id="fFrameLbl">frame 0</span>
+</div>
+<div class="lab">
+  <div>
+    <canvas id="fCanvas" width="640" height="300" aria-label="Vue de dessus du vaisseau et de la caméra de suivi"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--ship)"></i>vaisseau dessiné (m_worldMatrix)</span>
+      <span><i style="background:var(--ghost)"></i>vaisseau voulu (m_local, invisible)</span>
+      <span><i style="background:var(--cam)"></i>caméra (m_worldMatrix)</span>
+      <span><i style="border:1.5px dashed var(--cam); background:transparent"></i>place voulue : cible + offset</span>
+    </div>
+  </div>
+  <div>
+    <h4>Ordre exécuté à cette frame</h4>
+    <div class="frise" id="fFrise"></div>
+    <div class="stats" id="fStats"></div>
+  </div>
+</div>
+<h4>Journal des dernières frames</h4>
+<div class="console" id="fLog" aria-live="polite"></div>
+<div class="note">
+<b>Ce qu’il faut essayer.</b> (1) « dépôt du 17/09 » : le vaisseau gris (la valeur de <code>m_local</code>) part vers +X à 12 u/s sans qu’on touche à rien, le vaisseau bleu reste où il est après la première frame ; la caméra se cale à la frame 2 et ne bouge plus. (2) « 45 corrigé seul » : le gris obéit à <span class="kbd">Z</span>, le bleu ne bouge toujours pas : 45 sans 58 ne se voit pas. (3) « 45 + 58, une cuisson » en suivi rigide : la caméra est à 5,80 u du vaisseau au lieu de 6,00 ; c’est le bug 65, une frame de déplacement (12 / 60 = 0,2 u). (4) « S13 retenu » : 6,00 exactement. (5) Passer smoothSpeed à 5 : le lissage seul retarde la caméra de 2,30 u, le bug 65 n’en ajoute que 0,20. C’est pourquoi personne ne l’avait vu. (6) « régression du 26/09 » : le vaisseau va deux fois trop vite (0,4 u par frame).
+</div>
+
+<h3 id="lab-temps">1.2 · Deux horloges : realDt pour le joueur, simDt pour le monde</h3>
+<p>Une lune fictive tourne à 1 radian par jour simulé (<code>AnimationSystem</code>, <code>simDt</code>) ; le vaisseau avance à 12 u/s (<code>PlayerInputSystem</code>, <code>realDt</code>). L’horloge suit <code>SimulationClock</code> : <code>simDt = paused ? 0 : realDt · timeScale</code>, échelle par défaut 0,20 jour par seconde, pas ×1,5 (×4 avec <span class="kbd">Maj</span>), bornes 0,001 et 1 000. Les commandes sont traitées comme dans <code>main.cpp</code> : à l’intérieur de <code>BuildInputState</code>, donc <b>après</b> <code>_clock.Advance</code> de la même frame.</p>
+<div class="ctl">
+  <button type="button" id="tPause" aria-pressed="false">P — pause</button>
+  <button type="button" id="tDown">$ — ralentir</button>
+  <button type="button" id="tUp">^ — accélérer</button>
+  <label><input type="checkbox" id="tShift"> Maj (sprint ×4)</label>
+  <button type="button" id="tReset">0 — échelle par défaut</button>
+  <button type="button" id="tBreak">Point d’arrêt de 2,5 s</button>
+  <label><input type="checkbox" id="tClamp" checked> clamp 0,1 s (bug 44)</label>
+  <label><input type="checkbox" id="tWrong"> contre-exemple : PlayerInputSystem sur simDt</label>
+</div>
+<canvas id="tCanvas" width="640" height="230" aria-label="Lune en orbite au temps simulé et vaisseau au temps réel"></canvas>
+<div class="stats" id="tStats"></div>
+<h4>Journal de l’horloge (frame par frame, autour d’une commande)</h4>
+<div class="console" id="tLog" aria-live="polite"></div>
+
+<h3 id="lab-racine">1.3 · Quelle racine de contenu l’exécutable choisit-il ?</h3>
+<p>Le marqueur d’une racine valide est le fichier <code>engine.json</code>. Choisis la situation ; le tableau donne la racine retenue par les trois versions de <code>ResolveContentRoot</code> (et de <code>main.cpp</code> autour).</p>
+<div class="ctl">
+  <label for="rEnv">LV3_CONTENT_ROOT :
+    <select id="rEnv"><option value="none" selected>absente</option><option value="ok">posée, valide</option><option value="bad">posée, sans engine.json</option></select>
+  </label>
+  <label for="rArg">racine en argument :
+    <select id="rArg"><option value="none" selected>absente</option><option value="ok">donnée, valide</option><option value="bad">donnée, sans engine.json</option></select>
+  </label>
+  <label><input type="checkbox" id="rDebug" checked> build Debug (LV3_PROJECT_DIR défini)</label>
+  <label><input type="checkbox" id="rProj" checked> dossier du projet valide</label>
+  <label><input type="checkbox" id="rExe" checked> copie post-build à côté de l’exe</label>
+</div>
+<div class="scroll"><table id="rTable"></table></div>
+
+<h3 id="lab-offset">1.4 · Où se place la caméra : offset, followRotation, et le sens de « derrière »</h3>
+<p>Vue de dessus, X vers la droite, −Z vers le haut. Le nez du vaisseau suit <code>Forward() = (0, 0, −1)</code> tourné par son lacet. <code>CameraFollowSystem</code> calcule <code>targetPos + tgt-&gt;m_local.rotation.rotate(offset)</code> quand <code>followRotation</code> est vrai, <code>targetPos + offset</code> sinon. La rotation lue est la rotation <b>locale</b> de la cible ; la position lue est sa position <b>monde</b>.</p>
+<div class="ctl">
+  <label for="oYaw">lacet local du vaisseau : <input type="range" id="oYaw" min="-180" max="180" value="30" step="1"> <span id="oYawV" class="pill num">30°</span></label>
+  <label for="oZ">offset.z : <input type="range" id="oZ" min="-10" max="10" value="-6" step="0.5"> <span id="oZV" class="pill num">−6</span></label>
+  <label><input type="checkbox" id="oRot" checked> followRotation</label>
+  <label for="oPar">vaisseau amarré à une station tournée de : <input type="range" id="oPar" min="0" max="180" value="0" step="5"> <span id="oParV" class="pill num">0°</span></label>
+</div>
+<div class="lab">
+  <div><canvas id="oCanvas" width="640" height="380" aria-label="Vue de dessus : vaisseau, son nez, et la caméra de suivi"></canvas>
+  <div class="legend">
+    <span><i style="background:var(--ship)"></i>vaisseau et son nez</span>
+    <span><i style="background:var(--cam)"></i>caméra calculée par le code</span>
+    <span><i style="border:1.5px dashed var(--ok); background:transparent"></i>caméra si la rotation MONDE était lue</span>
+  </div></div>
+  <div><div class="stats" id="oStats"></div></div>
+</div>
+
+<h3 id="lab-cout">1.5 · Le prix de la seconde cuisson</h3>
+<p>On compte ce que fait chaque version, sans inventer de temps : un <b>produit</b> est un <code>m_localMatrix · parentWorld</code> (4 × 4 : 64 multiplications, 48 additions) ou une copie de matrice locale pour une entité sans hiérarchie ; un <b>test</b> est la lecture de <code>m_dirty</code> par <code>LocalTransformSystem</code>, qui parcourt tout le tableau dense des <code>TransformComponent</code>.</p>
+<div class="ctl">
+  <label for="cN">entités avec Transform N = <input type="range" id="cN" min="1" max="4.8" value="2.3" step="0.01"> <span id="cNV" class="pill num">200</span></label>
+  <label for="cV">vues rendues : <select id="cV"><option>1</option><option selected>2</option><option>4</option></select></label>
+  <label for="cC">caméras dans la scène : <select id="cC"><option>2</option><option selected>4</option><option>8</option></select></label>
+  <label><input type="checkbox" id="cG" checked> chaque caméra a un gizmo enfant</label>
+</div>
+<div class="scroll"><table id="cTable"></table></div>
+<p class="small">Mesure réelle disponible : depuis la phase G, les quatre zones du profileur <code>LocalXform1</code>, <code>WorldXform1</code>, <code>LocalXform2</code>, <code>WorldXform2</code> isolent ces passes dans <code>main.cpp</code>. Le compteur <code>XformNodes</code>, lui, n’est jamais incrémenté (PH1C-11).</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="technique">
+<h2>2 · La partie technique</h2>
+
+<p>Aucun de ces mécanismes n’est une technique nommée de la littérature ; ce sont les règles de base de toute boucle de jeu (Glenn Fiedler, « Fix Your Timestep! », gafferongames.com, 2004, pour le temps ; Robert Nystrom, <i>Game Programming Patterns</i>, chapitres « Game Loop » et « Update Method », gameprogrammingpatterns.com, pour l’ordre des mises à jour). Unity les applique avec ses phases <code>Update</code> puis <code>LateUpdate</code> : les caméras de suivi s’écrivent dans <code>LateUpdate</code>, après que tous les objets ont bougé. S13 en est l’équivalent explicite pour un ECS.</p>
+
+<h3 id="t-contrat">2.1 · Une frame est un ordre de dépendances</h3>
+<p>Chaque système a un contrat : ce qu’il lit, ce qu’il écrit. On peut dessiner la frame comme un graphe où une flèche va de l’écrivain d’une donnée vers ses lecteurs. Une boucle juste exécute les systèmes dans un <b>ordre topologique</b> de ce graphe : aucun système ne lit avant que l’écrivain ait fini.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Système</th><th>Lit</th><th>Écrit</th></tr></thead>
+<tbody>
+<tr><td><code>BuildInputState</code></td><td>file d’événements SDL, état du clavier, souris relative</td><td><code>InputState</code> (et, par effet de bord : <code>_clock</code>, demande de redimensionnement, cycles de caméra)</td></tr>
+<tr><td><code>PlayerInputSystem</code></td><td><code>InputState</code>, <code>PlayerControl.speed</code>, <code>realDt</code></td><td><code>m_local.position</code>, <code>m_dirty</code> du vaisseau</td></tr>
+<tr><td><code>AnimationSystem</code></td><td><code>MeshComponent</code> (vitesses), <code>simDt</code></td><td><code>m_local</code>, <code>m_dirty</code> des astres</td></tr>
+<tr><td><code>LocalTransformSystem</code></td><td><code>m_local</code>, <code>m_dirty</code></td><td><code>m_localMatrix</code>, <code>m_dirty = false</code></td></tr>
+<tr><td><code>WorldTransformSystem</code></td><td><code>m_localMatrix</code>, hiérarchie</td><td><code>m_worldMatrix</code></td></tr>
+<tr><td><code>CameraFollowSystem</code></td><td><code>m_worldMatrix</code> <b>de la cible</b>, <code>m_local.rotation</code> de la cible, <code>realDt</code></td><td><code>m_local</code>, <code>m_dirty</code> <b>de la caméra</b></td></tr>
+<tr><td><code>BuildViewData</code></td><td><code>m_worldMatrix</code> <b>de la caméra</b></td><td>la vue (matrice de vue = inverse rigide du monde de la caméra)</td></tr>
+</tbody>
+</table>
+</div>
+<p>On lit la boucle du 17/09 contre ce tableau. <code>CameraFollowSystem</code> lit le monde de sa cible ; ce monde n’est écrit que par <code>WorldTransformSystem</code>, qui ne tourne qu’après. Le graphe contient donc un chemin <b>World → Follow → World → Vue</b> : la même donnée (les matrices monde) est à la fois en amont et en aval des caméras. Aucun ordre d’une seule passe ne le satisfait. Deux façons de casser ce cycle :</p>
+<ul>
+<li><b>Une seconde passe</b> sur la partie du graphe qui a changé après la première (les caméras). C’est ce que fait S13.</li>
+<li><b>Un retard assumé</b> : on accepte de lire la frame précédente et on l’écrit dans la règle. C’était le comportement de fait, jamais écrit.</li>
+</ul>
+
+<h3 id="t-input">2.2 · <code>InputState</code> : un instantané, reconstruit à chaque frame</h3>
+<p><code>InputState</code> est un POD défini par le moteur (<code>Core/InputState.h</code>) : le moteur ne connaît ni SDL ni Win32, il ne voit que des intentions déjà traduites. Trois règles, écrites dans le commentaire de <code>BuildInputState</code> :</p>
+<ol>
+<li><b>Clavier = état, souris = événement.</b> Les touches se lisent avec <code>SDL_GetKeyboardState</code> (« est-elle enfoncée maintenant ? ») ; la souris et la molette s’accumulent (« de combien depuis la dernière lecture ? »).</li>
+<li><b>Reconstruit à chaque frame.</b> L’objet est local à <code>BuildInputState</code>. Global et persistant, <code>wheelDelta</code> et <code>toggleCameraMode</code> s’accumuleraient : la caméra changerait de mode à chaque frame.</li>
+<li><b>Un déplacement souris ne se multiplie jamais par dt</b> : c’est une distance déjà parcourue, pas une vitesse. Une touche maintenue, elle, est une vitesse : on la multiplie par dt.</li>
+</ol>
+<p>Les touches sont lues par <b>scancode</b> (<code>SDL_SCANCODE_W</code>, <code>_A</code>, <code>_S</code>, <code>_D</code>) : un scancode désigne une position physique. Sur le clavier AZERTY d’Onky, ces positions portent <span class="kbd">Z</span> <span class="kbd">Q</span> <span class="kbd">S</span> <span class="kbd">D</span>, sans une ligne de code spécifique.</p>
+<p>La diagonale est normalisée : sans <code>Normalized()</code>, <span class="kbd">Z</span> + <span class="kbd">D</span> donnerait une vitesse de 12·√2 ≈ 16,97 u/s. Le test <code>dir.norm() &gt; 0</code> porte sur la longueur <em>au carré</em> (<code>norm()</code> rend le carré, point L2-14) ; le seuil 0 rend la différence sans importance ici.</p>
+
+<h3 id="t-dirty">2.3 · Le drapeau sale et le piège de la première frame</h3>
+<p>R11bis répartit les rôles : celui qui écrit <code>m_local</code> lève <code>m_dirty</code> ; <code>LocalTransformSystem</code> recompose <code>m_localMatrix = S · R · T</code> seulement pour les transformations sales, puis baisse le drapeau. Un écrivain qui oublie le drapeau écrit pour rien.</p>
+<p>Le piège : <code>TransformComponent::m_dirty</code> vaut <code>true</code> à la construction. La toute première frame recompose donc toutes les matrices, que l’écrivain ait levé le drapeau ou non. Un oubli de <code>m_dirty</code> passe le premier test visuel (« le vaisseau est à sa place ») et ne se voit qu’à la deuxième frame. Le laboratoire 1.1, version « 45 corrigé seul », le montre : <code>m_local</code> obéit, l’image ne bouge plus après la frame 1.</p>
+<div class="rule"><b>Leçon.</b> Un test d’écrivain doit couvrir au moins deux frames. Une seule frame ne teste que la valeur par défaut du drapeau.</div>
+
+<h3 id="t-temps">2.4 · Deux temps (S10), une horloge, un clamp</h3>
+<p><code>realDt</code> est le temps mesuré entre deux frames (<code>SDL_GetPerformanceCounter</code>), borné à 0,1 s (bug 44). <code>SimulationClock::Advance(realDt)</code> en déduit le temps du monde : <code>simDt = paused ? 0 : realDt · timeScale</code>, en jours simulés, et l’ajoute à <code>m_simTime</code>. La règle S10, étendue par ce lot, dit qui prend quoi :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Système</th><th>dt</th><th>Pourquoi</th></tr></thead>
+<tbody>
+<tr><td><code>PlayerInputSystem</code></td><td><code>realDt</code></td><td>Le joueur pilote en secondes réelles ; le vaisseau répond aussi en pause.</td></tr>
+<tr><td><code>CameraFPSControllerSystem</code></td><td><code>realDt</code></td><td>On doit pouvoir se déplacer pour regarder une scène figée.</td></tr>
+<tr><td><code>CameraFollowSystem</code></td><td><code>realDt</code></td><td>Le lissage est un confort de l’œil, pas un phénomène du monde.</td></tr>
+<tr><td><code>CameraZoomSystem</code></td><td>aucun</td><td>Un cran de molette est un événement : un rapport ×0,9 par cran.</td></tr>
+<tr><td><code>AnimationSystem</code></td><td><code>simDt</code></td><td>Les orbites et les rotations sont des phénomènes du monde : la pause les arrête.</td></tr>
+</tbody>
+</table>
+</div>
+<p>Pourquoi le clamp avant <code>Advance</code> : un point d’arrêt de 2,5 s dans le débogueur produit <code>realDt = 2,5</code>. Sans clamp, à l’échelle par défaut 0,2, le monde avance d’un coup de 0,5 jour et le vaisseau de 30 unités. Avec le clamp : 0,02 jour et 1,2 unité.</p>
+<p>Le bug 52 (horloge déclarée deux fois) était une question de portée. Une seconde déclaration locale masque la globale : les touches modifient l’une, <code>Advance</code> lit l’autre. Le dépôt n’en contenait plus qu’une (<code>main.cpp:81</code>), et <code>/we4459</code> (déclaration qui masque une globale = erreur) l’interdit désormais à la compilation. Onky l’a confirmé à l’exécution : <span class="kbd">P</span>, <span class="kbd">0</span>, <span class="kbd">^</span>, <span class="kbd">$</span> agissent sur les orbites.</p>
+
+<h3 id="t-cuisson">2.5 · Deux cuissons, la seconde ciblée</h3>
+<p>La cuisson n°1 sert la logique : elle donne aux systèmes caméra le monde de cette frame. La cuisson n°2 sert le rendu : elle donne aux vues la position des caméras de cette frame. Entre les deux, seules les caméras (et leurs gizmos, enfants des caméras depuis A5) ont changé. D’où la surcharge :</p>
+<pre><code>void WorldTransformSystem(Registry&amp; registry, std::span&lt;const Entity&gt; roots)
+{
+    const Matrix44f identity = Matrix44f::Identity();
+    for (Entity e : roots)
+    {
+        LV3_ASSERT(IsRoot(registry, e));          // précondition, jamais devinée
+        PropagateWorld(registry, e, identity);     // e, puis ses enfants (le gizmo)
+    }
+}</code></pre>
+<p>Trois propriétés à connaître exactement :</p>
+<ul>
+<li><b>Le coût de <code>World</code> n°2 est en O(vues)</b>, au plus 4 caméras et leurs gizmos, soit 8 produits.</li>
+<li><b>Le coût de <code>Local</code> n°2 reste en O(N)</b> : <code>LocalTransformSystem</code> parcourt tout le tableau dense pour lire chaque <code>m_dirty</code>. Le test est une lecture et une branche bien prédite, mais le carnet (note du bug 65) et <code>architecture-rules.md</code> écrivent « O(caméras rendues) » pour toute la seconde passe : c’est vrai de <code>World</code>, pas de <code>Local</code> (PH1D-3).</li>
+<li><b>La précondition <code>IsRoot</code> n’est vérifiée qu’en Debug et RelWithAsserts.</b> En Release, une caméra parentée (une caméra de cockpit, enfant du vaisseau) recevrait <code>identity</code> comme monde parent et serait dessinée près de l’origine, sans message (PH1D-6).</li>
+</ul>
+<p>Et une limite de périmètre : <code>roots</code> contient les caméras <b>rendues</b>. Or <code>CameraFollowSystem</code> et <code>CameraFPSControllerSystem</code> écrivent toutes les caméras dont le contrôleur est actif. Une caméra qui bouge sans être affichée (la caméra de suivi pendant qu’on regarde une autre caméra de jeu) garde une frame de retard, ainsi que son gizmo, qui, lui, est visible dans les vues de debug (PH1D-2).</p>
+
+<h3 id="t-lissage">2.6 · Le lissage de la caméra, indépendant du taux d’images</h3>
+<p><code>CameraFollowSystem</code> rapproche la caméra de sa place voulue par <code>t = 1 − exp(−smoothSpeed · dt)</code>. Après n frames d’une durée totale T, la part restante vaut <code>exp(−smoothSpeed · T)</code>, quel que soit le découpage : le comportement est le même à 30 et à 144 i/s. La forme naïve <code>lerp(a, b, smoothSpeed · dt)</code> ne l’est pas :</p>
+<div class="scroll">
+<table>
+<thead><tr><th>Taux d’images</th><th class="num">t naïf = 5·dt</th><th class="num">t exact</th><th class="num">temps pour 90 % (naïf)</th><th class="num">temps pour 90 % (exact)</th></tr></thead>
+<tbody>
+<tr><td>10 i/s (dt clampé à 0,1)</td><td class="num">0,5000</td><td class="num">0,3935</td><td class="num">0,332 s</td><td class="num">0,461 s</td></tr>
+<tr><td>30 i/s</td><td class="num">0,1667</td><td class="num">0,1535</td><td class="num">0,421 s</td><td class="num">0,461 s</td></tr>
+<tr><td>60 i/s</td><td class="num">0,0833</td><td class="num">0,0800</td><td class="num">0,441 s</td><td class="num">0,461 s</td></tr>
+<tr><td>144 i/s</td><td class="num">0,0347</td><td class="num">0,0341</td><td class="num">0,452 s</td><td class="num">0,461 s</td></tr>
+</tbody>
+</table>
+</div>
+<p>Avec <code>smoothSpeed = 25</code> et une frame de 0,1 s, la forme naïve donne t = 2,5 : la caméra dépasse sa cible et diverge. Le code du dépôt a la bonne forme ; ce lot n’y touche pas.</p>
+<p>Conséquence pour le bug 65 : à 12 u/s et smoothSpeed = 5, le lissage seul laisse la caméra à <b>2,30 u</b> derrière sa place voulue en régime établi (<code>(1 − t) · v · dt / t</code>). Le retard de cuisson n’ajoute que <b>0,20 u</b> (une frame de déplacement). D’où le commentaire de <code>main.cpp</code> : « imperceptible avec du lissage actif, mais faux ». En suivi rigide (smoothSpeed = 0), les 0,20 u deviennent l’erreur entière : 5,80 u au lieu de 6.</p>
+
+<h3 id="t-racine">2.7 · Trouver les fichiers : intention, candidat, copie</h3>
+<p>A10 a posé une copie post-build du contenu à côté de l’exécutable, pour qu’une distribution Release tourne sans le code source. Cette copie est faite à chaque build : elle est à jour quand on compile, et périmée dès qu’on modifie un JSON sans recompiler. Le dossier du projet (<code>LV3_PROJECT_DIR</code>, Debug seulement) est la source. L’ordre des candidats décide donc de ce qu’on teste :</p>
+<ul>
+<li><b>Avant 63</b>, l’exe passait avant le projet : la copie existait toujours, le projet n’était jamais lu. Modifier <code>offset</code> dans le JSON du projet n’avait aucun effet.</li>
+<li><b>Après 63</b>, le projet passe avant l’exe. L’exe reste le dernier recours, le seul qui marche sur une machine sans les sources.</li>
+</ul>
+<p>Le même défaut menaçait la campagne de mesure : une racine passée en argument pour choisir les fichiers d’un banc pouvait être ignorée si le dossier de l’exe contenait déjà un <code>engine.json</code>. Le bug 68 (phase G) a poussé la logique au bout ; voir l’amendement AM1.</p>
+<p>Et un fait trouvé en reconstruisant ce lot : le bug 64 était annoncé. <code>ParseCameraFollow</code> appelait déjà <code>r.WarnUnread()</code> le 17/09, et la scène contenait <code>"followRotation": true</code>. Le journal disait donc, à chaque chargement, <code>[CameraFollow] cle ignoree 'followRotation' sur Follow_Camera</code>. Personne ne l’a lu (PH1D-8).</p>
+
+<h3 id="t-sdl">2.8 · Les ressources SDL en fin de frame</h3>
+<p>La texture SDL est verrouillée (<code>SDL_LockTexture</code>) le temps du rendu : le moteur écrit directement dans sa mémoire, avec son <code>pitch</code>. Un redimensionnement pendant ce verrou invaliderait le pointeur et le pas de ligne. <code>BuildInputState</code> se contente donc de <em>noter</em> la nouvelle taille (<code>resizePending</code>) ; la texture est recréée après <code>Present</code>, quand plus rien ne la tient.</p>
+<p>Le bug 27 portait sur les deux sorties d’erreur de ce chemin. Un <code>SDL_CreateTexture</code> qui échoue rend <code>nullptr</code> ; sans test, l’échec sortait à la frame suivante, dans <code>SDL_LockTexture(nullptr, …)</code>, avec un message qui ne parlait pas de redimensionnement. Et une sortie par <code>return -1</code> sans <code>SDLkill()</code> laissait fenêtre, renderer et texture au système d’exploitation. Le correctif échoue là où l’erreur naît, avec le bon message, et libère tout.</p>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="etapes">
+<h2>3 · Les étapes, dans l’ordre de l’échange du 18/09</h2>
+<p>Chaque étape donne son objectif, ce qu’elle utilise de l’étape précédente, ce qu’elle produit, et le code avant / après tel qu’il est dans l’historique Git. Il n’y a ni calcul flottant à vectoriser ni boucle chaude dans ce lot : aucune étape n’a de pendant AVX2. La seule boucle sur N entités, <code>LocalTransformSystem</code>, n’a pas été modifiée.</p>
+
+<div class="step"><div class="h"><span class="n">Étape 1</span> Bug 45 · construire l’état des entrées avant de le lire</div><div class="b">
+<p><b>Objectif.</b> Donner à <code>PlayerInputSystem</code> l’état du clavier de cette frame. Un système qui veut lire une donnée doit s’exécuter après celui qui l’écrit.</p>
+<div class="io"><div><h5>Utilise</h5><code>BuildInputState()</code> existant, qui rend un <code>InputState</code> complet (déjà consommé par <code>CameraFPSControllerSystem</code>).</div><div><h5>Produit</h5>Un système joueur qui reçoit <code>const InputState&amp;</code> et réagit à six intentions ; l’ordre <code>BuildInputState</code> → <code>PlayerInputSystem</code>.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — main.cpp (2f48f93) et System.cpp</div>
+<pre><code>// main.cpp
+PlayerInputSystem(registry, realDt);
+LV3::InputState input = BuildInputState();
+
+// System.cpp
+void PlayerInputSystem(Registry&amp; registry, float deltaTime) {
+    for (auto&amp;&amp; [entity, control, transform] :
+         registry.ViewGroup&lt;PlayerControlComponent, TransformComponent&gt;())
+    {
+        transform.m_local.position.x += control.m_speed * deltaTime;
+    }
+}</code></pre></div>
+<div class="ap"><div class="t">Après — main.cpp (81f8fd9) et System.cpp</div>
+<pre><code>// main.cpp
+LV3::InputState input = BuildInputState();   // AVANT tout lecteur
+PlayerInputSystem(registry, input, realDt);
+
+// System.cpp
+void PlayerInputSystem(Registry&amp; registry, const InputState&amp; in, float deltaTime) {
+    for (auto&amp;&amp; [entity, control, transform] :
+         registry.ViewGroup&lt;PlayerControlComponent, TransformComponent&gt;())
+    {
+        Vec3f dir;
+        if (in.moveForward)  dir += Vec3f::Forward();   // (0, 0, -1)
+        if (in.moveBackward) dir -= Vec3f::Forward();
+        if (in.strafeRight)  dir += Vec3f::Right();     // (1, 0, 0)
+        if (in.strafeLeft)   dir -= Vec3f::Right();
+        if (in.moveUp)       dir += Vec3f::Up();        // (0, 1, 0)
+        if (in.moveDown)     dir -= Vec3f::Up();
+        if (dir.norm() &gt; 0.0f)
+        {
+            transform.m_local.position += dir.Normalized() * (control.m_speed * deltaTime);
+            transform.m_dirty = true;                   // étape 2
+        }
+    }
+}</code></pre></div>
+</div>
+<p class="small">Dans <code>System.hpp</code>, la déclaration change de la même façon. Les axes sont les axes <b>monde</b> : <code>PlayerControlComponent</code> ne porte aucune orientation (commentaire du dépôt, « hors périmètre du bug 45 »).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 2</span> Bug 58 · l’écrivain lève le drapeau</div><div class="b">
+<p><b>Objectif.</b> Que l’écriture de <code>m_local</code> atteigne la matrice. Sans <code>m_dirty = true</code>, <code>LocalTransformSystem</code> saute le vaisseau à partir de la frame 2.</p>
+<div class="io"><div><h5>Utilise</h5>Le bloc de déplacement de l’étape 1 ; la règle R11bis.</div><div><h5>Produit</h5><code>m_dirty = true</code> seulement quand le vaisseau a bougé. Résultat du laboratoire 1.1 : après 60 frames de <span class="kbd">Z</span>, monde.z = −12,0 (contre −0,2, figé depuis la frame 1, avec 45 seul).</div></div>
+<p>Ligne ajoutée dans le <code>if (dir.norm() &gt; 0.0f)</code> de l’étape 1. La placer hors du <code>if</code> recomposerait la matrice du vaisseau à chaque frame, même immobile : <code>AnimationSystem</code> suit déjà la même règle (« un mesh sans animation ne doit pas voir son m_dirty levé »).</p>
+<p><b>Pourquoi 45 et 58 ensemble.</b> 45 seul : <code>m_local</code> obéit, l’image ne bouge pas. 58 seul : le vaisseau dérive vers +X sans qu’on touche au clavier. Aucun des deux correctifs ne se valide sans l’autre.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 3</span> Bug 52 · confirmer avant de toucher</div><div class="b">
+<p><b>Objectif.</b> Savoir si l’horloge est encore déclarée deux fois. Une correction sur un bug déjà disparu ne prouve rien et peut casser autre chose.</p>
+<div class="io"><div><h5>Utilise</h5>La lecture de <code>main.cpp</code> (une seule déclaration, ligne 81) ; <code>/we4459</code> actif, aucun C4459 émis.</div><div><h5>Produit</h5>Un test d’exécution : <span class="kbd">P</span>, <span class="kbd">0</span>, <span class="kbd">^</span>, <span class="kbd">$</span> modifient visiblement la vitesse des orbites. Confirmé par Onky : « Oui, ça fonctionne ». Bug clos par confirmation, sans code.</div></div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 4</span> Bug 27 · échouer là où l’erreur naît</div><div class="b">
+<p><b>Objectif.</b> Qu’un échec SDL en fin de frame donne le bon message et libère les ressources.</p>
+<div class="io"><div><h5>Utilise</h5>Le bloc de redimensionnement différé (après <code>Present</code>) et la branche d’échec de <code>SDL_LockTexture</code>.</div><div><h5>Produit</h5>Deux sorties propres. Validé à la main par Onky (redimensionnements répétés) : « bug 27 testé et OK ». L’extraction du bloc en fonction testable est différée.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant</div>
+<pre><code>else
+{
+    SDL_Log("SDL_LockTexture a échoué : %s", SDL_GetError());
+    return -1;
+}
+// …
+SDL_DestroyTexture(SDLtexture);
+SDLtexture = SDL_CreateTexture(SDLrenderer,
+    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+    FrameW, FrameH);
+
+// 2. Le Z-buffer
+db.Resize(FrameW, FrameH);</code></pre></div>
+<div class="ap"><div class="t">Après</div>
+<pre><code>else
+{
+    SDL_Log("SDL_LockTexture a échoué : %s", SDL_GetError());
+    SDLkill();   // fenêtre, renderer, texture
+    return -1;
+}
+// …
+SDL_DestroyTexture(SDLtexture);
+SDLtexture = SDL_CreateTexture(SDLrenderer,
+    SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+    FrameW, FrameH);
+if (SDLtexture == nullptr)
+{
+    Logger::error(std::string("SDL_CreateTexture (resize) a échoué : ")
+                  + SDL_GetError());
+    SDLkill();
+    return -1;
+}
+// 2. Le Z-buffer
+db.Resize(FrameW, FrameH);</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 5</span> Bug 63 · lire les fichiers qu’on édite</div><div class="b">
+<p><b>Objectif.</b> Qu’une scène modifiée dans le projet soit celle que l’exécutable charge.</p>
+<div class="io"><div><h5>Utilise</h5>Le diagnostic d’Onky : l’exécutable choisit toujours les fichiers posés à côté de lui. La fonction qu’il a collée.</div><div><h5>Produit</h5>Ordre env → candidats de l’application → exe. Laboratoire 1.3, situation par défaut (Debug, projet valide, copie présente) : avant = copie de l’exe, après = projet. Validé : « Ca marche ».</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Core/ContentRoot.cpp (cea458e), cœur de la fonction</div>
+<pre><code>// --- 2. A cote de l'executable
+if (const std::filesystem::path exeDir = ExecutableDir(); !exeDir.empty())
+{
+    if (IsContentRoot(exeDir)) return exeDir;
+    tried.push_back(exeDir);
+}
+
+// --- 3. Candidats fournis par l'application
+for (const std::filesystem::path&amp; p : extraCandidates)
+{
+    if (IsContentRoot(p)) return p;
+    tried.push_back(p);
+}</code></pre></div>
+<div class="ap"><div class="t">Après — Core/ContentRoot.cpp (c7292f9)</div>
+<pre><code>// --- 2. Candidats fournis par l'application
+//     PRIORITAIRES sur le dossier de l'executable : ce sont les
+//     fichiers qu'on edite ou qu'on mesure, jamais une copie.
+for (const std::filesystem::path&amp; p : extraCandidates)
+{
+    if (IsContentRoot(p)) return p;
+    tried.push_back(p);
+}
+
+// --- 3. A cote de l'executable (dernier recours)
+if (const std::filesystem::path exeDir = ExecutableDir(); !exeDir.empty())
+{
+    if (IsContentRoot(exeDir)) return exeDir;
+    tried.push_back(exeDir);
+}</code></pre></div>
+</div>
+<p class="small">Les journaux (<code>Logger::info("[Content] racine = …")</code>) sont omis ici ; ils sont inchangés. Le bloc d’en-tête de la fonction documente désormais l’ordre et la raison (« Discussion D (18/09/2026) »).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 6</span> Bug 64 · lire la clé écrite dans la scène</div><div class="b">
+<p><b>Objectif.</b> Que <code>followRotation</code> écrit dans le JSON soit celui qu’utilise le système.</p>
+<div class="io"><div><h5>Utilise</h5>L’audit de <code>ParseCameraFollow</code> fait pendant le diagnostic d’<code>offset</code>.</div><div><h5>Produit</h5>Une lecture de plus. <code>WarnUnread()</code> se tait sur cette clé.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — Serializer.cpp</div>
+<pre><code>CameraFollowComponent c;
+c.m_isEnabled    = r.Read("enabled", true);
+c.m_offset       = r.ReadVector("offset", Vec3f(0.0f, 2.0f, -6.0f));
+c.m_smoothSpeed  = r.Read("smoothSpeed", 5.0f);
+c.m_lookAtHeight = r.Read("lookAtHeight", 0.0f);</code></pre></div>
+<div class="ap"><div class="t">Après — Serializer.cpp (2bb5e62)</div>
+<pre><code>CameraFollowComponent c;
+c.m_isEnabled      = r.Read("enabled", true);
+c.m_offset         = r.ReadVector("offset", Vec3f(0.0f, 2.0f, -6.0f));
+c.m_smoothSpeed    = r.Read("smoothSpeed", 5.0f);
+c.m_lookAtHeight   = r.Read("lookAtHeight", 0.0f);
+c.m_followRotation = r.Read("followRotation", true);</code></pre></div>
+</div>
+<p><b>Ce que fait <code>followRotation</code></b> (question d’Onky). Vrai : l’offset est tourné par l’orientation de la cible avant d’être ajouté, la caméra reste du même côté du vaisseau quand il tourne (caméra de poursuite à la troisième personne). Faux : l’offset est en axes monde, la caméra garde la même direction absolue et le vaisseau tourne devant elle (vue isométrique, stratégie). Aujourd’hui sans effet visible : rien n’écrit la rotation de <code>Player_Ship</code>, donc <code>rotate(offset) == offset</code>. Laboratoire 1.4.</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 7</span> Bug 65, première moitié · cuire le monde avant les caméras</div><div class="b">
+<p><b>Objectif.</b> Que <code>CameraFollowSystem</code> lise la position du vaisseau de cette frame.</p>
+<div class="io"><div><h5>Utilise</h5>Les étapes 1 et 2 (le vaisseau écrit <code>m_local</code> et lève <code>m_dirty</code> avant les caméras).</div><div><h5>Produit</h5>Cuisson n°1, complète, entre <code>AnimationSystem</code> et les systèmes caméra. Laboratoire 1.1, suivi rigide : distance au rendu 6,00 u au lieu de 5,80.</div></div>
+<div class="ab">
+<div class="av"><div class="t">Avant — main.cpp</div>
+<pre><code>AnimationSystem(registry, simDt);
+CameraFPSControllerSystem(registry, input, realDt);
+CameraFollowSystem(registry, realDt);
+CameraZoomSystem(registry, input);</code></pre></div>
+<div class="ap"><div class="t">Après — main.cpp (ced56a9)</div>
+<pre><code>AnimationSystem(registry, simDt);
+
+// CameraFollowSystem lit tr.m_worldMatrix de sa cible. Sans cette
+// cuisson, il lirait le monde de la frame PRÉCÉDENTE.
+LocalTransformSystem(registry);
+WorldTransformSystem(registry);
+
+CameraFPSControllerSystem(registry, input, realDt);
+CameraFollowSystem(registry, realDt);
+CameraZoomSystem(registry, input);</code></pre></div>
+</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 8</span> Bug 65, seconde moitié · ne recuire que les caméras</div><div class="b">
+<p><b>Objectif.</b> Que les vues lisent la position des caméras de cette frame, sans payer une seconde traversée de toute la scène.</p>
+<div class="io"><div><h5>Utilise</h5>L’étape 7 (le monde est déjà frais pour tout ce qui n’est pas caméra) ; <code>PropagateWorld</code> (PH1-C) ; <code>bindings[i].m_camera</code> rempli par <code>BuildCameraBindings</code>.</div><div><h5>Produit</h5>Une surcharge de <code>WorldTransformSystem</code> sur une liste de racines. Laboratoire 1.5, N = 200, 2 vues, gizmos : 400 produits pour deux cuissons complètes, 204 pour complète + ciblée. Validé : « pas de changement visible, ca marche ».</div></div>
+<div class="ab">
+<div class="pr"><div class="t">Première version proposée — refusée par Onky</div>
+<pre><code>CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
+
+LocalTransformSystem(registry);
+WorldTransformSystem(registry);   // N nœuds, une seconde fois</code></pre></div>
+<div class="ap"><div class="t">Retenu — main.cpp (ced56a9) et System.cpp</div>
+<pre><code>CameraGizmoSystem(registry, activeCamera, bindings, nViews, GizAssets);
+
+LocalTransformSystem(registry);   // ne recompose que le sale
+Entity renderedCameras[LV3_MAX_VIEWPORT];
+for (size_t i = 0; i &lt; nViews; ++i)
+    renderedCameras[i] = bindings[i].m_camera;
+WorldTransformSystem(registry,
+    std::span&lt;const Entity&gt;(renderedCameras, nViews));
+
+// System.cpp
+void WorldTransformSystem(Registry&amp; registry, std::span&lt;const Entity&gt; roots)
+{
+    const Matrix44f identity = Matrix44f::Identity();
+    for (Entity e : roots)
+    {
+        LV3_ASSERT(IsRoot(registry, e));
+        PropagateWorld(registry, e, identity);
+    }
+}</code></pre></div>
+</div>
+<p class="small"><code>System.hpp</code> gagne <code>#include &lt;span&gt;</code> et la déclaration. Depuis A11, le tableau est dimensionné par <code>kMaxCamerasHard</code> (amendement AM4).</p>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 9</span> Formaliser S10 et S13</div><div class="b">
+<p><b>Objectif.</b> Que l’ordre et le choix des dt ne dépendent plus de la mémoire d’une discussion.</p>
+<div class="io"><div><h5>Utilise</h5>Les étapes 1 à 8 ; la règle S10 de L06 (deux temps).</div><div><h5>Produit</h5>S10 étendue (tableau de 2.4) ; S13, neuf étapes, deux cuissons, numéro « provisoire à confirmer avec Onky » ; le patron de re-cuisson ciblée dans <code>architecture-rules.md</code>.</div></div>
+<div class="rule"><b>S13 (texte d’architecture-rules, résumé).</b> (1) mesurer et clamper <code>realDt</code> ; (2) <code>simDt = _clock.Advance(realDt)</code> ; (3) <code>BuildInputState</code> avant tout lecteur ; (4) systèmes qui écrivent <code>m_local</code> des entités du monde ; (5) cuisson n°1 complète ; (6) systèmes caméra, sélection, <code>BuildCameraBindings</code>, <code>CameraGizmoSystem</code> ; (7) cuisson n°2 ciblée sur les caméras rendues ; (8) <code>TriggerSystem</code> et tout lecteur de <code>m_worldMatrix</code> ; (9) vues, puis rendu.</div>
+</div></div>
+
+<div class="step"><div class="h"><span class="n">Étape 10</span> Clore la discussion dans le carnet</div><div class="b">
+<p><b>Objectif.</b> Que la reprise soit possible sans redériver.</p>
+<div class="io"><div><h5>Utilise</h5>Les réponses d’Onky : consigner 63/64/65 ; 52 confirmé ; 27 testé.</div><div><h5>Produit</h5>Bugs 45, 58, 27 « corrigé », 52 « confirmé clos », lignes 63, 64, 65, discussion D « CLOS », prochain numéro libre 66, ordre conseillé E → G.</div></div>
+<p class="small">À la relecture, deux notes du carnet racontent l’échange de travers (la caméra « insensible à offset » après 63 et 64 ; 64 « découvert pendant le diagnostic du bug 65 ») : PH1D-13.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="contre">
+<h2>4 · Contre-exemples chiffrés</h2>
+
+<div class="bad"><b>CE1 — Deux cuissons complètes.</b> Correct, et c’est la première proposition faite le 18/09. Sur une scène de N entités, la seconde passe refait N produits pour 2 à 8 entités qui ont réellement changé. Scène ceinture (<code>solar_system_v1compat_belt.json</code>, plusieurs centaines d’entités) : le coût de <code>WorldTransformSystem</code> double, alors que c’est précisément la grandeur que la campagne de mesure G doit trancher (décision A3). Laboratoire 1.5.</div>
+
+<div class="bad"><b>CE2 — Déplacer les systèmes caméra après l’unique cuisson.</b> Les caméras liraient le monde frais, mais les vues liraient alors une matrice monde de la caméra vieille d’une frame (personne ne la recuit après le suivi). Le retard change de côté, il ne disparaît pas. Une seule passe ne peut pas satisfaire le chemin World → caméras → World → vue (2.1).</div>
+
+<div class="bad"><b>CE3 — <code>PlayerInputSystem</code> sur <code>simDt</code>.</b> À l’échelle par défaut (0,20 jour par seconde), le vaisseau avance à 12 × 0,2 = <b>2,4 u/s</b> au lieu de 12, et s’arrête net en pause : le joueur ne peut plus aller regarder la scène figée. Avec <span class="kbd">^</span> poussé à l’échelle 1 000, il traverse <b>12 000 u/s</b>. Laboratoire 1.2, case « contre-exemple ».</div>
+
+<div class="bad"><b>CE4 — Un test d’une seule frame pour valider 58.</b> <code>m_dirty</code> vaut <code>true</code> à la construction : la frame 1 recompose la matrice même sans la ligne ajoutée. Le test passe, le bug reste. Laboratoire 1.1, « 45 corrigé seul » : monde.z vaut −0,2 à la frame 1 et encore −0,2 à la frame 600, alors que <code>m_local</code>.z est passé à −120.</div>
+
+<div class="bad"><b>CE5 — <code>InputState</code> global et persistant.</b> <code>wheelDelta += ev.wheel.y</code> sans remise à zéro : après trois crans de molette, <code>CameraZoomSystem</code> applique 0,9³ = 0,729 à <em>chaque</em> frame suivante, soit un zoom qui ne s’arrête jamais (0,729<sup>60</sup> ≈ 6·10⁻⁹ en une seconde, jusqu’au clamp). Même chose pour <code>toggleCameraMode</code> : un mode qui bascule à chaque frame.</div>
+
+<div class="bad"><b>CE6 — Multiplier le déplacement souris par dt.</b> Le même geste de 300 px est multiplié par 1/60 à 60 i/s et par 1/144 à 144 i/s : sur la machine la plus rapide, la caméra tourne 2,4 fois moins. La sensibilité dépend alors du taux d’images. Un déplacement est déjà une distance.</div>
+
+<div class="bad"><b>CE7 — Corriger le calcul quand c’est la donnée qui est fausse.</b> Le 18/09, la caméra « restait loin quelle que soit <code>offset</code> ». Deux offsets essayés, (0 ; 2 ; −20) et (0 ; 20 ; −2), aucun effet. Huit fichiers relus, un vrai défaut trouvé au passage (64), mais pas la cause : la scène modifiée n’était pas celle chargée (63). La vérification qui coûte trente secondes : lire dans le journal la ligne <code>[Content] racine = …</code>, ou changer une valeur absurde (offset de 1 000) et voir si quelque chose bouge.</div>
+
+<div class="bad"><b>CE8 — Faire confiance à <code>LV3_ASSERT(IsRoot)</code> en Release.</b> Une caméra de cockpit, enfant de <code>Player_Ship</code> à (64 ; 0 ; 0) avec un offset local (0 ; 0,5 ; 0) : en Debug, l’assertion arrête le programme ; en Release, <code>PropagateWorld(e, identité)</code> la place en (0 ; 0,5 ; 0), à 64 unités du vaisseau, sans un message. Laboratoire 1.4 pour la même famille d’erreur (rotation locale lue comme si elle était monde).</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="usage">
+<h2>5 · Exemples d’utilisation</h2>
+
+<h3>Une caméra de poursuite et une caméra isométrique</h3>
+<div class="ab">
+<div class="ap"><div class="t">Poursuite : l’offset tourne avec le vaisseau</div>
+<pre><code>"CameraFollow": {
+  "enabled": true,
+  "target": "Player_Ship",
+  "offset": [ 0.0, 1.5, 6.0 ],
+  "smoothSpeed": 5.0,
+  "lookAtHeight": 0.0,
+  "followRotation": true
+}</code></pre></div>
+<div class="ap"><div class="t">Isométrique : direction monde fixe</div>
+<pre><code>"CameraFollow": {
+  "enabled": true,
+  "target": "Player_Ship",
+  "offset": [ 8.0, 8.0, 8.0 ],
+  "smoothSpeed": 3.0,
+  "lookAtHeight": 0.0,
+  "followRotation": false
+}</code></pre></div>
+</div>
+<p class="small">Attention au signe : en main droite, le nez regarde vers −Z, donc « derrière » est +Z. La scène du dépôt écrit −6 et le défaut du composant (0 ; 2 ; −6) est commenté « derrière » : la caméra est en réalité devant le nez (PH1D-5, laboratoire 1.4).</p>
+
+<h3>Lancer l’exécutable sur les bons fichiers</h3>
+<pre><code>:: Debug depuis Visual Studio : rien à passer, LV3_PROJECT_DIR désigne le projet
+:: (avant 63, la copie post-build gagnait ; depuis, le projet passe devant)
+
+:: Racine explicite (ordre, pas suggestion : invalide = arrêt, bug 68)
+RefactoNouvelleLibrairieV3.exe "D:\Dev\RefactoNouvelleLibrairieV3"
+
+:: Racine + scène + banc (phase G)
+RefactoNouvelleLibrairieV3.exe "D:\Dev\RefactoNouvelleLibrairieV3" --scene=assets/GraphScene/solar_system_v1compat_belt.json --bench=600
+
+:: Variable d'environnement : vaut pour toutes les configurations
+set LV3_CONTENT_ROOT=D:\Dev\RefactoNouvelleLibrairieV3</code></pre>
+<p class="small">Premier réflexe en cas de doute : la ligne <code>[Content] racine = …</code> du journal dit d’où viennent les fichiers.</p>
+
+<h3>Où placer un nouveau système dans la frame</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Le système…</th><th>Étape S13</th><th>dt</th><th>Exemple</th></tr></thead>
+<tbody>
+<tr><td>lit <code>InputState</code> et écrit <code>m_local</code> d’une entité du monde</td><td>4, après <code>BuildInputState</code></td><td><code>realDt</code></td><td>tourelle pilotée par le joueur</td></tr>
+<tr><td>simule un phénomène du monde et écrit <code>m_local</code></td><td>4</td><td><code>simDt</code></td><td>projectile, porte qui s’ouvre, astre</td></tr>
+<tr><td>lit des matrices monde et écrit <code>m_local</code> d’une caméra</td><td>6, entre les deux cuissons</td><td><code>realDt</code></td><td>caméra qui vise la planète la plus proche</td></tr>
+<tr><td>lit des matrices monde et n’écrit pas de transformation</td><td>8, après la cuisson n°2</td><td>selon le sens</td><td>détection, son spatialisé, IA qui regarde</td></tr>
+<tr><td>écrit <code>m_local</code> d’une entité du monde <em>après</em> la cuisson n°1</td><td colspan="3">interdit sans ajouter cette entité aux racines de la cuisson n°2 : elle serait dessinée avec une frame de retard</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="amend">
+<h2>6 · Amendements — ce que la suite du projet a changé</h2>
+<p>Le dépôt actuel (LIB <code>e7cae94</code>, EXE <code>5203980</code>, 09/11) a fait évoluer plusieurs décisions de ce lot. L’échange du 18/09 n’est pas réécrit ; voici l’avant et l’après.</p>
+
+<div class="amend"><div class="h">AM1 · Bug 63 → bug 68 : une intention n’est pas un candidat (phase G)</div><div class="b">
+<p>Après 63, une variable <code>LV3_CONTENT_ROOT</code> posée mais invalide, ou une racine passée en argument mais invalide, était sautée en silence : le moteur tombait sur le projet ou sur la copie de l’exe. En campagne de mesure, cela donnait des chiffres exacts sur la mauvaise scène.</p>
+<div class="ab">
+<div class="av"><div class="t">18/09 (après 63)</div>
+<pre><code>si env posée :
+    si valide : retour env
+    sinon : essayé, on continue      // repli muet
+candidats : argv[1] (non validé), PROJECT_DIR
+exe</code></pre></div>
+<div class="ap"><div class="t">Aujourd’hui (63 + 68, AppArgs)</div>
+<pre><code>si env posée :
+    si valide : retour env
+    sinon : Logger::error, retour {}  // arrêt
+main.cpp : racine positionnelle invalide → arrêt
+           (la scène se choisit par --scene=)
+candidats : racine validée, PROJECT_DIR
+exe</code></pre></div>
+</div>
+<p>L’ordre de 63 est intact ; 68 le complète. Laboratoire 1.3, colonne « aujourd’hui ».</p>
+</div></div>
+
+<div class="amend"><div class="h">AM2 · Mode banc : realDt fixé, entrées vidées (G2b)</div><div class="b">
+<p>En mode <code>--bench</code>, <code>realDt</code> est mesuré puis remplacé par <code>kBenchDt = 1/60</code> avant <code>Advance</code> ; l’<code>InputState</code> est vidé après <code>BuildInputState</code> (les événements sont dépilés pour que Windows ne déclare pas la fenêtre figée). S10 tient toujours : le temps qui <em>nourrit</em> la simulation est fixe, le temps de frame est mesuré à part par le profileur. Le texte de S10 ne le dit pas (PH1D-16).</p>
+</div></div>
+
+<div class="amend"><div class="h">AM3 · Zones du profileur autour des cuissons, et une régression de 45</div><div class="b">
+<p>La phase G a entouré les quatre passes de zones séparées (<code>LocalXform1</code>, <code>WorldXform1</code>, <code>LocalXform2</code>, <code>WorldXform2</code>) : la cuisson n°1 complète est la grandeur dont dépend la décision A3. En insérant la zone <code>Input</code> (commit EXE <code>a22ceeb</code>, 26/09), le bloc de l’étape 1 a été dupliqué au lieu d’être déplacé :</p>
+<div class="ab">
+<div class="ap"><div class="t">18/09 (81f8fd9)</div>
+<pre><code>LV3::InputState input = BuildInputState();
+PlayerInputSystem(registry, input, realDt);</code></pre></div>
+<div class="av"><div class="t">Depuis le 26/09 (a22ceeb, toujours dans le dépôt)</div>
+<pre><code>LV3::InputState input{};
+{
+    LV3_PROF_SCOPE(LV3::EProfZone::Input);
+    input = BuildInputState();
+    if (bench) input = LV3::InputState{};
+    PlayerInputSystem(registry, input, realDt);
+}
+<span class="hl">if (bench) input = LV3::InputState{};      // doublon</span>
+<span class="hl">PlayerInputSystem(registry, input, realDt); // second appel</span></code></pre></div>
+</div>
+<p>Le vaisseau va deux fois trop vite (24 u/s au lieu de 12) ; sans effet en banc, où l’entrée est vide. Déjà inscrit en roadmap sous <b>L6-2</b> ; ce lot en donne l’origine (laboratoire 1.1, version « régression du 26/09 »).</p>
+</div></div>
+
+<div class="amend"><div class="h">AM4 · Le tableau des racines dimensionné par kMaxCamerasHard (A11)</div><div class="b">
+<p><code>Entity renderedCameras[LV3_MAX_VIEWPORT]</code> est devenu <code>Entity renderedCameras[kMaxCamerasHard]</code> quand la discussion J a découplé les vues des caméras (jusqu’à 4 vues). La cuisson n°2 coûte donc au plus 4 caméras et leurs gizmos.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM5 · Le récit des bugs 64 et 65 dans le carnet</div><div class="b">
+<p>Le carnet écrit, pour 65 : « une fois la config du bon fichier chargée (63) et <code>followRotation</code> correctement lu (64), le symptôme persistait ». L’échange dit le contraire : après 63, Onky a répondu « Ca marche » ; 64 a été corrigé ensuite, puis 65, que Claude avait relevé pendant l’audit et qui n’avait pas d’effet visible au lissage de la scène (0,20 u sur 2,30). Et 64 a été trouvé pendant le diagnostic du symptôme <code>offset</code>, pas pendant celui de 65. Correction proposée : PH1D-13.</p>
+</div></div>
+
+<div class="amend"><div class="h">AM6 · L’ordre canonique de L06 est caduc</div><div class="b">
+<p>L’ordre noté en L06 (« contrôleurs caméra → BuildCameraBindings → CameraGizmoSystem → Local → World → Trigger → vues ») est celui que S13 remplace. Le lot L06 le signale déjà (son amendement AM6 « deux cuissons ») ; toute documentation qui recopie l’ancien ordre est à corriger vers S13.</p>
+</div></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="verifier">
+<h2>7 · Vérifier</h2>
+
+<h3>Ce qui a été validé dans l’échange</h3>
+<div class="scroll">
+<table>
+<thead><tr><th>Bug</th><th>Validation</th><th>Réponse d’Onky</th></tr></thead>
+<tbody>
+<tr><td>45, 58</td><td>Le vaisseau répond à <span class="kbd">Z</span><span class="kbd">Q</span><span class="kbd">S</span><span class="kbd">D</span>, flèches, <span class="kbd">Espace</span>, <span class="kbd">Ctrl</span>, de façon stable dans la durée</td><td>compilé, testé</td></tr>
+<tr><td>52</td><td><span class="kbd">P</span>, <span class="kbd">0</span>, <span class="kbd">^</span>, <span class="kbd">$</span> agissent sur les orbites</td><td>« Oui, ça fonctionne »</td></tr>
+<tr><td>27</td><td>Redimensionnements répétés</td><td>« bug 27 testé et OK »</td></tr>
+<tr><td>63</td><td>La scène du projet est chargée ; <code>offset</code> agit</td><td>« Ca marche »</td></tr>
+<tr><td>64, 65</td><td>Compilation, exécution, aucune différence visible attendue ni constatée</td><td>« pas de changement visible, ca marche »</td></tr>
+</tbody>
+</table>
+</div>
+
+<h3>Tests hors moteur proposés (non écrits dans l’échange)</h3>
+<p>Aucun des sept bugs n’a reçu de test de non-régression. Trois tests couvriraient l’essentiel ; aucun ne demande de fenêtre.</p>
+<pre><code>// Test/Test_PH1D_Loop.cpp — proposition (PH1D-10)
+namespace LV3::Tests
+{
+    bool test_PH1D_Loop()
+    {
+        Registry reg;
+        const Entity ship = reg.CreateEntity();
+        TransformComponent st;  st.m_local.position = Vec3f(64.0f, 0.0f, 0.0f);
+        reg.addComponent(ship, st);
+        reg.addComponent(ship, PlayerControlComponent{ 12.0f });
+
+        const Entity cam = reg.CreateEntity();
+        reg.addComponent(cam, TransformComponent{});
+        CameraFollowComponent f;  f.m_target = ship;  f.m_offset = Vec3f(0.0f, 1.5f, -6.0f);
+        f.m_smoothSpeed = 0.0f;   // rigide : l'erreur de 65 est entière
+        reg.addComponent(cam, f);
+
+        InputState in;  in.moveForward = true;
+        const float dt = 1.0f / 60.0f;
+        bool ok = true;
+        for (int frame = 0; frame &lt; 2; ++frame)          // DEUX frames (CE4)
+        {
+            PlayerInputSystem(reg, in, dt);              // S13 (4)
+            LocalTransformSystem(reg);                   // S13 (5)
+            WorldTransformSystem(reg);
+            CameraFollowSystem(reg, dt);                 // S13 (6)
+            LocalTransformSystem(reg);                   // S13 (7)
+            const Entity roots[1] = { cam };
+            WorldTransformSystem(reg, std::span&lt;const Entity&gt;(roots, 1));
+
+            const Matrix44f&amp; s = reg.TryGet&lt;TransformComponent&gt;(ship)-&gt;m_worldMatrix;
+            const Matrix44f&amp; c = reg.TryGet&lt;TransformComponent&gt;(cam)-&gt;m_worldMatrix;
+            ok &amp;= std::fabs(s[3][2] + 0.2f * float(frame + 1)) &lt; 1e-5f;   // 58 : bouge aussi à la frame 2
+            ok &amp;= (c[3][2] - s[3][2]) == -6.0f;          // 65 : exact en float32 (laboratoire 1.1)
+        }
+        return ok;
+    }
+}</code></pre>
+<p class="small">Mutations qui doivent le faire échouer : retirer <code>m_dirty = true</code> (le vaisseau reste à z = −0,2 à la frame 2) ; inverser les étapes 5 et 6 (distance −5,8) ; appeler <code>PlayerInputSystem</code> deux fois (z = −0,4 à la frame 1).</p>
+<pre><code>// Test/Test_ContentRoot.cpp — proposition (PH1D-9), principe
+// 1. Créer trois dossiers temporaires : P (projet), X (copie), E (env), chacun avec engine.json.
+// 2. Sans LV3_CONTENT_ROOT : ResolveContentRoot({P}) == P  (et non le dossier de l'exe).
+// 3. SetEnvironmentVariableW(L"LV3_CONTENT_ROOT", E) : résultat == E.
+// 4. Supprimer E/engine.json : résultat vide (bug 68), jamais P.
+// 5. Retirer la variable, supprimer P/engine.json : repli sur le dossier de l'exe s'il est valide.</code></pre>
+
+<h3>Filets en place</h3>
+<ul>
+<li><code>LV3_ASSERT(IsRoot(registry, e))</code> dans la cuisson ciblée (Debug, RelWithAsserts).</li>
+<li><code>CheckControllerExclusivity</code> chaque frame, avant les systèmes caméra : un seul contrôleur écrit une caméra.</li>
+<li><code>WarnUnread()</code> à la fin de chaque <code>Parse*</code> : il avait vu 64 (PH1D-8).</li>
+<li>Journal <code>[Content] racine = …</code> au démarrage : il aurait montré 63.</li>
+</ul>
+
+<h3>Prédictions vérifiables sur le dépôt actuel</h3>
+<ul>
+<li>Avant correction de L6-2, le vaisseau parcourt 10 unités en 0,42 s ; après, en 0,83 s.</li>
+<li>Zones du profileur : <code>WorldXform2</code> ne doit pas varier entre <code>solar_system_v1compat</code> et la version ceinture (mêmes caméras) ; <code>LocalXform2</code> doit croître avec le nombre d’entités (parcours du tableau dense, PH1D-3), en restant faible.</li>
+<li>Au chargement de <code>solar_system_v1compat.json</code>, aucune ligne <code>cle ignoree</code> pour <code>CameraFollow</code>.</li>
+</ul>
+</section>
+
+<!-- ═════════════════════════════════════════════════════════ -->
+<section id="roadmap">
+<h2>8 · Roadmap — dettes et évolutions à décider plus tard</h2>
+<p>Rien n’est acté ici. Ces points sont inscrits dans <code>Plan_Phase_G_LibraryV3.md</code>, section « Décisions en attente — lot PH1-D ». Les décisions prises pendant l’échange sont dans <code>Résultats/Résultats_Lot_PH1D_Entree_Boucle_Principale.md</code>. Relevé sur LIB <code>e7cae94</code> / EXE <code>5203980</code> ; à vérifier sur le dépôt avant toute modification.</p>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr></thead>
+<tbody>
+<tr><td>PH1D-1</td><td><code>PlayerInputSystem</code> appelé deux fois par frame depuis EXE <code>a22ceeb</code> (26/09), en ajoutant la zone <code>Input</code> : régression du correctif de 45 (AM3)</td><td>Bug, déjà inscrit</td><td>Renvoi à <b>L6-2</b> (même correctif : supprimer le second appel et le second <code>if (bench)</code>).</td></tr>
+<tr><td>PH1D-2</td><td>Cuisson n°2 : <code>roots</code> = caméras <em>rendues</em>, alors que les systèmes caméra écrivent toutes les caméras à contrôleur actif. Une caméra qui bouge sans être affichée, et son gizmo visible dans les vues de debug, gardent une frame de retard</td><td>Dette</td><td><code>roots</code> = toutes les entités <code>CameraComponent</code> (coût O(caméras), ≤ 8 aujourd’hui), ou liste des caméras écrites cette frame.</td></tr>
+<tr><td>PH1D-3</td><td><code>LocalTransformSystem</code> n°2 parcourt tout le tableau dense (O(N) lectures de <code>m_dirty</code>) ; le carnet (bug 65) et <code>architecture-rules.md</code> écrivent « O(caméras rendues) » pour toute la seconde passe</td><td>Documentation + évolution</td><td>Corriger les deux textes ; plus tard, liste des sales (indices poussés par les écrivains) si <code>LocalXform2</code> devient visible au profileur.</td></tr>
+<tr><td>PH1D-4</td><td><code>CameraFollowSystem</code> lit la position <b>monde</b> de la cible mais sa rotation <b>locale</b> (<code>tgt-&gt;m_local.rotation</code>) : faux dès que la cible a un parent qui tourne</td><td>Dette latente</td><td>Rotation monde (base orthonormée tirée de <code>m_worldMatrix</code>), ou cible racine exigée par assertion + avertissement au chargement.</td></tr>
+<tr><td>PH1D-5</td><td>Sens de l’offset : défaut <code>(0, 2, −6)</code> commenté « derrière » (composant, parseur), scènes à <code>(0 ; 1,5 ; −6)</code> ; en main droite (<code>Forward = −Z</code>), −6 est <b>devant</b> le nez</td><td>Incohérence (héritage d’avant L05)</td><td>Passer à +6 (caméra de poursuite) dans le défaut et les scènes, ou garder −6 et corriger les commentaires (vue de face).</td></tr>
+<tr><td>PH1D-6</td><td>Précondition <code>IsRoot</code> de la cuisson ciblée : assertion seule, rien en Release (CE8)</td><td>Dette / évolution</td><td>(a) patron PH1C.b, assertion + repli journalisé ; (b) lever la précondition : utiliser le monde du parent, frais depuis la cuisson n°1, ce qui autorise une caméra de cockpit parentée.</td></tr>
+<tr><td>PH1D-7</td><td>Les commandes d’horloge (<span class="kbd">P</span> <span class="kbd">0</span> <span class="kbd">^</span> <span class="kbd">$</span>) sont traitées dans <code>BuildInputState</code>, après <code>_clock.Advance</code> : effet à la frame suivante. <code>BuildInputState</code> écrit aussi des globales (<code>_clock</code>, <code>g_running</code>, taille en attente, cycles de caméra)</td><td>Évolution</td><td>Inverser S13 (2) et (3) (entrées, puis horloge), ou faire passer ces commandes par <code>InputState</code> ; assumer et l’écrire dans S13 sinon.</td></tr>
+<tr><td>PH1D-8</td><td>Le bug 64 était annoncé à chaque chargement par <code>WarnUnread</code> (« cle ignoree 'followRotation' »), sans que personne le lise</td><td>Évolution</td><td>Bilan après chargement (<code>Logger::warnCount()</code> en fin de <code>LoadSceneGraph</code>, en clair) ; scènes de TNR chargées en mode strict (0 avertissement attendu).</td></tr>
+<tr><td>PH1D-9</td><td>Aucune TNR de <code>ResolveContentRoot</code> (ordre de 63, arrêt de 68)</td><td>Proposée</td><td><code>Test_ContentRoot</code> sur dossiers temporaires (principe en section 7).</td></tr>
+<tr><td>PH1D-10</td><td>Aucune TNR de l’ordre de la frame (45, 58, 65)</td><td>Proposée</td><td><code>Test_PH1D_Loop</code> (code en section 7) : deux frames, distance exacte, trois mutations.</td></tr>
+<tr><td>PH1D-11</td><td>Bug 27 : extraction du bloc de redimensionnement en fonction testable, différée le 18/09</td><td>Dette</td><td>À faire avec la discussion F ou quand ce chemin régresse.</td></tr>
+<tr><td>PH1D-12</td><td>S13 est notée « numéro provisoire à confirmer avec Onky »</td><td>Décision</td><td>Confirmer le numéro (et le texte étendu de S10).</td></tr>
+<tr><td>PH1D-13</td><td>Carnet, notes 64 et 65 : récit inexact (AM5)</td><td>Documentation</td><td>Réécrire : symptôme <code>offset</code> = 63 seul ; 65 relevé par audit, 0,20 u sous 2,30 u de lissage.</td></tr>
+<tr><td>PH1D-14</td><td>Blocs dupliqués laissés en commentaire dans la boucle (ancien ordre, cuissons, <code>TriggerSystem</code>, <code>BuildViewData</code>, clamp)</td><td>Hygiène</td><td>Purge, avec <b>L6-5</b>.</td></tr>
+<tr><td>PH1D-15</td><td><code>PlayerControlComponent</code> sans orientation : déplacement sur les axes monde ; <code>followRotation</code> invérifiable en jeu</td><td>Évolution</td><td>Lacet piloté (souris ou touches) quand le gameplay le demandera ; c’est ce qui rendra 64 et PH1D-4 observables.</td></tr>
+<tr><td>PH1D-16</td><td>S10 ne dit pas le mode banc : <code>realDt</code> remplacé par <code>kBenchDt</code> avant <code>Advance</code>, entrées vidées (AM2)</td><td>Documentation</td><td>Ajouter une phrase à S10.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="rule"><b>Règle proposée PH1D.a, non actée.</b> Toute donnée lue par un système est écrite plus tôt dans la même frame, ou son retard est voulu et écrit (dans S13 et au site de lecture). Un retard d’une frame non écrit est un bug, même invisible.</div>
+<div class="rule"><b>Règle proposée PH1D.b, non actée.</b> Un avertissement de chargement compte : le bilan des avertissements est affiché à la fin du chargement, et une scène de test se charge avec zéro avertissement.</div>
+
+<p><b>Ordre de lecture suggéré (sans engagement).</b> PH1D-1 avec L6-2 (bug visible, deux lignes) ; PH1D-5 (une décision, effet immédiat à l’écran) ; PH1D-12 et PH1D-16 (texte des règles) ; PH1D-8 et PH1D-10 (le filet qui aurait vu 64 et 65) ; PH1D-2, 3, 6 ensemble (la cuisson ciblée) ; PH1D-13 (carnet) ; PH1D-4, 7, 15 attendent un besoin de gameplay ; PH1D-11 et 14 avec la discussion F.</p>
+</section>
+
+<footer>
+Lot PH1-D · reconstruit le 12/11/2026 à partir de l’échange du 18/09/2026 (discussion D du carnet de route) et de l’historique Git des deux dépôts (EXE <code>2f48f93</code> → <code>81f8fd9</code> → <code>ced56a9</code> ; LIB <code>cea458e</code> → <code>c7292f9</code>, <code>2bb5e62</code>, <code>b46b33c</code>), relu contre LIB <code>e7cae94</code> / EXE <code>5203980</code>. Lots appairés : PH1-C (graphe de scène), L06 (SimulationClock, caméras), A10 (racine de contenu), A11 (vues et caméras).
+</footer>
+</main>
+
+<script>
+(function(){
+"use strict";
+const f = Math.fround;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim() || "#888";
+const $ = id => document.getElementById(id);
+const fmt = (v, d=3) => (Object.is(v,-0)?0:v).toFixed(d).replace('.', ',').replace('-', '−');
+function fit(cv, h){
+  const dpr = window.devicePixelRatio || 1, w = cv.clientWidth || 640;
+  if (cv.width !== Math.round(w*dpr)) { cv.width = Math.round(w*dpr); cv.height = Math.round(h*dpr); }
+  cv.style.height = h + "px";
+  const g = cv.getContext("2d"); g.setTransform(dpr,0,0,dpr,0,0); return {g, w, h};
+}
+const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ═══════════ 1.1 · la frame au ralenti ═══════════ */
+const DT = f(1/60), V = f(12), OFFZ = f(-6);
+const ORDERS = {
+  d17:     ["playerOld","input","anim","follow","local","world"],
+  f45:     ["input","playerNoDirty","anim","follow","local","world"],
+  f4558:   ["input","player","anim","follow","local","world"],
+  s13full: ["input","player","anim","local","world","follow","local","world"],
+  s13:     ["input","player","anim","local","world","follow","local","worldCams"],
+  l62:     ["input","player","player","anim","local","world","follow","local","worldCams"]
+};
+const LABEL = {
+  input:["BuildInputState",""], playerOld:["PlayerInput (ne lit rien)","x"], playerNoDirty:["PlayerInput (sans m_dirty)","x"],
+  player:["PlayerInput","w"], anim:["Animation (simDt)","w"], local:["LocalTransform","b"], world:["WorldTransform (N)","b"],
+  worldCams:["WorldTransform (caméras)","b"], follow:["CameraFollow","c"]
+};
+let S;
+function fReset(){
+  S = { frame:0, log:[],
+    ship:{loc:{x:f(64),z:f(0)}, dirty:true, lm:{x:0,z:0}, w:{x:0,z:0}},
+    cam:{loc:{x:0,z:0}, dirty:true, lm:{x:0,z:0}, w:{x:0,z:0}, init:false, sm:{x:0,z:0}},
+    lastOrder:[], dirtied:false };
+  fDraw();
+}
+function fStep(){
+  const ver = $("fVer").value, smooth = +$("fSmooth").value, W = $("fW").checked;
+  const sh = S.ship, cm = S.cam; S.dirtied = false;
+  const sys = {
+    input(){},
+    playerOld(){ sh.loc.x = f(sh.loc.x + f(V*DT)); },
+    playerNoDirty(){ if (W) sh.loc.z = f(sh.loc.z - f(V*DT)); },
+    player(){ if (W) { sh.loc.z = f(sh.loc.z - f(V*DT)); sh.dirty = true; S.dirtied = true; } },
+    anim(){},
+    local(){ for (const e of [sh, cm]) if (e.dirty) { e.lm = {x:e.loc.x, z:e.loc.z}; e.dirty = false; } },
+    world(){ sh.w = {...sh.lm}; cm.w = {...cm.lm}; },
+    worldCams(){ cm.w = {...cm.lm}; },
+    follow(){
+      const wanted = {x:sh.w.x, z:f(sh.w.z + OFFZ)};
+      if (!cm.init){ cm.sm = {...wanted}; cm.init = true; }
+      else if (smooth <= 0) cm.sm = {...wanted};
+      else { const t = f(1 - Math.exp(-smooth*DT));
+        cm.sm = {x:f(cm.sm.x + f(t*f(wanted.x - cm.sm.x))), z:f(cm.sm.z + f(t*f(wanted.z - cm.sm.z)))}; }
+      cm.loc = {...cm.sm}; cm.dirty = true;
+    }
+  };
+  for (const s of ORDERS[ver]) sys[s]();
+  S.lastOrder = ORDERS[ver]; S.frame++;
+  const d = Math.hypot(f(cm.w.x - sh.w.x), f(cm.w.z - sh.w.z));
+  S.log.push(`f ${String(S.frame).padStart(3)} | m_local (${fmt(sh.loc.x,2)} ; ${fmt(sh.loc.z,3)})  monde (${fmt(sh.w.x,2)} ; ${fmt(sh.w.z,3)})  caméra z ${fmt(cm.w.z,3)} | distance ${fmt(d,3)}`);
+  if (S.log.length > 6) S.log.shift();
+  fDraw();
+}
+function fDraw(){
+  const cv = $("fCanvas"), {g, w, h} = fit(cv, 300);
+  const sh = S.ship, cm = S.cam, Sx = 26, cx = w*0.32, cy = h*0.5;
+  const ref = sh.w;
+  const P = p => ({x: cx - (p.z - ref.z)*Sx, y: cy + (p.x - ref.x)*Sx});
+  g.clearRect(0,0,w,h);
+  g.strokeStyle = css("--line"); g.lineWidth = 1;
+  const z0 = Math.floor(ref.z - (w - cx)/Sx) - 1, z1 = Math.ceil(ref.z + cx/Sx) + 1;
+  for (let z = z0; z <= z1; z++){ const x = cx - (z - ref.z)*Sx; g.beginPath(); g.moveTo(x,0); g.lineTo(x,h); g.stroke(); }
+  g.fillStyle = css("--ink3"); g.font = "11px ui-monospace, monospace";
+  g.fillText("← +Z            vue de dessus, une case = 1 u            −Z (Forward) →", 10, h-10);
+  const clampP = (p) => ({x: Math.max(12, Math.min(w-12, p.x)), y: Math.max(12, Math.min(h-24, p.y)), off: p.x<12||p.x>w-12||p.y<12||p.y>h-24});
+  // place voulue
+  const want = clampP(P({x:sh.w.x, z:f(sh.w.z+OFFZ)}));
+  g.setLineDash([4,3]); g.strokeStyle = css("--cam"); g.beginPath(); g.arc(want.x, want.y, 11, 0, 7); g.stroke(); g.setLineDash([]);
+  // fantôme m_local
+  const gp = clampP(P(sh.loc));
+  g.fillStyle = css("--ghost"); g.globalAlpha = .55; g.beginPath(); g.arc(gp.x, gp.y, 9, 0, 7); g.fill(); g.globalAlpha = 1;
+  if (gp.off){ g.fillText("m_local hors champ", Math.min(gp.x, w-120), gp.y + 22); }
+  // vaisseau
+  const sp = P(sh.w);
+  g.fillStyle = css("--ship"); g.beginPath(); g.moveTo(sp.x+13, sp.y); g.lineTo(sp.x-9, sp.y-8); g.lineTo(sp.x-9, sp.y+8); g.closePath(); g.fill();
+  // caméra
+  const cp = clampP(P(cm.w));
+  g.strokeStyle = css("--cam"); g.lineWidth = 1.5; g.beginPath(); g.moveTo(sp.x, sp.y); g.lineTo(cp.x, cp.y); g.stroke();
+  g.fillStyle = css("--cam"); g.fillRect(cp.x-7, cp.y-7, 14, 14);
+  if (cp.off) { g.fillStyle = css("--ink2"); g.fillText("caméra hors champ", Math.min(cp.x, w-120), cp.y + 24); }
+  // frise
+  $("fFrise").innerHTML = (S.lastOrder.length ? S.lastOrder : ORDERS[$("fVer").value]).map(s => `<span class="${LABEL[s][1]}">${LABEL[s][0]}</span>`).join("") + `<span class="r">Vues, rendu</span>`;
+  const d = Math.hypot(f(cm.w.x - sh.w.x), f(cm.w.z - sh.w.z));
+  const ok = Math.abs(d - 6) < 1e-4, near = Math.abs(d-6) < 0.5;
+  $("fStats").innerHTML = `
+    <div><div class="k">m_local du vaisseau</div><div class="v">${fmt(sh.loc.x,2)} ; ${fmt(sh.loc.z,3)}</div></div>
+    <div><div class="k">monde du vaisseau (dessiné)</div><div class="v ${(sh.loc.x!==sh.w.x||sh.loc.z!==sh.w.z)&&S.frame>0?'bad':''}">${fmt(sh.w.x,2)} ; ${fmt(sh.w.z,3)}</div></div>
+    <div><div class="k">m_dirty levé cette frame</div><div class="v">${S.frame? (S.dirtied?'oui':'non') : '—'}</div></div>
+    <div><div class="k">distance caméra-vaisseau au rendu</div><div class="v ${S.frame?(ok?'ok':(near?'warn':'bad')):''}">${S.frame?fmt(d,3):'—'} <span class="small">attendu 6,000</span></div></div>`;
+  $("fLog").textContent = S.log.join("\n") || "Appuie sur « Frame suivante » ou « Lecture ».";
+  $("fFrameLbl").textContent = "frame " + S.frame;
+}
+let fRAF = 0;
+function fLoop(){ fStep(); if (S.frame > 3600) fReset(); fRAF = requestAnimationFrame(fLoop); }
+$("fStep").addEventListener("click", fStep);
+$("fReset").addEventListener("click", fReset);
+$("fPlay").addEventListener("click", e => {
+  const on = e.currentTarget.getAttribute("aria-pressed") !== "true";
+  e.currentTarget.setAttribute("aria-pressed", on); e.currentTarget.textContent = on ? "Pause" : "Lecture";
+  if (on) fRAF = requestAnimationFrame(fLoop); else cancelAnimationFrame(fRAF);
+});
+["fVer","fSmooth"].forEach(id => $(id).addEventListener("change", fReset));
+$("fW").addEventListener("change", fDraw);
+fReset();
+for (let i = 0; i < 3; i++) fStep();
+
+/* ═══════════ 1.2 · deux horloges ═══════════ */
+const T = { ts:0.2, paused:false, sim:0, moon:0, shipX:0, queue:[], frame:0, log:[], last:0, brk:false, realDt:0, simDt:0, watch:0 };
+function tCmd(c){ T.queue.push(c); }
+function tFrame(now){
+  let realDt = T.last ? (now - T.last)/1000 : 1/60; T.last = now;
+  realDt = Math.min(realDt, 0.25);
+  if (T.brk){ realDt = 2.5; T.brk = false; T.watch = 3; }
+  if ($("tClamp").checked) realDt = Math.min(realDt, 0.1);
+  realDt = f(realDt);
+  const simDt = T.paused ? 0 : f(realDt * T.ts);          // _clock.Advance
+  T.sim += simDt; T.moon = (T.moon + simDt * 1.0) % (2*Math.PI);
+  const before = T.paused, cmds = T.queue.splice(0);          // BuildInputState
+  for (const c of cmds){
+    const k = $("tShift").checked ? 4 : 1.5;
+    if (c === "P") T.paused = !T.paused;
+    if (c === "^") T.ts = Math.min(1000, T.ts * k);
+    if (c === "$") T.ts = Math.max(0.001, T.ts / k);
+    if (c === "0") T.ts = 0.2;
+  }
+  const dtPlayer = $("tWrong").checked ? simDt : realDt;     // PlayerInputSystem
+  T.shipX = (T.shipX + 12 * dtPlayer);
+  T.frame++; T.realDt = realDt; T.simDt = simDt;
+  if (cmds.length) { T.watch = 2; T.log.push(`frame ${T.frame} : Advance(${fmt(realDt,4)} s) → simDt ${fmt(simDt,5)} j ; puis BuildInputState lit [${cmds.join(" ")}] → pause ${T.paused?"oui":"non"}, échelle ${fmt(T.ts,3)}`); }
+  else if (T.watch > 0) { T.watch--; T.log.push(`frame ${T.frame} : Advance(${fmt(realDt,4)} s) → simDt ${fmt(simDt,5)} j${realDt>=0.1-1e-6?"  (clamp)":""}  ← la commande agit ici`); }
+  if (T.log.length > 8) T.log.splice(0, T.log.length - 8);
+  tDraw();
+}
+function tDraw(){
+  const {g, w, h} = fit($("tCanvas"), 230);
+  g.clearRect(0,0,w,h);
+  const ox = Math.min(150, w*0.25), oy = h/2, r = 70;
+  g.strokeStyle = css("--line"); g.beginPath(); g.arc(ox, oy, r, 0, 7); g.stroke();
+  g.fillStyle = css("--warn"); g.beginPath(); g.arc(ox, oy, 12, 0, 7); g.fill();
+  g.fillStyle = css("--planet"); g.beginPath(); g.arc(ox + r*Math.cos(T.moon), oy - r*Math.sin(T.moon), 8, 0, 7); g.fill();
+  g.fillStyle = css("--ink3"); g.font = "11px ui-monospace, monospace";
+  g.fillText("AnimationSystem (simDt)", ox - 70, h - 10);
+  const x0 = ox + r + 40, x1 = w - 20, L = x1 - x0;
+  g.strokeStyle = css("--line"); g.beginPath(); g.moveTo(x0, oy); g.lineTo(x1, oy); g.stroke();
+  const sx = x0 + ((T.shipX * 8) % L + L) % L;
+  g.fillStyle = css("--ship"); g.beginPath(); g.moveTo(sx+12, oy); g.lineTo(sx-8, oy-8); g.lineTo(sx-8, oy+8); g.closePath(); g.fill();
+  g.fillStyle = css("--ink3"); g.fillText("PlayerInputSystem (" + ($("tWrong").checked ? "simDt : contre-exemple" : "realDt") + ")", x0, h - 10);
+  const vEff = $("tWrong").checked ? (T.paused ? 0 : 12*T.ts) : 12;
+  $("tStats").innerHTML = `
+    <div><div class="k">realDt</div><div class="v">${fmt(T.realDt*1000,1)} ms</div></div>
+    <div><div class="k">simDt</div><div class="v">${fmt(T.simDt,5)} j</div></div>
+    <div><div class="k">échelle</div><div class="v">${fmt(T.ts,3)} j/s</div></div>
+    <div><div class="k">pause</div><div class="v ${T.paused?'warn':''}">${T.paused?'oui':'non'}</div></div>
+    <div><div class="k">date simulée</div><div class="v">${fmt(T.sim,3)} j</div></div>
+    <div><div class="k">vitesse du vaisseau</div><div class="v ${vEff!==12?'bad':'ok'}">${fmt(vEff,1)} u/s</div></div>`;
+  $("tLog").textContent = T.log.join("\n") || "Appuie sur une commande : le journal montre à quelle frame elle prend effet.";
+  $("tPause").setAttribute("aria-pressed", T.paused);
+}
+let tRAF = 0, tVisible = true;
+function tLoop(now){ tFrame(now); tRAF = requestAnimationFrame(tLoop); }
+$("tPause").addEventListener("click", () => tCmd("P"));
+$("tUp").addEventListener("click", () => tCmd("^"));
+$("tDown").addEventListener("click", () => tCmd("$"));
+$("tReset").addEventListener("click", () => tCmd("0"));
+$("tBreak").addEventListener("click", () => { T.brk = true; });
+$("tWrong").addEventListener("change", tDraw);
+if ("IntersectionObserver" in window){
+  new IntersectionObserver(es => { for (const e of es){ tVisible = e.isIntersecting;
+    if (tVisible && !reduce){ T.last = 0; cancelAnimationFrame(tRAF); tRAF = requestAnimationFrame(tLoop); } else cancelAnimationFrame(tRAF); } }).observe($("tCanvas"));
+} else if (!reduce) tRAF = requestAnimationFrame(tLoop);
+tDraw();
+if (reduce) { for (let i=0;i<30;i++) tFrame(i*16.7); }
+
+/* ═══════════ 1.3 · racine de contenu ═══════════ */
+function rCompute(){
+  const env = $("rEnv").value, arg = $("rArg").value, debug = $("rDebug").checked, proj = $("rProj").checked, exe = $("rExe").checked;
+  const projOK = debug && proj;
+  const N = {E:"E — variable d’environnement", A:"A — racine en argument", P:"P — dossier du projet", X:"X — copie à côté de l’exe"};
+  let want = env !== "none" ? "E" : arg !== "none" ? "A" : debug ? "P" : "X";
+  function old(){ if (env==="ok") return "E"; if (exe) return "X"; if (arg==="ok") return "A"; if (projOK) return "P"; return null; }
+  function a63(){ if (env==="ok") return "E"; if (arg==="ok") return "A"; if (projOK) return "P"; if (exe) return "X"; return null; }
+  function today(){ if (env==="bad") return "STOP_E"; if (arg==="bad") return "STOP_A"; return a63(); }
+  function verdict(r){
+    if (r === "STOP_E") return ['<span class="pill ok">arrêt explicite</span>', "LV3_CONTENT_ROOT posée mais invalide : erreur, aucun repli"];
+    if (r === "STOP_A") return ['<span class="pill ok">arrêt explicite</span>', "racine passée en argument invalide : erreur, aucun repli"];
+    if (r === null) return ['<span class="pill bad">aucune racine</span>', "liste des essais dans le journal, arrêt"];
+    if (r === want) return ['<span class="pill ok">attendu</span>', N[r]];
+    if (r === "X" && want === "P") return ['<span class="pill bad">copie périmée</span>', N[r] + " — les JSON modifiés dans le projet sont ignorés (bug 63)"];
+    if (want === "E" || want === "A") return ['<span class="pill bad">intention ignorée</span>', N[r] + " — " + N[want] + " sautée en silence"];
+    return ['<span class="pill warn">repli</span>', N[r]];
+  }
+  const rows = [["avant 63 (17/09)", old()], ["après 63 (18/09)", a63()], ["aujourd’hui (63 + 68)", today()]];
+  $("rTable").innerHTML = `<thead><tr><th>Version</th><th>Verdict</th><th>Racine retenue</th></tr></thead><tbody>` +
+    rows.map(([v, r]) => { const [p, t] = verdict(r); return `<tr><td>${v}</td><td>${p}</td><td>${t}</td></tr>`; }).join("") +
+    `</tbody><caption style="caption-side:bottom; text-align:left; padding-top:6px" class="small">Intention de l’opérateur dans cette situation : ${N[want]}.</caption>`;
+}
+["rEnv","rArg","rDebug","rProj","rExe"].forEach(id => $(id).addEventListener("change", rCompute));
+rCompute();
+
+/* ═══════════ 1.4 · offset et followRotation ═══════════ */
+function rotY(v, deg){ const a = deg*Math.PI/180, c = Math.cos(a), s = Math.sin(a); return {x: v.x*c + v.z*s, z: -v.x*s + v.z*c}; }
+function oDraw(){
+  const yaw = +$("oYaw").value, oz = +$("oZ").value, rot = $("oRot").checked, par = +$("oPar").value;
+  $("oYawV").textContent = yaw + "°"; $("oZV").textContent = String(oz).replace('.', ',').replace('-', '−'); $("oParV").textContent = par + "°";
+  const worldYaw = yaw + par, off = {x:0, z:oz};
+  const code = rot ? rotY(off, yaw) : off;              // tgt->m_local.rotation.rotate(offset)
+  const ideal = rot ? rotY(off, worldYaw) : off;        // rotation monde
+  const nose = rotY({x:0, z:-1}, worldYaw);
+  const {g, w, h} = fit($("oCanvas"), 380), cx = w/2, cy = h/2, Sc = Math.min(w, h)/26;
+  const P = p => ({x: cx + p.x*Sc, y: cy + p.z*Sc});
+  g.clearRect(0,0,w,h);
+  g.strokeStyle = css("--line"); g.lineWidth = 1;
+  for (let i = -12; i <= 12; i += 2){ g.beginPath(); g.moveTo(cx+i*Sc, 0); g.lineTo(cx+i*Sc, h); g.stroke(); g.beginPath(); g.moveTo(0, cy+i*Sc); g.lineTo(w, cy+i*Sc); g.stroke(); }
+  g.fillStyle = css("--ink3"); g.font = "11px ui-monospace, monospace";
+  g.fillText("−Z ↑", cx + 6, 14); g.fillText("+X →", w - 40, cy - 6);
+  if (par){ g.strokeStyle = css("--planet"); g.setLineDash([3,4]); g.beginPath(); g.arc(cx, cy, 2.2*Sc, 0, 7); g.stroke(); g.setLineDash([]); g.fillStyle = css("--planet"); g.fillText("station (parent) tournée de " + par + "°", 10, h - 12); }
+  // vaisseau
+  const tip = P({x: nose.x*2, z: nose.z*2}), left = rotY({x:-1, z:1.1}, worldYaw), right = rotY({x:1, z:1.1}, worldYaw);
+  g.fillStyle = css("--ship"); g.beginPath(); g.moveTo(tip.x, tip.y); const L = P(left), R = P(right); g.lineTo(L.x, L.y); g.lineTo(R.x, R.y); g.closePath(); g.fill();
+  g.strokeStyle = css("--ship"); g.beginPath(); g.moveTo(cx, cy); const n3 = P({x:nose.x*4, z:nose.z*4}); g.lineTo(n3.x, n3.y); g.stroke();
+  g.fillStyle = css("--ship"); g.fillText("nez", n3.x + 8, n3.y - 6);
+  // caméras
+  const ip = P(ideal); g.strokeStyle = css("--ok"); g.setLineDash([4,3]); g.beginPath(); g.arc(ip.x, ip.y, 10, 0, 7); g.stroke(); g.setLineDash([]);
+  const cp = P(code); g.fillStyle = css("--cam"); g.fillRect(cp.x-7, cp.y-7, 14, 14);
+  g.strokeStyle = css("--cam"); g.beginPath(); g.moveTo(cp.x, cp.y); g.lineTo(cx, cy); g.stroke();
+  const side = code.x*nose.x + code.z*nose.z;
+  const err = Math.hypot(code.x-ideal.x, code.z-ideal.z);
+  $("oStats").innerHTML = `
+    <div><div class="k">lacet monde du vaisseau</div><div class="v">${worldYaw}°</div></div>
+    <div><div class="k">caméra par rapport au nez</div><div class="v ${side>0?'warn':'ok'}">${Math.abs(side)<1e-6?'à côté':(side>0?'devant':'derrière')}</div></div>
+    <div><div class="k">offset tourné par le code</div><div class="v">${fmt(code.x,2)} ; ${fmt(code.z,2)}</div></div>
+    <div><div class="k">écart avec la rotation monde</div><div class="v ${err>1e-6?'bad':'ok'}">${fmt(err,2)} u</div></div>`;
+}
+["oYaw","oZ","oRot","oPar"].forEach(id => $(id).addEventListener("input", oDraw));
+
+/* ═══════════ 1.5 · coût ═══════════ */
+function cCompute(){
+  const N = Math.round(Math.pow(10, +$("cN").value)), Vv = +$("cV").value, C = Math.max(+$("cC").value, Vv), g1 = $("cG").checked ? 2 : 1;
+  $("cNV").textContent = N.toLocaleString("fr-FR");
+  const rows = [
+    ["Une cuisson (avant 65)", N, N, '<span class="pill bad">caméras en retard d’une frame</span>'],
+    ["Deux cuissons complètes (refusé)", 2*N, 2*N, '<span class="pill ok">juste</span>'],
+    ["Complète + ciblée sur les caméras rendues (retenu)", N + Vv*g1, 2*N, '<span class="pill warn">juste pour les caméras rendues (PH1D-2)</span>'],
+    ["Complète + ciblée sur toutes les caméras (PH1D-2)", N + C*g1, 2*N, '<span class="pill ok">juste</span>'],
+    ["… + liste des sales au lieu du parcours (PH1D-3)", N + C*g1, N + C*g1, '<span class="pill ok">juste</span>']
+  ];
+  $("cTable").innerHTML = `<thead><tr><th>Version</th><th class="num">produits (cuissons World)</th><th class="num">flottants (×112)</th><th class="num">tests m_dirty (cuissons Local)</th><th>Résultat</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${r[0]}</td><td class="num">${r[1].toLocaleString("fr-FR")}</td><td class="num">${(r[1]*112).toLocaleString("fr-FR")}</td><td class="num">${r[2].toLocaleString("fr-FR")}</td><td>${r[3]}</td></tr>`).join("") + `</tbody>`;
+}
+["cN","cV","cC","cG"].forEach(id => $(id).addEventListener("input", cCompute));
+cCompute();
+
+function redrawAll(){ fDraw(); tDraw(); oDraw(); }
+window.addEventListener("resize", redrawAll);
+if (window.matchMedia) window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
+oDraw();
+})();
+</script>
+</body></html>

@@ -79,9 +79,21 @@ summary{cursor:pointer;font-weight:600}
   <div class="ctl"><button class="p" id="btnExport">Exporter en HTML (rejouer hors ligne)</button><span class="small" id="expMsg"></span></div>
 </header>
 <nav class="bar">
-  <a href="#pourquoi">1 · Pourquoi ce lot</a><a href="#methode">2 · La méthode</a><a href="#labo">3 · Laboratoire</a><a href="#avantapres">4 · Avant / après</a><a href="#technique">5 · Fonctionnement</a><a href="#etapes">6 · Pas à pas</a><a href="#fond">7 · Questions de fond</a><a href="#roadmap">8 · Roadmap &amp; écarts</a>
+  <a href="#vue">0 · Vue d’ensemble</a><a href="#pourquoi">1 · Pourquoi ce lot</a><a href="#methode">2 · La méthode</a><a href="#labo">3 · Laboratoire</a><a href="#avantapres">4 · Avant / après</a><a href="#technique">5 · Fonctionnement</a><a href="#etapes">6 · Pas à pas</a><a href="#fond">7 · Questions de fond</a><a href="#roadmap">8 · Roadmap &amp; écarts</a>
 </nav>
 <main>
+
+<section id="vue">
+<h2>0 · Vue d’ensemble : où se place ce lot dans le moteur</h2>
+<p>Le moteur est devenu dense : avant d’entrer dans ce lot, voici le moteur entier, de son démarrage à sa fermeture, avec la place du lot en surbrillance. La section 0.2 détaille ensuite, fonction par fonction, ce que le lot ajoute, modifie ou supprime.</p>
+<h3>0.1 · Algorithme global du moteur</h3>
+<div id="globalOut"></div>
+<h3>Carte des fichiers</h3>
+<div id="filesOut"></div>
+<p class="small">Ordre « par frame » d’après la règle S13 (numéro provisoire) et l’avenant A12a ; noms et emplacements des fichiers tels qu’ils apparaissent dans les annexes, à confirmer sur le dépôt.</p>
+<h3>0.2 · Algorithme détaillé de l’apport du lot</h3>
+<div id="apportOut"></div>
+</section>
 
 <section id="pourquoi">
 <h2>1 · Pourquoi ce lot existe</h2>
@@ -1262,6 +1274,134 @@ function roadHtml() {
 <div class="note">Les points <b>HIER-1</b> et <b>TRIG-1</b> sont les deux seuls qui touchent du code déjà livré avec un risque réel, mais ils s’appuient sur des fichiers plus anciens que plusieurs correctifs du Carnet de route (<code>NULL_ENTITY</code> déjà utilisé par <code>DestroyHierarchy</code>, <code>TriggerComponent</code> enrichi d’un <code>role</code>) : <b>vérifier sur le dépôt actuel avant d’agir</b>. Les autres lignes sont de la documentation, du nettoyage ou des décisions d’architecture futures. La même liste, numérotée L3-n, est fournie sous forme de section à coller dans <code>Plan_Phase_G_LibraryV3.md</code>.</div>`;
 }
 
+/* ====================== §0 VUE D'ENSEMBLE ====================== */
+/* Chaque étape : [phase, n°, titre, fonctions/systèmes, lots, rôle de L03 ('★' apport direct, '◦' consommateur, '' aucun), détail L03] */
+const GLOBAL = [
+ ['Démarrage', 'D1', 'Build et configuration', '<code>config.h</code>, <code>pch.h</code>, <code>Compiler.h</code>, <code>Platform.h</code>, <code>LV3.Common.props</code>', ['L01', 'A10'], '', ''],
+ ['Démarrage', 'D2', 'Lecture de la configuration moteur', '<code>ResolveContentRoot</code>, <code>JsonReader</code>, <code>EngineConfig::LoadFromJson</code> (<code>engine.json</code>)', ['A6'], '', ''],
+ ['Démarrage', 'D3', 'Création du <code>Registry</code> et du <code>ResourceManager</code>', 'entités versionnées, pools <code>SparseSet&lt;T&gt;</code> créés à la demande, caches de ressources', ['L03'], '★', 'Les deux objets que tout le reste du moteur interroge : identité des objets, stockage des composants, propriété des ressources.'],
+ ['Démarrage', 'D4', 'Chargement de la scène', '<code>SceneSerializer::LoadSceneGraph</code> → <code>CreateEntity</code>, <code>emplaceComponent</code>, <code>LoadMesh</code> (→ <code>OBJLoader</code>, <code>MTLLoader</code>), liens de hiérarchie', ['L03', 'A17', 'A18', 'A6'], '★', 'Chaque nœud JSON devient une entité ; chaque composant est construit à sa place finale (Emplace) ; un mesh n’est chargé qu’une fois (clé canonique) et le composant n’en garde qu’un handle.'],
+ ['Démarrage', 'D5', 'Ressources de debug et tampons', '<code>GizmoAssets</code>, <code>FrameBuffer</code>, <code>DepthBuffer</code>, <code>RasterSpaceBuffer</code>, <code>ClipSpaceBuffer</code>', ['A5', 'L04', 'C4'], '◦', 'Les gizmos sont des meshes du ResourceManager, référencés par handle.'],
+ ['Par frame', 'F1', 'Temps : <code>realDt</code> borné, horloge de simulation', '<code>SimulationClock::Advance</code> → <code>simDt</code>', ['S13', 'A7'], '', ''],
+ ['Par frame', 'F2', 'Entrées de la frame', '<code>BuildInputState</code> → <code>InputState</code>', ['L05', 'S13'], '', ''],
+ ['Par frame', 'F3', 'Systèmes du monde (écrivent <code>m_local</code>, lèvent <code>m_dirty</code>)', '<code>PlayerInputSystem</code> (<code>realDt</code>), <code>AnimationSystem</code> (<code>simDt</code>)', ['L03', 'L05', 'R11bis'], '◦', 'Itèrent par <code>ViewGroup</code> : pivot minimal, pointeurs typés capturés, itérateur proxy (<code>auto&amp;&amp;</code>).'],
+ ['Par frame', 'F4', 'Cuisson n°1 des matrices (toute la scène)', '<code>LocalTransformSystem</code> (pool dense) puis <code>WorldTransformSystem</code> (hiérarchie)', ['L03', 'L05', 'A8'], '◦', 'Parcourt le dense des Transform (cache) ; descend la hiérarchie par référence, sans copier <code>HierarchyComponent</code> (F6).'],
+ ['Par frame', 'F5', 'Caméras (lisent les matrices fraîches, écrivent <code>m_local</code> des caméras)', 'FPS / Follow / Zoom, sélection, <code>BuildCameraBindings</code>, <code>BuildLayout</code>, <code>CameraGizmoSystem</code>', ['L05', 'A5', 'A7', 'A9', 'A11'], '◦', 'L’entité caméra active est un handle conservé entre deux frames : <code>IsAlive</code> dit s’il est encore valable.'],
+ ['Par frame', 'F6', 'Cuisson n°2, ciblée (caméras rendues seulement)', '<code>LocalTransformSystem</code> (dirty seulement), <code>WorldTransformSystem(roots)</code>', ['S13'], '◦', ''],
+ ['Par frame', 'F7', 'Déclencheurs et événements', '<code>TriggerSystem</code>, <code>EventBus</code> → <code>HealthSystem</code>, <code>AudioSystem</code>', ['L03', 'bug 62'], '◦', 'Stocke des handles d’autres entités d’une frame à l’autre : exactement le cas que le versionnage protège.'],
+ ['Par frame', 'F8', 'Construction des vues', '<code>BuildViewData</code> (une fois par vue : V, P, V·P, frustum)', ['L05', 'A11', 'A16', 'A20'], '◦', ''],
+ ['Par frame', 'F9', 'Effacement des tampons', '<code>Clean_Render</code> + <code>Renderer::BeginFrame</code>', ['A15'], '', ''],
+ ['Par frame', 'F10', 'Par vue × par instance : filtre, frustum, LOD, constantes', '<code>RenderView</code> : <code>m_hideForCamera</code>, <code>Frustum::Classify</code>, choix du LOD, <code>mvp</code> ; <b>résolution <code>GetMesh(handle)</code></b>', ['L05', 'A13', 'A14', 'L03'], '★', 'Le seul endroit où le handle du <code>MeshComponent</code> devient un <code>MeshClass*</code> ; garde « pointeur nul → instance ignorée ».'],
+ ['Par frame', 'F11', 'Étage sommets (par sommet)', '<code>ProjectPositions</code> (Inside, AVX2) / <code>TransformPositions</code> (Intersect)', ['C2', 'C4', 'B'], '', ''],
+ ['Par frame', 'F12', 'Assemblage, clipping near, aval unique', '<code>ClipTriangleNear</code>, <code>ProjectClip</code>, <code>EmitRasterTriangle</code> (backface, rejet 3b)', ['L04', 'C3'], '', ''],
+ ['Par frame', 'F13', 'Rasterisation, fragment, profondeur', '<code>RasterizeTriangle</code> (arêtes Giesen, barycentriques), <code>ShadeFragment_*</code>, test reverse-Z', ['L04', 'D-a1', 'D-a1b', 'L02-C'], '', ''],
+ ['Par frame', 'F14', 'Présentation et outils', 'copie vers la fenêtre ; <code>DrawHierarchySystem</code> si <code>LV3_DUMP_HIERARCHY</code>', ['Carnet 0.2', 'L03'], '◦', 'Le dump de hiérarchie parcourt les entités vivantes par <code>ForEachAlive</code> (F6), jamais par une boucle d’index.'],
+ ['Fin', 'X1', 'Destruction déterministe (RAII)', '<code>~ResourceManager()</code> → <code>UnloadAll()</code> ; le <code>Registry</code> libère ses pools (<code>unique_ptr</code>)', ['L03'], '★', 'Aucune fuite, aucun appel manuel : le langage garantit l’ordre et le moment.']
+];
+const FILES = [
+ ['Core / socle', '<code>config.h</code>, <code>pch.h</code>, <code>Compiler.h</code>, <code>Platform.h</code>, <code>EngineSettings.h</code>, <code>ContentRoot.cpp</code>, <code>EventBus.hpp</code>', 'L01, A10, A6', ''],
+ ['Maths', '<code>Vectorlib.h</code>, <code>MatrixLib.h</code>, <code>QuaternionLib.h</code>, <code>MathTypes.h</code>, <code>Projection.h</code>', 'L02, L02-C, L05', ''],
+ ['Scene — identité et stockage', '<code>Entity.hpp</code>, <code>SparseSet.hpp</code>, <code>Registry.hpp</code>', '<b>L03</b>', '★'],
+ ['Scene — composants et systèmes', '<code>Components/Component.hpp</code>, <code>System.hpp</code>, <code>System.cpp</code>, <code>Hierarchy.cpp</code>', '<b>L03</b> (composants, hygiène), L05, A5, bug 53', '◦'],
+ ['Scene — chargement', '<code>Serializer.cpp</code>, <code>JsonReader</code>', '<b>L03</b> (ParseMesh, Emplace), A6, A17', '◦'],
+ ['Ressources', '<code>ResourceManager.h/.cpp</code>, <code>ResourceHandle.h</code>', '<b>L03</b> (F5), A18', '★'],
+ ['Ressources — chargeurs et géométrie', '<code>OBJLoader</code>, <code>MTLLoader</code>, <code>MeshClass.h</code>, <code>SubMesh.h</code>, <code>Material.h</code>', 'A18, A13', ''],
+ ['Caméras et vues', '<code>CameraBinding.CPP</code>, <code>ViewData.h</code>, <code>Frustum.cpp</code>, <code>DebugGizmos.cpp</code>', 'L05, A5, A9, A11', ''],
+ ['Rendu', '<code>RenderSystem.cpp</code>, <code>VertexStage.cpp/.h</code>, <code>Clipper.cpp</code>, <code>Rasterizer.cpp</code>, <code>Fragment.cpp/.h</code>, <code>Renderer.h</code>, <code>FrameBuffer.h</code>, <code>DepthBuffer.h</code>', 'L04, chantiers B, C, D, A15 ; <b>L03</b> pour <code>GetMesh</code> dans <code>RenderView</code>', '◦'],
+ ['Application (EXE)', '<code>main.cpp</code>, tests (<code>Test/…</code>)', 'S13, tests TNR', '']
+];
+const LOTSEL = ['L03', 'L01', 'L02', 'L04', 'L05', 'A5', 'A6', 'A13', 'A15', 'C4', 'S13'];
+function globalHtml(sel) {
+  const mark = r => sel === 'L03' ? r[5] !== '' : r[4].some(l => l === sel || l.startsWith(sel));
+  let h = `<div class="ctl"><label>Mettre en surbrillance <select id="gSel">${LOTSEL.map(l => '<option' + (l === sel ? ' selected' : '') + '>' + l + '</option>').join('')}</select></label><span class="small">★ = apport direct du lot · ◦ = utilise les structures du lot · clique une ligne pour le détail</span></div>`;
+  h += `<div class="${sel === 'L03' ? 'good' : 'card'}" style="margin:6px 0 12px"><b>Couche « données de la scène »</b> — <code>Registry</code> (entités versionnées) · <code>SparseSet&lt;T&gt;</code> par type (sparse paginé, dense, miroir) · <code>ResourceManager</code> (meshes, matériaux, textures par handle). ${sel === 'L03' ? tag('C’EST CE LOT', 'ok') : ''}<br><span class="small">Elle n’apparaît pas comme une étape : toutes les étapes la lisent ou l’écrivent. C’est pour cela qu’une erreur ici se propage partout sans planter.</span></div>`;
+  let ph = '';
+  h += '<div class="scroll"><table><tr><th>#</th><th>Étape</th><th>Fonctions / systèmes</th><th>Lots</th><th>L03</th></tr>';
+  for (const r of GLOBAL) {
+    if (r[0] !== ph) { ph = r[0]; h += '<tr><th colspan="5" style="background:var(--surf2)">' + ph + (ph === 'Par frame' ? ' — ordre canonique S13 (numéro provisoire)' : '') + '</th></tr>'; }
+    const on = mark(r);
+    h += '<tr data-g="' + r[1] + '" style="cursor:pointer;' + (on ? 'background:var(--accbg);box-shadow:inset 3px 0 0 var(--acc)' : 'opacity:.72') + '"><td class="mono">' + r[1] + '</td><td>' + r[2] + '</td><td>' + r[3] + '</td><td>' + r[4].map(l => tag(l, l === 'L03' ? 'ok' : '')).join('') + '</td><td style="text-align:center;font-weight:600">' + r[5] + '</td></tr>';
+  }
+  h += '</table></div><div id="gDet" class="note">Clique une étape pour voir ce que ce lot y apporte.</div>';
+  return h;
+}
+function globalDetail(id) {
+  const r = GLOBAL.find(x => x[1] === id); if (!r) return '';
+  return '<b>' + r[1] + ' · ' + r[2] + '</b><br>' + r[3] + '<br>Lots : ' + r[4].join(', ') + '<br>' + (r[6] ? '<b>Ce que L03 y apporte :</b> ' + r[6] : '<span class="small">Étape sans lien direct avec ce lot.</span>');
+}
+function filesHtml() {
+  return '<div class="scroll"><table><tr><th>Zone</th><th>Fichiers</th><th>Lots / annexes</th><th>L03</th></tr>' + FILES.map(f => '<tr style="' + (f[3] === '★' ? 'background:var(--accbg);box-shadow:inset 3px 0 0 var(--acc)' : f[3] === '◦' ? 'background:var(--surf2)' : '') + '"><td>' + f[0] + '</td><td>' + f[1] + '</td><td>' + f[2] + '</td><td style="text-align:center;font-weight:600">' + f[3] + '</td></tr>').join('') + '</table></div>';
+}
+
+/* ---------- §0.2 Algorithme détaillé de l'apport du lot ---------- */
+/* nœud : [statut, signature, fichier, rôle] — statuts : add, mod, keep, del */
+const CHAINS = [
+ { t: 'Chaîne 1 — Créer une entité et lui donner des composants', n: [
+   ['mod', 'Entity CreateEntity()', 'Registry.hpp', 'recycle un slot (LIFO) et renvoie MakeEntity(index, génération)'],
+   ['add', 'MakeEntity / EntityIndex / EntityGeneration', 'Entity.hpp', 'découpage du ticket en index + génération'],
+   ['keep', 'getStorage<T>()', 'Registry.hpp', 'type → ID → slot de m_Storages, pool créé à la demande'],
+   ['add', 'emplaceComponent<T>(e, args…) → SparseSet::Emplace', 'Registry.hpp, SparseSet.hpp', 'construit le composant à sa place finale'],
+   ['mod', 'addComponent<T>(e, t) → SparseSet::Add', 'SparseSet.hpp', 'sparse indexé par EntityIndex ; assert « composant fantôme »'],
+   ['add', 'PagedSparseArray::Set', 'SparseSet.hpp', 'alloue la page de 4096 cases si besoin'],
+   ['del', 'EnsureSparseFits, MAX_ENTITIES_INIT', 'SparseSet.hpp', 'remplacés par la pagination']],
+   before: ['e = m_EntityCount++  ou  m_FreeEntities.pop()', '!handle = simple numéro, recyclé tel quel', 'pool = getStorage<T>()', 'pool.Add(e, composant)        // copie si lvalue nommée', '!EnsureSparseFits(e) ; m_Sparse[e] = taille(dense)', 'dense.push(composant) ; miroir.push(e)'],
+   after: ['idx = m_FreeIndices.pop()  ou  nouveau slot (génération 0)', '+handle = MakeEntity(idx, m_Generations[idx])', 'pool = getStorage<T>()', '+pool.Emplace(e, args…)        // une seule construction', '+m_Sparse.Set(EntityIndex(e), taille(dense))   // page allouée à la demande', 'dense.emplace_back(args…) ; miroir.push(e)   // miroir = handle COMPLET'] },
+ { t: 'Chaîne 2 — Lire un composant', n: [
+   ['mod', 'hasComponent<T>(e) → SparseSet::Contains(e)', 'SparseSet.hpp', 'renommé (B3) ; index extrait ; == sur handle complet'],
+   ['mod', 'getComponent<T>(e) → SparseSet::Get(e)', 'SparseSet.hpp', 'assert(Contains) ; sparse lu par EntityIndex'],
+   ['add', 'PagedSparseArray::Get', 'SparseSet.hpp', 'page absente → INVALID_INDEX'],
+   ['add', 'Registry::IsAlive(e)', 'Registry.hpp', 'génération du slot == génération du handle']],
+   before: ['!d = m_Sparse[e]                // e brut : hors limites dès génération ≥ 1', 'existe = d ≠ INVALID et miroir[d] == e', '!Get : renvoie dense[m_Sparse[e]] sans vérifier'],
+   after: ['+d = m_Sparse.Get(EntityIndex(e))', 'existe = d ≠ INVALID et d < taille et miroir[d] == e   // refuse un handle périmé', '+Get : assert(Contains(e)) puis dense[d]'] },
+ { t: 'Chaîne 3 — Itérer plusieurs composants', n: [
+   ['keep', 'ViewGroup<T…>() → ComponentView(…)', 'Registry.hpp', 'capture les pointeurs typés, choisit le plus petit pool'],
+   ['mod', 'Iterator::SkipInvalidEntities', 'Registry.hpp', 'fold && sur les pointeurs capturés'],
+   ['mod', 'Iterator::operator*', 'Registry.hpp', 'itérateur proxy : tuple renvoyé par valeur'],
+   ['del', 'mutable std::optional<value_type> m_currentTuple', 'Registry.hpp', 'contournement devenu inutile'],
+   ['mod', 'for (auto&& [e, a, b] : view)', 'System.cpp', 'auto&& obligatoire chez les appelants']],
+   before: ['pivot = plus petit pool (déjà correct)', 'pour chaque e du pivot :', '!   pour chaque T : registry.hasComponent<T>(e)   // GetTypeID + bornes + cast à CHAQUE entité', '!   *it : registry.getComponent<T>(e)… rangé dans un optional mutable, renvoyé par référence'],
+   after: ['pivot = plus petit pool', 'pour chaque e du pivot :', '+   tous = (s->Contains(e) && …) sur les pointeurs capturés', '+   *it : tuple{e, s->Get(e)…} renvoyé PAR VALEUR'] },
+ { t: 'Chaîne 4 — Détruire une entité', n: [
+   ['mod', 'DestroyEntity(e)', 'Registry.hpp', 'assert(IsAlive) ; incrémente la génération'],
+   ['keep', 'IComponentStorage::OnEntityDestroyed → Remove', 'SparseSet.hpp', 'retire le composant de chaque pool'],
+   ['mod', 'SparseSet::Remove', 'SparseSet.hpp', 'pas de self-move ; redirection par EntityIndex'],
+   ['add', 'ForEachAlive(fn), GetAliveCount()', 'Registry.hpp', 'remplacent les boucles 0..N et getEntityCount'],
+   ['del', 'getEntityCount(), m_FreeEntities, m_EntityCount', 'Registry.hpp', 'remplacés par m_Generations, m_Alive, m_FreeIndices']],
+   before: ['!(aucun contrôle)                       // détruire deux fois passe', 'pour chaque pool : OnEntityDestroyed(e)', '!m_FreeEntities.push(e)                // le même numéro resservira tel quel', 'Remove : déplacer le dernier dans le trou (même si c’est lui-même)'],
+   after: ['+assert(IsAlive(e)) ; si périmé : retour', 'pour chaque pool : OnEntityDestroyed(e)', '+++m_Generations[idx] ; m_Alive[idx] = faux ; m_FreeIndices.push(idx)', '+Remove : si to ≠ last { déplacer ; m_Sparse.Set(EntityIndex(dernier), to) }'] },
+ { t: 'Chaîne 5 — Composants et ressources', n: [
+   ['mod', 'MeshComponent { MeshHandle m_mesh; … }', 'Component.hpp', 'shared_ptr et string remplacés par un handle de 4 octets'],
+   ['mod', 'SceneSerializer::ParseMesh', 'Serializer.cpp', 'le handle chargé est enfin stocké (emplaceComponent)'],
+   ['add', 'LoadMeshChecked → expected<MeshHandle, EMeshLoadError>', 'ResourceManager.cpp', 'FileNotFound / ParseFailed explicites'],
+   ['mod', 'LoadMesh', 'ResourceManager.cpp', 'devient un adaptateur mince de LoadMeshChecked'],
+   ['add', 'CanonicalKey(chemin)', 'ResourceManager.cpp', 'weakly_canonical + generic_string, utilisé aussi par FindMesh / IsMeshLoaded'],
+   ['add', 'm_meshIdToPath', 'ResourceManager.h', 'miroir id → chemin'],
+   ['mod', 'UnloadMesh, UnloadAll', 'ResourceManager.cpp', 'O(1) via le miroir ; UnloadAll vide aussi le miroir'],
+   ['mod', 'RenderSystem(registry, camera, resourceManager)', 'System.cpp', 'GetMesh(handle) au point d’usage + garde pointeur nul']],
+   before: ['MeshComponent possède shared_ptr<MeshClass> + std::string texture', '!ParseMesh : h = LoadMesh(chemin) ; …  ajout du composant SANS h   // mesh perdu', '!LoadMesh : clé = chemin brut              // 3 écritures = 3 chargements', '!UnloadMesh : parcourir m_pathToMesh jusqu’à trouver h   // O(N)', 'RenderSystem : lit directement mesh.m_mesh'],
+   after: ['+MeshComponent porte MeshHandle (POD, trivially copyable)', '+ParseMesh : h = LoadMesh(…) ; emplaceComponent<MeshComponent>(e, h, …)', '+LoadMeshChecked : clé = CanonicalKey ; absent → unexpected(FileNotFound)', '+UnloadMesh : chemin = m_meshIdToPath[h.id] ; effacer les deux maps   // O(1)', '+RenderView : mesh = GetMesh(h) ; si nul → instance ignorée'] },
+ { t: 'Chaîne 6 — Hygiène des systèmes', n: [
+   ['mod', 'UpdateWorldTransforms', 'System.cpp', 'const auto& sur HierarchyComponent (plus de copie du vector d’enfants)'],
+   ['mod', 'DebugDisplaySystem', 'System.cpp', 'ForEachAlive au lieu d’une boucle d’index'],
+   ['keep', 'WorldTransformSystem', 'System.cpp', 'matrice racine jamais modifiée (vérifié)']],
+   before: ['!HierarchyComponent copie = getComponent(e)     // allocation à chaque nœud, chaque frame', '!pour e de 0 à GetAliveCount() : …               // handles de génération 0, faux après recyclage'],
+   after: ['+const auto& h = getComponent(e)', '+ForEachAlive([&](Entity e){ … })'] }
+];
+const ST = { add: ['ajouté', 'ok'], mod: ['modifié', 'w'], keep: ['inchangé', ''], del: ['supprimé', 'ko'] };
+function apportHtml() {
+  const cnt = { add: 0, mod: 0, keep: 0, del: 0 }; CHAINS.forEach(c => c.n.forEach(n => cnt[n[0]]++));
+  let h = '<p>Les six chaînes d’appels que le lot touche, dans l’ordre où une entité les traverse au cours de sa vie. Chaque nœud porte son statut ; à droite, l’algorithme <b>avant</b> et <b>après</b> le lot, lignes changées surlignées.</p>';
+  h += '<p>' + tag(cnt.add + ' ajoutés', 'ok') + tag(cnt.mod + ' modifiés', 'w') + tag(cnt.keep + ' inchangés') + tag(cnt.del + ' supprimés', 'ko') + '</p>';
+  for (const c of CHAINS) {
+    h += '<div class="card"><h3 style="margin-top:0">' + c.t + '</h3><div class="cols"><div>';
+    h += c.n.map((n, i) => '<div style="border:.5px solid var(--bd);border-radius:8px;padding:6px 10px;margin:0 0 4px;' + (n[0] === 'del' ? 'opacity:.7;text-decoration:line-through;' : '') + '">' + tag(ST[n[0]][0], ST[n[0]][1]) + '<code>' + esc(n[1]) + '</code><br><span class="small">' + esc(n[2]) + ' — ' + esc(n[3]) + '</span></div>' + (i < c.n.length - 1 ? '<div class="small" style="text-align:center">↓</div>' : '')).join('');
+    h += '</div><div><div class="lbl">Avant le lot</div><pre class="d">' + c.before.map(l => '<span class="' + (l[0] === '!' ? 'del' : '') + '">' + esc(l[0] === '!' ? l.slice(1) : l) + '</span>').join('') + '</pre>';
+    h += '<div class="lbl">Après le lot</div><pre class="d">' + c.after.map(l => '<span class="' + (l[0] === '+' ? 'add' : '') + '">' + esc(l[0] === '+' ? l.slice(1) : l) + '</span>').join('') + '</pre></div></div></div>';
+  }
+  h += '<div class="warn">Ce schéma décrit l’apport du lot tel que la leçon le construit. Le dépôt a évolué depuis sur deux points de ces chaînes (Carnet de route) : découpage de l’entité en 16/16 au lieu de 24/8 (chaîne 1, roadmap L3-1) et <code>DestroyEntity</code> protégé par <code>HasOutgoingLinks</code> avec <code>DestroyHierarchy</code> (chaîne 4, roadmap L3-17).</div>';
+  return h;
+}
+
 /* ====================== GLUE ====================== */
 const P = { legacy: false, paged: true, page: 8, dbl: false, rem: 'C', noRedirect: false, order: 'TM', bigPivot: false, late: '500000', N: 10000, K: 12, nMesh: 500, canon: true, ci: true, mirror: true, nRM: 500, meshKB: 850 };
 let S = null;
@@ -1296,6 +1436,7 @@ function exportHtml() {
      .catch(e => { msg.textContent = e && e.code === 'declined' ? 'Annulé.' : 'Export indisponible dans cette vue.'; });
 }
 function boot() {
+  $('globalOut').innerHTML = globalHtml('L03'); $('filesOut').innerHTML = filesHtml(); $('apportOut').innerHTML = apportHtml();
   $('diffs').innerHTML = diffsHtml();
   $('tech').innerHTML = techHtml();
   $('fondOut').innerHTML = fondHtml();
@@ -1305,6 +1446,7 @@ function boot() {
   hopRender(-1); cacheRender();
   document.addEventListener('input', onCtl); document.addEventListener('change', onCtl);
   document.addEventListener('click', ev => {
+    const gr = ev.target.closest('[data-g]'); if (gr) { $('gDet').innerHTML = globalDetail(gr.dataset.g); return; }
     const lb = ev.target.closest('[data-lb]'); if (lb) { labAct(lb.dataset.lb); $('labOut').innerHTML = labRender(); return; }
     const sl = ev.target.closest('[data-slot]'); if (sl) { LB.sel = +sl.dataset.slot; $('labOut').innerHTML = labRender(); return; }
     if (ev.target.id === 'hopBtn') { hop = Math.min(hop + 1, HOPS.length); hopRender(hop - 1); }
@@ -1315,6 +1457,7 @@ function boot() {
 }
 function onCtl(ev) {
   const t = ev.target;
+  if (t.id === 'gSel') { $('globalOut').innerHTML = globalHtml(t.value); return; }
   if (t.name === 'vw') { $('diffs').className = t.value; return; }
   if (['lbVer', 'lbPag', 'lbPS'].includes(t.id)) { labInit(); $('labOut').innerHTML = labRender(); return; }
   if (['cN', 'cS', 'cL', 'cP'].includes(t.id)) { cacheRender(); return; }
