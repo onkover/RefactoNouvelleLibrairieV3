@@ -1,0 +1,1239 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Lot D-a2 pas à pas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;700&family=Fira+Sans+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Série « Lot … pas à pas » (B3 … D-a1c) : une colonne de lecture, schémas et registres en pleine largeur.
+   Tokens : fond, papier, encre, accent (bloc partiel / tuile partielle), ok (plein), warn (rejet, contre-exemple). */
+:root{
+  --bg:#f4f5f8; --paper:#ffffff; --fg:#1c2230; --mute:#5a6375; --line:#d8dce5;
+  --accent:#2f4fb8; --accent-soft:#e6ebfa; --warn:#b5520f; --warn-soft:#fbeee3;
+  --ok:#1f7a4d; --ok-soft:#e3f3ea; --code-bg:#f0f2f6; --cell:#e8ebf2;
+  --full:#3f9a6b; --full2:#9bd3b2; --pix:#2f4fb8; --rej:#c9ced8; --tri:#1c2230; --hatch:#b9bfcc;
+  --f-body:"Fira Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Fira Sans Condensed","Fira Sans",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --cell:#262d3b;
+  --full:#3c9468; --full2:#2a5f45; --pix:#6f8cf0; --rej:#3a4152; --tri:#f2f4f8; --hatch:#4a5266; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#12151c; --paper:#1a1f29; --fg:#e4e7ee; --mute:#9aa3b5; --line:#2e3545;
+  --accent:#8ea6ff; --accent-soft:#232c48; --warn:#f0a066; --warn-soft:#3a2a1d;
+  --ok:#6fd3a0; --ok-soft:#1b3328; --code-bg:#151a22; --cell:#262d3b;
+  --full:#3c9468; --full2:#2a5f45; --pix:#6f8cf0; --rej:#3a4152; --tri:#f2f4f8; --hatch:#4a5266; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+.read{max-width:80ch}
+h1,h2,h3{font-family:var(--f-head);text-wrap:balance;line-height:1.2;margin:0}
+h1{font-size:2rem} h2{font-size:1.45rem} h3{font-size:1.12rem;margin:16px 0 6px}
+p{margin:0 0 10px} ul,ol{margin:0 0 10px;padding-left:22px} li{margin-bottom:3px}
+.eyebrow{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{color:var(--mute);font-size:1.02rem}
+section{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:22px clamp(14px,3vw,28px);min-width:0}
+code{font:.88em var(--f-mono);background:var(--code-bg);padding:1px 4px;border-radius:4px}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{font-family:var(--f-head);font-weight:700;color:var(--mute)}
+td.n,th.n{text-align:right;white-space:nowrap}
+.tbl{overflow-x:auto;margin:8px 0 12px}
+tr.hl td{background:var(--accent-soft)}
+tr.ko td{background:var(--warn-soft)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:10px 14px;border-radius:0 8px 8px 0;margin:10px 0}
+.note.bad{border-left-color:var(--warn);background:var(--warn-soft)}
+.note.good{border-left-color:var(--ok);background:var(--ok-soft)}
+.pill{display:inline-block;font:600 .72rem var(--f-mono);padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);letter-spacing:.04em;white-space:nowrap}
+.pill.w{background:var(--warn-soft);color:var(--warn)} .pill.o{background:var(--ok-soft);color:var(--ok)}
+button,select{font:600 .85rem var(--f-body);border:1px solid var(--accent);background:var(--accent);color:var(--paper);padding:7px 14px;border-radius:6px;cursor:pointer}
+select{background:var(--paper);color:var(--fg);border-color:var(--line)}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px}
+.seg button{padding:5px 10px;font-size:.8rem;background:transparent;color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+.sh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.stepno{font:700 .8rem var(--f-mono);color:var(--paper);background:var(--accent);border-radius:99px;padding:2px 10px;letter-spacing:.05em;white-space:nowrap}
+.stepno.w{background:var(--warn)} .stepno.o{background:var(--ok)}
+.part{font:700 .8rem var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin:6px 0 -14px}
+.toc{columns:2 280px;font-size:.92rem;margin:0;padding-left:20px}
+.toc a{color:var(--accent)}
+.figrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start;margin-top:10px}
+.figrow.even{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:860px){.figrow,.figrow.even{grid-template-columns:minmax(0,1fr)}}
+.fig{display:flex;flex-direction:column;gap:6px;min-width:0}
+.fig canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:var(--code-bg);display:block;touch-action:none}
+.figcap{font-size:.86rem;color:var(--mute)} .figcap b{color:var(--fg)}
+.figctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:.86rem}
+.calc{font:.8rem/1.6 var(--f-mono);background:var(--code-bg);padding:8px 12px;border-radius:6px;white-space:pre-wrap;overflow-x:auto;min-width:0}
+.observe{border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:.92rem}
+.observe>b{display:block;font:700 .72rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+.observe ul{margin:0;padding-left:18px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--mute)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:2px;vertical-align:-1px;margin-right:4px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.kpi b{display:block;font:700 1.1rem var(--f-mono);font-variant-numeric:tabular-nums}
+.kpi span{font-size:.78rem;color:var(--mute)}
+.kpi.o b{color:var(--ok)} .kpi.w b{color:var(--warn)}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:10px 0}
+.timeline div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.88rem;min-width:0}
+.timeline div b{display:block;font:700 .74rem var(--f-mono);letter-spacing:.05em;color:var(--accent);margin-bottom:2px}
+.timeline div.now{border-color:var(--warn);background:var(--warn-soft)} .timeline div.now b{color:var(--warn)}
+.goal{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:8px 0 12px}
+.goal>div{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:.9rem;min-width:0}
+.goal b.h{display:block;font:700 .7rem var(--f-mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.goal .why b.h{color:var(--accent)} .goal .uses b.h{color:var(--warn)} .goal .gives b.h{color:var(--ok)}
+.goal .uses,.goal .gives{background:var(--code-bg)}
+.goal .v{font:.78rem/1.55 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:860px){.goal{grid-template-columns:1fr}}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:8px}
+.pair figure,.one{margin:0;min-width:0;display:flex;flex-direction:column}
+.pair figcaption,.one figcaption{font:700 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;background:var(--code-bg)}
+.pair figure.v figcaption,.one.v figcaption{background:var(--accent-soft);color:var(--accent)}
+.pair figure.a figcaption{background:var(--ok-soft);color:var(--ok)}
+.pair pre,.one pre{margin:0;overflow:auto;background:var(--code-bg);border:1px solid var(--line);border-radius:0 0 6px 6px;padding:9px 11px;font:12px/1.5 var(--f-mono);tab-size:4;flex:1;max-height:620px}
+@media (max-width:860px){.pair{grid-template-columns:minmax(0,1fr)}}
+.lanes{overflow-x:auto;margin-top:8px}
+.lanes table{width:auto;min-width:100%;border-collapse:separate;border-spacing:2px;font:11.5px/1.35 var(--f-mono)}
+.lanes th{font:600 11px var(--f-mono);color:var(--mute);text-align:right;padding:3px 6px;white-space:nowrap;border:0}
+.lanes td{padding:3px 6px;text-align:right;background:var(--cell);border:0;border-radius:3px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.lanes td.neg{background:var(--warn);color:var(--paper)}
+.lanes td.ok{background:var(--ok);color:var(--paper)}
+.lanes td.acc{background:var(--accent);color:var(--paper)}
+.lanes td.off{opacity:.35}
+.lanes thead td{background:transparent;color:var(--mute);font-weight:600}
+details.code,details.more{margin-top:12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+details.code>summary,details.more>summary{cursor:pointer;padding:8px 12px;font:600 .86rem var(--f-body);color:var(--accent);list-style:none}
+details.code>summary::before,details.more>summary::before{content:"▸ "}
+details[open].code>summary::before,details[open].more>summary::before{content:"▾ "}
+details.code>div,details.more>div{padding:0 12px 12px}
+.chg{border:1px solid var(--line);border-radius:8px;margin-top:12px;overflow:hidden}
+.chg>header{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;padding:8px 12px;background:var(--code-bg);border-bottom:1px solid var(--line)}
+.chg>header b{font:600 .82rem var(--f-mono)} .chg>header span{font-size:.84rem;color:var(--mute)}
+.chg>p{padding:8px 12px 0;margin:0;font-size:.9rem}
+.chg .pair{padding:0 12px 12px}
+.check{list-style:none;padding-left:0}
+.check li{display:flex;gap:8px;align-items:flex-start;margin-bottom:6px}
+.check input{margin-top:5px}
+.bars{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.bar{display:grid;grid-template-columns:96px minmax(0,1fr) 74px;gap:8px;align-items:center;font:.78rem var(--f-mono)}
+.bar .track{display:flex;height:18px;border-radius:3px;overflow:hidden;background:var(--cell)}
+.bar .track i{display:block;height:100%}
+.bar .lab{color:var(--mute);text-align:right}
+.alg{font:12.5px/1.6 var(--f-mono);background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;white-space:pre;overflow-x:auto}
+.alg .add{background:var(--ok-soft);color:var(--ok);display:inline-block;width:100%}
+.alg .gone{color:var(--mute);text-decoration:line-through}
+.cmp td:first-child{font-weight:600;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div class="wrap">
+
+<header class="read">
+  <div class="eyebrow">Phase G · Jalon D · lot D-a2 · 10 novembre 2026</div>
+  <h1>La hiérarchie d'Abrash posée sur Giesen, pas à pas</h1>
+  <p class="lede">D-a1 a rendu le test « ce pixel est-il dans le triangle ? » presque gratuit : trois additions entières et un bit de signe par bloc de 8 pixels. Il reste un défaut que Giesen ne peut pas corriger seul : il teste <b>tous</b> les blocs de la boîte englobante. Pour un grand triangle oblique, la moitié de ces blocs sont vides, et un tiers sont entièrement couverts. Ce lot ajoute au-dessus des blocs un niveau de <b>tuiles de 8 × 8 pixels</b>, jugées huit à la fois : une tuile vide est sautée d'un coup, une tuile pleine est dessinée sans un seul test.</p>
+  <p class="lede">Le lot suit l'ordre habituel : d'abord pourquoi (rappel, contexte, objectif), ensuite la leçon (la méthode, sa preuve, ce qu'elle peut et ne peut pas rapporter), puis le fonctionnement dans LV3 et les décisions, enfin les étapes de code avant/après, les contre-exemples, les prédictions et la vérification.</p>
+  <p class="lede" style="font-size:.92rem">Statut : <span class="pill w">LIVRÉ · À APPLIQUER ET MESURER</span> Base : LIB <code>e7cae94</code> / EXE <code>5203980</code> (D-a1c commité). Commutateur de mesure <code>LV3_RASTER_TILES</code> (config.h, section 14) : 0 = sans hiérarchie, 16 = défaut proposé.</p>
+</header>
+
+<section>
+  <div class="sh"><span class="stepno">PLAN</span><h2>Le parcours</h2></div>
+  <ol class="toc">
+    <li><a href="#rappel">D'où l'on vient</a></li>
+    <li><a href="#contexte">Le problème : 2 % des triangles, 58 % des pixels</a></li>
+    <li><a href="#objectif">L'objectif fonctionnel et la règle de déclenchement</a></li>
+    <li><a href="#methode">La méthode d'Abrash, sans formule</a></li>
+    <li><a href="#coins">Les deux coins : juger 64 pixels avec 2 nombres</a></li>
+    <li><a href="#preuve">Pourquoi le test est exact (démonstration)</a></li>
+    <li><a href="#amdahl">Ce que la hiérarchie peut rapporter, et ce qu'elle ne peut pas</a></li>
+    <li><a href="#compare">Giesen seul, Abrash sur Giesen, Larrabee : comparaison</a></li>
+    <li><a href="#lv3">Le fonctionnement dans LV3</a></li>
+    <li><a href="#decisions">Ce qui a été choisi, et pourquoi</a></li>
+    <li><a href="#algo">L'algorithme, avant et après</a></li>
+    <li><a href="#v5">La scène V5 : des grands triangles, mesurables</a></li>
+    <li><a href="#banc">Le banc hors moteur</a></li>
+    <li><a href="#etapes">Les étapes, pas à pas (registres couloir par couloir)</a></li>
+    <li><a href="#code">Le code, fichier par fichier, avant et après</a></li>
+    <li><a href="#contre">Huit façons de rater ce lot</a></li>
+    <li><a href="#predictions">Écrites avant la mesure</a></li>
+    <li><a href="#verifier">Vérifier</a></li>
+    <li><a href="#suite">Et après : binning, Hi-Z, multithread</a></li>
+    <li><a href="#resume">En résumé, ordre d'application</a></li>
+  </ol>
+</section>
+
+<div class="part">Partie I · Pourquoi ce lot</div>
+
+<section id="rappel">
+  <div class="sh"><span class="stepno">1 · RAPPEL</span><h2>D'où l'on vient</h2></div>
+  <p class="read">Le jalon D est né d'une mesure : sur la scène V3 (un niveau de FPS en six pièces), le test de couverture coûtait 41 % du rendu. Le plan a alors fixé l'ordre : Giesen d'abord (arêtes entières avancées par additions), Abrash ensuite (une hiérarchie de tuiles posée dessus). Voici ce que chaque lot a laissé derrière lui, dans l'ordre d'application.</p>
+  <div class="timeline">
+    <div><b>C0 → C3 · 21-29/10</b>Chantier C : ablation, shader résolu à la compilation (C1), blocs de 8 pixels en AVX2 au bit près (C2, V2 ×2,27), boîtes d'un pixel dans l'étage faces (C3, V1 −34,6 %).</div>
+    <div><b>V3 · 30-31/10</b>Scène FPS de 64 934 triangles, découpe en 6 pièces (−25,5 %). Arêtes = 41 % du Render : jalon D ouvert.</div>
+    <div><b>D-a1 · Giesen · 03/11</b>Sommets accrochés au 1/256 px, E' entiers avancés par additions. Rooms −13,9 %, arêtes −51 %. V1 +4 % accepté.</div>
+    <div><b>D-a1b · 06/11</b>Barycentriques tirées des E' entiers : 9 opérations par bloc au lieu de 26. Rooms −6,5 %, V2 ≈ −7 %.</div>
+    <div><b>D-a1d · 06/11</b>Accrochage par nombre magique. Présent dans le dépôt (Viewport.h, <code>Test_Da1d_Snap</code>) ; sa mesure n'est pas reportée dans le plan.</div>
+    <div><b>D-a1c · 09/11</b>Petits triangles (étendue &lt; 8 px) sur les blocs flottants de C2. V4 c3 −10,2 %, mix −4,9 %, rooms −2 %. Commité.</div>
+    <div class="now"><b>D-a2 · Abrash · aujourd'hui</b>Les grands triangles : tuiles 8 × 8 jugées huit à la fois, posées sur les blocs Giesen. D-a1c en fixe la frontière basse.</div>
+  </div>
+  <h3>Ce que Giesen a appris, et la question qu'il a laissée</h3>
+  <p class="read">La conclusion de D-a1 tenait en une phrase : <i>le gain de Giesen est proportionnel au nombre de blocs testés, son surcoût est fixe par triangle</i>. D-a1c a traité le bas de l'échelle (les triangles trop petits pour amortir ce surcoût). D-a2 traite le haut : les triangles si grands que le nombre de blocs testés devient lui-même le problème. Giesen rend chaque test bon marché ; Abrash en supprime la plupart.</p>
+  <p class="read">Le cours « Lot D pas à pas » du 25 octobre a présenté la méthode d'Abrash telle qu'elle est décrite pour Larrabee (tuiles 64 × 64, blocs 16 × 16 puis 4 × 4, vecteurs de 16 voies). Ce lot ne la répète pas : il la <b>transpose</b> à LV3 tel qu'il est aujourd'hui (AVX2 à 8 voies, blocs Giesen de 8 × 1, pas encore de binning), et il mesure ce qu'elle rapporte vraiment.</p>
+</section>
+
+<section id="contexte">
+  <div class="sh"><span class="stepno">2 · CONTEXTE</span><h2>Le problème : 2 % des triangles, 58 % des pixels</h2></div>
+  <p class="read">Dans la scène rooms (4 caméras, 79 323 triangles dessinés), le simulateur sur le vrai noyau compte <b>1 685 triangles</b> dont la boîte dépasse 16 pixels dans les deux sens. C'est 2,1 % des triangles. Ils contiennent pourtant <b>3,72 millions des 5,77 millions de pixels de boîte</b> (65 %) et <b>1,28 million des 2,19 millions de pixels couverts</b> (58 %). Un mur à deux mètres, le sol du hall, les montants d'un portail : quelques triangles, la moitié de l'image.</p>
+  <p class="read">Pour un tel triangle, Giesen parcourt la boîte ligne par ligne, bloc de 8 pixels par bloc de 8 pixels. Sur un triangle oblique, une ligne ressemble à ceci : des blocs vides à gauche, un bloc partiel, des blocs pleins, un bloc partiel, des blocs vides à droite. Les blocs vides coûtent peu (3 OU, 1 movemask, 4 additions), mais il y en a beaucoup ; les blocs pleins sont testés alors que la réponse est connue d'avance.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fG" width="768" height="480" tabindex="0" aria-label="Grille de pixels avec un triangle à faire glisser ; blocs ou tuiles colorés selon leur sort"></canvas>
+      <div class="figcap"><b>Figure 1.</b> Une zone de 128 × 80 pixels, un triangle (faites glisser ses sommets). En mode <b>Giesen</b>, chaque bloc de 8 × 1 testé est dessiné : gris = testé pour rien, contour bleu = partiel, vert = plein (testé quand même). En mode <b>Abrash</b>, la boîte est découpée en tuiles de 8 × 8 : hachuré = tuile rejetée d'un coup, vert = tuile pleine écrite sans test, contour bleu = tuile partielle, descendue bloc par bloc.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Mode :</span><span class="seg" id="segMode"><button type="button" aria-pressed="true" data-v="g">Giesen (aujourd'hui)</button><button type="button" aria-pressed="false" data-v="a">Abrash sur Giesen (D-a2)</button></span></div>
+      <div class="figctl"><span>Triangle :</span><span class="seg" id="segPreset"></span></div>
+      <div class="kpis" id="kpiG"></div>
+      <div class="calc" id="calcG"></div>
+      <div class="legend"><span><i style="background:var(--rej)"></i>bloc vide testé</span><span><i style="border:2px solid var(--accent)"></i>partiel</span><span><i style="background:var(--full)"></i>plein</span><span><i style="background:var(--hatch)"></i>tuile rejetée</span><span><i style="background:var(--pix)"></i>pixel couvert</span></div>
+    </div>
+  </div>
+  <div class="observe" style="margin-top:12px"><b>À observer</b><ul>
+    <li>Sur « Lame » (un triangle long et fin), Giesen teste plus de 90 % de blocs vides. La hiérarchie les écarte par paquets de 8.</li>
+    <li>Sur « Mur proche », les tuiles pleines dominent : 8 blocs écrits sans aucun test de couverture.</li>
+    <li>Sur « Moyen 20 px », presque toutes les tuiles sont partielles : la hiérarchie n'a presque rien à décider, elle ne fait qu'ajouter son propre coût. C'est pourquoi elle ne s'applique qu'au-delà d'un seuil (T* = 16 px).</li>
+  </ul></div>
+</section>
+
+<section id="objectif">
+  <div class="sh"><span class="stepno">3 · OBJECTIF</span><h2>L'objectif fonctionnel et la règle de déclenchement</h2></div>
+  <p class="read"><b>Dessiner les grands triangles en visitant moins de blocs, sans changer un seul bit de l'image.</b> Concrètement :</p>
+  <ul class="read">
+    <li><b>Même image au bit près</b> : couleurs, profondeurs, et tous les compteurs communs (PixelsCovered, PixelsDepthPassed, TrisSimd8…). Seul LaneBlocks8 baisse, et c'est voulu : il compte les blocs <i>testés</i>.</li>
+    <li><b>Plus rapide sur les grands triangles</b> : murs proches, sols, lames. Mesurable sur une scène faite pour eux (V5, section 12) et, dans une moindre mesure, sur rooms.</li>
+    <li><b>Pas plus lent ailleurs</b> : V1, V2 et V4 ne contiennent aucun triangle assez grand ; leur code ne doit pas changer de vitesse.</li>
+    <li><b>Conditionnel</b>, comme D-a1c : un commutateur <code>LV3_RASTER_TILES</code> ; si la mesure ne montre pas de gain, il reste à 0 et la question est close par la mesure.</li>
+  </ul>
+  <div class="note bad"><b>La règle de déclenchement du plan n'est probablement plus remplie.</b> Le 25 octobre, le plan a écrit : « hiérarchie si arêtes ≥ 40 % du Render ET Covered/Tight &lt; 50 % ». Sur rooms, Covered/Tight = 2 189 889 / 5 767 961 = <b>38 %</b> : la seconde condition tient. La première ne tient plus depuis Giesen : à la dernière ablation (D-a1, 03/11), les arêtes valaient 3,00 ms sur 12,29, soit <b>24 %</b> ; le banc d'aujourd'hui les place à 14 % du temps du noyau. Giesen a fait exactement ce qu'on attendait de lui : il a rendu le test bon marché.</div>
+  <p class="read"><b>Décision D0 : faire le lot quand même, en conditionnel.</b> Trois raisons. Tu as demandé de suivre le plan. La hiérarchie est le socle de deux chantiers déjà inscrits : le binning par tuiles (D2, avec la leçon L13) et un Hi-Z par tuile ; les construire sans elle reviendrait à l'écrire plus tard. Enfin, le banc montre un gain franc là où la règle ne regarde pas : sur les tuiles pleines, ce sont les fragments qui accélèrent (section 7). La règle de décision écrite plus bas protège le reste : si rooms régresse, le défaut repasse à 0.</p>
+</section>
+
+<div class="part">Partie II · La leçon</div>
+
+<section id="methode">
+  <div class="sh"><span class="stepno">4 · MÉTHODE</span><h2>La méthode d'Abrash, sans formule</h2></div>
+  <div class="read">
+  <p><b>L'idée en une image.</b> Un peintre qui doit repeindre une zone en forme de triangle sur un carrelage ne regarde pas chaque carreau un par un. Il repère d'abord les grandes dalles entièrement hors de la zone (il les ignore), celles entièrement dedans (il les peint au rouleau, sans réfléchir), et ne sort le petit pinceau que pour les dalles qui chevauchent le bord. La méthode d'Abrash fait la même chose avec des tuiles de pixels.</p>
+  <p><b>La source.</b> Michael Abrash, <i>Rasterization on Larrabee</i>, Dr. Dobb's Journal, mai 2009 (repris par Intel sous le titre « Adaptive rasterization helps boost efficiency »). Larrabee était un projet de GPU d'Intel fait de cœurs x86 avec des vecteurs de 16 voies ; tout le pipeline graphique y était logiciel, comme dans LV3. Abrash y décrit un rastériseur qui « gagne en évitant le travail ».</p>
+  <p><b>Qui l'utilise.</b> Les GPU font la même chose en matériel depuis longtemps : un rastériseur grossier découpe l'écran en tuiles, puis un rastériseur fin descend dans les tuiles touchées (Fabian Giesen le décrit dans <i>A trip through the Graphics Pipeline 2011</i>, partie 6). Côté logiciel, la bibliothèque d'Intel <i>Masked Software Occlusion Culling</i> (Hasselgren, Andersson, Akenine-Möller, HPG 2016) rastérise en AVX2 par tuiles, sur le même principe de rejet et d'acceptation par coins.</p>
+  <p><b>La méthode complète, en quatre gestes.</b></p>
+  <ol>
+    <li><b>Découper</b> la boîte englobante du triangle en tuiles (ici 8 × 8 pixels).</li>
+    <li><b>Juger</b> chaque tuile contre chaque arête, avec un seul nombre par arête : la valeur de l'arête au coin de la tuile le plus favorable (si même lui est dehors, la tuile est rejetée), et au coin le plus défavorable (si même lui est dedans, la tuile passe cette arête).</li>
+    <li><b>Trier</b> : une arête qui rejette suffit à écarter la tuile ; trois arêtes qui acceptent font une tuile pleine ; sinon la tuile est partielle.</li>
+    <li><b>Descendre</b> dans les seules tuiles partielles, avec le test ordinaire (ici les blocs Giesen de D-a1). Les tuiles pleines sont émises sans test.</li>
+  </ol>
+  <p><b>Pourquoi c'est rentable, et quand.</b> Juger une tuile coûte à peu près le prix de tester un bloc. Une tuile rejetée économise ses 8 blocs ; une tuile pleine économise 8 tests ; une tuile partielle ajoute le prix du jugement aux 8 blocs. La méthode gagne donc quand les tuiles décidées d'un coup (rejetées ou pleines) dominent, c'est-à-dire sur les grands triangles et sur les triangles longs et fins. Sur un triangle à peine plus grand qu'une tuile, presque toutes les tuiles sont partielles : elle perd.</p>
+  </div>
+</section>
+
+<section id="coins">
+  <div class="sh"><span class="stepno">5 · LES DEUX COINS</span><h2>Juger 64 pixels avec 2 nombres</h2></div>
+  <p class="read">Toute la méthode repose sur un fait simple : sur une tuile, l'arête E' est une fonction <b>affine</b> des coordonnées du pixel. Un pas à droite ajoute toujours A', un pas vers le bas ajoute toujours B'. Ses valeurs extrêmes sur les 64 centres sont donc aux coins de la tuile, et lesquels ne dépend que des signes de A' et B'. Faites tourner l'arête et regardez les deux coins changer de place.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fC" width="560" height="560" tabindex="0" aria-label="Une tuile de 8 par 8 pixels et une arête ; les 64 valeurs E' entières et les deux coins"></canvas>
+      <div class="figcap"><b>Figure 2.</b> Une tuile de 8 × 8 pixels. Chaque case affiche E' au centre du pixel (entier, unités de 1/256 px). Bleu : pixel du bon côté (E' ≥ 0). Le <b>coin de rejet</b> (anneau orange) porte le maximum ; le <b>coin d'acceptation</b> (anneau vert) porte le minimum. Faites glisser les deux extrémités de l'arête.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Convention :</span><span class="seg" id="segConv"><button type="button" aria-pressed="true" data-v="lv3">LV3 : dedans = E' ≥ 0</button><button type="button" aria-pressed="false" data-v="abr">Article d'Abrash : dedans = négatif</button></span></div>
+      <div class="calc" id="calcC"></div>
+      <div class="observe"><b>À observer</b><ul>
+        <li>Le coin de rejet est toujours en face du coin d'acceptation : on passe de l'un à l'autre en ajoutant |7A'| + |7B'|.</li>
+        <li>Le choix du coin ne dépend que des signes de A' et B' : il est fait <b>une fois par triangle</b>, pas par tuile.</li>
+        <li>En convention Abrash (intérieur négatif), les deux coins échangent leur nom et leur test, rien d'autre : la méthode est la même.</li>
+      </ul></div>
+    </div>
+  </div>
+  <p class="read">En code, le décalage du coin haut-gauche au coin de rejet est <code>max(0, 7A') + max(0, 7B')</code> : on ne fait un pas que s'il fait <i>monter</i> E'. Le décalage vers le coin d'acceptation est <code>min(0, 7A') + min(0, 7B')</code>. Deux nombres par arête, calculés une fois par triangle. C'est tout le cœur mathématique du lot : les étapes 3 et 8b.</p>
+</section>
+
+<section id="preuve">
+  <div class="sh"><span class="stepno">6 · PREUVE</span><h2>Pourquoi le test est exact, et pourquoi l'image ne change pas</h2></div>
+  <div class="read">
+  <p>Abrash présente ses coins comme un test <i>conservatif</i> (sûr mais parfois pessimiste). Dans LV3, grâce à Giesen, le test est <b>exact</b>. La démonstration tient en cinq points.</p>
+  <ol>
+    <li><b>Les E' sont des entiers exacts.</b> Depuis D-a1, pour chaque arête, E'(x, y) = A'·x + B'·y + q, avec A', B', q entiers, et « pixel couvert par l'arête » ⇔ E'(x, y) ≥ 0 (règle top-left comprise, par le biais −1). Aucun arrondi.</li>
+    <li><b>Une tuile a 64 centres.</b> Pour la tuile de coin (tx, ty), les centres sont (tx + i, ty + j), i, j ∈ {0..7}. E' y vaut c + A'·i + B'·j, avec c = E'(tx, ty).</li>
+    <li><b>Extrêmes aux coins.</b> A'·i est maximal en i = 7 si A' &gt; 0, en i = 0 sinon (idem pour B'·j). Donc max = c + max(0, 7A') + max(0, 7B') et min = c + min(0, 7A') + min(0, 7B'). Ces deux coins <b>sont</b> des centres de la tuile : le maximum et le minimum sont atteints, pas seulement bornés.</li>
+    <li><b>Verdicts exacts.</b> max &lt; 0 ⇔ aucun des 64 pixels ne passe l'arête ; min ≥ 0 ⇔ les 64 la passent. Une tuile rejetée ne contient aucun pixel couvert ; une tuile pleine (3 arêtes acceptées, et entière dans la boîte) contient 64 pixels couverts. Aucun faux négatif, aucun faux positif au niveau des tuiles décidées.</li>
+    <li><b>Mêmes valeurs, même image.</b> Dans les tuiles visitées, chaque voie porte le même entier E' que Fx32 (c'est la même fonction affine, calculée par un autre chemin d'additions). Les barycentriques (D-a1b) sont tirées de ces entiers : mêmes floats, même profondeur, même couleur. L'ordre de visite change (tuile par tuile au lieu de ligne par ligne), mais un pixel est écrit au plus une fois par triangle, et l'ordre des triangles ne change pas : le Z-buffer final est identique au bit près.</li>
+  </ol>
+  <p><b>Le cas int32.</b> Les voies AVX2 calculent en int32. La préparation prouve, comme PrepareLanesFx le fait pour Fx32, que E' tient dans int32 sur tout le domaine que la hiérarchie peut lire : [x0, x1 + 7] × [y0, y1 + 7] (étape 4). Les voies de tuiles <i>au-delà</i> de la boîte peuvent déborder : <code>vpaddd</code> est modulaire en SIMD (aucun comportement indéfini), et ces voies sont écartées avant toute décision. Si la preuve échoue (longue arête clippée au near), le triangle repart sur les blocs Giesen : même image.</p>
+  <p><b>Le filet.</b> La TNR <code>Test_Da2_Tiles</code> contient une référence <i>indépendante</i> (règle ajoutée au lot D-a1d) : pour chaque tuile, elle recalcule les 64 E' en int64 et vérifie que « rejetée » veut dire « aucun ne passe » et « acceptée » « tous passent ». Sur 174 000 tuiles : 0 erreur. Le contre-exemple intégré (coins échangés) en produit 58 399.</p>
+  </div>
+</section>
+
+<section id="amdahl">
+  <div class="sh"><span class="stepno">7 · AMDAHL</span><h2>Ce que la hiérarchie peut rapporter, et ce qu'elle ne peut pas</h2></div>
+  <p class="read">Avant d'écrire une ligne, il faut savoir où va le temps d'un grand triangle. Le banc l'a découpé par ablation (les paliers de C0 : S = préparation seule, E = arêtes sans fragment, N = complet), <b>dans la scène entière</b>, triangle par triangle (horloge rdtsc autour de chaque appel du noyau), par classe de taille de boîte. Choisissez une classe.</p>
+  <div class="figctl" style="margin-top:6px"><span>Classe (plus petit côté de la boîte) :</span><span class="seg" id="segCls"></span></div>
+  <div class="bars" id="barsA"></div>
+  <div class="legend" style="margin-top:6px"><span><i style="background:var(--mute)"></i>préparation (S)</span><span><i style="background:var(--warn)"></i>arêtes (E − S)</span><span><i style="background:var(--accent)"></i>fragments (N − E)</span></div>
+  <div class="calc" id="calcA" style="margin-top:8px"></div>
+  <div class="observe" style="margin-top:12px"><b>À retenir</b><ul>
+    <li>Pour un triangle de plus de 64 px, les <b>arêtes ne sont que 21 %</b> du temps ; les fragments (barycentriques, profondeur, écritures) font le reste. Même une hiérarchie infiniment rapide ne gagnerait pas plus de 21 % sur les arêtes. La hiérarchie divise les arêtes par 2,3 (374 → 161 µs) et rogne 15 % des fragments (tuiles pleines : ni masque de couverture, ni sauts mal prédits).</li>
+    <li>Pour 16-31 px, les arêtes ne baissent presque pas (−8 %) : la hiérarchie s'y paie elle-même. Le gain (−11 %) vient des fragments.</li>
+    <li>Sous 16 px : aucun triangle ne change de chemin. Les écarts de ±1 à 2 % sont le bruit du banc (contrôle A/A : ±3 %).</li>
+    <li>Ce que la hiérarchie ne touche pas : le trafic mémoire des fragments. Un grand triangle lit et écrit 8 octets par pixel (couleur + profondeur) ; un framebuffer de 1536 × 900 fait 11 Mo, la taille du cache L3 de l'i7-1265U. C'est le terrain de D2 (binning : chaque tuile d'écran tient dans le cache), pas de D-a2.</li>
+  </ul></div>
+</section>
+
+<section id="compare">
+  <div class="sh"><span class="stepno">8 · COMPARAISON</span><h2>Giesen seul, Abrash sur Giesen, Larrabee</h2></div>
+  <div class="tbl"><table class="cmp">
+    <thead><tr><th></th><th>Giesen seul (D-a1, aujourd'hui)</th><th>Abrash sur Giesen (D-a2)</th><th>Larrabee (Abrash 2009)</th></tr></thead>
+    <tbody>
+      <tr><td>Unité de décision</td><td>bloc de 8 × 1 pixels</td><td>tuile de 8 × 8, puis bloc de 8 × 1 dans les partielles</td><td>tuile 64 × 64, bloc 16 × 16, bloc 4 × 4, pixel</td></tr>
+      <tr><td>Travail ∝</td><td>aire de la boîte</td><td>périmètre du triangle (tuiles partielles) + nombre de tuiles / 8</td><td>idem, à 3 niveaux</td></tr>
+      <tr><td>Bloc vide</td><td>testé (3 OU + movemask + 4 additions)</td><td>sauté par paquet de 8 (une voie d'un registre de tuiles)</td><td>sauté par paquets de 16 ou 256</td></tr>
+      <tr><td>Bloc plein</td><td>testé, puis écrit avec masques</td><td>écrit sans test (BlockFull : lecture Z simple)</td><td>émis sans test</td></tr>
+      <tr><td>Meilleur cas</td><td>triangle qui remplit sa boîte</td><td>lames, grands murs (V5 fan : −64 % au banc)</td><td>idem</td></tr>
+      <tr><td>Pire cas</td><td>lame en diagonale (99 % de blocs vides)</td><td>triangle de 16 à 24 px : presque tout partiel</td><td>triangle d'une tuile</td></tr>
+      <tr><td>Vecteurs</td><td>8 voies AVX2</td><td>8 voies : 8 tuiles par registre au niveau haut</td><td>16 voies : 16 blocs par registre</td></tr>
+      <tr><td>Grille</td><td>blocs partant de x0</td><td>tuiles partant du coin (x0, y0) de la boîte</td><td>alignée sur l'écran (binning)</td></tr>
+      <tr><td>Exactitude</td><td>entiers, exacte</td><td>entiers, exacte (même image)</td><td>entiers, coins conservatifs</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read">Deux écarts avec Larrabee sont voulus. LV3 s'arrête à deux niveaux (tuiles, blocs) : un niveau 64 × 64 coûterait du code pour des économies de l'ordre du pourcent (section 10, D3). Et la grille part du coin de la boîte au lieu de l'écran : sans binning, une grille alignée ajoute un bloc partiel par ligne une fois sur deux (contre-exemple 2). Quand D2 introduira le binning, les tuiles d'écran seront alignées, et ce choix sera revu.</p>
+</section>
+
+<div class="part">Partie III · Le fonctionnement dans LV3</div>
+
+<section id="lv3">
+  <div class="sh"><span class="stepno">9 · LV3</span><h2>Le fonctionnement dans LV3 : où la hiérarchie s'insère</h2></div>
+  <p class="read">Un triangle arrive dans le noyau <code>RasterizeTriangleT</code> après l'étage faces (C3 a déjà pris les boîtes de 1 × 1). La préparation entière de Giesen (<code>SetupTriangleFx</code>) calcule la boîte, l'aire, et pour chaque arête E' au premier pixel, A' et B'. Puis un aiguillage choisit la boucle. D-a2 ajoute une branche, après celle de D-a1c :</p>
+  <pre class="alg">RasterizeTriangleT&lt;Shader&gt;
+ ├─ hors garde 2^20 px ............................ flottant C2 (TrisFixedGuard, jamais en pratique)
+ └─ RasterizeTriangleFx : SetupTriangleFx (E', A', B', boîte, 1/aire)
+     ├─ boîte &lt; 3 px de large ....................... ForEachCoveredPixelFx (scalaire int64)
+     │                                                 <span class="add">+ D-a2 : ForEachCoveredPixelFxTiled si boîte ≥ T* (LV3_SIMD = 0)</span>
+     └─ AVX2
+         ├─ étendue &lt; 8 px (D-a1c) ................... RasterizeBlocks8      (blocs flottants C2)
+<span class="add">         ├─ boîte ≥ T* dans les deux axes (D-a2) ..... RasterizeTiles8Fx     (hors ligne)
+         │     ├─ TilesFitInt32 ? ........................ ForEachCoveredTile8Fx32
+         │     └─ sinon ................................... repli RasterizeBlocks8Fx</span>
+         └─ sinon .......................................... RasterizeBlocks8Fx    (Fx32 ou Fx64, inchangé)</pre>
+  <p class="read">Rien ne change en amont (étage sommets, étage faces, C3) ni en aval (shaders, Z-buffer). Le Renderer prend la production par défaut (<code>RasterizeTriangleT&lt;ShaderSolid&gt;</code>, T* = <code>kTileMinPx</code>) ; les TNR forcent <code>kTilesOff</code> (la référence) ou 1 (tout en tuiles).</p>
+  <h3>Les deux niveaux de la boucle</h3>
+  <div class="read">
+  <p><b>Niveau tuiles.</b> La boîte est parcourue par rangées de tuiles (8 lignes de haut). Dans une rangée, les tuiles sont prises par groupes de 8 (64 pixels de large) : un registre AVX2 par arête contient E' au coin haut-gauche des 8 tuiles. Trois additions de plus donnent les 8 coins de rejet, trois autres les 8 coins d'acceptation ; deux OU et deux <code>movemask</code> donnent deux masques de 8 bits : tuiles rejetées, tuiles pleines. C'est l'équivalent, en 8 voies, de « juger 16 blocs en une instruction » chez Abrash.</p>
+  <p><b>Du masque aux tuiles.</b> Les tuiles à visiter (non rejetées, dans la boîte) forment un masque ; <code>tzcnt</code> trouve la plus basse, <code>blsr</code> l'efface. La boucle fait exactement autant de tours que de tuiles visitées. Pour chacune, <code>vpermd</code> diffuse son coin depuis le registre des coins.</p>
+  <p><b>Niveau blocs.</b> Une tuile pleine : 8 lignes, 8 blocs, barycentriques et profondeur calculées, écriture par <code>BlockFull</code>, aucun test de couverture. Une tuile partielle : ses 8 lignes sont 8 blocs Giesen testés exactement comme dans Fx32 (3 OU + la boîte en 4e arête, un movemask).</p>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="sh"><span class="stepno">10 · DÉCISIONS</span><h2>Ce qui a été choisi, et pourquoi</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Décision</th><th>Pourquoi</th><th>Écarté</th></tr></thead>
+    <tbody>
+      <tr><td>D0</td><td>Faire le lot, conditionnel (commutateur)</td><td>Demande d'Onky ; socle de D2 et du Hi-Z ; gain mesuré sur les grands triangles.</td><td>Attendre que la règle « arêtes ≥ 40 % » redevienne vraie (elle ne le redeviendra pas : Giesen l'a fait baisser).</td></tr>
+      <tr><td>D1</td><td>Seulement pour le chemin Giesen AVX2 en voies 32 bits, boîte ≥ T* dans les deux axes</td><td>Les petits (D-a1c) n'ont rien à découper ; les voies 64 bits (7 triangles sur rooms) ne valent pas un 2e corps de boucle.</td><td>Tuiles pour tout triangle AVX2 (classe 8-15 : +5 à +25 %, contre-exemple 1).</td></tr>
+      <tr><td>D2</td><td>Tuiles de 8 × 8, grille partant du coin (x0, y0) de la boîte</td><td>8 = un bloc AVX2 de large : une tuile partielle est exactement 8 blocs Fx32. Partir de x0 : aucun bloc de plus que Fx32.</td><td>Grille alignée sur l'écran : +9 % sur la classe 16-24 (contre-exemple 2). À revoir avec le binning.</td></tr>
+      <tr><td>D3</td><td>Deux niveaux : groupes de 8 tuiles en un registre, puis blocs</td><td>Un groupe de 64 × 8 se juge en ~20 µops ; sur la classe ≥ 64 px, tout le niveau tuiles coûte ~4 000 groupes, quelques µs.</td><td>Niveau 64 × 64 scalaire au-dessus : gain borné à ce coût, &lt; 1 % de la classe.</td></tr>
+      <tr><td>D4</td><td>Tuile pleine : <code>Shade8Full</code> (lecture Z simple, écritures masquées par le seul test Z)</td><td>Plus de masque de couverture ni de <code>vmaskmovps</code> en lecture ; les écritures ne touchent que les pixels qui passent.</td><td>Mélange + écriture pleine (<code>blendv</code> + <code>storeu</code>) : pas de gain mesurable, réécrit des pixels inchangés.</td></tr>
+      <tr><td>D5</td><td>Preuve int32 sur [x0, x1 + 7] × [y0, y1 + 7] (<code>TilesFitInt32</code>), sinon repli Giesen</td><td>Même raisonnement que PrepareLanesFx : E' affine, extrêmes à deux coins.</td><td>Voies de tuiles en int64 : code doublé pour des triangles rarissimes.</td></tr>
+      <tr><td>D6</td><td>Fonction propre <code>RasterizeTiles8Fx</code>, hors ligne</td><td>Le prologue et le placement de Fx32 ne changent pas (leçons C2 et D-a1c).</td><td>Hiérarchie dans RasterizeBlocks8Fx : V2 +4 % sans aucun triangle tuilé (contre-exemple 3).</td></tr>
+      <tr><td>D7</td><td><code>NextRow</code> : pointeurs de ligne avancés par addition dans une tuile</td><td>La hiérarchie revisite chaque ligne une fois par tuile : BeginRow (2 multiplications, 6 lectures) par ligne et par tuile coûtait 3 % sur V5 c24.</td><td>BeginRow à chaque ligne (contre-exemple 4).</td></tr>
+      <tr><td>D8</td><td>Commutateur <code>LV3_RASTER_TILES</code> = T* (défaut 16), en-tête CSV <code>tiles=</code></td><td>Point mort mesuré au banc entre 16 et 24 px ; 16 meilleur sur rooms.</td><td>Un booléen : on veut pouvoir régler T* par mesure.</td></tr>
+      <tr><td>D9</td><td>Pendant scalaire <code>ForEachCoveredPixelFxTiled</code></td><td>Comprendre et jouer le principe en scalaire (LV3_SIMD = 0) ; chemin indépendant pour la TNR. Gain mesuré en scalaire : rooms −8 à −11 %.</td><td>Hiérarchie AVX2 seule.</td></tr>
+      <tr><td>D10</td><td>Compteurs <code>TrisTiled</code>, <code>Tiles8Rejected/Full/Partial</code>, <code>BlocksFull8</code> ; LaneBlocks8 = blocs <i>testés</i></td><td>Prédire et vérifier au compte près (R1), invariants R + F + P = tuiles de la boîte.</td><td></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="algo">
+  <div class="sh"><span class="stepno">11 · ALGORITHME</span><h2>L'algorithme, avant et après</h2></div>
+  <div class="pair">
+    <figure><figcaption>Avant : ForEachCoveredBlock8Fx32 (D-a1b)</figcaption><pre>pour chaque ligne y de la boîte :
+    e_k = E'(x0, y) + i·A'_k         (8 voies)
+    pour chaque bloc x = x0, x0+8, … :
+        bits = ~signe(e0 | e1 | e2 | boîte)
+        si bits ≠ 0 :
+            barycentriques(e_k), Shade8(couvert)
+        e_k += 8·A'_k
+    E'(x0, y+1) = E'(x0, y) + B'_k</pre></figure>
+    <figure class="a"><figcaption>Après : ForEachCoveredTile8Fx32 (D-a2)</figcaption><pre>pour chaque rangée de tuiles ty = y0, y0+8, … :
+  pour chaque groupe de 8 tuiles gx = x0, x0+64, … :
+    c_k   = E'(gx, ty) + j·8A'_k     (8 voies = 8 tuiles)
+    rej   = signe(OU des c_k + rejet_k)
+    plein = ~signe(OU des c_k + accept_k)
+    pour chaque tuile j non rejetée (tzcnt, blsr) :
+      e_k = vpermd(c_k, j) + i·A'_k
+      si plein(j) : 8 lignes : barycentriques, BlockFull
+      sinon      : 8 lignes : test Fx32, Block(couvert)
+                   (e_k += B'_k à chaque ligne)</pre></figure>
+  </div>
+  <p class="read">Le corps « tester un bloc » est inchangé : c'est celui de Fx32. Ce qui change, c'est <i>quels</i> blocs on visite et <i>dans quel ordre</i>. Les deux lignes nouvelles (<code>rej</code>, <code>plein</code>) remplacent, pour un grand triangle, entre la moitié et les neuf dixièmes des blocs testés.</p>
+</section>
+
+<section id="v5">
+  <div class="sh"><span class="stepno">12 · SCÈNE V5</span><h2>La scène V5 : des grands triangles, mesurables</h2></div>
+  <p class="read">Rooms contient peu de grands triangles (1 685) : un gain sur eux se noie dans le bruit d'une frame de 9 ms. Comme V4 pour D-a1c, une scène de banc dédiée isole l'effet : un mur de 6 × 3,6 m à 2 m des caméras, plus grand que la vue (les bords sont rognés : on teste aussi les tuiles coupées par le viewport), tourné de 7° pour qu'aucune arête ne tombe sur la grille des pixels. Cinq variantes : quatre grilles de cellules de 24 à 192 px, et un éventail de 360 lames de 1°. Mêmes quatre caméras décalées d'une fraction de pixel que V4, gizmos à 0.</p>
+  <div class="figrow">
+    <div class="fig">
+      <canvas id="fV" width="768" height="450" tabindex="0" aria-label="Vue de la caméra Game sur le mur V5, tuiles des triangles colorées selon leur verdict"></canvas>
+      <div class="figcap"><b>Figure 3.</b> La vue 768 × 450 de la caméra Game, calculée dans la page (même projection que le banc, accrochage 1/256). Chaque tuile de chaque grand triangle est colorée selon son sort : hachuré = rejetée, vert = pleine, bleu = partielle. Survolez ou touchez un triangle pour isoler ses tuiles.</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+      <div class="figctl"><span>Variante :</span><span class="seg" id="segV5"></span></div>
+      <div class="kpis" id="kpiV"></div>
+      <div class="calc" id="calcV"></div>
+    </div>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène (4 vues)</th><th class="n">triangles</th><th class="n">pixels de boîte</th><th class="n">TrisTiled</th><th class="n">tuiles R / F / P</th><th class="n">LaneBlocks8 A → B</th><th class="n">BlocksFull8</th><th class="n">banc AVX2</th><th class="n">banc scalaire</th></tr></thead>
+    <tbody>
+      <tr><td>V5 c24</td><td class="n">5 222</td><td class="n">3 054 927</td><td class="n">4 683</td><td class="n">12 162 / 2 036 / 41 390</td><td class="n">389 646 → 301 153</td><td class="n">16 288</td><td class="n">−2 à 0 %</td><td class="n">+3 %</td></tr>
+      <tr><td>V5 c48</td><td class="n">1 440</td><td class="n">3 073 444</td><td class="n">1 298</td><td class="n">19 761 / 9 101 / 24 640</td><td class="n">406 650 → 190 954</td><td class="n">72 808</td><td class="n">−9 à −10 %</td><td class="n">−20 %</td></tr>
+      <tr><td>V5 c96</td><td class="n">398</td><td class="n">3 047 119</td><td class="n">354</td><td class="n">22 715 / 15 178 / 12 391</td><td class="n">400 602 → 101 493</td><td class="n">121 424</td><td class="n">−24 à −25 %</td><td class="n">−20 à −25 %</td></tr>
+      <tr><td>V5 c192</td><td class="n">152</td><td class="n">3 151 515</td><td class="n">136</td><td class="n">26 565 / 17 920 / 7 652</td><td class="n">405 857 → 58 493</td><td class="n">143 360</td><td class="n">−28 à −33 %</td><td class="n">−18 à −27 %</td></tr>
+      <tr><td>V5 fan</td><td class="n">1 440</td><td class="n">73 887 282</td><td class="n">1 408</td><td class="n">1 107 881 / 0 / 85 797</td><td class="n">9 347 022 → 689 272</td><td class="n">0</td><td class="n">−64 à −66 %</td><td class="n">−69 %</td></tr>
+      <tr class="hl"><td>rooms</td><td class="n">79 323</td><td class="n">5 767 961</td><td class="n">1 685</td><td class="n">31 468 / 10 931 / 19 890</td><td class="n">790 435 → 471 830</td><td class="n">87 448</td><td class="n">−2 à −7 %</td><td class="n">−8 à −11 %</td></tr>
+      <tr><td>V2, V4 c3, c12, V1</td><td class="n">—</td><td class="n">—</td><td class="n">0</td><td class="n">—</td><td class="n">inchangé</td><td class="n">0</td><td class="n">0 ± 3 %</td><td class="n">0 ± 3 %</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read">Les 4 vues couvrent 4 × 345 600 = 1 382 400 pixels dans toutes les variantes V5 : seul le découpage change. L'éventail est le cas d'école : 74 millions de pixels de boîte pour 1,4 million de pixels couverts (1,9 %), aucune tuile pleine, et 93 % des blocs testés par Giesen disparaissent.</p>
+</section>
+
+<section id="banc">
+  <div class="sh"><span class="stepno">13 · BANC</span><h2>Le banc hors moteur : ce qu'il mesure, et ce qu'il ne mesure pas</h2></div>
+  <div class="read">
+  <p><b>Ce que c'est.</b> Un programme g++ 13 (-O2 -mavx2) qui charge <code>level_fps.obj</code> et les meshes V2, V4, V5, refait la projection, le clip near, l'accrochage, la face arrière et le rejet 3b, puis envoie chaque triangle au <b>vrai noyau</b> de la copie de travail (Fragment.h, PixelStage8.h, Rasterizer.h). Sur rooms, il retrouve <b>au compte près</b> le R1 du moteur : 79 323 triangles dessinés, PixelsTight 5 767 961, PixelsCovered 2 189 889, TrisSimd8 36 262, LaneBlocks8 790 435, TrisSmallFloat 17 406, TrisFixedWide 7. Sur V2 et V4 c12 aussi. Les prédictions de compteurs ci-dessous sont donc exactes, pas estimées.</p>
+  <p><b>Ce qu'il ne mesure pas.</b> Le temps est pris sur un Xeon virtualisé à 2 vCPU, bruyant : un contrôle A/A (deux binaires identiques) donne ±3 %. MSVC n'est pas g++, l'i7-1265U n'a pas les mêmes caches. Comme en D-a1c, le banc donne une tendance et un ordre de grandeur ; la décision se prend au lot A/B sur ta machine.</p>
+  </div>
+  <h3>Classes de taille, dans la scène entière (rooms, médiane de 3 séries, µs à 2,1 GHz nominal)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Classe (min côté boîte)</th><th class="n">triangles</th><th class="n">N : A → B</th><th class="n">arêtes E − S : A → B</th><th class="n">fragments N − E : A → B</th><th class="n">blocs testés A → B</th><th class="n">tuiles R / F / P</th></tr></thead>
+    <tbody>
+      <tr><td>&lt; 3</td><td class="n">65 323</td><td class="n">4 140 → 4 195</td><td class="n">408 → 425</td><td class="n">1 526 → 1 576</td><td class="n">37 387 (inchangé)</td><td class="n">—</td></tr>
+      <tr><td>3-7</td><td class="n">8 989</td><td class="n">1 760 → 1 798</td><td class="n">393 → 384</td><td class="n">1 074 → 1 121</td><td class="n">129 881 (inchangé)</td><td class="n">—</td></tr>
+      <tr><td>8-15</td><td class="n">3 324</td><td class="n">1 419 → 1 428</td><td class="n">272 → 273</td><td class="n">1 040 → 1 048</td><td class="n">134 000 (inchangé)</td><td class="n">—</td></tr>
+      <tr class="hl"><td>16-31</td><td class="n">1 479</td><td class="n">1 530 → 1 357 (−11 %)</td><td class="n">273 → 251</td><td class="n">1 209 → 1 058</td><td class="n">169 456 → 96 016</td><td class="n">8 233 / 2 311 / 13 422</td></tr>
+      <tr class="hl"><td>32-63</td><td class="n">117</td><td class="n">357 → 296 (−17 %)</td><td class="n">72 → 43</td><td class="n">281 → 249</td><td class="n">52 508 → 15 358</td><td class="n">3 530 / 1 366 / 2 026</td></tr>
+      <tr class="hl"><td>≥ 64</td><td class="n">91</td><td class="n">1 768 → 1 350 (−24 %)</td><td class="n">374 → 161</td><td class="n">1 391 → 1 185</td><td class="n">267 203 → 59 188</td><td class="n">19 705 / 7 254 / 4 442</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Instructions et sauts (cachegrind, déterministe)</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th class="n">instructions du noyau A → B</th><th class="n">branches conditionnelles</th><th class="n">mal prédites (modèle cachegrind)</th></tr></thead>
+    <tbody>
+      <tr><td>rooms</td><td class="n">74,4 M → 70,4 M (−5,3 %)</td><td class="n">5,11 M → 4,57 M</td><td class="n">353 k → 345 k</td></tr>
+      <tr><td>V5 c96</td><td class="n">12,6 M → 8,9 M (−29 %)</td><td class="n">1,09 M → 0,65 M</td><td class="n">58,8 k → 55,8 k</td></tr>
+      <tr><td>V5 fan</td><td class="n">161,6 M → 34,6 M (−79 %)</td><td class="n">19,7 M → 2,8 M</td><td class="n">533 k → 268 k</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>Leçon reconduite de D-a1c : un banc isolé surestime.</b> Les mêmes triangles ≥ 64 px dessinés <i>seuls</i> gagnent −31 à −33 % ; dans la scène entière, −19 à −24 %. Les tuiles, les prédicteurs de branche et les caches ne sont pas dans le même état quand un grand triangle arrive entre deux mille petits. Seule la mesure en contexte compte ; c'est elle qui fonde les prédictions.</div>
+</section>
+
+<div class="part">Partie IV · Les étapes</div>
+
+<section id="etapes">
+  <div class="sh"><span class="stepno">14 · PAS À PAS</span><h2>Les étapes, sur votre triangle, registres couloir par couloir</h2></div>
+  <p class="read">Chaque étape ci-dessous est calculée <b>dans la page</b>, sur le triangle de la figure 1 (changez-le là-haut, tout se recalcule) : entiers exacts pour la préparation et les arêtes, <code>Math.fround</code> pour les barycentriques (float32, comme le CPU). Chaque étape dit pourquoi elle existe, ce qu'elle lit de l'étape précédente, ce qu'elle produit, puis montre le code scalaire à côté du code AVX2.</p>
+  <div class="figctl" style="margin:8px 0"><label for="selGroup">Groupe de 8 tuiles étudié : <select id="selGroup"></select></label><label for="selTile">Tuile étudiée : <select id="selTile"></select></label><label for="selRow">Ligne de la tuile : <select id="selRow"></select></label></div>
+  <div id="steps"></div>
+</section>
+
+<script type="text/plain" id="x1s">// Rasterizer.h — SetupTriangleFx (D-a1, inchangé) : ce que la hiérarchie lit
+const int64_t X0 = ToFixed(v0.x), Y0 = ToFixed(v0.y);   // sommets en 1/256 px
+...
+int64_t area = (X0 - X2) * (Y1 - Y2) - (Y0 - Y2) * (X1 - X2);
+s.flipped = (area < 0);                                 // face avant : on échange p1 et p2
+...
+PixelBox bb{ int32_t((minX + 127) >> 8), int32_t((minY + 127) >> 8),
+             int32_t((maxX - 128) >> 8) + 1, int32_t((maxY - 128) >> 8) + 1 };
+// par arête k : A' = ya - yb (pas en x), B' = xb - xa (pas en y)
+//               E' = (E(centre de (x0, y0)) + biais) >> 8   (biais = tl ? 0 : -1)
+fx.e[k] = eb >> 8;  fx.a[k] = A;  fx.b[k] = B;</script>
+<script type="text/plain" id="x1v">// Rien de vectoriel ici : la préparation est scalaire, une fois par triangle.
+// La hiérarchie ne la modifie pas : elle lit fx.e, fx.a, fx.b et s.bb.</script>
+
+<script type="text/plain" id="x2s">// Fragment.h — RasterizeTriangleFx, aiguillage (D-a2 après D-a1c)
+if (s.bb.x1 - s.bb.x0 >= kMinSimdWidth)                    // boîte assez large : AVX2
+{
+    if (IsSmallFloatTri<kSmall>(fx))                       // D-a1c : étendue < 8 px
+        covered = RasterizeBlocks8<Shader>(s, ctx);
+    else if (IsTiledTri<kTile>(s))                         // D-a2 : boîte >= T* dans les deux axes
+        covered = RasterizeTiles8Fx<Shader>(s, fx, ctx);   // hors ligne
+    else
+        covered = RasterizeBlocks8Fx<Shader, kForce64>(s, fx, ctx);
+}
+else  // scalaire : IsTiledTri ? ForEachCoveredPixelFxTiled : ForEachCoveredPixelFx</script>
+<script type="text/plain" id="x2v">// Rasterizer.h — le critère, deux comparaisons sans branche
+template<int32_t kTilePx>
+LV3_FORCEINLINE bool IsTiledTri(const TriangleSetup& s) noexcept
+{
+    if constexpr (kTilePx <= 0) { (void)s; return false; }   // T* = 0 : disparaît
+    else return ((s.bb.x1 - s.bb.x0) >= kTilePx) & ((s.bb.y1 - s.bb.y0) >= kTilePx);
+}</script>
+
+<script type="text/plain" id="x3s">// Rasterizer.h — les deux coins d'une tuile, pour UNE arête
+//   coin de REJET        = MAXIMUM de E' sur la tuile : max < 0  -> aucun pixel ne passe
+//   coin d'ACCEPTATION   = MINIMUM de E' sur la tuile : min >= 0 -> les 64 passent
+LV3_FORCEINLINE int64_t TileRejectOfs(int64_t a, int64_t b) noexcept
+{
+    const int64_t k = kTileSize - 1;                  // 7 pas de pixel d'un bord à l'autre
+    return (a > 0 ? a * k : 0) + (b > 0 ? b * k : 0); // on ne fait un pas que s'il fait MONTER E'
+}
+LV3_FORCEINLINE int64_t TileAcceptOfs(int64_t a, int64_t b) noexcept
+{
+    const int64_t k = kTileSize - 1;
+    return (a < 0 ? a * k : 0) + (b < 0 ? b * k : 0); // ... que s'il fait DESCENDRE E'
+}</script>
+<script type="text/plain" id="x3v">// PixelStage8.h — diffusés UNE fois par triangle (une voie = une tuile, même décalage pour toutes)
+const __m256i rj0 = _mm256_set1_epi32(int32_t(TileRejectOfs(A0, B0)));
+const __m256i rj1 = _mm256_set1_epi32(int32_t(TileRejectOfs(A1, B1)));
+const __m256i rj2 = _mm256_set1_epi32(int32_t(TileRejectOfs(A2, B2)));
+const __m256i ac0 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A0, B0)));
+const __m256i ac1 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A1, B1)));
+const __m256i ac2 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A2, B2)));</script>
+
+<script type="text/plain" id="x4s">// Rasterizer.h — TilesFitInt32 : E' tient-il dans int32 partout où la hiérarchie lit ?
+const int64_t dxe = int64_t(s.bb.x1) + kTileSize - 1 - s.bb.x0;   // domaine [x0, x1 + 7]
+const int64_t dye = int64_t(s.bb.y1) + kTileSize - 1 - s.bb.y0;   //         [y0, y1 + 7]
+bool fits = true;
+for (int k = 0; k < 3; ++k)
+{
+    const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;
+    const int64_t lo = fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0);   // coin du minimum
+    const int64_t hi = fx.e[k] + (ax > 0 ? ax : 0) + (by > 0 ? by : 0);   // coin du maximum
+    fits &= (lo >= INT32_MIN) & (hi <= INT32_MAX);
+}
+return fits;</script>
+<script type="text/plain" id="x4v">// Fragment.h — RasterizeTiles8Fx : la preuve AVANT toute voie int32
+template<class Shader>
+LV3_NOINLINE uint32_t RasterizeTiles8Fx(const TriangleSetup& s, const EdgeSetupFx& fx, FragmentContext& ctx) noexcept
+{
+    if (!TilesFitInt32(s, fx)) return RasterizeBlocks8Fx<Shader, false>(s, fx, ctx);  // repli Giesen
+    ShaderSink8<Shader> sink(ctx);
+    return ForEachCoveredTile8Fx32(s, fx, sink);
+}</script>
+
+<script type="text/plain" id="x5s">// Pendant scalaire : les pas restent des int64, rien à préparer
+const int64_t a0 = fx.a[0], a1 = fx.a[1], a2 = fx.a[2];
+const int64_t b0 = fx.b[0], b1 = fx.b[1], b2 = fx.b[2];
+const int64_t rj0 = TileRejectOfs(a0, b0), ...;   // coins
+const int64_t ac0 = TileAcceptOfs(a0, b0), ...;
+int64_t t0 = fx.e[0], t1 = fx.e[1], t2 = fx.e[2]; // E' au coin de la 1re tuile = (x0, y0)</script>
+<script type="text/plain" id="x5v">// PixelStage8.h — une fois par triangle
+const __m256i lane = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+// NIVEAU TUILES : voie j = tuile j du groupe, décalée de j * 8A'
+const __m256i tOff0 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(Mul(A0, kTileSize)));
+// NIVEAU BLOCS  : voie i = pixel x + i, décalé de i * A' ; pas de ligne B'
+const __m256i off0  = _mm256_mullo_epi32(lane, _mm256_set1_epi32(A0));
+const __m256i vB0   = _mm256_set1_epi32(B0);
+// pas scalaires (uint32, modulaires) : groupe suivant +64A', rangée suivante +8B'
+const int32_t gStep0 = Mul(A0, 8 * kTileSize), tStep0 = Mul(B0, kTileSize);
+// 4e « arête » des tuiles de la dernière colonne : (x1 - 1) - (x + i) >= 0
+const __m256i boxLane = _mm256_sub_epi32(_mm256_set1_epi32(bx1 - 1), lane);</script>
+
+<script type="text/plain" id="x6s">// Pendant scalaire : une tuile à la fois
+// REJET : une seule arête dont le maximum est < 0 suffit (OU des bits de signe)
+if (((c0 + rj0) | (c1 + rj1) | (c2 + rj2)) < 0) { /* tuile suivante */ continue; }
+// ACCEPTATION : les trois minimums >= 0, ET la tuile entière dans la boîte
+const bool full = ((c0 + ac0) | (c1 + ac1) | (c2 + ac2)) >= 0
+               && rx1 == tx + kTileSize && ry1 == ty + kTileSize;</script>
+<script type="text/plain" id="x6v">// AVX2 : 8 tuiles d'un coup
+const __m256i c0 = _mm256_add_epi32(_mm256_set1_epi32(g0), tOff0);      // coins haut-gauche
+...
+const __m256i anyRj = _mm256_or_si256(_mm256_or_si256(_mm256_add_epi32(c0, rj0),
+                         _mm256_add_epi32(c1, rj1)), _mm256_add_epi32(c2, rj2));
+const __m256i anyAc = _mm256_or_si256(_mm256_or_si256(_mm256_add_epi32(c0, ac0),
+                         _mm256_add_epi32(c1, ac1)), _mm256_add_epi32(c2, ac2));
+const uint32_t rej = uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(anyRj)));          // bit j = 1 : rejetée
+const uint32_t acc = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(anyAc))) & 0xFFu; // bit j = 1 : 3 arêtes OK
+const int32_t  nt    = (bx1 - gx + 7) >> 3;                       // tuiles dans la boîte
+const uint32_t inBox = nt >= 8 ? 0xFFu : ((1u << nt) - 1u);
+const uint32_t fitX  = (bx1 - gx) >= 64 ? 0xFFu : ((1u << ((bx1 - gx) >> 3)) - 1u);  // tuiles ENTIÈRES
+const uint32_t full  = acc & fitX & (rowsFull ? 0xFFu : 0u);
+uint32_t live = ~rej & inBox;</script>
+
+<script type="text/plain" id="x7s">// Pendant scalaire : les tuiles sont prises dans l'ordre, une par une
+for (int32_t tx = bx0; tx < bx1; tx += kTileSize) { ... }</script>
+<script type="text/plain" id="x7v">// AVX2 : du masque aux tuiles, une itération par bit à 1
+while (live != 0)
+{
+    const uint32_t j = _tzcnt_u32(live);         // indice de la tuile la plus basse
+    live = _blsr_u32(live);                      // efface ce bit
+    const int32_t x = gx + int32_t(j) * kTileSize;
+    // coin de la tuile j diffusé depuis la voie j du registre des coins (un µop par arête)
+    const __m256i jj = _mm256_set1_epi32(int32_t(j));
+    __m256i e0 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c0, jj), off0);   // E'(x + i, ty)
+    __m256i e1 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c1, jj), off1);
+    __m256i e2 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c2, jj), off2);
+    ...
+}</script>
+
+<script type="text/plain" id="x8s">// Pendant scalaire : tuile pleine, aucun test
+for (int32_t y = ty; y < ry1; ++y, sink.NextRow())
+    for (int32_t x = tx; x < rx1; ++x)
+    {
+        if (full || (e0 | e1 | e2) >= 0)                 // full : le test est court-circuité
+        {
+            const float w0 = BaryFromFixed(e0, o0, inv); // (float(E') + ofs) * invQ
+            ...
+            sink.Pixel(x, bary);
+        }
+        e0 += a0; e1 += a1; e2 += a2;
+    }</script>
+<script type="text/plain" id="x8v">// AVX2 : tuile pleine, 8 lignes, 8 blocs, AUCUN test de couverture
+sink.BeginRow(ty);                                         // pointeurs : une fois par tuile
+for (int32_t r = 0; r < kTileSize; ++r, sink.NextRow())
+{
+    const __m256 w0 = BaryFromFixed8(e0, bf.o0, bf.inv);    // cvtdq2ps, addps, mulps
+    const __m256 w1 = BaryFromFixed8(e1, bf.o1, bf.inv);
+    const __m256 w2 = BaryFromFixed8(e2, bf.o2, bf.inv);
+    sink.BlockFull(x, allOn, w0, flipped ? w2 : w1, flipped ? w1 : w2);
+    e0 = _mm256_add_epi32(e0, vB0); e1 = _mm256_add_epi32(e1, vB1); e2 = _mm256_add_epi32(e2, vB2);
+}
+// ShaderSolid::Shade8Full : z = w0 z0 + w1 z1 + w2 z2 ; dst = loadu(depth) ;
+//   pass = cmp(z, dst, NLE_UQ) ; maskstore(depth, pass, z) ; maskstore(pixel, pass, couleur)</script>
+
+<script type="text/plain" id="x9s">// Pendant scalaire : tuile partielle, le test pixel de ForEachCoveredPixelFx
+if ((e0 | e1 | e2) >= 0) { ++covered; ... sink.Pixel(x, bary); }</script>
+<script type="text/plain" id="x9v">// AVX2 : tuile partielle, les blocs de Fx32
+const __m256i eb = _mm256_sub_epi32(boxLane, _mm256_set1_epi32(x));     // (x1 - 1) - (x + i)
+sink.BeginRow(ty);
+for (int32_t y = ty; y < ry1; ++y, sink.NextRow())
+{
+    const __m256i any = _mm256_or_si256(_mm256_or_si256(e0, e1), _mm256_or_si256(e2, eb));
+    const uint32_t bits = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(any))) & 0xFFu;
+    if (bits != 0)
+    {
+        covered += uint32_t(_mm_popcnt_u32(bits));
+        const __m256 cover = _mm256_castsi256_ps(_mm256_cmpgt_epi32(any, minus1));
+        ... barycentriques ... sink.Block(x, cover, bits, w0, w1', w2');
+    }
+    e0 = _mm256_add_epi32(e0, vB0); ...                                   // ligne suivante
+}</script>
+
+<script type="text/plain" id="x10s">// Fx32 (avant) : tous les blocs de la boîte, ligne par ligne
+for (y = by0; y < by1; ++y)
+    for (x = bx0; x < bx1; x += 8)
+        bits = test(e0 | e1 | e2 | eb);   // LaneBlocks8 += 1 à chaque bloc</script>
+<script type="text/plain" id="x10v">// Tuiles (après) : compteurs RASTER_STATS
+LV3_PROF_COUNT(EProfCounter::LaneBlocks8,    blocks);      // blocs TESTÉS (tuiles partielles)
+LV3_PROF_COUNT(EProfCounter::Tiles8Rejected, tRej);
+LV3_PROF_COUNT(EProfCounter::Tiles8Full,     tFull);
+LV3_PROF_COUNT(EProfCounter::Tiles8Partial,  tPart);
+LV3_PROF_COUNT(EProfCounter::BlocksFull8,    tFull * 8);   // écrits SANS test
+// invariant : Tiles8Rejected + Tiles8Full + Tiles8Partial = tuiles de la grille dans la boîte</script>
+
+<section id="code">
+  <div class="sh"><span class="stepno">15 · CODE</span><h2>Le code, fichier par fichier, avant et après</h2></div>
+  <p class="read">Trente modifications, dans l'ordre d'application. Chacune donne le fichier, l'endroit, la raison, puis le code avant et après. Le seul fichier entier fourni est la TNR <code>Test_Da2_Tiles.cpp</code>, qui est nouvelle (dans l'archive de fichiers). Les étapes 1 à 10 touchent la LIB, l'étape 11 l'EXE, l'étape 12 copie la scène V5.</p>
+  <div class="figctl"><span>Fichier :</span><span class="seg" id="segFile"></span></div>
+  <div id="changes"></div>
+  <div class="chg"><header><b>Étape 12 · Scène V5</b><span>assets de l'EXE</span></header>
+    <p>Copier depuis l'archive <code>Lot_Da2_fichiers.zip</code> : <code>assets/Meshes/v5_wall_c24|c48|c96|c192.obj/.mtl</code>, <code>assets/Meshes/v5_fan.obj/.mtl</code>, <code>assets/GraphScene/bench_V_V5_c24|c48|c96|c192|fan.json</code>, et pour la trace <code>Documentations/fichiers de génération/gen_v5_(da2).py</code>. Chaque OBJ a son propre MTL (règle du 08/10). Aucun code moteur ne change pour la scène.</p>
+  </div>
+</section>
+
+<section id="contre">
+  <div class="sh"><span class="stepno w">16 · CONTRE-EXEMPLES</span><h2>Huit façons de rater ce lot, chiffrées</h2></div>
+  <div class="tbl"><table>
+    <thead><tr><th>#</th><th>Ce qu'il ne faut pas faire</th><th>Ce qui se passe (mesuré)</th><th>Ce qui le détecte</th></tr></thead>
+    <tbody>
+      <tr class="ko"><td>1</td><td>Tuiler tout triangle AVX2 non petit (T* = 8)</td><td>Classe 8-15 : +5 % au banc isolé (+2 à +4 % en contexte) : presque toutes les tuiles sont partielles, la hiérarchie ne fait que s'ajouter.</td><td>Banc par classe ; R2 rooms.</td></tr>
+      <tr class="ko"><td>2</td><td>Aligner la grille sur l'écran (tx = x0 &amp; ~7) sans binning</td><td>Un bloc partiel de plus par ligne une fois sur deux : classe 16-24 <b>+9 %</b> (contre +1 % avec la grille sur x0), classe 8-16 +25 % (contre +10 %). Mesuré sur la version intermédiaire, même banc.</td><td>Banc par classe.</td></tr>
+      <tr class="ko"><td>3</td><td>Mettre la hiérarchie dans RasterizeBlocks8Fx</td><td>V2, qui n'a <b>aucun</b> triangle tuilé : <b>+4 à +5 %</b>. Le corps des tuiles alourdit le prologue et déplace la boucle Fx32 payée par tous les triangles Giesen. Après séparation : 0 ± 3 % (contrôle A/A).</td><td>Témoin V2 au R2 ; asm (taille du prologue de RasterizeBlocks8Fx identique à A).</td></tr>
+      <tr class="ko"><td>4</td><td>BeginRow à chaque ligne de chaque tuile ; coin de tuile recalculé en scalaire</td><td>V5 c24 <b>+3 à +5 %</b> avec BeginRow (2 multiplications et 6 lectures par ligne et par tuile). NextRow : c24 +1,5 %. vpermd au lieu de imul + diffusion : c24 0 %.</td><td>Banc V5 c24 ; asm (pas d'imul dans la boucle des lignes).</td></tr>
+      <tr class="ko"><td>5</td><td>Juger le rejet au mauvais coin (le minimum)</td><td>TNR : <b>58 399</b> verdicts d'arête faux ; image : <b>70 263</b> couleurs fausses (mutant appliqué à la copie de travail).</td><td>TNR (référence indépendante + image).</td></tr>
+      <tr class="ko"><td>6</td><td>Tuile pleine sans vérifier qu'elle tient dans la boîte (bord rogné au viewport)</td><td>Écriture de 8 pixels hors de la vue, dans la vue voisine ou hors du tampon : corruption du tas (<code>munmap_chunk(): invalid pointer</code>) dans la TNR.</td><td>Filet Debug ajouté : <code>LV3_ASSERT « tuile pleine hors de la boite »</code>.</td></tr>
+      <tr class="ko"><td>7</td><td>Oublier la 4e arête (la boîte) dans les tuiles partielles</td><td>Sur une vue collée au bord droit, des voies au-delà de x1 sont couvertes : écriture hors tampon, corruption du tas.</td><td>Filet Debug : <code>LV3_ASSERT « voie couverte hors de la boite »</code>.</td></tr>
+      <tr class="ko"><td>8</td><td>Se tromper de voie dans vpermd, ou oublier l'échange p1 ↔ p2 dans les tuiles pleines</td><td>Coin de la tuile 0 pour toutes : <b>66 591</b> couleurs fausses. Échange non défait : <b>8 115</b> couleurs et <b>18 146</b> profondeurs fausses.</td><td>TNR (image, 5 shaders).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>Ce qui n'est pas un contre-exemple : oublier le masque <code>inBox</code>.</b> La TNR ne voit rien, et c'est normal. Les tuiles au-delà de x1 sont alors visitées, avec des coins éventuellement débordés (modulaires) ; mais une tuile hors boîte ne peut pas être « pleine » (fitX), et dans une tuile partielle la 4e arête masque chaque voie au-delà de x1. <code>inBox</code> économise du travail ; il ne protège pas l'image. Savoir distinguer un garde-fou de correction d'un garde-fou de performance, c'est savoir ce qu'une TNR peut prouver.</div>
+</section>
+
+<section id="predictions">
+  <div class="sh"><span class="stepno">17 · PRÉDICTIONS</span><h2>Écrites avant la mesure</h2></div>
+  <h3>R1 : comptage (binaire B_stats, <code>rasterstats=1</code>, <code>tiles=16</code>)</h3>
+  <p class="read">Le banc reproduit le R1 du moteur au compte près sur rooms, V2 et V4 c12 : ces prédictions sont exactes. Pour V5 (projection float du moteur contre double du banc), tolérance ±0,1 % sur les pixels, exact sur les triangles.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th>Compteurs communs</th><th class="n">LaneBlocks8</th><th class="n">TrisTiled</th><th class="n">Tiles8 R / F / P</th><th class="n">BlocksFull8</th></tr></thead>
+    <tbody>
+      <tr class="hl"><td>rooms</td><td>identiques au R1 de D-a1c : Rasterized 176 038, Early 96 715, Covered 2 189 889, DepthPassed 1 611 624, TrisSimd8 36 262, TrisSmallFloat 17 406, TrisFixedWide 7, TrisPix1 1 865, classes W1…W17+</td><td class="n">790 435 → <b>471 830</b></td><td class="n">1 685</td><td class="n">31 468 / 10 931 / 19 890</td><td class="n">87 448</td></tr>
+      <tr><td>V5 c24</td><td>Covered 1 382 400 ; Tight 3 054 927 ; TrisSimd8 5 196</td><td class="n">389 646 → 301 153</td><td class="n">4 683</td><td class="n">12 162 / 2 036 / 41 390</td><td class="n">16 288</td></tr>
+      <tr><td>V5 c48</td><td>Covered 1 382 400 ; Tight 3 073 444 ; TrisSimd8 1 434</td><td class="n">406 650 → 190 954</td><td class="n">1 298</td><td class="n">19 761 / 9 101 / 24 640</td><td class="n">72 808</td></tr>
+      <tr><td>V5 c96</td><td>Covered 1 382 400 ; Tight 3 047 119 ; TrisSimd8 394</td><td class="n">400 602 → 101 493</td><td class="n">354</td><td class="n">22 715 / 15 178 / 12 391</td><td class="n">121 424</td></tr>
+      <tr><td>V5 c192</td><td>Covered 1 382 400 ; Tight 3 151 515 ; TrisSimd8 152</td><td class="n">405 857 → 58 493</td><td class="n">136</td><td class="n">26 565 / 17 920 / 7 652</td><td class="n">143 360</td></tr>
+      <tr><td>V5 fan</td><td>Covered 1 382 400 ; Tight 73 887 282 ; TrisSimd8 1 440</td><td class="n">9 347 022 → 689 272</td><td class="n">1 408</td><td class="n">1 107 881 / 0 / 85 797</td><td class="n">0</td></tr>
+      <tr><td>V2, V1, V4 c3, c12</td><td>tous identiques au R1 de D-a1c</td><td class="n">inchangé</td><td class="n">0</td><td class="n">0</td><td class="n">0</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read"><b>Invariants à vérifier dans chaque summary :</b> TrisTiled ≤ TrisSimd8 − TrisSmallFloat ; LaneBlocks8(A) − LaneBlocks8(B) − BlocksFull8 ≤ 8 × Tiles8Rejected (rooms : 231 157 ≤ 251 744 ; l'écart vient des rangées de tuiles coupées en bas de boîte) ; BlocksFull8 = 8 × Tiles8Full ; et tout compteur commun identique entre A et B. En-tête : <code>tiles=16</code> présent (Profiler.cpp appliqué).</p>
+  <h3>R2 : temps, A = <code>LV3_RASTER_TILES 0</code>, B = 16</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Scène</th><th class="n">Prédit (Render, B vs A)</th><th>Raisonnement</th></tr></thead>
+    <tbody>
+      <tr><td>V5 c96</td><td class="n">−10 à −25 %</td><td>Banc −24 à −25 % ; le noyau domine le Render de V5 (398 triangles). Borne basse : facteur ½ du banc, comme en D-a1c.</td></tr>
+      <tr><td>V5 fan</td><td class="n">−40 à −65 %</td><td>Banc −64 à −66 % ; 93 % des blocs testés disparaissent.</td></tr>
+      <tr><td>V5 c48</td><td class="n">−3 à −10 %</td><td>Banc −9 à −10 %.</td></tr>
+      <tr><td>V5 c192</td><td class="n">−12 à −30 %</td><td>Banc −28 à −33 % ; fragments dominants (tuiles pleines).</td></tr>
+      <tr><td>V5 c24</td><td class="n">0 ± 3 %</td><td>Au point mort (banc −2 à 0 %).</td></tr>
+      <tr class="hl"><td>rooms</td><td class="n">0 à −4 %</td><td>Banc −2 à −7 % (médiane ≈ −3 %) sur le noyau ; le Render contient aussi l'étage sommets et l'étage faces.</td></tr>
+      <tr><td>V2, V1, V4 c12</td><td class="n">0 ± 2 %</td><td>Aucun triangle ne change de chemin ; RasterizeBlocks8Fx est identique (D6).</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note good"><b>Règle de décision, écrite avant les temps.</b> D-a2 est <b>accepté avec le défaut <code>LV3_RASTER_TILES 16</code></b> si : TNR (toutes) vertes et journaux inchangés hors D-a2 ; runs Debug sans assertion ; compteurs R1 conformes ; asm conforme ; <b>V5 c96 ≥ −8 %</b> et <b>V5 fan ≥ −25 %</b> (séquences A B B A valides : ClearDepth &lt; 5 %, |A1 − A2| &lt; 3 %) ; <b>rooms B ≤ A + 2 %</b> (8 runs A B B A A B B A) ; V1, V2 (16 runs) et V4 c12 dans ±2 %. Sinon : asm d'abord ; si rien ne l'explique, défaut 0 (code conservé, éteint à la compilation), question close jusqu'à D2.</div>
+</section>
+
+<section id="verifier">
+  <div class="sh"><span class="stepno o">18 · VÉRIFIER</span><h2>Hors moteur d'abord, puis dans le moteur</h2></div>
+  <h3>Déjà vérifié hors moteur (g++ 13, copie de travail de la LIB)</h3>
+  <ul class="read">
+    <li>TNR C1, C2, D-a1, D-a1b, D-a1c <b>vertes, journaux identiques</b> à la LIB d'origine (comparés ligne à ligne), avec <code>LV3_RASTER_TILES</code> 16 et 0, <code>LV3_SIMD</code> 0 et 1, <code>LV3_RASTER_STATS</code> 1.</li>
+    <li>Nouvelle TNR <code>Test_Da2_Tiles</code> verte : 5 shaders + couverture brute, 3 vues (dont une collée au bord droit), référence sans tuiles contre « tout en tuiles », production et scalaire : 0 différence ; 173 973 tuiles auditées, 0 verdict faux ; contre-exemple 58 399 ; 319 replis Giesen sur 327 triangles lointains.</li>
+    <li>Mutants : 5 détectés sur 5 (images fausses ou filets Debug), 1 mutant équivalent expliqué (<code>inBox</code>).</li>
+    <li>Compile sans avertissement nouveau (-Wall -Wextra) dans les configurations : défaut, RASTER_STATS, ABLATION 1 et 2, SIMD 0, TILES 0, FIXED 0, Debug ; <code>LV3_RASTER_TILES 7</code> → <code>#error</code>. (Avertissement préexistant corrigé au passage : <code>kTile</code> marqué <code>[[maybe_unused]]</code> pour ABLATION 1.)</li>
+    <li>Scènes rooms, V2, V4 c3, V4 c12, V5 ×5 : image A et B identiques au bit (couleur et Z), scalaire tuilé identique.</li>
+  </ul>
+  <h3>Reçu le 14/11 : application, TNR, Debug, asm</h3>
+  <div class="note good"><b>Compilation, TNR, runs Debug (rooms, V5 c96, V5 fan) et asm Release : conformes.</b> Une seule erreur à l'application : une accolade ouvrante en trop dans la branche scalaire de <code>RasterizeTriangleFx</code>, qui faisait lire <code>RasterizeTriangleT</code> comme déclaré dans un corps de fonction.</div>
+  <div class="tbl"><table>
+    <thead><tr><th>Point de l'asm</th><th>Attendu</th><th>Lu dans le listing</th></tr></thead>
+    <tbody>
+      <tr><td>Aiguillage du noyau</td><td>2 cmp contre 16 + call RasterizeTiles8Fx</td><td>Conforme ; le pendant scalaire n'est pas inliné dans le chemin étroit (MSVC prouve « largeur &lt; 3 ⇒ &lt; 16 »)</td></tr>
+      <tr><td>RasterizeBlocks8Fx</td><td>inchangé</td><td>7 push, cadre 768 o, 10 xmm : identique au relevé D-a1b</td></tr>
+      <tr><td>Groupe de 8 tuiles</td><td>additions, 4 OU, 2 movemask</td><td>≈ 45 instructions (≈ 5,6 par tuile), 2 <code>vmovmskps</code></td></tr>
+      <tr><td>Entrée de tuile</td><td>tzcnt, blsr, vpermd ×3</td><td>Conforme ; BeginRow (2 imul) une fois par tuile</td></tr>
+      <tr><td>Ligne de tuile pleine</td><td>aucun test, lecture Z simple</td><td>≈ 27 instructions ; lecture Z repliée dans l'opérande du <code>vcmpps 22</code>, aucun <code>vmaskmovps</code> en lecture</td></tr>
+      <tr><td>Ligne de tuile partielle</td><td>corps de Fx32</td><td>Conforme ; NextRow = 2 add, aucun imul</td></tr>
+      <tr><td>FMA, appels</td><td>0 vfmadd ; call seulement dans le repli</td><td>0 FMA ; 1 call (repli, copie d'EdgeSetupFx de 104 o : point P4)</td></tr>
+    </tbody>
+  </table></div>
+  <p class="read"><b>Observation hors D-a2</b> : la lambda <code>Edge</code> de <code>SetupTriangleFx</code> n'est inlinée nulle part (3 appels par triangle, 6 push chacun). Elle existe depuis D-a1 : c'est probablement antérieur. Le listing A (<code>LV3_RASTER_TILES 0</code>) le confirmera ; si c'est le cas, piste P5 : en faire une fonction <code>LV3_FORCEINLINE</code>.</p>
+  <h3>À faire chez toi, dans l'ordre</h3>
+  <ul class="check" id="checks">
+    <li><input type="checkbox" id="ck1"><label for="ck1"><b>Compiler</b> Debug et Release, LIB et EXE (aucun avertissement nouveau).</label></li>
+    <li><input type="checkbox" id="ck2"><label for="ck2"><b>TNR Debug</b> : toutes vertes ; journal D-a2 attendu : <code>vue 333x211 : 6600 triangles, 104347 tuiles (55450 rejetees, 10768 pleines), erreurs de verdict 0</code> ; <code>211x151 : 46273 (24619, 4668)</code> ; <code>75x190 : 23353 (12195, 2580)</code> ; <code>contre-exemple : 58399</code> ; <code>lointains : 327 triangles, 319 replis</code>. Journaux C1, C2, D-a1, D-a1b, D-a1c inchangés.</label></li>
+    <li><input type="checkbox" id="ck3"><label for="ck3"><b>Run Debug</b> de rooms, V5 c96 et V5 fan : aucune assertion (les deux filets D-a2 restent silencieux), aucun défaut visible.</label></li>
+    <li><input type="checkbox" id="ck4"><label for="ck4"><b>Asm Release</b> (<code>/FAs</code> sur RenderSystem.cpp). Dans <code>RasterizeTriangleT&lt;ShaderSolid,3,0,8,16&gt;</code> : après les 2 <code>cmp … 2048</code> de D-a1c, 2 <code>cmp</code> largeur/hauteur contre 16 et <code>call RasterizeTiles8Fx&lt;ShaderSolid&gt;</code> ; prologue de même taille qu'en A. Dans <code>RasterizeTiles8Fx</code> : <code>vpermd</code> ×3 par tuile, <code>tzcnt</code> + <code>blsr</code>, 2 <code>vmovmskps</code> par groupe, dans la branche pleine un <code>vmovups</code> (lecture Z) et aucun <code>vmaskmovps</code> en lecture, 0 <code>vfmadd</code>, <code>call RasterizeBlocks8Fx</code> seulement dans le repli. <code>RasterizeBlocks8Fx&lt;ShaderSolid,0&gt;</code> : même nombre d'instructions qu'en A.</label></li>
+    <li><input type="checkbox" id="ck5"><label for="ck5"><b>R0 (facultatif)</b> : ablation N E S M sur rooms avec le binaire A, pour remettre à jour la règle « arêtes ≥ 40 % ».</label></li>
+    <li><input type="checkbox" id="ck6"><label for="ck6"><b>R1</b> (B_stats, affinity 4) : V5 ×5, rooms, V2, V1, V4 c12 ; en-tête <code>tiles=16</code> ; compteurs et invariants de la section 17.</label></li>
+    <li><input type="checkbox" id="ck7"><label for="ck7"><b>R2</b> (A = TILES 0, B = 16, affinity 4, rasterstats 0) : V5 c96, fan, c48 en A B B A ; rooms A B B A A B B A ; V2 A B B A A B B A × 2 ; V1 et V4 c12 en A B B A (c24 et c192 si le temps le permet). Me renvoyer les summaries.</label></li>
+    <li><input type="checkbox" id="ck8"><label for="ck8"><b>Décision</b> selon la règle de la section 17, puis commit (LIB : config.h, Profiler.h/.cpp, Rasterizer.h, PixelStage8.h, FrameBuffer.h, Fragment.h ; EXE : Test_Da2_Tiles.cpp, RunAllTests.cpp, vcxproj et filters, scène V5).</label></li>
+  </ul>
+</section>
+
+<section id="suite">
+  <div class="sh"><span class="stepno">19 · LA SUITE</span><h2>Et après : binning, Hi-Z, multithread</h2></div>
+  <div class="read">
+  <p>La section 7 a montré où est le reste du temps d'un grand triangle : dans les fragments, et surtout dans le trafic mémoire. Trois chantiers s'appuient sur les tuiles de ce lot.</p>
+  <ul>
+    <li><b>D2, binning (avec L13)</b> : ranger chaque triangle dans les tuiles d'écran qu'il touche, puis rastériser tuile d'écran par tuile d'écran, couleur et profondeur dans le cache L2. Le jugement de tuile de D-a2 sert tel quel à l'assignation (une tuile rejetée = triangle hors du bac). La grille devra alors être alignée sur l'écran : la décision D2 de ce lot sera revue.</li>
+    <li><b>Hi-Z par tuile</b> : garder pour chaque tuile 8 × 8 la profondeur la plus lointaine déjà écrite ; une tuile dont le triangle est entièrement derrière est sautée avant tout fragment. Sur rooms, 29 % des pixels couverts par les triangles de 16-31 px échouent au test Z (pass/cov 71 %) ; sur les ≥ 64 px, 4 % seulement (ce sont les murs visibles). À mesurer avant de décider.</li>
+    <li><b>Multithread (L13)</b> : une tuile d'écran par thread, sans verrou.</li>
+  </ul>
+  <p><b>Points ouverts, sans urgence</b> (à ranger dans la roadmap) : P1, régler T* (16 ou 24) si un lot de réglage est ouvert ; P2, niveau 64 × 64 seulement si une scène à triangles géants le justifie ; P3, voies de tuiles 64 bits (aujourd'hui repli Giesen) ; P4, <code>EdgeSetupFx</code> passé par valeur à RasterizeBlocks8Fx (remarque R1 de D-a1c, toujours valable pour le repli).</p>
+  </div>
+</section>
+
+<section id="resume">
+  <div class="sh"><span class="stepno">20 · RÉSUMÉ</span><h2>En résumé, ordre d'application</h2></div>
+  <ol class="read">
+    <li>LIB, étapes 1 à 10 (section 15) : config.h, Profiler.h/.cpp, Rasterizer.h, PixelStage8.h, FrameBuffer.h, Fragment.h.</li>
+    <li>EXE, étape 11 : copier <code>Test/Test_Da2_Tiles.cpp</code> (archive), RunAllTests.cpp, vcxproj et filters.</li>
+    <li>Étape 12 : copier la scène V5 (assets/Meshes, assets/GraphScene).</li>
+    <li>Compiler, TNR Debug, run Debug, asm, R1, R2 selon la section 18, et m'envoyer les summaries.</li>
+    <li>Selon la règle : commit D-a2 (défaut 16) ou défaut 0 et question close.</li>
+  </ol>
+  <p class="read" style="color:var(--mute);font-size:.88rem">Sources : M. Abrash, <a href="https://jacobfilipp.com/DrDobbs/articles/DDJ/2009/0905/0905ma01/0905ma01.html">Rasterization on Larrabee</a>, Dr. Dobb's, mai 2009 ; <a href="https://gamedeveloper.com/programming/sponsored-feature-rasterization-on-larrabee----adaptive-rasterization-helps-boost-efficiency">Adaptive rasterization helps boost efficiency</a>, Game Developer ; F. Giesen, <a href="https://fgiesen.wordpress.com/2011/07/06/a-trip-through-the-graphics-pipeline-2011-part-6/">A trip through the Graphics Pipeline 2011, part 6</a> et <a href="https://fgiesen.wordpress.com/2013/02/10/optimizing-the-basic-rasterizer/">Optimizing the basic rasterizer</a> ; J. Hasselgren, M. Andersson, T. Akenine-Möller, <a href="https://diglib.eg.org/handle/10.2312/hpg20161189">Masked Software Occlusion Culling</a>, HPG 2016.</p>
+</section>
+
+</div>
+
+<script type="application/json" id="changes-data">[{"step": "1", "file": "Core/config.h", "where": "section 14 (nouvelle), à la fin du fichier, après la section 13", "before": "\t#error \"LV3_RASTER_SMALL_FLOAT : 0 (desactive) a 16 px. Au-dela, le flottant n'est plus exact (lot D-a1c)\"\n#endif", "after": "\t#error \"LV3_RASTER_SMALL_FLOAT : 0 (desactive) a 16 px. Au-dela, le flottant n'est plus exact (lot D-a1c)\"\n#endif\n\n\n// 14. HIERARCHIE DE TUILES (jalon D, lot D-a2 : Abrash sur Giesen). Commutateur de MESURE A / B.\n//     Valeur = T* en pixels ; 0 = desactive (blocs Giesen pour tous les grands triangles, comme D-a1c).\n//     Sous LV3_RASTER_FIXED = 1, un triangle du chemin Giesen (pas un petit de D-a1c) dont la boite\n//     (rognee) fait >= T* pixels en largeur ET en hauteur est parcouru par tuiles 8 x 8 alignees :\n//     8 tuiles jugees par registre (rejetees / pleines / partielles), blocs testes seulement dans les\n//     tuiles partielles, blocs ecrits SANS test dans les tuiles pleines.\n//     Image IDENTIQUE au bit pres (memes E' entiers) : aucune reference TNR ne change.\n//     Declare dans l'en-tete CSV (tiles=).\n#ifndef LV3_RASTER_TILES\n\t#define LV3_RASTER_TILES 16\n#endif\n\n#if LV3_RASTER_TILES < 0 || (LV3_RASTER_TILES > 0 && LV3_RASTER_TILES < 8)\n\t#error \"LV3_RASTER_TILES : 0 (desactive) ou T* >= 8 px (une tuile). En dessous, D-a1c ou les blocs Giesen\"\n#endif\n", "why": "Le commutateur de mesure A/B : T* en pixels, 0 = pas de hiérarchie. Un #error refuse un T* entre 1 et 7 (plus petit qu'une tuile)."}, {"step": "2", "file": "Core/Profiler.h", "where": "enum EProfCounter : fin de l'énumération", "before": "\t\tTrisSmallFloat,\n\n\t\tCount\n\t};", "after": "\t\tTrisSmallFloat,\n\n\t\t// ── D-a2 (RASTER_STATS seulement) : hierarchie de tuiles 8 x 8 (LV3_RASTER_TILES > 0).\n\t\t//    TrisTiled      : triangles parcourus par tuiles. Sous-ensemble de TrisSimd8.\n\t\t//    Tiles8Rejected : tuiles de la boite rejetees d'un coup (une arete dont le max < 0).\n\t\t//    Tiles8Full     : tuiles pleines (les trois minimums >= 0, entierement dans la boite).\n\t\t//    Tiles8Partial  : tuiles descendues bloc par bloc.\n\t\t//    BlocksFull8    : blocs ecrits SANS test (8 par tuile pleine). Hors de LaneBlocks8, qui ne\n\t\t//                     compte plus que les blocs TESTES. Invariant par triangle tuile :\n\t\t//                     Tiles8Rejected + Tiles8Full + Tiles8Partial = tuiles de la grille dans la boite.\n\t\tTrisTiled, Tiles8Rejected, Tiles8Full, Tiles8Partial, BlocksFull8,\n\n\t\tCount\n\t};", "why": "Cinq compteurs RASTER_STATS : triangles tuilés, tuiles rejetées / pleines / partielles, blocs écrits sans test."}, {"step": "2", "file": "Core/Profiler.h", "where": "kProfCounterNames : fin du tableau", "before": "\t\t\"TrisFixedWide\", \"TrisFixedGuard\",\n\t\t\"TrisBoxW1\", \"TrisBoxW2\", \"TrisBoxW3to4\", \"TrisBoxW5to8\", \"TrisBoxW9to16\", \"TrisBoxW17plus\",\n\t\t\"TrisSmallFloat\"\n\t};\n", "after": "\t\t\"TrisFixedWide\", \"TrisFixedGuard\",\n\t\t\"TrisBoxW1\", \"TrisBoxW2\", \"TrisBoxW3to4\", \"TrisBoxW5to8\", \"TrisBoxW9to16\", \"TrisBoxW17plus\",\n\t\t\"TrisSmallFloat\",\n\t\t\"TrisTiled\", \"Tiles8Rejected\", \"Tiles8Full\", \"Tiles8Partial\", \"BlocksFull8\"\n\t};\n", "why": "Un nom par compteur : le static_assert de taille l'exige."}, {"step": "2", "file": "Core/Profiler.cpp", "where": "en-tête du CSV par frame (1re occurrence)", "before": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n\t\t\t\t<< \";smallfp=\" << LV3_RASTER_SMALL_FLOAT // 0 = Giesen partout, W* = petits triangles AVX2 en flottant (config.h, 13)\n\t\t\t\t<< \";lodstats=\" << LV3_LOD_STATS         // idem (M11)\n\t\t\t\t<< \";asserts_lib=\" << LV3_ASSERTS_ENABLED // valeur vue par la LIB, qui VERIFIE :", "after": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n\t\t\t\t<< \";smallfp=\" << LV3_RASTER_SMALL_FLOAT // 0 = Giesen partout, W* = petits triangles AVX2 en flottant (config.h, 13)\n\t\t\t\t<< \";tiles=\" << LV3_RASTER_TILES         // 0 = blocs Giesen partout, T* = hierarchie de tuiles 8 x 8 (config.h, 14)\n\t\t\t\t<< \";lodstats=\" << LV3_LOD_STATS         // idem (M11)\n\t\t\t\t<< \";asserts_lib=\" << LV3_ASSERTS_ENABLED // valeur vue par la LIB, qui VERIFIE :", "why": "La 1re ligne de chaque summary dira tiles= : deux runs de T* différents ne se comparent qu'en A/B."}, {"step": "2", "file": "Core/Profiler.cpp", "where": "en-tête du summary (2e occurrence, même texte)", "before": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n\t\t\t\t<< \";smallfp=\" << LV3_RASTER_SMALL_FLOAT // 0 = Giesen partout, W* = petits triangles AVX2 en flottant (config.h, 13)\n\t\t\t\t<< \";lodstats=\" << LV3_LOD_STATS         // idem (M11)\n\t\t\t\t<< \";asserts_lib=\" << LV3_ASSERTS_ENABLED // valeur vue par la LIB, qui VERIFIE :", "after": "\t\t\t\t<< \";fixed=\" << LV3_RASTER_FIXED         // 0 = aretes flottantes C2, 1 = virgule fixe D-a1 (config.h, 12)\n\t\t\t\t<< \";smallfp=\" << LV3_RASTER_SMALL_FLOAT // 0 = Giesen partout, W* = petits triangles AVX2 en flottant (config.h, 13)\n\t\t\t\t<< \";tiles=\" << LV3_RASTER_TILES         // 0 = blocs Giesen partout, T* = hierarchie de tuiles 8 x 8 (config.h, 14)\n\t\t\t\t<< \";lodstats=\" << LV3_LOD_STATS         // idem (M11)\n\t\t\t\t<< \";asserts_lib=\" << LV3_ASSERTS_ENABLED // valeur vue par la LIB, qui VERIFIE :", "why": "Même champ dans le résumé."}, {"step": "3", "file": "Rendering/Rasterizer.h", "where": "nouveau bloc D-a2 : à insérer juste AVANT le commentaire « // ── Pendant SCALAIRE (LV3_SIMD = 0, boîtes étroites, TNR) » (avant ForEachCoveredPixelFx). Partie 1 : constantes et coins", "before": "// (n'existe pas : code NOUVEAU)\n// emplacement : juste avant\n   // ── Pendant SCALAIRE (LV3_SIMD = 0, boîtes étroites, TNR). Toujours en int64 :", "after": "    // ════════════════════════════════════════════════════════════\n    //  D-a2 : HIÉRARCHIE D'ABRASH POSÉE SUR GIESEN (tuiles de 8 x 8 pixels)\n    //\n    //  La boîte est couverte par une grille de tuiles ALIGNÉES sur le framebuffer\n    //  (x et y multiples de 8). Pour chaque tuile et chaque arête, E' est affine :\n    //  ses extrêmes sur les 64 centres sont atteints à deux coins opposés.\n    //      coin de REJET        : le MAXIMUM de E' sur la tuile.  max < 0  -> aucun pixel ne passe l'arête\n    //      coin d'ACCEPTATION   : le MINIMUM de E' sur la tuile.  min >= 0 -> les 64 pixels passent l'arête\n    //  Décalages depuis le coin haut-gauche (pixel (tx, ty)) :\n    //      max = E'(tx, ty) + max(0, 7A') + max(0, 7B')       min = E'(tx, ty) + min(0, 7A') + min(0, 7B')\n    //  Le test est EXACT (et non conservatif) : les coins sont des centres de pixels de la tuile.\n    //  NB : en LV3, « couvert » <=> E' >= 0 (intérieur POSITIF), l'inverse de l'article d'Abrash\n    //  (intérieur négatif) : les deux coins sont échangés par rapport à son texte, pas la méthode.\n    // ════════════════════════════════════════════════════════════\n\n    inline constexpr int32_t kTileBits = 3;                   // tuiles de 2^3 = 8 pixels de côté\n    inline constexpr int32_t kTileSize = 1 << kTileBits;     // 8 : un bloc AVX2 de large, 8 lignes de haut\n\n    // Décalages des deux coins d'une tuile pour UNE arête (pas a, b en E').\n    //   max(0, 7a) + max(0, 7b) : on ne prend un pas que s'il fait MONTER E' (coin de rejet)\n    //   min(0, 7a) + min(0, 7b) : on ne prend un pas que s'il fait DESCENDRE E' (coin d'acceptation)\n    [[nodiscard]] LV3_FORCEINLINE int64_t TileRejectOfs(int64_t a, int64_t b) noexcept\n    {\n        const int64_t k = kTileSize - 1;\n        return (a > 0 ? a * k : 0) + (b > 0 ? b * k : 0);\n    }\n    [[nodiscard]] LV3_FORCEINLINE int64_t TileAcceptOfs(int64_t a, int64_t b) noexcept\n    {\n        const int64_t k = kTileSize - 1;\n        return (a < 0 ? a * k : 0) + (b < 0 ? b * k : 0);\n    }", "why": "La taille de tuile et les deux décalages de coin. Tout le cœur mathématique de la méthode tient dans TileRejectOfs / TileAcceptOfs."}, {"step": "4", "file": "Rendering/Rasterizer.h", "where": "même bloc, partie 2 : TilesFitInt32 (à la suite)", "before": "// (n'existe pas : code NOUVEAU)", "after": "    // ── La hiérarchie tient-elle en int32 ? Même preuve que PrepareLanesFx (E' affine : ses\n    //    extrêmes sur un rectangle sont à deux coins, choisis par les signes de A' et B'), sur le\n    //    domaine des tuiles : la grille part de (x0, y0), ses coins vont jusqu'à x1 + 6 et y1 + 6.\n    //    On vérifie [x0, x1 + 7] x [y0, y1 + 7]. Les voies de tuiles HORS de la boîte peuvent\n    //    déborder : vpaddd est modulaire, et elles sont écartées (inBox) avant toute décision.\n    [[nodiscard]] LV3_FORCEINLINE bool TilesFitInt32(const TriangleSetup& s, const EdgeSetupFx& fx) noexcept\n    {\n        const int64_t dxe = int64_t(s.bb.x1) + kTileSize - 1 - s.bb.x0;\n        const int64_t dye = int64_t(s.bb.y1) + kTileSize - 1 - s.bb.y0;\n        bool fits = true;\n        for (int k = 0; k < 3; ++k)\n        {\n            const int64_t ax = fx.a[k] * dxe, by = fx.b[k] * dye;\n            const int64_t lo = fx.e[k] + (ax < 0 ? ax : 0) + (by < 0 ? by : 0);     // coin d'acceptation du domaine\n            const int64_t hi = fx.e[k] + (ax > 0 ? ax : 0) + (by > 0 ? by : 0);     // coin de rejet du domaine\n            fits &= (lo >= INT32_MIN) & (hi <= INT32_MAX);\n        }\n        return fits;\n    }", "why": "La preuve qu'aucune voie utile ne sort de int32 sur le domaine des tuiles ; sinon repli sur les blocs Giesen."}, {"step": "5", "file": "Rendering/Rasterizer.h", "where": "même bloc, partie 3 : IsTiledTri<kTilePx> (à la suite)", "before": "// (n'existe pas : code NOUVEAU)", "after": "    // ── Le triangle est-il assez GRAND pour la hiérarchie ? Boîte (rognée) >= T* dans les deux axes.\n    //    kTilePx = 0 : toujours faux, la hiérarchie disparaît à la compilation.\n    template<int32_t kTilePx>\n    [[nodiscard]] LV3_FORCEINLINE bool IsTiledTri(const TriangleSetup& s) noexcept\n    {\n        if constexpr (kTilePx <= 0) { (void)s; return false; }\n        else return ((s.bb.x1 - s.bb.x0) >= kTilePx) & ((s.bb.y1 - s.bb.y0) >= kTilePx);\n    }", "why": "Le critère « grand triangle » : boîte rognée >= T* dans les deux axes. Disparaît à la compilation si T* = 0."}, {"step": "6", "file": "Rendering/Rasterizer.h", "where": "même bloc, partie 4 : ForEachCoveredPixelFxTiled, pendant scalaire (à la suite)", "before": "// (n'existe pas : code NOUVEAU)", "after": "    // ── Pendant SCALAIRE de la hiérarchie (LV3_SIMD = 0, TNR). Mêmes tuiles, mêmes coins,\n    //    mêmes E' que la voie AVX2 ; dans une tuile partielle, le test pixel de ForEachCoveredPixelFx ;\n    //    dans une tuile pleine, AUCUN test. Ordre de visite : tuile par tuile (et non ligne par ligne).\n    //    Le résultat (pixels, barycentriques, profondeurs) est identique : un pixel est écrit au plus\n    //    une fois par triangle, l'ordre de visite à l'intérieur d'un triangle ne change aucun bit.\n    template<class Sink>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredPixelFxTiled(const TriangleSetup& s, const EdgeSetupFx& fx, Sink& sink)\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1, by0 = s.bb.y0, by1 = s.bb.y1;\n        const int64_t a0 = fx.a[0], a1 = fx.a[1], a2 = fx.a[2];\n        const int64_t b0 = fx.b[0], b1 = fx.b[1], b2 = fx.b[2];\n        const int64_t rj0 = TileRejectOfs(a0, b0), rj1 = TileRejectOfs(a1, b1), rj2 = TileRejectOfs(a2, b2);\n        const int64_t ac0 = TileAcceptOfs(a0, b0), ac1 = TileAcceptOfs(a1, b1), ac2 = TileAcceptOfs(a2, b2);\n        const float o0 = fx.ofs[0], o1 = fx.ofs[1], o2 = fx.ofs[2], inv = fx.invQ;\n        const bool  flipped = s.flipped;\n\n        // E' au coin haut-gauche de la rangée de tuiles : la grille part du pixel (x0, y0) de la boîte.\n        int64_t t0 = fx.e[0], t1 = fx.e[1], t2 = fx.e[2];\n\n        uint32_t covered = 0;\n        for (int32_t ty = by0; ty < by1; ty += kTileSize)\n        {\n            const int32_t ry1 = ty + kTileSize > by1 ? by1 : ty + kTileSize;   // dernière rangée : peut être courte\n            int64_t c0 = t0, c1 = t1, c2 = t2;                // E' au coin haut-gauche de la tuile\n            for (int32_t tx = bx0; tx < bx1; tx += kTileSize)\n            {\n                // REJET : une seule arête dont le maximum est < 0 suffit (OU des signes).\n                if (((c0 + rj0) | (c1 + rj1) | (c2 + rj2)) < 0) { c0 += a0 * kTileSize; c1 += a1 * kTileSize; c2 += a2 * kTileSize; continue; }\n                // ACCEPTATION : les trois minimums >= 0, ET la tuile entière dans la boîte (bord rogné).\n                const int32_t rx1 = tx + kTileSize > bx1 ? bx1 : tx + kTileSize;\n                const bool full = ((c0 + ac0) | (c1 + ac1) | (c2 + ac2)) >= 0\n                    && rx1 == tx + kTileSize && ry1 == ty + kTileSize;\n                sink.BeginRow(ty);                                // pointeurs de ligne : une fois par tuile\n                for (int32_t y = ty; y < ry1; ++y, sink.NextRow())\n                {\n                    int64_t e0 = c0 + b0 * (y - ty);\n                    int64_t e1 = c1 + b1 * (y - ty);\n                    int64_t e2 = c2 + b2 * (y - ty);\n                    for (int32_t x = tx; x < rx1; ++x)\n                    {\n                        if (full || (e0 | e1 | e2) >= 0)          // tuile pleine : aucun test\n                        {\n                            ++covered;\n                            const float w0 = BaryFromFixed(e0, o0, inv);\n                            const float w1 = BaryFromFixed(e1, o1, inv);\n                            const float w2 = BaryFromFixed(e2, o2, inv);\n                            const BarycentricWeights bary = flipped\n                                ? BarycentricWeights{ w0, w2, w1 }\n                                : BarycentricWeights{ w0, w1, w2 };\n                            sink.Pixel(x, bary);\n                        }\n                        e0 += a0; e1 += a1; e2 += a2;\n                    }\n                }\n                c0 += a0 * kTileSize; c1 += a1 * kTileSize; c2 += a2 * kTileSize;   // tuile suivante\n            }\n            t0 += b0 * kTileSize; t1 += b1 * kTileSize; t2 += b2 * kTileSize;       // rangée de tuiles suivante\n        }\n        return covered;\n    }", "why": "Mêmes tuiles, mêmes coins, mêmes E' que la voie AVX2 ; test par pixel dans les tuiles partielles, aucun test dans les tuiles pleines."}, {"step": "6", "file": "Rendering/Rasterizer.h", "where": "struct AblationEdgeSink (palier E, sous LV3_ABLATION_PIXELS)", "before": "        {\n            LV3_FORCEINLINE void BeginRow(int32_t) noexcept {}\n            LV3_FORCEINLINE void Pixel(int32_t, const BarycentricWeights&) noexcept {}\n        };", "after": "        {\n            LV3_FORCEINLINE void BeginRow(int32_t) noexcept {}\n            LV3_FORCEINLINE void NextRow() noexcept {}                                   // D-a2\n            LV3_FORCEINLINE void Pixel(int32_t, const BarycentricWeights&) noexcept {}\n        };", "why": "Le puits d'ablation doit connaître NextRow (vide)."}, {"step": "7", "file": "Rendering/PixelStage8.h", "where": "après la constante kSmallFloatOff", "before": "    #endif\n        inline constexpr int32_t kSmallFloatOff = 0;        // valeur de TEST : Giesen pour tous (référence TNR)\n\n", "after": "    #endif\n        inline constexpr int32_t kSmallFloatOff = 0;        // valeur de TEST : Giesen pour tous (référence TNR)\n\n    // ── D-a2 : T* effectif (pixels). Un triangle Giesen dont la boîte fait >= T* dans les deux axes\n    //    est parcouru par tuiles 8 x 8 (hiérarchie d'Abrash). 0 : blocs Giesen pour tous (D-a1c).\n    //    Sans virgule fixe (LV3_RASTER_FIXED = 0) : sans objet (la hiérarchie repose sur les E' entiers).\n    #if LV3_RASTER_FIXED\n        inline constexpr int32_t kTileMinPx = LV3_RASTER_TILES;\n    #else\n        inline constexpr int32_t kTileMinPx = 0;\n    #endif\n        inline constexpr int32_t kTilesOff = 0;             // valeur de TEST : sans hiérarchie (référence TNR)\n\n", "why": "T* effectif (0 sans virgule fixe) et la valeur de test kTilesOff (la référence de la TNR)."}, {"step": "8", "file": "Rendering/PixelStage8.h", "where": "nouvelle fonction ForEachCoveredTile8Fx32 : juste AVANT « #if LV3_ABLATION_PIXELS » en fin de fichier", "before": "// (n'existe pas : code NOUVEAU)\n// emplacement : juste avant\n    #if LV3_ABLATION_PIXELS\n        // Palier E (C0) pour le chemin AVX2 : arêtes et masques, AUCUN fragment.", "after": "    // ════════════════════════════════════════════════════════════\n    //  D-a2 : HIÉRARCHIE D'ABRASH (tuiles 8 x 8) POSÉE SUR LES BLOCS GIESEN\n    //\n    //  Deux niveaux, le même geste « additionner puis lire un bit de signe » :\n    //    NIVEAU TUILES : 8 tuiles voisines d'une rangée (64 x 8 pixels) jugées en UN registre par\n    //                    arête : voie j = coin haut-gauche de la tuile j. Deux masques de 8 bits :\n    //                    REJETÉES (une arête dont le MAX < 0) et PLEINES (les trois MIN >= 0).\n    //    NIVEAU BLOCS  : une tuile PARTIELLE = 8 lignes = 8 blocs Giesen testés (3 OU + movemask,\n    //                    comme Fx32). Une tuile PLEINE = 8 blocs écrits SANS AUCUN TEST.\n    //  La grille part du coin (x0, y0) de la boîte : aucun bloc de plus que Fx32 (contre-exemple 2).\n    //  Les E' de chaque voie sont les MÊMES entiers que Fx32 (affine, exact) : mêmes pixels,\n    //  mêmes barycentriques, mêmes profondeurs. Seuls changent les blocs VISITÉS et leur ORDRE.\n    //  Précondition : TilesFitInt32(s, fx), E' tient dans int32 sur [x0, x1 + 7] x [y0, y1 + 7].\n    // ════════════════════════════════════════════════════════════\n    template<class Sink8>\n    [[nodiscard]] LV3_FORCEINLINE uint32_t ForEachCoveredTile8Fx32(const TriangleSetup& s, const EdgeSetupFx& fx, Sink8& sink) noexcept\n    {\n        const int32_t bx0 = s.bb.x0, bx1 = s.bb.x1;           // C2b : locales, jamais relues en mémoire\n        const int32_t by0 = s.bb.y0, by1 = s.bb.y1;\n        const bool    flipped = s.flipped;\n        const BaryFx8 bf = MakeBaryFx8(fx);\n\n        // ── Pas entiers d'une arête : int32 EXACTS (TilesFitInt32). Les produits passent par uint32 :\n        //    modulaires, jamais de comportement indéfini, et justes pour toute voie qui reste dans la boîte.\n        const int32_t A0 = int32_t(fx.a[0]), A1 = int32_t(fx.a[1]), A2 = int32_t(fx.a[2]);\n        const int32_t B0 = int32_t(fx.b[0]), B1 = int32_t(fx.b[1]), B2 = int32_t(fx.b[2]);\n        const auto Mul = [](int32_t v, int32_t k) noexcept { return int32_t(uint32_t(v) * uint32_t(k)); };\n        const auto Add = [](int32_t u, int32_t v) noexcept { return int32_t(uint32_t(u) + uint32_t(v)); };\n\n        const __m256i lane = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);\n\n        // ── NIVEAU TUILES (une fois par triangle) : voie j d'un groupe = tuile j, décalée de j * 8A'.\n        const __m256i tOff0 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(Mul(A0, kTileSize)));\n        const __m256i tOff1 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(Mul(A1, kTileSize)));\n        const __m256i tOff2 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(Mul(A2, kTileSize)));\n        //    Décalages des deux coins, du coin haut-gauche au coin de REJET (max) et d'ACCEPTATION (min).\n        const __m256i rj0 = _mm256_set1_epi32(int32_t(TileRejectOfs(A0, B0)));\n        const __m256i rj1 = _mm256_set1_epi32(int32_t(TileRejectOfs(A1, B1)));\n        const __m256i rj2 = _mm256_set1_epi32(int32_t(TileRejectOfs(A2, B2)));\n        const __m256i ac0 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A0, B0)));\n        const __m256i ac1 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A1, B1)));\n        const __m256i ac2 = _mm256_set1_epi32(int32_t(TileAcceptOfs(A2, B2)));\n        const int32_t gStep0 = Mul(A0, 8 * kTileSize), gStep1 = Mul(A1, 8 * kTileSize), gStep2 = Mul(A2, 8 * kTileSize);\n        const int32_t tStep0 = Mul(B0, kTileSize), tStep1 = Mul(B1, kTileSize), tStep2 = Mul(B2, kTileSize);\n\n        // ── NIVEAU BLOCS (une fois par triangle) : décalage de chaque voie-pixel (i * A') et pas de ligne B'.\n        const __m256i off0 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(A0));\n        const __m256i off1 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(A1));\n        const __m256i off2 = _mm256_mullo_epi32(lane, _mm256_set1_epi32(A2));\n        const __m256i vB0 = _mm256_set1_epi32(B0), vB1 = _mm256_set1_epi32(B1), vB2 = _mm256_set1_epi32(B2);\n        const __m256i minus1 = _mm256_set1_epi32(-1);\n        const __m256  allOn = _mm256_castsi256_ps(minus1);\n        // 4e « arête » des tuiles de la DERNIÈRE colonne : la boîte, comme dans Fx32 ((x1 - 1) - (x + i) >= 0).\n        const __m256i boxLane = _mm256_sub_epi32(_mm256_set1_epi32(bx1 - 1), lane);\n\n        // E' au coin haut-gauche de la rangée de tuiles courante : départ au pixel (x0, y0).\n        int32_t t0 = int32_t(fx.e[0]), t1 = int32_t(fx.e[1]), t2 = int32_t(fx.e[2]);\n\n        uint32_t covered = 0;\n        #if LV3_RASTER_STATS\n            uint32_t blocks = 0, tRej = 0, tFull = 0, tPart = 0;\n        #endif\n\n        for (int32_t ty = by0; ty < by1; ty += kTileSize, t0 = Add(t0, tStep0), t1 = Add(t1, tStep1), t2 = Add(t2, tStep2))\n        {\n            const int32_t ry1 = ty + kTileSize < by1 ? ty + kTileSize : by1;     // la dernière rangée peut être courte\n            const bool    rowsFull = (ty + kTileSize <= by1);\n            int32_t g0 = t0, g1 = t1, g2 = t2;                                    // E' au coin de la 1re tuile du groupe\n\n            for (int32_t gx = bx0; gx < bx1; gx += 8 * kTileSize, g0 = Add(g0, gStep0), g1 = Add(g1, gStep1), g2 = Add(g2, gStep2))\n            {\n                // ── JUGER 8 TUILES. E' au coin haut-gauche de chacune : 1 diffusion + 1 addition par arête.\n                const __m256i c0 = _mm256_add_epi32(_mm256_set1_epi32(g0), tOff0);\n                const __m256i c1 = _mm256_add_epi32(_mm256_set1_epi32(g1), tOff1);\n                const __m256i c2 = _mm256_add_epi32(_mm256_set1_epi32(g2), tOff2);\n                //    REJET : bit de signe du OU des trois MAX (UNE arête dehors suffit).\n                const __m256i anyRj = _mm256_or_si256(_mm256_or_si256(_mm256_add_epi32(c0, rj0), _mm256_add_epi32(c1, rj1)),\n                                                      _mm256_add_epi32(c2, rj2));\n                //    ACCEPTATION : bit de signe du OU des trois MIN à 0 (les TROIS dedans).\n                const __m256i anyAc = _mm256_or_si256(_mm256_or_si256(_mm256_add_epi32(c0, ac0), _mm256_add_epi32(c1, ac1)),\n                                                      _mm256_add_epi32(c2, ac2));\n                const uint32_t rej = uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(anyRj)));\n                const uint32_t acc = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(anyAc))) & 0xFFu;\n\n                //    Tuiles de la boîte : gx + 8j < x1. Les voies au-delà (débordement modulaire possible)\n                //    sont ignorées ici, AVANT toute décision.\n                const int32_t  nt = (bx1 - gx + kTileSize - 1) >> kTileBits;\n                const uint32_t inBox = nt >= 8 ? 0xFFu : ((1u << nt) - 1u);\n                //    Une tuile PLEINE doit aussi tenir dans la boîte (bord rogné au viewport) :\n                //    dernière colonne complète, rangée complète.\n                const uint32_t fitX = (bx1 - gx) >= 8 * kTileSize ? 0xFFu : ((1u << ((bx1 - gx) >> kTileBits)) - 1u);\n                const uint32_t full = acc & fitX & (rowsFull ? 0xFFu : 0u);\n                uint32_t live = ~rej & inBox;                                     // tuiles à visiter\n                #if LV3_RASTER_STATS\n                    tRej += uint32_t(_mm_popcnt_u32(rej & inBox));\n                #endif\n\n                // ── DU MASQUE AUX TUILES : une itération par bit à 1 (tzcnt trouve, blsr efface).\n                while (live != 0)\n                {\n                    const uint32_t j = _tzcnt_u32(live);\n                    live = _blsr_u32(live);\n                    const int32_t x = gx + int32_t(j) * kTileSize;\n\n                    // E' des 8 voies-pixels sur la 1re ligne de la tuile : coin de la tuile j, diffusé depuis\n                    // la voie j du registre des coins (vpermd : un seul µop par arête), plus i * A'.\n                    const __m256i jj = _mm256_set1_epi32(int32_t(j));\n                    __m256i e0 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c0, jj), off0);\n                    __m256i e1 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c1, jj), off1);\n                    __m256i e2 = _mm256_add_epi32(_mm256_permutevar8x32_epi32(c2, jj), off2);\n\n                    if ((full >> j) & 1u)\n                    {\n                        // ── TUILE PLEINE : 8 lignes, 8 blocs, AUCUN test de couverture.\n                        //    Filet Debug : une tuile écrite sans test DOIT tenir dans la boîte (fitX, rowsFull).\n                        LV3_ASSERT(x >= bx0 && x + kTileSize <= bx1 && ty + kTileSize <= by1\n                            && \"D-a2 : tuile pleine hors de la boite (bord rogne au viewport ?)\");\n                        #if LV3_RASTER_STATS\n                            ++tFull;\n                        #endif\n                        sink.BeginRow(ty);                                // pointeurs : une fois par tuile\n                        for (int32_t r = 0; r < kTileSize; ++r, sink.NextRow())\n                        {\n                            const __m256 w0 = BaryFromFixed8(e0, bf.o0, bf.inv);\n                            const __m256 w1 = BaryFromFixed8(e1, bf.o1, bf.inv);\n                            const __m256 w2 = BaryFromFixed8(e2, bf.o2, bf.inv);\n                            sink.BlockFull(x, allOn, w0, flipped ? w2 : w1, flipped ? w1 : w2);\n                            e0 = _mm256_add_epi32(e0, vB0); e1 = _mm256_add_epi32(e1, vB1); e2 = _mm256_add_epi32(e2, vB2);\n                        }\n                        covered += uint32_t(kTileSize * kTileSize);\n                    }\n                    else\n                    {\n                        // ── TUILE PARTIELLE : les blocs de Fx32, la boîte en 4e arête (constante sur la tuile).\n                        #if LV3_RASTER_STATS\n                            ++tPart;\n                        #endif\n                        const __m256i eb = _mm256_sub_epi32(boxLane, _mm256_set1_epi32(x));   // (x1 - 1) - (x + i)\n                        sink.BeginRow(ty);\n                        for (int32_t y = ty; y < ry1; ++y, sink.NextRow())\n                        {\n                            const __m256i any = _mm256_or_si256(_mm256_or_si256(e0, e1), _mm256_or_si256(e2, eb));\n                            const uint32_t bits = ~uint32_t(_mm256_movemask_ps(_mm256_castsi256_ps(any))) & 0xFFu;\n                            #if LV3_RASTER_STATS\n                                ++blocks;\n                            #endif\n                            // Filet Debug : aucune voie couverte au-delà de la boîte (la 4e arête eb l'interdit).\n                            LV3_ASSERT((x + kTileSize <= bx1 || (bits >> (bx1 - x)) == 0u)\n                                && \"D-a2 : voie couverte hors de la boite (4e arete oubliee ?)\");\n                            if (bits != 0)\n                            {\n                                covered += uint32_t(_mm_popcnt_u32(bits));\n                                const __m256 cover = _mm256_castsi256_ps(_mm256_cmpgt_epi32(any, minus1));\n                                const __m256 w0 = BaryFromFixed8(e0, bf.o0, bf.inv);\n                                const __m256 w1 = BaryFromFixed8(e1, bf.o1, bf.inv);\n                                const __m256 w2 = BaryFromFixed8(e2, bf.o2, bf.inv);\n                                sink.Block(x, cover, bits, w0, flipped ? w2 : w1, flipped ? w1 : w2);\n                            }\n                            e0 = _mm256_add_epi32(e0, vB0); e1 = _mm256_add_epi32(e1, vB1); e2 = _mm256_add_epi32(e2, vB2);\n                        }\n                    }\n                }\n            }\n        }\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisSimd8, 1);\n            LV3_PROF_COUNT(EProfCounter::LaneBlocks8, blocks);\n            LV3_PROF_COUNT(EProfCounter::Tiles8Rejected, tRej);\n            LV3_PROF_COUNT(EProfCounter::Tiles8Full, tFull);\n            LV3_PROF_COUNT(EProfCounter::Tiles8Partial, tPart);\n            LV3_PROF_COUNT(EProfCounter::BlocksFull8, tFull * kTileSize);\n        #endif\n        return covered;\n    }", "why": "La hiérarchie AVX2 : 8 tuiles jugées par registre, du masque aux tuiles par tzcnt/blsr, tuile pleine sans test, tuile partielle = les blocs de Fx32."}, {"step": "8", "file": "Rendering/PixelStage8.h", "where": "struct AblationEdgeSink8 (palier E)", "before": "        {\n            LV3_FORCEINLINE void BeginRow(int32_t) noexcept {}\n            LV3_FORCEINLINE void Block(int32_t, __m256, uint32_t, __m256, __m256, __m256) noexcept {}\n        };\n    #endif", "after": "        {\n            LV3_FORCEINLINE void BeginRow(int32_t) noexcept {}\n            LV3_FORCEINLINE void NextRow() noexcept {}                                   // D-a2\n            LV3_FORCEINLINE void Block(int32_t, __m256, uint32_t, __m256, __m256, __m256) noexcept {}\n            LV3_FORCEINLINE void BlockFull(int32_t, __m256, __m256, __m256, __m256) noexcept {}   // D-a2\n        };\n    #endif", "why": "NextRow et BlockFull vides pour le puits d'ablation."}, {"step": "9", "file": "Rendering/FrameBuffer.h", "where": "accesseurs publics, après frameBuffer()", "before": "        [[nodiscard]] int32_t Height() const { return m_Height; }\n        [[nodiscard]] void* frameBuffer() const { return m_Pixels; }\n\n", "after": "        [[nodiscard]] int32_t Height() const { return m_Height; }\n        [[nodiscard]] void* frameBuffer() const { return m_Pixels; }\n        [[nodiscard]] int32_t PitchBytes() const { return m_Pitch; }   // D-a2 : pas d'une ligne (ShaderSink8::NextRow)\n\n", "why": "Le pas d'une ligne en octets, lu une fois par triangle par ShaderSink8."}, {"step": "9", "file": "Rendering/Fragment.h", "where": "struct ShaderSolid : après Shade8", "before": "            return uint32_t(_mm256_movemask_ps(pass));\n        }\n    };\n", "after": "            return uint32_t(_mm256_movemask_ps(pass));\n        }\n\n        // D-a2 : bloc PLEIN (tuile acceptée). Les 8 voies sont dans le triangle ET dans la boîte :\n        // lecture ordinaire de la profondeur, comparaison identique (NLE_UQ, NaN compris), écritures\n        // masquées par le seul résultat du test Z. Même mémoire finale que Shade8(..., cover = tout).\n        static LV3_FORCEINLINE uint32_t Shade8Full(const Uniforms8& u, __m256 b0, __m256 b1, __m256 b2, float* depth, uint32_t* pixel) noexcept\n        {\n            const __m256 z    = InterpolateDepth8(u, b0, b1, b2);\n            const __m256 dst  = _mm256_loadu_ps(depth);                          // 8 voies valides : lecture simple\n            const __m256 pass = _mm256_cmp_ps(z, dst, _CMP_NLE_UQ);             // même prédicat que DepthTestAndSet8\n            _mm256_maskstore_ps(depth, _mm256_castps_si256(pass), z);\n            _mm256_maskstore_epi32(reinterpret_cast<int*>(pixel), _mm256_castps_si256(pass), u.color);\n            return uint32_t(_mm256_movemask_ps(pass));\n        }\n    };\n", "why": "Bloc plein : lecture Z ordinaire (pas de maskload), même prédicat NLE_UQ, écritures masquées par le seul test Z."}, {"step": "9", "file": "Rendering/Fragment.h", "where": "struct ShaderSink (scalaire) : après BeginRow", "before": "            colorRow = ctx.fb->Row(y);\n        }\n        LV3_FORCEINLINE void Pixel(int32_t x, const BarycentricWeights& b) noexcept\n        {", "after": "            colorRow = ctx.fb->Row(y);\n        }\n        // D-a2 : ligne suivante SANS recalcul (la hiérarchie revisite les lignes tuile par tuile).\n        LV3_FORCEINLINE void NextRow() noexcept\n        {\n            depthRow += ctx.db->Width();\n            colorRow = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(colorRow) + ctx.fb->PitchBytes());\n        }\n        LV3_FORCEINLINE void Pixel(int32_t x, const BarycentricWeights& b) noexcept\n        {", "why": "Ligne suivante par deux additions (pendant scalaire de la hiérarchie)."}, {"step": "9", "file": "Rendering/Fragment.h", "where": "struct ShaderSink8 : constructeur, BeginRow, NextRow", "before": "        explicit ShaderSink8(const FragmentContext& c) noexcept : ctx(c), u(MakeUniforms8(c)) {}\n\n        LV3_FORCEINLINE void BeginRow(int32_t y) noexcept\n        {\n            depthRow = ctx.db->Row(y);\n            colorRow = ctx.fb->Row(y);\n        }", "after": "        // D-a2 : pas d'une ligne, lus UNE fois par triangle (NextRow : 2 additions au lieu de BeginRow).\n        const ptrdiff_t dStride;            // floats par ligne du Z-buffer\n        const ptrdiff_t cStride;            // OCTETS par ligne du framebuffer (pitch SDL)\n\n        explicit ShaderSink8(const FragmentContext& c) noexcept\n            : ctx(c), u(MakeUniforms8(c)), dStride(c.db->Width()), cStride(c.fb->PitchBytes()) {}\n\n        LV3_FORCEINLINE void BeginRow(int32_t y) noexcept\n        {\n            depthRow = ctx.db->Row(y);\n            colorRow = ctx.fb->Row(y);\n        }\n        // D-a2 : la hiérarchie parcourt une tuile de 8 lignes : BeginRow une fois, puis NextRow.\n        LV3_FORCEINLINE void NextRow() noexcept\n        {\n            depthRow += dStride;\n            colorRow = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(colorRow) + cStride);\n        }", "why": "Les deux pas de ligne sont lus une fois par triangle ; NextRow = 2 additions au lieu de BeginRow (2 multiplications, 6 lectures)."}, {"step": "9", "file": "Rendering/Fragment.h", "where": "struct ShaderSink8 : après Block", "before": "                        (void)passBits;\n            #endif\n        }\n    };", "after": "                        (void)passBits;\n            #endif\n        }\n\n        // D-a2 : bloc PLEIN d'une tuile acceptée (8 voies couvertes, dans la boîte).\n        //   Shader avec Shade8Full : lecture Z ordinaire, aucun masque de couverture.\n        //   Sinon : le Block() normal, masque « tout », bits 0xFF (mêmes écritures).\n        LV3_FORCEINLINE void BlockFull(int32_t x, __m256 allOn, __m256 b0, __m256 b1, __m256 b2) noexcept\n        {\n            if constexpr (requires { Shader::Shade8Full; })\n            {\n                (void)allOn;\n                [[maybe_unused]] const uint32_t passBits = Shader::Shade8Full(u, b0, b1, b2, depthRow + x, colorRow + x);\n                #if LV3_RASTER_STATS\n                    depthPassed += uint32_t(_mm_popcnt_u32(passBits));\n                #endif\n            }\n            else\n            {\n                Block(x, allOn, 0xFFu, b0, b1, b2);\n            }\n        }\n    };", "why": "BlockFull : le bloc d'une tuile pleine. Shade8Full si le shader l'a, sinon Block(tout, 0xFF) : mêmes écritures."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "nouvelle fonction RasterizeTiles8Fx + 5e paramètre de RasterizeTriangleFx", "before": "    }\n\n    //    D-a1c : kSmallPx = W* (pixels). Un triangle AVX2 PETIT (IsSmallFloatTri) prend les blocs\n    //    flottants de C2 sur le TriangleSetup de la préparation entière : identique au bit à celui de\n    //    SetupTriangle pour un petit triangle (sommets, échange, boîte, top-left, 1/aire exacts).\n    //    Force64 (TNR des voies 64 bits) coupe l'aiguillage : chaque triangle doit y passer par Fx64.\n    template<class Shader, int32_t kMinSimdWidth, EFixedLanes kLanes, int32_t kSmallPx>\n    LV3_FORCEINLINE void RasterizeTriangleFx(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {", "after": "    }\n\n    // ── D-a2 : la hiérarchie dans SA PROPRE fonction, hors ligne (leçon C2 et contre-exemple 2 de D-a1c) :\n    //    dans RasterizeBlocks8Fx, ses registres ymm alourdiraient le prologue payé par TOUS les triangles\n    //    Giesen (ABI Windows x64 : xmm6-15 sauvegardés à l'entrée), et changeraient le placement de la\n    //    boucle Fx32. Mesuré sur V2 (aucun triangle tuilé) : +4 % quand la hiérarchie partageait la fonction.\n    //    E' hors de int32 sur le domaine des tuiles (rare : longues arêtes clippées) : repli Giesen.\n    template<class Shader>\n    LV3_NOINLINE uint32_t RasterizeTiles8Fx(const TriangleSetup& s, const EdgeSetupFx& fx, FragmentContext& ctx) noexcept\n    {\n        if (!TilesFitInt32(s, fx)) return RasterizeBlocks8Fx<Shader, false>(s, fx, ctx);\n        #if LV3_RASTER_STATS\n            LV3_PROF_COUNT(EProfCounter::TrisTiled, 1);\n        #endif\n        ShaderSink8<Shader> sink(ctx);                                     // COPIE + diffusions\n        const uint32_t covered = ForEachCoveredTile8Fx32(s, fx, sink);\n        #if LV3_RASTER_STATS\n            ctx.depthPassed += sink.depthPassed;\n        #endif\n        return covered;\n    }\n\n    //    D-a1c : kSmallPx = W* (pixels). Un triangle AVX2 PETIT (IsSmallFloatTri) prend les blocs\n    //    flottants de C2 sur le TriangleSetup de la préparation entière : identique au bit à celui de\n    //    SetupTriangle pour un petit triangle (sommets, échange, boîte, top-left, 1/aire exacts).\n    //    Force64 (TNR des voies 64 bits) coupe l'aiguillage : chaque triangle doit y passer par Fx64.\n    template<class Shader, int32_t kMinSimdWidth, EFixedLanes kLanes, int32_t kSmallPx, int32_t kTilePx>\n    LV3_FORCEINLINE void RasterizeTriangleFx(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {", "why": "La hiérarchie dans SA fonction hors ligne : le prologue des triangles Giesen ne change pas (V2 : +4 % mesuré sinon)."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleFx : constantes de compilation", "before": "        constexpr bool kForce64 = (kLanes == EFixedLanes::Force64);\n        constexpr int32_t kSmall = kForce64 ? 0 : kSmallPx;\n\n        #if LV3_ABLATION_PIXELS == 1", "after": "        constexpr bool kForce64 = (kLanes == EFixedLanes::Force64);\n        constexpr int32_t kSmall = kForce64 ? 0 : kSmallPx;\n        [[maybe_unused]] constexpr int32_t kTile = kForce64 ? 0 : kTilePx;  // D-a2 : Force64 coupe aussi la hiérarchie\n\n        #if LV3_ABLATION_PIXELS == 1", "why": "Force64 (TNR des voies 64 bits) coupe aussi la hiérarchie."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleFx : palier E de l'ablation, chemin AVX2", "before": "                else\n                {\n                    PrepareLanesFx(s, fx);\n                    g_ablationSink = g_ablationSink + ((kForce64 || fx.wide) ? ForEachCoveredBlock8Fx64(s, fx, edges)\n                        : ForEachCoveredBlock8Fx32(s, fx, edges));\n                }\n            }", "after": "                else\n                {\n                    if (IsTiledTri<kTile>(s) && TilesFitInt32(s, fx))      // D-a2 : MÊME aiguillage que le moteur\n                    {\n                        g_ablationSink = g_ablationSink + ForEachCoveredTile8Fx32(s, fx, edges);\n                    }\n                    else\n                    {\n                        PrepareLanesFx(s, fx);\n                        g_ablationSink = g_ablationSink + ((kForce64 || fx.wide) ? ForEachCoveredBlock8Fx64(s, fx, edges)\n                            : ForEachCoveredBlock8Fx32(s, fx, edges));\n                    }\n                }\n            }", "why": "Même aiguillage que le moteur : le palier E mesure les arêtes de la hiérarchie."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleFx : palier E de l'ablation, chemin scalaire", "before": "            {\n                AblationEdgeSink edges;\n                g_ablationSink = g_ablationSink + ForEachCoveredPixelFx(s, fx, edges);\n            }\n        #else", "after": "            {\n                AblationEdgeSink edges;\n                g_ablationSink = g_ablationSink + (IsTiledTri<kTile>(s) ? ForEachCoveredPixelFxTiled(s, fx, edges)\n                                                                          : ForEachCoveredPixelFx(s, fx, edges));\n            }\n        #else", "why": "Idem pour le pendant scalaire."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleFx : aiguillage AVX2", "before": "                #endif\n            }\n            else\n            {", "after": "                #endif\n            }\n            else if (IsTiledTri<kTile>(s))                             // D-a2 : grand -> tuiles 8 x 8\n            {\n                covered = RasterizeTiles8Fx<Shader>(s, fx, ctx);       // hors ligne : prologue inchangé\n            }\n            else\n            {", "why": "Après le test « petit » (D-a1c) : grand -> tuiles, sinon blocs Giesen."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleFx : chemin scalaire (boîte étroite ou LV3_SIMD = 0)", "before": "            {\n                ShaderSink<Shader> sink{ ctx };\n                covered = ForEachCoveredPixelFx(s, fx, sink);\n                #if LV3_RASTER_STATS\n                    ctx.depthPassed += sink.depthPassed;", "after": "            {\n                ShaderSink<Shader> sink{ ctx };\n                // D-a2 : pendant scalaire de la hiérarchie (LV3_SIMD = 0 ou TNR kScalarOnly) pour les grandes boîtes.\n                covered = IsTiledTri<kTile>(s) ? ForEachCoveredPixelFxTiled(s, fx, sink)\n                                                 : ForEachCoveredPixelFx(s, fx, sink);\n                #if LV3_RASTER_STATS\n                    ctx.depthPassed += sink.depthPassed;", "why": "Le pendant scalaire prend les tuiles pour les grandes boîtes."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleT : 5e paramètre de template", "before": "    //    kSmallFloatOff (Giesen pour tous, la référence) ou une valeur > 16 (contre-exemple).\n    template<class Shader, int32_t kMinSimdWidth = kSimdMinBoxWidth, EFixedLanes kLanes = EFixedLanes::Auto,\n        int32_t kSmallPx = kSmallFloatPx>\n    void RasterizeTriangleT(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {", "after": "    //    kSmallFloatOff (Giesen pour tous, la référence) ou une valeur > 16 (contre-exemple).\n    template<class Shader, int32_t kMinSimdWidth = kSimdMinBoxWidth, EFixedLanes kLanes = EFixedLanes::Auto,\n        int32_t kSmallPx = kSmallFloatPx, int32_t kTilePx = kTileMinPx>\n    void RasterizeTriangleT(const Vec2f& v0, const Vec2f& v1, const Vec2f& v2, const Viewport& vp, FragmentContext& ctx) noexcept\n    {", "why": "kTilePx, défaut kTileMinPx : le Renderer (instances par défaut) prend la production, les TNR forcent kTilesOff ou 1."}, {"step": "10", "file": "Rendering/Fragment.h", "where": "RasterizeTriangleT : appel de RasterizeTriangleFx", "before": "            if (InFixedGuard(v0, v1, v2))\n            {\n                RasterizeTriangleFx<Shader, kMinSimdWidth, kLanes, kSmallPx>(v0, v1, v2, vp, ctx);\n               return;\n            }", "after": "            if (InFixedGuard(v0, v1, v2))\n            {\n                RasterizeTriangleFx<Shader, kMinSimdWidth, kLanes, kSmallPx, kTilePx>(v0, v1, v2, vp, ctx);\n               return;\n            }", "why": "Transmet le 5e paramètre."}, {"step": "11", "file": "Test/RunAllTests.cpp (EXE)", "where": "déclarations, après Test_Da1d_Snap", "before": "    bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image\n    bool Test_Da1d_Snap();", "after": "    bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image\n    bool Test_Da1d_Snap();\n    bool Test_Da2_Tiles();          // D-a2 : hierarchie de tuiles 8 x 8 (Abrash), meme image", "why": "Déclare la nouvelle TNR."}, {"step": "11", "file": "Test/RunAllTests.cpp (EXE)", "where": "après le bloc Test_Da1d_Snap()", "before": "        if (!Test_Da1d_Snap())\n        {\n            Logger::error(\"ECHEC : Test_Da1d_Snap()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1d_Snap()\");\n        }", "after": "        if (!Test_Da1d_Snap())\n        {\n            Logger::error(\"ECHEC : Test_Da1d_Snap()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da1d_Snap()\");\n        }\n\n        if (!Test_Da2_Tiles())\n        {\n            Logger::error(\"ECHEC : Test_Da2_Tiles()\");\n            return false;\n        }\n        else\n        {\n            Logger::success(\"SUCCES : Test_Da2_Tiles()\");\n        }", "why": "Appelle la TNR, dans l'ordre des lots."}, {"step": "11", "file": "RefactoNouvelleLibrairieV3.vcxproj (EXE)", "where": "ItemGroup des ClCompile", "before": "    <ClCompile Include=\"Test\\Test_Da1d_Snap.cpp\" />", "after": "    <ClCompile Include=\"Test\\Test_Da1d_Snap.cpp\" />\n    <ClCompile Include=\"Test\\Test_Da2_Tiles.cpp\" />", "why": "Le nouveau fichier entre dans le projet."}, {"step": "11", "file": "RefactoNouvelleLibrairieV3.vcxproj.filters (EXE)", "where": "après l'entrée Test_Da1c_SmallFloat.cpp", "before": "    <ClCompile Include=\"Test\\Test_Da1c_SmallFloat.cpp\">\n      <Filter>Fichiers sources\\Test<\/Filter>\n    <\/ClCompile>", "after": "    <ClCompile Include=\"Test\\Test_Da1c_SmallFloat.cpp\">\n      <Filter>Fichiers sources\\Test<\/Filter>\n    <\/ClCompile>\n    <ClCompile Include=\"Test\\Test_Da2_Tiles.cpp\">\n      <Filter>Fichiers sources\\Test<\/Filter>\n    <\/ClCompile>", "why": "Rangé avec les autres TNR dans l'explorateur de solutions."}]</script>
+
+<script>
+(function(){
+"use strict";
+const f32 = Math.fround;
+const $ = (id) => document.getElementById(id);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fmt = (n) => (typeof n === "number" ? n.toLocaleString("fr-FR") : String(n));
+const T_STAR = 16;
+
+// ───────────── Noyau mathématique : copie fidèle de SetupTriangleFx (entiers exacts) ─────────────
+function rne(x){ const f = Math.floor(x), d = x - f; if (d > 0.5) return f + 1; if (d < 0.5) return f; return (f % 2 === 0) ? f : f + 1; }
+function snap(v){ return f32(rne(f32(v) * 256) / 256); }
+function setupFx(v, vp){
+  const X = v.map(p => rne(f32(p[0]) * 256)), Y = v.map(p => rne(f32(p[1]) * 256));
+  let area = (X[0]-X[2])*(Y[1]-Y[2]) - (Y[0]-Y[2])*(X[1]-X[2]);
+  if (area === 0) return null;
+  const flipped = area < 0;
+  if (flipped){ [X[1],X[2]] = [X[2],X[1]]; [Y[1],Y[2]] = [Y[2],Y[1]]; area = -area; }
+  const minX = Math.min(...X), maxX = Math.max(...X), minY = Math.min(...Y), maxY = Math.max(...Y);
+  let x0 = Math.floor((minX+127)/256), y0 = Math.floor((minY+127)/256);
+  let x1 = Math.floor((maxX-128)/256)+1, y1 = Math.floor((maxY-128)/256)+1;
+  if (x0 < vp.x) x0 = vp.x; if (y0 < vp.y) y0 = vp.y;
+  if (x1 > vp.x+vp.w) x1 = vp.x+vp.w; if (y1 > vp.y+vp.h) y1 = vp.y+vp.h;
+  if (x0 >= x1 || y0 >= y1) return null;
+  const px = 256*x0+128, py = 256*y0+128;
+  const pairs = [[1,2],[2,0],[0,1]];
+  const e = [], a = [], b = [], ofs = [], tl = [];
+  pairs.forEach(([i,j],k) => {
+    const A = Y[i]-Y[j], B = X[j]-X[i];
+    const t = (A === 0 && B < 0) || (A < 0);
+    const E = (X[i]-px)*(Y[j]-py) - (Y[i]-py)*(X[j]-px);
+    const bias = t ? 0 : -1, eb = E + bias, ek = Math.floor(eb/256), r = eb - 256*ek;
+    e[k] = ek; a[k] = A; b[k] = B; tl[k] = t; ofs[k] = f32((r - bias)/256);
+  });
+  const invArea = f32(1 / f32(f32(area) * 2**-16)), invQ = f32(invArea * 2**-8);
+  return { X, Y, area, flipped, x0, y0, x1, y1, e, a, b, ofs, tl, invQ, spanX: maxX-minX, spanY: maxY-minY };
+}
+const Ep = (s,k,x,y) => s.e[k] + s.a[k]*(x - s.x0) + s.b[k]*(y - s.y0);
+const covers = (s,x,y) => Ep(s,0,x,y) >= 0 && Ep(s,1,x,y) >= 0 && Ep(s,2,x,y) >= 0;
+const rejOfs = (a,b) => (a > 0 ? 7*a : 0) + (b > 0 ? 7*b : 0);
+const accOfs = (a,b) => (a < 0 ? 7*a : 0) + (b < 0 ? 7*b : 0);
+const bary = (s,k,x,y) => f32(f32(f32(Ep(s,k,x,y)) + s.ofs[k]) * s.invQ);
+const i32 = (v) => { let r = ((v % 4294967296) + 4294967296) % 4294967296; return r >= 2147483648 ? r - 4294967296 : r; };
+
+function analyse(s){
+  const giesen = { blocks:0, empty:0, partial:0, full:0, list:[] };
+  for (let y = s.y0; y < s.y1; ++y) for (let bx = s.x0; bx < s.x1; bx += 8){
+    const n = Math.min(8, s.x1 - bx); let c = 0;
+    for (let i = 0; i < n; ++i) if (covers(s, bx+i, y)) ++c;
+    giesen.blocks++; const st = c === 0 ? 0 : (c === n ? 2 : 1);
+    if (st === 0) giesen.empty++; else if (st === 1) giesen.partial++; else giesen.full++;
+    giesen.list.push([bx, y, n, st]);
+  }
+  const tiles = { R:0, F:0, P:0, tested:0, fullBlocks:0, groups:0, list:[] };
+  const rj = [0,1,2].map(k => rejOfs(s.a[k], s.b[k])), ac = [0,1,2].map(k => accOfs(s.a[k], s.b[k]));
+  for (let ty = s.y0; ty < s.y1; ty += 8){
+    for (let gx = s.x0; gx < s.x1; gx += 64) tiles.groups++;
+    for (let tx = s.x0; tx < s.x1; tx += 8){
+      const c = [0,1,2].map(k => Ep(s,k,tx,ty));
+      const rej = c.some((v,k) => v + rj[k] < 0), acc = c.every((v,k) => v + ac[k] >= 0);
+      const fit = tx + 8 <= s.x1 && ty + 8 <= s.y1, rows = Math.min(8, s.y1 - ty);
+      let st;
+      if (rej){ st = "R"; tiles.R++; } else if (acc && fit){ st = "F"; tiles.F++; tiles.fullBlocks += 8; } else { st = "P"; tiles.P++; tiles.tested += rows; }
+      tiles.list.push([tx, ty, Math.min(8, s.x1 - tx), rows, st]);
+    }
+  }
+  let covered = 0; for (let y = s.y0; y < s.y1; ++y) for (let x = s.x0; x < s.x1; ++x) if (covers(s,x,y)) ++covered;
+  return { giesen, tiles, covered, rj, ac };
+}
+
+// ───────────── Figure 1 : Giesen contre Abrash sur un triangle réglable ─────────────
+const RW = 128, RH = 80, SC = 6, VP = { x:0, y:0, w:RW, h:RH };
+const PRESETS = {
+  "Mur proche":  [[6.3,4.7],[121.6,10.2],[30.4,76.1]],
+  "Lame":        [[3.2,6.1],[124.7,71.4],[117.9,75.6]],
+  "Moyen 20 px": [[40.3,30.2],[61.1,34.6],[47.6,51.8]],
+  "Bord rogné":  [[-20.5,10.2],[150.3,-15.6],[60.7,95.4]]
+};
+let tri = PRESETS["Mur proche"].map(p => p.slice());
+let mode = "g";
+const listeners = [];
+function onTri(fn){ listeners.push(fn); }
+function triChanged(){ listeners.forEach(fn => fn()); }
+
+const cG = $("fG"), gG = cG.getContext("2d");
+function snapped(){ return tri.map(p => [snap(p[0]), snap(p[1])]); }
+function drawG(){
+  const W = cG.width, H = cG.height;
+  gG.clearRect(0,0,W,H);
+  gG.fillStyle = css("--code-bg"); gG.fillRect(0,0,W,H);
+  const s = setupFx(snapped(), VP);
+  gG.strokeStyle = css("--line"); gG.lineWidth = 1;
+  for (let x = 0; x <= RW; x += 8){ gG.beginPath(); gG.moveTo(x*SC+.5,0); gG.lineTo(x*SC+.5,H); gG.stroke(); }
+  if (s){
+    const an = analyse(s);
+    for (let y = s.y0; y < s.y1; ++y) for (let x = s.x0; x < s.x1; ++x) if (covers(s,x,y)){ gG.fillStyle = css("--pix"); gG.globalAlpha = .55; gG.fillRect(x*SC, y*SC, SC, SC); }
+    gG.globalAlpha = 1;
+    if (mode === "g"){
+      for (const [bx,y,n,st] of an.giesen.list){
+        if (st === 0){ gG.fillStyle = css("--rej"); gG.globalAlpha = .7; gG.fillRect(bx*SC+1, y*SC+1, n*SC-2, SC-2); gG.globalAlpha = 1; }
+        else if (st === 2){ gG.strokeStyle = css("--full"); gG.lineWidth = 2; gG.strokeRect(bx*SC+1, y*SC+1, n*SC-2, SC-2); }
+        else { gG.strokeStyle = css("--accent"); gG.lineWidth = 1.5; gG.strokeRect(bx*SC+1, y*SC+1, n*SC-2, SC-2); }
+      }
+    } else {
+      for (const [tx,ty,w,h,st] of an.tiles.list){
+        const X = tx*SC, Y = ty*SC, Wd = w*SC, Hd = h*SC;
+        if (st === "R"){
+          gG.save(); gG.beginPath(); gG.rect(X,Y,Wd,Hd); gG.clip();
+          gG.strokeStyle = css("--hatch"); gG.lineWidth = 1;
+          for (let d = -Hd; d < Wd; d += 7){ gG.beginPath(); gG.moveTo(X+d,Y+Hd); gG.lineTo(X+d+Hd,Y); gG.stroke(); }
+          gG.restore();
+        } else if (st === "F"){ gG.fillStyle = css("--full"); gG.globalAlpha = .55; gG.fillRect(X,Y,Wd,Hd); gG.globalAlpha = 1; }
+        else { gG.strokeStyle = css("--accent"); gG.lineWidth = 2; gG.strokeRect(X+1,Y+1,Wd-2,Hd-2);
+          gG.globalAlpha = .35; gG.lineWidth = 1; for (let r = 1; r < h; ++r){ gG.beginPath(); gG.moveTo(X, Y+r*SC); gG.lineTo(X+Wd, Y+r*SC); gG.stroke(); } gG.globalAlpha = 1; }
+      }
+    }
+    gG.strokeStyle = css("--warn"); gG.setLineDash([4,3]); gG.lineWidth = 1;
+    gG.strokeRect(s.x0*SC+.5, s.y0*SC+.5, (s.x1-s.x0)*SC, (s.y1-s.y0)*SC); gG.setLineDash([]);
+    renderKpiG(s, an);
+  } else { $("kpiG").innerHTML = ""; $("calcG").textContent = "Triangle dégénéré ou hors de la zone : rien à dessiner."; }
+  gG.strokeStyle = css("--tri"); gG.lineWidth = 2; gG.beginPath();
+  tri.forEach((p,i) => { const X = p[0]*SC, Y = p[1]*SC; if (i) gG.lineTo(X,Y); else gG.moveTo(X,Y); }); gG.closePath(); gG.stroke();
+  tri.forEach((p,i) => { gG.fillStyle = css("--warn"); gG.beginPath(); gG.arc(p[0]*SC, p[1]*SC, 7, 0, 7); gG.fill();
+    gG.fillStyle = css("--paper"); gG.font = "bold 10px JetBrains Mono, monospace"; gG.fillText("V"+i, p[0]*SC-6, p[1]*SC+3.5); });
+}
+function kpi(label, val, cls){ return '<div class="kpi '+(cls||"")+'"><b>'+fmt(val)+'</b><span>'+label+'</span></div>'; }
+function renderKpiG(s, an){
+  const bw = s.x1 - s.x0, bh = s.y1 - s.y0, g = an.giesen, t = an.tiles;
+  const tiled = bw >= T_STAR && bh >= T_STAR, small = s.spanX < 2048 && s.spanY < 2048;
+  if (mode === "g"){
+    $("kpiG").innerHTML = kpi("blocs testés", g.blocks) + kpi("dont vides", g.empty, "w") + kpi("partiels", g.partial) + kpi("pleins (testés quand même)", g.full, "o");
+  } else {
+    $("kpiG").innerHTML = kpi("blocs testés", t.tested) + kpi("tuiles rejetées", t.R, "w") + kpi("tuiles pleines", t.F, "o") + kpi("tuiles partielles", t.P);
+  }
+  const gain = g.blocks ? 100*(1 - t.tested/g.blocks) : 0;
+  $("calcG").textContent =
+`boîte [${s.x0}, ${s.x1}[ × [${s.y0}, ${s.y1}[ = ${bw} × ${bh} px, ${fmt(an.covered)} pixels couverts (identiques dans les deux modes)
+Giesen  : ${fmt(g.blocks)} blocs testés = ${fmt(g.empty)} vides (${(100*g.empty/Math.max(1,g.blocks)).toFixed(0)} %) + ${fmt(g.partial)} partiels + ${fmt(g.full)} pleins
+Abrash  : ${fmt(t.groups)} groupes de 8 tuiles jugés, ${fmt(t.R+t.F+t.P)} tuiles = ${t.R} R + ${t.F} F + ${t.P} P
+          ${fmt(t.tested)} blocs testés (−${gain.toFixed(0)} %), ${fmt(t.fullBlocks)} blocs écrits sans test
+Moteur  : ${small ? "étendue < 8 px : D-a1c (blocs flottants), pas de tuiles" : tiled ? "boîte ≥ T* = 16 dans les deux axes : HIÉRARCHIE" : "boîte < 16 px dans un axe : blocs Giesen (pas de tuiles)"}`;
+}
+(function(){
+  const seg = $("segPreset");
+  Object.keys(PRESETS).forEach((k,i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.setAttribute("aria-pressed", i ? "false" : "true");
+    b.onclick = () => { tri = PRESETS[k].map(p => p.slice()); [...seg.children].forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false")); triChanged(); }; seg.appendChild(b); });
+  $("segMode").querySelectorAll("button").forEach(b => b.onclick = () => { mode = b.dataset.v; $("segMode").querySelectorAll("button").forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false")); drawG(); });
+  let drag = -1;
+  const pos = (ev) => { const r = cG.getBoundingClientRect(); return [ (ev.clientX - r.left) * cG.width / r.width / SC, (ev.clientY - r.top) * cG.height / r.height / SC ]; };
+  cG.addEventListener("pointerdown", ev => { const p = pos(ev); let best = 1e9; tri.forEach((q,i) => { const d = Math.hypot(q[0]-p[0], q[1]-p[1]); if (d < best){ best = d; drag = i; } }); if (best > 4) drag = -1; else cG.setPointerCapture(ev.pointerId); });
+  cG.addEventListener("pointermove", ev => { if (drag < 0) return; const p = pos(ev); tri[drag] = [Math.round(p[0]*16)/16 + 0.03, Math.round(p[1]*16)/16 + 0.02]; triChanged(); });
+  cG.addEventListener("pointerup", () => { drag = -1; });
+  onTri(drawG);
+})();
+
+// ───────────── Figure 2 : les deux coins ─────────────
+const cC = $("fC"), gC = cC.getContext("2d"); const CS = 70;
+let edgeA = [-1.37, 9.31], edgeB = [9.21, -0.62], conv = "lv3";
+function drawC(){
+  const W = cC.width; gC.clearRect(0,0,W,W); gC.fillStyle = css("--code-bg"); gC.fillRect(0,0,W,W);
+  const xa = rne(f32(edgeA[0])*256), ya = rne(f32(edgeA[1])*256), xb = rne(f32(edgeB[0])*256), yb = rne(f32(edgeB[1])*256);
+  const A = ya - yb, B = xb - xa, tl = (A === 0 && B < 0) || A < 0, bias = tl ? 0 : -1;
+  const Ev = (i,j) => { const px = 256*i+128, py = 256*j+128; return Math.floor(((xa-px)*(yb-py) - (ya-py)*(xb-px) + bias)/256); };
+  const d = (v) => conv === "lv3" ? v : -v - 1;
+  const iMax = A > 0 ? 7 : 0, jMax = B > 0 ? 7 : 0, iMin = 7 - iMax, jMin = 7 - jMax;
+  const vmax = Ev(iMax, jMax), vmin = Ev(iMin, jMin);
+  for (let j = 0; j < 8; ++j) for (let i = 0; i < 8; ++i){
+    const v = Ev(i,j), inside = v >= 0;
+    gC.fillStyle = inside ? css("--pix") : css("--cell"); gC.globalAlpha = inside ? .45 : 1;
+    gC.fillRect(i*CS+1, j*CS+1, CS-2, CS-2); gC.globalAlpha = 1;
+    gC.fillStyle = css("--fg"); gC.font = "11px JetBrains Mono, monospace"; gC.textAlign = "center";
+    gC.fillText(fmt(d(v)), i*CS + CS/2, j*CS + CS/2 + 4);
+  }
+  const ring = (i,j,col) => { gC.strokeStyle = col; gC.lineWidth = 4; gC.strokeRect(i*CS+3, j*CS+3, CS-6, CS-6); };
+  const rejCorner = conv === "lv3" ? [iMax,jMax] : [iMax,jMax];   // le pixel est le même ; seul le nom du test change
+  ring(rejCorner[0], rejCorner[1], css("--warn")); ring(iMin, jMin, css("--ok"));
+  gC.strokeStyle = css("--tri"); gC.lineWidth = 2.5; gC.beginPath(); gC.moveTo(edgeA[0]*CS+CS/2, edgeA[1]*CS+CS/2); gC.lineTo(edgeB[0]*CS+CS/2, edgeB[1]*CS+CS/2); gC.stroke();
+  [edgeA, edgeB].forEach((p,k) => { gC.fillStyle = css("--warn"); gC.beginPath(); gC.arc(p[0]*CS+CS/2, p[1]*CS+CS/2, 8, 0, 7); gC.fill(); });
+  gC.textAlign = "start";
+  const ro = rejOfs(A,B), ao = accOfs(A,B), c = Ev(0,0);
+  const verdict = vmax < 0 ? "REJETÉE : même le maximum est < 0, aucun pixel ne passe" : vmin >= 0 ? "ACCEPTÉE : même le minimum est ≥ 0, les 64 passent" : "TRAVERSÉE : la tuile chevauche l'arête (partielle pour cette arête)";
+  $("calcC").textContent = (conv === "lv3" ?
+`A' = ${fmt(A)}   B' = ${fmt(B)}   (pas d'un pixel en x, en y ; 1/256 px)
+c = E'(0, 0) = ${fmt(c)}
+coin de rejet       : max(0, 7A') + max(0, 7B') = ${fmt(ro)}
+                      c + ${fmt(ro)} = ${fmt(c+ro)}   (pixel ${iMax}, ${jMax}, anneau orange)
+coin d'acceptation  : min(0, 7A') + min(0, 7B') = ${fmt(ao)}
+                      c + ${fmt(ao)} = ${fmt(c+ao)}   (pixel ${iMin}, ${jMin}, anneau vert)
+verdict : ${verdict}` :
+`Convention de l'article : d = −E' − 1 (dedans ⇔ d < 0)
+coin de rejet trivial  : là où d est le PLUS NÉGATIF = pixel ${iMax}, ${jMax}
+                         d = ${fmt(d(vmax))} → ${d(vmax) >= 0 ? "≥ 0 : REJET" : "< 0 : pas de rejet"}
+coin d'acceptation     : là où d est le PLUS POSITIF = pixel ${iMin}, ${jMin}
+                         d = ${fmt(d(vmin))} → ${d(vmin) < 0 ? "< 0 : ACCEPTÉE" : "≥ 0 : pas d'acceptation"}
+Même pixel, même verdict qu'en convention LV3 : seuls le signe et le nom changent.`);
+}
+(function(){
+  let dragC = -1;
+  const pos = (ev) => { const r = cC.getBoundingClientRect(); return [ ((ev.clientX - r.left) * cC.width / r.width - CS/2) / CS, ((ev.clientY - r.top) * cC.height / r.height - CS/2) / CS ]; };
+  cC.addEventListener("pointerdown", ev => { const p = pos(ev); const da = Math.hypot(p[0]-edgeA[0], p[1]-edgeA[1]), db = Math.hypot(p[0]-edgeB[0], p[1]-edgeB[1]); dragC = Math.min(da,db) < 1 ? (da < db ? 0 : 1) : -1; if (dragC >= 0) cC.setPointerCapture(ev.pointerId); });
+  cC.addEventListener("pointermove", ev => { if (dragC < 0) return; const p = pos(ev).map(v => Math.max(-0.45, Math.min(7.45, v)) + 0.013); if (dragC) edgeB = p; else edgeA = p; drawC(); });
+  cC.addEventListener("pointerup", () => { dragC = -1; });
+  $("segConv").querySelectorAll("button").forEach(b => b.onclick = () => { conv = b.dataset.v; $("segConv").querySelectorAll("button").forEach(c => c.setAttribute("aria-pressed", c === b ? "true" : "false")); drawC(); });
+})();
+
+// ───────────── Figure 3 : où va le temps (banc, rooms, dans la scène) ─────────────
+const CLS = [
+  { k:"< 3", n:65323, A:[2206,408,1526], B:[2195,425,1575] },
+  { k:"3-7", n:8989,  A:[293,393,1074],  B:[293,385,1120] },
+  { k:"8-15", n:3324, A:[107,272,1040],  B:[107,273,1048] },
+  { k:"16-31", n:1479, A:[48,273,1209],  B:[48,251,1058] },
+  { k:"32-63", n:117, A:[4,72,281],      B:[4,43,249] },
+  { k:"≥ 64", n:91,   A:[4,374,1390],    B:[4,161,1185] } ];
+let clsSel = 5;
+function drawA(){
+  const c = CLS[clsSel], tA = c.A.reduce((x,y)=>x+y), tB = c.B.reduce((x,y)=>x+y);
+  const cols = [css("--mute"), css("--warn"), css("--accent")];
+  const bar = (lab, v, t) => '<div class="bar"><span>'+lab+'</span><div class="track">' + v.map((x,i) => '<i style="width:'+(100*x/tA).toFixed(2)+'%;background:'+cols[i]+'"></i>').join("") + '</div><span class="lab">'+fmt(Math.round(t))+' µs</span></div>';
+  $("barsA").innerHTML = bar("A (tiles=0)", c.A, tA) + bar("B (tiles=16)", c.B, tB);
+  const pct = (x) => (100*x/tA).toFixed(0)+" %";
+  $("calcA").textContent =
+`classe ${c.k} px : ${fmt(c.n)} triangles (rooms, 4 vues)
+A : préparation ${c.A[0]} µs (${pct(c.A[0])}) · arêtes ${c.A[1]} µs (${pct(c.A[1])}) · fragments ${c.A[2]} µs (${pct(c.A[2])})
+B : préparation ${c.B[0]} µs · arêtes ${c.B[1]} µs (${(100*(c.B[1]/c.A[1]-1)).toFixed(0)} %) · fragments ${c.B[2]} µs (${(100*(c.B[2]/c.A[2]-1)).toFixed(0)} %)
+total ${fmt(tA)} → ${fmt(tB)} µs : ${(100*(tB/tA-1)).toFixed(1)} %${clsSel < 3 ? "   (aucun triangle de cette classe ne change de chemin : écart = bruit)" : ""}`;
+}
+(function(){ const seg = $("segCls"); CLS.forEach((c,i) => { const b = document.createElement("button"); b.type = "button"; b.textContent = c.k; b.setAttribute("aria-pressed", i === clsSel ? "true" : "false");
+  b.onclick = () => { clsSel = i; [...seg.children].forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); drawA(); }; seg.appendChild(b); }); })();
+
+// ───────────── Figure 4 : scène V5 (vue Game), calculée dans la page ─────────────
+const cV = $("fV"), gV = cV.getContext("2d");
+const V5 = { c24:24, c48:48, c96:96, c192:192, fan:0 };
+let v5sel = "c96", v5data = null, v5hover = -1;
+function genV5(name){
+  const F = 225/Math.tan(Math.PI/6), D = 2, TH = 7*Math.PI/180, W = 6, H = 3.6, cs = Math.cos(TH), sn = Math.sin(TH);
+  const rot = (u,v) => [u*cs - v*sn, u*sn + v*cs];
+  const P = [], T = [];
+  if (name === "fan"){
+    P.push([0,0]); for (let k = 0; k < 360; ++k){ const a = 2*Math.PI*k/360 + TH; P.push([2.5*Math.cos(a), 2.5*Math.sin(a)]); }
+    for (let k = 0; k < 360; ++k) T.push([0, 1+k, 1+(k+1)%360]);
+  } else {
+    const st = V5[name]*D/F, nx = Math.max(1, Math.round(W/st)), ny = Math.max(1, Math.round(H/st)), sx = W/nx, sy = H/ny;
+    for (let j = 0; j <= ny; ++j) for (let i = 0; i <= nx; ++i) P.push(rot(-W/2 + i*sx, -H/2 + j*sy));
+    const id = (i,j) => j*(nx+1) + i;
+    for (let j = 0; j < ny; ++j) for (let i = 0; i < nx; ++i){ const a = id(i,j), b = id(i+1,j), c = id(i+1,j+1), d = id(i,j+1); T.push([a,b,c]); T.push([a,c,d]); }
+  }
+  // projection : caméra Game (0, 0, 2), regard -Z, fov 60°, vue 768 x 450 ; w = 2 (mur en z = 0)
+  const fy = 1/Math.tan(Math.PI/6), fx = fy/(768/450), vp = { x:0, y:0, w:768, h:450 };
+  const R = P.map(([x,y]) => { const w = f32(2), xn = f32(f32(fx*x)/w), yn = f32(f32(fy*y)/w);
+    return [ snap(f32(f32(f32(xn*0.5)+0.5)*768)), snap(f32(f32(0.5 - f32(yn*0.5))*450)) ]; });
+  const out = []; let tiled = 0, R_ = 0, F_ = 0, P_ = 0, blkA = 0, blkB = 0;
+  T.forEach(t => { const v = t.map(i => R[i]);
+    const area = (v[0][0]-v[2][0])*(v[1][1]-v[2][1]) - (v[0][1]-v[2][1])*(v[1][0]-v[2][0]);
+    if (area >= 0) return;                                      // face arrière (aire raster >= 0)
+    const s = setupFx(v, vp); if (!s) return;
+    const bw = s.x1 - s.x0, bh = s.y1 - s.y0;
+    const small = s.spanX < 2048 && s.spanY < 2048;
+    const isT = !small && bw >= 3 && bw >= T_STAR && bh >= T_STAR;
+    const rec = { v, s, isT, tiles: null };
+    if (isT){ const an = analyse(s); rec.tiles = an.tiles.list; tiled++; R_ += an.tiles.R; F_ += an.tiles.F; P_ += an.tiles.P;
+      blkA += bh * Math.ceil(bw/8); blkB += an.tiles.tested; }
+    out.push(rec); });
+  return { tris: out, tiled, R:R_, F:F_, P:P_, blkA, blkB };
+}
+function drawV(){
+  const W = cV.width, H = cV.height; gV.clearRect(0,0,W,H); gV.fillStyle = css("--code-bg"); gV.fillRect(0,0,W,H);
+  const d = v5data; if (!d) return;
+  const full = css("--full"), acc = css("--accent"), hatch = css("--hatch");
+  d.tris.forEach((r, idx) => {
+    if (!r.tiles || (v5hover >= 0 && idx !== v5hover)) return;
+    for (const [tx,ty,w,h,st] of r.tiles){
+      if (st === "F"){ gV.fillStyle = full; gV.globalAlpha = v5hover >= 0 ? .6 : .35; gV.fillRect(tx,ty,w,h); }
+      else if (st === "P"){ gV.strokeStyle = acc; gV.globalAlpha = v5hover >= 0 ? .9 : .35; gV.lineWidth = 1; gV.strokeRect(tx+.5,ty+.5,w-1,h-1); }
+      else if (v5hover >= 0){ gV.fillStyle = hatch; gV.globalAlpha = .45; gV.fillRect(tx+1,ty+1,w-2,h-2); }
+    }
+    gV.globalAlpha = 1;
+  });
+  gV.strokeStyle = css("--tri"); gV.globalAlpha = v5hover >= 0 ? .25 : .4; gV.lineWidth = .6;
+  d.tris.forEach(r => { gV.beginPath(); gV.moveTo(r.v[0][0], r.v[0][1]); gV.lineTo(r.v[1][0], r.v[1][1]); gV.lineTo(r.v[2][0], r.v[2][1]); gV.closePath(); gV.stroke(); });
+  gV.globalAlpha = 1;
+  if (v5hover >= 0){ const r = d.tris[v5hover]; gV.strokeStyle = css("--warn"); gV.lineWidth = 2; gV.beginPath(); gV.moveTo(r.v[0][0], r.v[0][1]); gV.lineTo(r.v[1][0], r.v[1][1]); gV.lineTo(r.v[2][0], r.v[2][1]); gV.closePath(); gV.stroke(); }
+  $("kpiV").innerHTML = kpi("triangles tuilés (vue Game)", d.tiled) + kpi("tuiles rejetées", d.R, "w") + kpi("tuiles pleines", d.F, "o") + kpi("tuiles partielles", d.P);
+  let txt = `${v5sel} : ${fmt(d.tris.length)} triangles dessinés dans cette vue, ${fmt(d.tiled)} tuilés
+blocs des triangles tuilés : Giesen ${fmt(d.blkA)} → hiérarchie ${fmt(d.blkB)} testés (−${(100*(1-d.blkB/Math.max(1,d.blkA))).toFixed(0)} %)
+(une vue ; le tableau ci-dessous donne les 4 vues du banc)`;
+  if (v5hover >= 0){ const r = d.tris[v5hover], s = r.s; const n = { R:0, F:0, P:0 }; (r.tiles||[]).forEach(t => n[t[4]]++);
+    txt += `\n\ntriangle survolé : boîte ${s.x1-s.x0} × ${s.y1-s.y0} px, ` + (r.tiles ? `tuiles ${n.R} R / ${n.F} F / ${n.P} P` : "pas tuilé (boîte < T* ou petit)"); }
+  $("calcV").textContent = txt;
+}
+(function(){
+  const seg = $("segV5");
+  Object.keys(V5).forEach(k => { const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.setAttribute("aria-pressed", k === v5sel ? "true" : "false");
+    b.onclick = () => { v5sel = k; v5hover = -1; [...seg.children].forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); v5data = genV5(k); drawV(); }; seg.appendChild(b); });
+  const pick = (ev) => { const r = cV.getBoundingClientRect(); const x = Math.floor((ev.clientX - r.left) * cV.width / r.width), y = Math.floor((ev.clientY - r.top) * cV.height / r.height);
+    let found = -1; if (v5data) v5data.tris.forEach((t,i) => { const s = t.s; if (x >= s.x0 && x < s.x1 && y >= s.y0 && y < s.y1 && covers(s,x,y)) found = i; });
+    if (found !== v5hover){ v5hover = found; drawV(); } };
+  cV.addEventListener("pointermove", pick); cV.addEventListener("pointerdown", pick);
+  cV.addEventListener("pointerleave", () => { if (v5hover >= 0){ v5hover = -1; drawV(); } });
+})();
+
+// ───────────── Étapes : calcul réel sur le triangle de la figure 1 ─────────────
+function lanes(head, rows){
+  let h = '<div class="lanes"><table><thead><tr><th></th>' + head.map(x => '<td>'+x+'</td>').join("") + '</tr></thead><tbody>';
+  rows.forEach(r => { h += '<tr><th>'+r[0]+'</th>' + r[1].map((v,i) => '<td class="'+(r[2] ? r[2](v,i) : "")+'">'+(typeof v === "number" ? fmt(v) : v)+'</td>').join("") + '</tr>'; });
+  return h + '</tbody></table></div>';
+}
+const esc = (t) => t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+function codePair(id){ const s = $("x"+id+"s"), v = $("x"+id+"v");
+  return '<details class="code" open><summary>Le code : scalaire et AVX2</summary><div><div class="pair"><figure><figcaption>Pendant scalaire</figcaption><pre>'+esc(s.textContent.trim())+'</pre></figure><figure class="v"><figcaption>AVX2</figcaption><pre>'+esc(v.textContent.trim())+'</pre></figure></div></div></details>'; }
+function card(no, title, why, uses, gives, body, code){
+  return '<section style="margin-top:14px;padding:16px clamp(12px,2.5vw,22px)"><div class="sh"><span class="stepno">'+no+'</span><h3 style="margin:0">'+title+'</h3></div>'
+    + '<div class="goal"><div class="why"><b class="h">Pourquoi</b>'+why+'</div><div class="uses"><b class="h">Utilise</b><div class="v">'+uses+'</div></div><div class="gives"><b class="h">Produit</b><div class="v">'+gives+'</div></div></div>'
+    + (body || "") + (code ? codePair(code) : "") + '</section>';
+}
+let selG = 0, selT = 0, selR = 0;
+function groupsOf(s){ const g = []; for (let ty = s.y0; ty < s.y1; ty += 8) for (let gx = s.x0; gx < s.x1; gx += 64) g.push([gx,ty]); return g; }
+function renderSteps(){
+  const s = setupFx(snapped(), VP), host = $("steps");
+  if (!s){ host.innerHTML = '<div class="note bad">Triangle dégénéré ou hors de la zone : choisissez un autre triangle dans la figure 1.</div>'; return; }
+  const an = analyse(s), bw = s.x1 - s.x0, bh = s.y1 - s.y0;
+  const small = s.spanX < 2048 && s.spanY < 2048, tiled = !small && bw >= T_STAR && bh >= T_STAR;
+  const dxe = bw + 7, dye = bh + 7;
+  const fit = [0,1,2].map(k => { const ax = s.a[k]*dxe, by = s.b[k]*dye; return [ s.e[k] + Math.min(ax,0) + Math.min(by,0), s.e[k] + Math.max(ax,0) + Math.max(by,0) ]; });
+  const fits = fit.every(([lo,hi]) => lo >= -2147483648 && hi <= 2147483647);
+  const groups = groupsOf(s); if (selG >= groups.length) selG = 0;
+  const [gx, ty] = groups[selG];
+  const L = [0,1,2,3,4,5,6,7];
+  const c = [0,1,2].map(k => L.map(j => i32(Ep(s,k,gx+8*j,ty))));
+  const cr = [0,1,2].map(k => c[k].map(v => i32(v + an.rj[k]))), ca = [0,1,2].map(k => c[k].map(v => i32(v + an.ac[k])));
+  const orR = L.map(j => cr[0][j] | cr[1][j] | cr[2][j]), orA = L.map(j => ca[0][j] | ca[1][j] | ca[2][j]);
+  const rej = L.reduce((m,j) => m | ((orR[j] < 0 ? 1 : 0) << j), 0), acc = L.reduce((m,j) => m | ((orA[j] < 0 ? 0 : 1) << j), 0);
+  const nt = (s.x1 - gx + 7) >> 3, inBox = nt >= 8 ? 255 : (1 << nt) - 1;
+  const fitX = (s.x1 - gx) >= 64 ? 255 : (1 << ((s.x1 - gx) >> 3)) - 1, rowsFull = ty + 8 <= s.y1;
+  const full = acc & fitX & (rowsFull ? 255 : 0), live = ~rej & inBox & 255;
+  const order = []; for (let m = live; m; m &= m - 1) order.push(31 - Math.clz32(m & -m));
+  const bits8 = (m) => L.map(j => (m >> j) & 1).reverse().join("");
+  // sélecteurs
+  const sg = $("selGroup"); sg.innerHTML = groups.map((g,i) => '<option value="'+i+'">ty = '+g[1]+', gx = '+g[0]+'</option>').join(""); sg.value = String(selG);
+  if (selT >= order.length) selT = 0;
+  const st = $("selTile"); st.innerHTML = order.length ? order.map((j,i) => '<option value="'+i+'">j = '+j+' (x = '+(gx+8*j)+', '+(((full>>j)&1) ? "pleine" : "partielle")+')</option>').join("") : '<option>aucune tuile visitée dans ce groupe</option>'; st.value = String(selT);
+  const rowsT = Math.min(8, s.y1 - ty); if (selR >= rowsT) selR = 0;
+  const sr = $("selRow"); sr.innerHTML = Array.from({length: rowsT}, (_,r) => '<option value="'+r+'">r = '+r+' (y = '+(ty+r)+')</option>').join(""); sr.value = String(selR);
+
+  let h = "";
+  // É1
+  h += card("É1", "La préparation de Giesen (rappel, inchangée)",
+    "La hiérarchie ne recalcule rien : elle part des entiers que SetupTriangleFx a produits pour Giesen (D-a1).",
+    `sommets (float, accrochés 1/256) :\n V0 (${snapped()[0].join(", ")})\n V1 (${snapped()[1].join(", ")})\n V2 (${snapped()[2].join(", ")})\nzone : 128 × 80 px (viewport)`,
+    `X = ${s.X.join(", ")}\nY = ${s.Y.join(", ")}\naire = ${fmt(s.area)} (×2⁻¹⁶ px²), échange p1↔p2 : ${s.flipped ? "oui" : "non"}\nboîte [${s.x0}, ${s.x1}[ × [${s.y0}, ${s.y1}[\n` + [0,1,2].map(k => `arête ${k} : E' = ${fmt(s.e[k])}, A' = ${fmt(s.a[k])}, B' = ${fmt(s.b[k])}, tl = ${s.tl[k] ? 1 : 0}`).join("\n"),
+    "", "1");
+  // É2
+  h += card("É2", "L'aiguillage : petit, grand, ou ni l'un ni l'autre ?",
+    "Chaque triangle prend la boucle la plus rapide pour sa taille : D-a1c sous 8 px d'étendue, la hiérarchie à partir de T* = 16 px de boîte dans les deux axes, Giesen entre les deux.",
+    `étendue non rognée : ${fmt(s.spanX)} × ${fmt(s.spanY)} (1/256 px)\nboîte rognée : ${bw} × ${bh} px`,
+    `petit (D-a1c) : ${s.spanX} < 2048 && ${s.spanY} < 2048 → ${small}\nIsTiledTri<16> : ${bw} ≥ 16 && ${bh} ≥ 16 → ${bw >= 16 && bh >= 16}\n→ ${small ? "RasterizeBlocks8 (D-a1c)" : tiled ? "RasterizeTiles8Fx (D-a2)" : "RasterizeBlocks8Fx (Giesen)"}` + (tiled ? "" : "\n(les étapes suivantes montrent quand même la hiérarchie sur ce triangle)"),
+    "", "2");
+  // É3
+  h += card("É3", "Les décalages des deux coins, une fois par triangle",
+    "Le coin de rejet (maximum) et le coin d'acceptation (minimum) ne dépendent que des signes de A' et B' : on calcule leur décalage depuis le coin haut-gauche une fois, il sert à toutes les tuiles.",
+    [0,1,2].map(k => `arête ${k} : A' = ${fmt(s.a[k])}, B' = ${fmt(s.b[k])}`).join("\n"),
+    [0,1,2].map(k => `rj${k} = max(0, 7·${s.a[k]}) + max(0, 7·${s.b[k]}) = ${fmt(an.rj[k])}\nac${k} = min(0, 7·${s.a[k]}) + min(0, 7·${s.b[k]}) = ${fmt(an.ac[k])}`).join("\n"),
+    "", "3");
+  // É4
+  h += card("É4", "La preuve int32 sur le domaine des tuiles",
+    "Les voies AVX2 calculent en int32. Avant de s'en servir, on prouve que E' y tient partout où la hiérarchie peut lire : E' est affine, il suffit de regarder ses deux extrêmes sur le rectangle [x0, x1 + 7] × [y0, y1 + 7].",
+    `domaine : dx ∈ [0, ${dxe}], dy ∈ [0, ${dye}]\n` + [0,1,2].map(k => `E'${k} = ${fmt(s.e[k])}, A' = ${fmt(s.a[k])}, B' = ${fmt(s.b[k])}`).join("\n"),
+    [0,1,2].map(k => `arête ${k} : min ${fmt(fit[k][0])}, max ${fmt(fit[k][1])}`).join("\n") + `\nint32 = [−2 147 483 648, 2 147 483 647]\nTilesFitInt32 → ${fits} ${fits ? "(voies 32 bits)" : "(repli Giesen)"}`,
+    "", "4");
+  // É5
+  h += card("É5", "Les constantes vectorielles d'un triangle",
+    "Tout ce qui ne dépend que du triangle est diffusé une fois : le décalage de chaque tuile d'un groupe (j·8A'), le décalage de chaque pixel d'un bloc (i·A'), le pas de ligne B'.",
+    `A' = ${s.a.join(", ")}\nB' = ${s.b.join(", ")}`,
+    `gStep = 64·A' = ${s.a.map(a => fmt(64*a)).join(", ")}\ntStep = 8·B' = ${s.b.map(b => fmt(8*b)).join(", ")}`,
+    lanes(L.map(i => "voie "+i), [
+      ["tOff0 = j·8A'0", L.map(j => i32(8*j*s.a[0]))], ["tOff1", L.map(j => i32(8*j*s.a[1]))], ["tOff2", L.map(j => i32(8*j*s.a[2]))],
+      ["off0 = i·A'0", L.map(i => i32(i*s.a[0]))], ["off1", L.map(i => i32(i*s.a[1]))], ["off2", L.map(i => i32(i*s.a[2]))] ]), "5");
+  // É6
+  const tileCls = (v,j) => ((inBox >> j) & 1) ? "" : "off";
+  h += card("É6", `Juger 8 tuiles d'un coup (groupe ty = ${ty}, gx = ${gx})`,
+    "Un registre par arête porte E' au coin haut-gauche des 8 tuiles ; une addition donne les 8 coins de rejet, une autre les 8 coins d'acceptation. Le OU des trois arêtes et un movemask donnent un bit par tuile.",
+    `E'(gx, ty) = ${[0,1,2].map(k => fmt(Ep(s,k,gx,ty))).join(", ")}\nrj = ${an.rj.map(fmt).join(", ")}\nac = ${an.ac.map(fmt).join(", ")}`,
+    `rej   = ${bits8(rej)} (bit 7 … bit 0)\nacc   = ${bits8(acc)}\ninBox = ${bits8(inBox)}   fitX = ${bits8(fitX)}   rangée complète : ${rowsFull}\nfull  = acc & fitX = ${bits8(full)}\nlive  = ~rej & inBox = ${bits8(live)}`,
+    lanes(L.map(j => "tuile "+j), [
+      ["c0 (coin)", c[0], tileCls], ["c1", c[1], tileCls], ["c2", c[2], tileCls],
+      ["c0 + rj0", cr[0], (v,j) => tileCls(v,j) || (v < 0 ? "neg" : "")], ["c1 + rj1", cr[1], (v,j) => tileCls(v,j) || (v < 0 ? "neg" : "")], ["c2 + rj2", cr[2], (v,j) => tileCls(v,j) || (v < 0 ? "neg" : "")],
+      ["OU (rejet)", orR, (v,j) => tileCls(v,j) || (v < 0 ? "neg" : "")],
+      ["c0 + ac0", ca[0], (v,j) => tileCls(v,j) || (v >= 0 ? "ok" : "")], ["c1 + ac1", ca[1], (v,j) => tileCls(v,j) || (v >= 0 ? "ok" : "")], ["c2 + ac2", ca[2], (v,j) => tileCls(v,j) || (v >= 0 ? "ok" : "")],
+      ["OU (accept.)", orA, (v,j) => tileCls(v,j) || (v >= 0 ? "ok" : "")],
+      ["verdict", L.map(j => !((inBox>>j)&1) ? "hors boîte" : ((rej>>j)&1) ? "REJETÉE" : ((full>>j)&1) ? "PLEINE" : "partielle"), (v) => v === "REJETÉE" ? "neg" : v === "PLEINE" ? "ok" : v === "partielle" ? "acc" : "off"] ])
+    + '<p class="figcap" style="margin-top:6px">Orange : valeur &lt; 0 (bit de signe à 1). Vert : ≥ 0. Voies grisées : tuiles au-delà de x1 (calculées, puis écartées par inBox).</p>', "6");
+  // É7
+  h += card("É7", "Du masque aux tuiles : tzcnt et blsr",
+    "Passer du parallèle au séquentiel sans tester les 8 bits : tzcnt donne l'indice du bit le plus bas, blsr l'efface. La boucle fait exactement un tour par tuile visitée.",
+    `live = ${bits8(live)}`,
+    order.length ? order.map((j,i) => `tour ${i} : tzcnt → j = ${j}, x = ${gx+8*j}, ${((full>>j)&1) ? "PLEINE" : "partielle"}`).join("\n") : "aucune tuile visitée : tout le groupe est rejeté",
+    "", "7");
+  // É8 / É9 : tuile choisie
+  if (order.length){
+    const j = order[selT], x = gx + 8*j, isFull = (full >> j) & 1, y = ty + selR;
+    const e = [0,1,2].map(k => L.map(i => i32(Ep(s,k,x+i,y))));
+    const corner = [0,1,2].map(k => Ep(s,k,x,ty));
+    if (isFull){
+      const w = [0,1,2].map(k => L.map(i => bary(s,k,x+i,y)));
+      const ww = s.flipped ? [w[0], w[2], w[1]] : w;
+      const z0 = f32(0.05), z1 = f32(0.04), z2 = f32(0.025);
+      const z = L.map(i => f32(f32(f32(ww[0][i]*z0) + f32(ww[1][i]*z1)) + f32(ww[2][i]*z2)));
+      h += card("É8", `Tuile pleine j = ${j} (x = ${x}), ligne r = ${selR}`,
+        "Les 64 pixels sont couverts et dans la boîte : aucun test de couverture. On calcule les barycentriques depuis les E' entiers (D-a1b) et on écrit par BlockFull : lecture Z ordinaire, écritures masquées par le seul test Z.",
+        `coin de la tuile (vpermd, voie ${j}) : ${corner.map(fmt).join(", ")}\nligne r = ${selR} : + ${selR}·B'\nofs = ${s.ofs.map(v => v.toFixed(8)).join(", ")}\ninvQ = ${s.invQ.toPrecision(9)}`,
+        `8 voies couvertes sur 8 (aucun bit à calculer)\nw0 + w1 + w2 ≈ ${(ww[0][0]+ww[1][0]+ww[2][0]).toPrecision(8)} (voie 0)\nz (exemple z0 = 0,05 ; z1 = 0,04 ; z2 = 0,025)`,
+        lanes(L.map(i => "voie "+i), [
+          ["e0 = E'0(x+i, y)", e[0], v => v >= 0 ? "ok" : "neg"], ["e1", e[1], v => v >= 0 ? "ok" : "neg"], ["e2", e[2], v => v >= 0 ? "ok" : "neg"],
+          ["w0 (float32)", ww[0].map(v => v.toPrecision(7))], [s.flipped ? "w1 ← e2 (échange)" : "w1 (float32)", ww[1].map(v => v.toPrecision(7))], [s.flipped ? "w2 ← e1 (échange)" : "w2 (float32)", ww[2].map(v => v.toPrecision(7))],
+          ["z (float32)", z.map(v => v.toPrecision(7))] ]), "8");
+      h += card("É9", "Tuile partielle", "Choisissez une tuile partielle dans le sélecteur pour voir le test par bloc.", "—", "—", "", "9");
+    } else {
+      const eb = L.map(i => (s.x1 - 1) - (x + i));
+      const any = L.map(i => e[0][i] | e[1][i] | e[2][i] | eb[i]);
+      const bits = L.reduce((m,i) => m | ((any[i] < 0 ? 0 : 1) << i), 0);
+      let rowsBits = []; for (let r = 0; r < rowsT; ++r){ let m = 0; for (let i = 0; i < 8; ++i){ const xx = x+i, yy = ty+r; if (xx < s.x1 && covers(s,xx,yy)) m |= 1 << i; } rowsBits.push(m); }
+      const pc = (m) => { let n = 0; while (m){ m &= m-1; ++n; } return n; };
+      h += card("É8", "Tuile pleine", "La tuile choisie est partielle : voir l'étape É9. Choisissez une tuile « pleine » dans le sélecteur pour cette étape.", "—", "—", "", "8");
+      h += card("É9", `Tuile partielle j = ${j} (x = ${x}), ligne r = ${selR}`,
+        "Une tuile partielle redevient du Giesen ordinaire : 8 lignes de 1 bloc, chacune testée par 3 OU (+ la boîte) et un movemask. Seules ses lignes sont visitées, et la boîte (4e arête) masque les voies au-delà de x1.",
+        `coin de la tuile (vpermd, voie ${j}) : ${corner.map(fmt).join(", ")}\neb = (x1 − 1) − (x + i), x1 = ${s.x1}`,
+        `bits de la ligne r = ${selR} : ${bits8(bits)} → ${pc(bits)} pixel(s)\nbits des ${rowsT} lignes : ${rowsBits.map(bits8).join(" ")}\npixels couverts dans la tuile : ${rowsBits.reduce((n,m) => n + pc(m), 0)} (le scalaire trouve le même nombre)`,
+        lanes(L.map(i => "voie "+i), [
+          ["e0", e[0], v => v >= 0 ? "ok" : "neg"], ["e1", e[1], v => v >= 0 ? "ok" : "neg"], ["e2", e[2], v => v >= 0 ? "ok" : "neg"], ["eb (boîte)", eb, v => v >= 0 ? "ok" : "neg"],
+          ["OU", any, v => v >= 0 ? "ok" : "neg"], ["couvert", L.map(i => (bits >> i) & 1 ? "oui" : "non"), v => v === "oui" ? "ok" : "off"] ]), "9");
+    }
+  } else {
+    h += card("É8", "Tuile pleine", "Ce groupe n'a aucune tuile visitée (tout est rejeté). Choisissez un autre groupe.", "—", "—", "", "8");
+    h += card("É9", "Tuile partielle", "Idem.", "—", "—", "", "9");
+  }
+  // É10
+  const t = an.tiles, g = an.giesen;
+  h += card("É10", "Le bilan du triangle : compteurs et invariants",
+    "Ce que le run R1 doit retrouver, à l'échelle d'un triangle : les pixels couverts ne changent pas, les blocs testés baissent, et les tuiles se partagent exactement la grille de la boîte.",
+    `Giesen : ${fmt(g.blocks)} blocs testés\ngrille : ${Math.ceil(bw/8)} × ${Math.ceil(bh/8)} = ${Math.ceil(bw/8)*Math.ceil(bh/8)} tuiles`,
+    `Tiles8 R / F / P = ${t.R} / ${t.F} / ${t.P} (somme ${t.R+t.F+t.P})\nLaneBlocks8 : ${fmt(g.blocks)} → ${fmt(t.tested)}\nBlocksFull8 = 8 × ${t.F} = ${t.fullBlocks}\nA − B − BlocksFull8 = ${fmt(g.blocks - t.tested - t.fullBlocks)} ≤ 8 × R = ${8*t.R}\npixels couverts : ${fmt(an.covered)} (identiques)`,
+    "", "10");
+  host.innerHTML = h;
+}
+$("selGroup").onchange = (e) => { selG = +e.target.value; selT = 0; selR = 0; renderSteps(); };
+$("selTile").onchange = (e) => { selT = +e.target.value; selR = 0; renderSteps(); };
+$("selRow").onchange = (e) => { selR = +e.target.value; renderSteps(); };
+onTri(() => { selG = 0; selT = 0; selR = 0; renderSteps(); });
+
+// ───────────── Code avant / après ─────────────
+const CHANGES = JSON.parse($("changes-data").textContent);
+let fileSel = "Tout";
+function renderChanges(){
+  const host = $("changes");
+  host.innerHTML = CHANGES.filter(c => fileSel === "Tout" || c.file === fileSel).map(c =>
+    '<div class="chg"><header><b>Étape '+c.step+' · '+esc(c.file)+'</b><span>'+esc(c.where)+'</span></header><p>'+esc(c.why)+'</p>'
+    + '<div class="pair"><figure><figcaption>Avant</figcaption><pre>'+esc(c.before)+'</pre></figure><figure class="a"><figcaption>Après</figcaption><pre>'+esc(c.after)+'</pre></figure></div></div>').join("");
+}
+(function(){ const seg = $("segFile"); ["Tout", ...new Set(CHANGES.map(c => c.file))].forEach(f => { const b = document.createElement("button"); b.type = "button"; b.textContent = f.replace(" (EXE)", ""); b.setAttribute("aria-pressed", f === fileSel ? "true" : "false");
+  b.onclick = () => { fileSel = f; [...seg.children].forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false")); renderChanges(); }; seg.appendChild(b); }); })();
+
+// ───────────── Liste de vérification (mémoire locale, facultative) ─────────────
+document.querySelectorAll("#checks input").forEach(cb => {
+  try { cb.checked = localStorage.getItem("da2-" + cb.id) === "1"; } catch (e) {}
+  cb.addEventListener("change", () => { try { localStorage.setItem("da2-" + cb.id, cb.checked ? "1" : "0"); } catch (e) {} });
+});
+
+// ───────────── Démarrage, et redessin au changement de thème ─────────────
+function all(){ drawG(); drawC(); drawA(); if (!v5data) v5data = genV5(v5sel); drawV(); }
+renderChanges(); renderSteps(); all();
+try { window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", all); } catch (e) {}
+new MutationObserver(all).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+
+</body></html>
