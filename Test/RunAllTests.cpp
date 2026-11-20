@@ -47,6 +47,7 @@ namespace LV3::Tests
     bool Test_Da1c_SmallFloat();    // D-a1c : petits triangles sur les blocs flottants, meme image
     bool Test_Da1d_Snap();
     bool Test_Da2_Tiles();          // D-a2 : hierarchie de tuiles 8 x 8 (Abrash), meme image
+    bool Test_Da2b_TileSplit();     // D-a2b : boucle des tuiles sans branche de donnees, meme image
 
 
 #if LV3_DEBUG    
@@ -244,6 +245,16 @@ namespace LV3::Tests
         else
         {
             Logger::success("SUCCES : Test_Da2_Tiles()");
+        }
+
+        if (!Test_Da2b_TileSplit())
+        {
+            Logger::error("ECHEC : Test_Da2b_TileSplit()");
+            return false;
+        }
+        else
+        {
+            Logger::success("SUCCES : Test_Da2b_TileSplit()");
         }
 
 
