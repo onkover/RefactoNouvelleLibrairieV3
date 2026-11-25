@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lot R3 — Le diagnostic H4′ (fenêtre de 1552 px), pas à pas</title>
+<style>
+:root{
+  --bg:#0f1218;--panel:#161b24;--panel2:#1c2330;--ink:#e6e9ef;--mute:#9aa4b5;--line:#2b3445;
+  --acc:#e0a33a;--acc2:#5fb3d9;--ok:#5cc28a;--bad:#e06464;--vio:#b48ef0;--hl:#3a2f12;
+  --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:28px 28px 18px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#151b26,#0f1218)}
+header h1{margin:0 0 6px;font-size:26px}
+header p{margin:4px 0;color:var(--mute)}
+.badge{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;margin-right:6px;border:1px solid var(--line)}
+.b-ok{color:var(--ok);border-color:#2f6a4b}.b-acc{color:var(--acc);border-color:#6b5222}.b-blue{color:var(--acc2);border-color:#2d5a70}
+.wrap{display:grid;grid-template-columns:250px 1fr;gap:0}
+nav{position:sticky;top:0;align-self:start;height:100vh;overflow:auto;padding:16px 12px;border-right:1px solid var(--line);font-size:13px}
+nav a{display:block;color:var(--mute);text-decoration:none;padding:3px 6px;border-radius:5px}
+nav a:hover{background:var(--panel2);color:var(--ink)}
+nav .grp{margin:12px 0 4px;color:var(--acc);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+main{padding:10px 30px 80px;max-width:1150px}
+section{padding:22px 0;border-bottom:1px solid var(--line)}
+h2{font-size:21px;margin:0 0 12px;color:#fff}
+h2 .n{color:var(--acc);margin-right:8px}
+h3{font-size:16px;margin:20px 0 8px;color:var(--acc2)}
+p{margin:8px 0}
+.mute{color:var(--mute)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0}
+.why{border-left:4px solid var(--acc)}
+.warn{border-left:4px solid var(--bad)}
+.good{border-left:4px solid var(--ok)}
+.info{border-left:4px solid var(--acc2)}
+code,kbd{font-family:var(--mono);font-size:13px;background:#0b0e13;padding:1px 5px;border-radius:4px;border:1px solid #232b39}
+pre{font-family:var(--mono);font-size:12.5px;background:#0b0e13;border:1px solid #232b39;border-radius:8px;padding:12px 14px;overflow:auto;line-height:1.5;margin:8px 0}
+pre .c{color:#7d8799}pre .k{color:var(--vio)}pre .s{color:#9fd18b}pre .h{background:var(--hl);color:#ffd27a;display:inline-block;width:100%}
+pre .del{background:#3a1717;color:#ffb3b3;display:inline-block;width:100%}
+pre .add{background:#14301f;color:#b4f0c8;display:inline-block;width:100%}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:#fff}
+td.num,th.num{text-align:right;font-family:var(--mono)}
+tr.hl td{background:#2a2411}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}nav{display:none}.two{grid-template-columns:1fr}main{padding:10px 14px}}
+/* flux */
+.flow{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.fb{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;position:relative}
+.fb small{color:var(--mute);display:block}
+.fb.on{border:2px solid var(--acc);background:#2a2411;box-shadow:0 0 0 3px #e0a33a22}
+.fb.on2{border:2px solid var(--acc2);background:#13283a}
+.arrow{text-align:center;color:var(--mute);font-size:13px;line-height:1}
+.row3{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.lab{background:#11161f;border:1px solid #33405a;border-radius:12px;padding:14px 16px;margin:16px 0}
+.lab h4{margin:0 0 8px;color:var(--ok);font-size:15px}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:8px 0}
+.ctrl label{font-size:13px;color:var(--mute)}
+input[type=range]{width:200px;vertical-align:middle}
+input[type=number]{width:90px;background:#0b0e13;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:3px 5px;font-family:var(--mono)}
+button{background:var(--panel2);color:var(--ink);border:1px solid #3a475e;border-radius:6px;padding:5px 11px;cursor:pointer;font-size:13px}
+button:hover{border-color:var(--acc)}
+button.on{border-color:var(--acc);color:var(--acc)}
+select{background:#0b0e13;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:3px}
+.out{font-family:var(--mono);font-size:13px;white-space:pre-wrap;background:#0b0e13;border:1px solid #232b39;border-radius:8px;padding:10px;margin-top:8px}
+.verdict{font-weight:600;padding:8px 12px;border-radius:8px;margin-top:8px}
+.v-ok{background:#14301f;color:#b4f0c8}.v-bad{background:#3a1717;color:#ffb3b3}.v-mid{background:#3a2f12;color:#ffd27a}
+.tl{display:grid;grid-template-columns:120px 1fr;gap:4px 14px;font-size:13.5px}
+.tl div:nth-child(odd){color:var(--acc);font-family:var(--mono)}
+.tl .now{color:#fff;font-weight:600}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+.step h3{margin-top:0}
+.step .lbl{display:inline-block;font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--acc);margin-right:6px}
+canvas{background:#0b0e13;border:1px solid #232b39;border-radius:8px;max-width:100%}
+.legend span{display:inline-block;margin-right:14px;font-size:12px;color:var(--mute)}
+.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Lot R3 — Le diagnostic H4′ : la fenêtre de 1552 px, pas à pas</h1>
+  <p>Jalon D · après le lot D-a2b · une expérience <b>sans une ligne de C++</b> : on change seulement la largeur de l'écran, puis on regarde si la perte des tuiles disparaît.</p>
+  <p><span class="badge b-ok">D12 commité (LIB 9678f47 / EXE 26ae1f8)</span><span class="badge b-acc">R3 clos le 25/11 : formellement non valide, H4′ non retenue pour c24</span><span class="badge b-blue">clé : config.json → screen.width</span></p>
+  <p class="mute">Export : bouton « Copier le HTML » en bas de page (le cadre de l'artefact bloque les téléchargements ; la page de l'artefact sur claude.ai permet aussi de l'enregistrer). Tous les laboratoires fonctionnent hors ligne.</p>
+</header>
+<div class="wrap">
+<nav>
+  <div class="grp">Avant la technique</div>
+  <a href="#pourquoi">1 · Pourquoi ce lot</a>
+  <a href="#rappel">2 · Ce qu'on a fait jusqu'ici</a>
+  <a href="#global">3 · Algorithme global du moteur</a>
+  <a href="#contexte">4 · Contexte et objectif fonctionnel</a>
+  <a href="#besoin">5 · Besoin et méthode</a>
+  <div class="grp">Laboratoires</div>
+  <a href="#lab1">Lab 1 · Adresses d'une tuile</a>
+  <a href="#lab2">Lab 2 · Ordre de visite et file des écritures</a>
+  <a href="#lab3">Lab 3 · Dérive et ordre des runs</a>
+  <div class="grp">L'apport du lot</div>
+  <a href="#detail">6 · Algorithme détaillé, avant / après</a>
+  <a href="#tech">7 · Fonctionnement technique</a>
+  <a href="#decisions">8 · Décisions proposées</a>
+  <div class="grp">Étapes</div>
+  <a href="#e0">Étape 0 · D12 commité</a>
+  <a href="#e1">Étape 1 · Binaires A et B</a>
+  <a href="#e2">Étape 2 · Deux racines de contenu</a>
+  <a href="#e3">Étape 3 · Les pas, calculés</a>
+  <a href="#e4">Étape 4 · Le script</a>
+  <a href="#e5">Étape 5 · Contrôles des summaries</a>
+  <a href="#e6">Étape 6 · Dépouillement</a>
+  <a href="#e7">Étape 7 · Vérifier</a>
+  <div class="grp">Fin</div>
+  <a href="#resultats">Résultats (25/11)</a>
+  <a href="#contre">Contre-exemples chiffrés</a>
+  <a href="#usage">Exemples d'utilisation (Lab 4)</a>
+  <a href="#dettes">Dettes relevées</a>
+  <a href="#suite">Suite</a>
+</nav>
+<main>
+
+<!-- ============================================================ -->
+<section id="pourquoi">
+<h2><span class="n">1</span>Pourquoi ce lot</h2>
+<div class="card why">
+<p>La hiérarchie de tuiles d'Abrash (lot D-a2) gagne beaucoup sur les très grands triangles (V5 c96 −14 %, éventail −55 %) mais <b>perd sur les triangles moyens</b> : c24 +4 %, c48 +10 à +14 %. Cette perte n'a pas encore d'explication.</p>
+<p>Le lot D-a2b a testé le premier suspect, la branche « tuile pleine ou partielle ? » mal prédite (hypothèse H3). Il l'a supprimée : <b>aucun gain</b>. H3 est réfutée sur la machine de mesure, et D12 a remis le commutateur à 0.</p>
+<p>Le banc du lot D-a2b a désigné un autre suspect, qu'on appelle <b>H4′</b>. Il ne tient pas au code, il tient à <b>la largeur de l'écran</b>. Avec 1536 px, une ligne du Z-buffer fait 1536 × 4 = <b>6 144 octets</b>. Les lignes r et r + 2 d'une tuile 8 × 8 tombent alors sur les <b>mêmes 12 bits d'adresse faibles</b>, et le processeur les confond un instant. Sur la VM, la perte de c24 n'apparaissait qu'avec ce genre de largeur.</p>
+<p><b>R3 pose la question directement à la machine de mesure</b> : si on décale le pas de ligne de 64 octets (fenêtre de 1552 px), est-ce que la perte des tuiles disparaît ? La réponse décide de la forme du prochain lot de code (D-a2c). On mesure avant d'écrire le code, parce que les deux corrections possibles n'ont rien en commun.</p>
+</div>
+<div class="two">
+<div class="card info"><b>Ce que R3 fait</b><br>Il change <b>une</b> valeur dans un fichier de configuration (<code>config.json</code>, clé <code>screen.width</code>, de 1536 à 1552) et compare les deux mêmes binaires A (sans tuiles) et B (tuiles D-a2) aux deux largeurs, dans la même séance.</div>
+<div class="card info"><b>Ce que R3 ne fait pas</b><br>Aucun changement de C++, aucun nouveau commutateur. Le binaire B′ (D-a2b) n'est plus mesuré : D12 l'a écarté. R3 ne corrige rien ; il dit quelle correction écrire.</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="rappel">
+<h2><span class="n">2</span>Ce qu'on a fait jusqu'à ce lot</h2>
+<div class="tl">
+<div>Sept.–oct.</div><div>Phase G, étapes 1 à 4 : LOD des rochers puis des sphères (A14, A14a), <code>Clear</code> en stores non temporels (A15), dettes Serializer / JSON / ResourceManager (A16–A18), coût fixe de <code>Render</code> et rendu en point (A19, A20).</div>
+<div>13–21/10</div><div><b>Chantier B</b> : l'étage géométrie vectorisé (B1 <code>/arch:AVX2</code>, B2, B4 rejet par lots de 8, B3 sommets en SoA, B5 face arrière en espace objet).</div>
+<div>21–29/10</div><div><b>Chantier C</b> : le dessin des pixels. C0 découpage par ablation, C1 noyaux spécialisés, C2 arêtes par 8 pixels en AVX2 (V2 ×2,27), C3 chemin rapide d'un pixel.</div>
+<div>31/10</div><div><b>Lot V3</b> : une scène de niveau FPS (« rooms ») ; les arêtes pèsent 41 % du Render, d'où le jalon D.</div>
+<div>03–09/11</div><div><b>D-a1</b> Giesen (arêtes en virgule fixe), <b>D-a1b</b> barycentriques entières, <b>D-a1d</b> accrochage par nombre magique, <b>D-a1c</b> petits triangles en flottant.</div>
+<div>10–14/11</div><div><b>D-a2</b> Abrash : tuiles 8 × 8, jugées 8 par registre (rejetée, pleine, partielle). Accepté, défaut 16, avec réserves : c24 +4 %, c48 +10 à +14 %. Nouvelle scène V5 (c24, c48, c96, c192, fan).</div>
+<div>15–20/11</div><div><b>D-a2b</b> : deux boucles sans branche par tuile. Aucun gain (fan +3,4 %, c48 +1,2 / +1,7 %) : H3 réfutée, <b>D12 acté</b> (défaut 0, code gardé derrière le commutateur). Le banc découvre <b>H4′</b>.</div>
+<div class="now">20/11 · R3</div><div class="now">Ce lot : tester H4′ sur l'i7-1265U, sans code.</div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="global">
+<h2><span class="n">3</span>Algorithme global du moteur : où se situe R3</h2>
+<p>Une frame du moteur, du haut vers le bas. <span style="color:var(--acc)">En orange</span> : ce que R3 modifie (une valeur lue au démarrage). <span style="color:var(--acc2)">En bleu</span> : là où l'effet est attendu (les accès mémoire de la boucle des tuiles).</p>
+<div class="flow">
+  <div class="fb on"><b>Démarrage · lecture de <code>config.json</code></b> (EXE, <code>Helper/ConfigManager.cpp</code>) : <code>screen.width</code> → <code>cfg.screenWidth</code> → <code>FrameW</code><small>R3 : 1536 → 1552. C'est la seule chose qui change.</small></div>
+  <div class="arrow">▼</div>
+  <div class="fb on"><b>Démarrage · allocation des tampons</b> (EXE, <code>main.cpp</code>) : texture SDL <code>FrameW × FrameH</code> (pitch choisi par le pilote), <code>db.Resize(FrameW, FrameH)</code><small>Le pas de ligne du Z-buffer devient 4 × FrameW : 6 144 o → 6 208 o.</small></div>
+  <div class="arrow">▼ boucle de frame</div>
+  <div class="fb">Entrées · systèmes ECS (animation, hiérarchie, triggers) · <code>WorldTransformSystem</code><small>L03, L06</small></div>
+  <div class="arrow">▼</div>
+  <div class="fb on"><b>Choix des caméras · <code>BuildLayout</code></b> (LIB, <code>Scene/CameraBinding.CPP</code>) : 4 vues en Quad, chacune <code>FrameW/2 × FrameH/2</code><small>R3 : vues de 768 × 450 → 776 × 450 (+1 % de largeur visible).</small></div>
+  <div class="arrow">▼</div>
+  <div class="fb">Clear couleur (<code>ClearColor</code>) + Clear profondeur (<code>ClearDepth</code>, témoin de mesure)<small>A15. Coût proportionnel à la résolution : +1 % attendu.</small></div>
+  <div class="arrow">▼ pour chaque vue</div>
+  <div class="row3">
+    <div class="fb">Culling, LOD<small>A13, A14</small></div>
+    <div class="fb">Étage sommets SoA AVX2<small>B3, 2b, D-a1d</small></div>
+    <div class="fb">Étage faces : rejet par lots de 8, clipping<small>B4, B5, L04</small></div>
+    <div class="fb">Routage du triangle<small>C3 1 px · D-a1c petits · Giesen · tuiles</small></div>
+  </div>
+  <div class="arrow">▼ grands triangles (boîte ≥ 16 px)</div>
+  <div class="fb on2"><b>D-a2 · <code>RasterizeTiles8Fx</code></b> (LIB, <code>Rendering/PixelStage8.h</code>) : groupes de 8 tuiles, et dans chaque tuile <b>8 lignes du Z-buffer l'une après l'autre</b><small>H4′ : les lignes r et r + 2 ont les mêmes 12 bits d'adresse faibles quand le pas vaut 6 144 o.</small></div>
+  <div class="arrow">▼</div>
+  <div class="fb on2"><b>Étage pixels</b> : lecture du Z, test reverse-Z, écriture Z + couleur, 8 pixels par registre<small>C1, C2, D-a1b. Ce sont ces lectures et écritures que H4′ accuse.</small></div>
+  <div class="arrow">▼</div>
+  <div class="fb">Séparateurs de vues, <code>Present</code> (copie vers la carte graphique)<small>Hors du Render ; une dette relevée ici (§ Dettes).</small></div>
+  <div class="arrow">▼ fin du banc</div>
+  <div class="fb on"><b>Profiler · summary CSV</b> : 1ʳᵉ ligne <code>res=1552x900</code>, <code>tiles=</code>, <code>tsplit=</code>, compteur <code>FbDbAlias4K</code><small>Le contrôle qui prouve qu'un run a bien tourné à la bonne largeur.</small></div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="contexte">
+<h2><span class="n">4</span>Contexte et objectif fonctionnel</h2>
+<div class="card">
+<p><b>Contexte.</b> Après D-a2b, deux corrections sont possibles pour récupérer la perte des tuiles sur c24 et c48, et le plan les a rangées sous le nom D-a2c :</p>
+<table>
+<tr><th>Si la cause est…</th><th>…on écrit</th><th>Ce que ça touche</th></tr>
+<tr><td><b>H4′</b> : la géométrie mémoire (pas de ligne multiple de 2 048 o)</td><td>un <b>Z-buffer à pas décalé</b> : <code>m_Pitch = largeur + 16</code> floats, distinct de <code>m_Width</code></td><td><code>DepthBuffer</code>, <code>Row(y)</code>, le pas du collecteur de pixels, <code>Clear</code></td></tr>
+<tr><td><b>H4</b> d'origine : l'ordre de visite (8 lignes d'une tuile au lieu de lignes entières)</td><td>visiter un groupe de 8 tuiles <b>ligne par ligne</b> (8 tuiles × 1 ligne)</td><td>les deux corps de <code>RasterizeTiles8Fx</code></td></tr>
+<tr><td>Ni l'un ni l'autre</td><td>le réglage P1 (seuil T* à 24 px) ou une mesure VTune (R4) avant tout code</td><td><code>config.h</code> §14</td></tr>
+</table>
+<p><b>Objectif fonctionnel.</b> Savoir, avec une seule expérience sur l'i7-1265U, laquelle de ces trois branches suivre. Le résultat attendu n'est pas un gain : c'est un <b>verdict</b> (H4′ confirmée, réfutée ou non conclusive), obtenu par une règle écrite avant la mesure.</p>
+<p><b>Intérêt.</b> Le Z-buffer à pas décalé coûte peu à écrire, mais il touche le cœur du moteur (toutes les lectures de profondeur). Le réordonnancement touche le noyau le plus délicat. Se tromper de branche, c'est un lot complet de code, de TNR et de mesure pour rien. R3 coûte une soirée de runs.</p>
+</div>
+<div class="card warn"><b>Une remarque qui rend R3 encore plus utile.</b> Une fenêtre de 1552 px donne au Z-buffer un pas de 6 208 o, <b>exactement</b> celui qu'aurait un Z-buffer de 1536 px avec 16 floats de remplissage par ligne. R3 est donc une préversion du Z-buffer à pas décalé, sans le coder. Une différence : à 1552 px la couleur change de pas elle aussi, alors que le correctif ne toucherait que le Z. Si R3 confirme H4′, le lot D-a2c dira la part de la couleur.</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="besoin">
+<h2><span class="n">5</span>Le besoin, et les méthodes employées</h2>
+<h3>5.1 Le besoin, dit fonctionnellement</h3>
+<ol>
+<li>Faire tourner le moteur à une autre largeur <b>sans recompiler</b> et sans toucher au <code>config.json</code> du dépôt.</li>
+<li>Changer <b>seulement</b> la propriété suspecte : le pas de ligne n'est plus un multiple de 2 048 o, mais chaque ligne reste alignée sur 64 o (une ligne de cache), comme à 1536.</li>
+<li>Mesurer A et B aux deux largeurs <b>dans la même séance</b>, de façon que la dérive de la machine s'annule.</li>
+<li>Décider avec une règle écrite à l'avance, sur une grandeur qui isole l'effet cherché.</li>
+</ol>
+
+<h3>5.2 Méthode 1 : deux mécanismes du processeur, expliqués simplement</h3>
+<div class="card">
+<p><b>L'adresse et ses 12 bits faibles.</b> Une adresse mémoire est un nombre. Ses 12 bits du bas valent <code>adresse mod 4096</code> : la position dans une « page » de 4 Ko. Deux adresses distantes de 4 096, 8 192, 12 288… octets ont les mêmes 12 bits faibles.</p>
+<p><b>Mécanisme 1, l'alias 4 Ko.</b> Quand le cœur lance une lecture, il doit vérifier qu'aucune écriture plus ancienne, encore en attente dans sa <b>file des écritures</b> (store buffer), ne vise la même adresse. Pour aller vite, il compare d'abord les <b>12 bits faibles</b>. S'ils sont égaux, il suppose un conflit, retient la lecture puis la relance quand l'adresse complète est connue : quelques cycles perdus à chaque fois. Avec un pas de 6 144 o, l'écart entre les lignes r et r + 2 vaut 12 288 o = 3 × 4 096 : <b>même 12 bits faibles</b>. Dans une tuile, on lit la ligne r + 2 du Z juste après avoir écrit la ligne r. Le cœur croit à un conflit qui n'existe pas.</p>
+<p><b>Mécanisme 2, les ensembles du cache L1.</b> Le cache L1 de données d'un cœur P de l'i7-1265U fait 48 Ko : 64 ensembles de 12 emplacements (« voies »). L'ensemble d'une ligne de 64 o est donné par les bits 6 à 11 de l'adresse, encore les 12 bits faibles. Quand trop de lignes utiles tombent dans le même ensemble, elles s'évincent l'une l'autre. À 1536 px, les 8 lignes d'une tuile n'occupent que 2 ensembles (les paires et les impaires) au lieu de 8. C'est encore loin des 12 voies, mais on ajoute la couleur, qui a le même pas. À 1024 px (pas de 4 096 o), les 8 lignes tombent dans <b>un seul</b> ensemble, et le banc VM y a mesuré +18 à +22 %.</p>
+<p class="mute">Les deux mécanismes viennent de la même cause : un pas de ligne multiple de 2 048 o. R3 ne sait pas les séparer ; c'est le rôle de R4 (VTune, compteurs <code>LD_BLOCKS_PARTIAL.ADDRESS_ALIAS</code> et conflits L1). Le script épingle le moteur sur le processeur logique 2 (<code>/affinity 4</code>), un cœur P. Un cœur E (Gracemont) n'a que 32 Ko en 8 voies.</p>
+</div>
+
+<h3>5.3 Méthode 2 : l'expérience contrôlée et la « différence de différences »</h3>
+<div class="card">
+<p>Changer la largeur change aussi autre chose : à 1552 px, chaque vue montre 1 % de scène en plus, et <code>Clear</code> efface 1 % de pixels en plus. Comparer « B à 1552 » à « B à 1536 » mélangerait ces effets avec H4′.</p>
+<p>On compare donc des <b>rapports</b>. À chaque largeur, B/A mesure ce que les tuiles coûtent ou rapportent par rapport aux blocs Giesen, <b>sur la même image</b>. Les pixels en plus touchent A et B pareillement et disparaissent du rapport. Ensuite on compare les deux rapports :</p>
+<pre>Δ  =  (B/A)<sub>1552</sub>  ÷  (B/A)<sub>1536</sub>  −  1</pre>
+<p>Si H4′ tient, les tuiles (B) profitent du nouveau pas et les blocs (A, qui avancent ligne par ligne et ne relisent jamais r + 2 juste après r) en profitent peu : Δ est nettement négatif. Si H4′ est fausse, B/A ne bouge pas : Δ ≈ 0. C'est la « différence de différences » des expériences contrôlées : on retire deux fois ce qu'on ne veut pas mesurer.</p>
+</div>
+
+<h3>5.4 Méthode 3 : l'ordre des runs (ABBA imbriqué)</h3>
+<div class="card">
+<p>Les binaires sont les mêmes aux deux largeurs ; seule la racine de contenu change. On peut donc entrelacer les quatre bras dans un ordre symétrique :</p>
+<pre>A<sub>1536</sub>  B<sub>1536</sub>  A<sub>1552</sub>  B<sub>1552</sub>  B<sub>1552</sub>  A<sub>1552</sub>  B<sub>1536</sub>  A<sub>1536</sub></pre>
+<p>Chaque comparaison a son centre au milieu de la séquence : B/A à 1536 (runs 1, 2, 7, 8), B/A à 1552 (runs 3 à 6), et l'effet de largeur sur A (runs 1, 8 contre 3, 6). Une dérive linéaire de la machine s'annule dans les trois. Le laboratoire 3 montre ce que deviennent les autres ordres.</p>
+</div>
+
+<!-- LAB 1 -->
+<div class="lab" id="lab1">
+<h4>Laboratoire 1 · Les adresses des 8 lignes d'une tuile, selon la largeur</h4>
+<p class="mute">Pour une largeur d'écran W, la ligne r d'une tuile commence à r × 4W octets de la ligne 0. On affiche ses 12 bits faibles, son ensemble L1 (bits 6 à 11) et les lignes qui se confondent.</p>
+<div class="ctrl">
+  <label>Largeur W <input type="range" id="l1w" min="640" max="2600" step="4" value="1536"> <b id="l1wv">1536</b> px</label>
+  <span>
+  <button data-w="1536">1536 (moteur)</button><button data-w="1552">1552 (R3)</button><button data-w="1024">1024</button><button data-w="2048">2048</button><button data-w="768">768</button><button data-w="1540">1540</button><button data-w="1920">1920</button>
+  </span>
+</div>
+<div class="ctrl"><label>Abscisse x de la tuile (px) <input type="number" id="l1x" value="500" min="0" max="2600"></label>
+<label>Voies du L1 <select id="l1ways"><option value="12">12 (cœur P, 48 Ko)</option><option value="8">8 (cœur E, 32 Ko)</option></select></label></div>
+<canvas id="l1c" width="900" height="250"></canvas>
+<div class="legend"><span><i class="sw" style="background:#e0a33a"></i>lignes du Z</span><span><i class="sw" style="background:#5fb3d9"></i>lignes de la couleur (même pas supposé)</span><span>une colonne = un ensemble du L1 (64)</span></div>
+<div class="out" id="l1o"></div>
+</div>
+
+<!-- LAB 2 -->
+<div class="lab" id="lab2">
+<h4>Laboratoire 2 · Ordre de visite contre file des écritures (modèle jouet)</h4>
+<p class="mute">On suit les blocs de 8 pixels d'un rectangle de triangle, dans l'ordre de A (blocs Giesen, ligne après ligne) et dans l'ordre de B (tuile après tuile, 8 lignes par tuile). Chaque bloc lit puis écrit le Z. Une écriture reste « en attente » pendant L blocs. Une lecture qui tombe sur une écriture en attente de même 12 bits faibles, mais d'adresse différente, est un <b>faux conflit</b>. Ce n'est pas un simulateur du cœur : il montre seulement <b>quand</b> l'ordre de visite expose au mécanisme.</p>
+<div class="ctrl">
+  <label>Largeur du triangle <input type="range" id="l2s" min="8" max="192" step="8" value="24"> <b id="l2sv">24</b> px</label>
+  <label>Hauteur <input type="range" id="l2h" min="8" max="96" step="8" value="24"> <b id="l2hv">24</b> px</label>
+  <label>Durée d'attente L <input type="range" id="l2l" min="1" max="24" value="4"> <b id="l2lv">4</b> blocs</label>
+</div>
+<div class="ctrl"><label>Largeurs comparées</label><span id="l2wset"></span></div>
+<canvas id="l2c" width="900" height="170"></canvas>
+<div class="out" id="l2o"></div>
+</div>
+
+<!-- LAB 3 -->
+<div class="lab" id="lab3">
+<h4>Laboratoire 3 · La dérive de la machine et l'ordre des runs</h4>
+<p class="mute">On fixe de « vraies » valeurs, on ajoute une dérive de la machine, et on calcule ce que chaque ordre de runs estimerait. Écart = estimation − vérité, en points de pourcentage.</p>
+<div class="ctrl">
+  <label>Vrai (B/A)<sub>1536</sub> % <input type="number" id="l3a" value="4" step="0.5"></label>
+  <label>Vrai (B/A)<sub>1552</sub> % <input type="number" id="l3b" value="-4" step="0.5"></label>
+  <label>Vrai effet de largeur sur A % <input type="number" id="l3c" value="1" step="0.5"></label>
+</div>
+<div class="ctrl">
+  <label>Dérive <select id="l3t"><option value="lin">linéaire</option><option value="quad">accélérée (quadratique)</option><option value="step">palier (bridage soudain)</option></select></label>
+  <label>Amplitude <input type="range" id="l3d" min="0" max="20" step="0.5" value="8"> <b id="l3dv">8</b> % sur la séquence</label>
+  <label>Palier après le run <input type="number" id="l3k" value="5" min="1" max="7"></label>
+</div>
+<div class="out" id="l3o"></div>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="detail">
+<h2><span class="n">6</span>Algorithme détaillé de l'apport du lot : avant / après</h2>
+<p>R3 n'ajoute aucune fonctionnalité. Il fait passer une valeur par toute la chaîne de démarrage. Voici cette chaîne, maillon par maillon, à 1536 (avant) et à 1552 (pendant R3).</p>
+<table>
+<tr><th>#</th><th>Maillon (fichier)</th><th>Avant : 1536</th><th>Pendant R3 : 1552</th><th>Rôle dans R3</th></tr>
+<tr class="hl"><td>1</td><td><code>config.json</code> (racine de contenu) : <code>"screen": { "width": … }</code></td><td class="num">1536</td><td class="num">1552</td><td>la seule modification</td></tr>
+<tr><td>2</td><td><code>ProgrammeConfig</code> (<code>Helper/ConfigManager.cpp</code>) : <code>cfg.screenWidth = rr.Read("width", 1920)</code></td><td class="num">1536</td><td class="num">1552</td><td>lecture ; 1920 si la clé manque</td></tr>
+<tr><td>3</td><td><code>main.cpp</code> : <code>FrameW = cfg.screenWidth</code></td><td class="num">1536</td><td class="num">1552</td><td>largeur de travail de toute la frame</td></tr>
+<tr><td>4</td><td><code>SDLINIT(FrameW, FrameH)</code> → texture <code>ARGB8888</code>, pitch rendu par <code>SDL_LockTexture</code></td><td class="num">6 144 o (≥ 4W)</td><td class="num">≥ 6 208 o (pilote)</td><td>pas de la couleur, non journalisé (dette R3-d)</td></tr>
+<tr class="hl"><td>5</td><td><code>db.Resize(FrameW, FrameH)</code> → <code>DepthBuffer::Row(y) = data + y·m_Width</code></td><td class="num">6 144 o</td><td class="num">6 208 o</td><td><b>le pas suspect</b></td></tr>
+<tr><td>6</td><td><code>BuildLayout(Quad, FrameW, FrameH)</code> → 4 vues</td><td class="num">768 × 450</td><td class="num">776 × 450</td><td>+1 % de largeur visible</td></tr>
+<tr><td>7</td><td><code>Projection::Perspective(fovY, aspect…)</code> (fov vertical)</td><td class="num">aspect 1,7067</td><td class="num">aspect 1,7244</td><td>même taille des cellules en px, quelques cellules en plus sur les bords</td></tr>
+<tr><td>8</td><td>Clear couleur + profondeur</td><td class="num">1 382 400 px</td><td class="num">1 396 800 px</td><td>+1,04 % : les témoins se comparent à largeur égale</td></tr>
+<tr class="hl"><td>9</td><td><code>RasterizeTiles8Fx</code> : 8 lignes par tuile, lignes r et r + 2</td><td>même 12 bits faibles</td><td>écart de 128 o, tous distincts</td><td>ce que R3 teste</td></tr>
+<tr><td>10</td><td>Profiler : <code>res=</code> dans la 1ʳᵉ ligne du summary, <code>FbDbAlias4K</code></td><td><code>res=1536x900</code></td><td><code>res=1552x900</code></td><td>preuve que le run a tourné à la bonne largeur</td></tr>
+</table>
+<h3>Ce qui ne change pas (et doit être vérifié)</h3>
+<ul>
+<li>Les binaires A et B : les mêmes exécutables aux deux largeurs (même placement du code, voir la dette « effet de placement » de D-a2).</li>
+<li>L'alignement de chaque ligne sur 64 o : 6 208 = 97 × 64. Le motif de lignes de cache coupées par les blocs de 8 pixels est identique d'une largeur à l'autre (contre-exemple 1).</li>
+<li>La taille des cellules de c24 / c48 en pixels : le fov est vertical et la hauteur des vues reste 450.</li>
+<li>Les clés <code>viewports[].largeur</code> de <code>config.json</code> : elles ne servent qu'aux séparateurs dessinés après le Render (dette R3-a). Les modifier ne change pas le pas (contre-exemple 2).</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="tech">
+<h2><span class="n">7</span>Fonctionnement technique</h2>
+<h3>7.1 Le fichier qui porte la résolution, et sa clé de largeur</h3>
+<div class="card good">
+<p><b>Réponse à ta question :</b> le fichier est <code>config.json</code>, à la <b>racine de contenu</b> de l'EXE (celle qui contient <code>engine.json</code>). La largeur est la clé <code>width</code> de l'objet <code>screen</code> : <code>"screen": { "width": 1536, "height": 900 }</code>.</p>
+<p>Ce n'est ni <code>engine.json</code> (aucune résolution dedans) ni les entrées <code>viewports[].largeur</code> du même <code>config.json</code>.</p>
+</div>
+<pre><span class="c">// EXE — Helper/ConfigManager.cpp, ProgrammeConfig()</span>
+JsonReader rr = r.Child(<span class="s">"screen"</span>);
+<span class="h">cfg.screenWidth  = rr.Read(<span class="s">"width"</span>, 1920);    <span class="c">// ← la clé de R3</span></span>
+cfg.screenHeight = rr.Read(<span class="s">"height"</span>, 1080);
+rr.WarnUnread();                                <span class="c">// une faute de frappe dans "screen" est signalée</span>
+
+<span class="c">// EXE — main.cpp, initialisation</span>
+FrameW = cfg.screenWidth;
+FrameH = cfg.screenHeight;
+SDLINIT(FrameW, FrameH, ...);                   <span class="c">// fenêtre + texture streaming FrameW x FrameH</span>
+<span class="h">db.Resize(FrameW, FrameH);                      <span class="c">// Z-buffer : m_Data.assign(W*H, 0.0f)</span></span>
+
+<span class="c">// LIB — Rendering/DepthBuffer.h</span>
+<span class="k">float</span>* Row(int32_t y) { <span class="k">return</span> m_Data.data() + size_t(y) * size_t(<span class="h">m_Width</span>); }   <span class="c">// pas = largeur : 4·W octets</span></pre>
+
+<h3>7.2 Comment l'EXE trouve son <code>config.json</code> (et pourquoi c'est un piège pour R3)</h3>
+<pre><span class="c">// LIB — Core/ContentRoot.cpp, ResolveContentRoot() : ordre des candidats</span>
+1. variable d'environnement <span class="h">LV3_CONTENT_ROOT</span>   <span class="c">// si posée, elle GAGNE TOUJOURS (bug 68 : pas de repli)</span>
+2. candidats applicatifs :
+     - argument positionnel (le seul argument sans "--")   <span class="c">// AppArgs.cpp : a.contentRoot</span>
+     - LV3_PROJECT_DIR                                      <span class="c">// Debug seulement</span>
+3. dossier de l'exécutable                                  <span class="c">// Release sans argument</span></pre>
+<p>R3 a besoin de deux racines (une par largeur) pour les mêmes binaires. On passe la racine en <b>argument positionnel</b> : <code>RefactoNouvelleLibrairieV3.exe C:\Banc_R3\W1552 --scene=bench_V_V5_c24.json …</code>. Mais si <code>LV3_CONTENT_ROOT</code> est posée dans ton environnement, elle passe <b>avant</b> l'argument, et les deux racines liraient le même <code>config.json</code> : R3 mesurerait deux fois la même largeur. Le script commence donc par <code>set LV3_CONTENT_ROOT=</code>, et la 1ʳᵉ ligne du summary (<code>res=</code>) le vérifie.</p>
+
+<h3>7.3 Pourquoi 1552 et pas une autre largeur</h3>
+<table>
+<tr><th>W</th><th class="num">pas (o)</th><th class="num">pas mod 4096</th><th class="num">pas mod 64</th><th>Lignes d'une tuile de mêmes 12 bits</th><th>Verdict</th></tr>
+<tr class="hl"><td>1536</td><td class="num">6 144</td><td class="num">2 048</td><td class="num">0</td><td>0-2-4-6 et 1-3-5-7</td><td>le moteur aujourd'hui</td></tr>
+<tr><td>1552</td><td class="num">6 208</td><td class="num">2 112</td><td class="num">0</td><td>aucune (écart de 128 o)</td><td><b>retenu</b> : seul le motif 4 Ko change</td></tr>
+<tr><td>1540</td><td class="num">6 160</td><td class="num">2 064</td><td class="num">16</td><td>aucune</td><td>écarté : lignes non alignées sur 64 o, une seconde variable</td></tr>
+<tr><td>1544</td><td class="num">6 176</td><td class="num">2 080</td><td class="num">32</td><td>aucune</td><td>écarté : idem</td></tr>
+<tr><td>1600</td><td class="num">6 400</td><td class="num">2 304</td><td class="num">0</td><td>aucune</td><td>valable, mais +4 % de pixels au lieu de +1 %</td></tr>
+<tr><td>1024</td><td class="num">4 096</td><td class="num">0</td><td class="num">0</td><td>les 8</td><td>pire cas (VM +18 à +22 %), mais vues de 512 px : autre scène</td></tr>
+<tr><td>2048</td><td class="num">8 192</td><td class="num">0</td><td class="num">0</td><td>les 8</td><td>idem, et +78 % de pixels</td></tr>
+</table>
+
+<h3>7.4 Ce que A et B font en mémoire (le « pendant scalaire » de ce lot)</h3>
+<p>R3 n'a pas de couple scalaire / vectoriel : il compare deux <b>ordres de visite</b> de la même image, tous deux en AVX2.</p>
+<div class="two">
+<pre><span class="c">// A : blocs Giesen 8 x 1 (LV3_RASTER_TILES 0)</span>
+<span class="k">for</span> (y = y0; y &lt;= y1; ++y)          <span class="c">// ligne après ligne</span>
+  <span class="k">for</span> (x = x0; x &lt;= x1; x += 8)     <span class="c">// toute la ligne du triangle</span>
+    Shade8(Zrow(y) + x, ...);       <span class="c">// lit puis écrit Z[y][x..x+7]</span>
+<span class="c">// La ligne y+2 n'est relue qu'après 2 lignes</span>
+<span class="c">// entières : longtemps après l'écriture de y.</span></pre>
+<pre><span class="c">// B : tuiles 8 x 8 (LV3_RASTER_TILES 16, D-a2)</span>
+<span class="k">for</span> (chaque tuile vivante du groupe)
+  <span class="k">for</span> (r = 0; r &lt; 8; ++r)           <span class="c">// 8 lignes d'une tuile</span>
+    Shade8(Zrow(ty + r) + x, ...);  <span class="c">// Z[ty+r][x..x+7]</span>
+<span class="c">// La ligne r+2 est lue 2 blocs après l'écriture</span>
+<span class="c">// de r : à 1536 px, mêmes 12 bits faibles.</span></pre>
+</div>
+<p>Le pendant scalaire du moteur (<code>LV3_SIMD 0</code>, <code>ForEachCoveredPixelFxTiled</code>) suit l'ordre de B pixel par pixel. Il n'est pas mesuré par R3 (décision R3-D3) ; s'il fallait le faire, la même racine W1552 servirait.</p>
+
+<h3>7.5 La sonde déjà présente : <code>FbDbAlias4K</code></h3>
+<p>Le compteur <code>FbDbAlias4K</code> (lot C0b, <code>Renderer::ProbeAlias4K</code>) écrit <code>(adresse couleur − adresse Z) mod 4096</code>. Il surveille un autre alias : la couleur et le Z <b>du même pixel</b>. Il ne mesure pas H4′, mais il change avec la largeur (les allocations bougent). <b>Correction du 25/11</b> : il vaut 0 dans tous les runs, et c'est attendu. Le lot C0b (21/10) l'a établi : couleur et profondeur sont toutes deux allouées à « page + 32 » (même chemin de grand bloc), donc l'écart est un multiple de 4 096 <b>par construction</b>, à toute largeur. Il ne change pas entre 1536 et 1552 : ce n'est pas une seconde variable de R3.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="decisions">
+<h2><span class="n">8</span>Décisions proposées par le lot (non actées)</h2>
+<table>
+<tr><th>#</th><th>Proposition</th><th>Raison</th><th>Écarté</th></tr>
+<tr><td>R3-D1</td><td>Une seule variable : <code>screen.width</code> 1536 → 1552 (+16 px, +64 o)</td><td>Casse la périodicité de 2 048 o, garde l'alignement 64 o et +1 % de pixels seulement</td><td>1540 / 1544 (lignes non alignées), 1024 / 2048 (autre scène), modifier <code>viewports</code></td></tr>
+<tr><td>R3-D2</td><td>Mêmes binaires A et B aux deux largeurs ; deux racines de contenu passées en argument positionnel ; <code>LV3_CONTENT_ROOT</code> vidée dans le script</td><td>Même placement du code ; aucune édition du dépôt</td><td>Quatre copies d'exécutables ; éditer le <code>config.json</code> du dépôt</td></tr>
+<tr><td>R3-D3</td><td>Séquence imbriquée de 8 runs ; c24 ×2, c48 ×2 (32 runs), c96 ×1 facultatif ; AVX2 seulement</td><td>Dérive annulée sur les trois comparaisons ; c24 et c48 sont les scènes qui perdent</td><td>Séquences ABBA séparées par largeur (effet de largeur biaisé), B′ (D12)</td></tr>
+<tr><td>R3-D4</td><td>Grandeur décisive : Δ = (B/A)<sub>1552</sub> ÷ (B/A)<sub>1536</sub> − 1</td><td>Retire le +1 % de pixels et la dérive</td><td>(B/A)<sub>1552</sub> seul, comparé au B/A d'un autre jour</td></tr>
+<tr><td>R3-D5</td><td>Règle de décision écrite avant la mesure (étape 7)</td><td>Règle du projet</td><td>—</td></tr>
+<tr><td>R3-D6</td><td>Contrôles : <code>res=</code>, <code>tiles=</code>, <code>tsplit=0</code>, <code>views=4</code>, <code>FbDbAlias4K</code>, compteurs identiques entre A et B à largeur égale</td><td>Un run à la mauvaise largeur ou sur le mauvais binaire se voit dans le fichier</td><td>Se fier aux noms des fichiers</td></tr>
+<tr><td>R3-D7</td><td>Le <code>config.json</code> du dépôt reste à 1536 ; les racines R3 sont des copies hors dépôt</td><td>Aucun risque de commiter une largeur de mesure</td><td>Éditer puis « penser à remettre »</td></tr>
+<tr><td>R3-D8</td><td>Suites : confirmée → D-a2c = Z-buffer à pas décalé ; réfutée → D-a2c = ordre ligne par ligne dans un groupe ; non conclusive → R4 (VTune) avant tout code</td><td>Le plan, branches 2c / 2c-bis / 2d</td><td>Coder les deux en parallèle</td></tr>
+</table>
+</section>
+
+<!-- ============================================================ -->
+<section id="e0">
+<h2><span class="n">É0</span>Étape 0 · Le défaut de <code>config.h</code> à 0 et le commit du lot D-a2b</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Appliquer D12 avant toute mesure : R3 mesure le binaire B de production (D-a2), pas B′.</p>
+<p><span class="lbl">Constat sur les dépôts du 20/11, 21:49</span><b>Déjà fait.</b> Les deux dépôts portent un commit « Lot D-a2b » (LIB <code>9678f47</code>, EXE <code>26ae1f8</code>), et <code>Core/config.h</code> §14b vaut bien :</p>
+<pre><span class="c">// LIB — Core/config.h, §14b (état du dépôt)</span>
+<span class="k">#ifndef</span> LV3_RASTER_TILE_SPLIT
+<span class="add">	#define LV3_RASTER_TILE_SPLIT 0        // D12 acté le 20/11 : boucle D-a2</span>
+<span class="k">#endif</span></pre>
+<p>L'EXE contient <code>Test/Test_Da2b_TileSplit.cpp</code>, appelé par <code>RunAllTests.cpp</code> et déclaré dans le vcxproj. <code>LV3_RASTER_TILES</code> reste à 16. Rien à modifier.</p>
+<p><span class="lbl">Résultat</span>Un B construit avec la configuration par défaut est le B de R2 (en-tête <code>tiles=16;tsplit=0</code>).</p>
+<p class="mute">Au passage : <code>config.h</code> définit encore <code>LV3_PROFILE 1</code> alors que son message annonce « défaut 0 » (point E5 de la roadmap, toujours ouvert). R3 a besoin de <code>LV3_PROFILE=1</code>, donc aucune incidence ce soir.</p>
+</div>
+</section>
+
+<section id="e1">
+<h2><span class="n">É1</span>Étape 1 · Les binaires A et B</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Deux exécutables Release, <code>LV3_PROFILE=1</code>, <code>RASTER_STATS=0</code>, qui ne diffèrent que par <code>LV3_RASTER_TILES</code>.</p>
+<table>
+<tr><th>Bras</th><th>Commutateurs</th><th>1ʳᵉ ligne attendue du summary</th></tr>
+<tr><td>A</td><td><code>LV3_RASTER_TILES 0</code> (blocs Giesen partout), le reste par défaut</td><td><code>…;tiles=0;tsplit=0;…;res=WxH;views=4</code></td></tr>
+<tr><td>B</td><td>tout par défaut (<code>TILES 16</code>, <code>TILE_SPLIT 0</code>)</td><td><code>…;tiles=16;tsplit=0;…</code></td></tr>
+</table>
+<p><span class="lbl">Le plus simple</span>Reprendre les binaires A et B de la campagne R2 s'ils existent encore : ils sont exactement ceux-là (vérifie leurs en-têtes). Sinon, recompile-les comme pour R2.</p>
+<p><span class="lbl">Résultat utilisé par l'étape suivante</span>Deux chemins, notés <code>EXE_A</code> et <code>EXE_B</code>.</p>
+</div>
+</section>
+
+<section id="e2">
+<h2><span class="n">É2</span>Étape 2 · Deux racines de contenu, une par largeur</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Faire lire deux <code>config.json</code> différents aux mêmes binaires, sans toucher au dépôt.</p>
+<ol>
+<li>Copier la racine de contenu de l'EXE (le dossier qui contient <code>engine.json</code>, <code>config.json</code>, <code>assets\</code>, <code>tahoma.ttf</code>) en <code>C:\Banc_R3\W1536</code>.</li>
+<li>Copier la même racine en <code>C:\Banc_R3\W1552</code>.</li>
+<li>Dans <code>C:\Banc_R3\W1552\config.json</code> seulement :</li>
+</ol>
+<pre><span class="c">// C:\Banc_R3\W1552\config.json — avant / après</span>
+  "screen": {
+<span class="del">    "width": 1536,</span>
+<span class="add">    "width": 1552,</span>
+    "height": 900
+  },</pre>
+<p>Ne touche ni à <code>height</code>, ni à <code>viewports</code>, ni à <code>engine.json</code> (<code>maxViewport</code> doit rester 4).</p>
+<p><span class="lbl">Contrôle</span>Les CSV iront dans <code>&lt;racine&gt;\Mesures\R3\</code> (le Profiler écrit sous la racine de contenu) : les fichiers à 1536 et à 1552 ne peuvent pas s'écraser.</p>
+</div>
+</section>
+
+<section id="e3">
+<h2><span class="n">É3</span>Étape 3 · Les pas, calculés réellement</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Prédire, avant de mesurer, quelles lectures sont exposées à l'alias. Calcul en entiers, comme le cœur (adresses relatives au début du Z-buffer ; une tuile à l'abscisse x et à la ligne ty, choisies ci-dessous).</p>
+<p><span class="lbl">Entrées</span>Résultat de l'étape 2 : W = 1536 ou 1552, H = 900. Pas = 4·W.</p>
+<div class="ctrl"><label>Tuile : x <input type="number" id="e3x" value="512" min="0" max="1500"></label><label>ty <input type="number" id="e3y" value="200" min="0" max="880"></label></div>
+<div class="out" id="e3o"></div>
+<p><span class="lbl">Résultat</span>À 1536 px, dans chaque tuile, les lectures des lignes 2 à 7 tombent sur les mêmes 12 bits que l'écriture faite deux lignes plus tôt : 6 lectures sur 8 exposées. À 1552 px : aucune.</p>
+</div>
+</section>
+
+<section id="e4">
+<h2><span class="n">É4</span>Étape 4 · Le script de campagne</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Lancer les 32 runs (plus un run jetable de chauffe) dans l'ordre imbriqué, avec des noms de fichiers qui portent la scène, la séquence, la position, le bras et la largeur.</p>
+<p>Ajuste <code>FRAMES</code> à la valeur de <code>Campagne_Da2b.bat</code> (même nombre de frames qu'en R2).</p>
+<pre id="batch">@echo off
+rem =====================================================================
+rem  Campagne_R3.bat  -  diagnostic H4' (pas de ligne 6 144 o), lot R3
+rem  Memes binaires A / B, deux racines de contenu (1536 et 1552 px).
+rem  Sequence par scene : A36 B36 A52 B52 B52 A52 B36 A36
+rem =====================================================================
+set EXE_A=C:\Banc_R3\A\RefactoNouvelleLibrairieV3.exe
+set EXE_B=C:\Banc_R3\B\RefactoNouvelleLibrairieV3.exe
+set R36=C:\Banc_R3\W1536
+set R52=C:\Banc_R3\W1552
+set FRAMES=300
+set AFF=4
+
+rem  LV3_CONTENT_ROOT GAGNE sur l'argument positionnel : on la vide.
+set LV3_CONTENT_ROOT=
+
+rem  Chauffe (resultat jete)
+start "" /wait /affinity %AFF% "%EXE_B%" "%R36%" --scene=bench_V_V5_c24.json --bench=%FRAMES% --csv=Mesures/R3/jetable.csv
+
+call :seq c24 s1
+call :seq c48 s1
+call :seq c24 s2
+call :seq c48 s2
+rem call :seq c96 s1
+goto :eof
+
+rem ---------------------------------------------------------------------
+:seq
+rem  %1 = scene (c24, c48...), %2 = sequence (s1, s2)
+call :run "%EXE_A%" "%R36%" %1 %2_1_A_1536
+call :run "%EXE_B%" "%R36%" %1 %2_2_B_1536
+call :run "%EXE_A%" "%R52%" %1 %2_3_A_1552
+call :run "%EXE_B%" "%R52%" %1 %2_4_B_1552
+call :run "%EXE_B%" "%R52%" %1 %2_5_B_1552
+call :run "%EXE_A%" "%R52%" %1 %2_6_A_1552
+call :run "%EXE_B%" "%R36%" %1 %2_7_B_1536
+call :run "%EXE_A%" "%R36%" %1 %2_8_A_1536
+exit /b
+
+:run
+rem  %1 = exe, %2 = racine de contenu, %3 = scene, %4 = suffixe
+start "" /wait /affinity %AFF% "%~1" "%~2" --scene=bench_V_V5_%3.json --bench=%FRAMES% --csv=Mesures/R3/R3_%3_%4.csv
+exit /b</pre>
+<button id="copyBatch">Copier le script</button>
+<p><span class="lbl">Rappels du protocole</span>Secteur branché, mode d'alimentation « performances », pas d'autre programme lourd, le portable posé à plat (bridage thermique : voir c24 s1 de R2).</p>
+</div>
+</section>
+
+<section id="e5">
+<h2><span class="n">É5</span>Étape 5 · Contrôles des summaries, avant tout calcul</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Écarter un run qui n'a pas tourné dans les bonnes conditions, avant de regarder un seul temps.</p>
+<table>
+<tr><th>Contrôle</th><th>Attendu</th><th>Si faux</th></tr>
+<tr><td>1ʳᵉ ligne : <code>res=</code></td><td><code>1536x900</code> pour les runs « _1536 », <code>1552x900</code> pour « _1552 »</td><td><code>LV3_CONTENT_ROOT</code> encore posée, ou mauvaise racine : séquence à refaire</td></tr>
+<tr><td><code>tiles=</code> / <code>tsplit=</code></td><td>A : <code>0</code> / <code>0</code> ; B : <code>16</code> / <code>0</code></td><td>binaires inversés</td></tr>
+<tr><td><code>views=</code>, <code>rasterstats=</code>, <code>config=</code></td><td><code>4</code>, <code>0</code>, <code>Release</code></td><td>autre disposition, run de comptage ou binaire de debug</td></tr>
+<tr><td><code>TrisRasterized</code>, <code>FacesSubmitted</code></td><td>identiques entre A et B <b>à largeur égale</b> ; légèrement plus élevés à 1552 (+1 % de vue)</td><td>scène ou caméra différente</td></tr>
+<tr><td><code>FbDbAlias4K</code></td><td>0 aux deux largeurs (structurel depuis C0b : les deux tampons à « page + 32 »)</td><td>une valeur différente de 0 à une seule largeur serait une seconde variable : à signaler</td></tr>
+<tr><td>RenderVerts, ClearDepth</td><td>RenderVerts ≈ 5 µs sur V5 (inutilisable) ; ClearDepth ≤ 1,15 × la médiane de sa largeur</td><td>portable bridé : run refait</td></tr>
+</table>
+</div>
+</section>
+
+<section id="e6">
+<h2><span class="n">É6</span>Étape 6 · Dépouillement</h2>
+<div class="step">
+<p><span class="lbl">Objectif</span>Calculer les trois grandeurs de chaque séquence sur la médiane de <code>Render</code>, avec la formule habituelle des paires.</p>
+<pre>(B/A)<sub>1536</sub> = (B₂ + B₇) / (A₁ + A₈) − 1
+(B/A)<sub>1552</sub> = (B₄ + B₅) / (A₃ + A₆) − 1
+Δ          = (1 + (B/A)<sub>1552</sub>) / (1 + (B/A)<sub>1536</sub>) − 1          <span class="c">← la grandeur décisive</span>
+Effet de largeur sur A = (A₃ + A₆) / (A₁ + A₈) − 1             <span class="c">← attendu ≈ +1 %</span></pre>
+<p><span class="lbl">Validité d'une séquence</span>(règles du 03/11, appliquées <b>par largeur</b> car ClearDepth grandit de 1 % à 1552) : |A₁ − A₈| &lt; 3 % et |A₃ − A₆| &lt; 3 % ; ClearDepth varie de moins de 5 % entre les runs d'une même largeur. Correction par thermomètre : B/A ÷ ClearDepth, à chaque largeur, en contrôle.</p>
+<p>Le laboratoire 4 (§ Exemples d'utilisation) fait ce calcul à partir de tes médianes.</p>
+</div>
+</section>
+
+<section id="e7">
+<h2><span class="n">É7</span>Étape 7 · Vérifier : prédictions et règle de décision (écrites avant la mesure)</h2>
+<div class="step">
+<p><span class="lbl">Tests hors moteur</span>Aucun : pas de code. Les calculs d'adresses (étape 3, laboratoire 1) sont la seule prédiction calculée.</p>
+<p><span class="lbl">Filets Debug</span>Sans objet (aucun fichier modifié). Un run Debug à 1552 px est facultatif : les assertions de <code>BeginFrame</code> (tailles Z / couleur égales) et de <code>Row(y)</code> couvrent la nouvelle largeur.</p>
+<h3>Prédictions</h3>
+<table>
+<tr><th>Grandeur</th><th>Si H4′ tient</th><th>Si H4′ est fausse</th></tr>
+<tr><td>c24 (B/A)<sub>1536</sub></td><td colspan="2">+2 à +5 % (reproduit D-a2 : +4 % ; R2 : ≈ +2 %)</td></tr>
+<tr><td>c24 (B/A)<sub>1552</sub></td><td>−3 à −6 %</td><td>+2 à +5 %</td></tr>
+<tr><td>c24 Δ</td><td><b>−6 à −10 %</b></td><td>0 ± 1,5 %</td></tr>
+<tr><td>c48 (B/A)<sub>1536</sub></td><td colspan="2">+4 à +10 % (D-a2 +10 à +14 %, R2 +4 à +8 %)</td></tr>
+<tr><td>c48 Δ</td><td>−3 % ou moins</td><td>0 ± 1,5 %</td></tr>
+<tr><td>Effet de largeur sur A</td><td colspan="2">+0,5 à +2 % (+1,04 % de pixels ; la VM donnait +30 %, non expliqué, à surveiller)</td></tr>
+</table>
+<h3>Règle de décision</h3>
+<ul>
+<li><b>H4′ confirmée</b> si Δc24 ≤ −3 % sur les <b>deux</b> séquences valides et Δc48 &lt; 0 sur au moins une séquence valide. → D-a2c = Z-buffer à pas décalé.</li>
+<li><b>H4′ réfutée</b> si |Δc24| ≤ 1,5 % sur les deux séquences valides. → D-a2c = ordre ligne par ligne dans un groupe (ou P1).</li>
+<li><b>Non conclusive</b> sinon (Δ entre −3 et −1,5 %, ou séquences contradictoires, ou une seule valide). → une séquence c24 de plus, puis R4 (VTune, <code>LD_BLOCKS_PARTIAL.ADDRESS_ALIAS</code>) avant tout code.</li>
+</ul>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="resultats">
+<h2><span class="n">R</span>Résultats de la campagne (24-25/11, 32 runs)</h2>
+<div class="card info"><b>En une phrase.</b> Selon la règle écrite le 20/11, le verdict est <b>non conclusif</b>. Mais sur c24, la scène où H4′ devait se voir le mieux, Δ est <b>positif</b> (+1,2 et +3,3 %), donc du côté opposé à la prédiction. Et la largeur a changé autre chose que le pas : <code>Clear</code> prend +24 à +42 % pour 1 % de pixels en plus.</div>
+<h3>Δ par séquence, face aux deux prédictions</h3>
+<svg viewBox="0 0 760 230" style="width:100%;max-width:760px;background:#0b0e13;border:1px solid #232b39;border-radius:8px">
+  <g font-family="ui-monospace,monospace" font-size="12" fill="#9aa4b5">
+    <rect x="90" y="20" width="84" height="180" fill="#14301f" opacity="0.6"/>
+    <text x="90" y="14">H4′ : −10 à −6 %</text>
+    <rect x="269" y="20" width="62" height="180" fill="#3a2f12" opacity="0.7"/>
+    <text x="262" y="14">H4′ fausse : 0 ± 1,5 %</text>
+    <line x1="300" y1="20" x2="300" y2="200" stroke="#5a6578"/>
+    <text x="294" y="216">0</text><text x="190" y="216">−5 %</text><text x="86" y="216">−10 %</text><text x="396" y="216">+5 %</text>
+    <line x1="100" y1="200" x2="500" y2="200" stroke="#2b3445"/>
+    <text x="520" y="52">c24 s1  +1,2 %</text><circle cx="324" cy="48" r="7" fill="#e0a33a"/>
+    <text x="520" y="92">c24 s2  +3,3 % (non valide à 1552)</text><circle cx="369" cy="88" r="7" fill="none" stroke="#e0a33a" stroke-width="2"/>
+    <text x="520" y="132">c48 s1  −6,1 %</text><circle cx="172" cy="128" r="7" fill="#5fb3d9"/>
+    <text x="520" y="172">c48 s2  −2,4 %</text><circle cx="252" cy="168" r="7" fill="#5fb3d9"/>
+  </g>
+</svg>
+<table>
+<tr><th>Séquence</th><th class="num">(B/A)₁₅₃₆</th><th class="num">(B/A)₁₅₅₂</th><th class="num">Δ brut</th><th class="num">Δ ÷ ClearDepth</th><th class="num">Δ ÷ RenderVerts</th><th>Paires à 1552</th></tr>
+<tr><td>c24 s1</td><td class="num">+1,8 %</td><td class="num">+3,1 %</td><td class="num"><b>+1,2 %</b></td><td class="num">+0,8 %</td><td class="num">+1,8 %</td><td>+5,6 / +0,5</td></tr>
+<tr><td>c24 s2</td><td class="num">+1,4 %</td><td class="num">+4,7 %</td><td class="num"><b>+3,3 %</b></td><td class="num">+2,2 %</td><td class="num">−0,7 %</td><td>−0,8 / +10,4</td></tr>
+<tr><td>c48 s1</td><td class="num">+8,8 %</td><td class="num">+2,1 %</td><td class="num"><b>−6,1 %</b></td><td class="num">−3,1 %</td><td class="num">(5 µs)</td><td>−0,1 / +4,3</td></tr>
+<tr><td>c48 s2</td><td class="num">+6,9 %</td><td class="num">+4,4 %</td><td class="num"><b>−2,4 %</b></td><td class="num">−4,7 %</td><td class="num">(5 µs)</td><td>−3,4 / +12,6</td></tr>
+</table>
+<h3>Ce que la largeur a changé d'autre (mêmes binaires, runs entrelacés)</h3>
+<table>
+<tr><th>Séquence</th><th class="num">Render A</th><th class="num">Render B</th><th class="num">ClearDepth</th><th class="num">ClearColor</th></tr>
+<tr><td>c24 s1</td><td class="num">−3,8 %</td><td class="num">−2,6 %</td><td class="num">+28,8 %</td><td class="num">+16,7 %</td></tr>
+<tr><td>c24 s2</td><td class="num">−7,4 %</td><td class="num">−4,3 %</td><td class="num">+25,5 %</td><td class="num">+21,0 %</td></tr>
+<tr><td>c48 s1</td><td class="num">+12,8 %</td><td class="num">+5,9 %</td><td class="num">+41,6 %</td><td class="num">+33,5 %</td></tr>
+<tr><td>c48 s2</td><td class="num">+8,7 %</td><td class="num">+6,1 %</td><td class="num">+24,3 %</td><td class="num">+19,0 %</td></tr>
+</table>
+<p>Prévu : environ +1 % partout (1,04 % de pixels en plus). <code>Clear</code> écrit en continu sans jamais relire de ligne : le pas de ligne ne peut pas l'expliquer. A ne visite aucune tuile, et pourtant il bouge de −7 % à +13 % selon la scène. La largeur a donc aussi déplacé les tampons en mémoire (bases dans leur page, pitch SDL), ce que la VM laissait déjà voir (A ≈ +30 % au pas 1552). Le rapport de rapports retire ce qui touche A et B de la même façon. Il ne retire pas un effet qui touche différemment les blocs (A) et les tuiles (B).</p>
+<h3>Verdict proposé (R3-D9, à acter)</h3>
+<ul>
+<li><b>H4′ écartée comme cause de la perte de c24</b> : six lectures de Δ (brut, ÷ ClearDepth, ÷ RenderVerts, deux séquences) entre −0,7 et +3,3 %, aucune du côté prédit.</li>
+<li><b>Non tranchée pour c48</b> : Δ négatif, mais les paires d'une même largeur divergent de 4 à 16 points, dans une expérience contaminée par l'effet de placement.</li>
+<li><b>Pas de Z-buffer à pas décalé.</b> Prochaine étape : D-a2d (boucles de ligne, accepté le 21/11). Ensuite R4 (VTune), qui compte directement les alias 4K dans <code>RasterizeTiles8Fx</code> à 1536, sans changer la largeur. D-a2c se choisira après R4.</li>
+<li><b>Règle de validité R3-V proposée</b> (A et ClearDepth dérivent ensemble à moins de 3 points), ainsi qu'une règle de contrôle : comparer les témoins entre les deux valeurs du paramètre changé avant de juger un rapport de rapports.</li>
+</ul>
+<div class="card good"><b>Décision d'Onky (25/11) : la « troisième voie ».</b> R3-V est actée pour les lots futurs seulement : elle a été écrite après la mesure, et l'appliquer à R3 reviendrait à adapter le critère aux résultats. R3 reste donc jugé par la règle du 03/11 : les quatre séquences sont formellement non valides. R3-D9 est retenu sur la lecture d'ensemble, sans valeur de preuve. Suite : D-a2d (boucles de ligne), puis R4 (VTune), puis le choix de D-a2c.</div>
+<p class="mute">Le laboratoire 4 a un bouton « Données réelles c24 s1 » pour rejouer ce dépouillement.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="contre">
+<h2><span class="n">CE</span>Contre-exemples chiffrés</h2>
+<div class="card warn">
+<h3>1 · Choisir 1540 px « parce que c'est presque pareil »</h3>
+<p>Pas de 6 160 o : 6 160 mod 64 = 16. Les débuts de ligne d'une tuile tombent à 0, 16, 32, 48 octets d'une ligne de cache, à tour de rôle. Un bloc de 8 floats (32 o) qui commence à 48 o d'une ligne de cache est coupé en deux : à x égal, le motif des lignes coupées change d'une ligne de l'écran à l'autre. On a changé <b>deux</b> choses (alias 4 Ko <b>et</b> coupures de lignes). Un Δ mesuré ne s'attribue plus à H4′. 1552 garde le pas multiple de 64 (97 lignes de cache exactement).</p>
+</div>
+<div class="card warn">
+<h3>2 · Modifier <code>viewports[].largeur</code> au lieu de <code>screen.width</code></h3>
+<p>Les entrées <code>viewports</code> de <code>config.json</code> ne servent qu'aux deux séparateurs dessinés après le Render (<code>main.cpp</code>). Les vues viennent de <code>BuildLayout(FrameW, FrameH)</code>. Le Z-buffer garde un pas de 6 144 o, l'en-tête dit encore <code>res=1536x900</code>, et Δ vaut 0 à la précision près. On conclurait « H4′ réfutée » sur une expérience qui n'a rien changé.</p>
+</div>
+<div class="card warn">
+<h3>3 · Laisser <code>LV3_CONTENT_ROOT</code> posée</h3>
+<p>Elle passe avant l'argument positionnel. Les 16 runs « _1552 » liraient <code>W1536\config.json</code> (ou la racine pointée par la variable). Même effet que le contre-exemple 2, avec en plus des CSV rangés ailleurs que prévu. Seule la 1ʳᵉ ligne (<code>res=</code>) le révèle.</p>
+</div>
+<div class="card warn">
+<h3>4 · Comparer (B/A)<sub>1552</sub> de ce soir au B/A de 1536 mesuré un autre jour</h3>
+<p>Le même B/A de c24 à 1536 a valu +4 % (D-a2, 14/11) et ≈ +2,3 % (R2, 20/11, contre A1 seul) : 1,7 point d'écart pour une même grandeur, d'un jour à l'autre. L'effet cherché fait 6 à 10 points ; la marge d'erreur en mangerait un tiers à la moitié. Δ se calcule dans une seule séance.</p>
+</div>
+<div class="card warn">
+<h3>5 · Lire « B à 1552 plus lent que B à 1536 » comme une réfutation</h3>
+<p>À 1552, la scène a +1 % de largeur visible, Clear efface +1,04 % de pixels, et A ralentit aussi. Si H4′ tient, B ralentit moins que A, ou même accélère, mais il peut rester plus lent en valeur absolue. Seul le rapport de rapports (Δ) répond à la question.</p>
+</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="usage">
+<h2><span class="n">EX</span>Exemples d'utilisation</h2>
+<div class="lab">
+<h4>Laboratoire 4 · Dépouiller une séquence R3</h4>
+<p class="mute">Saisis les médianes de <code>Render</code> et de <code>ClearDepth</code> (µs) des 8 runs d'une séquence. Les valeurs préremplies sont <b>fictives</b> (un exemple où H4′ tient), pour voir le calcul.</p>
+<div id="l4grid"></div>
+<div class="ctrl"><button id="l4ex1">Exemple : H4′ tient</button><button id="l4ex2">Exemple : H4′ fausse</button><button id="l4ex3">Exemple : séquence bridée</button><button id="l4real">Données réelles c24 s1</button><button id="l4real2">Données réelles c48 s2</button></div>
+<div class="out" id="l4o"></div>
+<div id="l4v"></div>
+</div>
+<h3>Autres usages de la même méthode</h3>
+<ul>
+<li><b>Mesurer le futur Z-buffer à pas décalé (D-a2c)</b> : même script, mais W1536 partout et deux binaires B (sans et avec <code>m_Pitch</code>). R3 en aura donné la cible : Δ de R3 ≈ ce que le correctif peut gagner (un peu plus, puisque R3 décale aussi la couleur).</li>
+<li><b>Tester une autre résolution « piège »</b> : 2 560, 3 072 px (multiples de 512 px, pas multiple de 2 048 o) ; le laboratoire 1 dit d'avance si les lignes d'une tuile se confondent.</li>
+<li><b>Toute question « est-ce le code ou la machine ? »</b> : changer un paramètre de l'environnement avec les mêmes binaires, et comparer des rapports A/B plutôt que des temps.</li>
+</ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="dettes">
+<h2><span class="n">D</span>Dettes et évolutions relevées par ce lot (à décider plus tard, rien n'est acté)</h2>
+<table>
+<tr><th>#</th><th>Sujet</th><th>Nature</th><th>À décider</th></tr>
+<tr><td>R3-a</td><td><code>main.cpp</code>, séparateurs de vues : <code>cfg.mapViewports["title"]</code> n'existe pas (le fichier définit <code>title1</code> et <code>title2</code>) ; <code>operator[]</code> crée une entrée vide (largeur 0) et la ligne horizontale n'est jamais tracée. La verticale est tracée à x = 1136 quelle que soit la disposition (en Quad, la frontière est à W/2 = 768).</td><td>Bug (visuel)</td><td>Tracer les séparateurs à partir des vues de <code>BuildLayout</code>, ou les retirer.</td></tr>
+<tr><td>R3-b</td><td>Même boucle : <code>cfg.mapViewports["left"]</code> est évalué dans la condition de la boucle (801 recherches de <code>unordered_map</code> par frame, avec construction d'une <code>std::string</code> à chaque fois), dans la frame mesurée, hors des zones du Profiler.</td><td>Dette (coût non mesuré, estimé à quelques dizaines de µs par frame)</td><td>Lire les valeurs une fois avant la boucle ; à mesurer dans <code>frame_ns</code>.</td></tr>
+<tr><td>R3-c</td><td><code>DepthBuffer</code> range ses données dans un <code>std::vector&lt;float&gt;</code> : base alignée sur 16 o seulement, alors que les tampons sommets utilisent <code>SimdVector</code> (64 o).</td><td>Dette (à vérifier)</td><td>Passer à <code>SimdVector</code> ; à faire avec le Z-buffer à pas décalé (même classe) et la grille de tuiles alignée (P4 de D-a2).</td></tr>
+<tr><td>R3-d</td><td>Le pitch rendu par <code>SDL_LockTexture</code> n'est écrit nulle part ; <code>ProbeAlias4K</code> suppose « pitch = W × 4 ».</td><td>Évolution d'outillage</td><td>Ajouter <code>pitch=</code> à la 1ʳᵉ ligne du summary.</td></tr>
+<tr><td>R3-e</td><td>Aucun argument de ligne de commande pour la résolution : changer de largeur exige une copie de la racine de contenu.</td><td>Évolution d'outillage</td><td><code>--res=WxH</code> (prime sur <code>config.json</code>, écrit dans l'en-tête), comme <code>--scene=</code>.</td></tr>
+<tr><td>R3-f</td><td>La section <code>viewports</code> de <code>config.json</code> ne décrit plus les vues réelles (calculées par <code>BuildLayout</code>).</td><td>Dette documentaire</td><td>La retirer ou la brancher (se tranche avec R3-a).</td></tr>
+</table>
+</section>
+
+<section id="suite">
+<h2><span class="n">→</span>Suite</h2>
+<ol>
+<li>Préparer les deux racines (étape 2), vérifier les binaires (étape 1), lancer <code>Campagne_R3.bat</code>.</li>
+<li>M'envoyer les 32 summaries (ou les médianes) : je dépouille, j'applique la règle, je complète cet artefact et <code>Résultats/Decisions_Lot_R3.md</code>.</li>
+<li>Selon le verdict : lot D-a2c (Z-buffer à pas décalé, ou ordre ligne par ligne), ou R4 (leçon VTune) d'abord.</li>
+</ol>
+<p><button id="copyAll">Copier le HTML de cette page</button> <span id="copyMsg" class="mute"></span></p>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+function copyText(t,msgEl){
+  try{navigator.clipboard.writeText(t).then(()=>{if(msgEl)msgEl.textContent="Copié.";},()=>{if(msgEl)msgEl.textContent="Copie refusée par le navigateur.";});}
+  catch(e){if(msgEl)msgEl.textContent="Copie indisponible.";}
+}
+$("copyBatch").onclick=()=>copyText($("batch").textContent,$("copyMsg"));
+$("copyAll").onclick=()=>copyText("<!DOCTYPE html>\n"+document.documentElement.outerHTML,$("copyMsg"));
+
+/* ---------------- LAB 1 ---------------- */
+function lab1(){
+  const W=+$("l1w").value, x=Math.max(0,+$("l1x").value|0), ways=+$("l1ways").value;
+  $("l1wv").textContent=W;
+  const P=4*W;
+  const rows=[];
+  for(let r=0;r<8;r++){
+    const a=r*P+4*x;                 // adresse relative du 1er float du bloc
+    rows.push({r,a,low:a%4096,set:(a>>6)&63,set2:((a+31)>>6)&63});
+  }
+  // groupes d'alias 4K
+  const groups={};rows.forEach(o=>{(groups[o.low]=groups[o.low]||[]).push(o.r);});
+  const aliasPairs=rows.filter(o=>o.r>=2&&rows[o.r-2].low===o.low).length;
+  // occupation des ensembles : Z + couleur (meme pas, decalage arbitraire de la couleur = 0 ici)
+  const occ=new Array(64).fill(0), occZ=new Array(64).fill(0);
+  rows.forEach(o=>{
+    const s=new Set([o.set,o.set2]);
+    s.forEach(k=>{occ[k]+=2;occZ[k]+=1;});
+  });
+  const maxOcc=Math.max(...occ);
+  // dessin
+  const c=$("l1c"),g=c.getContext("2d");g.clearRect(0,0,c.width,c.height);
+  g.font="12px ui-monospace,monospace";g.fillStyle="#9aa4b5";
+  g.fillText("Ensembles du L1 (bits 6 à 11) — hauteur = lignes de 64 o tombant dans l'ensemble (Z + couleur)",10,16);
+  const x0=20,y0=200,cw=13.4,unit=12;
+  for(let k=0;k<64;k++){
+    const X=x0+k*cw;
+    g.strokeStyle="#2b3445";g.strokeRect(X,y0-ways*unit,cw-2,ways*unit);
+    const z=occZ[k],col=occ[k]-occZ[k];
+    g.fillStyle="#e0a33a";g.fillRect(X,y0-z*unit,cw-2,z*unit);
+    g.fillStyle="#5fb3d9";g.fillRect(X,y0-(z+col)*unit,cw-2,col*unit);
+    if(occ[k]>ways){g.fillStyle="#e06464";g.fillRect(X,y0+4,cw-2,5);}
+  }
+  g.fillStyle="#9aa4b5";g.fillText("0",x0,y0+22);g.fillText("63",x0+63*cw-4,y0+22);
+  g.fillText("cadre = "+ways+" voies ; trait rouge = ensemble débordé",x0+190,y0+22);
+  // texte
+  let t="W = "+W+" px   pas = "+P+" o   pas mod 4096 = "+(P%4096)+"   pas mod 64 = "+(P%64)+(P%64?"   ⚠ lignes non alignées sur 64 o":"")+"\n\n";
+  t+="ligne  adresse rel.  12 bits faibles  ensemble L1\n";
+  rows.forEach(o=>{t+=("  r="+o.r).padEnd(7)+String(o.a).padStart(10)+"     "+String(o.low).padStart(6)+("  (0x"+o.low.toString(16).padStart(3,"0")+")").padEnd(10)+"   "+o.set+(o.set2!==o.set?"+"+o.set2:"")+"\n";});
+  const gl=Object.values(groups).filter(v=>v.length>1).map(v=>"{"+v.join(",")+"}");
+  t+="\nLignes qui se confondent (mêmes 12 bits) : "+(gl.length?gl.join(" "):"aucune");
+  t+="\nLectures r exposées à l'écriture de r−2 : "+aliasPairs+" / 6";
+  t+="\nEnsembles L1 distincts occupés par le Z de la tuile : "+new Set(rows.flatMap(o=>[o.set,o.set2])).size+"   max lignes (Z+couleur) dans un ensemble : "+maxOcc+" / "+ways;
+  $("l1o").textContent=t;
+}
+["l1w","l1x","l1ways"].forEach(id=>$(id).addEventListener("input",lab1));
+document.querySelectorAll("#lab1 button[data-w]").forEach(b=>b.onclick=()=>{$("l1w").value=b.dataset.w;lab1();});
+lab1();
+
+/* ---------------- LAB 2 ---------------- */
+const l2Ws=[1536,1552,1024,768];
+let l2On=new Set([1536,1552]);
+(function(){const sp=$("l2wset");l2Ws.forEach(w=>{const b=document.createElement("button");b.textContent=w;b.className=l2On.has(w)?"on":"";b.onclick=()=>{l2On.has(w)?l2On.delete(w):l2On.add(w);b.className=l2On.has(w)?"on":"";lab2();};sp.appendChild(b);});})();
+function seqA(wb,h){const s=[];for(let y=0;y<h;y++)for(let b=0;b<wb;b++)s.push([b,y]);return s;}
+function seqB(wb,h){const s=[];for(let ty=0;ty<h;ty+=8)for(let b=0;b<wb;b++)for(let r=0;r<8&&ty+r<h;r++)s.push([b,ty+r]);return s;}
+function sim(seq,W,L){
+  const P=4*W;let alias=0;const pend=[];
+  for(const [b,y] of seq){
+    const a=y*P+b*32;
+    for(const q of pend){if(q!==a&&(q%4096)===(a%4096)){alias++;break;}}
+    pend.push(a);if(pend.length>L)pend.shift();
+  }
+  return alias;
+}
+function lab2(){
+  const sw=+$("l2s").value,h=+$("l2h").value,L=+$("l2l").value;
+  $("l2sv").textContent=sw;$("l2hv").textContent=h;$("l2lv").textContent=L;
+  const wb=sw/8, sA=seqA(wb,h), sB=seqB(wb,h), n=sA.length;
+  let t="Triangle (rectangle de couverture) : "+sw+" × "+h+" px = "+n+" blocs de 8 px ; une écriture reste en attente pendant "+L+" blocs.\n\n";
+  t+="largeur  pas (o)   A : faux conflits    B : faux conflits\n";
+  const res=[];
+  [...l2On].sort((a,b)=>a-b).forEach(W=>{
+    const a=sim(sA,W,L),b=sim(sB,W,L);res.push({W,a,b});
+    t+=String(W).padEnd(9)+String(4*W).padEnd(10)+(a+" ("+(100*a/n).toFixed(0)+" %)").padEnd(21)+b+" ("+(100*b/n).toFixed(0)+" %)\n";
+  });
+  t+="\nLecture : B relit la ligne r+2 deux blocs après avoir écrit r ; A seulement 2 × "+wb+" = "+(2*wb)+" blocs plus tard.";
+  t+="\nA n'est exposé que si L ≥ "+(2*wb)+" (triangles étroits) ; B l'est dès L ≥ 2, quelle que soit la taille.";
+  $("l2o").textContent=t;
+  // dessin barres
+  const c=$("l2c"),g=c.getContext("2d");g.clearRect(0,0,c.width,c.height);g.font="12px ui-monospace,monospace";
+  res.forEach((o,i)=>{
+    const y=18+i*36;g.fillStyle="#9aa4b5";g.fillText(o.W+" px",8,y+16);
+    g.fillStyle="#e0a33a";g.fillRect(80,y,700*o.a/n,13);g.fillStyle="#5fb3d9";g.fillRect(80,y+15,700*o.b/n,13);
+    g.fillStyle="#e6e9ef";g.fillText("A "+(100*o.a/n).toFixed(0)+" %",80+700*o.a/n+6,y+11);g.fillText("B "+(100*o.b/n).toFixed(0)+" %",80+700*o.b/n+6,y+26);
+  });
+}
+["l2s","l2h","l2l"].forEach(id=>$(id).addEventListener("input",lab2));lab2();
+
+/* ---------------- LAB 3 ---------------- */
+function lab3(){
+  const ba36=+$("l3a").value/100, ba52=+$("l3b").value/100, wA=+$("l3c").value/100;
+  const typ=$("l3t").value, amp=+$("l3d").value/100, k=Math.max(1,Math.min(7,+$("l3k").value|0));
+  $("l3dv").textContent=$("l3d").value;
+  const truth={A36:1000,A52:1000*(1+wA)};truth.B36=truth.A36*(1+ba36);truth.B52=truth.A52*(1+ba52);
+  const drift=(i,N)=>{ // i : 1..N
+    const u=(i-1)/(N-1);
+    if(typ==="lin")return 1+amp*u;
+    if(typ==="quad")return 1+amp*u*u;
+    return 1+(i>Math.round(k*N/8)?amp:0);
+  };
+  const schemes={
+    "Imbriqué (R3)":["A36","B36","A52","B52","B52","A52","B36","A36"],
+    "ABBA 1536 puis ABBA 1552":["A36","B36","B36","A36","A52","B52","B52","A52"],
+    "Par bras (AAAA BBBB)":["A36","A36","A52","A52","B36","B36","B52","B52"]
+  };
+  const tDelta=(1+ba52)/(1+ba36)-1;
+  let t="Vérité : (B/A)1536 = "+(ba36*100).toFixed(2)+" %   (B/A)1552 = "+(ba52*100).toFixed(2)+" %   Δ = "+(tDelta*100).toFixed(2)+" %   largeur sur A = "+(wA*100).toFixed(2)+" %\n\n";
+  t+="ordre des runs                 B/A 1536   B/A 1552      Δ       largeur A   (écarts en points)\n";
+  for(const [name,seq] of Object.entries(schemes)){
+    const sums={};const N=seq.length;
+    seq.forEach((arm,i)=>{sums[arm]=(sums[arm]||0)+truth[arm]*drift(i+1,N);});
+    const e36=sums.B36/sums.A36-1,e52=sums.B52/sums.A52-1,eD=(1+e52)/(1+e36)-1,eW=sums.A52/sums.A36-1;
+    const f=(v,tr)=>{const d=(v-tr)*100;return (d>=0?"+":"")+d.toFixed(2);};
+    t+=name.padEnd(31)+f(e36,ba36).padStart(8)+f(e52,ba52).padStart(11)+f(eD,tDelta).padStart(10)+f(eW,wA).padStart(12)+"\n";
+  }
+  t+="\nÀ retenir : contre une dérive linéaire, l'ordre imbriqué ne laisse aucune erreur sur les trois grandeurs.";
+  t+="\nUn palier en milieu de séquence fausse surtout l'effet de largeur des ordres non imbriqués ; une dérive accélérée laisse une petite erreur partout : d'où deux séquences par scène.";
+  $("l3o").textContent=t;
+}
+["l3a","l3b","l3c","l3t","l3d","l3k"].forEach(id=>$(id).addEventListener("input",lab3));lab3();
+
+/* ---------------- ETAPE 3 ---------------- */
+function e3(){
+  const x=Math.max(0,+$("e3x").value|0), ty=Math.max(0,+$("e3y").value|0);
+  let t="";
+  [1536,1552].forEach(W=>{
+    const P=4*W;
+    t+="W = "+W+"  (pas "+P+" o)\n  r   adresse = ((ty+r)·W + x)·4     mod 4096   même 12 bits que r−2 ?\n";
+    for(let r=0;r<8;r++){
+      const a=((ty+r)*W+x)*4, ap=r>=2?((ty+r-2)*W+x)*4:null;
+      const same=ap!==null&&(a%4096)===(ap%4096);
+      t+="  "+r+"   "+String(a).padStart(12)+"             "+String(a%4096).padStart(5)+"    "+(r<2?"—":same?"OUI : faux conflit possible":"non")+"\n";
+    }
+    t+="\n";
+  });
+  $("e3o").textContent=t;
+}
+["e3x","e3y"].forEach(id=>$(id).addEventListener("input",e3));e3();
+
+/* ---------------- LAB 4 ---------------- */
+const lab4Runs=["1 · A 1536","2 · B 1536","3 · A 1552","4 · B 1552","5 · B 1552","6 · A 1552","7 · B 1536","8 · A 1536"];
+const ex={
+  ok:{R:[2450,2550,2480,2370,2365,2475,2545,2445],C:[178,179,180,181,180,181,179,178]},
+  ko:{R:[2450,2550,2478,2580,2585,2482,2552,2452],C:[178,179,180,181,180,181,179,178]},
+  bad:{R:[2450,2550,2480,2370,2600,2700,2800,2700],C:[178,179,180,181,195,203,205,199]}
+};
+(function(){
+  let h="<table><tr><th>Run</th><th>Render médiane (µs)</th><th>ClearDepth médiane (µs)</th></tr>";
+  lab4Runs.forEach((n,i)=>{h+="<tr><td>"+n+"</td><td><input type=number id=r"+i+" step=1></td><td><input type=number id=c"+i+" step=0.1></td></tr>";});
+  $("l4grid").innerHTML=h+"</table>";
+  for(let i=0;i<8;i++){$("r"+i).addEventListener("input",lab4);$("c"+i).addEventListener("input",lab4);}
+})();
+function fill(e){for(let i=0;i<8;i++){$("r"+i).value=e.R[i];$("c"+i).value=e.C[i];}lab4();}
+$("l4real").onclick=()=>fill({R:[2571.4,2692.5,2581.0,2724.6,2539.9,2526.2,2714.9,2739.7],C:[196.9,199.2,261.6,261.3,252.1,258.3,197.8,206.8]});
+$("l4real2").onclick=()=>fill({R:[2060.2,2291.2,2376.7,2295.4,2538.4,2253.5,2265.4,2201.5],C:[186.2,192.6,241.5,229.5,253.8,235.8,187.1,197.9]});
+$("l4ex1").onclick=()=>fill(ex.ok);$("l4ex2").onclick=()=>fill(ex.ko);$("l4ex3").onclick=()=>fill(ex.bad);
+function lab4(){
+  const R=[],C=[];for(let i=0;i<8;i++){R.push(+$("r"+i).value);C.push(+$("c"+i).value);}
+  if(R.some(v=>!(v>0))){$("l4o").textContent="Saisis les 8 médianes de Render.";$("l4v").innerHTML="";return;}
+  const pc=v=>(v>=0?"+":"")+(v*100).toFixed(2)+" %";
+  const ba36=(R[1]+R[6])/(R[0]+R[7])-1, ba52=(R[3]+R[4])/(R[2]+R[5])-1, D=(1+ba52)/(1+ba36)-1, wA=(R[2]+R[5])/(R[0]+R[7])-1;
+  const a36=Math.abs(R[0]-R[7])/Math.min(R[0],R[7]), a52=Math.abs(R[2]-R[5])/Math.min(R[2],R[5]);
+  let cdOk=true,cd36="—",cd52="—",bac36=null,bac52=null;
+  if(C.every(v=>v>0)){
+    const i36=[0,1,6,7],i52=[2,3,4,5];
+    const sp=ix=>{const v=ix.map(i=>C[i]);return Math.max(...v)/Math.min(...v)-1;};
+    const s36=sp(i36),s52=sp(i52);cd36=pc(s36);cd52=pc(s52);cdOk=s36<0.05&&s52<0.05;
+    bac36=((R[1]/C[1]+R[6]/C[6])/(R[0]/C[0]+R[7]/C[7]))-1; bac52=((R[3]/C[3]+R[4]/C[4])/(R[2]/C[2]+R[5]/C[5]))-1;
+  }
+  const valid=a36<0.03&&a52<0.03&&cdOk;
+  let t="(B/A)1536 = "+pc(ba36)+"    (B/A)1552 = "+pc(ba52)+"\nΔ = "+pc(D)+"    effet de largeur sur A = "+pc(wA)+"\n";
+  if(bac36!==null)t+="÷ ClearDepth : (B/A)1536 = "+pc(bac36)+"   (B/A)1552 = "+pc(bac52)+"   Δ = "+pc((1+bac52)/(1+bac36)-1)+"\n";
+  t+="\nValidité : |A1−A8| = "+(a36*100).toFixed(1)+" %   |A3−A6| = "+(a52*100).toFixed(1)+" %   étendue ClearDepth 1536 = "+cd36+"   1552 = "+cd52+"\n";
+  t+="Séquence "+(valid?"VALIDE":"NON VALIDE (refaire)")+"\n";
+  $("l4o").textContent=t;
+  let v,cls;
+  if(!valid){v="Séquence non valide : elle ne compte pas dans la règle.";cls="v-mid";}
+  else if(D<=-0.03){v="Cette séquence va dans le sens de H4′ (Δ ≤ −3 %). Confirmée si la seconde séquence c24 le confirme et Δc48 < 0.";cls="v-ok";}
+  else if(Math.abs(D)<=0.015){v="Cette séquence va dans le sens d'une réfutation de H4′ (|Δ| ≤ 1,5 %).";cls="v-bad";}
+  else{v="Zone grise (Δ entre les deux seuils) : séquence de plus, puis R4 (VTune).";cls="v-mid";}
+  $("l4v").innerHTML='<div class="verdict '+cls+'">'+v+'</div>';
+}
+fill(ex.ok);
+})();
+</script>
+</body>
+</html>
